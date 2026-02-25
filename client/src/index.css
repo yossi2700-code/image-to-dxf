@@ -119,6 +119,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Heebo', 'Assistant', sans-serif;
+    direction: rtl;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),

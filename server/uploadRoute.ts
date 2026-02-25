@@ -1,0 +1,61 @@
+import { Router } from "express";
+import multer from "multer";
+import { convertImageToDxf } from "./imageProcessor";
+import { storagePut } from "./storage";
+import { nanoid } from "nanoid";
+
+const router = Router();
+
+// Store files in memory (max 20 MB)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ["image/png", "image/jpeg", "image/bmp", "image/webp"];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("סוג קובץ לא נתמך. אנא העלה PNG, JPG או BMP."));
+    }
+  },
+});
+
+router.post("/api/convert", upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "לא הועלתה תמונה" });
+    }
+
+    const threshold = parseInt((req.body.threshold as string) ?? "128", 10);
+    const simplifyTolerance = parseFloat((req.body.simplifyTolerance as string) ?? "2");
+
+    const { dxf, segmentCount, width, height } = await convertImageToDxf(
+      req.file.buffer,
+      { threshold: Math.min(255, Math.max(0, threshold)), simplifyTolerance }
+    );
+
+    if (segmentCount === 0) {
+      return res.status(422).json({
+        error: "לא נמצאו קווים בתמונה. נסה להתאים את ערך הסף.",
+      });
+    }
+
+    // Upload DXF to S3
+    const key = `dxf-output/${nanoid()}.dxf`;
+    const { url } = await storagePut(key, Buffer.from(dxf, "utf-8"), "application/dxf");
+
+    return res.json({
+      success: true,
+      dxfUrl: url,
+      segmentCount,
+      width,
+      height,
+    });
+  } catch (err: unknown) {
+    console.error("[convert]", err);
+    const message = err instanceof Error ? err.message : "שגיאה בעיבוד התמונה";
+    return res.status(500).json({ error: message });
+  }
+});
+
+export default router;

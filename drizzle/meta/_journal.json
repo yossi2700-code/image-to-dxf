@@ -1,5 +1,13 @@
 {
   "version": "7",
   "dialect": "mysql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1772038715165,
+      "tag": "0000_nifty_guardian",
+      "breakpoints": true
+    }
+  ]
 }
