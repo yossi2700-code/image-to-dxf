@@ -140,6 +140,19 @@ export const appRouter = router({
           .orderBy(desc(userActions.createdAt))
           .limit(100);
       }),
+
+    /** Update a user's action limit (null = unlimited) */
+    setUserLimit: adminProcedure
+      .input(z.object({ userId: z.number(), maxActions: z.number().nullable() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db
+          .update(appUsers)
+          .set({ maxActions: input.maxActions })
+          .where(eq(appUsers.id, input.userId));
+        return { success: true };
+      }),
   }),
 
   /** History — returns the logged-in app user's own actions */
@@ -160,6 +173,7 @@ export const appRouter = router({
           dxfUrl: userActions.dxfUrl,
           imageUrl: userActions.imageUrl,
           svgPreview: userActions.svgPreview,
+          shareToken: userActions.shareToken,
           createdAt: userActions.createdAt,
         })
         .from(userActions)
@@ -167,6 +181,59 @@ export const appRouter = router({
         .orderBy(desc(userActions.createdAt))
         .limit(100);
     }),
+
+    /** Create a share link for a specific action */
+    createShare: publicProcedure
+      .input(z.object({ actionId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const appUser = getAppUserFromCookie(
+          (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
+        );
+        if (!appUser) throw new TRPCError({ code: "UNAUTHORIZED", message: "נדרשת התחברות" });
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        // Verify ownership
+        const [action] = await db
+          .select()
+          .from(userActions)
+          .where(eq(userActions.id, input.actionId))
+          .limit(1);
+        if (!action || action.appUserId !== appUser.userId) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        // Reuse existing token or create new one
+        if (action.shareToken) return { shareToken: action.shareToken };
+        const token = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+        await db
+          .update(userActions)
+          .set({ shareToken: token, shareTitle: action.description ?? undefined })
+          .where(eq(userActions.id, input.actionId));
+        return { shareToken: token };
+      }),
+
+    /** Get a shared design by token (public) */
+    getByShareToken: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return null;
+        const [action] = await db
+          .select({
+            id: userActions.id,
+            actionType: userActions.actionType,
+            description: userActions.description,
+            segmentCount: userActions.segmentCount,
+            dxfUrl: userActions.dxfUrl,
+            imageUrl: userActions.imageUrl,
+            svgPreview: userActions.svgPreview,
+            shareTitle: userActions.shareTitle,
+            createdAt: userActions.createdAt,
+          })
+          .from(userActions)
+          .where(eq(userActions.shareToken, input.token))
+          .limit(1);
+        return action ?? null;
+      }),
   }),
 });
 

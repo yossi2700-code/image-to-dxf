@@ -1,0 +1,1 @@
+ALTER TABLE `app_users` ADD `maxActions` int DEFAULT 10;

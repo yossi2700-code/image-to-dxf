@@ -59,6 +59,8 @@ export const appUsers = mysqlTable("app_users", {
   googleId: varchar("googleId", { length: 128 }).unique(),
   /** Whether the email has been verified */
   emailVerified: int("emailVerified").default(0).notNull(),
+  /** Max number of actions allowed (null = unlimited) */
+  maxActions: int("maxActions").default(10),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   lastLoginAt: timestamp("lastLoginAt").defaultNow().notNull(),
 });
@@ -83,6 +85,10 @@ export const userActions = mysqlTable("user_actions", {
   imageUrl: text("imageUrl"),
   /** SVG preview string for re-displaying the result */
   svgPreview: text("svgPreview"),
+  /** Unique token for public sharing (null = not shared) */
+  shareToken: varchar("shareToken", { length: 64 }).unique(),
+  /** User-facing prompt/title for the shared design */
+  shareTitle: varchar("shareTitle", { length: 200 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

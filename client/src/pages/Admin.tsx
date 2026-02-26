@@ -142,9 +142,20 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const { data: stats, isLoading: statsLoading } = trpc.admin.stats.useQuery();
   const { data: daily, isLoading: dailyLoading } = trpc.admin.dailyActivity.useQuery();
   const { data: recent, isLoading: recentLoading } = trpc.admin.recentEvents.useQuery();
-  const { data: registeredUsers, isLoading: usersLoading } = trpc.admin.users.useQuery();
+  const { data: registeredUsers, isLoading: usersLoading, refetch: refetchUsers } = trpc.admin.users.useQuery();
   const { data: userActionsData, isLoading: actionsLoading } = trpc.admin.userActions.useQuery();
   const [expandedUser, setExpandedUser] = useState<number | null>(null);
+  const [editingLimit, setEditingLimit] = useState<number | null>(null);
+  const [limitInput, setLimitInput] = useState("");
+
+  const setUserLimitMutation = trpc.admin.setUserLimit.useMutation({
+    onSuccess: () => {
+      toast.success("המגבלה עודכנה בהצלחה");
+      setEditingLimit(null);
+      refetchUsers();
+    },
+    onError: (err) => toast.error(err.message ?? "שגיאה בעדכון"),
+  });
 
   const logoutMutation = trpc.admin.logout.useMutation({
     onSuccess: () => {
@@ -356,6 +367,52 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                           <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
                             {actions.length} פעולות
                           </span>
+                          {/* Limit badge + edit */}
+                          {editingLimit === u.id ? (
+                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                              <Input
+                                type="number"
+                                min={0}
+                                placeholder="מגבלה"
+                                value={limitInput}
+                                onChange={(e) => setLimitInput(e.target.value)}
+                                className="w-16 h-6 text-xs px-1 py-0"
+                                dir="ltr"
+                                autoFocus
+                              />
+                              <Button
+                                size="sm"
+                                className="h-6 px-2 text-xs"
+                                disabled={setUserLimitMutation.isPending}
+                                onClick={() => {
+                                  const val = limitInput === "" ? null : parseInt(limitInput, 10);
+                                  setUserLimitMutation.mutate({ userId: u.id, maxActions: val });
+                                }}
+                              >
+                                שמור
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-1 text-xs"
+                                onClick={() => setEditingLimit(null)}
+                              >
+                                ✕
+                              </Button>
+                            </div>
+                          ) : (
+                            <button
+                              className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium hover:bg-orange-200 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingLimit(u.id);
+                                setLimitInput("");
+                              }}
+                              title="לחץ לשינוי מגבלה"
+                            >
+                              מגבלה: {(u as { maxActions?: number | null }).maxActions ?? 10}
+                            </button>
+                          )}
                           {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                         </div>
                       </button>

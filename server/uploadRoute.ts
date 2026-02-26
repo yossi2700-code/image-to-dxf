@@ -6,6 +6,7 @@ import { nanoid } from "nanoid";
 import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
+import { checkUsageLimit } from "./usageLimits";
 
 const router = Router();
 
@@ -32,6 +33,22 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
     const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
     const ipAnon = anonymizeIp(rawIp);
     const appUser = getAppUserFromCookie(req.cookies);
+
+    // Only registered users may convert
+    if (!appUser?.userId) {
+      return res.status(401).json({ error: "REGISTRATION_REQUIRED", message: "נדרשת הרשמה כדי לבצע המרה" });
+    }
+
+    // Check usage limit
+    const limitCheck = await checkUsageLimit(appUser.userId);
+    if (!limitCheck.allowed) {
+      return res.status(403).json({
+        error: "QUOTA_EXCEEDED",
+        message: `עברת את מכסת הפעולות (${limitCheck.used}/${limitCheck.max}). צור קשר עם המפתח לפתיחה מחדש.`,
+        used: limitCheck.used,
+        max: limitCheck.max,
+      });
+    }
 
     const threshold = parseInt((req.body.threshold as string) ?? "128", 10);
     const simplifyTolerance = parseFloat((req.body.simplifyTolerance as string) ?? "2");

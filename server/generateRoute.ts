@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
+import { checkUsageLimit } from "./usageLimits";
 import OpenAI from "openai";
 import { svgToDxf } from "./svgToDxf";
 import potrace from "potrace";
@@ -14,19 +15,52 @@ const router = Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 /**
- * Build a prompt that produces a clean, high-contrast PNG ideal for potrace vectorization.
- * Key: thick black strokes on pure white — no grey, no gradients, no fills.
+ * Three distinct style variations for the same subject.
+ * Each produces visually different line art for potrace vectorization.
  */
-function buildLineArtPrompt(userPrompt: string): string {
+const STYLE_VARIATIONS = [
+  {
+    label: "minimal",
+    style:
+      "Minimalist clean line art, simple bold outlines only, very few lines, " +
+      "no internal details, icon-like silhouette style.",
+  },
+  {
+    label: "detailed",
+    style:
+      "Detailed technical illustration, rich internal lines and cross-hatching details, " +
+      "architectural drawing style, many fine lines showing texture and depth.",
+  },
+  {
+    label: "geometric",
+    style:
+      "Geometric abstract interpretation, composed of straight lines and simple shapes, " +
+      "low-poly / faceted look, no curves.",
+  },
+];
+
+function buildLineArtPrompt(userPrompt: string, variationIndex: number): string {
+  const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
   return (
     `Clean black and white line art of ${userPrompt}. ` +
     "Pure white background (#FFFFFF). " +
     "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
     "High contrast: only pure black (#000000) lines on white. " +
-    "Style: bold coloring book illustration, technical drawing. " +
+    `${variation.style} ` +
     "Single centered object, complete, not cropped. " +
     "No text, no watermarks, no grey tones."
   );
+}
+
+/** Convert a user prompt to a safe filename (Hebrew + ASCII supported) */
+function promptToFilename(prompt: string): string {
+  // Keep Hebrew, Latin letters, digits, spaces; replace spaces with underscore; trim to 40 chars
+  const safe = prompt
+    .trim()
+    .replace(/[^\u0590-\u05FF\w\s]/g, "")
+    .replace(/\s+/g, "_")
+    .slice(0, 40);
+  return safe || "design";
 }
 
 /**
@@ -64,14 +98,35 @@ router.post("/api/generate-images", async (req, res) => {
       return res.status(400).json({ error: "נא להזין תיאור של התמונה הרצויה" });
     }
 
+    const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+    const ipAnon = anonymizeIp(rawIp);
+    const appUser = getAppUserFromCookie(req.cookies);
+
+    // Only registered users may generate
+    if (!appUser?.userId) {
+      return res.status(401).json({ error: "REGISTRATION_REQUIRED", message: "נדרשת הרשמה כדי ליצור עיצובי AI" });
+    }
+
+    // Check usage limit
+    const limitCheck = await checkUsageLimit(appUser.userId);
+    if (!limitCheck.allowed) {
+      return res.status(403).json({
+        error: "QUOTA_EXCEEDED",
+        message: `עברת את מכסת הפעולות (${limitCheck.used}/${limitCheck.max}). צור קשר עם המפתח לפתיחה מחדש.`,
+        used: limitCheck.used,
+        max: limitCheck.max,
+      });
+    }
+
     const fullPrompt = modifications
       ? `${prompt}. Modifications: ${modifications}`
       : prompt;
 
-    const imagePrompt = buildLineArtPrompt(fullPrompt);
+    const baseFilename = promptToFilename(prompt);
 
-    // Generate 3 images in parallel using gpt-image-1
-    const generationPromises = Array.from({ length: 3 }, async () => {
+    // Generate 3 images in parallel using gpt-image-1 — each with a different style variation
+    const generationPromises = Array.from({ length: 3 }, async (_, idx) => {
+      const imagePrompt = buildLineArtPrompt(fullPrompt, idx);
       // Step 1: Generate PNG with AI
       const response = await openai.images.generate({
         model: "gpt-image-1",
@@ -119,8 +174,10 @@ router.post("/api/generate-images", async (req, res) => {
       const imgKey = `ai-generated/${nanoid()}.png`;
       const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
 
-      // Upload DXF to S3
-      const dxfKey = `dxf-ai/${nanoid()}.dxf`;
+      // Upload DXF to S3 — use prompt-based filename
+      const variation = STYLE_VARIATIONS[idx % STYLE_VARIATIONS.length];
+      const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
+      const dxfKey = `dxf-ai/${nanoid()}-${dxfFilename}`;
       const { url: dxfUrl } = await storagePut(
         dxfKey,
         Buffer.from(dxf, "utf-8"),
@@ -128,36 +185,30 @@ router.post("/api/generate-images", async (req, res) => {
       );
 
       // Use cleanSvg (stroke-only) for visual preview
-      return { imageUrl, svgPreview: cleanSvg, dxfUrl, segmentCount, width, height };
+      return { imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height };
     });
 
     const images = await Promise.all(generationPromises);
 
     // Log usage
-    const rawIp =
-      (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
-      req.socket.remoteAddress;
     const totalSegments = images.reduce((s, img) => s + img.segmentCount, 0);
     void logUsageEvent({
       type: "ai_generate",
       segmentCount: Math.round(totalSegments / images.length),
-      ipAnon: anonymizeIp(rawIp),
+      ipAnon: anonymizeIp(ipAnon ?? undefined),
     });
 
-    // Record user action if logged in
-    const appUser = getAppUserFromCookie(req.cookies);
-    if (appUser?.userId) {
-      for (const img of images) {
-        void recordUserAction({
-          appUserId: appUser.userId,
-          actionType: "ai_generate",
-          description: fullPrompt.slice(0, 200),
-          segmentCount: img.segmentCount,
-          dxfUrl: img.dxfUrl,
-          imageUrl: img.imageUrl,
-          svgPreview: img.svgPreview,
-        });
-      }
+    // Record user action (user is guaranteed logged in at this point)
+    for (const img of images) {
+      void recordUserAction({
+        appUserId: appUser.userId,
+        actionType: "ai_generate",
+        description: fullPrompt.slice(0, 200),
+        segmentCount: img.segmentCount,
+        dxfUrl: img.dxfUrl,
+        imageUrl: img.imageUrl,
+        svgPreview: img.svgPreview,
+      });
     }
 
     return res.json({ success: true, images });

@@ -14,6 +14,7 @@ import {
   Clock,
   FileCode2,
   ImageIcon,
+  Share2,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -225,6 +226,20 @@ function DetailDialog({
                 </a>
               </Button>
             )}
+            {/* Share via WhatsApp */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-green-700 border-green-300 hover:bg-green-50"
+              onClick={() => {
+                const shareUrl = `${window.location.origin}/share/${item.id}`;
+                const text = encodeURIComponent(`עיצוב DXF: ${item.description ?? "עיצוב וקטורי"} ${shareUrl}`);
+                window.open(`https://wa.me/?text=${text}`, "_blank");
+              }}
+            >
+              <Share2 className="w-4 h-4" />
+              שתף בוואטסאפ
+            </Button>
             {isAi && item.description && (
               <Button
                 size="sm"

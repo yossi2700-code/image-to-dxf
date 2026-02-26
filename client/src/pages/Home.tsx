@@ -51,6 +51,7 @@ interface AiImage {
   imageUrl: string;
   svgPreview: string;
   dxfUrl: string;
+  dxfFilename?: string;
   segmentCount: number;
   width: number;
   height: number;
@@ -429,6 +430,16 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                   <span>פרטים מרביים</span><span>קווים פשוטים</span>
                 </div>
               </div>
+              {/* Reset to recommended */}
+              {(threshold !== 128 || simplify !== 2) && (
+                <button
+                  type="button"
+                  onClick={() => { setThreshold(128); setSimplify(2); }}
+                  className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
+                >
+                  ↺ אפס לברירת מחדל (threshold=128, פישוט=2)
+                </button>
+              )}
 
             </div>
           </CardContent>
@@ -588,7 +599,7 @@ function AiGeneratorTab() {
         onClose={() => setAiPreviewOpen(false)}
         svgContent={aiPreviewImg.svgPreview}
         dxfUrl={aiPreviewImg.dxfUrl}
-        filename={`ai-design-${Date.now()}.dxf`}
+        filename={aiPreviewImg.dxfFilename ?? `ai-design-${Date.now()}.dxf`}
         segmentCount={aiPreviewImg.segmentCount}
       />
     )}
