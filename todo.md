@@ -166,3 +166,8 @@
 - [x] שינוי generateRoute: GPT-4o מייצר SVG ישיר (לא תמונה) עם קווים נקיים
 - [x] כתיבת svgToDxf: המרת SVG paths לקווי DXF
 - [x] עדכון UI להציג SVG ישיר
+
+## וקטוריזציה מקצועית עם potrace
+
+- [x] התקנת potrace + node-potrace לוקטוריזציה מקצועית של תמונות AI
+- [x] שינוי generateRoute: PNG → potrace → SVG paths חלקים → DXF
