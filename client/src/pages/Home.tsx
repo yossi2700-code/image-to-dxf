@@ -49,7 +49,8 @@ function UploadTab() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [threshold, setThreshold] = useState(128);
   const [simplify, setSimplify] = useState(2);
-  const [doubleLineOffset, setDoubleLineOffset] = useState(0);
+  const [doubleLineOffset, setDoubleLineOffset] = useState(0); // in mm (0 = off)
+  const [dpi, setDpi] = useState(300); // default 300 DPI
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<ConvertResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
@@ -97,7 +98,9 @@ function UploadTab() {
       formData.append("image", imageFile);
       formData.append("threshold", String(threshold));
       formData.append("simplifyTolerance", String(simplify));
-      formData.append("doubleLineOffset", String(doubleLineOffset));
+      // Convert mm to pixels based on DPI
+      const doubleLineOffsetPx = doubleLineOffset === 0 ? 0 : Math.max(1, Math.round((doubleLineOffset / 25.4) * dpi));
+      formData.append("doubleLineOffset", String(doubleLineOffsetPx));
 
       const res = await fetch("/api/convert", { method: "POST", body: formData });
       const data = await res.json();
@@ -216,16 +219,59 @@ function UploadTab() {
                     מצב קו כפול CNC
                   </label>
                   <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded text-primary font-semibold">
-                    {doubleLineOffset === 0 ? "כבוי" : `${doubleLineOffset}px`}
+                    {doubleLineOffset === 0 ? "כבוי" : `${doubleLineOffset} מ"מ`}
                   </span>
                 </div>
-                <Slider min={0} max={12} step={1} value={[doubleLineOffset]} onValueChange={([v]) => setDoubleLineOffset(v)} />
+                <Slider min={0} max={5} step={0.1} value={[doubleLineOffset]} onValueChange={([v]) => setDoubleLineOffset(parseFloat(v.toFixed(1)))} />
                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>כבוי</span><span>רווח גדול בין הקווים</span>
+                  <span>כבוי</span><span>5 מ"מ</span>
                 </div>
+
+                {/* DPI field */}
+                {doubleLineOffset > 0 && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <label className="text-xs text-muted-foreground whitespace-nowrap">רזולוציית תמונה (DPI):</label>
+                    <select
+                      className="text-xs border rounded px-2 py-1 bg-background"
+                      value={dpi}
+                      onChange={(e) => setDpi(Number(e.target.value))}
+                    >
+                      <option value={72}>72 DPI (מסך)</option>
+                      <option value={150}>150 DPI</option>
+                      <option value={300}>300 DPI (ברירת מחדל)</option>
+                      <option value={600}>600 DPI (סריקה)</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* Live preview */}
+                {doubleLineOffset > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs text-muted-foreground mb-1.5">תצוגה מקדימה של הקו הכפול:</p>
+                    <svg width="100%" height="60" viewBox="0 0 200 60" className="border rounded bg-white">
+                      {/* Single line reference */}
+                      <line x1="10" y1="20" x2="190" y2="20" stroke="#94a3b8" strokeWidth="1" strokeDasharray="4,3" />
+                      <text x="10" y="14" fontSize="7" fill="#94a3b8">קו מקורי</text>
+                      {/* Double lines */}
+                      {(() => {
+                        const offsetPx = Math.max(1, Math.round((doubleLineOffset / 25.4) * dpi));
+                        const scale = 80 / Math.max(1, Math.round((5 / 25.4) * dpi)); // scale to fit preview
+                        const visualOffset = Math.max(2, Math.min(20, offsetPx * scale));
+                        return (
+                          <>
+                            <line x1="10" y1={40 - visualOffset / 2} x2="190" y2={40 - visualOffset / 2} stroke="#1d4ed8" strokeWidth="1.5" />
+                            <line x1="10" y1={40 + visualOffset / 2} x2="190" y2={40 + visualOffset / 2} stroke="#1d4ed8" strokeWidth="1.5" />
+                            <text x="10" y="58" fontSize="7" fill="#1d4ed8">קו כפול ({doubleLineOffset} מ"מ = {Math.max(1, Math.round((doubleLineOffset / 25.4) * dpi))}px)</text>
+                          </>
+                        );
+                      })()}
+                    </svg>
+                  </div>
+                )}
+
                 {doubleLineOffset > 0 && (
                   <p className="text-xs text-orange-600 mt-1.5 bg-orange-50 rounded px-2 py-1">
-                    ✓ כל קו יוכפל עם רווח של {doubleLineOffset}px — מתאים לחריטת CNC
+                    ✓ כל קו יוכפל עם רווח של {doubleLineOffset} מ"מ ({Math.max(1, Math.round((doubleLineOffset / 25.4) * dpi))}px) — מתאים לחריטת CNC
                   </p>
                 )}
               </div>
