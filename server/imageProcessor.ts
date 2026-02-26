@@ -1,8 +1,9 @@
 import sharp from "sharp";
 
 export interface ProcessingOptions {
-  threshold: number; // 0-255, default 128
-  simplifyTolerance: number; // 0-10, default 1
+  threshold: number;          // 0-255, default 128
+  simplifyTolerance: number;  // 0-10, default 1
+  doubleLineOffset?: number;  // pixels to offset for double-line CNC mode (0 = disabled)
 }
 
 export interface Segment {
@@ -25,7 +26,6 @@ export async function imageToGrayscale(
   let width = meta.width ?? 800;
   let height = meta.height ?? 600;
 
-  // Scale down if too large
   if (width > maxSize || height > maxSize) {
     const scale = maxSize / Math.max(width, height);
     width = Math.round(width * scale);
@@ -91,8 +91,8 @@ export function sobelEdgeDetection(
 }
 
 /**
- * Convert edge pixels to horizontal and vertical line segments
- * Groups consecutive edge pixels in rows and columns into segments
+ * Convert edge pixels to horizontal and vertical line segments.
+ * Groups consecutive edge pixels in rows and columns into segments.
  */
 export function edgesToSegments(
   edges: Uint8Array,
@@ -142,8 +142,62 @@ export function edgesToSegments(
 }
 
 /**
- * Generate DXF file content from line segments
- * Produces a valid DXF R12 file
+ * Generate an offset (parallel) copy of each segment shifted by `offset` pixels
+ * perpendicular to the segment direction.
+ * For horizontal segments: shift in Y; for vertical: shift in X.
+ * This creates the "double line" effect required for CNC routing paths.
+ */
+export function doubleLineSegments(
+  segments: Segment[],
+  offset: number
+): Segment[] {
+  if (offset <= 0) return segments;
+
+  const result: Segment[] = [...segments];
+
+  for (const seg of segments) {
+    const isHorizontal = seg.y1 === seg.y2;
+    const isVertical = seg.x1 === seg.x2;
+
+    if (isHorizontal) {
+      // Shift perpendicular (Y direction) — add offset line above
+      result.push({ x1: seg.x1, y1: seg.y1 - offset, x2: seg.x2, y2: seg.y2 - offset });
+      // Close the ends to form a closed loop (left cap + right cap)
+      result.push({ x1: seg.x1, y1: seg.y1, x2: seg.x1, y2: seg.y1 - offset });
+      result.push({ x1: seg.x2, y1: seg.y2, x2: seg.x2, y2: seg.y2 - offset });
+    } else if (isVertical) {
+      // Shift perpendicular (X direction) — add offset line to the right
+      result.push({ x1: seg.x1 + offset, y1: seg.y1, x2: seg.x2 + offset, y2: seg.y2 });
+      // Close the ends
+      result.push({ x1: seg.x1, y1: seg.y1, x2: seg.x1 + offset, y2: seg.y1 });
+      result.push({ x1: seg.x2, y1: seg.y2, x2: seg.x2 + offset, y2: seg.y2 });
+    } else {
+      // Diagonal segment — compute perpendicular unit vector
+      const dx = seg.x2 - seg.x1;
+      const dy = seg.y2 - seg.y1;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      if (len < 0.001) continue;
+      // Perpendicular: (-dy, dx) normalised
+      const nx = (-dy / len) * offset;
+      const ny = (dx / len) * offset;
+
+      const ox1 = Math.round(seg.x1 + nx);
+      const oy1 = Math.round(seg.y1 + ny);
+      const ox2 = Math.round(seg.x2 + nx);
+      const oy2 = Math.round(seg.y2 + ny);
+
+      result.push({ x1: ox1, y1: oy1, x2: ox2, y2: oy2 });
+      // Close the ends
+      result.push({ x1: seg.x1, y1: seg.y1, x2: ox1, y2: oy1 });
+      result.push({ x1: seg.x2, y1: seg.y2, x2: ox2, y2: oy2 });
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Generate DXF file content from line segments (DXF R12)
  */
 export function segmentsToDxf(
   segments: Segment[],
@@ -152,7 +206,6 @@ export function segmentsToDxf(
 ): string {
   const lines: string[] = [];
 
-  // DXF Header
   lines.push("0\nSECTION");
   lines.push("2\nHEADER");
   lines.push("9\n$ACADVER");
@@ -167,7 +220,6 @@ export function segmentsToDxf(
   lines.push("30\n0.0");
   lines.push("0\nENDSEC");
 
-  // Tables section
   lines.push("0\nSECTION");
   lines.push("2\nTABLES");
   lines.push("0\nTABLE");
@@ -181,17 +233,15 @@ export function segmentsToDxf(
   lines.push("0\nENDTAB");
   lines.push("0\nENDSEC");
 
-  // Entities section
   lines.push("0\nSECTION");
   lines.push("2\nENTITIES");
 
   for (const seg of segments) {
-    // Flip Y axis so image top = DXF top
     const y1 = height - seg.y1;
     const y2 = height - seg.y2;
 
     lines.push("0\nLINE");
-    lines.push("8\n0"); // Layer 0
+    lines.push("8\n0");
     lines.push(`10\n${seg.x1}`);
     lines.push(`20\n${y1}`);
     lines.push("30\n0.0");
@@ -229,15 +279,29 @@ export function segmentsToSvg(
 
 /**
  * Full pipeline: image buffer → DXF string
+ * When doubleLineOffset > 0, each edge segment is duplicated with a parallel
+ * offset and the ends are closed — producing CNC-ready double-line paths.
  */
 export async function convertImageToDxf(
   buffer: Buffer,
   options: ProcessingOptions
-): Promise<{ dxf: string; svgPreview: string; segmentCount: number; width: number; height: number }> {
+): Promise<{
+  dxf: string;
+  svgPreview: string;
+  segmentCount: number;
+  width: number;
+  height: number;
+}> {
   const { pixels, width, height } = await imageToGrayscale(buffer);
   const binary = applyThreshold(pixels, options.threshold);
   const edges = sobelEdgeDetection(binary, width, height);
-  const segments = edgesToSegments(edges, width, height, options);
+  let segments = edgesToSegments(edges, width, height, options);
+
+  // Apply double-line offset for CNC routing paths
+  if (options.doubleLineOffset && options.doubleLineOffset > 0) {
+    segments = doubleLineSegments(segments, options.doubleLineOffset);
+  }
+
   const dxf = segmentsToDxf(segments, width, height);
   const svgPreview = segmentsToSvg(segments, width, height);
 

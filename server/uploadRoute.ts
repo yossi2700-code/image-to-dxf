@@ -29,10 +29,15 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
 
     const threshold = parseInt((req.body.threshold as string) ?? "128", 10);
     const simplifyTolerance = parseFloat((req.body.simplifyTolerance as string) ?? "2");
+    const doubleLineOffset = parseFloat((req.body.doubleLineOffset as string) ?? "0");
 
     const { dxf, svgPreview, segmentCount, width, height } = await convertImageToDxf(
       req.file.buffer,
-      { threshold: Math.min(255, Math.max(0, threshold)), simplifyTolerance }
+      {
+        threshold: Math.min(255, Math.max(0, threshold)),
+        simplifyTolerance,
+        doubleLineOffset: Math.min(20, Math.max(0, doubleLineOffset)),
+      }
     );
 
     if (segmentCount === 0) {

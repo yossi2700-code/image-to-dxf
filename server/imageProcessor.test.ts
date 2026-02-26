@@ -154,3 +154,53 @@ describe("segmentsToSvg", () => {
     expect(lineCount).toBe(0);
   });
 });
+
+import { doubleLineSegments } from "./imageProcessor";
+
+describe("doubleLineSegments", () => {
+  it("should return original segments when offset is 0", () => {
+    const segs = [{ x1: 0, y1: 5, x2: 10, y2: 5 }];
+    const result = doubleLineSegments(segs, 0);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual(segs[0]);
+  });
+
+  it("should produce 4 segments for a horizontal line (original + offset + 2 caps)", () => {
+    const segs = [{ x1: 0, y1: 5, x2: 10, y2: 5 }];
+    const result = doubleLineSegments(segs, 4);
+    // original + parallel + left cap + right cap = 4
+    expect(result).toHaveLength(4);
+  });
+
+  it("should produce 4 segments for a vertical line (original + offset + 2 caps)", () => {
+    const segs = [{ x1: 5, y1: 0, x2: 5, y2: 10 }];
+    const result = doubleLineSegments(segs, 4);
+    expect(result).toHaveLength(4);
+  });
+
+  it("should offset horizontal line by correct Y amount", () => {
+    const segs = [{ x1: 0, y1: 10, x2: 20, y2: 10 }];
+    const result = doubleLineSegments(segs, 4);
+    // The offset line should be at y = 10 - 4 = 6
+    const offsetLine = result.find(s => s.y1 === 6 && s.y2 === 6);
+    expect(offsetLine).toBeDefined();
+  });
+
+  it("should offset vertical line by correct X amount", () => {
+    const segs = [{ x1: 10, y1: 0, x2: 10, y2: 20 }];
+    const result = doubleLineSegments(segs, 4);
+    // The offset line should be at x = 10 + 4 = 14
+    const offsetLine = result.find(s => s.x1 === 14 && s.x2 === 14);
+    expect(offsetLine).toBeDefined();
+  });
+
+  it("should handle multiple segments", () => {
+    const segs = [
+      { x1: 0, y1: 5, x2: 10, y2: 5 },
+      { x1: 5, y1: 0, x2: 5, y2: 10 },
+    ];
+    const result = doubleLineSegments(segs, 3);
+    // Each segment produces 4 lines → 2 × 4 = 8
+    expect(result).toHaveLength(8);
+  });
+});

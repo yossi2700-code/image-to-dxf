@@ -49,6 +49,7 @@ function UploadTab() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [threshold, setThreshold] = useState(128);
   const [simplify, setSimplify] = useState(2);
+  const [doubleLineOffset, setDoubleLineOffset] = useState(0);
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<ConvertResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
@@ -96,6 +97,7 @@ function UploadTab() {
       formData.append("image", imageFile);
       formData.append("threshold", String(threshold));
       formData.append("simplifyTolerance", String(simplify));
+      formData.append("doubleLineOffset", String(doubleLineOffset));
 
       const res = await fetch("/api/convert", { method: "POST", body: formData });
       const data = await res.json();
@@ -205,6 +207,27 @@ function UploadTab() {
                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
                   <span>פרטים מרביים</span><span>קווים פשוטים</span>
                 </div>
+              </div>
+              {/* Double-line CNC mode */}
+              <div className="border-t pt-3">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-sm font-medium flex items-center gap-1.5">
+                    <span className="inline-block w-2 h-2 rounded-full bg-orange-500"></span>
+                    מצב קו כפול CNC
+                  </label>
+                  <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded text-primary font-semibold">
+                    {doubleLineOffset === 0 ? "כבוי" : `${doubleLineOffset}px`}
+                  </span>
+                </div>
+                <Slider min={0} max={12} step={1} value={[doubleLineOffset]} onValueChange={([v]) => setDoubleLineOffset(v)} />
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>כבוי</span><span>רווח גדול בין הקווים</span>
+                </div>
+                {doubleLineOffset > 0 && (
+                  <p className="text-xs text-orange-600 mt-1.5 bg-orange-50 rounded px-2 py-1">
+                    ✓ כל קו יוכפל עם רווח של {doubleLineOffset}px — מתאים לחריטת CNC
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>

@@ -54,3 +54,10 @@
 - [x] Admin login page: simple PIN input form in Hebrew
 - [x] Admin logout button
 - [x] Tests for admin auth logic (25 tests passing total)
+
+## CNC Double-Line Mode
+
+- [x] Update AI image generation prompt: enforce double-line closed contours, 2mm gap, no fill, CNC-ready
+- [x] Update imageProcessor: add contour offset (dilation) to produce double parallel lines in DXF output
+- [x] Add "double line spacing" slider (0=off, 1-12px) in UI settings for upload tab
+- [x] Tests for double-line offset logic (31 tests passing total)
