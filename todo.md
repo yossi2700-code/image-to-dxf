@@ -156,3 +156,13 @@
 
 - [x] הפעלת chainSegmentsToPolylines בכל מצב (גם ללא קו כפול) לחיבור קטעים לקווים רציפים
 - [x] שיפור SVG: שימוש ב-polyline/path במקום line נפרדים לקווים חלקים יותר
+
+## תיקון קווים כפולים
+
+- [ ] הוספת Zhang-Suen thinning לאחר edge detection — מצמצם כל קו לרוחב פיקסל אחד
+
+## גישה חדשה: SVG ישיר מ-GPT-4o
+
+- [x] שינוי generateRoute: GPT-4o מייצר SVG ישיר (לא תמונה) עם קווים נקיים
+- [x] כתיבת svgToDxf: המרת SVG paths לקווי DXF
+- [x] עדכון UI להציג SVG ישיר

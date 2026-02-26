@@ -95,6 +95,79 @@ export function sobelEdgeDetection(
 }
 
 /**
+ * Zhang-Suen thinning algorithm — reduces thick edges to single-pixel-wide skeleton.
+ * This eliminates the "double line" effect caused by Sobel detecting both sides of a stroke.
+ *
+ * Input: edge map (255 = edge pixel, 0 = background)
+ * Output: thinned edge map (same format)
+ */
+export function thinEdges(
+  edges: Uint8Array,
+  width: number,
+  height: number
+): Uint8Array {
+  // Work on a copy; 1 = foreground (edge), 0 = background
+  const img = new Uint8Array(edges.length);
+  for (let i = 0; i < edges.length; i++) img[i] = edges[i] === 255 ? 1 : 0;
+
+  const idx = (x: number, y: number) => y * width + x;
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+
+    for (let pass = 0; pass < 2; pass++) {
+      const toDelete: number[] = [];
+
+      for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+          if (img[idx(x, y)] !== 1) continue;
+
+          // 8-neighbours in order: P2..P9 (clockwise from top)
+          const p2 = img[idx(x,     y - 1)];
+          const p3 = img[idx(x + 1, y - 1)];
+          const p4 = img[idx(x + 1, y    )];
+          const p5 = img[idx(x + 1, y + 1)];
+          const p6 = img[idx(x,     y + 1)];
+          const p7 = img[idx(x - 1, y + 1)];
+          const p8 = img[idx(x - 1, y    )];
+          const p9 = img[idx(x - 1, y - 1)];
+
+          const B = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9; // neighbour count
+          if (B < 2 || B > 6) continue;
+
+          // Count 0→1 transitions in the ordered sequence
+          const seq = [p2, p3, p4, p5, p6, p7, p8, p9, p2];
+          let A = 0;
+          for (let k = 0; k < 8; k++) if (seq[k] === 0 && seq[k + 1] === 1) A++;
+          if (A !== 1) continue;
+
+          if (pass === 0) {
+            if (p2 * p4 * p6 !== 0) continue;
+            if (p4 * p6 * p8 !== 0) continue;
+          } else {
+            if (p2 * p4 * p8 !== 0) continue;
+            if (p2 * p6 * p8 !== 0) continue;
+          }
+
+          toDelete.push(idx(x, y));
+        }
+      }
+
+      if (toDelete.length > 0) {
+        changed = true;
+        for (const i of toDelete) img[i] = 0;
+      }
+    }
+  }
+
+  // Convert back to 0/255 format
+  const result = new Uint8Array(edges.length);
+  for (let i = 0; i < img.length; i++) result[i] = img[i] === 1 ? 255 : 0;
+  return result;
+}
+
+/**
  * Convert edge pixels to horizontal and vertical line segments.
  * Groups consecutive edge pixels in rows and columns into segments.
  */
@@ -562,7 +635,9 @@ export async function convertImageToDxf(
 }> {
   const { pixels, width, height } = await imageToGrayscale(buffer);
   const binary = applyThreshold(pixels, options.threshold);
-  const edges = sobelEdgeDetection(binary, width, height);
+  const rawEdges = sobelEdgeDetection(binary, width, height);
+  // Thin the edges to single-pixel width — eliminates double-line artifacts
+  const edges = thinEdges(rawEdges, width, height);
   const rawSegments = edgesToSegments(edges, width, height, options);
 
   // Filter out very short segments (noise/artifacts) before further processing
