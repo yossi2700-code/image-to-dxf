@@ -453,13 +453,25 @@ function AiGeneratorTab() {
                     ${selectedIdx === idx ? "border-primary shadow-lg scale-[1.02]" : "border-border hover:border-primary/50 hover:shadow-md"}`}
                   onClick={() => setSelectedIdx(idx)}
                 >
-                  {/* AI-generated image preview */}
-                  <div className="aspect-square overflow-hidden bg-white flex items-center justify-center p-1">
-                    <img
-                      src={img.imageUrl}
-                      alt={`עיצוב ${idx + 1}`}
-                      className="w-full h-full object-contain"
-                    />
+                  {/* SVG vector preview in gallery */}
+                  <div className="aspect-square overflow-hidden bg-white flex items-center justify-center p-2">
+                    {img.svgPreview ? (
+                      <div
+                        className="w-full h-full flex items-center justify-center"
+                        dangerouslySetInnerHTML={{
+                          __html: img.svgPreview.replace(
+                            /<svg /,
+                            '<svg style="max-width:100%;max-height:100%;width:auto;height:auto;" '
+                          ),
+                        }}
+                      />
+                    ) : (
+                      <img
+                        src={img.imageUrl}
+                        alt={`עיצוב ${idx + 1}`}
+                        className="w-full h-full object-contain"
+                      />
+                    )}
                   </div>
                   <div className="px-2 py-1.5 border-t bg-muted/30 flex items-center justify-between">
                     <span className="text-xs font-medium text-muted-foreground">וריאציה {idx + 1}</span>

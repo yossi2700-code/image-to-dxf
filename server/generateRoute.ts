@@ -17,10 +17,12 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
  */
 function buildLineArtPrompt(userPrompt: string): string {
   return (
-    `Bold black and white illustration of ${userPrompt}. ` +
-    "Single centered object on pure white background. " +
-    "High contrast, bold black shapes, no color, no grey, no gradients. " +
-    "Simple clean design. Do not repeat. Do not crop."
+    `Decorative black and white line art of ${userPrompt}. ` +
+    "Single centered design on pure white background. " +
+    "Artistic ornamental style with elegant flowing curves and intricate details. " +
+    "High contrast black lines on white, no fill, no shading, no color, no gradients. " +
+    "Style: decorative botanical illustration, art nouveau, tattoo flash art. " +
+    "One complete centered image. Do not repeat. Do not crop."
   );
 }
 
