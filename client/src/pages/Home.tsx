@@ -372,14 +372,6 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                 </div>
                 <p className="font-semibold text-red-600">שגיאה בעיבוד</p>
                 <p className="text-sm text-muted-foreground max-w-xs">{errorMsg}</p>
-                {(errorMsg.includes("הגעת למגבלה") || errorMsg.includes("limit") || errorMsg.includes("מגבלה")) && (
-                  <button
-                    onClick={onOpenAuth}
-                    className="text-sm text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
-                  >
-                    הירשם בחינם לקבל עד 10 המרות ביום
-                  </button>
-                )}
                 <Button variant="outline" size="sm" onClick={() => setStatus("idle")}>נסה שוב</Button>
               </div>
             )}
