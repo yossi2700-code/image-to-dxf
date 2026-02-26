@@ -6,6 +6,9 @@ import { ENV } from "./_core/env";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
+import { getDb } from "./db";
+import { appUsers } from "../drizzle/schema";
+import { desc } from "drizzle-orm";
 
 const ADMIN_COOKIE = "admin_session";
 
@@ -81,6 +84,23 @@ export const appRouter = router({
     /** Recent events list */
     recentEvents: adminProcedure.query(async () => {
       return getRecentEvents(50);
+    }),
+
+    /** Registered app users list */
+    users: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db
+        .select({
+          id: appUsers.id,
+          name: appUsers.name,
+          email: appUsers.email,
+          createdAt: appUsers.createdAt,
+          lastLoginAt: appUsers.lastLoginAt,
+        })
+        .from(appUsers)
+        .orderBy(desc(appUsers.createdAt))
+        .limit(200);
     }),
   }),
 });

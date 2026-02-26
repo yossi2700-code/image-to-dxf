@@ -1,10 +1,11 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { AuthDialog } from "@/components/AuthDialog";
 import {
   Upload,
   Download,
@@ -20,6 +21,9 @@ import {
   Eye,
   ChevronLeft,
   Wand2,
+  LogIn,
+  LogOut,
+  UserCircle,
 } from "lucide-react";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -652,6 +656,24 @@ function AiGeneratorTab() {
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function Home() {
+  const [appUser, setAppUser] = useState<{ id: number; email: string; name: string | null } | null>(null);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [limitReached, setLimitReached] = useState(false);
+
+  // Load current user on mount
+  useEffect(() => {
+    fetch("/api/app-auth/me")
+      .then((r) => r.json())
+      .then((d) => { if (d.user) setAppUser(d.user); })
+      .catch(() => {});
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch("/api/app-auth/logout", { method: "POST" });
+    setAppUser(null);
+    toast.success("התנתקתא בהצלחה");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Header */}
@@ -662,12 +684,40 @@ export default function Home() {
             alt="לוגו"
             className="w-10 h-10 rounded-lg object-contain shrink-0"
           />
-          <div>
+          <div className="flex-1">
             <h1 className="text-base font-bold leading-tight">ממיר תמונה ל-DXF</h1>
             <p className="text-xs text-muted-foreground">המרה לקבצי וקטור לחיתוך לייזר ו-CNC</p>
           </div>
+          {/* Auth buttons */}
+          {appUser ? (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <UserCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">{appUser.name ?? appUser.email}</span>
+              </div>
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs">
+                <LogOut className="w-3.5 h-3.5 ml-1" />
+                יציאה
+              </Button>
+            </div>
+          ) : (
+            <Button size="sm" variant="outline" onClick={() => { setLimitReached(false); setAuthOpen(true); }} className="text-xs gap-1.5">
+              <LogIn className="w-3.5 h-3.5" />
+              התחבר/הירשם
+            </Button>
+          )}
         </div>
       </header>
+
+      <AuthDialog
+        open={authOpen}
+        onOpenChange={setAuthOpen}
+        limitReached={limitReached}
+        onSuccess={(user) => {
+          setAppUser(user);
+          setLimitReached(false);
+        }}
+      />
 
       <main className="container py-6">
         <Tabs defaultValue="upload" dir="rtl">

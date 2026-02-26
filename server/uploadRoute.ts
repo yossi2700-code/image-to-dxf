@@ -4,6 +4,7 @@ import { convertImageToDxf } from "./imageProcessor";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 import { logUsageEvent, anonymizeIp } from "./usageDb";
+import { getAppUserFromCookie, getAnonDailyCount, getUserDailyCount, ANON_DAILY_LIMIT, USER_DAILY_LIMIT } from "./appAuth";
 
 const router = Router();
 
@@ -25,6 +26,35 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "לא הועלתה תמונה" });
+    }
+
+    // Check daily conversion limit
+    const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+    const ipAnon = anonymizeIp(rawIp);
+    const appUser = getAppUserFromCookie(req.cookies);
+
+    if (appUser) {
+      const count = await getUserDailyCount(appUser.userId);
+      if (count >= USER_DAILY_LIMIT) {
+        return res.status(429).json({
+          error: `הגעת למגבלת ${USER_DAILY_LIMIT} המרות ביום. חזור מחר!`,
+          limitReached: true,
+          isLoggedIn: true,
+          limit: USER_DAILY_LIMIT,
+          used: count,
+        });
+      }
+    } else {
+      const count = await getAnonDailyCount(ipAnon ?? "");
+      if (count >= ANON_DAILY_LIMIT) {
+        return res.status(429).json({
+          error: `הגעת למגבלת ${ANON_DAILY_LIMIT} המרות ביום. הירשם בחינם לקבל ${USER_DAILY_LIMIT} המרות!`,
+          limitReached: true,
+          isLoggedIn: false,
+          limit: ANON_DAILY_LIMIT,
+          used: count,
+        });
+      }
     }
 
     const threshold = parseInt((req.body.threshold as string) ?? "128", 10);
@@ -61,8 +91,7 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
     }
 
     // Log usage event (fire-and-forget)
-    const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress;
-    void logUsageEvent({ type: "convert", segmentCount, ipAnon: anonymizeIp(rawIp), imageUrl });
+    void logUsageEvent({ type: "convert", segmentCount, ipAnon, imageUrl, appUserId: appUser?.userId ?? undefined });
 
     return res.json({
       success: true,

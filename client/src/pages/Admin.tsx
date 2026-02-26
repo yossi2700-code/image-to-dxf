@@ -24,6 +24,7 @@ import {
   LogOut,
   Eye,
   EyeOff,
+  Users,
 } from "lucide-react";
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
@@ -138,6 +139,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const { data: stats, isLoading: statsLoading } = trpc.admin.stats.useQuery();
   const { data: daily, isLoading: dailyLoading } = trpc.admin.dailyActivity.useQuery();
   const { data: recent, isLoading: recentLoading } = trpc.admin.recentEvents.useQuery();
+  const { data: registeredUsers, isLoading: usersLoading } = trpc.admin.users.useQuery();
 
   const logoutMutation = trpc.admin.logout.useMutation({
     onSuccess: () => {
@@ -303,6 +305,52 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             ) : (
               <div className="py-8 text-center text-muted-foreground text-sm">
                 אין פעולות עדיין. ברגע שמשתמשים יתחילו להשתמש — הנתונים יופיעו כאן.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        {/* Registered Users */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Users className="w-4 h-4 text-primary" />
+              משתמשים רשומים
+              {registeredUsers && (
+                <span className="mr-auto text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                  {registeredUsers.length} משתמשים
+                </span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {usersLoading ? (
+              <div className="space-y-2">{[...Array(3)].map((_, i) => <div key={i} className="h-10 bg-muted animate-pulse rounded-lg" />)}</div>
+            ) : registeredUsers && registeredUsers.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-muted-foreground">
+                      <th className="text-right py-2 pr-2 font-medium">שם</th>
+                      <th className="text-right py-2 pr-2 font-medium">אימייל</th>
+                      <th className="text-right py-2 font-medium">תאריך הרשמה</th>
+                      <th className="text-right py-2 font-medium">כניסה אחרונה</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {registeredUsers.map((u) => (
+                      <tr key={u.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                        <td className="py-2 pr-2 font-medium">{u.name ?? <span className="text-muted-foreground">ללא שם</span>}</td>
+                        <td className="py-2 pr-2 font-mono text-xs text-muted-foreground">{u.email}</td>
+                        <td className="py-2 text-xs text-muted-foreground">{new Date(u.createdAt).toLocaleDateString("he-IL")}</td>
+                        <td className="py-2 text-xs text-muted-foreground">{new Date(u.lastLoginAt).toLocaleDateString("he-IL")}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="py-8 text-center text-muted-foreground text-sm">
+                אין משתמשים רשומים עדיין.
               </div>
             )}
           </CardContent>

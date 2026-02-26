@@ -10,6 +10,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import uploadRoute from "../uploadRoute";
 import generateRoute from "../generateRoute";
+import appAuthRoute from "../appAuth";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -40,6 +41,8 @@ async function startServer() {
   app.use(cookieParser());
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  // App user auth routes (register, login, logout, me)
+  app.use(appAuthRoute);
   // Image upload & conversion route
   app.use(uploadRoute);
   // AI image generation route

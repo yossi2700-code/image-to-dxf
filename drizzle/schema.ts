@@ -38,8 +38,28 @@ export const usageEvents = mysqlTable("usage_events", {
   country: varchar("country", { length: 64 }),
   /** Thumbnail URL of the uploaded image (stored in S3) */
   imageUrl: text("imageUrl"),
+  /** App user ID (null for anonymous) */
+  appUserId: int("appUserId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 export type UsageEvent = typeof usageEvents.$inferSelect;
 export type InsertUsageEvent = typeof usageEvents.$inferInsert;
+
+// App users table (for email/password and Google OAuth registration)
+export const appUsers = mysqlTable("app_users", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Display name */
+  name: varchar("name", { length: 128 }),
+  /** Email address (unique) */
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  /** Bcrypt hashed password (null for Google-only users) */
+  passwordHash: text("passwordHash"),
+  /** Google OAuth subject ID */
+  googleId: varchar("googleId", { length: 128 }).unique(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  lastLoginAt: timestamp("lastLoginAt").defaultNow().notNull(),
+});
+
+export type AppUser = typeof appUsers.$inferSelect;
+export type InsertAppUser = typeof appUsers.$inferInsert;
