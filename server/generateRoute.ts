@@ -91,8 +91,8 @@ router.post("/api/generate-images", async (req, res) => {
       // Higher simplifyTolerance = smoother, fewer segments.
       const { dxf, svgPreview, segmentCount, width, height } =
         await convertImageToDxf(rawBuffer, {
-          threshold: 160,
-          simplifyTolerance: 4,  // Smoother curves, fewer segments
+          threshold: 170,          // Higher = only darkest lines
+          simplifyTolerance: 8,      // Smoother, far fewer segments (~2k-4k)
           doubleLineOffset: 0,
         });
 

@@ -24,6 +24,9 @@ import {
   LogIn,
   LogOut,
   UserCircle,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
 } from "lucide-react";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -43,6 +46,150 @@ interface AiImage {
   segmentCount: number;
   width: number;
   height: number;
+}
+
+// ─── SVG Zoom Viewer ──────────────────────────────────────────────────────────
+
+interface SvgZoomViewerProps {
+  svgContent: string;
+  label?: string;
+  maxHeight?: number;
+}
+
+function SvgZoomViewer({ svgContent, label = "תצוגה מקדימה", maxHeight = 300 }: SvgZoomViewerProps) {
+  const [scale, setScale] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const panStart = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  // Touch pinch state
+  const lastPinchDist = useRef<number | null>(null);
+
+  const clampScale = (s: number) => Math.min(8, Math.max(0.5, s));
+
+  const zoomIn = () => setScale((s) => clampScale(+(s * 1.3).toFixed(2)));
+  const zoomOut = () => setScale((s) => clampScale(+(s / 1.3).toFixed(2)));
+  const reset = () => { setScale(1); setOffset({ x: 0, y: 0 }); };
+
+  // Mouse wheel zoom
+  const onWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+    setScale((s) => clampScale(+(s * factor).toFixed(3)));
+  };
+
+  // Mouse drag pan
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    setIsPanning(true);
+    panStart.current = { x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y };
+  };
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isPanning || !panStart.current) return;
+    setOffset({
+      x: panStart.current.ox + e.clientX - panStart.current.x,
+      y: panStart.current.oy + e.clientY - panStart.current.y,
+    });
+  };
+  const onMouseUp = () => { setIsPanning(false); panStart.current = null; };
+
+  // Touch pinch-to-zoom + drag
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastPinchDist.current = Math.hypot(dx, dy);
+    } else if (e.touches.length === 1) {
+      panStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, ox: offset.x, oy: offset.y };
+    }
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
+    if (e.touches.length === 2 && lastPinchDist.current !== null) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.hypot(dx, dy);
+      const factor = dist / lastPinchDist.current;
+      lastPinchDist.current = dist;
+      setScale((s) => clampScale(+(s * factor).toFixed(3)));
+    } else if (e.touches.length === 1 && panStart.current) {
+      setOffset({
+        x: panStart.current.ox + e.touches[0].clientX - panStart.current.x,
+        y: panStart.current.oy + e.touches[0].clientY - panStart.current.y,
+      });
+    }
+  };
+  const onTouchEnd = () => { lastPinchDist.current = null; panStart.current = null; };
+
+  const styledSvg = svgContent.replace(/<svg /, '<svg style="width:100%;height:100%;" ');
+
+  return (
+    <div className="border rounded-lg overflow-hidden bg-white">
+      {/* Toolbar */}
+      <div className="flex items-center gap-1 px-3 py-1.5 border-b bg-muted/30">
+        <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+        <span className="text-xs text-muted-foreground font-medium flex-1">{label}</span>
+        <span className="text-xs text-muted-foreground/60 ml-1">{Math.round(scale * 100)}%</span>
+        <button
+          onClick={zoomOut}
+          className="w-6 h-6 rounded flex items-center justify-center hover:bg-muted transition-colors"
+          title="הקטן"
+        >
+          <ZoomOut className="w-3.5 h-3.5 text-muted-foreground" />
+        </button>
+        <button
+          onClick={zoomIn}
+          className="w-6 h-6 rounded flex items-center justify-center hover:bg-muted transition-colors"
+          title="הגדל"
+        >
+          <ZoomIn className="w-3.5 h-3.5 text-muted-foreground" />
+        </button>
+        <button
+          onClick={reset}
+          className="w-6 h-6 rounded flex items-center justify-center hover:bg-muted transition-colors"
+          title="איפוס"
+        >
+          <Maximize2 className="w-3.5 h-3.5 text-muted-foreground" />
+        </button>
+      </div>
+
+      {/* Canvas */}
+      <div
+        ref={containerRef}
+        className="relative overflow-hidden bg-white select-none"
+        style={{ height: maxHeight, cursor: isPanning ? "grabbing" : "grab" }}
+        onWheel={onWheel}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`,
+            transformOrigin: "center center",
+            width: "90%",
+            height: "90%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          dangerouslySetInnerHTML={{ __html: styledSvg }}
+        />
+      </div>
+
+      {/* Hint */}
+      <div className="px-3 py-1 border-t bg-muted/20 text-center">
+        <span className="text-[10px] text-muted-foreground/60">גלגל עכבר לזום · גרור להזזה · צבט להגדלה במובייל</span>
+      </div>
+    </div>
+  );
 }
 
 // ─── Upload Tab ─────────────────────────────────────────────────────────────
@@ -254,19 +401,13 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
 
             {status === "success" && result && (
               <div className="flex flex-col gap-4">
-                {/* SVG Preview */}
+                {/* SVG Preview with zoom */}
                 {showSvgPreview && result.svgPreview && (
-                  <div className="border rounded-lg overflow-hidden bg-white">
-                    <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30">
-                      <Eye className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground font-medium">תצוגה מקדימה של הוקטור</span>
-                    </div>
-                    <div
-                      className="w-full flex items-center justify-center p-2 bg-white"
-                      style={{ maxHeight: 260, overflow: "hidden" }}
-                      dangerouslySetInnerHTML={{ __html: result.svgPreview.replace(/<svg /, '<svg style="max-width:100%;max-height:240px;width:auto;height:auto;" ') }}
-                    />
-                  </div>
+                  <SvgZoomViewer
+                    svgContent={result.svgPreview}
+                    label="תצוגה מקדימה של הוקטור"
+                    maxHeight={280}
+                  />
                 )}
 
                 {/* Stats */}
@@ -503,22 +644,13 @@ function AiGeneratorTab() {
                   <span className="font-semibold text-sm">וריאציה {selectedIdx! + 1} נבחרה</span>
                 </div>
 
-                {/* SVG Vector Preview */}
+                {/* SVG Vector Preview with zoom */}
                 {selected.svgPreview && (
-                  <div className="border rounded-lg overflow-hidden bg-white mb-3">
-                    <div className="flex items-center gap-2 px-3 py-1.5 border-b bg-muted/30">
-                      <Eye className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground font-medium">תצוגת קווי וקטור (DXF)</span>
-                    </div>
-                    <div
-                      className="w-full flex items-center justify-center p-2 bg-white"
-                      style={{ maxHeight: 220 }}
-                      dangerouslySetInnerHTML={{
-                        __html: selected.svgPreview.replace(
-                          /<svg /,
-                          '<svg style="max-width:100%;max-height:200px;width:auto;height:auto;" '
-                        ),
-                      }}
+                  <div className="mb-3">
+                    <SvgZoomViewer
+                      svgContent={selected.svgPreview}
+                      label="תצוגת קווי וקטור (DXF)"
+                      maxHeight={280}
                     />
                   </div>
                 )}
