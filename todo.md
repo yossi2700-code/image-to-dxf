@@ -33,3 +33,16 @@
 - [x] UI: Auto-convert selected AI image to DXF with preview
 - [x] Navigation: tabs between "העלאת תמונה" and "יצירת AI"
 - [x] Tests: vitest for SVG preview (15 tests passing total)
+
+## מעקב שימוש ודשבורד ניהול
+
+- [x] DB schema: usage_events table (type, segmentCount, ip, createdAt)
+- [x] Server: log event on every /api/convert call
+- [x] Server: log event on every /api/generate-images call
+- [x] tRPC: admin-only stats procedure (total, by type, by day)
+- [x] Admin page /admin: total conversions + AI generations cards
+- [x] Admin page /admin: activity chart (last 30 days)
+- [x] Admin page /admin: recent events table
+- [x] Route guard: /admin accessible only to owner
+- [x] Tests: vitest for anonymizeIp (20 tests passing total)
+- [x] Logo: robotics & technology classic logo added to header

@@ -3,6 +3,7 @@ import multer from "multer";
 import { convertImageToDxf } from "./imageProcessor";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
+import { logUsageEvent, anonymizeIp } from "./usageDb";
 
 const router = Router();
 
@@ -43,6 +44,10 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
     // Upload DXF to S3
     const key = `dxf-output/${nanoid()}.dxf`;
     const { url } = await storagePut(key, Buffer.from(dxf, "utf-8"), "application/dxf");
+
+    // Log usage event (fire-and-forget)
+    const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress;
+    void logUsageEvent({ type: "convert", segmentCount, ipAnon: anonymizeIp(rawIp) });
 
     return res.json({
       success: true,

@@ -3,6 +3,7 @@ import { generateImage } from "./_core/imageGeneration";
 import { convertImageToDxf } from "./imageProcessor";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
+import { logUsageEvent, anonymizeIp } from "./usageDb";
 
 const router = Router();
 
@@ -80,6 +81,11 @@ router.post("/api/generate-images", async (req, res) => {
     });
 
     const images = await Promise.all(generationPromises);
+
+    // Log one ai_generate event (covers all 3 variants)
+    const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress;
+    const totalSegments = images.reduce((s, img) => s + img.segmentCount, 0);
+    void logUsageEvent({ type: "ai_generate", segmentCount: Math.round(totalSegments / images.length), ipAnon: anonymizeIp(rawIp) });
 
     return res.json({ success: true, images });
   } catch (err: unknown) {

@@ -588,9 +588,11 @@ export default function Home() {
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container py-3 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shrink-0">
-            <FileCode2 className="w-5 h-5 text-primary-foreground" />
-          </div>
+          <img
+            src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663365044246/SslVmktvndMoFSwH.png"
+            alt="לוגו"
+            className="w-10 h-10 rounded-lg object-contain shrink-0"
+          />
           <div>
             <h1 className="text-base font-bold leading-tight">ממיר תמונה ל-DXF</h1>
             <p className="text-xs text-muted-foreground">המרה לקבצי וקטור לחיתוך לייזר ו-CNC</p>

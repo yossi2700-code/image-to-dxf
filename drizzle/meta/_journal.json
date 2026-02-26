@@ -8,6 +8,13 @@
       "when": 1772038715165,
       "tag": "0000_nifty_guardian",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1772069448523,
+      "tag": "0001_parched_thanos",
+      "breakpoints": true
     }
   ]
 }
