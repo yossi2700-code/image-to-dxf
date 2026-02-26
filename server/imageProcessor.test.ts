@@ -165,17 +165,18 @@ describe("doubleLineSegments", () => {
     expect(result[0]).toEqual(segs[0]);
   });
 
-  it("should produce 4 segments for a horizontal line (original + offset + 2 caps)", () => {
+  it("should produce 2 segments for a horizontal line (original + parallel offset)", () => {
     const segs = [{ x1: 0, y1: 5, x2: 10, y2: 5 }];
     const result = doubleLineSegments(segs, 4);
-    // original + parallel + left cap + right cap = 4
-    expect(result).toHaveLength(4);
+    // original + parallel only (no caps) = 2
+    expect(result).toHaveLength(2);
   });
 
-  it("should produce 4 segments for a vertical line (original + offset + 2 caps)", () => {
+  it("should produce 2 segments for a vertical line (original + parallel offset)", () => {
     const segs = [{ x1: 5, y1: 0, x2: 5, y2: 10 }];
     const result = doubleLineSegments(segs, 4);
-    expect(result).toHaveLength(4);
+    // original + parallel only (no caps) = 2
+    expect(result).toHaveLength(2);
   });
 
   it("should offset horizontal line by correct Y amount", () => {
@@ -200,7 +201,7 @@ describe("doubleLineSegments", () => {
       { x1: 5, y1: 0, x2: 5, y2: 10 },
     ];
     const result = doubleLineSegments(segs, 3);
-    // Each segment produces 4 lines → 2 × 4 = 8
-    expect(result).toHaveLength(8);
+    // Each segment produces 2 lines (original + parallel, no caps) → 2 × 2 = 4
+    expect(result).toHaveLength(4);
   });
 });

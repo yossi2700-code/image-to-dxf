@@ -144,8 +144,8 @@ export function edgesToSegments(
 /**
  * Generate an offset (parallel) copy of each segment shifted by `offset` pixels
  * perpendicular to the segment direction.
- * For horizontal segments: shift in Y; for vertical: shift in X.
- * This creates the "double line" effect required for CNC routing paths.
+ * Only adds the parallel line — NO end caps — to produce clean double lines
+ * without the "ladder" cross-connecting segments.
  */
 export function doubleLineSegments(
   segments: Segment[],
@@ -160,17 +160,11 @@ export function doubleLineSegments(
     const isVertical = seg.x1 === seg.x2;
 
     if (isHorizontal) {
-      // Shift perpendicular (Y direction) — add offset line above
+      // Shift perpendicular (Y direction) — add parallel line only
       result.push({ x1: seg.x1, y1: seg.y1 - offset, x2: seg.x2, y2: seg.y2 - offset });
-      // Close the ends to form a closed loop (left cap + right cap)
-      result.push({ x1: seg.x1, y1: seg.y1, x2: seg.x1, y2: seg.y1 - offset });
-      result.push({ x1: seg.x2, y1: seg.y2, x2: seg.x2, y2: seg.y2 - offset });
     } else if (isVertical) {
-      // Shift perpendicular (X direction) — add offset line to the right
+      // Shift perpendicular (X direction) — add parallel line only
       result.push({ x1: seg.x1 + offset, y1: seg.y1, x2: seg.x2 + offset, y2: seg.y2 });
-      // Close the ends
-      result.push({ x1: seg.x1, y1: seg.y1, x2: seg.x1 + offset, y2: seg.y1 });
-      result.push({ x1: seg.x2, y1: seg.y2, x2: seg.x2 + offset, y2: seg.y2 });
     } else {
       // Diagonal segment — compute perpendicular unit vector
       const dx = seg.x2 - seg.x1;
@@ -181,15 +175,12 @@ export function doubleLineSegments(
       const nx = (-dy / len) * offset;
       const ny = (dx / len) * offset;
 
-      const ox1 = Math.round(seg.x1 + nx);
-      const oy1 = Math.round(seg.y1 + ny);
-      const ox2 = Math.round(seg.x2 + nx);
-      const oy2 = Math.round(seg.y2 + ny);
-
-      result.push({ x1: ox1, y1: oy1, x2: ox2, y2: oy2 });
-      // Close the ends
-      result.push({ x1: seg.x1, y1: seg.y1, x2: ox1, y2: oy1 });
-      result.push({ x1: seg.x2, y1: seg.y2, x2: ox2, y2: oy2 });
+      result.push({
+        x1: Math.round(seg.x1 + nx),
+        y1: Math.round(seg.y1 + ny),
+        x2: Math.round(seg.x2 + nx),
+        y2: Math.round(seg.y2 + ny),
+      });
     }
   }
 
