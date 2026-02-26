@@ -57,8 +57,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [threshold, setThreshold] = useState(128);
   const [simplify, setSimplify] = useState(2);
-  const [doubleLineOffset, setDoubleLineOffset] = useState(1.5); // in mm (1.5mm default for 0.8mm CNC bit)
-  const [dpi, setDpi] = useState(300); // default 300 DPI
+  const [dpi] = useState(300); // fixed 300 DPI for mm conversion
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<ConvertResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
@@ -106,9 +105,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
       formData.append("image", imageFile);
       formData.append("threshold", String(threshold));
       formData.append("simplifyTolerance", String(simplify));
-      // Convert mm to pixels based on DPI
-      const doubleLineOffsetPx = doubleLineOffset === 0 ? 0 : Math.max(1, Math.round((doubleLineOffset / 25.4) * dpi));
-      formData.append("doubleLineOffset", String(doubleLineOffsetPx));
+      formData.append("doubleLineOffset", "0"); // double-line disabled
 
       const res = await fetch("/api/convert", { method: "POST", body: formData });
       const data = await res.json();
@@ -219,71 +216,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                   <span>פרטים מרביים</span><span>קווים פשוטים</span>
                 </div>
               </div>
-              {/* Double-line CNC mode */}
-              <div className="border-t pt-3">
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-sm font-medium flex items-center gap-1.5">
-                    <span className="inline-block w-2 h-2 rounded-full bg-orange-500"></span>
-                    מצב קו כפול CNC
-                  </label>
-                  <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded text-primary font-semibold">
-                    {doubleLineOffset === 0 ? "כבוי" : `${doubleLineOffset} מ"מ`}
-                  </span>
-                </div>
-                <Slider min={0} max={5} step={0.1} value={[doubleLineOffset]} onValueChange={([v]) => setDoubleLineOffset(parseFloat(v.toFixed(1)))} />
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>כבוי</span><span>5 מ"מ</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">ברירת מחדל: 1.5 מ"מ (מתאים לפרזה 0.8 מ"מ)</p>
 
-                {/* DPI field */}
-                {doubleLineOffset > 0 && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <label className="text-xs text-muted-foreground whitespace-nowrap">רזולוציית תמונה (DPI):</label>
-                    <select
-                      className="text-xs border rounded px-2 py-1 bg-background"
-                      value={dpi}
-                      onChange={(e) => setDpi(Number(e.target.value))}
-                    >
-                      <option value={72}>72 DPI (מסך)</option>
-                      <option value={150}>150 DPI</option>
-                      <option value={300}>300 DPI (ברירת מחדל)</option>
-                      <option value={600}>600 DPI (סריקה)</option>
-                    </select>
-                  </div>
-                )}
-
-                {/* Live preview */}
-                {doubleLineOffset > 0 && (
-                  <div className="mt-3">
-                    <p className="text-xs text-muted-foreground mb-1.5">תצוגה מקדימה של הקו הכפול:</p>
-                    <svg width="100%" height="60" viewBox="0 0 200 60" className="border rounded bg-white">
-                      {/* Single line reference */}
-                      <line x1="10" y1="20" x2="190" y2="20" stroke="#94a3b8" strokeWidth="1" strokeDasharray="4,3" />
-                      <text x="10" y="14" fontSize="7" fill="#94a3b8">קו מקורי</text>
-                      {/* Double lines */}
-                      {(() => {
-                        const offsetPx = Math.max(1, Math.round((doubleLineOffset / 25.4) * dpi));
-                        const scale = 80 / Math.max(1, Math.round((5 / 25.4) * dpi)); // scale to fit preview
-                        const visualOffset = Math.max(2, Math.min(20, offsetPx * scale));
-                        return (
-                          <>
-                            <line x1="10" y1={40 - visualOffset / 2} x2="190" y2={40 - visualOffset / 2} stroke="#1d4ed8" strokeWidth="1.5" />
-                            <line x1="10" y1={40 + visualOffset / 2} x2="190" y2={40 + visualOffset / 2} stroke="#1d4ed8" strokeWidth="1.5" />
-                            <text x="10" y="58" fontSize="7" fill="#1d4ed8">קו כפול ({doubleLineOffset} מ"מ = {Math.max(1, Math.round((doubleLineOffset / 25.4) * dpi))}px)</text>
-                          </>
-                        );
-                      })()}
-                    </svg>
-                  </div>
-                )}
-
-                {doubleLineOffset > 0 && (
-                  <p className="text-xs text-orange-600 mt-1.5 bg-orange-50 rounded px-2 py-1">
-                    ✓ שני קווים מקבילים רציפים עם רווח {doubleLineOffset} מ"מ — הפרזה כורסת בין הקווים
-                  </p>
-                )}
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -343,12 +276,12 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                     <p className="text-xs text-muted-foreground">קווים</p>
                   </div>
                   <div className="bg-muted rounded-lg p-2.5 text-center">
-                    <p className="text-lg font-bold text-primary">{result.width}</p>
-                    <p className="text-xs text-muted-foreground">רוחב px</p>
+                    <p className="text-lg font-bold text-primary">{((result.width / dpi) * 25.4).toFixed(1)}</p>
+                    <p className="text-xs text-muted-foreground">רוחב מ"מ</p>
                   </div>
                   <div className="bg-muted rounded-lg p-2.5 text-center">
-                    <p className="text-lg font-bold text-primary">{result.height}</p>
-                    <p className="text-xs text-muted-foreground">גובה px</p>
+                    <p className="text-lg font-bold text-primary">{((result.height / dpi) * 25.4).toFixed(1)}</p>
+                    <p className="text-xs text-muted-foreground">גובה מ"מ</p>
                   </div>
                 </div>
 
@@ -456,7 +389,7 @@ function AiGeneratorTab() {
             disabled={status === "loading"}
           />
           <p className="text-xs text-muted-foreground mt-2">
-            ה-AI ייצור 3 וריאציות עם קווי מתאר עבים וברורים, מותאמות לחיתוך לייזר וכרסום CNC
+            ה-AI ייצור 3 וריאציות עם קווים דקים וחלקים, מותאמות להמרה ל-DXF לחיתוך לייזר וכרסום CNC
           </p>
           <Button
             className="w-full mt-3 h-11 font-semibold"
@@ -483,7 +416,7 @@ function AiGeneratorTab() {
               </div>
               <div>
                 <p className="font-semibold text-base">ה-AI יוצר עיצובים...</p>
-                <p className="text-sm text-muted-foreground mt-1">מייצר 3 וריאציות עם קווי מתאר ברורים לחיתוך וכרסום</p>
+                <p className="text-sm text-muted-foreground mt-1">מייצר 3 וריאציות עם קווים דקים וחלקים להמרה ל-DXF</p>
               </div>
               <div className="flex gap-1.5 mt-1">
                 {[0, 1, 2].map((i) => (
@@ -577,12 +510,12 @@ function AiGeneratorTab() {
                     <p className="text-xs text-muted-foreground">קווים</p>
                   </div>
                   <div className="bg-white rounded-lg p-2 text-center border">
-                    <p className="text-base font-bold text-primary">{selected.width}</p>
-                    <p className="text-xs text-muted-foreground">רוחב px</p>
+                    <p className="text-base font-bold text-primary">{((selected.width / 96) * 25.4).toFixed(1)}</p>
+                    <p className="text-xs text-muted-foreground">רוחב מ"מ</p>
                   </div>
                   <div className="bg-white rounded-lg p-2 text-center border">
-                    <p className="text-base font-bold text-primary">{selected.height}</p>
-                    <p className="text-xs text-muted-foreground">גובה px</p>
+                    <p className="text-base font-bold text-primary">{((selected.height / 96) * 25.4).toFixed(1)}</p>
+                    <p className="text-xs text-muted-foreground">גובה מ"מ</p>
                   </div>
                 </div>
 
@@ -651,7 +584,7 @@ function AiGeneratorTab() {
             <li className="flex gap-2"><span className="shrink-0">•</span><span>ציין סגנון: "מינימליסטי", "גיאומטרי", "סטנסיל", "לוגו פשוט"</span></li>
             <li className="flex gap-2"><span className="shrink-0">•</span><span>הוסף הקשר: "לחריטה על עץ", "לחיתוך לייזר", "לכרסום CNC"</span></li>
             <li className="flex gap-2"><span className="shrink-0">•</span><span>דוגמאות: "פרח לוטוס מינימליסטי", "מנדלה גיאומטרית", "דרקון בסגנון סטנסיל", "מפת ישראל"</span></li>
-            <li className="flex gap-2"><span className="shrink-0">💡</span><span>תמונות עם קווים עבים וברורים מתמירות טוב יותר ל-DXF</span></li>
+            <li className="flex gap-2"><span className="shrink-0">💡</span><span>תמונות עם קווים דקים וחלקים על רקע לבן מתמירות הכי טוב ל-DXF</span></li>
           </ul>
         </CardContent>
       </Card>
