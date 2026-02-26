@@ -516,6 +516,29 @@ export function segmentsToSvg(
 }
 
 /**
+ * Generate SVG preview from polylines — uses <polyline> elements for smooth continuous lines
+ */
+export function polylinesToSvg(
+  polylines: Polyline[],
+  width: number,
+  height: number
+): string {
+  const lines: string[] = [];
+  lines.push(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" style="background:#fff">`
+  );
+  for (const poly of polylines) {
+    if (poly.length < 2) continue;
+    const pts = poly.map(([x, y]) => `${x},${y}`).join(" ");
+    lines.push(
+      `<polyline points="${pts}" fill="none" stroke="#1a1a2e" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>`
+    );
+  }
+  lines.push("</svg>");
+  return lines.join("\n");
+}
+
+/**
  * Full pipeline: image buffer → DXF string
  *
  * Double-line mode (doubleLineOffset > 0):
@@ -552,19 +575,22 @@ export async function convertImageToDxf(
       })
     : rawSegments;
 
-  let segments: Segment[];
+  // Always chain segments into continuous polylines for smooth output.
+  // This eliminates the "dashed line" effect caused by many short disconnected segments.
+  const polylines = chainSegmentsToPolylines(filteredSegments, 2);
+
+  let outputPolylines: Polyline[];
 
   if (options.doubleLineOffset && options.doubleLineOffset > 0) {
-    // New high-quality path: chain → offset → flatten
-    const polylines = chainSegmentsToPolylines(filteredSegments, 2);
-    const doublePolylines = doubleLinePolylines(polylines, options.doubleLineOffset);
-    segments = polylinesToSegments(doublePolylines);
+    outputPolylines = doubleLinePolylines(polylines, options.doubleLineOffset);
   } else {
-    segments = filteredSegments;
+    outputPolylines = polylines;
   }
 
+  const segments = polylinesToSegments(outputPolylines);
+
   const dxf = segmentsToDxf(segments, width, height);
-  const svgPreview = segmentsToSvg(segments, width, height);
+  const svgPreview = polylinesToSvg(outputPolylines, width, height);
 
   return { dxf, svgPreview, segmentCount: segments.length, width, height };
 }
