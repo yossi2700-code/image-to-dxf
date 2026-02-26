@@ -46,3 +46,11 @@
 - [x] Route guard: /admin accessible only to owner
 - [x] Tests: vitest for anonymizeIp (20 tests passing total)
 - [x] Logo: robotics & technology classic logo added to header
+
+## גישה פשוטה לדשבורד
+
+- [x] Replace OAuth guard on /admin with simple PIN/password stored in env secret
+- [x] Add tRPC public procedure: adminLogin (check PIN, set cookie)
+- [x] Admin login page: simple PIN input form in Hebrew
+- [x] Admin logout button
+- [x] Tests for admin auth logic (25 tests passing total)
