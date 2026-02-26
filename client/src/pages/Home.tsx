@@ -47,7 +47,11 @@ interface AiImage {
 
 // ─── Upload Tab ─────────────────────────────────────────────────────────────
 
-function UploadTab() {
+interface UploadTabProps {
+  onOpenAuth: () => void;
+}
+
+function UploadTab({ onOpenAuth }: UploadTabProps) {
   const [dragOver, setDragOver] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -368,6 +372,14 @@ function UploadTab() {
                 </div>
                 <p className="font-semibold text-red-600">שגיאה בעיבוד</p>
                 <p className="text-sm text-muted-foreground max-w-xs">{errorMsg}</p>
+                {(errorMsg.includes("הגעת למגבלה") || errorMsg.includes("limit") || errorMsg.includes("מגבלה")) && (
+                  <button
+                    onClick={onOpenAuth}
+                    className="text-sm text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
+                  >
+                    הירשם בחינם לקבל עד 10 המרות ביום
+                  </button>
+                )}
                 <Button variant="outline" size="sm" onClick={() => setStatus("idle")}>נסה שוב</Button>
               </div>
             )}
@@ -733,7 +745,7 @@ export default function Home() {
           </TabsList>
 
           <TabsContent value="upload">
-            <UploadTab />
+            <UploadTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
           </TabsContent>
 
           <TabsContent value="ai">

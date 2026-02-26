@@ -11,7 +11,7 @@ const router = Router();
 const JWT_SECRET = ENV.cookieSecret || "fallback-secret-change-me";
 const APP_USER_COOKIE = "app_user_session";
 const ANON_DAILY_LIMIT = 3;
-const USER_DAILY_LIMIT = 5;
+const USER_DAILY_LIMIT = 10;
 
 /** Sign a JWT for an app user */
 function signToken(userId: number, email: string): string {
