@@ -24,6 +24,7 @@ import {
   LogIn,
   LogOut,
   UserCircle,
+  History,
   ZoomIn,
   ZoomOut,
   Maximize2,
@@ -879,6 +880,15 @@ export default function Home() {
                 <UserCircle className="w-4 h-4" />
                 <span>{appUser.name ?? appUser.email}</span>
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.location.href = "/history"}
+                className="text-xs gap-1"
+              >
+                <History className="w-3.5 h-3.5" />
+                היסטוריה
+              </Button>
               <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs">
                 <LogOut className="w-3.5 h-3.5 ml-1" />
                 יציאה

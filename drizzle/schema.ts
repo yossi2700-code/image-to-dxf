@@ -57,6 +57,8 @@ export const appUsers = mysqlTable("app_users", {
   passwordHash: text("passwordHash"),
   /** Google OAuth subject ID */
   googleId: varchar("googleId", { length: 128 }).unique(),
+  /** Whether the email has been verified */
+  emailVerified: int("emailVerified").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   lastLoginAt: timestamp("lastLoginAt").defaultNow().notNull(),
 });
@@ -79,8 +81,34 @@ export const userActions = mysqlTable("user_actions", {
   dxfUrl: text("dxfUrl"),
   /** URL of the source image or AI-generated image */
   imageUrl: text("imageUrl"),
+  /** SVG preview string for re-displaying the result */
+  svgPreview: text("svgPreview"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 export type UserAction = typeof userActions.$inferSelect;
 export type InsertUserAction = typeof userActions.$inferInsert;
+
+// Email verification tokens
+export const emailVerifications = mysqlTable("email_verifications", {
+  id: int("id").autoincrement().primaryKey(),
+  appUserId: int("appUserId").notNull(),
+  token: varchar("token", { length: 128 }).notNull().unique(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  usedAt: timestamp("usedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type EmailVerification = typeof emailVerifications.$inferSelect;
+
+// Password reset tokens
+export const passwordResets = mysqlTable("password_resets", {
+  id: int("id").autoincrement().primaryKey(),
+  appUserId: int("appUserId").notNull(),
+  token: varchar("token", { length: 128 }).notNull().unique(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  usedAt: timestamp("usedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PasswordReset = typeof passwordResets.$inferSelect;

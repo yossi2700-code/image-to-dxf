@@ -147,6 +147,7 @@ router.post("/api/generate-images", async (req, res) => {
           segmentCount: img.segmentCount,
           dxfUrl: img.dxfUrl,
           imageUrl: img.imageUrl,
+          svgPreview: img.svgPreview,
         });
       }
     }

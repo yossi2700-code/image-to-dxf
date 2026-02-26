@@ -14,6 +14,7 @@ export interface RecordActionParams {
   segmentCount?: number;
   dxfUrl?: string;
   imageUrl?: string;
+  svgPreview?: string;
 }
 
 export async function recordUserAction(params: RecordActionParams): Promise<void> {
@@ -27,6 +28,7 @@ export async function recordUserAction(params: RecordActionParams): Promise<void
       segmentCount: params.segmentCount ?? 0,
       dxfUrl: params.dxfUrl ?? null,
       imageUrl: params.imageUrl ?? null,
+      svgPreview: params.svgPreview ?? null,
     });
   } catch (err) {
     // Non-critical — don't fail the request if logging fails

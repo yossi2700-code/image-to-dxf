@@ -9,6 +9,7 @@ import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
 import { getDb } from "./db";
 import { appUsers, userActions } from "../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
+import { getAppUserFromCookie } from "./appAuth";
 
 const ADMIN_COOKIE = "admin_session";
 
@@ -139,6 +140,33 @@ export const appRouter = router({
           .orderBy(desc(userActions.createdAt))
           .limit(100);
       }),
+  }),
+
+  /** History — returns the logged-in app user's own actions */
+  history: router({
+    list: publicProcedure.query(async ({ ctx }) => {
+      const appUser = getAppUserFromCookie(
+        (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
+      );
+      if (!appUser) return [];
+      const db = await getDb();
+      if (!db) return [];
+      return db
+        .select({
+          id: userActions.id,
+          actionType: userActions.actionType,
+          description: userActions.description,
+          segmentCount: userActions.segmentCount,
+          dxfUrl: userActions.dxfUrl,
+          imageUrl: userActions.imageUrl,
+          svgPreview: userActions.svgPreview,
+          createdAt: userActions.createdAt,
+        })
+        .from(userActions)
+        .where(eq(userActions.appUserId, appUser.userId))
+        .orderBy(desc(userActions.createdAt))
+        .limit(100);
+    }),
   }),
 });
 

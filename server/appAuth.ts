@@ -3,7 +3,9 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { eq, and, gte, count, sql } from "drizzle-orm";
 import { getDb } from "./db";
-import { appUsers, usageEvents } from "../drizzle/schema";
+import { appUsers, usageEvents, emailVerifications, passwordResets } from "../drizzle/schema";
+import { sendVerificationEmail, sendPasswordResetEmail } from "./emailService";
+import { randomBytes } from "crypto";
 import { ENV } from "./_core/env";
 
 const router = Router();
@@ -104,6 +106,19 @@ router.post("/api/app-auth/register", async (req, res) => {
     });
 
     const userId = (result as { insertId: number }).insertId;
+
+    // Send email verification (fire-and-forget)
+    try {
+      const verifyToken = randomBytes(48).toString("hex");
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      await db.insert(emailVerifications).values({ appUserId: userId, token: verifyToken, expiresAt });
+      const origin = (req.headers["x-forwarded-proto"] ? `${req.headers["x-forwarded-proto"]}://${req.headers["x-forwarded-host"]}` : `${req.protocol}://${req.get("host")}`);
+      const verifyUrl = `${origin}/verify-email?token=${verifyToken}`;
+      void sendVerificationEmail({ to: email.toLowerCase(), name: name?.trim() || null, verifyUrl });
+    } catch (e) {
+      console.warn("[register] Failed to send verification email:", e);
+    }
+
     const token = signToken(userId, email.toLowerCase());
     setSessionCookie(res, token);
 
@@ -154,6 +169,92 @@ router.get("/api/app-auth/me", async (req, res) => {
 
   const [user] = await db.select({ id: appUsers.id, email: appUsers.email, name: appUsers.name }).from(appUsers).where(eq(appUsers.id, appUser.userId));
   return res.json({ user: user ?? null });
+});
+
+// ─── Verify email ────────────────────────────────────────────────────────────
+
+router.get("/api/app-auth/verify-email", async (req, res) => {
+  try {
+    const { token } = req.query as { token?: string };
+    if (!token) return res.status(400).json({ error: "טוקן חסר" });
+
+    const db = await getDb();
+    if (!db) return res.status(500).json({ error: "שגיאת מסד נתונים" });
+
+    const [row] = await db.select().from(emailVerifications).where(eq(emailVerifications.token, token));
+    if (!row) return res.status(400).json({ error: "קישור לא תקין" });
+    if (row.usedAt) return res.status(400).json({ error: "קישור זה כבר שומש" });
+    if (new Date() > row.expiresAt) return res.status(400).json({ error: "הקישור פג תוקף" });
+
+    await db.update(emailVerifications).set({ usedAt: new Date() }).where(eq(emailVerifications.id, row.id));
+    await db.update(appUsers).set({ emailVerified: 1 }).where(eq(appUsers.id, row.appUserId));
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("[verify-email]", err);
+    return res.status(500).json({ error: "שגיאה באימות" });
+  }
+});
+
+// ─── Forgot password ──────────────────────────────────────────────────────────
+
+router.post("/api/app-auth/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body as { email?: string };
+    if (!email) return res.status(400).json({ error: "אימייל נדרש" });
+
+    const db = await getDb();
+    if (!db) return res.status(500).json({ error: "שגיאת מסד נתונים" });
+
+    const [user] = await db.select({ id: appUsers.id, name: appUsers.name, email: appUsers.email })
+      .from(appUsers).where(eq(appUsers.email, email.toLowerCase()));
+
+    // Always return success to avoid email enumeration
+    if (user && user.email) {
+      try {
+        const resetToken = randomBytes(48).toString("hex");
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+        await db.insert(passwordResets).values({ appUserId: user.id, token: resetToken, expiresAt });
+        const origin = (req.headers["x-forwarded-proto"] ? `${req.headers["x-forwarded-proto"]}://${req.headers["x-forwarded-host"]}` : `${req.protocol}://${req.get("host")}`);
+        const resetUrl = `${origin}/reset-password?token=${resetToken}`;
+        void sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl });
+      } catch (e) {
+        console.warn("[forgot-password] Failed to send email:", e);
+      }
+    }
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("[forgot-password]", err);
+    return res.status(500).json({ error: "שגיאה" });
+  }
+});
+
+// ─── Reset password ───────────────────────────────────────────────────────────
+
+router.post("/api/app-auth/reset-password", async (req, res) => {
+  try {
+    const { token, password } = req.body as { token?: string; password?: string };
+    if (!token || !password) return res.status(400).json({ error: "טוקן וסיסמה נדרשים" });
+    if (password.length < 6) return res.status(400).json({ error: "הסיסמה חייבת להכיל לפחות 6 תווים" });
+
+    const db = await getDb();
+    if (!db) return res.status(500).json({ error: "שגיאת מסד נתונים" });
+
+    const [row] = await db.select().from(passwordResets).where(eq(passwordResets.token, token));
+    if (!row) return res.status(400).json({ error: "קישור לא תקין" });
+    if (row.usedAt) return res.status(400).json({ error: "קישור זה כבר שומש" });
+    if (new Date() > row.expiresAt) return res.status(400).json({ error: "הקישור פג תוקף" });
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    await db.update(appUsers).set({ passwordHash }).where(eq(appUsers.id, row.appUserId));
+    await db.update(passwordResets).set({ usedAt: new Date() }).where(eq(passwordResets.id, row.id));
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("[reset-password]", err);
+    return res.status(500).json({ error: "שגיאה באיפוס סיסמה" });
+  }
 });
 
 // ─── Logout ───────────────────────────────────────────────────────────────────
