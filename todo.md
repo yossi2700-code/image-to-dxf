@@ -10,3 +10,26 @@
 - [x] Build Hebrew UI: download DXF button
 - [x] Write vitest tests for conversion logic (11 tests passing)
 - [ ] Final checkpoint and publish
+
+## פיצ'רים חדשים
+
+- [ ] SVG vector preview: render edge segments as SVG before download
+- [ ] Server: /api/generate-images endpoint using AI image generation (3 variants)
+- [ ] Server: convert AI image URL to B&W line-art style prompt
+- [ ] UI: AI tab with Hebrew text prompt input
+- [ ] UI: 3-image gallery grid with selection state
+- [ ] UI: "בקש שינויים" (request changes) flow with modification prompt
+- [ ] UI: Auto-convert selected AI image to DXF with preview
+- [ ] Navigation: tabs between "העלאת תמונה" and "יצירת AI"
+- [ ] Tests: vitest for generate endpoint and SVG preview logic
+
+## פיצ'רים חדשים
+
+- [x] SVG vector preview: render edge segments as SVG before download
+- [x] Server: /api/generate-images endpoint using AI image generation (3 variants)
+- [x] UI: AI tab with Hebrew text prompt input
+- [x] UI: 3-image gallery grid with selection state
+- [x] UI: "בקש שינויים" flow with modification prompt
+- [x] UI: Auto-convert selected AI image to DXF with preview
+- [x] Navigation: tabs between "העלאת תמונה" and "יצירת AI"
+- [x] Tests: vitest for SVG preview (15 tests passing total)

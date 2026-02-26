@@ -207,17 +207,39 @@ export function segmentsToDxf(
 }
 
 /**
+ * Generate SVG preview from line segments
+ */
+export function segmentsToSvg(
+  segments: Segment[],
+  width: number,
+  height: number
+): string {
+  const lines: string[] = [];
+  lines.push(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" style="background:#fff">`
+  );
+  for (const seg of segments) {
+    lines.push(
+      `<line x1="${seg.x1}" y1="${seg.y1}" x2="${seg.x2}" y2="${seg.y2}" stroke="#1a1a2e" stroke-width="0.8" stroke-linecap="round"/>`
+    );
+  }
+  lines.push("</svg>");
+  return lines.join("\n");
+}
+
+/**
  * Full pipeline: image buffer → DXF string
  */
 export async function convertImageToDxf(
   buffer: Buffer,
   options: ProcessingOptions
-): Promise<{ dxf: string; segmentCount: number; width: number; height: number }> {
+): Promise<{ dxf: string; svgPreview: string; segmentCount: number; width: number; height: number }> {
   const { pixels, width, height } = await imageToGrayscale(buffer);
   const binary = applyThreshold(pixels, options.threshold);
   const edges = sobelEdgeDetection(binary, width, height);
   const segments = edgesToSegments(edges, width, height, options);
   const dxf = segmentsToDxf(segments, width, height);
+  const svgPreview = segmentsToSvg(segments, width, height);
 
-  return { dxf, segmentCount: segments.length, width, height };
+  return { dxf, svgPreview, segmentCount: segments.length, width, height };
 }

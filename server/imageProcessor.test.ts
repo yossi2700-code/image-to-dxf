@@ -4,6 +4,7 @@ import {
   sobelEdgeDetection,
   edgesToSegments,
   segmentsToDxf,
+  segmentsToSvg,
 } from "./imageProcessor";
 
 describe("applyThreshold", () => {
@@ -113,5 +114,43 @@ describe("segmentsToDxf", () => {
     const dxf = segmentsToDxf(segments, 100, 100);
     // y1 should be height - 10 = 90
     expect(dxf).toContain("20\n90");
+  });
+});
+
+describe("segmentsToSvg", () => {
+  it("should produce valid SVG with correct viewBox", () => {
+    const segments = [{ x1: 0, y1: 0, x2: 10, y2: 0 }];
+    const svg = segmentsToSvg(segments, 100, 80);
+    expect(svg).toContain('<svg');
+    expect(svg).toContain('viewBox="0 0 100 80"');
+    expect(svg).toContain('</svg>');
+  });
+
+  it("should include correct number of line elements", () => {
+    const segments = [
+      { x1: 0, y1: 0, x2: 10, y2: 0 },
+      { x1: 5, y1: 5, x2: 5, y2: 20 },
+      { x1: 10, y1: 10, x2: 50, y2: 10 },
+    ];
+    const svg = segmentsToSvg(segments, 100, 100);
+    const lineCount = (svg.match(/<line /g) ?? []).length;
+    expect(lineCount).toBe(3);
+  });
+
+  it("should use correct coordinates in line elements", () => {
+    const segments = [{ x1: 5, y1: 10, x2: 50, y2: 10 }];
+    const svg = segmentsToSvg(segments, 100, 100);
+    expect(svg).toContain('x1="5"');
+    expect(svg).toContain('y1="10"');
+    expect(svg).toContain('x2="50"');
+    expect(svg).toContain('y2="10"');
+  });
+
+  it("should return empty SVG with no lines for empty segments", () => {
+    const svg = segmentsToSvg([], 100, 100);
+    expect(svg).toContain('<svg');
+    expect(svg).toContain('</svg>');
+    const lineCount = (svg.match(/<line /g) ?? []).length;
+    expect(lineCount).toBe(0);
   });
 });

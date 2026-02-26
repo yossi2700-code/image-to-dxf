@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import uploadRoute from "../uploadRoute";
+import generateRoute from "../generateRoute";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -38,6 +39,8 @@ async function startServer() {
   registerOAuthRoutes(app);
   // Image upload & conversion route
   app.use(uploadRoute);
+  // AI image generation route
+  app.use(generateRoute);
   // tRPC API
   app.use(
     "/api/trpc",

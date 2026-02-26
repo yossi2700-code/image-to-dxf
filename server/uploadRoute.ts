@@ -29,7 +29,7 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
     const threshold = parseInt((req.body.threshold as string) ?? "128", 10);
     const simplifyTolerance = parseFloat((req.body.simplifyTolerance as string) ?? "2");
 
-    const { dxf, segmentCount, width, height } = await convertImageToDxf(
+    const { dxf, svgPreview, segmentCount, width, height } = await convertImageToDxf(
       req.file.buffer,
       { threshold: Math.min(255, Math.max(0, threshold)), simplifyTolerance }
     );
@@ -47,6 +47,7 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
     return res.json({
       success: true,
       dxfUrl: url,
+      svgPreview,
       segmentCount,
       width,
       height,
