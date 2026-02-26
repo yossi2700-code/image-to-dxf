@@ -10,23 +10,16 @@ const router = Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 /**
- * Build a DALL-E 3 prompt for pure outline-only line art (no fill, no shading).
- *
- * Strategy: use "single continuous outline" + "wireframe" language to prevent fill.
- * DALL-E responds well to "wireframe", "outline only", "coloring book empty".
+ * Build a DALL-E 3 prompt for CNC engraving line art.
+ * Goal: one single illustration, closed black outlines on white, no fill, no shading.
  */
 function buildLineArtPrompt(userPrompt: string): string {
   return (
-    `Pen sketch line art of: ${userPrompt}. ` +
-    "ONE single centered object filling the frame, NOT cropped, NOT repeated. " +
-    "Style: hand-drawn pen sketch, like a tattoo flash art or botanical illustration outline. " +
-    "Thin single black pen strokes only on pure white background. " +
-    "All shapes are open outlines with white interior — like a coloring book page. " +
-    "NO fill, NO shading, NO hatching, NO cross-hatching, NO stippling, NO grey tones, NO gradients. " +
-    "NO black areas, NO filled shapes. Every interior must be pure white. " +
-    "Clean flowing lines, elegant and simple. " +
-    "Suitable for laser cutting and CNC engraving. " +
-    "Pure black lines on pure white background only. No text, no watermarks, no border frame."
+    `Black and white line art illustration for CNC engraving: ${userPrompt}. ` +
+    "ONE single illustration centered on a pure white background. " +
+    "Closed black outlines only, thin clean lines, white fill inside all shapes. " +
+    "No shading, no gradients, no hatching, no texture, no grey. " +
+    "Simple clean design suitable for CNC router or laser engraving."
   );
 }
 
