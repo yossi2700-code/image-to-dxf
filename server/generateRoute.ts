@@ -17,16 +17,16 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
  */
 function buildLineArtPrompt(userPrompt: string): string {
   return (
-    `Simple wireframe outline drawing of: ${userPrompt}. ` +
-    "IMPORTANT: outline strokes only, every interior area must be completely empty white. " +
-    "Like an empty coloring book page — only the outer contour lines, nothing filled in. " +
-    "Single thin black stroke outline on pure white background. " +
-    "Absolutely NO fill, NO shading, NO hatching, NO cross-hatching, NO stippling, " +
-    "NO texture inside shapes, NO grey areas, NO gradients. " +
-    "Every shape interior = pure white. " +
-    "Style: clean vector wireframe, technical outline drawing. " +
-    "Minimal details, simple shapes, suitable for laser cutting and CNC engraving. " +
-    "Pure black and white only. No text, no watermarks."
+    `Pen sketch line art of: ${userPrompt}. ` +
+    "ONE single centered object filling the frame, NOT cropped, NOT repeated. " +
+    "Style: hand-drawn pen sketch, like a tattoo flash art or botanical illustration outline. " +
+    "Thin single black pen strokes only on pure white background. " +
+    "All shapes are open outlines with white interior — like a coloring book page. " +
+    "NO fill, NO shading, NO hatching, NO cross-hatching, NO stippling, NO grey tones, NO gradients. " +
+    "NO black areas, NO filled shapes. Every interior must be pure white. " +
+    "Clean flowing lines, elegant and simple. " +
+    "Suitable for laser cutting and CNC engraving. " +
+    "Pure black lines on pure white background only. No text, no watermarks, no border frame."
   );
 }
 
