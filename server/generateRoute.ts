@@ -4,46 +4,24 @@ import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 import { logUsageEvent, anonymizeIp } from "./usageDb";
 import OpenAI from "openai";
-import sharp from "sharp";
 
 const router = Router();
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 /**
- * Build a DALL-E 3 prompt for CNC engraving line art.
- * We ask for a bold, high-contrast illustration — then we extract edges from it.
- * This works better than asking for thin lines (DALL-E ignores that).
+ * Build a prompt for gpt-image-1 for CNC engraving line art.
+ * gpt-image-1 follows prompts much more precisely than DALL-E 3,
+ * so we can directly ask for thin outline-only drawings.
  */
 function buildLineArtPrompt(userPrompt: string): string {
   return (
-    `Decorative black and white line art of ${userPrompt}. ` +
-    "Single centered design on pure white background. " +
-    "Artistic ornamental style with elegant flowing curves and intricate details. " +
-    "High contrast black lines on white, no fill, no shading, no color, no gradients. " +
-    "Style: decorative botanical illustration, art nouveau, tattoo flash art. " +
-    "One complete centered image. Do not repeat. Do not crop."
+    `Black and white line drawing of ${userPrompt}. ` +
+    "Pure white background. " +
+    "Thin black outlines only, no fill, no shading, no gradients, no color. " +
+    "Style: clean pen sketch, coloring book illustration. " +
+    "Single centered object, complete and not cropped."
   );
-}
-
-/**
- * Pre-process a DALL-E image to make it ideal for edge detection:
- * 1. Convert to grayscale
- * 2. Apply strong contrast boost (levels: darken blacks, whiten whites)
- * 3. Threshold at 180 to get pure black/white binary image
- *
- * This ensures that even filled/shaded DALL-E images produce clean
- * outline-only DXF results via Sobel edge detection.
- */
-async function preprocessForEdgeDetection(buffer: Buffer): Promise<Buffer> {
-  return await sharp(buffer)
-    .grayscale()
-    // Normalize to full range, then apply linear stretch to increase contrast
-    .normalise()
-    // Threshold: pixels darker than 128 become black, rest become white
-    .threshold(128)
-    .png()
-    .toBuffer();
 }
 
 /**
@@ -66,40 +44,54 @@ router.post("/api/generate-images", async (req, res) => {
       ? `${prompt}. Modifications: ${modifications}`
       : prompt;
 
-    const dallePrompt = buildLineArtPrompt(fullPrompt);
+    const imagePrompt = buildLineArtPrompt(fullPrompt);
 
-    // Generate 3 images in parallel using DALL-E 3
+    // Generate 3 images in parallel using gpt-image-1
     const generationPromises = Array.from({ length: 3 }, async () => {
       const response = await openai.images.generate({
-        model: "dall-e-3",
-        prompt: dallePrompt,
+        model: "gpt-image-1",
+        prompt: imagePrompt,
         n: 1,
         size: "1024x1024",
-        quality: "standard",
-        style: "natural",
+        quality: "medium",
       });
 
-      const imageUrl = response.data?.[0]?.url;
-      if (!imageUrl) {
+      // gpt-image-1 returns base64 by default
+      const imageData = response.data?.[0];
+      if (!imageData) {
         throw new Error("לא הצלחנו לייצר תמונה");
       }
 
-      // Fetch the generated image
-      const imgResponse = await fetch(imageUrl);
-      if (!imgResponse.ok) {
-        throw new Error("שגיאה בהורדת התמונה שנוצרה");
+      let rawBuffer: Buffer;
+
+      if (imageData.b64_json) {
+        // Base64 response
+        rawBuffer = Buffer.from(imageData.b64_json, "base64");
+      } else if (imageData.url) {
+        // URL response (fallback)
+        const imgResponse = await fetch(imageData.url);
+        if (!imgResponse.ok) {
+          throw new Error("שגיאה בהורדת התמונה שנוצרה");
+        }
+        rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
+      } else {
+        throw new Error("לא התקבלה תמונה מה-AI");
       }
-      const rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
 
-      // Pre-process: normalize contrast + threshold to pure black/white
-      // This converts any filled/shaded DALL-E image into a clean binary image
-      // so that Sobel edge detection extracts only the outline strokes.
-      const processedBuffer = await preprocessForEdgeDetection(rawBuffer);
+      // Upload original image to S3 for preview
+      const imgKey = `ai-generated/${nanoid()}.png`;
+      const { url: imageUrl } = await storagePut(
+        imgKey,
+        rawBuffer,
+        "image/png"
+      );
 
+      // Convert to DXF — gpt-image-1 already produces clean line art,
+      // so we use a higher threshold to keep only the darkest lines
       const { dxf, svgPreview, segmentCount, width, height } =
-        await convertImageToDxf(processedBuffer, {
-          threshold: 128,        // Standard threshold on already-binary image
-          simplifyTolerance: 2,  // Moderate simplification for clean paths
+        await convertImageToDxf(rawBuffer, {
+          threshold: 160,       // Higher threshold = only dark lines pass
+          simplifyTolerance: 2,
           doubleLineOffset: 0,
         });
 

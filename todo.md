@@ -131,3 +131,8 @@
 - [x] שיפור פרומפטים: קווים דקים, חלקים, פשוטים
 - [x] הסרת UI קו כפול מ-Home.tsx
 - [x] המרת כל המידות למ"מ בתצוגה
+
+## מעבר ל-GPT-4o Image Generation
+
+- [x] עדכון generateRoute.ts להשתמש ב-gpt-image-1 במקום DALL-E 3
+- [x] הסרת preprocessForEdgeDetection (gpt-image-1 מייצר קווים דקים ישירות)
