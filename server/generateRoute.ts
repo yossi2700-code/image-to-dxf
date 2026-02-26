@@ -20,22 +20,25 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
  */
 const STYLE_VARIATIONS = [
   {
-    label: "minimal",
+    label: "simple",
     style:
-      "Minimalist clean line art, simple bold outlines only, very few lines, " +
-      "no internal details, icon-like silhouette style.",
+      "Simple clean outline only. Bold outer contour lines, minimal internal lines. " +
+      "Icon/sticker style. NO texture, NO hatching, NO shading, NO fill. " +
+      "Only 2-4 main structural lines inside the shape.",
   },
   {
     label: "detailed",
     style:
-      "Detailed technical illustration, rich internal lines and cross-hatching details, " +
-      "architectural drawing style, many fine lines showing texture and depth.",
+      "Clean outline with moderate internal details. Bold outer contour plus clear structural " +
+      "inner lines showing main features. NO texture, NO hatching, NO shading, NO fill. " +
+      "Like a coloring book page — clear distinct lines only.",
   },
   {
-    label: "geometric",
+    label: "decorative",
     style:
-      "Geometric abstract interpretation, composed of straight lines and simple shapes, " +
-      "low-poly / faceted look, no curves.",
+      "Decorative artistic outline style. Bold outer contour with elegant decorative inner lines. " +
+      "Art nouveau or mandala-inspired clean line work. NO texture, NO hatching, NO shading, NO fill. " +
+      "All lines must be clean, distinct, and suitable for laser cutting.",
   },
 ];
 
