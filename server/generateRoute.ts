@@ -91,9 +91,10 @@ router.post("/api/generate-images", async (req, res) => {
       // Higher simplifyTolerance = smoother, fewer segments.
       const { dxf, svgPreview, segmentCount, width, height } =
         await convertImageToDxf(rawBuffer, {
-          threshold: 170,          // Higher = only darkest lines
-          simplifyTolerance: 8,      // Smoother, far fewer segments (~2k-4k)
+          threshold: 160,          // Good balance: removes grey noise, keeps outlines
+          simplifyTolerance: 4,      // Smooth lines, good detail
           doubleLineOffset: 0,
+          minSegmentLength: 3,       // Filter tiny noise segments (< 3px)
         });
 
       // Upload DXF to S3

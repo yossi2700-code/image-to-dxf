@@ -149,5 +149,5 @@
 ## צמצום קווים וזום
 
 - [x] הגדלת simplifyTolerance ל-AI images לצמצום ל-2000-4000 קווים
-- [ ] סינון קטעים קצרים מדי (minSegmentLength)
+- [x] סינון קטעים קצרים מדי (minSegmentLength)
 - [x] הוספת זום אינטראקטיבי בתצוגת SVG (pinch + כפתורים)

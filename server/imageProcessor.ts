@@ -4,6 +4,7 @@ export interface ProcessingOptions {
   threshold: number;          // 0-255, default 128
   simplifyTolerance: number;  // 0-10, default 1
   doubleLineOffset?: number;  // pixels to offset for double-line CNC mode (0 = disabled)
+  minSegmentLength?: number;  // minimum segment length in pixels; shorter segments are filtered as noise
 }
 
 export interface Segment {
@@ -541,15 +542,25 @@ export async function convertImageToDxf(
   const edges = sobelEdgeDetection(binary, width, height);
   const rawSegments = edgesToSegments(edges, width, height, options);
 
+  // Filter out very short segments (noise/artifacts) before further processing
+  const minLen = options.minSegmentLength ?? 0;
+  const filteredSegments = minLen > 0
+    ? rawSegments.filter((s) => {
+        const dx = s.x2 - s.x1;
+        const dy = s.y2 - s.y1;
+        return Math.sqrt(dx * dx + dy * dy) >= minLen;
+      })
+    : rawSegments;
+
   let segments: Segment[];
 
   if (options.doubleLineOffset && options.doubleLineOffset > 0) {
     // New high-quality path: chain → offset → flatten
-    const polylines = chainSegmentsToPolylines(rawSegments, 2);
+    const polylines = chainSegmentsToPolylines(filteredSegments, 2);
     const doublePolylines = doubleLinePolylines(polylines, options.doubleLineOffset);
     segments = polylinesToSegments(doublePolylines);
   } else {
-    segments = rawSegments;
+    segments = filteredSegments;
   }
 
   const dxf = segmentsToDxf(segments, width, height);
