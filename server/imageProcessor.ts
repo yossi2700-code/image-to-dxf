@@ -13,6 +13,9 @@ export interface Segment {
   y2: number;
 }
 
+/** A polyline is an ordered list of [x, y] points */
+export type Polyline = Array<[number, number]>;
+
 /**
  * Convert an image buffer to grayscale pixel data
  */
@@ -142,10 +145,257 @@ export function edgesToSegments(
 }
 
 /**
- * Generate an offset (parallel) copy of each segment shifted by `offset` pixels
- * perpendicular to the segment direction.
- * Only adds the parallel line — NO end caps — to produce clean double lines
- * without the "ladder" cross-connecting segments.
+ * Chain individual segments into continuous polylines by connecting
+ * segments whose endpoints are within `snapDist` pixels of each other.
+ *
+ * This is the key step that enables clean parallel-offset double lines:
+ * instead of offsetting each short segment independently (which creates
+ * a "ladder" of cross-connecting lines), we first build long continuous
+ * paths and then offset the entire path.
+ */
+export function chainSegmentsToPolylines(
+  segments: Segment[],
+  snapDist = 2
+): Polyline[] {
+  if (segments.length === 0) return [];
+
+  // Build adjacency: for each endpoint, store which segment indices touch it
+  // We use a grid-based lookup for performance
+  type EndpointKey = string;
+  const endpointMap = new Map<EndpointKey, number[]>();
+
+  const key = (x: number, y: number): EndpointKey =>
+    `${Math.round(x)},${Math.round(y)}`;
+
+  const addEndpoint = (x: number, y: number, idx: number) => {
+    const k = key(x, y);
+    const list = endpointMap.get(k);
+    if (list) list.push(idx);
+    else endpointMap.set(k, [idx]);
+  };
+
+  segments.forEach((seg, idx) => {
+    addEndpoint(seg.x1, seg.y1, idx);
+    addEndpoint(seg.x2, seg.y2, idx);
+  });
+
+  const used = new Uint8Array(segments.length);
+  const polylines: Polyline[] = [];
+
+  // Find neighbours of a point within snapDist
+  const findNeighbours = (x: number, y: number, excludeIdx: number): number[] => {
+    const result: number[] = [];
+    // Check a small grid around the point
+    for (let dy = -snapDist; dy <= snapDist; dy++) {
+      for (let dx = -snapDist; dx <= snapDist; dx++) {
+        const k = key(x + dx, y + dy);
+        const list = endpointMap.get(k);
+        if (list) {
+          for (const idx of list) {
+            if (idx !== excludeIdx && !used[idx]) {
+              result.push(idx);
+            }
+          }
+        }
+      }
+    }
+    return result;
+  };
+
+  for (let startIdx = 0; startIdx < segments.length; startIdx++) {
+    if (used[startIdx]) continue;
+
+    // Start a new polyline from this segment
+    used[startIdx] = 1;
+    const seg = segments[startIdx];
+    const polyline: Polyline = [[seg.x1, seg.y1], [seg.x2, seg.y2]];
+
+    // Extend forward from the tail
+    let extended = true;
+    while (extended) {
+      extended = false;
+      const [tx, ty] = polyline[polyline.length - 1];
+      const neighbours = findNeighbours(tx, ty, -1);
+      for (const nIdx of neighbours) {
+        if (used[nIdx]) continue;
+        const ns = segments[nIdx];
+        // Determine which end of ns connects to (tx, ty)
+        const d1 = Math.abs(ns.x1 - tx) + Math.abs(ns.y1 - ty);
+        const d2 = Math.abs(ns.x2 - tx) + Math.abs(ns.y2 - ty);
+        if (d1 <= snapDist * 2) {
+          used[nIdx] = 1;
+          polyline.push([ns.x2, ns.y2]);
+          extended = true;
+          break;
+        } else if (d2 <= snapDist * 2) {
+          used[nIdx] = 1;
+          polyline.push([ns.x1, ns.y1]);
+          extended = true;
+          break;
+        }
+      }
+    }
+
+    // Extend backward from the head
+    extended = true;
+    while (extended) {
+      extended = false;
+      const [hx, hy] = polyline[0];
+      const neighbours = findNeighbours(hx, hy, -1);
+      for (const nIdx of neighbours) {
+        if (used[nIdx]) continue;
+        const ns = segments[nIdx];
+        const d1 = Math.abs(ns.x1 - hx) + Math.abs(ns.y1 - hy);
+        const d2 = Math.abs(ns.x2 - hx) + Math.abs(ns.y2 - hy);
+        if (d1 <= snapDist * 2) {
+          used[nIdx] = 1;
+          polyline.unshift([ns.x2, ns.y2]);
+          extended = true;
+          break;
+        } else if (d2 <= snapDist * 2) {
+          used[nIdx] = 1;
+          polyline.unshift([ns.x1, ns.y1]);
+          extended = true;
+          break;
+        }
+      }
+    }
+
+    if (polyline.length >= 2) {
+      polylines.push(polyline);
+    }
+  }
+
+  return polylines;
+}
+
+/**
+ * Compute the parallel offset of a polyline.
+ * For each vertex, the offset direction is the average of the normals
+ * of the adjacent edges (miter join), clamped to avoid extreme spikes.
+ *
+ * Returns the offset polyline (same number of points).
+ */
+export function offsetPolyline(polyline: Polyline, offset: number): Polyline {
+  const n = polyline.length;
+  if (n < 2) return polyline;
+
+  const result: Polyline = [];
+
+  for (let i = 0; i < n; i++) {
+    const [x, y] = polyline[i];
+
+    // Edge vectors adjacent to this vertex
+    let nx = 0;
+    let ny = 0;
+    let count = 0;
+
+    if (i > 0) {
+      // Vector from prev to current
+      const dx = x - polyline[i - 1][0];
+      const dy = y - polyline[i - 1][1];
+      const len = Math.sqrt(dx * dx + dy * dy);
+      if (len > 0.001) {
+        // Right-hand normal: (dy, -dx) — offset to the right of travel direction
+        nx += dy / len;
+        ny += -dx / len;
+        count++;
+      }
+    }
+
+    if (i < n - 1) {
+      // Vector from current to next
+      const dx = polyline[i + 1][0] - x;
+      const dy = polyline[i + 1][1] - y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      if (len > 0.001) {
+        nx += dy / len;
+        ny += -dx / len;
+        count++;
+      }
+    }
+
+    if (count === 0) {
+      result.push([x, y]);
+      continue;
+    }
+
+    // Average normal
+    nx /= count;
+    ny /= count;
+
+    // Normalise the miter vector and scale by offset
+    const miterLen = Math.sqrt(nx * nx + ny * ny);
+    if (miterLen < 0.001) {
+      result.push([x, y]);
+      continue;
+    }
+
+    // Scale the normalised miter vector by `offset`.
+    // We clamp the magnitude to avoid extreme spikes at sharp corners,
+    // but preserve the sign so negative offsets work correctly.
+    const absMiter = miterLen;
+    const absOffset = Math.abs(offset);
+    const clampedMag = Math.min(absOffset / absMiter, absOffset * 3);
+    const scale = Math.sign(offset) * clampedMag;
+    result.push([x + nx * scale, y + ny * scale]);
+  }
+
+  return result;
+}
+
+/**
+ * Convert polylines back to Segment[] for DXF/SVG output.
+ */
+export function polylinesToSegments(polylines: Polyline[]): Segment[] {
+  const segments: Segment[] = [];
+  for (const poly of polylines) {
+    for (let i = 0; i < poly.length - 1; i++) {
+      segments.push({
+        x1: poly[i][0],
+        y1: poly[i][1],
+        x2: poly[i + 1][0],
+        y2: poly[i + 1][1],
+      });
+    }
+  }
+  return segments;
+}
+
+/**
+ * Apply double-line CNC offset to a set of polylines.
+ *
+ * For each polyline we generate TWO parallel offset paths:
+ *   - one shifted +offset/2 to the left
+ *   - one shifted -offset/2 to the right
+ *
+ * This gives two clean, continuous parallel lines with the specified gap
+ * between them — exactly what a CNC milling bit needs to carve between.
+ *
+ * No end-caps, no cross-connecting segments.
+ */
+export function doubleLinePolylines(
+  polylines: Polyline[],
+  offset: number
+): Polyline[] {
+  if (offset <= 0) return polylines;
+
+  const result: Polyline[] = [];
+  const halfOffset = offset / 2;
+
+  for (const poly of polylines) {
+    const left = offsetPolyline(poly, halfOffset);
+    const right = offsetPolyline(poly, -halfOffset);
+    result.push(left);
+    result.push(right);
+  }
+
+  return result;
+}
+
+/**
+ * Legacy function kept for backward compatibility and simple cases.
+ * For the full pipeline, use doubleLinePolylines instead.
  */
 export function doubleLineSegments(
   segments: Segment[],
@@ -160,18 +410,14 @@ export function doubleLineSegments(
     const isVertical = seg.x1 === seg.x2;
 
     if (isHorizontal) {
-      // Shift perpendicular (Y direction) — add parallel line only
       result.push({ x1: seg.x1, y1: seg.y1 - offset, x2: seg.x2, y2: seg.y2 - offset });
     } else if (isVertical) {
-      // Shift perpendicular (X direction) — add parallel line only
       result.push({ x1: seg.x1 + offset, y1: seg.y1, x2: seg.x2 + offset, y2: seg.y2 });
     } else {
-      // Diagonal segment — compute perpendicular unit vector
       const dx = seg.x2 - seg.x1;
       const dy = seg.y2 - seg.y1;
       const len = Math.sqrt(dx * dx + dy * dy);
       if (len < 0.001) continue;
-      // Perpendicular: (-dy, dx) normalised
       const nx = (-dy / len) * offset;
       const ny = (dx / len) * offset;
 
@@ -270,8 +516,15 @@ export function segmentsToSvg(
 
 /**
  * Full pipeline: image buffer → DXF string
- * When doubleLineOffset > 0, each edge segment is duplicated with a parallel
- * offset and the ends are closed — producing CNC-ready double-line paths.
+ *
+ * Double-line mode (doubleLineOffset > 0):
+ *   1. Detect edges → raw segments
+ *   2. Chain segments into continuous polylines (snap nearby endpoints)
+ *   3. Apply ±offset/2 parallel offset to each polyline → two clean parallel paths
+ *   4. Convert back to segments for DXF/SVG output
+ *
+ * This produces two smooth, continuous parallel lines with no "ladder"
+ * cross-connecting artefacts — exactly what a CNC milling bit needs.
  */
 export async function convertImageToDxf(
   buffer: Buffer,
@@ -286,11 +539,17 @@ export async function convertImageToDxf(
   const { pixels, width, height } = await imageToGrayscale(buffer);
   const binary = applyThreshold(pixels, options.threshold);
   const edges = sobelEdgeDetection(binary, width, height);
-  let segments = edgesToSegments(edges, width, height, options);
+  const rawSegments = edgesToSegments(edges, width, height, options);
 
-  // Apply double-line offset for CNC routing paths
+  let segments: Segment[];
+
   if (options.doubleLineOffset && options.doubleLineOffset > 0) {
-    segments = doubleLineSegments(segments, options.doubleLineOffset);
+    // New high-quality path: chain → offset → flatten
+    const polylines = chainSegmentsToPolylines(rawSegments, 2);
+    const doublePolylines = doubleLinePolylines(polylines, options.doubleLineOffset);
+    segments = polylinesToSegments(doublePolylines);
+  } else {
+    segments = rawSegments;
   }
 
   const dxf = segmentsToDxf(segments, width, height);

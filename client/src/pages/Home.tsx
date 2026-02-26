@@ -57,7 +57,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [threshold, setThreshold] = useState(128);
   const [simplify, setSimplify] = useState(2);
-  const [doubleLineOffset, setDoubleLineOffset] = useState(0); // in mm (0 = off)
+  const [doubleLineOffset, setDoubleLineOffset] = useState(1.5); // in mm (1.5mm default for 0.8mm CNC bit)
   const [dpi, setDpi] = useState(300); // default 300 DPI
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<ConvertResult | null>(null);
@@ -234,6 +234,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
                   <span>כבוי</span><span>5 מ"מ</span>
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">ברירת מחדל: 1.5 מ"מ (מתאים לפרזה 0.8 מ"מ)</p>
 
                 {/* DPI field */}
                 {doubleLineOffset > 0 && (
@@ -279,7 +280,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
 
                 {doubleLineOffset > 0 && (
                   <p className="text-xs text-orange-600 mt-1.5 bg-orange-50 rounded px-2 py-1">
-                    ✓ כל קו יוכפל עם רווח של {doubleLineOffset} מ"מ ({Math.max(1, Math.round((doubleLineOffset / 25.4) * dpi))}px) — מתאים לחריטת CNC
+                    ✓ שני קווים מקבילים רציפים עם רווח {doubleLineOffset} מ"מ — הפרזה כורסת בין הקווים
                   </p>
                 )}
               </div>
@@ -455,7 +456,7 @@ function AiGeneratorTab() {
             disabled={status === "loading"}
           />
           <p className="text-xs text-muted-foreground mt-2">
-            ה-AI ייצור 3 וריאציות של הציור בקווים שחור-לבן, מוכנות לחריטה ו-CNC
+            ה-AI ייצור 3 וריאציות עם קווי מתאר עבים וברורים, מותאמות לחיתוך לייזר וכרסום CNC
           </p>
           <Button
             className="w-full mt-3 h-11 font-semibold"
@@ -482,7 +483,7 @@ function AiGeneratorTab() {
               </div>
               <div>
                 <p className="font-semibold text-base">ה-AI יוצר עיצובים...</p>
-                <p className="text-sm text-muted-foreground mt-1">מייצר 3 וריאציות שחור-לבן בקווים דקים</p>
+                <p className="text-sm text-muted-foreground mt-1">מייצר 3 וריאציות עם קווי מתאר ברורים לחיתוך וכרסום</p>
               </div>
               <div className="flex gap-1.5 mt-1">
                 {[0, 1, 2].map((i) => (
@@ -647,9 +648,10 @@ function AiGeneratorTab() {
         <CardContent className="p-4">
           <h3 className="font-semibold text-sm text-purple-800 mb-2">✨ טיפים לתיאור טוב</h3>
           <ul className="space-y-1.5 text-sm text-purple-700">
-            <li className="flex gap-2"><span className="shrink-0">•</span><span>ציין סגנון: "בסגנון מינימליסטי", "עם פרטים דקים", "גיאומטרי"</span></li>
-            <li className="flex gap-2"><span className="shrink-0">•</span><span>הוסף הקשר: "לחריטה על עץ", "לחיתוך לייזר", "לחותמת"</span></li>
-            <li className="flex gap-2"><span className="shrink-0">•</span><span>דוגמאות: "פרח לוטוס", "מנדלה עם 8 עלים", "דרקון יפני", "מפת ישראל"</span></li>
+            <li className="flex gap-2"><span className="shrink-0">•</span><span>ציין סגנון: "מינימליסטי", "גיאומטרי", "סטנסיל", "לוגו פשוט"</span></li>
+            <li className="flex gap-2"><span className="shrink-0">•</span><span>הוסף הקשר: "לחריטה על עץ", "לחיתוך לייזר", "לכרסום CNC"</span></li>
+            <li className="flex gap-2"><span className="shrink-0">•</span><span>דוגמאות: "פרח לוטוס מינימליסטי", "מנדלה גיאומטרית", "דרקון בסגנון סטנסיל", "מפת ישראל"</span></li>
+            <li className="flex gap-2"><span className="shrink-0">💡</span><span>תמונות עם קווים עבים וברורים מתמירות טוב יותר ל-DXF</span></li>
           </ul>
         </CardContent>
       </Card>

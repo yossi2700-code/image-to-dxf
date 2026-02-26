@@ -5,6 +5,11 @@ import {
   edgesToSegments,
   segmentsToDxf,
   segmentsToSvg,
+  doubleLineSegments,
+  chainSegmentsToPolylines,
+  offsetPolyline,
+  doubleLinePolylines,
+  polylinesToSegments,
 } from "./imageProcessor";
 
 describe("applyThreshold", () => {
@@ -155,9 +160,7 @@ describe("segmentsToSvg", () => {
   });
 });
 
-import { doubleLineSegments } from "./imageProcessor";
-
-describe("doubleLineSegments", () => {
+describe("doubleLineSegments (legacy)", () => {
   it("should return original segments when offset is 0", () => {
     const segs = [{ x1: 0, y1: 5, x2: 10, y2: 5 }];
     const result = doubleLineSegments(segs, 0);
@@ -203,5 +206,141 @@ describe("doubleLineSegments", () => {
     const result = doubleLineSegments(segs, 3);
     // Each segment produces 2 lines (original + parallel, no caps) → 2 × 2 = 4
     expect(result).toHaveLength(4);
+  });
+});
+
+// ─── New polyline-based double-line tests ────────────────────────────────────
+
+describe("chainSegmentsToPolylines", () => {
+  it("should return empty array for no segments", () => {
+    const result = chainSegmentsToPolylines([]);
+    expect(result).toHaveLength(0);
+  });
+
+  it("should chain two connected segments into one polyline", () => {
+    // seg1: (0,0)→(5,0), seg2: (5,0)→(10,0) — share endpoint (5,0)
+    const segs = [
+      { x1: 0, y1: 0, x2: 5, y2: 0 },
+      { x1: 5, y1: 0, x2: 10, y2: 0 },
+    ];
+    const polylines = chainSegmentsToPolylines(segs, 1);
+    // Should produce 1 polyline with 3 points
+    expect(polylines).toHaveLength(1);
+    expect(polylines[0]).toHaveLength(3);
+  });
+
+  it("should keep disconnected segments as separate polylines", () => {
+    // Two segments far apart
+    const segs = [
+      { x1: 0, y1: 0, x2: 5, y2: 0 },
+      { x1: 50, y1: 50, x2: 60, y2: 50 },
+    ];
+    const polylines = chainSegmentsToPolylines(segs, 1);
+    expect(polylines).toHaveLength(2);
+  });
+
+  it("should chain a chain of 3 segments into one polyline", () => {
+    const segs = [
+      { x1: 0, y1: 0, x2: 10, y2: 0 },
+      { x1: 10, y1: 0, x2: 10, y2: 10 },
+      { x1: 10, y1: 10, x2: 20, y2: 10 },
+    ];
+    const polylines = chainSegmentsToPolylines(segs, 1);
+    expect(polylines).toHaveLength(1);
+    expect(polylines[0]).toHaveLength(4);
+  });
+});
+
+describe("offsetPolyline", () => {
+  it("should return same length polyline", () => {
+    const poly: [number, number][] = [[0, 0], [10, 0], [10, 10]];
+    const result = offsetPolyline(poly, 3);
+    expect(result).toHaveLength(3);
+  });
+
+  it("should offset a horizontal line perpendicular by the given amount", () => {
+    // Horizontal line going right (y=10): right-hand normal points downward (y decreases)
+    // offset +4 → y=6 (y=10-4), offset -4 → y=14 (y=10+4)
+    const poly: [number, number][] = [[0, 10], [20, 10]];
+    const resultPos = offsetPolyline(poly, 4);
+    const resultNeg = offsetPolyline(poly, -4);
+    // The two offset lines should be 2*offset pixels apart
+    const gap = Math.abs(resultPos[0][1] - resultNeg[0][1]);
+    expect(gap).toBeCloseTo(8, 0);
+    // Each point should be offset by exactly 4 from the original
+    expect(Math.abs(resultPos[0][1] - 10)).toBeCloseTo(4, 0);
+    expect(Math.abs(resultNeg[0][1] - 10)).toBeCloseTo(4, 0);
+  });
+
+  it("should offset a vertical line perpendicular by the given amount", () => {
+    // Vertical line going down (x=10): right-hand normal points to the right (x increases)
+    // offset +5 → x=15 (x=10+5), offset -5 → x=5 (x=10-5)
+    const poly: [number, number][] = [[10, 0], [10, 20]];
+    const resultPos = offsetPolyline(poly, 5);
+    const resultNeg = offsetPolyline(poly, -5);
+    // The two offset lines should be 2*offset pixels apart
+    const gap = Math.abs(resultPos[0][0] - resultNeg[0][0]);
+    expect(gap).toBeCloseTo(10, 0);
+    // Each point should be offset by exactly 5 from the original
+    expect(Math.abs(resultPos[0][0] - 10)).toBeCloseTo(5, 0);
+    expect(Math.abs(resultNeg[0][0] - 10)).toBeCloseTo(5, 0);
+  });
+
+  it("should handle single-point polyline gracefully", () => {
+    const poly: [number, number][] = [[5, 5]];
+    const result = offsetPolyline(poly, 3);
+    expect(result).toHaveLength(1);
+  });
+});
+
+describe("doubleLinePolylines", () => {
+  it("should return original polylines when offset is 0", () => {
+    const polys: [number, number][][] = [[[0, 0], [10, 0]]];
+    const result = doubleLinePolylines(polys, 0);
+    expect(result).toHaveLength(1);
+  });
+
+  it("should produce 2 polylines for each input polyline", () => {
+    const polys: [number, number][][] = [
+      [[0, 0], [10, 0]],
+      [[0, 5], [10, 5]],
+    ];
+    const result = doubleLinePolylines(polys, 4);
+    // 2 input polylines × 2 = 4 output polylines
+    expect(result).toHaveLength(4);
+  });
+
+  it("should produce parallel lines with correct total gap", () => {
+    // Horizontal polyline at y=10, doubleLinePolylines with offset=4
+    // halfOffset=2: line1 at y=8 (10-2), line2 at y=12 (10+2) → gap = 4
+    const polys: [number, number][][] = [[[0, 10], [20, 10]]];
+    const result = doubleLinePolylines(polys, 4);
+    expect(result).toHaveLength(2);
+    // The two lines should be exactly `offset` pixels apart total
+    const y0 = result[0][0][1];
+    const y1 = result[1][0][1];
+    expect(Math.abs(y0 - y1)).toBeCloseTo(4, 0);
+    // Each line should be offset/2 = 2 pixels from the original (y=10)
+    expect(Math.abs(y0 - 10)).toBeCloseTo(2, 0);
+    expect(Math.abs(y1 - 10)).toBeCloseTo(2, 0);
+  });
+});
+
+describe("polylinesToSegments", () => {
+  it("should convert a 3-point polyline to 2 segments", () => {
+    const polys: [number, number][][] = [[[0, 0], [5, 0], [10, 0]]];
+    const segs = polylinesToSegments(polys);
+    expect(segs).toHaveLength(2);
+  });
+
+  it("should return empty array for empty polylines", () => {
+    const segs = polylinesToSegments([]);
+    expect(segs).toHaveLength(0);
+  });
+
+  it("should correctly map polyline points to segment endpoints", () => {
+    const polys: [number, number][][] = [[[1, 2], [3, 4]]];
+    const segs = polylinesToSegments(polys);
+    expect(segs[0]).toEqual({ x1: 1, y1: 2, x2: 3, y2: 4 });
   });
 });

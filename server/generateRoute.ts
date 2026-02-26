@@ -8,28 +8,40 @@ import { logUsageEvent, anonymizeIp } from "./usageDb";
 const router = Router();
 
 /**
- * Build a prompt optimized for CNC engraving:
- * - Double closed contour lines (2mm gap between inner and outer line)
- * - No fill, no shading, pure black on white
- * - All paths must be closed loops
+ * Build a prompt optimized for CNC engraving / laser cutting.
+ *
+ * Key requirements for good CNC conversion:
+ * - Pure black outlines on white background (no grey, no fill)
+ * - Bold, clear, single-stroke or double-stroke contour lines
+ * - No gradients, no textures, no shading
+ * - Simple shapes with clear edges (Sobel edge detection works best on these)
+ * - High contrast so threshold detection is clean
+ *
+ * Each variant uses a slightly different style emphasis to give 3 distinct options.
  */
 function buildCncLineArtPrompt(userPrompt: string, variant: number): string {
-  const styles = [
-    // Variant 0: clean minimal double-outline
-    "clean minimal double-outline contour drawing. Every shape has TWO parallel black lines forming a closed loop with a 2mm gap between them, like a CNC routing path. Pure white background, no fill, no shading, no gradients. Suitable for CNC engraving where the tool travels between the two lines.",
-    // Variant 1: detailed technical double-contour
-    "precise technical double-contour illustration. Each element is drawn with two parallel closed black outlines separated by a 2mm channel, creating a routing groove for CNC machines. White background, no fill, no cross-hatching, no text. All contours are closed paths.",
-    // Variant 2: bold graphic double-stroke
-    "bold graphic double-stroke design. Every outline consists of two parallel black lines forming closed shapes with a uniform 2mm gap between them — the channel where a CNC engraving tool will cut. High contrast, white background, no fill, no shading, simplified clean shapes.",
+  const baseStyle =
+    "Black ink on pure white background. Bold clean outlines only, no fill, no shading, no gradients, no textures, no grey tones. High contrast. Suitable for CNC engraving and laser cutting.";
+
+  const variantStyles = [
+    // Variant 0: clean minimal silhouette / stencil style
+    "Minimalist stencil-style illustration. Single bold black outline, thick strokes (3-5px), simplified shapes, no internal details. Like a rubber stamp or vinyl cut design.",
+
+    // Variant 1: technical line art / woodcut style
+    "Technical line art / woodcut style. Bold black outlines with simple internal line details. All lines are closed paths. No cross-hatching, no gradients. Like a vintage woodcut print.",
+
+    // Variant 2: geometric / graphic design style
+    "Geometric graphic design style. Clean geometric shapes with bold black outlines. Symmetrical composition. No fill, no shading. Like a modern logo or icon.",
   ];
-  const style = styles[variant % styles.length];
-  return `${userPrompt}. ${style} Black and white only. No text. No watermarks. No background elements.`;
+
+  const style = variantStyles[variant % variantStyles.length];
+  return `${userPrompt}. ${style} ${baseStyle} No text. No watermarks. No background patterns.`;
 }
 
 /**
  * POST /api/generate-images
  * Body: { prompt: string, modifications?: string }
- * Returns: { images: Array<{ url, svgPreview, dxfUrl, segmentCount, width, height }> }
+ * Returns: { images: Array<{ imageUrl, svgPreview, dxfUrl, segmentCount, width, height }> }
  */
 router.post("/api/generate-images", async (req, res) => {
   try {
@@ -55,7 +67,10 @@ router.post("/api/generate-images", async (req, res) => {
         throw new Error("לא הצלחנו לייצר תמונה");
       }
 
-      // Fetch the generated image and convert to DXF with double-line mode
+      // Fetch the generated image and convert to DXF
+      // We use a relatively high threshold (160) because AI images tend to have
+      // mostly white backgrounds with dark outlines — we want to capture only
+      // the dark edges, not noise.
       const imgResponse = await fetch(imageUrl);
       if (!imgResponse.ok) {
         throw new Error("שגיאה בהורדת התמונה שנוצרה");
@@ -64,9 +79,10 @@ router.post("/api/generate-images", async (req, res) => {
 
       const { dxf, svgPreview, segmentCount, width, height } =
         await convertImageToDxf(imgBuffer, {
-          threshold: 180,       // High threshold: AI images are mostly white
-          simplifyTolerance: 2,
-          doubleLineOffset: 4,  // ~2mm at typical 2px/mm resolution
+          threshold: 160,          // High threshold: capture bold outlines only
+          simplifyTolerance: 2,    // Moderate simplification for clean paths
+          doubleLineOffset: 0,     // No double-line for AI images by default
+                                   // (user can apply it in the upload tab if needed)
         });
 
       // Upload DXF to S3
