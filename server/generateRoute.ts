@@ -7,31 +7,26 @@ import OpenAI from "openai";
 
 const router = Router();
 
-// Initialize OpenAI client with the user's API key
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 /**
- * Build a DALL-E 3 prompt optimized for clean outline-only line art suitable for DXF/CNC conversion.
+ * Build a DALL-E 3 prompt for pure outline-only line art (no fill, no shading).
  *
- * The key insight: DALL-E tends to fill shapes. We must be very explicit:
- * - OUTLINE ONLY — like a coloring book page
- * - Pure white inside all shapes (no fill, no grey, no texture)
- * - Single thin black stroke on the outline
- * - Absolutely no hatching, cross-hatching, stippling, or texture fills
+ * Strategy: use "single continuous outline" + "wireframe" language to prevent fill.
+ * DALL-E responds well to "wireframe", "outline only", "coloring book empty".
  */
 function buildLineArtPrompt(userPrompt: string): string {
   return (
-    `${userPrompt}. ` +
-    "Coloring book style line art. " +
-    "Pure white background. " +
-    "Only thin black outline strokes, like a coloring book page for children. " +
-    "All interior areas must be completely white with zero fill. " +
-    "No shading, no hatching, no cross-hatching, no stippling, no texture, no grey tones, no gradients. " +
-    "No black fill anywhere inside the shapes. " +
-    "Simple clean outlines only. " +
-    "High contrast: pure black lines on pure white. " +
-    "Suitable for laser cutting and CNC engraving. " +
-    "No text, no watermarks, no background patterns."
+    `Simple wireframe outline drawing of: ${userPrompt}. ` +
+    "IMPORTANT: outline strokes only, every interior area must be completely empty white. " +
+    "Like an empty coloring book page — only the outer contour lines, nothing filled in. " +
+    "Single thin black stroke outline on pure white background. " +
+    "Absolutely NO fill, NO shading, NO hatching, NO cross-hatching, NO stippling, " +
+    "NO texture inside shapes, NO grey areas, NO gradients. " +
+    "Every shape interior = pure white. " +
+    "Style: clean vector wireframe, technical outline drawing. " +
+    "Minimal details, simple shapes, suitable for laser cutting and CNC engraving. " +
+    "Pure black and white only. No text, no watermarks."
   );
 }
 
@@ -65,7 +60,7 @@ router.post("/api/generate-images", async (req, res) => {
         n: 1,
         size: "1024x1024",
         quality: "standard",
-        style: "natural", // "natural" gives cleaner line art vs "vivid"
+        style: "natural", // "natural" gives cleaner outlines vs "vivid"
       });
 
       const imageUrl = response.data?.[0]?.url;
@@ -74,6 +69,8 @@ router.post("/api/generate-images", async (req, res) => {
       }
 
       // Fetch the generated image and convert to DXF
+      // Use high threshold (200+) to capture ONLY the dark outline strokes,
+      // ignoring any light grey areas that DALL-E might add
       const imgResponse = await fetch(imageUrl);
       if (!imgResponse.ok) {
         throw new Error("שגיאה בהורדת התמונה שנוצרה");
@@ -82,9 +79,9 @@ router.post("/api/generate-images", async (req, res) => {
 
       const { dxf, svgPreview, segmentCount, width, height } =
         await convertImageToDxf(imgBuffer, {
-          threshold: 180,         // High threshold: capture thin dark outlines only
-          simplifyTolerance: 1.5, // Light simplification to preserve thin line details
-          doubleLineOffset: 0,    // No double-line for AI images
+          threshold: 200,         // Very high: only capture dark black outlines
+          simplifyTolerance: 2,   // Moderate simplification for clean paths
+          doubleLineOffset: 0,
         });
 
       // Upload DXF to S3
