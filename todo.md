@@ -61,3 +61,8 @@
 - [x] Update imageProcessor: add contour offset (dilation) to produce double parallel lines in DXF output
 - [x] Add "double line spacing" slider (0=off, 1-12px) in UI settings for upload tab
 - [x] Tests for double-line offset logic (31 tests passing total)
+
+## באגים לתיקון
+
+- [x] דשבורד /admin לא מציג נתוני שימוש למרות שהיו שימושים בפועל
+- [x] תיקון: הוספת cookie-parser middleware לשרת כדי ש-req.cookies יאוכלס נכון

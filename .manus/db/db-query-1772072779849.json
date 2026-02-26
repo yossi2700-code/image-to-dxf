@@ -1,0 +1,34 @@
+{
+  "query": "SELECT COUNT(*) as total FROM usage_events; SELECT * FROM usage_events ORDER BY createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT COUNT(*) as total FROM usage_events; SELECT * FROM usage_events ORDER BY createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "total": "6"
+    },
+    {
+      "total": "id\ttype\tsegmentCount\tipAnon\tcountry\tcreatedAt"
+    },
+    {
+      "total": "30005\tconvert\t204300\t2a09:bac3:3a21:x\tNULL\t2026-02-26 02:22:59"
+    },
+    {
+      "total": "30004\tconvert\t51075\t2a09:bac3:3a21:x\tNULL\t2026-02-26 02:22:45"
+    },
+    {
+      "total": "30003\tai_generate\t9774\t2a0d:6fc0:12cc:x\tNULL\t2026-02-26 02:06:23"
+    },
+    {
+      "total": "30002\tai_generate\t20564\t2a02:26f7:df84:x\tNULL\t2026-02-26 02:02:45"
+    },
+    {
+      "total": "30001\tai_generate\t13573\t2a02:26f7:df84:x\tNULL\t2026-02-26 02:01:41"
+    },
+    {
+      "total": "1\tai_generate\t20404\t2a0d:6fc0:12cc:x\tNULL\t2026-02-26 01:39:21"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\n6\nid\ttype\tsegmentCount\tipAnon\tcountry\tcreatedAt\n30005\tconvert\t204300\t2a09:bac3:3a21:x\tNULL\t2026-02-26 02:22:59\n30004\tconvert\t51075\t2a09:bac3:3a21:x\tNULL\t2026-02-26 02:22:45\n30003\tai_generate\t9774\t2a0d:6fc0:12cc:x\tNULL\t2026-02-26 02:06:23\n30002\tai_generate\t20564\t2a02:26f7:df84:x\tNULL\t2026-02-26 02:02:45\n30001\tai_generate\t13573\t2a02:26f7:df84:x\tNULL\t2026-02-26 02:01:41\n1\tai_generate\t20404\t2a0d:6fc0:12cc:x\tNULL\t2026-02-26 01:39:21\n",
+  "stderr": "",
+  "execution_time_ms": 1937
+}

@@ -1,0 +1,52 @@
+{
+  "query": "SELECT id, type, segmentCount, ipAnon, createdAt FROM usage_events ORDER BY createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, type, segmentCount, ipAnon, createdAt FROM usage_events ORDER BY createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "30005",
+      "type": "convert",
+      "segmentCount": "204300",
+      "ipAnon": "2a09:bac3:3a21:x",
+      "createdAt": "2026-02-26 02:22:59"
+    },
+    {
+      "id": "30004",
+      "type": "convert",
+      "segmentCount": "51075",
+      "ipAnon": "2a09:bac3:3a21:x",
+      "createdAt": "2026-02-26 02:22:45"
+    },
+    {
+      "id": "30003",
+      "type": "ai_generate",
+      "segmentCount": "9774",
+      "ipAnon": "2a0d:6fc0:12cc:x",
+      "createdAt": "2026-02-26 02:06:23"
+    },
+    {
+      "id": "30002",
+      "type": "ai_generate",
+      "segmentCount": "20564",
+      "ipAnon": "2a02:26f7:df84:x",
+      "createdAt": "2026-02-26 02:02:45"
+    },
+    {
+      "id": "30001",
+      "type": "ai_generate",
+      "segmentCount": "13573",
+      "ipAnon": "2a02:26f7:df84:x",
+      "createdAt": "2026-02-26 02:01:41"
+    },
+    {
+      "id": "1",
+      "type": "ai_generate",
+      "segmentCount": "20404",
+      "ipAnon": "2a0d:6fc0:12cc:x",
+      "createdAt": "2026-02-26 01:39:21"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttype\tsegmentCount\tipAnon\tcreatedAt\n30005\tconvert\t204300\t2a09:bac3:3a21:x\t2026-02-26 02:22:59\n30004\tconvert\t51075\t2a09:bac3:3a21:x\t2026-02-26 02:22:45\n30003\tai_generate\t9774\t2a0d:6fc0:12cc:x\t2026-02-26 02:06:23\n30002\tai_generate\t20564\t2a02:26f7:df84:x\t2026-02-26 02:02:45\n30001\tai_generate\t13573\t2a02:26f7:df84:x\t2026-02-26 02:01:41\n1\tai_generate\t20404\t2a0d:6fc0:12cc:x\t2026-02-26 01:39:21\n",
+  "stderr": "",
+  "execution_time_ms": 1756
+}
