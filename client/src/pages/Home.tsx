@@ -450,7 +450,9 @@ function AiGeneratorTab() {
                 <div
                   key={idx}
                   className={`relative rounded-xl border-2 cursor-pointer transition-all overflow-hidden bg-white
-                    ${selectedIdx === idx ? "border-primary shadow-lg scale-[1.02]" : "border-border hover:border-primary/50 hover:shadow-md"}`}
+                    ${selectedIdx === idx
+                      ? "border-primary shadow-xl ring-2 ring-primary/30 scale-[1.02]"
+                      : "border-border hover:border-primary/50 hover:shadow-md"}`}
                   onClick={() => setSelectedIdx(idx)}
                 >
                   {/* SVG vector preview in gallery */}
@@ -478,8 +480,13 @@ function AiGeneratorTab() {
                     <span className="text-xs text-muted-foreground">{img.segmentCount.toLocaleString()} קווים</span>
                   </div>
                   {selectedIdx === idx && (
-                    <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                      <CheckCircle2 className="w-4 h-4 text-white" />
+                    <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-primary flex items-center justify-center shadow-md">
+                      <CheckCircle2 className="w-5 h-5 text-white" />
+                    </div>
+                  )}
+                  {selectedIdx !== idx && (
+                    <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 border-2 border-border flex items-center justify-center">
+                      <div className="w-3 h-3 rounded-full bg-transparent" />
                     </div>
                   )}
                 </div>

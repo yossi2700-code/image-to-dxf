@@ -86,12 +86,13 @@ router.post("/api/generate-images", async (req, res) => {
         "image/png"
       );
 
-      // Convert to DXF — gpt-image-1 already produces clean line art,
-      // so we use a higher threshold to keep only the darkest lines
+      // Convert to DXF — gpt-image-1 already produces clean line art.
+      // Higher threshold = only dark lines pass.
+      // Higher simplifyTolerance = smoother, fewer segments.
       const { dxf, svgPreview, segmentCount, width, height } =
         await convertImageToDxf(rawBuffer, {
-          threshold: 160,       // Higher threshold = only dark lines pass
-          simplifyTolerance: 2,
+          threshold: 160,
+          simplifyTolerance: 4,  // Smoother curves, fewer segments
           doubleLineOffset: 0,
         });
 

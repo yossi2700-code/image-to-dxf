@@ -136,3 +136,12 @@
 
 - [x] עדכון generateRoute.ts להשתמש ב-gpt-image-1 במקום DALL-E 3
 - [x] הסרת preprocessForEdgeDetection (gpt-image-1 מייצר קווים דקים ישירות)
+
+## שיפורי ביצועים וUX
+
+- [x] הגדלת simplifyTolerance ל-4 ל-AI images לקווים חלקים יותר
+- [x] אינדיקטור בחירה ברור בגלריה (border + ring + checkmark גדול + עיגול ריק לבחירה)
+
+## עתידי - אחרי מערכת התחברות
+
+- [ ] שמירת היסטוריית עיצובים לפי שם משתמש (DB + UI)
