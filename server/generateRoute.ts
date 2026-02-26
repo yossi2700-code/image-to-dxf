@@ -11,23 +11,27 @@ const router = Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 /**
- * Build a DALL-E 3 prompt optimized for thin, clean line art suitable for DXF conversion.
+ * Build a DALL-E 3 prompt optimized for clean outline-only line art suitable for DXF/CNC conversion.
  *
- * Key requirements:
- * - Pure black thin outlines on white background
- * - No fill, no shading, no gradients, no textures
- * - Simple clean paths — ideal for Sobel edge detection
- * - High contrast for clean threshold conversion
+ * The key insight: DALL-E tends to fill shapes. We must be very explicit:
+ * - OUTLINE ONLY — like a coloring book page
+ * - Pure white inside all shapes (no fill, no grey, no texture)
+ * - Single thin black stroke on the outline
+ * - Absolutely no hatching, cross-hatching, stippling, or texture fills
  */
 function buildLineArtPrompt(userPrompt: string): string {
   return (
     `${userPrompt}. ` +
-    "Minimalist black line art on pure white background. " +
-    "Thin clean single black outlines only, no fill, no shading, no gradients, no textures, no grey tones. " +
-    "Simple flat design with clear sharp edges. " +
-    "Style: technical drawing / vector illustration. " +
-    "High contrast black and white only. " +
-    "No text, no watermarks, no background patterns, no shadows."
+    "Coloring book style line art. " +
+    "Pure white background. " +
+    "Only thin black outline strokes, like a coloring book page for children. " +
+    "All interior areas must be completely white with zero fill. " +
+    "No shading, no hatching, no cross-hatching, no stippling, no texture, no grey tones, no gradients. " +
+    "No black fill anywhere inside the shapes. " +
+    "Simple clean outlines only. " +
+    "High contrast: pure black lines on pure white. " +
+    "Suitable for laser cutting and CNC engraving. " +
+    "No text, no watermarks, no background patterns."
   );
 }
 
