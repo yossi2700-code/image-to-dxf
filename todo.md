@@ -197,3 +197,7 @@
 - [x] עמוד /history עם תמונות ו-SVG preview לכל פעולה
 - [x] כפתור "המר מחדש" שפותח את ה-SVG/DXF מחדש
 - [x] קישור להיסטוריה בדף הראשי (למשתמשים מחוברים)
+
+## תיקון SVG preview
+
+- [x] הסרת fill שחור מ-potrace SVG — הצגת קווים בלבד (fill=none, stroke=black)

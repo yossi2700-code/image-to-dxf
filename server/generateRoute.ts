@@ -103,10 +103,17 @@ router.post("/api/generate-images", async (req, res) => {
         .toBuffer();
 
       // Step 3: Vectorize with potrace (bitmap → smooth SVG Bezier curves)
-      const svgContent = await pngToSvg(processedBuffer);
+      const rawSvg = await pngToSvg(processedBuffer);
+      // potrace fills paths with black by default — convert to stroke-only for preview
+      const svgContent = rawSvg
+        .replace(/fill="[^"]*"/g, 'fill="none"')
+        .replace(/fill:[^;"']*(;|(?="))/g, 'fill:none$1')
+        .replace(/<path /g, '<path stroke="black" stroke-width="1.5" fill="none" ');
+      // Remove duplicate fill/stroke attrs that might appear after replacement
+      const cleanSvg = svgContent.replace(/stroke="black" stroke-width="1.5" fill="none" ([^>]*?)fill="none"/g, 'stroke="black" stroke-width="1.5" fill="none" $1');
 
-      // Step 4: Convert SVG to DXF
-      const { dxf, segmentCount, width, height } = svgToDxf(svgContent);
+      // Step 4: Convert SVG to DXF (use raw SVG for DXF — fill doesn't matter there)
+      const { dxf, segmentCount, width, height } = svgToDxf(rawSvg);
 
       // Upload original PNG to S3 for preview thumbnail
       const imgKey = `ai-generated/${nanoid()}.png`;
@@ -120,7 +127,8 @@ router.post("/api/generate-images", async (req, res) => {
         "application/dxf"
       );
 
-      return { imageUrl, svgPreview: svgContent, dxfUrl, segmentCount, width, height };
+      // Use cleanSvg (stroke-only) for visual preview
+      return { imageUrl, svgPreview: cleanSvg, dxfUrl, segmentCount, width, height };
     });
 
     const images = await Promise.all(generationPromises);
