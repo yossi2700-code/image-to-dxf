@@ -229,3 +229,7 @@
 
 - [x] תיקון prompt: כל 3 וריאציות עם outline נקי בלבד (ללא texture, ללא פרטים קטנים)
 - [x] וריאציה 1: simple clean outline, וריאציה 2: medium detail outline, וריאציה 3: decorative outline
+
+## תיקון הודעות שגיאה OpenAI
+
+- [x] שיפור הודעות שגיאה: QUOTA_EXCEEDED / 429 / 402 → הודעה ידידותית בעברית

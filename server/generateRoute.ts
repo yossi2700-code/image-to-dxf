@@ -217,6 +217,39 @@ router.post("/api/generate-images", async (req, res) => {
     return res.json({ success: true, images });
   } catch (err: unknown) {
     console.error("[generate-images]", err);
+
+    // Handle OpenAI-specific errors with friendly Hebrew messages
+    if (err && typeof err === "object" && "status" in err) {
+      const apiErr = err as { status: number; message?: string; code?: string };
+      if (apiErr.status === 429) {
+        return res.status(503).json({
+          error: "SERVICE_UNAVAILABLE",
+          message: "שירות ה-AI עמוס כרגע. אנא נסה שוב בעוד מספר דקות.",
+        });
+      }
+      if (apiErr.status === 402 || apiErr.code === "insufficient_quota") {
+        return res.status(503).json({
+          error: "SERVICE_UNAVAILABLE",
+          message: "שירות ה-AI אינו זמין כרגע. אנא נסה שוב מאוחר יותר.",
+        });
+      }
+      if (apiErr.status === 400) {
+        return res.status(400).json({
+          error: "INVALID_PROMPT",
+          message: "הפרומפט אינו תקין. נסה תיאור אחר.",
+        });
+      }
+    }
+
+    // Check error message for quota/billing keywords
+    const errMsg = err instanceof Error ? err.message : String(err);
+    if (errMsg.toLowerCase().includes("quota") || errMsg.toLowerCase().includes("billing") || errMsg.toLowerCase().includes("insufficient")) {
+      return res.status(503).json({
+        error: "SERVICE_UNAVAILABLE",
+        message: "שירות ה-AI אינו זמין כרגע. אנא נסה שוב מאוחר יותר.",
+      });
+    }
+
     const message = err instanceof Error ? err.message : "שגיאה ביצירת התמונות";
     return res.status(500).json({ error: message });
   }
