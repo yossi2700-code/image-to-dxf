@@ -11,15 +11,17 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 /**
  * Build a DALL-E 3 prompt for CNC engraving line art.
- * Goal: one single illustration, closed black outlines on white, no fill, no shading.
+ * Strategy: ask for "SVG icon" or "sticker outline" style — DALL-E produces
+ * clean uniform strokes with white fill when given these keywords.
  */
 function buildLineArtPrompt(userPrompt: string): string {
   return (
-    `Black and white line art illustration for CNC engraving: ${userPrompt}. ` +
-    "ONE single illustration centered on a pure white background. " +
-    "Closed black outlines only, thin clean lines, white fill inside all shapes. " +
-    "No shading, no gradients, no hatching, no texture, no grey. " +
-    "Simple clean design suitable for CNC router or laser engraving."
+    `Minimalist black outline sticker design of ${userPrompt}. ` +
+    "Single object centered on pure white background. " +
+    "Clean uniform black stroke outline, completely white inside every shape. " +
+    "Flat 2D design, no shading, no fill, no gradients, no texture, no grey tones. " +
+    "Style: simple SVG icon, sticker outline art, suitable for laser engraving. " +
+    "Do not repeat the object. Do not crop. One complete centered image."
   );
 }
 
