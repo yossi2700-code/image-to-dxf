@@ -25,6 +25,9 @@ import {
   Eye,
   EyeOff,
   Users,
+  ChevronDown,
+  ChevronUp,
+  FileCode2,
 } from "lucide-react";
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
@@ -140,6 +143,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const { data: daily, isLoading: dailyLoading } = trpc.admin.dailyActivity.useQuery();
   const { data: recent, isLoading: recentLoading } = trpc.admin.recentEvents.useQuery();
   const { data: registeredUsers, isLoading: usersLoading } = trpc.admin.users.useQuery();
+  const { data: userActionsData, isLoading: actionsLoading } = trpc.admin.userActions.useQuery();
+  const [expandedUser, setExpandedUser] = useState<number | null>(null);
 
   const logoutMutation = trpc.admin.logout.useMutation({
     onSuccess: () => {
@@ -309,7 +314,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             )}
           </CardContent>
         </Card>
-        {/* Registered Users */}
+        {/* Registered Users + Actions */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -326,27 +331,86 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             {usersLoading ? (
               <div className="space-y-2">{[...Array(3)].map((_, i) => <div key={i} className="h-10 bg-muted animate-pulse rounded-lg" />)}</div>
             ) : registeredUsers && registeredUsers.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b text-muted-foreground">
-                      <th className="text-right py-2 pr-2 font-medium">שם</th>
-                      <th className="text-right py-2 pr-2 font-medium">אימייל</th>
-                      <th className="text-right py-2 font-medium">תאריך הרשמה</th>
-                      <th className="text-right py-2 font-medium">כניסה אחרונה</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {registeredUsers.map((u) => (
-                      <tr key={u.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                        <td className="py-2 pr-2 font-medium">{u.name ?? <span className="text-muted-foreground">ללא שם</span>}</td>
-                        <td className="py-2 pr-2 font-mono text-xs text-muted-foreground">{u.email}</td>
-                        <td className="py-2 text-xs text-muted-foreground">{new Date(u.createdAt).toLocaleDateString("he-IL")}</td>
-                        <td className="py-2 text-xs text-muted-foreground">{new Date(u.lastLoginAt).toLocaleDateString("he-IL")}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="space-y-2">
+                {registeredUsers.map((u) => {
+                  const actions = userActionsData?.filter((a) => a.appUserId === u.id) ?? [];
+                  const isExpanded = expandedUser === u.id;
+                  return (
+                    <div key={u.id} className="border rounded-lg overflow-hidden">
+                      {/* User row */}
+                      <button
+                        className="w-full text-right px-3 py-2.5 flex items-center gap-3 hover:bg-muted/30 transition-colors"
+                        onClick={() => setExpandedUser(isExpanded ? null : u.id)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">{u.name ?? <span className="text-muted-foreground">ללא שם</span>}</span>
+                            <span className="text-xs text-muted-foreground font-mono">{u.email}</span>
+                          </div>
+                          <div className="flex gap-3 text-xs text-muted-foreground mt-0.5">
+                            <span>נרשם: {new Date(u.createdAt).toLocaleDateString("he-IL")}</span>
+                            <span>כניסה אחרונה: {new Date(u.lastLoginAt).toLocaleDateString("he-IL")}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                            {actions.length} פעולות
+                          </span>
+                          {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                        </div>
+                      </button>
+                      {/* Expanded actions */}
+                      {isExpanded && (
+                        <div className="border-t bg-muted/20 px-3 py-2">
+                          {actionsLoading ? (
+                            <div className="h-8 bg-muted animate-pulse rounded" />
+                          ) : actions.length === 0 ? (
+                            <p className="text-xs text-muted-foreground py-2">אין פעולות עדיין.</p>
+                          ) : (
+                            <table className="w-full text-xs">
+                              <thead>
+                                <tr className="text-muted-foreground border-b">
+                                  <th className="text-right py-1.5 pr-2 font-medium">סוג</th>
+                                  <th className="text-right py-1.5 pr-2 font-medium">תיאור</th>
+                                  <th className="text-right py-1.5 pr-2 font-medium">קווים</th>
+                                  <th className="text-right py-1.5 font-medium">תאריך</th>
+                                  <th className="text-right py-1.5 font-medium">DXF</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {actions.map((a) => (
+                                  <tr key={a.id} className="border-b last:border-0">
+                                    <td className="py-1.5 pr-2">
+                                      <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                                        a.actionType === "ai_generate"
+                                          ? "bg-purple-100 text-purple-700"
+                                          : a.actionType === "convert"
+                                          ? "bg-blue-100 text-blue-700"
+                                          : "bg-green-100 text-green-700"
+                                      }`}>
+                                        {a.actionType === "ai_generate" ? "יצירת AI" : a.actionType === "convert" ? "המרה" : "הורדה"}
+                                      </span>
+                                    </td>
+                                    <td className="py-1.5 pr-2 text-muted-foreground max-w-[160px] truncate">{a.description ?? "—"}</td>
+                                    <td className="py-1.5 pr-2">{(a.segmentCount ?? 0).toLocaleString()}</td>
+                                    <td className="py-1.5 text-muted-foreground">{new Date(a.createdAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}</td>
+                                    <td className="py-1.5">
+                                      {a.dxfUrl ? (
+                                        <a href={a.dxfUrl} download className="text-primary hover:underline flex items-center gap-1">
+                                          <FileCode2 className="w-3 h-3" />הורד
+                                        </a>
+                                      ) : "—"}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="py-8 text-center text-muted-foreground text-sm">

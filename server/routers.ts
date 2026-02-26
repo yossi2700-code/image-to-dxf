@@ -7,8 +7,8 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers } from "../drizzle/schema";
-import { desc } from "drizzle-orm";
+import { appUsers, userActions } from "../drizzle/schema";
+import { desc, eq } from "drizzle-orm";
 
 const ADMIN_COOKIE = "admin_session";
 
@@ -102,6 +102,43 @@ export const appRouter = router({
         .orderBy(desc(appUsers.createdAt))
         .limit(200);
     }),
+
+    /** All user actions (for admin view) */
+    userActions: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db
+        .select({
+          id: userActions.id,
+          appUserId: userActions.appUserId,
+          actionType: userActions.actionType,
+          description: userActions.description,
+          segmentCount: userActions.segmentCount,
+          dxfUrl: userActions.dxfUrl,
+          imageUrl: userActions.imageUrl,
+          createdAt: userActions.createdAt,
+          userName: appUsers.name,
+          userEmail: appUsers.email,
+        })
+        .from(userActions)
+        .leftJoin(appUsers, eq(userActions.appUserId, appUsers.id))
+        .orderBy(desc(userActions.createdAt))
+        .limit(500);
+    }),
+
+    /** Actions for a specific user */
+    userActionsByUser: adminProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return [];
+        return db
+          .select()
+          .from(userActions)
+          .where(eq(userActions.appUserId, input.userId))
+          .orderBy(desc(userActions.createdAt))
+          .limit(100);
+      }),
   }),
 });
 

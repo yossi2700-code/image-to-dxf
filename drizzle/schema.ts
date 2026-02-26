@@ -63,3 +63,24 @@ export const appUsers = mysqlTable("app_users", {
 
 export type AppUser = typeof appUsers.$inferSelect;
 export type InsertAppUser = typeof appUsers.$inferInsert;
+
+// User actions table — tracks every convert/generate/download per registered user
+export const userActions = mysqlTable("user_actions", {
+  id: int("id").autoincrement().primaryKey(),
+  /** App user who performed the action */
+  appUserId: int("appUserId").notNull(),
+  /** Action type */
+  actionType: mysqlEnum("actionType", ["convert", "ai_generate", "download"]).notNull(),
+  /** Short description, e.g. prompt text or filename */
+  description: text("description"),
+  /** Number of vector segments produced (if applicable) */
+  segmentCount: int("segmentCount").default(0),
+  /** URL of the generated/converted DXF file */
+  dxfUrl: text("dxfUrl"),
+  /** URL of the source image or AI-generated image */
+  imageUrl: text("imageUrl"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type UserAction = typeof userActions.$inferSelect;
+export type InsertUserAction = typeof userActions.$inferInsert;

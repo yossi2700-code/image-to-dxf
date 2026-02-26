@@ -2,6 +2,8 @@ import { Router } from "express";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 import { logUsageEvent, anonymizeIp } from "./usageDb";
+import { getAppUserFromCookie } from "./appAuth";
+import { recordUserAction } from "./userActionsDb";
 import OpenAI from "openai";
 import { svgToDxf } from "./svgToDxf";
 import potrace from "potrace";
@@ -133,6 +135,21 @@ router.post("/api/generate-images", async (req, res) => {
       segmentCount: Math.round(totalSegments / images.length),
       ipAnon: anonymizeIp(rawIp),
     });
+
+    // Record user action if logged in
+    const appUser = getAppUserFromCookie(req.cookies);
+    if (appUser?.userId) {
+      for (const img of images) {
+        void recordUserAction({
+          appUserId: appUser.userId,
+          actionType: "ai_generate",
+          description: fullPrompt.slice(0, 200),
+          segmentCount: img.segmentCount,
+          dxfUrl: img.dxfUrl,
+          imageUrl: img.imageUrl,
+        });
+      }
+    }
 
     return res.json({ success: true, images });
   } catch (err: unknown) {

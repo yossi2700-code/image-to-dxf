@@ -5,6 +5,7 @@ import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
+import { recordUserAction } from "./userActionsDb";
 
 const router = Router();
 
@@ -67,6 +68,18 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
 
     // Log usage event (fire-and-forget)
     void logUsageEvent({ type: "convert", segmentCount, ipAnon, imageUrl, appUserId: appUser?.userId ?? undefined });
+
+    // Record user action if logged in
+    if (appUser?.userId) {
+      void recordUserAction({
+        appUserId: appUser.userId,
+        actionType: "convert",
+        description: req.file.originalname,
+        segmentCount,
+        dxfUrl: url,
+        imageUrl,
+      });
+    }
 
     return res.json({
       success: true,

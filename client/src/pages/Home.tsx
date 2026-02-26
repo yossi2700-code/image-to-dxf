@@ -27,7 +27,14 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
+  X,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -46,6 +53,55 @@ interface AiImage {
   segmentCount: number;
   width: number;
   height: number;
+}
+
+// ─── DXF Preview Modal ───────────────────────────────────────────────────────
+
+interface DxfPreviewModalProps {
+  open: boolean;
+  onClose: () => void;
+  svgContent: string;
+  dxfUrl: string;
+  filename: string;
+  segmentCount: number;
+}
+
+function DxfPreviewModal({ open, onClose, svgContent, dxfUrl, filename, segmentCount }: DxfPreviewModalProps) {
+  const doDownload = () => {
+    const a = document.createElement("a");
+    a.href = dxfUrl;
+    a.download = filename;
+    a.click();
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-lg w-full p-0 overflow-hidden">
+        <DialogHeader className="px-5 pt-5 pb-3 border-b">
+          <DialogTitle className="text-base font-semibold flex items-center gap-2">
+            <Eye className="w-4 h-4 text-primary" />
+            תצוגה מקדימה — {filename}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="p-4">
+          <SvgZoomViewer svgContent={svgContent} label="תצוגת קווי וקטור" maxHeight={320} />
+          <div className="flex items-center justify-between mt-3 px-1">
+            <span className="text-xs text-muted-foreground">{segmentCount.toLocaleString()} קווים</span>
+            <span className="text-xs text-muted-foreground">{filename}</span>
+          </div>
+        </div>
+        <div className="px-4 pb-4 flex gap-2">
+          <Button size="lg" className="flex-1 bg-green-600 hover:bg-green-700 font-semibold" onClick={doDownload}>
+            <Download className="w-4 h-4 ml-2" />הורד קובץ DXF
+          </Button>
+          <Button variant="outline" size="lg" onClick={onClose}>
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 // ─── SVG Zoom Viewer ──────────────────────────────────────────────────────────
@@ -209,6 +265,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
   const [result, setResult] = useState<ConvertResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [showSvgPreview, setShowSvgPreview] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback((file: File) => {
@@ -273,10 +330,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
 
   const handleDownload = () => {
     if (!result?.dxfUrl) return;
-    const a = document.createElement("a");
-    a.href = result.dxfUrl;
-    a.download = `${imageFile?.name.replace(/\.[^.]+$/, "") ?? "output"}.dxf`;
-    a.click();
+    setPreviewOpen(true);
   };
 
   const reset = () => {
@@ -289,6 +343,17 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
   };
 
   return (
+    <>
+    {result && previewOpen && (
+      <DxfPreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        svgContent={result.svgPreview}
+        dxfUrl={result.dxfUrl}
+        filename={`${imageFile?.name.replace(/\.[^.]+$/, "") ?? "output"}.dxf`}
+        segmentCount={result.segmentCount}
+      />
+    )}
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
       {/* Left: Upload + Controls */}
       <div className="flex flex-col gap-4">
@@ -432,7 +497,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                 </div>
 
                 <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 font-semibold" onClick={handleDownload}>
-                  <Download className="w-4 h-4 ml-2" />הורד קובץ DXF
+                  <Eye className="w-4 h-4 ml-2" />תצוגה מקדימה והורדה
                 </Button>
                 <Button variant="outline" size="sm" className="w-full" onClick={reset}>
                   המר תמונה חדשה
@@ -454,6 +519,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
         </Card>
       </div>
     </div>
+    </>
   );
 }
 
@@ -503,16 +569,28 @@ function AiGeneratorTab() {
     }
   };
 
+  const [aiPreviewOpen, setAiPreviewOpen] = useState(false);
+  const [aiPreviewImg, setAiPreviewImg] = useState<AiImage | null>(null);
+
   const handleDownload = (img: AiImage) => {
-    const a = document.createElement("a");
-    a.href = img.dxfUrl;
-    a.download = `ai-design-${Date.now()}.dxf`;
-    a.click();
+    setAiPreviewImg(img);
+    setAiPreviewOpen(true);
   };
 
   const selected = selectedIdx !== null ? images[selectedIdx] : null;
 
   return (
+    <>
+    {aiPreviewImg && aiPreviewOpen && (
+      <DxfPreviewModal
+        open={aiPreviewOpen}
+        onClose={() => setAiPreviewOpen(false)}
+        svgContent={aiPreviewImg.svgPreview}
+        dxfUrl={aiPreviewImg.dxfUrl}
+        filename={`ai-design-${Date.now()}.dxf`}
+        segmentCount={aiPreviewImg.segmentCount}
+      />
+    )}
     <div className="flex flex-col gap-5">
       {/* Prompt Input */}
       <Card>
@@ -740,6 +818,7 @@ function AiGeneratorTab() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }
 
@@ -778,24 +857,6 @@ export default function Home() {
             <h1 className="text-base font-bold leading-tight">ממיר תמונה ל-DXF</h1>
             <p className="text-xs text-muted-foreground">המרה לקבצי וקטור לחיתוך לייזר ו-CNC</p>
           </div>
-          {/* Auth buttons */}
-          {appUser ? (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <UserCircle className="w-4 h-4" />
-                <span className="hidden sm:inline">{appUser.name ?? appUser.email}</span>
-              </div>
-              <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs">
-                <LogOut className="w-3.5 h-3.5 ml-1" />
-                יציאה
-              </Button>
-            </div>
-          ) : (
-            <Button size="sm" variant="outline" onClick={() => { setLimitReached(false); setAuthOpen(true); }} className="text-xs gap-1.5">
-              <LogIn className="w-3.5 h-3.5" />
-              התחבר/הירשם
-            </Button>
-          )}
         </div>
       </header>
 
@@ -810,6 +871,26 @@ export default function Home() {
       />
 
       <main className="container py-6">
+        {/* Auth bar — below the billing banner */}
+        <div className="flex justify-end mb-4">
+          {appUser ? (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <UserCircle className="w-4 h-4" />
+                <span>{appUser.name ?? appUser.email}</span>
+              </div>
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs">
+                <LogOut className="w-3.5 h-3.5 ml-1" />
+                יציאה
+              </Button>
+            </div>
+          ) : (
+            <Button size="sm" variant="outline" onClick={() => { setLimitReached(false); setAuthOpen(true); }} className="text-xs gap-1.5">
+              <LogIn className="w-3.5 h-3.5" />
+              התחבר/הירשם
+            </Button>
+          )}
+        </div>
         <Tabs defaultValue="upload" dir="rtl">
           <TabsList className="w-full mb-5 h-11">
             <TabsTrigger value="upload" className="flex-1 gap-2 text-sm">
