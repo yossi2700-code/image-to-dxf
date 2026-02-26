@@ -36,6 +36,8 @@ export const usageEvents = mysqlTable("usage_events", {
   ipAnon: varchar("ipAnon", { length: 20 }),
   /** Country/region hint from IP (optional, filled later) */
   country: varchar("country", { length: 64 }),
+  /** Thumbnail URL of the uploaded image (stored in S3) */
+  imageUrl: text("imageUrl"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

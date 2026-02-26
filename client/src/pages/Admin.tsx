@@ -262,6 +262,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b text-muted-foreground">
+                      <th className="text-right py-2 pr-2 font-medium">תמונה</th>
                       <th className="text-right py-2 pr-2 font-medium">סוג</th>
                       <th className="text-right py-2 font-medium">קווים</th>
                       <th className="text-right py-2 font-medium">IP</th>
@@ -271,6 +272,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   <tbody>
                     {recent.map((ev) => (
                       <tr key={ev.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                        <td className="py-2 pr-2">
+                          {ev.imageUrl ? (
+                            <img
+                              src={ev.imageUrl}
+                              alt="תמונה מקורית"
+                              className="w-10 h-10 object-cover rounded border"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded border bg-muted flex items-center justify-center">
+                              <Upload className="w-4 h-4 text-muted-foreground" />
+                            </div>
+                          )}
+                        </td>
                         <td className="py-2 pr-2">
                           <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium
                             ${ev.type === "convert" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>
@@ -282,6 +296,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                         <td className="py-2 text-muted-foreground text-xs">{new Date(ev.createdAt).toLocaleString("he-IL")}</td>
                       </tr>
                     ))}
+
                   </tbody>
                 </table>
               </div>

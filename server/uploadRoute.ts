@@ -50,9 +50,19 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
     const key = `dxf-output/${nanoid()}.dxf`;
     const { url } = await storagePut(key, Buffer.from(dxf, "utf-8"), "application/dxf");
 
+    // Upload original image thumbnail to S3 (fire-and-forget)
+    let imageUrl: string | undefined;
+    try {
+      const imgKey = `thumbnails/${nanoid()}.${req.file.mimetype.split("/")[1] ?? "jpg"}`;
+      const imgResult = await storagePut(imgKey, req.file.buffer, req.file.mimetype);
+      imageUrl = imgResult.url;
+    } catch (e) {
+      console.warn("[convert] Failed to upload thumbnail:", e);
+    }
+
     // Log usage event (fire-and-forget)
     const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress;
-    void logUsageEvent({ type: "convert", segmentCount, ipAnon: anonymizeIp(rawIp) });
+    void logUsageEvent({ type: "convert", segmentCount, ipAnon: anonymizeIp(rawIp), imageUrl });
 
     return res.json({
       success: true,
