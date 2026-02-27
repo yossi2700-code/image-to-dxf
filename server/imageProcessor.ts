@@ -632,6 +632,8 @@ export async function convertImageToDxf(
   segmentCount: number;
   width: number;
   height: number;
+  realWidth: number;
+  realHeight: number;
 }> {
   const { pixels, width, height } = await imageToGrayscale(buffer);
   const binary = applyThreshold(pixels, options.threshold);
@@ -667,5 +669,16 @@ export async function convertImageToDxf(
   const dxf = segmentsToDxf(segments, width, height);
   const svgPreview = polylinesToSvg(outputPolylines, width, height);
 
-  return { dxf, svgPreview, segmentCount: segments.length, width, height };
+  // Compute tight bounding box of actual drawn segments
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const seg of segments) {
+    minX = Math.min(minX, seg.x1, seg.x2);
+    minY = Math.min(minY, seg.y1, seg.y2);
+    maxX = Math.max(maxX, seg.x1, seg.x2);
+    maxY = Math.max(maxY, seg.y1, seg.y2);
+  }
+  const realWidth  = segments.length > 0 ? (maxX - minX) : width;
+  const realHeight = segments.length > 0 ? (maxY - minY) : height;
+
+  return { dxf, svgPreview, segmentCount: segments.length, width, height, realWidth, realHeight };
 }

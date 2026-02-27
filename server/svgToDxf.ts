@@ -13,6 +13,9 @@ export interface DxfResult {
   segmentCount: number;
   width: number;
   height: number;
+  /** Tight bounding box of actual drawn segments (px). May differ from viewBox. */
+  realWidth: number;
+  realHeight: number;
 }
 
 // ─── Simple SVG attribute parser ─────────────────────────────────────────────
@@ -358,6 +361,17 @@ export function svgToDxf(svgContent: string): DxfResult {
     allSegments.push(...segs);
   }
 
+  // Compute tight bounding box of all drawn segments
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const seg of allSegments) {
+    minX = Math.min(minX, seg.x1, seg.x2);
+    minY = Math.min(minY, seg.y1, seg.y2);
+    maxX = Math.max(maxX, seg.x1, seg.x2);
+    maxY = Math.max(maxY, seg.y1, seg.y2);
+  }
+  const realWidth  = allSegments.length > 0 ? (maxX - minX) : width;
+  const realHeight = allSegments.length > 0 ? (maxY - minY) : height;
+
   // Build DXF R12
   const lines: string[] = [];
   lines.push("0\nSECTION");
@@ -389,5 +403,7 @@ export function svgToDxf(svgContent: string): DxfResult {
     segmentCount: allSegments.length,
     width,
     height,
+    realWidth,
+    realHeight,
   };
 }

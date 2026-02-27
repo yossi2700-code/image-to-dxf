@@ -258,3 +258,9 @@
 - [x] DXF: גודל ברירת מחדל יהיה הגודל האמיתי של העיצוב (לפי viewBox ה-SVG), לא ריבוע 50x50
 - [x] הצגת הגודל האמיתי ב-mm/cm בדיאלוג ההורדה
 - [x] slider אחוזים ישנה את הגודל האמיתי (לא ריבוע)
+
+## תיקון גודל אמיתי - bounding box
+
+- [x] svgToDxf: חישוב bounding box אמיתי של כל הקטעים (לא viewBox 1024x1024)
+- [x] החזרת realWidth/realHeight (גודל האובייקט בלבד, ללא שוליים ריקים)
+- [x] DxfDownloadDialog: שימוש ב-realWidth/realHeight לחישוב גודל אמיתי

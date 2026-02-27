@@ -40,6 +40,8 @@ interface ConvertResult {
   segmentCount: number;
   width: number;
   height: number;
+  realWidth?: number;
+  realHeight?: number;
 }
 
 interface AiImage {
@@ -50,6 +52,8 @@ interface AiImage {
   segmentCount: number;
   width: number;
   height: number;
+  realWidth?: number;
+  realHeight?: number;
 }
 
 // ─── SVG Zoom Viewer ──────────────────────────────────────────────────────────
@@ -286,8 +290,8 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
         dxfUrl={result.dxfUrl}
         defaultFilename={`${imageFile?.name.replace(/\.[^.]+$/, "") ?? "output"}.dxf`}
         segmentCount={result.segmentCount}
-        svgWidth={result.width}
-        svgHeight={result.height}
+        svgWidth={result.realWidth ?? result.width}
+        svgHeight={result.realHeight ?? result.height}
       />
     )}
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -530,8 +534,8 @@ function AiGeneratorTab() {
         dxfUrl={downloadImg.dxfUrl}
         defaultFilename={downloadImg.dxfFilename ?? `ai-design-${Date.now()}.dxf`}
         segmentCount={downloadImg.segmentCount}
-        svgWidth={downloadImg.width}
-        svgHeight={downloadImg.height}
+        svgWidth={downloadImg.realWidth ?? downloadImg.width}
+        svgHeight={downloadImg.realHeight ?? downloadImg.height}
       />
     )}
     <div className="flex flex-col gap-5">

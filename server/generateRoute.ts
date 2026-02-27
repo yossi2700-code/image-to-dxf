@@ -179,7 +179,7 @@ router.post("/api/generate-images", async (req, res) => {
       const cleanSvg = svgContent.replace(/stroke="black" stroke-width="1.5" fill="none" ([^>]*?)fill="none"/g, 'stroke="black" stroke-width="1.5" fill="none" $1');
 
       // Step 4: Convert SVG to DXF (use raw SVG for DXF — fill doesn't matter there)
-      const { dxf, segmentCount, width, height } = svgToDxf(rawSvg);
+      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg);
 
       // Upload original PNG to S3 for preview thumbnail
       const imgKey = `ai-generated/${nanoid()}.png`;
@@ -196,7 +196,7 @@ router.post("/api/generate-images", async (req, res) => {
       );
 
       // Use cleanSvg (stroke-only) for visual preview
-      return { imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height };
+      return { imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight };
     });
 
     const images = await Promise.all(generationPromises);
