@@ -1,0 +1,20 @@
+{
+  "query": "SELECT u.id as userId, u.maxActions, COUNT(a.id) as usedActions FROM app_users u LEFT JOIN user_actions a ON a.appUserId = u.id GROUP BY u.id ORDER BY u.id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT u.id as userId, u.maxActions, COUNT(a.id) as usedActions FROM app_users u LEFT JOIN user_actions a ON a.appUserId = u.id GROUP BY u.id ORDER BY u.id;",
+  "rows": [
+    {
+      "userId": "1",
+      "maxActions": "10",
+      "usedActions": "0"
+    },
+    {
+      "userId": "30001",
+      "maxActions": "10",
+      "usedActions": "10"
+    }
+  ],
+  "messages": [],
+  "stdout": "userId\tmaxActions\tusedActions\n1\t10\t0\n30001\t10\t10\n",
+  "stderr": "",
+  "execution_time_ms": 1555
+}

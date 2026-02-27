@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -193,8 +194,13 @@ function HistoryCard({
           />
         ) : item.svgPreview ? (
           <div
-            className="w-full h-full p-2 flex items-center justify-center [&_svg]:max-w-full [&_svg]:max-h-full [&_svg]:w-auto [&_svg]:h-auto"
-            dangerouslySetInnerHTML={{ __html: item.svgPreview }}
+            className="w-full h-full p-2 flex items-center justify-center bg-white"
+            dangerouslySetInnerHTML={{
+              __html: item.svgPreview.replace(
+                /<svg /,
+                '<svg style="max-width:100%;max-height:100%;width:auto;height:auto;display:block;" '
+              ),
+            }}
           />
         ) : (
           <ImageIcon className="w-10 h-10 text-muted-foreground" />
@@ -260,6 +266,7 @@ function DetailDialog({
   onClose: () => void;
   onDelete: (item: HistoryItem) => void;
 }) {
+  const [dxfDownloadOpen, setDxfDownloadOpen] = useState(false);
   if (!item) return null;
   const isAi = item.actionType === "ai_generate";
   const date = new Date(item.createdAt).toLocaleString("he-IL", {
@@ -317,16 +324,30 @@ function DetailDialog({
 
             <div className="flex gap-2 flex-wrap">
               {item.dxfUrl && (
-                <Button asChild variant="outline" size="sm" className="gap-1.5">
-                  <a href={item.dxfUrl} download>
-                    <Download className="w-4 h-4" />
-                    הורד DXF
-                  </a>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => setDxfDownloadOpen(true)}
+                >
+                  <Download className="w-4 h-4" />
+                  הורד DXF
                 </Button>
               )}
-
             </div>
           </div>
+
+          {/* DXF Download Dialog */}
+          {item.dxfUrl && dxfDownloadOpen && (
+            <DxfDownloadDialog
+              open={dxfDownloadOpen}
+              onClose={() => setDxfDownloadOpen(false)}
+              svgContent={item.svgPreview ?? ""}
+              dxfUrl={item.dxfUrl}
+              defaultFilename={`${item.description ?? "design"}.dxf`}
+              segmentCount={item.segmentCount ?? 0}
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -1,0 +1,10 @@
+{
+  "query": "SELECT appUserId, COUNT(*) as cnt FROM user_actions GROUP BY appUserId;\nSELECT id, openId, maxActions FROM app_users LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT appUserId, COUNT(*) as cnt FROM user_actions GROUP BY appUserId;\nSELECT id, openId, maxActions FROM app_users LIMIT 20;",
+  "returncode": 1,
+  "logs": [
+    "appUserId\tcnt",
+    "30001\t10",
+    "ERROR 1054 (42S22) at line 2: Unknown column 'openid' in 'field list'"
+  ]
+}

@@ -113,9 +113,17 @@ router.post("/api/generate-images", async (req, res) => {
     // Check usage limit
     const limitCheck = await checkUsageLimit(appUser.userId);
     if (!limitCheck.allowed) {
+      let quotaMessage: string;
+      if (limitCheck.reason === "daily") {
+        quotaMessage = `הגעת למכסה החינמית של ${limitCheck.max} עיצובים ליום. לפרטים נוספים ולשדרוג, פנה למפתח התוכנה — רובוטיקה וטכנולוגיה.`;
+      } else if (limitCheck.reason === "expired") {
+        quotaMessage = `תקופת הניסיון החינמית הסתיימה. לפרטים נוספים ולשדרוג, פנה למפתח התוכנה — רובוטיקה וטכנולוגיה.`;
+      } else {
+        quotaMessage = `הגעת למכסה החינמית. לפרטים נוספים ולשדרוג, פנה למפתח התוכנה — רובוטיקה וטכנולוגיה.`;
+      }
       return res.status(403).json({
         error: "QUOTA_EXCEEDED",
-        message: `הגעת למגבלת ${limitCheck.max} עיצובים. לשדרוג ופתיחת גישה מלאה, צרו קשר עם רובוטיקה וטכנולוגיה בוואטסאפ: 050-0000000 או במייל: info@robotics-tech.co.il`,
+        message: quotaMessage,
         used: limitCheck.used,
         max: limitCheck.max,
       });
