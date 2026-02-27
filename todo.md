@@ -264,3 +264,15 @@
 - [x] svgToDxf: חישוב bounding box אמיתי של כל הקטעים (לא viewBox 1024x1024)
 - [x] החזרת realWidth/realHeight (גודל האובייקט בלבד, ללא שוליים ריקים)
 - [x] DxfDownloadDialog: שימוש ב-realWidth/realHeight לחישוב גודל אמיתי
+
+## תמיכה רב-לשונית (i18n)
+
+- [x] יצירת מערכת תרגום עם קבצי עברית ואנגלית
+- [x] הוספת LanguageContext ו-useLanguage hook
+- [x] רכיב בחירת שפה (LanguageSwitcher) בניווט
+- [x] תמיכה ב-RTL (עברית) ו-LTR (אנגלית)
+- [x] תרגום Home.tsx
+- [x] תרגום History.tsx
+- [x] תרגום DxfDownloadDialog.tsx
+- [x] תרגום App.tsx / ניווט
+- [x] שמירת העדפת שפה ב-localStorage

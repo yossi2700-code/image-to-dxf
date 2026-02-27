@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { AuthDialog } from "@/components/AuthDialog";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Upload,
   Download,
@@ -29,7 +31,6 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
-  X,
 } from "lucide-react";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -57,14 +58,13 @@ interface AiImage {
 }
 
 // ─── SVG Zoom Viewer ──────────────────────────────────────────────────────────
-
 interface SvgZoomViewerProps {
   svgContent: string;
   label?: string;
   maxHeight?: number;
 }
 
-function SvgZoomViewer({ svgContent, label = "תצוגה מקדימה", maxHeight = 300 }: SvgZoomViewerProps) {
+function SvgZoomViewer({ svgContent, label = "Preview", maxHeight = 300 }: SvgZoomViewerProps) {
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -73,7 +73,6 @@ function SvgZoomViewer({ svgContent, label = "תצוגה מקדימה", maxHeigh
   const lastPinchDist = useRef<number | null>(null);
 
   const clampScale = (s: number) => Math.min(8, Math.max(0.5, s));
-
   const zoomIn = () => setScale((s) => clampScale(+(s * 1.3).toFixed(2)));
   const zoomOut = () => setScale((s) => clampScale(+(s / 1.3).toFixed(2)));
   const reset = () => { setScale(1); setOffset({ x: 0, y: 0 }); };
@@ -83,7 +82,6 @@ function SvgZoomViewer({ svgContent, label = "תצוגה מקדימה", maxHeigh
     const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
     setScale((s) => clampScale(+(s * factor).toFixed(3)));
   };
-
   const onMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return;
     setIsPanning(true);
@@ -97,7 +95,6 @@ function SvgZoomViewer({ svgContent, label = "תצוגה מקדימה", maxHeigh
     });
   };
   const onMouseUp = () => { setIsPanning(false); panStart.current = null; };
-
   const onTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 2) {
       const dx = e.touches[0].clientX - e.touches[1].clientX;
@@ -129,23 +126,20 @@ function SvgZoomViewer({ svgContent, label = "תצוגה מקדימה", maxHeigh
 
   return (
     <div className="border rounded-lg overflow-hidden bg-white">
-      {/* Toolbar */}
       <div className="flex items-center gap-1 px-3 py-1.5 border-b bg-muted/30">
         <Eye className="w-3.5 h-3.5 text-muted-foreground" />
         <span className="text-xs text-muted-foreground font-medium flex-1">{label}</span>
         <span className="text-xs text-muted-foreground/60 ml-1">{Math.round(scale * 100)}%</span>
-        <button onClick={zoomOut} className="w-6 h-6 rounded flex items-center justify-center hover:bg-muted transition-colors" title="הקטן">
+        <button onClick={zoomOut} className="w-6 h-6 rounded flex items-center justify-center hover:bg-muted transition-colors">
           <ZoomOut className="w-3.5 h-3.5 text-muted-foreground" />
         </button>
-        <button onClick={zoomIn} className="w-6 h-6 rounded flex items-center justify-center hover:bg-muted transition-colors" title="הגדל">
+        <button onClick={zoomIn} className="w-6 h-6 rounded flex items-center justify-center hover:bg-muted transition-colors">
           <ZoomIn className="w-3.5 h-3.5 text-muted-foreground" />
         </button>
-        <button onClick={reset} className="w-6 h-6 rounded flex items-center justify-center hover:bg-muted transition-colors" title="איפוס">
+        <button onClick={reset} className="w-6 h-6 rounded flex items-center justify-center hover:bg-muted transition-colors">
           <Maximize2 className="w-3.5 h-3.5 text-muted-foreground" />
         </button>
       </div>
-
-      {/* Canvas */}
       <div
         ref={containerRef}
         className="relative overflow-hidden bg-white select-none"
@@ -175,22 +169,17 @@ function SvgZoomViewer({ svgContent, label = "תצוגה מקדימה", maxHeigh
           dangerouslySetInnerHTML={{ __html: styledSvg }}
         />
       </div>
-
-      {/* Hint */}
-      <div className="px-3 py-1 border-t bg-muted/20 text-center">
-        <span className="text-[10px] text-muted-foreground/60">גלגל עכבר לזום · גרור להזזה · צבט להגדלה במובייל</span>
-      </div>
     </div>
   );
 }
 
 // ─── Upload Tab ─────────────────────────────────────────────────────────────
-
 interface UploadTabProps {
   onOpenAuth: () => void;
 }
 
 function UploadTab({ onOpenAuth }: UploadTabProps) {
+  const { t, isRtl } = useLanguage();
   const [dragOver, setDragOver] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -207,11 +196,11 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
   const handleFile = useCallback((file: File) => {
     const allowed = ["image/png", "image/jpeg", "image/bmp", "image/webp"];
     if (!allowed.includes(file.type)) {
-      toast.error("סוג קובץ לא נתמך. אנא העלה PNG, JPG, BMP או WebP.");
+      toast.error(t("unsupportedFormat"));
       return;
     }
     if (file.size > 20 * 1024 * 1024) {
-      toast.error("הקובץ גדול מדי. מקסימום 20 MB.");
+      toast.error(isRtl ? "הקובץ גדול מדי. מקסימום 20 MB." : "File too large. Maximum 20 MB.");
       return;
     }
     setImageFile(file);
@@ -221,7 +210,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
     const reader = new FileReader();
     reader.onload = (e) => setImagePreview(e.target?.result as string);
     reader.readAsDataURL(file);
-  }, []);
+  }, [t, isRtl]);
 
   const onDrop = useCallback(
     (e: React.DragEvent) => {
@@ -239,32 +228,28 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
     setResult(null);
     setErrorMsg("");
     setShowSvgPreview(false);
-
     try {
       const formData = new FormData();
       formData.append("image", imageFile);
       formData.append("threshold", String(threshold));
       formData.append("simplifyTolerance", String(simplify));
       formData.append("doubleLineOffset", "0");
-
       const res = await fetch("/api/convert", { method: "POST", body: formData });
       const data = await res.json();
-
       if (!res.ok || !data.success) {
         if (data.error === "REGISTRATION_REQUIRED") {
           onOpenAuth();
           setStatus("idle");
           return;
         }
-        throw new Error(data.message ?? data.error ?? "שגיאה לא ידועה");
+        throw new Error(data.message ?? data.error ?? t("unknownError"));
       }
-
       setResult(data as ConvertResult);
       setStatus("success");
       setShowSvgPreview(true);
-      toast.success(`הומרו ${data.segmentCount.toLocaleString()} קווים בהצלחה!`);
+      toast.success(`${t("conversionSuccess")} (${data.segmentCount.toLocaleString()} ${t("lines")})`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "שגיאה בעיבוד התמונה";
+      const msg = err instanceof Error ? err.message : t("imageProcessingError");
       setErrorMsg(msg);
       setStatus("error");
       toast.error(msg);
@@ -297,7 +282,6 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
       {/* Left: Upload + Controls */}
       <div className="flex flex-col gap-4">
-        {/* Drop Zone */}
         <Card className="overflow-hidden">
           <CardContent className="p-0">
             <div
@@ -317,7 +301,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
               />
               {imagePreview ? (
                 <div className="w-full flex flex-col items-center gap-2">
-                  <img src={imagePreview} alt="תצוגה מקדימה" className="max-h-44 max-w-full object-contain rounded-lg shadow" />
+                  <img src={imagePreview} alt="preview" className="max-h-44 max-w-full object-contain rounded-lg shadow" />
                   <p className="text-sm text-muted-foreground">{imageFile?.name}</p>
                 </div>
               ) : (
@@ -326,13 +310,9 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                     <ImageIcon className="w-6 h-6 text-primary" />
                   </div>
                   <div className="text-center">
-                    <p className="font-semibold">גרור תמונה לכאן</p>
-                    <p className="text-sm text-muted-foreground mt-1">או לחץ לבחירת קובץ</p>
-                  </div>
-                  <div className="flex gap-2 flex-wrap justify-center">
-                    {["PNG", "JPG", "BMP", "WebP"].map((f) => (
-                      <span key={f} className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{f}</span>
-                    ))}
+                    <p className="font-semibold">{t("dragImageHere")}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{t("orClickToSelect")}</p>
+                    <p className="text-xs text-muted-foreground/70 mt-1">{t("supportedFormats")}</p>
                   </div>
                 </>
               )}
@@ -340,32 +320,33 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
           </CardContent>
         </Card>
 
-        {/* Controls */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-3">
               <Sliders className="w-4 h-4 text-primary" />
-              <h2 className="font-semibold text-sm">הגדרות המרה</h2>
+              <h2 className="font-semibold text-sm">{t("conversionSettings")}</h2>
             </div>
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between items-center mb-1.5">
-                  <label className="text-sm font-medium">ערך סף (Threshold)</label>
+                  <label className="text-sm font-medium">{isRtl ? "סף זיהוי" : "Detection Threshold"}</label>
                   <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded text-primary font-semibold">{threshold}</span>
                 </div>
                 <Slider min={10} max={245} step={5} value={[threshold]} onValueChange={([v]) => setThreshold(v)} />
                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>כהה יותר</span><span>בהיר יותר</span>
+                  <span>{isRtl ? "כהה יותר" : "Darker"}</span>
+                  <span>{isRtl ? "בהיר יותר" : "Lighter"}</span>
                 </div>
               </div>
               <div>
                 <div className="flex justify-between items-center mb-1.5">
-                  <label className="text-sm font-medium">פישוט קווים</label>
+                  <label className="text-sm font-medium">{t("lineSimplification")}</label>
                   <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded text-primary font-semibold">{simplify}</span>
                 </div>
                 <Slider min={1} max={10} step={1} value={[simplify]} onValueChange={([v]) => setSimplify(v)} />
                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>פרטים מרביים</span><span>קווים פשוטים</span>
+                  <span>{isRtl ? "פרטים מרביים" : "Max detail"}</span>
+                  <span>{isRtl ? "קווים פשוטים" : "Simple lines"}</span>
                 </div>
               </div>
               {(threshold !== 128 || simplify !== 2) && (
@@ -374,7 +355,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                   onClick={() => { setThreshold(128); setSimplify(2); }}
                   className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
                 >
-                  ↺ אפס לברירת מחדל (threshold=128, פישוט=2)
+                  ↺ {isRtl ? "אפס לברירת מחדל" : "Reset to default"}
                 </button>
               )}
             </div>
@@ -382,7 +363,9 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
         </Card>
 
         <Button size="lg" className="w-full h-11 font-semibold" disabled={!imageFile || status === "loading"} onClick={handleConvert}>
-          {status === "loading" ? <><Loader2 className="w-4 h-4 ml-2 animate-spin" />מעבד...</> : <><Upload className="w-4 h-4 ml-2" />המר ל-DXF</>}
+          {status === "loading"
+            ? <><Loader2 className="w-4 h-4 ml-2 animate-spin" />{t("processing")}</>
+            : <><Upload className="w-4 h-4 ml-2" />{t("convertToDxf")}</>}
         </Button>
       </div>
 
@@ -392,73 +375,66 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
           <CardContent className="p-5">
             <div className="flex items-center gap-2 mb-4">
               <Layers className="w-4 h-4 text-primary" />
-              <h2 className="font-semibold text-sm">תוצאה</h2>
+              <h2 className="font-semibold text-sm">{isRtl ? "תוצאה" : "Result"}</h2>
             </div>
-
             {status === "idle" && (
               <div className="flex flex-col items-center gap-3 py-10 text-center">
                 <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                   <FileCode2 className="w-6 h-6 text-muted-foreground" />
                 </div>
-                <p className="text-muted-foreground text-sm">{imageFile ? "לחץ על 'המר ל-DXF'" : "העלה תמונה כדי להתחיל"}</p>
+                <p className="text-muted-foreground text-sm">
+                  {imageFile ? t("clickConvertButton") : t("uploadImageToStart")}
+                </p>
               </div>
             )}
-
             {status === "loading" && (
               <div className="flex flex-col items-center gap-4 py-10 text-center">
                 <div className="w-14 h-14 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-                <p className="font-medium">מעבד תמונה...</p>
-                <p className="text-sm text-muted-foreground">מזהה קצוות ומייצר קווים וקטוריים</p>
+                <p className="font-medium">{t("processingImage")}</p>
+                <p className="text-sm text-muted-foreground">{t("detectingEdges")}</p>
               </div>
             )}
-
             {status === "success" && result && (
               <div className="flex flex-col gap-4">
                 {showSvgPreview && result.svgPreview && (
                   <SvgZoomViewer
                     svgContent={result.svgPreview}
-                    label="תצוגה מקדימה של הוקטור"
+                    label={isRtl ? "תצוגה מקדימה של הוקטור" : "Vector Preview"}
                     maxHeight={280}
                   />
                 )}
-
                 <div className="grid grid-cols-3 gap-2">
                   <div className="bg-muted rounded-lg p-2.5 text-center">
                     <p className="text-lg font-bold text-primary">{result.segmentCount.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">קווים</p>
+                    <p className="text-xs text-muted-foreground">{t("lines")}</p>
                   </div>
                   <div className="bg-muted rounded-lg p-2.5 text-center">
                     <p className="text-lg font-bold text-primary">{((result.width / dpi) * 25.4).toFixed(1)}</p>
-                    <p className="text-xs text-muted-foreground">רוחב מ"מ</p>
+                    <p className="text-xs text-muted-foreground">{t("widthMm")}</p>
                   </div>
                   <div className="bg-muted rounded-lg p-2.5 text-center">
                     <p className="text-lg font-bold text-primary">{((result.height / dpi) * 25.4).toFixed(1)}</p>
-                    <p className="text-xs text-muted-foreground">גובה מ"מ</p>
+                    <p className="text-xs text-muted-foreground">{t("heightMm")}</p>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-100">
                   <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                  <p className="text-sm font-medium text-green-700">ההמרה הושלמה בהצלחה!</p>
+                  <p className="text-sm font-medium text-green-700">{t("conversionSuccess")}</p>
                 </div>
-
                 <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 font-semibold" onClick={() => setDownloadOpen(true)}>
-                  <Download className="w-4 h-4 ml-2" />הורד קובץ DXF
+                  <Download className="w-4 h-4 ml-2" />{t("downloadDxf")}
                 </Button>
                 <Button variant="outline" size="sm" className="w-full" onClick={reset}>
-                  המר תמונה חדשה
+                  {isRtl ? "המר תמונה חדשה" : "Convert New Image"}
                 </Button>
               </div>
             )}
-
             {status === "error" && (
               <div className="flex flex-col items-center gap-3 py-8 text-center">
-                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                  <AlertCircle className="w-6 h-6 text-red-500" />
-                </div>
-                <p className="font-semibold text-red-600">שגיאה בעיבוד</p>
-                <p className="text-sm text-muted-foreground max-w-xs">{errorMsg}</p>
-                <Button variant="outline" size="sm" onClick={() => setStatus("idle")}>נסה שוב</Button>
+                <AlertCircle className="w-10 h-10 text-red-400" />
+                <p className="font-semibold text-red-600">{t("processingError")}</p>
+                <p className="text-sm text-muted-foreground">{errorMsg}</p>
+                <Button variant="outline" size="sm" onClick={reset}>{isRtl ? "נסה שוב" : "Try Again"}</Button>
               </div>
             )}
           </CardContent>
@@ -470,8 +446,8 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
 }
 
 // ─── AI Generator Tab ────────────────────────────────────────────────────────
-
 function AiGeneratorTab() {
+  const { t, isRtl } = useLanguage();
   const [prompt, setPrompt] = useState("");
   const [modifications, setModifications] = useState("");
   const [status, setStatus] = useState<Status>("idle");
@@ -484,14 +460,13 @@ function AiGeneratorTab() {
 
   const generate = async (isModify = false) => {
     if (!prompt.trim()) {
-      toast.error("נא להזין תיאור של התמונה הרצויה");
+      toast.error(t("enterDescription"));
       return;
     }
     setStatus("loading");
     setImages([]);
     setSelectedIdx(null);
     setErrorMsg("");
-
     try {
       const res = await fetch("/api/generate-images", {
         method: "POST",
@@ -502,15 +477,14 @@ function AiGeneratorTab() {
         }),
       });
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message ?? data.error ?? "שגיאה ביצירת התמונות");
-
+      if (!res.ok || !data.success) throw new Error(data.message ?? data.error ?? t("aiError"));
       setImages(data.images as AiImage[]);
       setStatus("success");
       setShowModify(false);
       setModifications("");
-      toast.success("3 עיצובים נוצרו בהצלחה!");
+      toast.success(t("aiSuccess"));
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "שגיאה ביצירת התמונות";
+      const msg = err instanceof Error ? err.message : t("aiError");
       setErrorMsg(msg);
       setStatus("error");
       toast.error(msg);
@@ -544,34 +518,31 @@ function AiGeneratorTab() {
         <CardContent className="p-5">
           <div className="flex items-center gap-2 mb-3">
             <Sparkles className="w-4 h-4 text-primary" />
-            <h2 className="font-semibold text-sm">תאר את העיצוב הרצוי</h2>
+            <h2 className="font-semibold text-sm">{t("describeDesign")}</h2>
           </div>
           <Textarea
-            placeholder="לדוגמה: פרח שושן, מנדלה עגולה, דג קוי, עץ זית, לוגו פשוט של כוכב..."
+            placeholder={t("aiPromptPlaceholder")}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            className="resize-none text-base min-h-[90px] text-right"
-            dir="rtl"
+            className="resize-none text-base min-h-[90px]"
+            style={{ textAlign: isRtl ? "right" : "left" }}
+            dir={isRtl ? "rtl" : "ltr"}
             disabled={status === "loading"}
           />
-          <p className="text-xs text-muted-foreground mt-2">
-            ה-AI ייצור 3 וריאציות עם קווים דקים וחלקים, מותאמות להמרה ל-DXF לחיתוך לייזר וכרסום CNC
-          </p>
+          <p className="text-xs text-muted-foreground mt-2">{t("aiTabSubtitle")}</p>
           <Button
             className="w-full mt-3 h-11 font-semibold"
             onClick={() => generate(false)}
             disabled={status === "loading" || !prompt.trim()}
           >
-            {status === "loading" ? (
-              <><Loader2 className="w-4 h-4 ml-2 animate-spin" />יוצר עיצובים...</>
-            ) : (
-              <><Wand2 className="w-4 h-4 ml-2" />צור 3 עיצובים</>
-            )}
+            {status === "loading"
+              ? <><Loader2 className="w-4 h-4 ml-2 animate-spin" />{t("creating")}</>
+              : <><Wand2 className="w-4 h-4 ml-2" />{t("create3Designs")}</>}
           </Button>
         </CardContent>
       </Card>
 
-      {/* Loading State */}
+      {/* Loading */}
       {status === "loading" && (
         <Card>
           <CardContent className="p-8">
@@ -581,8 +552,8 @@ function AiGeneratorTab() {
                 <Sparkles className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
               </div>
               <div>
-                <p className="font-semibold text-base">ה-AI יוצר עיצובים...</p>
-                <p className="text-sm text-muted-foreground mt-1">מייצר 3 וריאציות עם קווים דקים וחלקים להמרה ל-DXF</p>
+                <p className="font-semibold text-base">{t("aiCreating")}</p>
+                <p className="text-sm text-muted-foreground mt-1">{t("aiCreatingSubtitle")}</p>
               </div>
               <div className="flex gap-1.5 mt-1">
                 {[0, 1, 2].map((i) => (
@@ -599,9 +570,9 @@ function AiGeneratorTab() {
         <Card>
           <CardContent className="p-6 flex flex-col items-center gap-3 text-center">
             <AlertCircle className="w-10 h-10 text-red-400" />
-            <p className="font-semibold text-red-600">שגיאה ביצירת התמונות</p>
+            <p className="font-semibold text-red-600">{t("aiError")}</p>
             <p className="text-sm text-muted-foreground">{errorMsg}</p>
-            <Button variant="outline" size="sm" onClick={() => setStatus("idle")}>נסה שוב</Button>
+            <Button variant="outline" size="sm" onClick={() => setStatus("idle")}>{isRtl ? "נסה שוב" : "Try Again"}</Button>
           </CardContent>
         </Card>
       )}
@@ -610,7 +581,7 @@ function AiGeneratorTab() {
       {status === "success" && images.length > 0 && (
         <>
           <div>
-            <p className="text-sm font-semibold mb-3 text-muted-foreground">בחר את העיצוב המועדף עליך:</p>
+            <p className="text-sm font-semibold mb-3 text-muted-foreground">{t("selectDesign")}</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {images.map((img, idx) => (
                 <div
@@ -633,12 +604,12 @@ function AiGeneratorTab() {
                         }}
                       />
                     ) : (
-                      <img src={img.imageUrl} alt={`עיצוב ${idx + 1}`} className="w-full h-full object-contain" />
+                      <img src={img.imageUrl} alt={`${t("design")} ${idx + 1}`} className="w-full h-full object-contain" />
                     )}
                   </div>
                   <div className="px-2 py-1.5 border-t bg-muted/30 flex items-center justify-between">
-                    <span className="text-xs font-medium text-muted-foreground">וריאציה {idx + 1}</span>
-                    <span className="text-xs text-muted-foreground">{img.segmentCount.toLocaleString()} קווים</span>
+                    <span className="text-xs font-medium text-muted-foreground">{t("variation")} {idx + 1}</span>
+                    <span className="text-xs text-muted-foreground">{img.segmentCount.toLocaleString()} {t("lines")}</span>
                   </div>
                   {selectedIdx === idx && (
                     <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-primary flex items-center justify-center shadow-md">
@@ -655,72 +626,70 @@ function AiGeneratorTab() {
             </div>
           </div>
 
-          {/* Selected image detail */}
+          {/* Selected detail */}
           {selected && (
             <Card className="border-primary/30 bg-primary/5">
               <CardContent className="p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <CheckCircle2 className="w-4 h-4 text-primary" />
-                  <span className="font-semibold text-sm">וריאציה {selectedIdx! + 1} נבחרה</span>
+                  <span className="font-semibold text-sm">{t("variation")} {selectedIdx! + 1} {t("selected")}</span>
                 </div>
-
                 {selected.svgPreview && (
                   <div className="mb-3">
                     <SvgZoomViewer
                       svgContent={selected.svgPreview}
-                      label="תצוגת קווי וקטור (DXF)"
+                      label={isRtl ? "תצוגת קווי וקטור (DXF)" : "Vector Lines Preview (DXF)"}
                       maxHeight={280}
                     />
                   </div>
                 )}
-
                 <div className="grid grid-cols-3 gap-2 mb-3">
                   <div className="bg-white rounded-lg p-2 text-center border">
                     <p className="text-base font-bold text-primary">{selected.segmentCount.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">קווים</p>
+                    <p className="text-xs text-muted-foreground">{t("lines")}</p>
                   </div>
                   <div className="bg-white rounded-lg p-2 text-center border">
                     <p className="text-base font-bold text-primary">{((selected.width / 96) * 25.4).toFixed(1)}</p>
-                    <p className="text-xs text-muted-foreground">רוחב מ"מ</p>
+                    <p className="text-xs text-muted-foreground">{t("widthMm")}</p>
                   </div>
                   <div className="bg-white rounded-lg p-2 text-center border">
                     <p className="text-base font-bold text-primary">{((selected.height / 96) * 25.4).toFixed(1)}</p>
-                    <p className="text-xs text-muted-foreground">גובה מ"מ</p>
+                    <p className="text-xs text-muted-foreground">{t("heightMm")}</p>
                   </div>
                 </div>
-
                 <Button
                   size="lg"
                   className="w-full bg-green-600 hover:bg-green-700 font-semibold mb-2"
                   onClick={() => handleDownload(selected)}
                 >
-                  <Download className="w-4 h-4 ml-2" />הורד קובץ DXF
+                  <Download className="w-4 h-4 ml-2" />{t("downloadDxf")}
                 </Button>
-
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" className="flex-1" onClick={() => setShowModify(!showModify)}>
                     <RefreshCw className="w-3.5 h-3.5 ml-1.5" />
-                    בקש שינויים
+                    {t("requestChanges")}
                   </Button>
                   <Button variant="outline" size="sm" className="flex-1" onClick={() => { setImages([]); setSelectedIdx(null); setStatus("idle"); }}>
                     <ChevronLeft className="w-3.5 h-3.5 ml-1.5" />
-                    עיצוב חדש
+                    {isRtl ? "עיצוב חדש" : "New Design"}
                   </Button>
                 </div>
-
                 {showModify && (
                   <div className="mt-3 p-3 bg-white rounded-lg border">
-                    <p className="text-xs font-medium mb-2 text-muted-foreground">תאר את השינויים הרצויים:</p>
+                    <p className="text-xs font-medium mb-2 text-muted-foreground">
+                      {isRtl ? "תאר את השינויים הרצויים:" : "Describe the desired changes:"}
+                    </p>
                     <Textarea
-                      placeholder="לדוגמה: הוסף עלים, עשה את הקווים עבים יותר, הוסף פרטים..."
+                      placeholder={t("changesPlaceholder")}
                       value={modifications}
                       onChange={(e) => setModifications(e.target.value)}
-                      className="resize-none text-sm min-h-[70px] text-right mb-2"
-                      dir="rtl"
+                      className="resize-none text-sm min-h-[70px] mb-2"
+                      style={{ textAlign: isRtl ? "right" : "left" }}
+                      dir={isRtl ? "rtl" : "ltr"}
                     />
                     <Button size="sm" className="w-full" onClick={() => generate(true)} disabled={!modifications.trim()}>
                       <Wand2 className="w-3.5 h-3.5 ml-1.5" />
-                      צור 3 עיצובים מעודכנים
+                      {isRtl ? "צור 3 עיצובים מעודכנים" : "Create 3 Updated Designs"}
                     </Button>
                   </div>
                 )}
@@ -733,12 +702,12 @@ function AiGeneratorTab() {
       {/* Tips */}
       <Card className="bg-purple-50 border-purple-100">
         <CardContent className="p-4">
-          <h3 className="font-semibold text-sm text-purple-800 mb-2">✨ טיפים לתיאור טוב</h3>
+          <h3 className="font-semibold text-sm text-purple-800 mb-2">{t("tipsTitle")}</h3>
           <ul className="space-y-1.5 text-sm text-purple-700">
-            <li className="flex gap-2"><span className="shrink-0">•</span><span>ציין סגנון: "מינימליסטי", "גיאומטרי", "סטנסיל", "לוגו פשוט"</span></li>
-            <li className="flex gap-2"><span className="shrink-0">•</span><span>הוסף הקשר: "לחריטה על עץ", "לחיתוך לייזר", "לכרסום CNC"</span></li>
-            <li className="flex gap-2"><span className="shrink-0">•</span><span>דוגמאות: "פרח לוטוס מינימליסטי", "מנדלה גיאומטרית", "דרקון בסגנון סטנסיל", "מפת ישראל"</span></li>
-            <li className="flex gap-2"><span className="shrink-0">💡</span><span>תמונות עם קווים דקים וחלקים על רקע לבן מתמירות הכי טוב ל-DXF</span></li>
+            <li className="flex gap-2"><span className="shrink-0">•</span><span>{t("tip1")}</span></li>
+            <li className="flex gap-2"><span className="shrink-0">•</span><span>{t("tip2")}</span></li>
+            <li className="flex gap-2"><span className="shrink-0">•</span><span>{t("tip3")}</span></li>
+            <li className="flex gap-2"><span className="shrink-0">💡</span><span>{t("tip4")}</span></li>
           </ul>
         </CardContent>
       </Card>
@@ -748,8 +717,8 @@ function AiGeneratorTab() {
 }
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
-
 export default function Home() {
+  const { t, isRtl } = useLanguage();
   const [appUser, setAppUser] = useState<{ id: number; email: string; name: string | null } | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
@@ -764,23 +733,24 @@ export default function Home() {
   const handleLogout = async () => {
     await fetch("/api/app-auth/logout", { method: "POST" });
     setAppUser(null);
-    toast.success("התנתקת בהצלחה");
+    toast.success(t("loggedOutSuccess"));
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50" dir={isRtl ? "rtl" : "ltr"}>
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container py-3 flex items-center gap-3">
           <img
             src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663365044246/SslVmktvndMoFSwH.png"
-            alt="לוגו"
+            alt={t("logoAlt")}
             className="w-10 h-10 rounded-lg object-contain shrink-0"
           />
           <div className="flex-1">
-            <h1 className="text-base font-bold leading-tight">ממיר תמונה ל-DXF</h1>
-            <p className="text-xs text-muted-foreground">המרה לקבצי וקטור לחיתוך לייזר ו-CNC</p>
+            <h1 className="text-base font-bold leading-tight">{t("appTitle")}</h1>
+            <p className="text-xs text-muted-foreground">{t("appSubtitle")}</p>
           </div>
+          <LanguageSwitcher />
         </div>
       </header>
 
@@ -805,37 +775,35 @@ export default function Home() {
               </div>
               <Button variant="ghost" size="sm" onClick={() => window.location.href = "/history"} className="text-xs gap-1">
                 <History className="w-3.5 h-3.5" />
-                היסטוריה
+                {t("history")}
               </Button>
               <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs">
                 <LogOut className="w-3.5 h-3.5 ml-1" />
-                יציאה
+                {t("logout")}
               </Button>
             </div>
           ) : (
             <Button size="sm" variant="outline" onClick={() => { setLimitReached(false); setAuthOpen(true); }} className="text-xs gap-1.5">
               <LogIn className="w-3.5 h-3.5" />
-              התחבר/הירשם
+              {t("loginRegister")}
             </Button>
           )}
         </div>
 
-        <Tabs defaultValue="upload" dir="rtl">
+        <Tabs defaultValue="upload" dir={isRtl ? "rtl" : "ltr"}>
           <TabsList className="w-full mb-5 h-11">
             <TabsTrigger value="upload" className="flex-1 gap-2 text-sm">
               <Upload className="w-4 h-4" />
-              העלאת תמונה
+              {t("uploadTab")}
             </TabsTrigger>
             <TabsTrigger value="ai" className="flex-1 gap-2 text-sm">
               <Sparkles className="w-4 h-4" />
-              יצירת AI
+              {t("aiTab")}
             </TabsTrigger>
           </TabsList>
-
           <TabsContent value="upload">
             <UploadTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
           </TabsContent>
-
           <TabsContent value="ai">
             <AiGeneratorTab />
           </TabsContent>
@@ -844,7 +812,7 @@ export default function Home() {
 
       <footer className="border-t bg-white/50 mt-6">
         <div className="container py-3 text-center text-xs text-muted-foreground">
-          ממיר תמונה ל-DXF — לשימוש ב-CNC, חיתוך לייזר ועיצוב CAD
+          {t("appFooter")}
         </div>
       </footer>
     </div>
