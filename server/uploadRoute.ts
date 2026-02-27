@@ -44,7 +44,7 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
     if (!limitCheck.allowed) {
       return res.status(403).json({
         error: "QUOTA_EXCEEDED",
-        message: `עברת את מכסת הפעולות (${limitCheck.used}/${limitCheck.max}). צור קשר עם המפתח לפתיחה מחדש.`,
+        message: `הגעת למגבלת ${limitCheck.max} עיצובים. לשדרוג ופתיחת גישה מלאה, צרו קשר עם רובוטיקה וטכנולוגיה בוואטסאפ: 050-0000000 או במייל: info@robotics-tech.co.il`,
         used: limitCheck.used,
         max: limitCheck.max,
       });

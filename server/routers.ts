@@ -8,7 +8,7 @@ import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
 import { getDb } from "./db";
 import { appUsers, userActions } from "../drizzle/schema";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, and } from "drizzle-orm";
 import { getAppUserFromCookie } from "./appAuth";
 
 const ADMIN_COOKIE = "admin_session";
@@ -209,6 +209,23 @@ export const appRouter = router({
           .set({ shareToken: token, shareTitle: action.description ?? undefined })
           .where(eq(userActions.id, input.actionId));
         return { shareToken: token };
+      }),
+
+    /** Delete a user's own action */
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const appUser = getAppUserFromCookie(
+          (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
+        );
+        if (!appUser) throw new TRPCError({ code: "UNAUTHORIZED", message: "נדרשת התחברות" });
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        // Only delete own records
+        await db
+          .delete(userActions)
+          .where(and(eq(userActions.id, input.id), eq(userActions.appUserId, appUser.userId)));
+        return { success: true };
       }),
 
     /** Get a shared design by token (public) */
