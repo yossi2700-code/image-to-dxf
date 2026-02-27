@@ -1,15 +1,24 @@
 /**
  * DxfDownloadDialog — dialog for downloading DXF with:
  * - Custom filename input
- * - Default size 500x500mm (50x50cm) with proportional percentage scaling
+ * - Real physical size (based on SVG dimensions at 96 DPI → mm)
+ * - Proportional percentage scaling
  * - SVG preview
+ *
+ * Size logic:
+ *   potrace / GPT-4o SVG outputs at 96 DPI.
+ *   1 px = 25.4 / 96 ≈ 0.2646 mm
+ *   So a 500px design → ~132mm at 100%.
+ *   The DXF coordinates are currently in px units; we scale them to mm.
+ *   At 100% the output is the real physical size at 96 DPI.
+ *   The user can scale up/down with the slider.
  */
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Download, X, Eye, FileCode2 } from "lucide-react";
+import { Download, X, FileCode2 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,10 +42,8 @@ export interface DxfDownloadDialogProps {
  * Also updates $EXTMIN / $EXTMAX header values.
  */
 function scaleDxfContent(dxfText: string, scaleFactor: number): string {
-  if (Math.abs(scaleFactor - 1) < 0.001) return dxfText;
+  if (Math.abs(scaleFactor - 1) < 0.0001) return dxfText;
 
-  // Scale numeric coordinate values (groups 10/11/20/21/30/31)
-  // and EXTMAX values
   return dxfText.replace(
     /^(10|11|20|21|30|31)\n(-?[0-9]+\.?[0-9]*(?:[eE][+-]?[0-9]+)?)/gm,
     (_match, group, value) => {
@@ -54,7 +61,7 @@ function SvgMiniPreview({ svg }: { svg: string }) {
     '<svg style="max-width:100%;max-height:100%;width:auto;height:auto;" '
   );
   return (
-    <div className="border rounded-lg bg-white overflow-hidden flex items-center justify-center p-3" style={{ height: 220 }}>
+    <div className="border rounded-lg bg-white overflow-hidden flex items-center justify-center p-3" style={{ height: 200 }}>
       <div
         className="w-full h-full flex items-center justify-center"
         dangerouslySetInnerHTML={{ __html: styledSvg }}
@@ -63,17 +70,23 @@ function SvgMiniPreview({ svg }: { svg: string }) {
   );
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Format mm: if ≥ 10mm show as cm too */
+function formatSize(mm: number) {
+  if (mm >= 10) {
+    return `${mm.toFixed(0)} מ"מ (${(mm / 10).toFixed(1)} ס"מ)`;
+  }
+  return `${mm.toFixed(1)} מ"מ`;
+}
+
 // ─── Main Dialog ──────────────────────────────────────────────────────────────
 
 /**
- * Default output size: 500mm × 500mm (50cm × 50cm).
- * The DXF coordinates from potrace are in pixels (96 DPI).
- * We scale so the design fits within 500mm.
- *
- * Pixel → mm: 1px = 25.4/96 ≈ 0.2646 mm
- * So 1024px ≈ 271mm. We scale to 500mm by default.
+ * Pixel → mm conversion at 96 DPI (standard screen resolution).
+ * 1 px = 25.4 / 96 ≈ 0.2646 mm
  */
-const DEFAULT_SIZE_MM = 500; // 50cm
+const PX_TO_MM = 25.4 / 96;
 
 export function DxfDownloadDialog({
   open,
@@ -82,8 +95,8 @@ export function DxfDownloadDialog({
   dxfUrl,
   defaultFilename,
   segmentCount,
-  svgWidth = 1024,
-  svgHeight = 1024,
+  svgWidth = 500,
+  svgHeight = 500,
 }: DxfDownloadDialogProps) {
   const [filename, setFilename] = useState(defaultFilename.replace(/\.dxf$/i, ""));
   const [scalePercent, setScalePercent] = useState(100);
@@ -97,29 +110,29 @@ export function DxfDownloadDialog({
     }
   }, [open, defaultFilename]);
 
-  // Calculate actual output size in mm
-  // Base: potrace outputs at ~96 DPI; 1px = 25.4/96 mm
-  // We normalize so the larger dimension = DEFAULT_SIZE_MM at 100%
-  const pxToMm = 25.4 / 96;
-  const maxDim = Math.max(svgWidth, svgHeight);
-  const baseScaleFactor = maxDim > 0 ? (DEFAULT_SIZE_MM / (maxDim * pxToMm)) : 1;
-  const finalScaleFactor = baseScaleFactor * (scalePercent / 100);
+  // Real physical size at 100%:
+  // DXF coords are in px units → convert to mm at 96 DPI
+  const realWidthMm = svgWidth * PX_TO_MM;
+  const realHeightMm = svgHeight * PX_TO_MM;
 
-  const outputWidthMm = svgWidth * pxToMm * finalScaleFactor;
-  const outputHeightMm = svgHeight * pxToMm * finalScaleFactor;
+  // At 100% the output equals the real physical size.
+  // scaleFactor = (scalePercent / 100) * PX_TO_MM
+  // (we need to convert px→mm AND apply user scale)
+  const scaleFactor = PX_TO_MM * (scalePercent / 100);
+
+  const outputWidthMm = svgWidth * scaleFactor;
+  const outputHeightMm = svgHeight * scaleFactor;
 
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      // Fetch original DXF
       const resp = await fetch(dxfUrl);
       if (!resp.ok) throw new Error("שגיאה בהורדת הקובץ");
       const originalDxf = await resp.text();
 
-      // Scale the DXF
-      const scaledDxf = scaleDxfContent(originalDxf, finalScaleFactor);
+      // Scale: convert px→mm and apply user percentage
+      const scaledDxf = scaleDxfContent(originalDxf, scaleFactor);
 
-      // Create blob and trigger download
       const blob = new Blob([scaledDxf], { type: "application/dxf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -162,8 +175,7 @@ export function DxfDownloadDialog({
           <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
             <span>{segmentCount.toLocaleString()} קווים</span>
             <span>
-              {outputWidthMm.toFixed(0)} × {outputHeightMm.toFixed(0)} מ"מ
-              ({(outputWidthMm / 10).toFixed(1)} × {(outputHeightMm / 10).toFixed(1)} ס"מ)
+              גודל פלט: <strong>{outputWidthMm.toFixed(0)} × {outputHeightMm.toFixed(0)} מ"מ</strong>
             </span>
           </div>
 
@@ -192,21 +204,37 @@ export function DxfDownloadDialog({
             </div>
             <Slider
               min={10}
-              max={300}
+              max={500}
               step={5}
               value={[scalePercent]}
               onValueChange={([v]) => setScalePercent(v)}
             />
             <div className="flex justify-between text-xs text-muted-foreground mt-1">
               <span>קטן (10%)</span>
-              <span className="text-center text-primary font-medium">
-                ברירת מחדל: 50×50 ס"מ (100%)
-              </span>
-              <span>גדול (300%)</span>
+              <button
+                className="text-primary font-medium underline underline-offset-2 cursor-pointer"
+                onClick={() => setScalePercent(100)}
+              >
+                גודל אמיתי (100%)
+              </button>
+              <span>גדול (500%)</span>
             </div>
-            <p className="text-xs text-muted-foreground mt-1.5 text-center">
-              גודל סופי: <strong>{outputWidthMm.toFixed(0)} × {outputHeightMm.toFixed(0)} מ"מ</strong>
-            </p>
+
+            {/* Size info table */}
+            <div className="mt-2 rounded-md bg-muted/50 p-2 text-xs space-y-1">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">גודל מקורי (100%):</span>
+                <span className="font-medium">
+                  {formatSize(realWidthMm)} × {formatSize(realHeightMm)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">גודל סופי ({scalePercent}%):</span>
+                <span className="font-semibold text-primary">
+                  {formatSize(outputWidthMm)} × {formatSize(outputHeightMm)}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Actions */}
