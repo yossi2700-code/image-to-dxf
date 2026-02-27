@@ -18,13 +18,11 @@ import {
 import {
   ArrowRight,
   Download,
-  RefreshCw,
   Sparkles,
   Upload,
   Clock,
   FileCode2,
   ImageIcon,
-  Share2,
   Trash2,
 } from "lucide-react";
 
@@ -256,12 +254,10 @@ function HistoryCard({
 function DetailDialog({
   item,
   onClose,
-  onReconvert,
   onDelete,
 }: {
   item: HistoryItem | null;
   onClose: () => void;
-  onReconvert: (item: HistoryItem) => void;
   onDelete: (item: HistoryItem) => void;
 }) {
   if (!item) return null;
@@ -328,30 +324,7 @@ function DetailDialog({
                   </a>
                 </Button>
               )}
-              {/* Share via WhatsApp */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-green-700 border-green-300 hover:bg-green-50"
-                onClick={() => {
-                  const shareUrl = `${window.location.origin}/share/${item.id}`;
-                  const text = encodeURIComponent(`עיצוב DXF: ${item.description ?? "עיצוב וקטורי"} ${shareUrl}`);
-                  window.open(`https://wa.me/?text=${text}`, "_blank");
-                }}
-              >
-                <Share2 className="w-4 h-4" />
-                שתף בוואטסאפ
-              </Button>
-              {isAi && item.description && (
-                <Button
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => onReconvert(item)}
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  צור שוב
-                </Button>
-              )}
+
             </div>
           </div>
         </div>
@@ -375,11 +348,6 @@ export default function History() {
       setDeleteTarget(null);
     },
   });
-
-  const handleReconvert = (item: HistoryItem) => {
-    const prompt = encodeURIComponent(item.description ?? "");
-    navigate(`/?prompt=${prompt}&tab=ai`);
-  };
 
   const handleDeleteConfirm = () => {
     if (!deleteTarget) return;
@@ -458,10 +426,6 @@ export default function History() {
       <DetailDialog
         item={selectedItem}
         onClose={() => setSelectedItem(null)}
-        onReconvert={(item) => {
-          setSelectedItem(null);
-          handleReconvert(item);
-        }}
         onDelete={(item) => {
           setSelectedItem(null);
           setDeleteTarget(item);
