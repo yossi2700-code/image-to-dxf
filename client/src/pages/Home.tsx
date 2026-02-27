@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { AuthDialog } from "@/components/AuthDialog";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
+import { AiRefinePanel, type RefineResult } from "@/components/AiRefinePanel";
+import { AiTraceTab } from "@/components/AiTraceTab";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
@@ -31,6 +33,7 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
+  Scan,
 } from "lucide-react";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -664,7 +667,30 @@ function AiGeneratorTab() {
                 >
                   <Download className="w-4 h-4 ml-2" />{t("downloadDxf")}
                 </Button>
-                <div className="flex gap-2">
+                {/* AI Refine Panel */}
+                <AiRefinePanel
+                  imageUrl={selected.imageUrl}
+                  originalPrompt={prompt}
+                  onRefined={(refined: RefineResult) => {
+                    const refinedImg: AiImage = {
+                      imageUrl: refined.imageUrl,
+                      svgPreview: refined.svgPreview,
+                      dxfUrl: refined.dxfUrl,
+                      dxfFilename: refined.dxfFilename,
+                      segmentCount: refined.segmentCount,
+                      width: refined.width,
+                      height: refined.height,
+                      realWidth: refined.realWidth,
+                      realHeight: refined.realHeight,
+                    };
+                    setImages((prev) => {
+                      const next = [...prev];
+                      next[selectedIdx!] = refinedImg;
+                      return next;
+                    });
+                  }}
+                />
+                <div className="flex gap-2 mt-2">
                   <Button variant="outline" size="sm" className="flex-1" onClick={() => setShowModify(!showModify)}>
                     <RefreshCw className="w-3.5 h-3.5 ml-1.5" />
                     {t("requestChanges")}
@@ -800,12 +826,19 @@ export default function Home() {
               <Sparkles className="w-4 h-4" />
               {t("aiTab")}
             </TabsTrigger>
+            <TabsTrigger value="trace" className="flex-1 gap-2 text-sm">
+              <Scan className="w-4 h-4" />
+              {t("aiTraceTab")}
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="upload">
             <UploadTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
           </TabsContent>
           <TabsContent value="ai">
             <AiGeneratorTab />
+          </TabsContent>
+          <TabsContent value="trace">
+            <AiTraceTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
           </TabsContent>
         </Tabs>
       </main>

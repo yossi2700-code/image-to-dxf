@@ -11,6 +11,8 @@ import { serveStatic, setupVite } from "./vite";
 import uploadRoute from "../uploadRoute";
 import generateRoute from "../generateRoute";
 import appAuthRoute from "../appAuth";
+import aiTraceRoute from "../aiTraceRoute";
+import aiRefineRoute from "../aiRefineRoute";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -47,6 +49,10 @@ async function startServer() {
   app.use(uploadRoute);
   // AI image generation route
   app.use(generateRoute);
+  // AI Trace route (image → GPT-4o Vision → SVG → DXF)
+  app.use(aiTraceRoute);
+  // AI Refine route (existing image + instruction → refined image → DXF)
+  app.use(aiRefineRoute);
   // tRPC API
   app.use(
     "/api/trpc",

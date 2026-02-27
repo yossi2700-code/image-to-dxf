@@ -276,3 +276,34 @@
 - [x] תרגום DxfDownloadDialog.tsx
 - [x] תרגום App.tsx / ניווט
 - [x] שמירת העדפת שפה ב-localStorage
+
+## AI Trace - תמונה לעיצוב חריטה
+
+- [ ] Server: aiTraceRoute.ts — קבלת תמונה, שליחה ל-GPT-4o Vision, קבלת SVG נקי
+- [ ] Server: prompt מותאם לחריטה — outline נקי, ללא רקע, ללא פרטים מיותרים
+- [ ] Server: המרת SVG מ-Vision ל-DXF (שימוש ב-svgToDxf הקיים)
+- [ ] tRPC: procedure aiTrace (protected, בדיקת מכסה)
+- [ ] UI: Tab שלישי "AI Trace" ב-Home.tsx
+- [ ] UI: העלאת תמונה + preview + כפתור "צור outline"
+- [ ] UI: הצגת SVG תוצאה + כפתור הורדת DXF
+- [ ] תרגומים: הוספת מפתחות עברית/אנגלית ל-AI Trace
+- [ ] Tests: vitest לlogic של aiTrace
+
+## עיצוב מחדש - רמה בינלאומית
+
+- [ ] עיצוב מערכת: פלטת צבעים חדשה, טיפוגרפיה, CSS tokens
+- [ ] עיצוב מחדש Home: header, hero, tabs - מראה premium
+- [ ] הוספת AI Trace tab UI + חיבור לשרת
+- [ ] עיצוב מחדש History: תואם לעיצוב החדש
+
+## AI Refine - תיקון AI לתמונה קיימת
+
+- [ ] שרת: aiRefineRoute.ts - קבלת imageUrl + הוראת תיקון, GPT-4o image edit, החזרת SVG+DXF חדש
+- [ ] UI: כפתור "בקש תיקון AI" + textarea לתיאור התיקון - מופיע אחרי כל תוצאה
+- [ ] תמיכה בתיקון מכל מקור: העלאת תמונה, AI generate, AI Trace
+- [ ] תרגומים לעברית ואנגלית
+
+## AI Trace - זיהוי תמונה וציור מחדש
+
+- [ ] UI: Tab שלישי עם העלאת תמונה + AI שמצייר outline נקי
+- [ ] חיבור ל-aiTraceRoute.ts (כבר קיים בשרת)
