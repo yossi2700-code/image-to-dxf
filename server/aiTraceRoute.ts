@@ -69,6 +69,51 @@ const STYLE_VARIATIONS = [
 ];
 
 /**
+ * Three distinct style variations for LANDSCAPE mode.
+ * Designed to capture the full scene: sky, horizon, foreground, buildings, nature.
+ */
+const LANDSCAPE_STYLE_VARIATIONS = [
+  {
+    label: "simple",
+    style:
+      "Simple clean landscape outline. Bold horizon line, clear silhouettes of all elements (buildings, trees, mountains, sky). " +
+      "Capture the full panoramic scene — foreground, midground, background. " +
+      "NO texture, NO hatching, NO shading, NO fill. Clean minimal lines only.",
+  },
+  {
+    label: "detailed",
+    style:
+      "Detailed landscape line art. Clear horizon with rich detail in all layers: sky elements (clouds, sun), " +
+      "background (mountains, distant buildings), midground (trees, structures), foreground (ground, plants, paths). " +
+      "Every visible element drawn with clean distinct lines. NO texture, NO hatching, NO shading, NO fill. " +
+      "Like a detailed panoramic illustration or travel sketch.",
+  },
+  {
+    label: "decorative",
+    style:
+      "Elegant decorative landscape line art. Flowing artistic lines capturing the full scenic view. " +
+      "Detailed silhouettes of all scene elements with decorative inner line work. " +
+      "NO texture, NO hatching, NO shading, NO fill. " +
+      "Like a fine art engraving of a landscape — beautiful and suitable for laser cutting.",
+  },
+];
+
+function buildLandscapePrompt(sceneDescription: string, variationIndex: number): string {
+  const variation = LANDSCAPE_STYLE_VARIATIONS[variationIndex % LANDSCAPE_STYLE_VARIATIONS.length];
+  return (
+    `Clean black and white line art of a landscape scene: ${sceneDescription}. ` +
+    "Pure white background (#FFFFFF). " +
+    "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
+    "High contrast: only pure black (#000000) lines on white. " +
+    "IMPORTANT: Draw the ENTIRE scene — all elements visible in the landscape (sky, horizon, buildings, trees, mountains, water, foreground). " +
+    "Do NOT focus on a single object — capture the full panoramic view. " +
+    `${variation.style} ` +
+    "Wide panoramic composition, complete, not cropped. " +
+    "No text, no watermarks, no grey tones."
+  );
+}
+
+/**
  * Generate 5 contextual improvement suggestions based on the identified object.
  * Suggestions are in the user's UI language (he/en).
  * Also includes suggestions for other objects detected in the image.
@@ -238,15 +283,20 @@ router.post(
       const imageBase64 = resized.toString("base64");
       const userDesc = (req.body?.description || "").trim();
       const focusText = (req.body?.focusText || "").trim();
+      const landscapeMode = req.body?.landscapeMode === "true" || req.body?.landscapeMode === true;
 
       // ── Step A: LLM analyzes image → extracts detailed object description ─────
       // We use GPT-4o vision to understand what's in the image and describe it
       // in a way that gpt-image-1 can draw from scratch (same as AI Generate tab).
       console.log("[aiTrace] Analyzing image with LLM...");
 
-      // Build the user instruction based on focusText
+      // Build the user instruction based on landscapeMode / focusText
       let analysisInstruction: string;
-      if (focusText) {
+      if (landscapeMode) {
+        analysisInstruction = focusText
+          ? `Describe this landscape scene for line art generation, focusing on: "${focusText}". Include ALL visible elements: sky, horizon, background, midground, foreground. Describe the full panoramic composition. Output ONLY the description (3-5 sentences), no preamble.`
+          : "Describe this landscape/scene for line art generation. Include ALL visible elements: sky, horizon, background (mountains/buildings), midground (trees/structures), foreground (ground/plants). Describe the full panoramic composition. Output ONLY the description (3-5 sentences), no preamble.";
+      } else if (focusText) {
         analysisInstruction = `The user wants to draw: "${focusText}". Describe ONLY that specific element from the image in detail for line art generation. Focus on its shape, structure, key features, style, and proportions. Output ONLY the description (2-4 sentences), no preamble.`;
       } else {
         analysisInstruction = userDesc
@@ -297,7 +347,9 @@ router.post(
       // Exactly the same pipeline as generateRoute — draw from scratch, no image reference.
       // This guarantees the same clean output quality as the AI Generate tab.
       const generationPromises = Array.from({ length: 3 }, async (_, idx) => {
-        const imagePrompt = buildLineArtPrompt(objectDescription, idx);
+        const imagePrompt = landscapeMode
+          ? buildLandscapePrompt(objectDescription, idx)
+          : buildLineArtPrompt(objectDescription, idx);
 
         const response = await openai.images.generate({
           model: "gpt-image-1",

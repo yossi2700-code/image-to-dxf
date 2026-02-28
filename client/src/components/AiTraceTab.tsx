@@ -227,6 +227,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const [downloadTarget, setDownloadTarget] = useState<GeneratedImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [landscapeMode, setLandscapeMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback((file: File) => {
@@ -255,6 +256,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       if (description.trim()) formData.append("description", description.trim());
       if (focusText.trim()) formData.append("focusText", focusText.trim());
       formData.append("lang", isRtl ? "he" : "en");
+      formData.append("landscapeMode", landscapeMode ? "true" : "false");
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
       const data = await res.json();
       if (!res.ok) {
@@ -356,6 +358,36 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             </div>
             <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/bmp,image/webp,image/gif" className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+
+            {/* Landscape mode toggle */}
+            <div className="mb-3">
+              <button
+                type="button"
+                onClick={() => setLandscapeMode((v) => !v)}
+                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border-2 transition-colors font-semibold text-sm ${
+                  landscapeMode
+                    ? "border-green-500 bg-green-50 text-green-700"
+                    : "border-muted-foreground/20 bg-muted/30 text-muted-foreground hover:border-primary/40"
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <span className="text-lg">{landscapeMode ? "🌄" : "📷"}</span>
+                  <span>{landscapeMode ? (isRtl ? "מצב נוף פעיל" : "Landscape Mode ON") : (isRtl ? "מצב רגיל" : "Normal Mode")}</span>
+                </span>
+                <span className={`w-10 h-5 rounded-full transition-colors flex items-center px-0.5 ${
+                  landscapeMode ? "bg-green-500" : "bg-muted-foreground/30"
+                }`}>
+                  <span className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                    landscapeMode ? "translate-x-5" : "translate-x-0"
+                  }`} />
+                </span>
+              </button>
+              <p className="text-xs text-muted-foreground mt-1 px-1">
+                {landscapeMode
+                  ? (isRtl ? "מצייר את כל הסצנה: שמיים, רקע, עצים, בניינים, קדמת תמונה" : "Draws the entire scene: sky, background, trees, buildings, foreground")
+                  : (isRtl ? "מתמקד באובייקט הראשי בתמונה" : "Focuses on the main object in the image")}
+              </p>
+            </div>
 
             {/* Focus text — what to draw */}
             <div className="mb-3">

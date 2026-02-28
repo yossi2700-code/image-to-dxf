@@ -43,6 +43,51 @@ const STYLE_VARIATIONS = [
   },
 ];
 
+/**
+ * Three distinct style variations for LANDSCAPE mode.
+ * Designed to capture the full scene: sky, horizon, foreground, buildings, nature.
+ */
+const LANDSCAPE_STYLE_VARIATIONS = [
+  {
+    label: "simple",
+    style:
+      "Simple clean landscape outline. Bold horizon line, clear silhouettes of all elements (buildings, trees, mountains, sky). " +
+      "Capture the full panoramic scene — foreground, midground, background. " +
+      "NO texture, NO hatching, NO shading, NO fill. Clean minimal lines only.",
+  },
+  {
+    label: "detailed",
+    style:
+      "Detailed landscape line art. Clear horizon with rich detail in all layers: sky elements (clouds, sun), " +
+      "background (mountains, distant buildings), midground (trees, structures), foreground (ground, plants, paths). " +
+      "Every visible element drawn with clean distinct lines. NO texture, NO hatching, NO shading, NO fill. " +
+      "Like a detailed panoramic illustration or travel sketch.",
+  },
+  {
+    label: "decorative",
+    style:
+      "Elegant decorative landscape line art. Flowing artistic lines capturing the full scenic view. " +
+      "Detailed silhouettes of all scene elements with decorative inner line work. " +
+      "NO texture, NO hatching, NO shading, NO fill. " +
+      "Like a fine art engraving of a landscape — beautiful and suitable for laser cutting.",
+  },
+];
+
+function buildLandscapePrompt(userPrompt: string, variationIndex: number): string {
+  const variation = LANDSCAPE_STYLE_VARIATIONS[variationIndex % LANDSCAPE_STYLE_VARIATIONS.length];
+  return (
+    `Clean black and white line art of a landscape scene: ${userPrompt}. ` +
+    "Pure white background (#FFFFFF). " +
+    "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
+    "High contrast: only pure black (#000000) lines on white. " +
+    "IMPORTANT: Draw the ENTIRE scene — all elements visible in the landscape (sky, horizon, buildings, trees, mountains, water, foreground). " +
+    "Do NOT focus on a single object — capture the full panoramic view. " +
+    `${variation.style} ` +
+    "Wide panoramic composition, complete, not cropped. " +
+    "No text, no watermarks, no grey tones."
+  );
+}
+
 function buildLineArtPrompt(userPrompt: string, variationIndex: number): string {
   const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
   return (
@@ -93,9 +138,10 @@ function pngToSvg(pngBuffer: Buffer): Promise<string> {
  */
 router.post("/api/generate-images", async (req, res) => {
   try {
-    const { prompt, modifications } = req.body as {
+    const { prompt, modifications, landscapeMode } = req.body as {
       prompt?: string;
       modifications?: string;
+      landscapeMode?: boolean;
     };
 
     if (!prompt || prompt.trim().length < 2) {
@@ -146,7 +192,9 @@ router.post("/api/generate-images", async (req, res) => {
 
     // Generate 3 images in parallel using gpt-image-1 — each with a different style variation
     const generationPromises = Array.from({ length: 3 }, async (_, idx) => {
-      const imagePrompt = buildLineArtPrompt(fullPrompt, idx);
+      const imagePrompt = landscapeMode
+        ? buildLandscapePrompt(fullPrompt, idx)
+        : buildLineArtPrompt(fullPrompt, idx);
       // Step 1: Generate PNG with AI
       const response = await openai.images.generate({
         model: "gpt-image-1",

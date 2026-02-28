@@ -625,6 +625,7 @@ function AiGeneratorTab() {
   const [downloadImg, setDownloadImg] = useState<AiImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   const [showVector, setShowVector] = useState(false);
+  const [landscapeMode, setLandscapeMode] = useState(false);
 
   const generate = async (isModify = false) => {
     if (!prompt.trim()) {
@@ -642,6 +643,7 @@ function AiGeneratorTab() {
         body: JSON.stringify({
           prompt: prompt.trim(),
           modifications: isModify ? modifications.trim() : undefined,
+          landscapeMode,
         }),
       });
       const data = await res.json();
@@ -708,6 +710,35 @@ function AiGeneratorTab() {
             dir={isRtl ? "rtl" : "ltr"}
             disabled={status === "loading"}
           />
+          {/* Landscape mode toggle */}
+          <div className="mt-3 mb-1">
+            <button
+              type="button"
+              onClick={() => setLandscapeMode((v) => !v)}
+              className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border-2 transition-colors font-semibold text-sm ${
+                landscapeMode
+                  ? "border-green-500 bg-green-50 text-green-700"
+                  : "border-muted-foreground/20 bg-muted/30 text-muted-foreground hover:border-primary/40"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span className="text-lg">{landscapeMode ? "🌄" : "📷"}</span>
+                <span>{landscapeMode ? (isRtl ? "מצב נוף פעיל" : "Landscape Mode ON") : (isRtl ? "מצב רגיל" : "Normal Mode")}</span>
+              </span>
+              <span className={`w-10 h-5 rounded-full transition-colors flex items-center px-0.5 ${
+                landscapeMode ? "bg-green-500" : "bg-muted-foreground/30"
+              }`}>
+                <span className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                  landscapeMode ? "translate-x-5" : "translate-x-0"
+                }`} />
+              </span>
+            </button>
+            <p className="text-xs text-muted-foreground mt-1 px-1">
+              {landscapeMode
+                ? (isRtl ? "מצייר את כל הסצנה: שמיים, רקע, עצים, בניינים, קדמת תמונה" : "Draws the entire scene: sky, background, trees, buildings, foreground")
+                : (isRtl ? "מתמקד באובייקט הראשי בתמונה" : "Focuses on the main object in the image")}
+            </p>
+          </div>
           <p className="text-xs text-muted-foreground mt-2">{t("aiTabSubtitle")}</p>
           <Button
             className="w-full mt-3 h-11 font-semibold"

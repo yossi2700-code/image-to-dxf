@@ -464,3 +464,12 @@
 - [x] Frontend: שליחת שפת הממשק (he/en) לשרת עם הבקשה
 - [x] Backend: ייצור הצעות בשפת הממשק (עברית/אנגלית)
 - [x] Backend: הצעות יכללו אובייקטים נוספים שזוהו בתמונה
+
+## Rollback + Landscape Mode - פברואר 2026
+
+- [x] Rollback STYLE_VARIATIONS and buildLineArtPrompt to previous working version (before "architectural" upgrade)
+- [x] Add Landscape mode toggle in AI Trace tab (separate button/toggle)
+- [x] Backend: landscapeMode flag in aiTraceRoute — different prompt focusing on full scene (sky, trees, buildings, foreground)
+- [x] Backend: landscapeMode flag in generateRoute — same landscape-aware prompt
+- [x] UI: Landscape toggle button in AI Trace and AI Generate tabs
+- [x] Tests: 19 new landscape mode tests (81 total passing)

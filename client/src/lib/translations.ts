@@ -138,6 +138,11 @@ export const translations = {
     aiTraceTip2: "לוגואים, צללים, איורים וצורות פשוטות מתאימות ביותר",
     aiTraceTip3: "תמונות צבעוניות גם עובדות — ה-AI ימיר לקווים נקיים",
     aiTraceNewImage: "תמונה חדשה",
+    // Landscape mode
+    landscapeMode: "מצב נוף",
+    landscapeModeOn: "מצב נוף פעיל",
+    landscapeModeOff: "מצב רגיל",
+    landscapeModeTooltip: "מצב נוף: מצייר את כל הסצנה — שמיים, רקע, עצים, בניינים, קדמת תמונה",
     // AI Refine
     refineWithAi: "תיקון עם AI",
     refineDescription: "תאר את השינויים הספציפיים שברצונך להחיל על העיצוב:",
@@ -292,6 +297,11 @@ export const translations = {
     aiTraceTip3: "Color photos also work — AI converts to clean lines",
     aiTraceNoImage: "Please upload an image first",
     aiTraceNewImage: "New Image",
+    // Landscape mode
+    landscapeMode: "Landscape Mode",
+    landscapeModeOn: "Landscape Mode On",
+    landscapeModeOff: "Normal Mode",
+    landscapeModeTooltip: "Landscape mode: draws the entire scene — sky, background, trees, buildings, foreground",
     // AI Refine
     refineWithAi: "Refine with AI",
     refineDescription: "Describe the specific changes you want to apply to this design:",
