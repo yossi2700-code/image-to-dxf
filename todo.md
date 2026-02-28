@@ -437,3 +437,8 @@
 
 - [x] תיקון SVG לא מוצג ב-iOS/Safari — חזרה ל-dangerouslySetInnerHTML בשני ה-viewers
 - [x] שיפור כפתור "הצג וקטור" — כפתור בולט עם border + toggle הצג/הסתר
+
+## תיקון כפתור הצג וקטור + גובה תצוגה
+
+- [x] כפתור "הצג/הסתר וקטור" בולט ב-Upload Tab עם border + toggle
+- [x] הגבלת גובה תצוגת וקטור ל-350px, התחלה מסוגרת (false)

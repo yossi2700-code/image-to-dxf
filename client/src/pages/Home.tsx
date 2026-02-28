@@ -399,7 +399,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
       }
       setResult(data as ConvertResult);
       setStatus("success");
-      setShowSvgPreview(true);
+      setShowSvgPreview(false);
       toast.success(`${t("conversionSuccess")} (${data.segmentCount.toLocaleString()} ${t("lines")})`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t("imageProcessingError");
@@ -549,12 +549,23 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
             )}
             {status === "success" && result && (
               <div className="flex flex-col gap-4">
-                {showSvgPreview && result.svgPreview && (
-                  <SvgZoomViewer
-                    svgContent={result.svgPreview}
-                    label={isRtl ? "תצוגה מקדימה של הוקטור" : "Vector Preview"}
-                    maxHeight={280}
-                  />
+                {result.svgPreview && (
+                  <div>
+                    <button
+                      onClick={() => setShowSvgPreview((v) => !v)}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 mb-2 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 active:bg-primary/20 transition-colors font-semibold text-sm text-primary"
+                    >
+                      <Eye className="w-4 h-4" />
+                      {showSvgPreview ? (isRtl ? "הסתר וקטור" : "Hide Vector") : (isRtl ? "הצג וקטור" : "Show Vector")}
+                    </button>
+                    {showSvgPreview && (
+                      <SvgZoomViewer
+                        svgContent={result.svgPreview}
+                        label={isRtl ? "תצוגה מקדימה של הוקטור" : "Vector Preview"}
+                        maxHeight={350}
+                      />
+                    )}
+                  </div>
                 )}
                 <div className="grid grid-cols-3 gap-2">
                   <div className="bg-muted rounded-lg p-2.5 text-center">
