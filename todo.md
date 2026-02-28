@@ -372,3 +372,11 @@
 
 - [ ] בדיקת aiRefineRoute.ts להבנת pipeline ה-SVG
 - [x] עדכון prompt לקווים עבים (4-6px) לשיפור potrace
+
+## תיקון AI Trace - קווים חלקים עם potrace
+
+- [x] זיהוי הבעיה: convertImageToDxf משתמש ב-Sobel edge detection שמייצר קווים כפולים
+- [x] תיקון: שינוי Step 2 ב-aiTraceRoute להשתמש ב-potrace ישירות (כמו generateRoute)
+- [x] pipeline חדש: PNG → threshold(200) → potrace → SVG Bezier curves → svgToDxf → DXF
+- [x] עדכון prompt: קווים עבים ונקיים (3-5px) לתוצאות potrace טובות יותר
+- [x] 52 בדיקות עוברות

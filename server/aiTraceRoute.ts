@@ -6,21 +6,26 @@
  *   Returns: { previewPngUrl, previewPngBase64 }
  *
  * STEP 2 — POST /api/ai-trace/convert
- *   User approves the PNG preview → potrace pipeline → DXF
+ *   User approves the PNG preview → potrace pipeline (same as generateRoute) → DXF
  *   Returns: { svgPreview, dxfUrl, segmentCount, realWidth, realHeight, filename }
+ *
+ * KEY: Step 2 uses the SAME pipeline as generateRoute (potrace → SVG → DXF),
+ *      NOT the Sobel edge-detection pipeline from imageProcessor.ts.
+ *      This produces smooth Bezier curves instead of jagged line segments.
  */
 
 import { Router } from "express";
 import multer from "multer";
 import sharp from "sharp";
+import potrace from "potrace";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { checkUsageLimit } from "./usageLimits";
-import { convertImageToDxf } from "./imageProcessor";
 import { generateImage } from "./_core/imageGeneration";
+import { svgToDxf } from "./svgToDxf";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
@@ -33,6 +38,25 @@ function buildFilename(description: string): string {
     .replace(/\s+/g, "_")
     .slice(0, 40);
   return safe || "ai_trace";
+}
+
+/**
+ * Convert a PNG buffer to SVG using potrace.
+ * Same function as in generateRoute — traces bitmap contours into smooth Bezier curves.
+ */
+function pngToSvg(pngBuffer: Buffer): Promise<string> {
+  return new Promise((resolve, reject) => {
+    potrace.trace(pngBuffer, {
+      threshold: 180,       // pixels darker than this become foreground
+      turdSize: 4,          // ignore speckles smaller than this (noise removal)
+      alphaMax: 1,          // corner smoothness (0=sharp, 1.33=smooth)
+      optCurve: true,       // optimize curves for smooth output
+      optTolerance: 0.2,    // curve optimization tolerance
+    }, (err: Error | null, svg: string) => {
+      if (err) reject(err);
+      else resolve(svg);
+    });
+  });
 }
 
 // ─── STEP 1: AI generates B&W PNG drawing ────────────────────────────────────
@@ -93,17 +117,14 @@ router.post(
       const imageKey = `ai-trace-original/${nanoid()}.jpg`;
       const { url: imageUrl } = await storagePut(imageKey, resized, "image/jpeg");
 
-      // ── STEP 1: Use generateImage to create a B&W line drawing ───────────────
-      // We pass the original image and ask for a clean black-on-white line drawing
+      // ── Build prompt: request clean B&W line drawing ──────────────────────────
       const userDesc = (req.body?.description || "").trim();
       const prompt = [
-        "Create a bold black-and-white line drawing of the object in this image.",
-        "Style: pure white background (#FFFFFF), thick solid black lines (stroke width 4-6px minimum).",
-        "Use BOLD, THICK strokes — not thin hairlines. Every line must be clearly visible and at least 4px wide.",
-        "No shading, no fills, no gradients, no gray tones — only solid black outlines on pure white.",
-        "Draw the exact outer silhouette plus all internal details: logos, patterns, stitching, hardware, text.",
-        "Like a bold woodcut print or stencil art — thick clean outlines suitable for laser cutting and CNC engraving.",
-        "The lines must be thick enough to be traced by a vectorizer (potrace).",
+        "Create a clean black-and-white line art drawing of the object in this image.",
+        "Pure white background (#FFFFFF). Bold thick black outlines (3-5px stroke width).",
+        "No fill, no shading, no gradients — only pure black (#000000) lines on white.",
+        "High contrast: every line must be clearly visible. Like a coloring book or technical illustration.",
+        "Single centered object, complete, not cropped. Suitable for laser cutting and CNC engraving.",
         userDesc ? `The object is: ${userDesc}.` : "",
       ]
         .filter(Boolean)
@@ -122,21 +143,16 @@ router.post(
 
       console.log("[aiTrace] Generated image URL:", generated.url);
 
-      // ── Download the generated image — it's already a clean B&W line drawing ──
+      // ── Download the generated image ──────────────────────────────────────────
       const genResponse = await fetch(generated.url);
       const genBuffer = Buffer.from(await genResponse.arrayBuffer());
 
-      // Pre-process for potrace: upscale + slight blur + threshold to get clean crisp lines
-      // 1. Upscale to 2048px for better detail capture (lanczos3 = best quality)
-      // 2. Grayscale
-      // 3. Slight Gaussian blur to smooth anti-aliased edges
-      // 4. Threshold at 210 (keep lines dark, make background pure white)
-      //    Higher threshold = more white background, cleaner lines
+      // ── Pre-process for potrace: grayscale + threshold (same as generateRoute) ─
+      // This converts the AI-generated image to a clean binary B&W image
+      // threshold(200): pixels brighter than 200 → white, rest → black
       const enhancedBuffer = await sharp(genBuffer)
-        .resize(2048, 2048, { fit: "inside", withoutEnlargement: false, kernel: "lanczos3" })
         .grayscale()
-        .blur(0.5)          // Very slight blur to smooth anti-aliased edges before threshold
-        .threshold(210)     // Lines are dark (<210), background is white (>210)
+        .threshold(200)
         .png()
         .toBuffer();
 
@@ -180,7 +196,7 @@ router.post(
   }
 );
 
-// ─── STEP 2: Convert approved PNG to DXF ─────────────────────────────────────
+// ─── STEP 2: Convert approved PNG to DXF using potrace (same as generateRoute) ─
 
 router.post(
   "/api/ai-trace/convert",
@@ -213,36 +229,46 @@ router.post(
         return res.status(400).json({ error: "NO_PNG", message: "לא סופק PNG לעיבוד" });
       }
 
-      // ── Run potrace pipeline (same as regular upload) ─────────────────────────
-      const result = await convertImageToDxf(pngBuffer, {
-        threshold: 128,
-        simplifyTolerance: 0.8,   // Lower = more detail preserved, smoother curves
-        minSegmentLength: 1.5,    // Keep smaller segments for fine details
-      });
+      // ── Step 1: potrace → SVG with smooth Bezier curves ──────────────────────
+      // This is the SAME pipeline as generateRoute — produces smooth curves, not jagged lines
+      const rawSvg = await pngToSvg(pngBuffer);
+
+      // Convert potrace fill-based SVG to stroke-only for visual preview
+      const svgContent = rawSvg
+        .replace(/fill="[^"]*"/g, 'fill="none"')
+        .replace(/fill:[^;"']*(;|(?="))/g, 'fill:none$1')
+        .replace(/<path /g, '<path stroke="black" stroke-width="1.5" fill="none" ');
+      const svgPreview = svgContent.replace(
+        /stroke="black" stroke-width="1.5" fill="none" ([^>]*?)fill="none"/g,
+        'stroke="black" stroke-width="1.5" fill="none" $1'
+      );
+
+      // ── Step 2: SVG → DXF ────────────────────────────────────────────────────
+      const { dxf, segmentCount, realWidth, realHeight } = svgToDxf(rawSvg);
 
       // ── Upload DXF to S3 ──────────────────────────────────────────────────────
       const desc = description || "ai_trace";
       const filename = buildFilename(desc);
       const dxfKey = `ai-trace-dxf/${nanoid()}.dxf`;
-      const { url: dxfUrl } = await storagePut(dxfKey, result.dxf, "application/dxf");
+      const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
 
       // ── Record user action ────────────────────────────────────────────────────
       await recordUserAction({
         appUserId: appUser.userId,
         actionType: "ai_generate",
         description: desc,
-        segmentCount: result.segmentCount,
+        segmentCount,
         dxfUrl,
         imageUrl: imageUrl || previewPngUrl,
-        svgPreview: result.svgPreview,
+        svgPreview,
       });
 
       return res.json({
-        svgPreview: result.svgPreview,
+        svgPreview,
         dxfUrl,
-        segmentCount: result.segmentCount,
-        realWidth: result.realWidth,
-        realHeight: result.realHeight,
+        segmentCount,
+        realWidth,
+        realHeight,
         filename: `${filename}.dxf`,
       });
     } catch (err: unknown) {
