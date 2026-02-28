@@ -263,9 +263,15 @@ router.post("/api/export-pdf", async (req, res) => {
     drawSvgOnPage(page, svg, svgW, svgH, pageWidthPt, pageHeightPt);
 
     const pdfBytes = await pdfDoc.save();
-    const safeName = filename.replace(/[^a-zA-Z0-9_\-\u0590-\u05FF]/g, "_") || "design";
+    // Use RFC 5987 encoding for Unicode/Hebrew filenames
+    // fallback ASCII name + UTF-8 encoded filename* for modern browsers
+    const asciiName = filename.replace(/[^\x20-\x7E]/g, "_").replace(/[^a-zA-Z0-9_\-. ]/g, "_") || "design";
+    const encodedName = encodeURIComponent(filename || "design");
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="${safeName}.pdf"`);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${asciiName}.pdf"; filename*=UTF-8''${encodedName}.pdf`
+    );
     res.send(Buffer.from(pdfBytes));
   } catch (err) {
     console.error("[export-pdf]", err);
