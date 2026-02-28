@@ -992,7 +992,7 @@ export default function Home() {
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container py-3 flex items-center gap-3">
           <img
-            src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663365044246/SslVmktvndMoFSwH.png"
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-ai-robotics-4ufLRLRwpeLsqvCczeWuY8.webp"
             alt={t("logoAlt")}
             className="w-10 h-10 rounded-lg object-contain shrink-0"
           />
