@@ -27,35 +27,34 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 
 
 /**
  * Build the GPT-4o Vision prompt for generating a clean engraving outline.
- * We ask for a minimal SVG with only path/polyline elements — no fills, no colors.
+ * Two-step approach: identify the specific object, then draw it faithfully.
  */
 function buildTracePrompt(): string {
-  return `You are an expert SVG illustrator and product designer specializing in laser engraving and CNC cutting files.
+  return `You are an expert vector illustrator specializing in laser engraving and CNC cutting files.
 
-Your task has TWO steps:
+STEP 1 — IDENTIFY the object in the image with maximum specificity:
+- What exact object is this? (brand, model, specific variant if visible)
+- What are its most distinctive visual features? (logos, patterns, hardware, text, stitching, emblems)
+- What is the overall shape and proportions?
 
-STEP 1 — IDENTIFY: Look carefully at the image. Identify the EXACT object — its specific brand, model, shape, distinctive features, logos, patterns, stitching lines, hardware details, proportions. Be as specific as possible (e.g. "Louis Vuitton Neverfull tote bag with LV monogram pattern, leather handles, brass hardware").
+STEP 2 — DRAW a faithful SVG outline that captures those specific details:
 
-STEP 2 — REDRAW FAITHFULLY: Create a detailed SVG outline that captures the SPECIFIC object as accurately as possible — not a generic version. Include:
-- Exact silhouette and proportions from the image
-- All distinctive structural details (seams, handles, hardware, clasps, straps)
-- Brand-specific patterns or logos if visible (as outline paths)
-- Interior lines that define the object's character
-- Fine details that make this object recognizable
-
-STRICT OUTPUT RULES:
-1. Output ONLY valid SVG XML — no markdown, no code blocks, no explanation, no comments
-2. SVG must start with <svg and end with </svg>
-3. Use viewBox that matches the object's actual proportions (e.g. viewBox="0 0 400 500" for a tall object)
+SVG REQUIREMENTS:
+1. Output ONLY raw SVG XML — start with <svg and end with </svg>, nothing else
+2. NO markdown fences, NO explanations, NO text before or after the SVG
+3. viewBox must match the object's actual proportions (e.g. "0 0 600 400" for landscape)
 4. ALL elements must have: stroke="black" stroke-width="1.5" fill="none"
-5. NO fills, NO colors, NO gradients, NO background rectangle
-6. Use <path> elements with smooth curves (bezier) for organic shapes
-7. Use multiple detail paths — not just a single outline
-8. The result should be immediately recognizable as THIS SPECIFIC object
-9. Aim for 20-60 path elements to capture sufficient detail
-10. Suitable for laser engraving — clean lines, no overlapping strokes
+5. NO fills, NO colors, NO background shapes, NO decorative borders
+6. Structure: outer silhouette first → major interior divisions → distinctive details
+7. Include brand-specific elements: logos, monograms, patterns, hardware, text outlines
+8. Use bezier curves (C/c commands) for smooth organic shapes
+9. Use 20 to 60 path elements — enough detail to be recognizable, not cluttered
+10. Every line must be purposeful — represent a real edge, seam, or feature of the object
+11. Result must be suitable for laser engraving: clean, no overlapping strokes
 
-Redraw this specific object as a faithful detailed SVG outline now:`;
+IMPORTANT: Do NOT draw a generic silhouette. Capture the SPECIFIC object with its unique identifying features.
+
+Output the SVG now:`;
 }
 
 /** Convert buffer to base64 data URL for OpenAI Vision */

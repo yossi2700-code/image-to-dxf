@@ -170,9 +170,7 @@ function HistoryCard({
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow group">
       <div className="relative h-40 bg-muted/30 flex items-center justify-center overflow-hidden">
-        {item.imageUrl ? (
-          <img src={item.imageUrl} alt={item.description ?? "image"} className="w-full h-full object-cover" />
-        ) : item.svgPreview ? (
+        {item.svgPreview ? (
           <div
             className="w-full h-full p-2 flex items-center justify-center bg-white"
             dangerouslySetInnerHTML={{
@@ -263,9 +261,6 @@ function DetailDialog({
           )}
 
           <div className={`flex gap-3 items-start`} dir={isRtl ? "rtl" : "ltr"}>
-            {item.imageUrl && (
-              <img src={item.imageUrl} alt={t("originalImage")} className="w-20 h-20 object-cover rounded-lg border shrink-0" />
-            )}
             <div className={`text-sm space-y-1 ${isRtl ? "text-right" : "text-left"}`}>
               <p className="text-muted-foreground">{date}</p>
               {item.segmentCount != null && item.segmentCount > 0 && (
