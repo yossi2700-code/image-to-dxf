@@ -144,7 +144,7 @@ router.post("/api/generate-images", async (req, res) => {
         prompt: imagePrompt,
         n: 1,
         size: "1024x1024",
-        quality: "medium",
+        quality: "low",
       });
 
       const imageData = response.data?.[0];

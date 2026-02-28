@@ -221,10 +221,10 @@ router.post(
         return res.status(400).json({ error: "NO_IMAGE", message: "לא סופקה תמונה" });
       }
 
-      // ── Resize for LLM analysis ───────────────────────────────────────────────
+      // ── Resize for LLM analysis (512px = fewer Vision tokens = lower cost) ──────
       const resized = await sharp(imageBuffer)
-        .resize(1024, 1024, { fit: "inside", withoutEnlargement: true })
-        .jpeg({ quality: 90 })
+        .resize(512, 512, { fit: "inside", withoutEnlargement: true })
+        .jpeg({ quality: 85 })
         .toBuffer();
 
       const imageBase64 = resized.toString("base64");
@@ -263,7 +263,7 @@ router.post(
                 type: "image_url",
                 image_url: {
                   url: `data:image/jpeg;base64,${imageBase64}`,
-                  detail: "high",
+                  detail: "low",
                 },
               },
               {
@@ -296,7 +296,7 @@ router.post(
           prompt: imagePrompt,
           n: 1,
           size: "1024x1024",
-          quality: "medium",
+          quality: "low",
         });
 
         const imageData = response.data?.[0];

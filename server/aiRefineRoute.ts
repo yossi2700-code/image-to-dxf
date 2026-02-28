@@ -121,6 +121,7 @@ router.post("/api/ai-refine", async (req, res) => {
       prompt: refinePrompt,
       n: 1,
       size: "1024x1024",
+      quality: "low",
     });
 
     const imageData = response.data?.[0];
