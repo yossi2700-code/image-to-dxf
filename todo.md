@@ -356,3 +356,7 @@
 - [x] Backend: endpoint נפרד להמרת PNG ל-DXF (potrace pipeline)
 - [x] Frontend: הצגת PNG preview אחרי AI
 - [x] Frontend: כפתור "המר ל-DXF" נפרד אחרי אישור המשתמש
+
+## AI Trace - תיקון PNG corrupt header
+
+- [x] תיקון: שינוי מ-invokeLLM (לא יכול לייצר תמונות) ל-generateImage API שמחזיר PNG אמיתי
