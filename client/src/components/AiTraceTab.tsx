@@ -154,10 +154,10 @@ function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) 
         {/* Toggle vector preview */}
         <button
           onClick={() => setShowVector(!showVector)}
-          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 mb-2 w-full justify-center"
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 mb-3 rounded-xl border-2 border-primary bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors font-bold text-base text-primary shadow-sm"
         >
-          <Eye className="w-3 h-3" />
-          {showVector ? (isRtl ? "הסתר וקטור" : "Hide vector") : (isRtl ? "הצג וקטור DXF" : "Show DXF vector")}
+          <Eye className="w-5 h-5" />
+          {showVector ? (isRtl ? "⬆ הסתר וקטור" : "⬆ Hide Vector") : (isRtl ? "⬇ הצג וקטור" : "⬇ Show Vector")}
         </button>
 
         {showVector && (

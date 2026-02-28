@@ -553,10 +553,10 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                   <div>
                     <button
                       onClick={() => setShowSvgPreview((v) => !v)}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 mb-2 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 active:bg-primary/20 transition-colors font-semibold text-sm text-primary"
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4 mb-3 rounded-xl border-2 border-primary bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors font-bold text-base text-primary shadow-sm"
                     >
-                      <Eye className="w-4 h-4" />
-                      {showSvgPreview ? (isRtl ? "הסתר וקטור" : "Hide Vector") : (isRtl ? "הצג וקטור" : "Show Vector")}
+                      <Eye className="w-5 h-5" />
+                      {showSvgPreview ? (isRtl ? "⬆ הסתר וקטור" : "⬆ Hide Vector") : (isRtl ? "⬇ הצג וקטור" : "⬇ Show Vector")}
                     </button>
                     {showSvgPreview && (
                       <SvgZoomViewer
@@ -755,30 +755,29 @@ function AiGeneratorTab() {
               {images.map((img, idx) => (
                 <div
                   key={idx}
-                  className={`relative rounded-xl border-2 cursor-pointer transition-all overflow-hidden bg-white
+                  className={`relative rounded-xl border-2 cursor-pointer transition-all bg-white
                     ${selectedIdx === idx
                       ? "border-primary shadow-xl ring-2 ring-primary/30 scale-[1.02]"
                       : "border-border hover:border-primary/50 hover:shadow-md"}`}
                   onClick={() => setSelectedIdx(idx)}
                 >
                   <div
-                    className="bg-white flex items-center justify-center p-2 relative group cursor-zoom-in"
-                    style={{ minHeight: 180, maxHeight: 240 }}
+                    className="bg-white flex items-center justify-center p-2 relative group cursor-zoom-in rounded-t-xl overflow-hidden"
+                    style={{ minHeight: 180 }}
                     onClick={(e) => { e.stopPropagation(); setZoomImg({ src: img.imageUrl, alt: `${t("design")} ${idx + 1}` }); }}
                   >
                     {img.svgPreview ? (
                       <div
                         className="w-full flex items-center justify-center"
-                        style={{ maxHeight: 220 }}
                         dangerouslySetInnerHTML={{
                           __html: img.svgPreview.replace(
                             /<svg /,
-                            '<svg style="max-width:100%;max-height:220px;width:auto;height:auto;display:block;margin:auto;" '
+                            '<svg style="max-width:100%;width:auto;height:auto;display:block;margin:auto;" '
                           ),
                         }}
                       />
                     ) : (
-                      <img src={img.imageUrl} alt={`${t("design")} ${idx + 1}`} className="max-w-full max-h-52 object-contain" />
+                      <img src={img.imageUrl} alt={`${t("design")} ${idx + 1}`} className="max-w-full object-contain" />
                     )}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                       <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
@@ -815,10 +814,10 @@ function AiGeneratorTab() {
                   <div className="mb-3">
                     <button
                       onClick={() => setShowVector((v) => !v)}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 mb-2 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 active:bg-primary/20 transition-colors font-semibold text-sm text-primary"
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4 mb-3 rounded-xl border-2 border-primary bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors font-bold text-base text-primary shadow-sm"
                     >
-                      <Eye className="w-4 h-4" />
-                      {showVector ? (isRtl ? "הסתר וקטור" : "Hide Vector") : (isRtl ? "הצג וקטור" : "Show Vector")}
+                      <Eye className="w-5 h-5" />
+                      {showVector ? (isRtl ? "⬆ הסתר וקטור" : "⬆ Hide Vector") : (isRtl ? "⬇ הצג וקטור" : "⬇ Show Vector")}
                     </button>
                     {showVector && (
                       <SvgZoomViewer
