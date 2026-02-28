@@ -97,11 +97,12 @@ router.post(
       // We pass the original image and ask for a clean black-on-white line drawing
       const userDesc = (req.body?.description || "").trim();
       const prompt = [
-        "Create a clean black-and-white LINE DRAWING / TECHNICAL OUTLINE of the object in this image.",
-        "Style: pure white background, thin black lines only, no shading, no fills, no gradients.",
-        "Like a coloring book page or technical product illustration.",
-        "Trace the exact outer silhouette and all major internal details (logos, patterns, hardware, stitching).",
-        "The result should be suitable for laser engraving or CNC cutting.",
+        "Create a clean black-and-white vector line drawing of the object in this image.",
+        "Style: pure white background, thin uniform black lines only.",
+        "No shading, no fills, no gradients, no gray tones — only crisp black outlines on white.",
+        "Draw the exact outer silhouette plus all internal details: logos, patterns, stitching, hardware, text.",
+        "Like a technical product illustration or coloring book page — every detail traced as a clean line.",
+        "The drawing must be suitable for laser engraving and CNC cutting.",
         userDesc ? `The object is: ${userDesc}.` : "",
       ]
         .filter(Boolean)
