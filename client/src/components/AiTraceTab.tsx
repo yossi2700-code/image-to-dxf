@@ -195,6 +195,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [focusText, setFocusText] = useState("");
+  const [customImprovement, setCustomImprovement] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<TraceResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
@@ -250,7 +251,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
 
   const reset = () => {
     setImageFile(null); setImagePreview(null); setResult(null);
-    setStatus("idle"); setErrorMsg(""); setFocusText("");
+    setStatus("idle"); setErrorMsg(""); setFocusText(""); setCustomImprovement("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -404,17 +405,42 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               </CardContent>
             </Card>
 
-            {/* AI Suggestions chips */}
+            {/* AI Suggestions + custom improvement */}
             {result.suggestions && result.suggestions.length > 0 && (
               <Card className="border-blue-200 bg-blue-50">
                 <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
+                  {/* Header */}
+                  <div className="flex items-center gap-2 mb-3">
                     <Wand2 className="w-4 h-4 text-blue-600" />
-                    <span className="text-xs font-semibold text-blue-700">
-                      {isRtl ? "הצעות שיפור מה-AI:" : "AI Improvement Suggestions:"}
+                    <span className="text-sm font-semibold text-blue-700">
+                      {isRtl ? "שפר את העיצוב" : "Improve the design"}
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+
+                  {/* Style variation chips */}
+                  <p className="text-xs text-blue-600 font-medium mb-1.5">
+                    {isRtl ? "שנה סגנון:" : "Change style:"}
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {(isRtl ? VARIATION_LABELS : VARIATION_LABELS_EN).map((label, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setFocusText(label);
+                          handleTrace();
+                        }}
+                        className="text-xs px-3 py-1.5 rounded-full border border-indigo-300 bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200 text-indigo-700 font-medium transition-colors shadow-sm"
+                      >
+                        🎨 {label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* AI suggestions */}
+                  <p className="text-xs text-blue-600 font-medium mb-1.5">
+                    {isRtl ? "הצעות ה-AI:" : "AI suggestions:"}
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-4">
                     {result.suggestions.map((suggestion, idx) => (
                       <button
                         key={idx}
@@ -428,9 +454,41 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                       </button>
                     ))}
                   </div>
-                  <p className="text-xs text-blue-500 mt-2">
-                    {isRtl ? "לחץ על הצעה ליצירת 3 עיצובים חדשים" : "Click a suggestion to generate 3 new designs"}
+
+                  {/* Free-text custom improvement */}
+                  <p className="text-xs text-blue-600 font-medium mb-1.5">
+                    {isRtl ? "או הקלד בקשה משלהך:" : "Or type your own request:"}
                   </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={customImprovement}
+                      onChange={(e) => setCustomImprovement(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && customImprovement.trim()) {
+                          setFocusText(customImprovement.trim());
+                          setCustomImprovement("");
+                          handleTrace();
+                        }
+                      }}
+                      placeholder={isRtl ? "לדוגמה: הוסף פרטים, שנה סגנון, עשה יותר קטן..." : "e.g. add more detail, make it cuter, cartoon style..."}
+                      className="flex-1 text-sm border border-blue-300 rounded-lg px-3 py-2 bg-white placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      dir={isRtl ? "rtl" : "ltr"}
+                    />
+                    <button
+                      onClick={() => {
+                        if (customImprovement.trim()) {
+                          setFocusText(customImprovement.trim());
+                          setCustomImprovement("");
+                          handleTrace();
+                        }
+                      }}
+                      disabled={!customImprovement.trim()}
+                      className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-sm font-semibold transition-colors"
+                    >
+                      {isRtl ? "החל" : "Go"}
+                    </button>
+                  </div>
                 </CardContent>
               </Card>
             )}
