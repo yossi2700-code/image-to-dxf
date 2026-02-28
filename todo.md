@@ -447,3 +447,8 @@
 
 - [x] כפתור "הצג/הסתר וקטור" גדול ובולט בשלושתי ה-tabs
 - [x] תיקון חיתוך תמונות בכרטיסי גלריה AI — הסרת overflow-hidden מהכרטיס החיצוני
+
+## שינויים חדשים - פברואר 2026
+
+- [x] AI Generate tab: show AI image first by default (with fill/color), vector (lines only) shown only after clicking Show Vector button
+- [x] AI Trace tab: add focus text field to specify which object to draw (default: dominant object, user can type "only chairs" etc.)

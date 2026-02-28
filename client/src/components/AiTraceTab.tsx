@@ -193,6 +193,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [description, setDescription] = useState("");
+  const [focusText, setFocusText] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<TraceResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
@@ -225,6 +226,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       const formData = new FormData();
       formData.append("image", imageFile);
       if (description.trim()) formData.append("description", description.trim());
+      if (focusText.trim()) formData.append("focusText", focusText.trim());
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
       const data = await res.json();
       if (!res.ok) {
@@ -246,7 +248,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
 
   const reset = () => {
     setImageFile(null); setImagePreview(null); setResult(null);
-    setStatus("idle"); setErrorMsg("");
+    setStatus("idle"); setErrorMsg(""); setFocusText("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -319,9 +321,22 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/bmp,image/webp,image/gif" className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
 
-            <input type="text" value={description} onChange={(e) => setDescription(e.target.value)}
-              placeholder={isRtl ? "תיאור אופציונלי (לשם הקובץ):" : "Optional description (for filename):"}
-              className="w-full text-sm border rounded-lg px-3 py-2 bg-background mb-3 placeholder:text-muted-foreground/50" />
+            {/* Focus text — what to draw */}
+            <div className="mb-3">
+              <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                {isRtl ? "מה לצייר? (ברירת מחדל: האובייקט הדומיננטי)" : "What to draw? (default: dominant object)"}
+              </label>
+              <input
+                type="text"
+                value={focusText}
+                onChange={(e) => setFocusText(e.target.value)}
+                placeholder={isRtl ? "לדוגמה: רק הכיסאות, רק העציץ, הכלב בלבד..." : "e.g. only the chairs, only the plant, just the dog..."}
+                className="w-full text-sm border rounded-lg px-3 py-2 bg-background placeholder:text-muted-foreground/50"
+                style={{ textAlign: isRtl ? "right" : "left" }}
+                dir={isRtl ? "rtl" : "ltr"}
+              />
+            </div>
+            <input type="hidden" value={description} onChange={(e) => setDescription(e.target.value)} />
 
             <Button size="lg" className="w-full font-semibold"
               disabled={!imageFile || status === "loading"}

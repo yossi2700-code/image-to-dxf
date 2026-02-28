@@ -155,11 +155,22 @@ router.post(
 
       const imageBase64 = resized.toString("base64");
       const userDesc = (req.body?.description || "").trim();
+      const focusText = (req.body?.focusText || "").trim();
 
       // ── Step A: LLM analyzes image → extracts detailed object description ─────
       // We use GPT-4o vision to understand what's in the image and describe it
       // in a way that gpt-image-1 can draw from scratch (same as AI Generate tab).
       console.log("[aiTrace] Analyzing image with LLM...");
+
+      // Build the user instruction based on focusText
+      let analysisInstruction: string;
+      if (focusText) {
+        analysisInstruction = `The user wants to draw: "${focusText}". Describe ONLY that specific element from the image in detail for line art generation. Focus on its shape, structure, key features, style, and proportions. Output ONLY the description (2-4 sentences), no preamble.`;
+      } else {
+        analysisInstruction = userDesc
+          ? `Describe the main object for line art generation. Additional context: ${userDesc}`
+          : "Describe the main/dominant object in this image for line art generation.";
+      }
 
       const llmResponse = await invokeLLM({
         messages: [
@@ -167,8 +178,7 @@ router.post(
             role: "system",
             content:
               "You are an expert at describing objects for line art generation. " +
-              "Analyze the image and provide a concise, detailed description of the main object " +
-              "suitable for generating clean line art. " +
+              "Analyze the image and provide a concise, detailed description suitable for generating clean line art. " +
               "Focus on: shape, structure, key features, style, proportions. " +
               "Output ONLY the description (2-4 sentences), no preamble.",
           },
@@ -184,9 +194,7 @@ router.post(
               },
               {
                 type: "text",
-                text: userDesc
-                  ? `Describe this object for line art generation. Additional context: ${userDesc}`
-                  : "Describe this object for line art generation.",
+                text: analysisInstruction,
               },
             ],
           },

@@ -622,7 +622,7 @@ function AiGeneratorTab() {
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [downloadImg, setDownloadImg] = useState<AiImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
-  const [showVector, setShowVector] = useState(true);
+  const [showVector, setShowVector] = useState(false);
 
   const generate = async (isModify = false) => {
     if (!prompt.trim()) {
@@ -766,19 +766,7 @@ function AiGeneratorTab() {
                     style={{ minHeight: 180 }}
                     onClick={(e) => { e.stopPropagation(); setZoomImg({ src: img.imageUrl, alt: `${t("design")} ${idx + 1}` }); }}
                   >
-                    {img.svgPreview ? (
-                      <div
-                        className="w-full flex items-center justify-center"
-                        dangerouslySetInnerHTML={{
-                          __html: img.svgPreview.replace(
-                            /<svg /,
-                            '<svg style="max-width:100%;width:auto;height:auto;display:block;margin:auto;" '
-                          ),
-                        }}
-                      />
-                    ) : (
-                      <img src={img.imageUrl} alt={`${t("design")} ${idx + 1}`} className="max-w-full object-contain" />
-                    )}
+                    <img src={img.imageUrl} alt={`${t("design")} ${idx + 1}`} className="max-w-full object-contain" style={{ maxHeight: 220 }} />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                       <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
                     </div>
@@ -809,6 +797,17 @@ function AiGeneratorTab() {
                 <div className="flex items-center gap-2 mb-3">
                   <CheckCircle2 className="w-4 h-4 text-primary" />
                   <span className="font-semibold text-sm">{t("variation")} {selectedIdx! + 1} {t("selected")}</span>
+                </div>
+                {/* AI Image preview (always shown) */}
+                <div
+                  className="border rounded-xl overflow-hidden bg-white mb-3 flex items-center justify-center relative group cursor-zoom-in"
+                  style={{ minHeight: 200 }}
+                  onClick={() => setZoomImg({ src: selected.imageUrl, alt: `${t("design")} ${selectedIdx! + 1}` })}
+                >
+                  <img src={selected.imageUrl} alt={`${t("design")} ${selectedIdx! + 1}`} className="max-w-full object-contain" style={{ maxHeight: 280 }} />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                    <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
+                  </div>
                 </div>
                 {selected.svgPreview && (
                   <div className="mb-3">
