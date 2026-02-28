@@ -427,3 +427,8 @@
 
 - [x] תיקון overflow בתמונות בכרטיסי תוצאה (object-contain + aspect-ratio)
 - [x] הוספת zoom/fullscreen על תמונות AI בלחיצה (modal עם ZoomIn/ZoomOut/pan)
+
+## תיקון תצוגת וקטור
+
+- [x] תיקון zoom בתצוגת וקטור — כפתורים גדולים (44px), SVG כ-data URL, pan תקין
+- [x] הגדלת גובה תצוגת וקטור ל-450px + כפתור fullscreen

@@ -164,26 +164,28 @@ interface SvgZoomViewerProps {
   maxHeight?: number;
 }
 
-function SvgZoomViewer({ svgContent, label = "Preview", maxHeight = 300 }: SvgZoomViewerProps) {
+function SvgZoomViewer({ svgContent, label = "Preview", maxHeight = 450 }: SvgZoomViewerProps) {
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
   const panStart = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastPinchDist = useRef<number | null>(null);
 
-  const clampScale = (s: number) => Math.min(8, Math.max(0.5, s));
-  const zoomIn = () => setScale((s) => clampScale(+(s * 1.3).toFixed(2)));
-  const zoomOut = () => setScale((s) => clampScale(+(s / 1.3).toFixed(2)));
-  const reset = () => { setScale(1); setOffset({ x: 0, y: 0 }); };
+  const clampScale = (s: number) => Math.min(10, Math.max(0.3, s));
+  const zoomIn = (e: React.MouseEvent) => { e.stopPropagation(); setScale((s) => clampScale(parseFloat((s * 1.4).toFixed(2)))); };
+  const zoomOut = (e: React.MouseEvent) => { e.stopPropagation(); setScale((s) => clampScale(parseFloat((s / 1.4).toFixed(2)))); };
+  const resetView = (e: React.MouseEvent) => { e.stopPropagation(); setScale(1); setOffset({ x: 0, y: 0 }); };
 
   const onWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
-    setScale((s) => clampScale(+(s * factor).toFixed(3)));
+    setScale((s) => clampScale(parseFloat((s * factor).toFixed(3))));
   };
   const onMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return;
+    e.preventDefault();
     setIsPanning(true);
     panStart.current = { x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y };
   };
@@ -212,7 +214,7 @@ function SvgZoomViewer({ svgContent, label = "Preview", maxHeight = 300 }: SvgZo
       const dist = Math.hypot(dx, dy);
       const factor = dist / lastPinchDist.current;
       lastPinchDist.current = dist;
-      setScale((s) => clampScale(+(s * factor).toFixed(3)));
+      setScale((s) => clampScale(parseFloat((s * factor).toFixed(3))));
     } else if (e.touches.length === 1 && panStart.current) {
       setOffset({
         x: panStart.current.ox + e.touches[0].clientX - panStart.current.x,
@@ -222,54 +224,101 @@ function SvgZoomViewer({ svgContent, label = "Preview", maxHeight = 300 }: SvgZo
   };
   const onTouchEnd = () => { lastPinchDist.current = null; panStart.current = null; };
 
-  const styledSvg = svgContent.replace(/<svg /, '<svg style="width:100%;height:100%;" ');
+  // Encode SVG as data URL for reliable rendering
+  const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
+
+  const ViewerContent = ({ height }: { height: number | string }) => (
+    <div
+      ref={containerRef}
+      className="relative overflow-hidden bg-white select-none"
+      style={{ height, cursor: isPanning ? "grabbing" : "grab" }}
+      onWheel={onWheel}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
+      <img
+        src={svgDataUrl}
+        alt={label}
+        draggable={false}
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`,
+          transformOrigin: "center center",
+          maxWidth: "90%",
+          maxHeight: "90%",
+          objectFit: "contain",
+          pointerEvents: "none",
+          userSelect: "none",
+        }}
+      />
+    </div>
+  );
+
+  const Toolbar = ({ onClose }: { onClose?: (e: React.MouseEvent) => void }) => (
+    <div className="flex items-center gap-1 px-3 border-b bg-muted/30" style={{ minHeight: 44 }}>
+      <Eye className="w-4 h-4 text-muted-foreground shrink-0" />
+      <span className="text-xs text-muted-foreground font-medium flex-1 truncate">{label}</span>
+      <span className="text-xs text-muted-foreground/60 w-10 text-center">{Math.round(scale * 100)}%</span>
+      <button
+        onClick={zoomOut}
+        className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors"
+        title="Zoom out"
+      >
+        <ZoomOut className="w-5 h-5 text-foreground" />
+      </button>
+      <button
+        onClick={zoomIn}
+        className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors"
+        title="Zoom in"
+      >
+        <ZoomIn className="w-5 h-5 text-foreground" />
+      </button>
+      <button
+        onClick={resetView}
+        className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors"
+        title="Reset view"
+      >
+        <Maximize2 className="w-5 h-5 text-foreground" />
+      </button>
+      {onClose ? (
+        <button
+          onClick={onClose}
+          className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors text-lg font-bold"
+        >✕</button>
+      ) : (
+        <button
+          onClick={(e) => { e.stopPropagation(); setFullscreen(true); setScale(1); setOffset({ x: 0, y: 0 }); }}
+          className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors"
+          title="Fullscreen"
+        >
+          <Maximize2 className="w-5 h-5 text-primary" />
+        </button>
+      )}
+    </div>
+  );
 
   return (
-    <div className="border rounded-lg overflow-hidden bg-white">
-      <div className="flex items-center gap-1 px-3 py-1.5 border-b bg-muted/30">
-        <Eye className="w-3.5 h-3.5 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground font-medium flex-1">{label}</span>
-        <span className="text-xs text-muted-foreground/60 ml-1">{Math.round(scale * 100)}%</span>
-        <button onClick={zoomOut} className="w-6 h-6 rounded flex items-center justify-center hover:bg-muted transition-colors">
-          <ZoomOut className="w-3.5 h-3.5 text-muted-foreground" />
-        </button>
-        <button onClick={zoomIn} className="w-6 h-6 rounded flex items-center justify-center hover:bg-muted transition-colors">
-          <ZoomIn className="w-3.5 h-3.5 text-muted-foreground" />
-        </button>
-        <button onClick={reset} className="w-6 h-6 rounded flex items-center justify-center hover:bg-muted transition-colors">
-          <Maximize2 className="w-3.5 h-3.5 text-muted-foreground" />
-        </button>
+    <>
+      {fullscreen && (
+        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+          <Toolbar onClose={(e) => { e.stopPropagation(); setFullscreen(false); setScale(1); setOffset({ x: 0, y: 0 }); }} />
+          <div className="flex-1 overflow-hidden">
+            <ViewerContent height="100%" />
+          </div>
+        </div>
+      )}
+      <div className="border rounded-lg overflow-hidden bg-white">
+        <Toolbar />
+        <ViewerContent height={maxHeight} />
       </div>
-      <div
-        ref={containerRef}
-        className="relative overflow-hidden bg-white select-none"
-        style={{ height: maxHeight, cursor: isPanning ? "grabbing" : "grab" }}
-        onWheel={onWheel}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={onMouseUp}
-        onMouseLeave={onMouseUp}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      >
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`,
-            transformOrigin: "center center",
-            width: "90%",
-            height: "90%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          dangerouslySetInnerHTML={{ __html: styledSvg }}
-        />
-      </div>
-    </div>
+    </>
   );
 }
 

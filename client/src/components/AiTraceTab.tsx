@@ -48,23 +48,69 @@ const VARIATION_LABELS_EN = ["Simple", "Detailed", "Decorative"];
 
 function SvgViewer({ svgContent }: { svgContent: string }) {
   const [scale, setScale] = useState(1);
-  const clamp = (s: number) => Math.min(8, Math.max(0.5, s));
-  const styledSvg = svgContent.replace(/<svg /, '<svg style="width:100%;height:100%;" ');
-  return (
-    <div className="border rounded-lg overflow-hidden bg-white">
-      <div className="flex items-center gap-1 px-3 py-1.5 border-b bg-muted/30">
-        <Eye className="w-3.5 h-3.5 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground flex-1">Vector Preview</span>
-        <button onClick={() => setScale(clamp(scale - 0.25))} className="p-1 hover:bg-muted rounded"><ZoomOut className="w-3.5 h-3.5" /></button>
-        <span className="text-xs w-10 text-center">{Math.round(scale * 100)}%</span>
-        <button onClick={() => setScale(clamp(scale + 0.25))} className="p-1 hover:bg-muted rounded"><ZoomIn className="w-3.5 h-3.5" /></button>
-        <button onClick={() => setScale(1)} className="p-1 hover:bg-muted rounded"><Maximize2 className="w-3.5 h-3.5" /></button>
-      </div>
-      <div className="overflow-auto" style={{ maxHeight: 320 }}>
-        <div style={{ transform: `scale(${scale})`, transformOrigin: "top left", width: `${100 / scale}%` }}
-          dangerouslySetInnerHTML={{ __html: styledSvg }} />
-      </div>
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const panStart = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
+  const lastPinchDist = useRef<number | null>(null);
+
+  const clamp = (s: number) => Math.min(10, Math.max(0.3, s));
+  const zoomIn = (e: React.MouseEvent) => { e.stopPropagation(); setScale((s) => clamp(parseFloat((s * 1.4).toFixed(2)))); };
+  const zoomOut = (e: React.MouseEvent) => { e.stopPropagation(); setScale((s) => clamp(parseFloat((s / 1.4).toFixed(2)))); };
+  const resetView = (e: React.MouseEvent) => { e.stopPropagation(); setScale(1); setOffset({ x: 0, y: 0 }); };
+
+  const onWheel = (e: React.WheelEvent) => { e.preventDefault(); const f = e.deltaY < 0 ? 1.12 : 1/1.12; setScale((s) => clamp(parseFloat((s*f).toFixed(3)))); };
+  const onMouseDown = (e: React.MouseEvent) => { if (e.button !== 0) return; e.preventDefault(); setIsPanning(true); panStart.current = { x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y }; };
+  const onMouseMove = (e: React.MouseEvent) => { if (!isPanning || !panStart.current) return; setOffset({ x: panStart.current.ox + e.clientX - panStart.current.x, y: panStart.current.oy + e.clientY - panStart.current.y }); };
+  const onMouseUp = () => { setIsPanning(false); panStart.current = null; };
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) { const dx = e.touches[0].clientX - e.touches[1].clientX; const dy = e.touches[0].clientY - e.touches[1].clientY; lastPinchDist.current = Math.hypot(dx, dy); }
+    else if (e.touches.length === 1) { panStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, ox: offset.x, oy: offset.y }; }
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
+    if (e.touches.length === 2 && lastPinchDist.current !== null) { const dx = e.touches[0].clientX - e.touches[1].clientX; const dy = e.touches[0].clientY - e.touches[1].clientY; const dist = Math.hypot(dx, dy); setScale((s) => clamp(parseFloat((s * dist / lastPinchDist.current!).toFixed(3)))); lastPinchDist.current = dist; }
+    else if (e.touches.length === 1 && panStart.current) { setOffset({ x: panStart.current.ox + e.touches[0].clientX - panStart.current.x, y: panStart.current.oy + e.touches[0].clientY - panStart.current.y }); }
+  };
+  const onTouchEnd = () => { lastPinchDist.current = null; panStart.current = null; };
+
+  const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
+
+  const Viewer = ({ height }: { height: number | string }) => (
+    <div className="relative overflow-hidden bg-white select-none" style={{ height, cursor: isPanning ? "grabbing" : "grab" }}
+      onWheel={onWheel} onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
+      onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+      <img src={svgDataUrl} alt="Vector" draggable={false} style={{ position: "absolute", top: "50%", left: "50%", transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`, transformOrigin: "center center", maxWidth: "90%", maxHeight: "90%", objectFit: "contain", pointerEvents: "none", userSelect: "none" }} />
     </div>
+  );
+
+  const Toolbar = ({ onClose }: { onClose?: (e: React.MouseEvent) => void }) => (
+    <div className="flex items-center gap-1 px-3 border-b bg-muted/30" style={{ minHeight: 44 }}>
+      <Eye className="w-4 h-4 text-muted-foreground shrink-0" />
+      <span className="text-xs text-muted-foreground font-medium flex-1">Vector Preview</span>
+      <span className="text-xs text-muted-foreground/60 w-10 text-center">{Math.round(scale * 100)}%</span>
+      <button onClick={zoomOut} className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80"><ZoomOut className="w-5 h-5 text-foreground" /></button>
+      <button onClick={zoomIn} className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80"><ZoomIn className="w-5 h-5 text-foreground" /></button>
+      <button onClick={onClose ?? ((e) => { e.stopPropagation(); setFullscreen(true); setScale(1); setOffset({ x: 0, y: 0 }); })} className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80">
+        {onClose ? <span className="text-lg font-bold">✕</span> : <Maximize2 className="w-5 h-5 text-primary" />}
+      </button>
+      {!onClose && <button onClick={resetView} className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80"><Maximize2 className="w-4 h-4 text-muted-foreground" /></button>}
+    </div>
+  );
+
+  return (
+    <>
+      {fullscreen && (
+        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+          <Toolbar onClose={(e) => { e.stopPropagation(); setFullscreen(false); setScale(1); setOffset({ x: 0, y: 0 }); }} />
+          <div className="flex-1 overflow-hidden"><Viewer height="100%" /></div>
+        </div>
+      )}
+      <div className="border rounded-lg overflow-hidden bg-white">
+        <Toolbar />
+        <Viewer height={450} />
+      </div>
+    </>
   );
 }
 
