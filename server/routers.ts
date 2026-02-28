@@ -14,6 +14,58 @@ import { getTokenBalance, addTokens, getTokenTransactions } from "./tokenService
 
 const ADMIN_COOKIE = "admin_session";
 
+// ── Rate limiting for admin login ─────────────────────────────────────────────
+// Simple in-memory store: IP → { attempts, blockedUntil }
+const MAX_ATTEMPTS = 5;
+const BLOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
+interface RateLimitEntry {
+  attempts: number;
+  blockedUntil: number | null;
+}
+
+const loginAttempts = new Map<string, RateLimitEntry>();
+
+function getClientIp(req: { headers: Record<string, string | string[] | undefined>; socket?: { remoteAddress?: string } }): string {
+  const forwarded = req.headers["x-forwarded-for"];
+  if (forwarded) {
+    const ip = Array.isArray(forwarded) ? forwarded[0] : forwarded.split(",")[0];
+    return ip.trim();
+  }
+  return (req as { socket?: { remoteAddress?: string } }).socket?.remoteAddress ?? "unknown";
+}
+
+function checkRateLimit(ip: string): void {
+  const now = Date.now();
+  const entry = loginAttempts.get(ip);
+  if (entry?.blockedUntil && now < entry.blockedUntil) {
+    const minutesLeft = Math.ceil((entry.blockedUntil - now) / 60000);
+    throw new TRPCError({
+      code: "TOO_MANY_REQUESTS",
+      message: `יותר מדי ניסיונות כושלים. נסה שוב בעוד ${minutesLeft} דקות.`,
+    });
+  }
+}
+
+function recordFailedAttempt(ip: string): void {
+  const now = Date.now();
+  const entry = loginAttempts.get(ip) ?? { attempts: 0, blockedUntil: null };
+  // Reset if previous block has expired
+  if (entry.blockedUntil && now >= entry.blockedUntil) {
+    entry.attempts = 0;
+    entry.blockedUntil = null;
+  }
+  entry.attempts += 1;
+  if (entry.attempts >= MAX_ATTEMPTS) {
+    entry.blockedUntil = now + BLOCK_DURATION_MS;
+  }
+  loginAttempts.set(ip, entry);
+}
+
+function clearRateLimit(ip: string): void {
+  loginAttempts.delete(ip);
+}
+
 /** Check if the request has a valid admin session cookie */
 function isAdminAuthenticated(req: { headers: Record<string, string | string[] | undefined>; cookies?: Record<string, string> }): boolean {
   // Express populates req.cookies when cookie-parser is used
@@ -46,9 +98,26 @@ export const appRouter = router({
     login: publicProcedure
       .input(z.object({ pin: z.string().min(1) }))
       .mutation(({ ctx, input }) => {
+        const ip = getClientIp(ctx.req as Parameters<typeof getClientIp>[0]);
+        // Check if IP is currently blocked
+        checkRateLimit(ip);
+
         if (!ENV.adminPin || input.pin !== ENV.adminPin) {
-          throw new TRPCError({ code: "UNAUTHORIZED", message: "קוד גישה שגוי" });
+          recordFailedAttempt(ip);
+          const entry = loginAttempts.get(ip);
+          const remaining = MAX_ATTEMPTS - (entry?.attempts ?? 0);
+          const blocked = entry?.blockedUntil && Date.now() < entry.blockedUntil;
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: blocked
+              ? `חסמנו את הגישה ל-15 דקות לאחר ${MAX_ATTEMPTS} ניסיונות כושלים.`
+              : `קוד גישה שגוי. נותרו ${remaining} ניסיונות.`,
+          });
         }
+
+        // Successful login — clear rate limit counter
+        clearRateLimit(ip);
+
         // Set a simple session cookie (httpOnly, 7 days)
         ctx.res.cookie(ADMIN_COOKIE, "authenticated", {
           httpOnly: true,

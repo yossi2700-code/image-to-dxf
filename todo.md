@@ -473,3 +473,9 @@
 - [x] Backend: landscapeMode flag in generateRoute — same landscape-aware prompt
 - [x] UI: Landscape toggle button in AI Trace and AI Generate tabs
 - [x] Tests: 19 new landscape mode tests (81 total passing)
+
+## תיקוני אבטחה - פברואר 2026
+
+- [x] Rate Limiting על פאנל הניהול — חסימה לאחר 5 ניסיונות כושלים (15 דקות)
+- [x] S3 keys — nanoid() כבר מייצר 21 תווים (126 ביט אנטרופיה), בלתי ניתן לניחוש — אין צורך בשינוי
+- [x] בדיקות Rate Limiting — 9 בדיקות חדשות (90 סה"כ עוברות)
