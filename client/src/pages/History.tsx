@@ -161,6 +161,7 @@ function HistoryCard({
   onDelete: (item: HistoryItem) => void;
 }) {
   const { t, isRtl, language } = useLanguage();
+  const [downloadOpen, setDownloadOpen] = useState(false);
   const isAi = item.actionType === "ai_generate";
   const date = new Date(item.createdAt).toLocaleString(language === "he" ? "he-IL" : "en-US", {
     dateStyle: "short",
@@ -213,10 +214,23 @@ function HistoryCard({
           )}
         </div>
         {item.dxfUrl && (
-          <a href={item.dxfUrl} download className="flex items-center gap-1 text-xs text-primary hover:underline">
+          <button
+            onClick={(e) => { e.stopPropagation(); setDownloadOpen(true); }}
+            className="flex items-center gap-1 text-xs text-primary hover:underline"
+          >
             <FileCode2 className="w-3 h-3" />
-            {isRtl ? "הורד DXF" : "Download DXF"}
-          </a>
+            {isRtl ? "שמור קובץ" : "Save File"}
+          </button>
+        )}
+        {item.dxfUrl && downloadOpen && (
+          <DxfDownloadDialog
+            open={downloadOpen}
+            onClose={() => setDownloadOpen(false)}
+            svgContent={item.svgPreview ?? ""}
+            dxfUrl={item.dxfUrl}
+            defaultFilename={`${item.description ?? "design"}.dxf`}
+            segmentCount={item.segmentCount ?? 0}
+          />
         )}
       </CardContent>
     </Card>

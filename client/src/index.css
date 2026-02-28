@@ -217,6 +217,90 @@
     color: oklch(0.40 0.18 264);
     border: 1px solid oklch(0.88 0.015 264);
   }
+
+  /* ── AI-themed header gradient ── */
+  .header-ai {
+    background: linear-gradient(135deg,
+      oklch(0.14 0.04 264) 0%,
+      oklch(0.18 0.06 280) 50%,
+      oklch(0.14 0.04 264) 100%);
+    border-bottom: 1px solid oklch(0.30 0.08 264 / 60%);
+    box-shadow: 0 2px 20px oklch(0.45 0.22 264 / 20%);
+  }
+
+  /* ── Glowing tab trigger ── */
+  .tab-ai [data-state="active"] {
+    background: linear-gradient(135deg, oklch(0.45 0.22 264), oklch(0.52 0.24 290)) !important;
+    color: white !important;
+    box-shadow: 0 0 12px oklch(0.52 0.24 290 / 50%), 0 2px 8px oklch(0.45 0.22 264 / 40%) !important;
+    border: none !important;
+  }
+  .tab-ai {
+    background: oklch(0.16 0.03 264 / 80%) !important;
+    border: 1px solid oklch(0.30 0.08 264 / 40%) !important;
+    padding: 4px !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(8px);
+  }
+  .tab-ai [data-state="inactive"] {
+    color: oklch(0.75 0.06 264) !important;
+  }
+  .tab-ai [data-state="inactive"]:hover {
+    background: oklch(0.25 0.06 264 / 60%) !important;
+    color: oklch(0.90 0.04 264) !important;
+  }
+
+  /* ── AI hero background ── */
+  .bg-ai-hero {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, oklch(0.45 0.22 264 / 12%) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 110%, oklch(0.52 0.24 290 / 8%) 0%, transparent 50%),
+      linear-gradient(180deg, oklch(0.97 0.006 264) 0%, oklch(0.99 0.002 240) 100%);
+  }
+
+  /* ── Gold token badge ── */
+  .token-badge {
+    background: linear-gradient(135deg, oklch(0.82 0.15 85), oklch(0.75 0.18 75));
+    color: oklch(0.25 0.08 75);
+    border: 1px solid oklch(0.70 0.16 80 / 50%);
+    box-shadow: 0 1px 4px oklch(0.75 0.18 75 / 30%);
+  }
+
+  /* ── Glowing card ── */
+  .card-ai {
+    border: 1px solid oklch(0.88 0.015 264);
+    box-shadow: 0 1px 3px oklch(0.45 0.22 264 / 8%), 0 4px 16px oklch(0.45 0.22 264 / 6%);
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+  .card-ai:hover {
+    border-color: oklch(0.75 0.12 264);
+    box-shadow: 0 2px 8px oklch(0.45 0.22 264 / 15%), 0 8px 24px oklch(0.45 0.22 264 / 10%);
+  }
+
+  /* ── Pulsing AI indicator dot ── */
+  .ai-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: oklch(0.62 0.22 264);
+    box-shadow: 0 0 6px oklch(0.62 0.22 264 / 80%);
+    animation: ai-pulse 2s ease-in-out infinite;
+  }
+  @keyframes ai-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 6px oklch(0.62 0.22 264 / 80%); }
+    50% { opacity: 0.6; box-shadow: 0 0 12px oklch(0.62 0.22 264 / 60%); }
+  }
+
+  /* ── Section divider with AI glow ── */
+  .divider-ai {
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      oklch(0.75 0.12 264 / 40%) 30%,
+      oklch(0.62 0.22 264 / 60%) 50%,
+      oklch(0.75 0.12 264 / 40%) 70%,
+      transparent 100%);
+  }
 }
 
 @layer utilities {

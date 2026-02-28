@@ -987,18 +987,22 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50" dir={isRtl ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-ai-hero" dir={isRtl ? "rtl" : "ltr"}>
       {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+      <header className="header-ai sticky top-0 z-10">
         <div className="container py-3 flex items-center gap-3">
-          <img
-            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-ai-robotics-4ufLRLRwpeLsqvCczeWuY8.webp"
-            alt={t("logoAlt")}
-            className="w-10 h-10 rounded-lg object-contain shrink-0"
-          />
+          <div className="relative shrink-0">
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-ai-robotics-4ufLRLRwpeLsqvCczeWuY8.webp"
+              alt={t("logoAlt")}
+              className="w-10 h-10 rounded-xl object-contain"
+              style={{ filter: "drop-shadow(0 0 8px oklch(0.62 0.22 264 / 60%))" }}
+            />
+            <span className="ai-dot absolute -bottom-0.5 -right-0.5" />
+          </div>
           <div className="flex-1">
-            <h1 className="text-base font-bold leading-tight">{t("appTitle")}</h1>
-            <p className="text-xs text-muted-foreground">{t("appSubtitle")}</p>
+            <h1 className="text-base font-bold leading-tight text-white">{t("appTitle")}</h1>
+            <p className="text-xs" style={{ color: "oklch(0.70 0.08 264)" }}>{t("appSubtitle")}</p>
           </div>
           <LanguageSwitcher />
         </div>
@@ -1023,7 +1027,7 @@ export default function Home() {
                 <UserCircle className="w-4 h-4" />
                 <span>{appUser.name ?? appUser.email}</span>
               </div>
-              <div className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+              <div className="token-badge flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full">
                 <Sparkles className="w-3 h-3" />
                 <span>{tokenBalance}</span>
               </div>
@@ -1044,17 +1048,20 @@ export default function Home() {
           )}
         </div>
 
+        {/* AI divider below auth bar */}
+        <div className="divider-ai mb-5" />
+
         <Tabs defaultValue="upload" dir={isRtl ? "rtl" : "ltr"}>
-          <TabsList className="w-full mb-5 h-11">
-            <TabsTrigger value="upload" className="flex-1 gap-2 text-sm">
+          <TabsList className="tab-ai w-full mb-5 h-12">
+            <TabsTrigger value="upload" className="flex-1 gap-2 text-sm font-semibold">
               <Upload className="w-4 h-4" />
               {t("uploadTab")}
             </TabsTrigger>
-            <TabsTrigger value="ai" className="flex-1 gap-2 text-sm">
+            <TabsTrigger value="ai" className="flex-1 gap-2 text-sm font-semibold">
               <Sparkles className="w-4 h-4" />
               {t("aiTab")}
             </TabsTrigger>
-            <TabsTrigger value="trace" className="flex-1 gap-2 text-sm">
+            <TabsTrigger value="trace" className="flex-1 gap-2 text-sm font-semibold">
               <Scan className="w-4 h-4" />
               {t("aiTraceTab")}
             </TabsTrigger>
@@ -1071,7 +1078,7 @@ export default function Home() {
         </Tabs>
       </main>
 
-      <footer className="border-t bg-white/50 mt-6">
+      <footer className="mt-6" style={{ borderTop: "1px solid oklch(0.88 0.015 264 / 40%)", background: "oklch(0.97 0.006 264 / 50%)" }}>
         <div className="container py-4 text-center text-xs text-muted-foreground space-y-1.5">
           <div>{t("appFooter")}</div>
           <div className="flex items-center justify-center gap-3">

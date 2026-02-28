@@ -1,9 +1,10 @@
 /**
- * DxfDownloadDialog — dialog for downloading DXF with:
+ * DxfDownloadDialog — dialog for downloading DXF / PDF with:
  * - Custom filename input
  * - Real physical size (based on SVG dimensions at 96 DPI → mm)
  * - Proportional percentage scaling
  * - SVG preview
+ * - Mobile-friendly: scrollable body, sticky action buttons
  *
  * Size logic:
  *   potrace / GPT-4o SVG outputs at 96 DPI.
@@ -18,7 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Download, X, FileCode2, FileText, Loader2 } from "lucide-react";
+import { Download, X, FileText, Loader2 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -61,7 +62,10 @@ function SvgMiniPreview({ svg }: { svg: string }) {
     '<svg style="max-width:100%;max-height:100%;width:auto;height:auto;" '
   );
   return (
-    <div className="border rounded-lg bg-white overflow-hidden flex items-center justify-center p-3" style={{ height: 200 }}>
+    <div
+      className="border rounded-lg bg-white overflow-hidden flex items-center justify-center p-2"
+      style={{ height: 140 }}
+    >
       <div
         className="w-full h-full flex items-center justify-center"
         dangerouslySetInnerHTML={{ __html: styledSvg }}
@@ -193,23 +197,33 @@ export function DxfDownloadDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md w-full" dir="rtl">
-        <DialogHeader>
+      {/* max-h ensures the dialog never exceeds the viewport on mobile */}
+      <DialogContent
+        className="max-w-md w-full flex flex-col p-0 gap-0 overflow-hidden"
+        style={{ maxHeight: "90dvh" }}
+        dir="rtl"
+      >
+        {/* ── Header (fixed) ── */}
+        <DialogHeader className="px-5 pt-5 pb-3 border-b shrink-0">
           <DialogTitle className="flex items-center gap-2 text-right">
-            <FileCode2 className="w-4 h-4 text-primary" />
-            הורדת קובץ DXF
+            <Download className="w-4 h-4 text-primary" />
+            שמירת קובץ
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* SVG Preview */}
+        {/* ── Scrollable body ── */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          {/* SVG Preview — compact height */}
           {svgContent && <SvgMiniPreview svg={svgContent} />}
 
           {/* Stats */}
           <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
             <span>{segmentCount.toLocaleString()} קווים</span>
             <span>
-              גודל פלט: <strong>{outputWidthMm.toFixed(0)} × {outputHeightMm.toFixed(0)} מ"מ</strong>
+              גודל פלט:{" "}
+              <strong>
+                {outputWidthMm.toFixed(0)} × {outputHeightMm.toFixed(0)} מ"מ
+              </strong>
             </span>
           </div>
 
@@ -224,7 +238,7 @@ export function DxfDownloadDialog({
                 className="text-right flex-1"
                 dir="rtl"
               />
-              <span className="text-sm text-muted-foreground shrink-0">.dxf</span>
+              <span className="text-xs text-muted-foreground shrink-0">.dxf / .pdf</span>
             </div>
           </div>
 
@@ -263,43 +277,61 @@ export function DxfDownloadDialog({
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">גודל סופי ({scalePercent}%):</span>
+                <span className="text-muted-foreground">
+                  גודל סופי ({scalePercent}%):
+                </span>
                 <span className="font-semibold text-primary">
                   {formatSize(outputWidthMm)} × {formatSize(outputHeightMm)}
                 </span>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Actions */}
-          <div className="flex flex-col gap-2 pt-1">
-            <div className="flex gap-2">
-              <Button
-                size="lg"
-                className="flex-1 bg-green-600 hover:bg-green-700 font-semibold"
-                onClick={handleDownload}
-                disabled={isDownloading || isDownloadingPdf}
-              >
-                {isDownloading ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Download className="w-4 h-4 ml-2" />}
-                {isDownloading ? "מוריד..." : "הורד DXF"}
-              </Button>
-              <Button variant="outline" size="lg" onClick={onClose} disabled={isDownloading || isDownloadingPdf}>
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-            {svgContent && (
-              <Button
-                size="lg"
-                variant="outline"
-                className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 font-semibold"
-                onClick={handleDownloadPdf}
-                disabled={isDownloading || isDownloadingPdf}
-              >
-                {isDownloadingPdf ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <FileText className="w-4 h-4 ml-2" />}
-                {isDownloadingPdf ? "יוצר PDF..." : "הורד PDF (וקטורי)"}
-              </Button>
-            )}
+        {/* ── Sticky action buttons (always visible) ── */}
+        <div className="px-5 py-4 border-t bg-background shrink-0 space-y-2">
+          {/* DXF download */}
+          <div className="flex gap-2">
+            <Button
+              size="lg"
+              className="flex-1 bg-green-600 hover:bg-green-700 font-semibold"
+              onClick={handleDownload}
+              disabled={isDownloading || isDownloadingPdf}
+            >
+              {isDownloading ? (
+                <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4 ml-2" />
+              )}
+              {isDownloading ? "מוריד..." : "הורד DXF"}
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={onClose}
+              disabled={isDownloading || isDownloadingPdf}
+            >
+              <X className="w-4 h-4" />
+            </Button>
           </div>
+
+          {/* PDF download */}
+          {svgContent && (
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 font-semibold"
+              onClick={handleDownloadPdf}
+              disabled={isDownloading || isDownloadingPdf}
+            >
+              {isDownloadingPdf ? (
+                <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+              ) : (
+                <FileText className="w-4 h-4 ml-2" />
+              )}
+              {isDownloadingPdf ? "יוצר PDF..." : "הורד PDF על A4 (וקטורי)"}
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
