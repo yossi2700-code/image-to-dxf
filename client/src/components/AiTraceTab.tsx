@@ -74,13 +74,18 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
   };
   const onTouchEnd = () => { lastPinchDist.current = null; panStart.current = null; };
 
-  const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
+  const styledSvg = svgContent.replace(/<svg([^>]*)>/, (_m, attrs) =>
+    /width=/.test(attrs) && /height=/.test(attrs)
+      ? `<svg${attrs} style="display:block;max-width:100%;max-height:100%;">`
+      : `<svg${attrs} style="display:block;width:100%;height:100%;">`
+  );
 
   const Viewer = ({ height }: { height: number | string }) => (
     <div className="relative overflow-hidden bg-white select-none" style={{ height, cursor: isPanning ? "grabbing" : "grab" }}
       onWheel={onWheel} onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
       onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
-      <img src={svgDataUrl} alt="Vector" draggable={false} style={{ position: "absolute", top: "50%", left: "50%", transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`, transformOrigin: "center center", maxWidth: "90%", maxHeight: "90%", objectFit: "contain", pointerEvents: "none", userSelect: "none" }} />
+      <div style={{ position: "absolute", top: "50%", left: "50%", transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`, transformOrigin: "center center", width: "90%", height: "90%", display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}
+        dangerouslySetInnerHTML={{ __html: styledSvg }} />
     </div>
   );
 

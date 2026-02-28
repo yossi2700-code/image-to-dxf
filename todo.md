@@ -432,3 +432,8 @@
 
 - [x] תיקון zoom בתצוגת וקטור — כפתורים גדולים (44px), SVG כ-data URL, pan תקין
 - [x] הגדלת גובה תצוגת וקטור ל-450px + כפתור fullscreen
+
+## תיקון תצוגת SVG + כפתור הצג וקטור
+
+- [x] תיקון SVG לא מוצג ב-iOS/Safari — חזרה ל-dangerouslySetInnerHTML בשני ה-viewers
+- [x] שיפור כפתור "הצג וקטור" — כפתור בולט עם border + toggle הצג/הסתר

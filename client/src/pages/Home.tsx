@@ -224,8 +224,13 @@ function SvgZoomViewer({ svgContent, label = "Preview", maxHeight = 450 }: SvgZo
   };
   const onTouchEnd = () => { lastPinchDist.current = null; panStart.current = null; };
 
-  // Encode SVG as data URL for reliable rendering
-  const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
+  // Prepare SVG: ensure it has explicit width/height for proper rendering
+  const styledSvg = svgContent
+    .replace(/<svg([^>]*)>/, (match, attrs) => {
+      const hasWidthHeight = /width=/.test(attrs) && /height=/.test(attrs);
+      if (hasWidthHeight) return `<svg${attrs} style="display:block;max-width:100%;max-height:100%;">`;
+      return `<svg${attrs} style="display:block;width:100%;height:100%;">`;
+    });
 
   const ViewerContent = ({ height }: { height: number | string }) => (
     <div
@@ -241,22 +246,21 @@ function SvgZoomViewer({ svgContent, label = "Preview", maxHeight = 450 }: SvgZo
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      <img
-        src={svgDataUrl}
-        alt={label}
-        draggable={false}
+      <div
         style={{
           position: "absolute",
           top: "50%",
           left: "50%",
           transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`,
           transformOrigin: "center center",
-          maxWidth: "90%",
-          maxHeight: "90%",
-          objectFit: "contain",
+          width: "90%",
+          height: "90%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           pointerEvents: "none",
-          userSelect: "none",
         }}
+        dangerouslySetInnerHTML={{ __html: styledSvg }}
       />
     </div>
   );
@@ -607,6 +611,7 @@ function AiGeneratorTab() {
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [downloadImg, setDownloadImg] = useState<AiImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
+  const [showVector, setShowVector] = useState(true);
 
   const generate = async (isModify = false) => {
     if (!prompt.trim()) {
@@ -797,11 +802,20 @@ function AiGeneratorTab() {
                 </div>
                 {selected.svgPreview && (
                   <div className="mb-3">
-                    <SvgZoomViewer
-                      svgContent={selected.svgPreview}
-                      label={isRtl ? "תצוגת קווי וקטור (DXF)" : "Vector Lines Preview (DXF)"}
-                      maxHeight={280}
-                    />
+                    <button
+                      onClick={() => setShowVector((v) => !v)}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 mb-2 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 active:bg-primary/20 transition-colors font-semibold text-sm text-primary"
+                    >
+                      <Eye className="w-4 h-4" />
+                      {showVector ? (isRtl ? "הסתר וקטור" : "Hide Vector") : (isRtl ? "הצג וקטור" : "Show Vector")}
+                    </button>
+                    {showVector && (
+                      <SvgZoomViewer
+                        svgContent={selected.svgPreview}
+                        label={isRtl ? "תצוגת קווי וקטור (DXF)" : "Vector Lines Preview (DXF)"}
+                        maxHeight={380}
+                      />
+                    )}
                   </div>
                 )}
                 <div className="grid grid-cols-3 gap-2 mb-3">
