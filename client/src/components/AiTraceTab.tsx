@@ -136,7 +136,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
         formData.append("description", description.trim());
       }
 
-      const res = await fetch("/api/ai-trace", { method: "POST", body: formData });
+      const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
       const data = await res.json();
 
       if (!res.ok) {
@@ -276,20 +276,49 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
         {/* Loading */}
         {status === "loading" && (
           <Card>
-            <CardContent className="p-8">
-              <div className="flex flex-col items-center gap-4 text-center">
-                <div className="relative">
-                  <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-                  <Scan className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                </div>
-                <div>
-                  <p className="font-semibold text-base">{t("aiTraceProcessing")}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{t("aiTraceProcessingSubtitle")}</p>
-                </div>
-                <div className="flex gap-1.5 mt-1">
-                  {[0, 1, 2].map((i) => (
-                    <div key={i} className="w-2 h-2 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-                  ))}
+            <CardContent className="p-5">
+              <div className="flex flex-col gap-4">
+                {/* Show original image while processing */}
+                {imagePreview && (
+                  <div className="relative rounded-xl overflow-hidden border bg-white">
+                    <img
+                      src={imagePreview}
+                      alt="Processing"
+                      className="w-full max-h-56 object-contain"
+                    />
+                    {/* Animated scan overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-primary/10 animate-pulse" />
+                    <div
+                      className="absolute left-0 right-0 h-0.5 bg-primary/60 shadow-[0_0_8px_2px_rgba(99,102,241,0.5)]"
+                      style={{
+                        animation: "scanLine 2s ease-in-out infinite",
+                        top: "50%",
+                      }}
+                    />
+                    <style>{`
+                      @keyframes scanLine {
+                        0% { top: 10%; }
+                        50% { top: 90%; }
+                        100% { top: 10%; }
+                      }
+                    `}</style>
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs px-3 py-1 rounded-full flex items-center gap-2">
+                      <Scan className="w-3 h-3 animate-pulse" />
+                      {isRtl ? "ה-AI מנתח את התמונה..." : "AI is analyzing..."}
+                    </div>
+                  </div>
+                )}
+                <div className="flex flex-col items-center gap-3 text-center">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+                    <p className="font-semibold text-sm">{t("aiTraceProcessing")}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t("aiTraceProcessingSubtitle")}</p>
+                  <div className="flex gap-1.5">
+                    {[0, 1, 2].map((i) => (
+                      <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                    ))}
+                  </div>
                 </div>
               </div>
             </CardContent>
