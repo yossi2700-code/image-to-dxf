@@ -360,3 +360,10 @@
 ## AI Trace - תיקון PNG corrupt header
 
 - [x] תיקון: שינוי מ-invokeLLM (לא יכול לייצר תמונות) ל-generateImage API שמחזיר PNG אמיתי
+
+## AI Trace - שיפור איכות DXF
+
+- [x] הגדלת רזולוציה לפני potrace (upscale ל-2048px עם lanczos3)
+- [x] Gaussian blur קל (0.5) + threshold 210 לפני potrace
+- [x] simplifyTolerance 0.8 + minSegmentLength 1.5 לקווים חלקים יותר
+- [x] הגדלת תצוגה מקדימה של ציור ה-AI ב-AiTraceTab (רוחב מלא + גובה 500px)

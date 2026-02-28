@@ -125,8 +125,17 @@ router.post(
       const genResponse = await fetch(generated.url);
       const genBuffer = Buffer.from(await genResponse.arrayBuffer());
 
-      // Minimal processing: just convert to PNG (no threshold — the AI already drew clean lines)
+      // Pre-process for potrace: upscale + slight blur + threshold to get clean crisp lines
+      // 1. Upscale to 2048px for better detail capture (lanczos3 = best quality)
+      // 2. Grayscale
+      // 3. Slight Gaussian blur to smooth anti-aliased edges
+      // 4. Threshold at 210 (keep lines dark, make background pure white)
+      //    Higher threshold = more white background, cleaner lines
       const enhancedBuffer = await sharp(genBuffer)
+        .resize(2048, 2048, { fit: "inside", withoutEnlargement: false, kernel: "lanczos3" })
+        .grayscale()
+        .blur(0.5)          // Very slight blur to smooth anti-aliased edges before threshold
+        .threshold(210)     // Lines are dark (<210), background is white (>210)
         .png()
         .toBuffer();
 
@@ -206,8 +215,8 @@ router.post(
       // ── Run potrace pipeline (same as regular upload) ─────────────────────────
       const result = await convertImageToDxf(pngBuffer, {
         threshold: 128,
-        simplifyTolerance: 1.5,
-        minSegmentLength: 2,
+        simplifyTolerance: 0.8,   // Lower = more detail preserved, smoother curves
+        minSegmentLength: 1.5,    // Keep smaller segments for fine details
       });
 
       // ── Upload DXF to S3 ──────────────────────────────────────────────────────

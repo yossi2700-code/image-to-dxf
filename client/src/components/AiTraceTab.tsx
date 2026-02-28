@@ -279,19 +279,19 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1.5 font-medium text-center">{isRtl ? "תמונה מקורית" : "Original"}</p>
-                  <div className="border rounded-lg overflow-hidden bg-white aspect-square flex items-center justify-center p-2">
-                    <img src={imagePreview!} alt="Original" className="max-w-full max-h-full object-contain" />
-                  </div>
-                </div>
+              <div className="flex flex-col gap-3 mb-4">
                 <div>
                   <p className="text-xs text-muted-foreground mb-1.5 font-medium text-center">{isRtl ? "ציור AI (שחור-לבן)" : "AI Drawing (B&W)"}</p>
-                  <div className="border rounded-lg overflow-hidden bg-white aspect-square flex items-center justify-center p-2">
-                    <img src={previewResult.previewPngBase64} alt="AI Drawing" className="max-w-full max-h-full object-contain" />
+                  <div className="border rounded-lg overflow-hidden bg-white flex items-center justify-center p-2" style={{ minHeight: 340 }}>
+                    <img src={previewResult.previewPngBase64} alt="AI Drawing" className="max-w-full object-contain" style={{ maxHeight: 500 }} />
                   </div>
                 </div>
+                <details>
+                  <summary className="text-xs text-muted-foreground cursor-pointer text-center py-1">{isRtl ? "הצג תמונה מקורית" : "Show original photo"}</summary>
+                  <div className="border rounded-lg overflow-hidden bg-white flex items-center justify-center p-2 mt-2" style={{ minHeight: 200 }}>
+                    <img src={imagePreview!} alt="Original" className="max-w-full object-contain" style={{ maxHeight: 300 }} />
+                  </div>
+                </details>
               </div>
 
               <p className="text-xs text-muted-foreground text-center mb-4">
@@ -317,18 +317,11 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                 <span className="font-semibold text-sm">{t("aiTraceSuccess")}</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="flex flex-col gap-3 mb-4">
                 <div>
                   <p className="text-xs text-muted-foreground mb-1.5 font-medium text-center">{isRtl ? "ציור AI" : "AI Drawing"}</p>
-                  <div className="border rounded-lg overflow-hidden bg-white aspect-square flex items-center justify-center p-2">
-                    <img src={previewResult?.previewPngBase64} alt="AI Drawing" className="max-w-full max-h-full object-contain" />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1.5 font-medium text-center">{isRtl ? "וקטור לחריטה" : "Engraving Vector"}</p>
-                  <div className="border rounded-lg overflow-hidden bg-white aspect-square flex items-center justify-center p-2">
-                    <div className="w-full h-full flex items-center justify-center"
-                      dangerouslySetInnerHTML={{ __html: dxfResult.svgPreview.replace(/<svg /, '<svg style="max-width:100%;max-height:100%;width:auto;height:auto;" ') }} />
+                  <div className="border rounded-lg overflow-hidden bg-white flex items-center justify-center p-2" style={{ minHeight: 200 }}>
+                    <img src={previewResult?.previewPngBase64} alt="AI Drawing" className="max-w-full object-contain" style={{ maxHeight: 300 }} />
                   </div>
                 </div>
               </div>
