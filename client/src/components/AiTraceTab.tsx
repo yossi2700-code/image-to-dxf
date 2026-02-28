@@ -142,11 +142,10 @@ function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) 
 
         {/* AI Drawing preview */}
         <div
-          className="border rounded-lg overflow-hidden bg-white mb-3 flex items-center justify-center relative group cursor-zoom-in"
-          style={{ minHeight: 200 }}
+          className="border rounded-lg overflow-hidden bg-white mb-3 relative group cursor-zoom-in"
           onClick={() => onZoom(image.imageUrl, label)}
         >
-          <img src={image.imageUrl} alt={`Variation ${index + 1}`} className="max-w-full object-contain" style={{ maxHeight: 280 }} />
+          <img src={image.imageUrl} alt={`Variation ${index + 1}`} className="w-full h-auto block" />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
             <ZoomIn className="w-7 h-7 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
           </div>
@@ -260,20 +259,27 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       {zoomImg && (
         <div
           className="fixed inset-0 z-50 bg-black/85 flex flex-col"
-          onClick={(e) => { if (e.target === e.currentTarget) setZoomImg(null); }}
+          onClick={() => setZoomImg(null)}
         >
-          <div className="flex items-center gap-2 px-4 py-2 bg-black/60 text-white shrink-0">
-            <span className="text-xs flex-1 truncate opacity-70">{zoomImg.alt}</span>
-            <button onClick={() => setZoomImg(null)} className="p-1.5 rounded hover:bg-white/10 text-lg font-bold">✕</button>
-          </div>
-          <div className="flex-1 flex items-center justify-center overflow-hidden p-4">
+          {/* Big close button top-right */}
+          <button
+            onClick={() => setZoomImg(null)}
+            className="absolute top-4 right-4 z-10 w-12 h-12 rounded-full bg-white/20 hover:bg-white/40 active:bg-white/60 flex items-center justify-center text-white text-2xl font-bold shadow-lg"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+          <div className="flex-1 flex items-center justify-center overflow-hidden p-6 pt-16">
             <img
               src={zoomImg.src}
               alt={zoomImg.alt}
-              style={{ maxWidth: "90vw", maxHeight: "80vh", objectFit: "contain" }}
+              style={{ maxWidth: "92vw", maxHeight: "82vh", objectFit: "contain" }}
+              onClick={(e) => e.stopPropagation()}
             />
           </div>
-          <p className="text-center text-xs text-white/40 py-2 shrink-0">{isRtl ? "לחץ מחוץ לתמונה לסגירה" : "Click outside image to close"}</p>
+          <p className="text-center text-sm text-white/50 pb-4 shrink-0">
+            {isRtl ? "לחץ בכל מקום לסגירה" : "Tap anywhere to close"}
+          </p>
         </div>
       )}
       {downloadTarget && (
