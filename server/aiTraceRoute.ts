@@ -20,10 +20,9 @@ import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { checkUsageLimit } from "./usageLimits";
 import { svgToDxf } from "./svgToDxf";
-import OpenAI from "openai";
+import { invokeLLM } from "./_core/llm";
 
 const router = Router();
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
 
 /**
@@ -153,10 +152,8 @@ router.post(
 
       const dataUrl = bufferToDataUrl(resized, "image/jpeg");
 
-      // ── Call GPT-4o Vision ───────────────────────────────────────────────────
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
-        max_tokens: 4096,
+      // ── Call Vision AI via Manus Forge API ────────────────────────────────
+      const completion = await invokeLLM({
         messages: [
           {
             role: "user",
@@ -174,7 +171,7 @@ router.post(
         ],
       });
 
-      const rawResponse = completion.choices[0]?.message?.content ?? "";
+      const rawResponse = (completion.choices[0]?.message?.content as string) ?? "";
       if (!rawResponse) {
         throw new Error("Empty response from AI");
       }
