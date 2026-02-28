@@ -102,7 +102,14 @@ export function DxfDownloadDialog({
   svgWidth = 500,
   svgHeight = 500,
 }: DxfDownloadDialogProps) {
-  const [filename, setFilename] = useState(defaultFilename.replace(/\.dxf$/i, ""));
+  // Shorten filename: take first 3 words, max 30 chars
+  const shortenFilename = (name: string) => {
+    const base = name.replace(/\.dxf$/i, "").trim();
+    const words = base.split(/\s+/).slice(0, 3).join("_");
+    return words.slice(0, 30) || "design";
+  };
+
+  const [filename, setFilename] = useState(() => shortenFilename(defaultFilename));
   const [scalePercent, setScalePercent] = useState(100);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
@@ -110,7 +117,7 @@ export function DxfDownloadDialog({
   // Reset when dialog opens
   useEffect(() => {
     if (open) {
-      setFilename(defaultFilename.replace(/\.dxf$/i, ""));
+      setFilename(shortenFilename(defaultFilename));
       setScalePercent(100);
     }
   }, [open, defaultFilename]);
