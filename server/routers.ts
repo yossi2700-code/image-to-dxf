@@ -165,6 +165,7 @@ export const appRouter = router({
           name: appUsers.name,
           email: appUsers.email,
           tokenBalance: appUsers.tokenBalance,
+          isBlocked: appUsers.isBlocked,
           createdAt: appUsers.createdAt,
           lastLoginAt: appUsers.lastLoginAt,
         })
@@ -192,6 +193,26 @@ export const appRouter = router({
           input.note ?? `Admin added ${input.amount} tokens`
         );
         return { success: true, balanceAfter };
+      }),
+
+    /** Block a user — prevents them from using AI features */
+    blockUser: adminProcedure
+      .input(z.object({ userId: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db.update(appUsers).set({ isBlocked: 1 }).where(eq(appUsers.id, input.userId));
+        return { success: true };
+      }),
+
+    /** Unblock a user */
+    unblockUser: adminProcedure
+      .input(z.object({ userId: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db.update(appUsers).set({ isBlocked: 0 }).where(eq(appUsers.id, input.userId));
+        return { success: true };
       }),
   }),
 

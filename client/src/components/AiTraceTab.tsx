@@ -76,6 +76,20 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
   };
   const onTouchEnd = () => { lastPinchDist.current = null; panStart.current = null; };
 
+  // Extract viewBox to compute aspect ratio for proper height
+  const viewBoxMatch = svgContent.match(/viewBox=["']([^"']+)["']/);
+  const svgAspect = (() => {
+    if (viewBoxMatch) {
+      const parts = viewBoxMatch[1].trim().split(/[\s,]+/);
+      if (parts.length === 4) {
+        const w = parseFloat(parts[2]);
+        const h = parseFloat(parts[3]);
+        if (w > 0 && h > 0) return h / w;
+      }
+    }
+    return 1;
+  })();
+
   const styledSvg = svgContent.replace(/<svg([^>]*)>/, (_m, attrs) =>
     /width=/.test(attrs) && /height=/.test(attrs)
       ? `<svg${attrs} style="display:block;max-width:100%;max-height:100%;">`
@@ -115,7 +129,17 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
       )}
       <div className="border rounded-lg overflow-hidden bg-white">
         <Toolbar />
-        <Viewer height={450} />
+        <div ref={(el) => {
+          if (el) {
+            const w = el.getBoundingClientRect().width;
+            el.style.height = Math.min(Math.max(w * svgAspect, 180), 500) + 'px';
+          }
+        }} className="relative overflow-hidden bg-white select-none" style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
+          onWheel={onWheel} onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
+          onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`, transformOrigin: 'center center', width: '90%', height: '90%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}
+            dangerouslySetInnerHTML={{ __html: styledSvg }} />
+        </div>
       </div>
     </>
   );

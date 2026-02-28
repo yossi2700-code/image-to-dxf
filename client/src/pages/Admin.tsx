@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,9 @@ import {
   Coins,
   Plus,
   History,
+  Ban,
+  ShieldCheck,
+  RefreshCw,
 } from "lucide-react";
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
@@ -172,6 +175,23 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     },
     onError: (err) => toast.error(err.message ?? "שגיאה בהוספת אסימונים"),
   });
+
+  const blockUserMutation = trpc.admin.blockUser.useMutation({
+    onSuccess: () => { toast.success("המשתמש נחסם"); refetchUsers(); },
+    onError: (err) => toast.error(err.message ?? "שגיאה בחסימה"),
+  });
+
+  const unblockUserMutation = trpc.admin.unblockUser.useMutation({
+    onSuccess: () => { toast.success("החסימה הוסרה"); refetchUsers(); },
+    onError: (err) => toast.error(err.message ?? "שגיאה בשחרור חסימה"),
+  });
+
+  // Auto-refresh token balances every 30 seconds
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const interval = setInterval(() => { refetchUsers(); }, 30000);
+    return () => clearInterval(interval);
+  }, [refetchUsers]);
 
   const { data: tokenHistory, isLoading: tokenHistoryLoading } = trpc.admin.userTokenHistory.useQuery(
     { userId: tokenHistoryUser ?? 0 },
@@ -353,10 +373,17 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               <Users className="w-4 h-4 text-primary" />
               משתמשים רשומים
               {registeredUsers && (
-                <span className="mr-auto text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                   {registeredUsers.length} משתמשים
                 </span>
               )}
+              <button
+                className="mr-auto text-muted-foreground hover:text-primary transition-colors"
+                onClick={() => refetchUsers()}
+                title="רענן נתונים"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -426,6 +453,27 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                               <Plus className="w-3 h-3" />
                             </button>
                           )}
+                          {/* Block/Unblock button */}
+                          <button
+                            className={`text-xs px-2 py-0.5 rounded-full font-medium transition-colors flex items-center gap-1 ${
+                              u.isBlocked
+                                ? "bg-red-100 text-red-700 hover:bg-red-200"
+                                : "bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-600"
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (u.isBlocked) {
+                                unblockUserMutation.mutate({ userId: u.id });
+                              } else {
+                                if (confirm(`לחסום את ${u.name ?? u.email}?`)) {
+                                  blockUserMutation.mutate({ userId: u.id });
+                                }
+                              }
+                            }}
+                            title={u.isBlocked ? "שחרר חסימה" : "חסום משתמש"}
+                          >
+                            {u.isBlocked ? <><ShieldCheck className="w-3 h-3" /> חסום</> : <Ban className="w-3 h-3" />}
+                          </button>
                           {/* Token history toggle */}
                           <button
                             className="text-xs text-muted-foreground hover:text-primary transition-colors"

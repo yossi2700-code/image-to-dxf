@@ -111,6 +111,22 @@ router.post("/api/generate-images", async (req, res) => {
       return res.status(401).json({ error: "REGISTRATION_REQUIRED", message: "נדרשת הרשמה כדי ליצור עיצובי AI" });
     }
 
+    // Block check
+    const { getDb } = await import("./db");
+    const { appUsers } = await import("../drizzle/schema");
+    const { eq } = await import("drizzle-orm");
+    const dbConn = await getDb();
+    if (dbConn) {
+      const [userRow] = await dbConn.select({ isBlocked: appUsers.isBlocked }).from(appUsers).where(eq(appUsers.id, appUser.userId)).limit(1);
+      if (userRow?.isBlocked) {
+        return res.status(403).json({
+          error: "USER_BLOCKED",
+          message: "חשבונך חסום. לפרטים פנה לרובוטיקה וטכנולוגיה.",
+          messageEn: "Your account has been blocked. Please contact Robotics & Technology.",
+        });
+      }
+    }
+
     // Token check & deduction
     const tokenResult = await deductTokens(appUser.userId, "ai_generate", prompt);
     if (!tokenResult.success) {
@@ -137,7 +153,7 @@ router.post("/api/generate-images", async (req, res) => {
         prompt: imagePrompt,
         n: 1,
         size: "1024x1024",
-        quality: "low",
+        quality: "medium",
       });
 
       const imageData = response.data?.[0];
