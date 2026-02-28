@@ -48,27 +48,23 @@ const STYLE_VARIATIONS = [
   {
     label: "simple",
     style:
-      "Clean architectural/technical line drawing style. Clear outer contour with essential structural details. " +
-      "Every major visible element must be drawn with clean precise lines. " +
-      "NO texture, NO hatching, NO shading, NO fill, NO noise. " +
-      "Lines must be smooth, confident, and well-proportioned — like a professional technical illustration.",
+      "Simple clean outline only. Bold outer contour lines, minimal internal lines. " +
+      "Icon/sticker style. NO texture, NO hatching, NO shading, NO fill. " +
+      "Only 2-4 main structural lines inside the shape.",
   },
   {
     label: "detailed",
     style:
-      "Highly detailed technical illustration style. Precise outer contour with rich internal line work " +
-      "capturing all visible structural elements, surfaces, and features. " +
-      "Every part of the scene should be recognizable and well-drawn. " +
-      "NO texture, NO hatching, NO shading, NO fill. " +
-      "Like a professional architectural or engineering drawing — clean, accurate, and complete.",
+      "Clean outline with moderate internal details. Bold outer contour plus clear structural " +
+      "inner lines showing main features. NO texture, NO hatching, NO shading, NO fill. " +
+      "Like a coloring book page — clear distinct lines only.",
   },
   {
     label: "decorative",
     style:
-      "Elegant artistic line illustration style. Detailed outer contour with refined artistic inner lines. " +
-      "All elements drawn with flowing, precise strokes — like a high-quality engraving or fine art print. " +
-      "NO texture, NO hatching, NO shading, NO fill. " +
-      "Every visible element beautifully rendered with clean distinct lines suitable for laser cutting.",
+      "Decorative artistic outline style. Bold outer contour with elegant decorative inner lines. " +
+      "Art nouveau or mandala-inspired clean line work. NO texture, NO hatching, NO shading, NO fill. " +
+      "All lines must be clean, distinct, and suitable for laser cutting.",
   },
 ];
 
@@ -149,15 +145,13 @@ async function generateImprovementSuggestions(
 function buildLineArtPrompt(objectDescription: string, variationIndex: number): string {
   const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
   return (
-    `Professional black and white line art illustration of ${objectDescription}. ` +
+    `Clean black and white line art of ${objectDescription}. ` +
     "Pure white background (#FFFFFF). " +
-    "Clean precise black lines only, no fill, no shading, no gradients, no grey tones. " +
-    "High contrast: only pure black (#000000) lines on pure white. " +
-    "ALL elements in the scene must be drawn — do not simplify or omit any visible parts. " +
-    "Vary line weight: thicker lines for main outlines, thinner lines for internal details. " +
+    "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
+    "High contrast: only pure black (#000000) lines on white. " +
     `${variation.style} ` +
-    "Complete composition, not cropped, centered. " +
-    "No text, no watermarks, no noise, no texture fills."
+    "Single centered object, complete, not cropped. " +
+    "No text, no watermarks, no grey tones."
   );
 }
 
@@ -168,11 +162,11 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number): 
 function pngToSvg(pngBuffer: Buffer): Promise<string> {
   return new Promise((resolve, reject) => {
     potrace.trace(pngBuffer, {
-      threshold: 128,       // midpoint threshold (image already pre-thresholded)
-      turdSize: 4,          // smaller: preserve more fine detail lines
-      alphaMax: 0.8,        // slightly sharper corners for technical drawings
-      optCurve: true,       // optimize curves for smooth Bezier paths
-      optTolerance: 0.15,   // tighter tolerance = more accurate curves
+      threshold: 180,
+      turdSize: 8,
+      alphaMax: 1,
+      optCurve: true,
+      optTolerance: 0.2,
     }, (err: Error | null, svg: string) => {
       if (err) reject(err);
       else resolve(svg);
@@ -327,12 +321,10 @@ router.post(
           throw new Error("לא התקבלה תמונה מה-AI");
         }
 
-        // Pre-process: enhance contrast + sharpen + threshold for cleaner potrace results
+        // Pre-process: grayscale + threshold for potrace (same as generateRoute)
         const processedBuffer = await sharp(rawBuffer)
           .grayscale()
-          .normalize()       // stretch histogram to full 0-255 range
-          .sharpen({ sigma: 1.5, m1: 1.5, m2: 0.5 })  // crisp edges
-          .threshold(160)    // preserve thin detail lines
+          .threshold(200)
           .png()
           .toBuffer();
 
