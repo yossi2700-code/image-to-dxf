@@ -31,23 +31,32 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 
  * We ask for a minimal SVG with only path/polyline elements — no fills, no colors.
  */
 function buildTracePrompt(): string {
-  return `You are an expert SVG illustrator specializing in laser engraving and CNC cutting files.
+  return `You are an expert SVG illustrator and product designer specializing in laser engraving and CNC cutting files.
 
-Analyze the image and create a clean SVG outline drawing of the MAIN SUBJECT only.
+Your task has TWO steps:
 
-STRICT RULES:
-1. Output ONLY valid SVG XML — no markdown, no code blocks, no explanation
+STEP 1 — IDENTIFY: Look carefully at the image. Identify the EXACT object — its specific brand, model, shape, distinctive features, logos, patterns, stitching lines, hardware details, proportions. Be as specific as possible (e.g. "Louis Vuitton Neverfull tote bag with LV monogram pattern, leather handles, brass hardware").
+
+STEP 2 — REDRAW FAITHFULLY: Create a detailed SVG outline that captures the SPECIFIC object as accurately as possible — not a generic version. Include:
+- Exact silhouette and proportions from the image
+- All distinctive structural details (seams, handles, hardware, clasps, straps)
+- Brand-specific patterns or logos if visible (as outline paths)
+- Interior lines that define the object's character
+- Fine details that make this object recognizable
+
+STRICT OUTPUT RULES:
+1. Output ONLY valid SVG XML — no markdown, no code blocks, no explanation, no comments
 2. SVG must start with <svg and end with </svg>
-3. Use viewBox="0 0 500 500" (or appropriate aspect ratio)
-4. ALL paths/lines must have: stroke="black" stroke-width="2" fill="none"
-5. NO fills, NO colors, NO gradients, NO text, NO background rectangle
-6. Draw ONLY the outline/contour of the main subject
-7. Keep it clean and simple — suitable for laser engraving
-8. Include main structural details but skip fine texture/shading
-9. The outline should be a single connected or grouped set of paths
-10. Ignore background, shadows, and decorative elements
+3. Use viewBox that matches the object's actual proportions (e.g. viewBox="0 0 400 500" for a tall object)
+4. ALL elements must have: stroke="black" stroke-width="1.5" fill="none"
+5. NO fills, NO colors, NO gradients, NO background rectangle
+6. Use <path> elements with smooth curves (bezier) for organic shapes
+7. Use multiple detail paths — not just a single outline
+8. The result should be immediately recognizable as THIS SPECIFIC object
+9. Aim for 20-60 path elements to capture sufficient detail
+10. Suitable for laser engraving — clean lines, no overlapping strokes
 
-Draw the clean laser-engraving outline now:`;
+Redraw this specific object as a faithful detailed SVG outline now:`;
 }
 
 /** Convert buffer to base64 data URL for OpenAI Vision */
