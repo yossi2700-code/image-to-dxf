@@ -10,6 +10,7 @@ import {
   offsetPolyline,
   doubleLinePolylines,
   polylinesToSegments,
+  thinBinary,
 } from "./imageProcessor";
 
 describe("applyThreshold", () => {
@@ -414,5 +415,50 @@ describe("traceCenterlines", () => {
     for (const [, y] of result[0]) {
       expect(y).toBe(5);
     }
+  });
+});
+
+describe("thinBinary", () => {
+  it("should thin a thick horizontal black line to single-pixel width", () => {
+    const width = 20, height = 10;
+    // binary: 0=black (foreground), 255=white (background)
+    const binary = new Uint8Array(width * height).fill(255);
+    // Draw a 3px thick horizontal black line at rows 3-5
+    for (let y = 3; y <= 5; y++) {
+      for (let x = 2; x < 18; x++) {
+        binary[y * width + x] = 0;
+      }
+    }
+    const thinned = thinBinary(binary, width, height);
+    // Count foreground pixels per column — should be at most 1 per column
+    for (let x = 4; x < 16; x++) {
+      let count = 0;
+      for (let y = 0; y < height; y++) {
+        if (thinned[y * width + x] === 255) count++;
+      }
+      expect(count).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("should preserve connectivity of a 1px line", () => {
+    const width = 20, height = 10;
+    const binary = new Uint8Array(width * height).fill(255);
+    // Draw a 1px horizontal black line at row 5
+    for (let x = 2; x < 18; x++) binary[5 * width + x] = 0;
+    const thinned = thinBinary(binary, width, height);
+    // The line should still have pixels present
+    let count = 0;
+    for (let x = 2; x < 18; x++) {
+      if (thinned[5 * width + x] === 255) count++;
+    }
+    expect(count).toBeGreaterThan(8);
+  });
+
+  it("should return all background for all-white input", () => {
+    const width = 10, height = 10;
+    const binary = new Uint8Array(width * height).fill(255);
+    const thinned = thinBinary(binary, width, height);
+    const hasEdge = Array.from(thinned).some((v) => v === 255);
+    expect(hasEdge).toBe(false);
   });
 });

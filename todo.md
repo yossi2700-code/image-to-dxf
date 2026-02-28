@@ -391,3 +391,11 @@
 - [x] עדכון prompt: קווים דקים 1-2px (לא 3-5px) לתוצאות centerline טובות יותר
 - [x] תיקון שגיאות TypeScript (הסרת potrace/svgToDxf שלא בשימוש)
 - [x] 59 בדיקות עוברות (7 בדיקות חדשות לdouglasPeucker ו-traceCenterlines)
+
+## תיקון איכות קו - potrace + centerline מ-SVG
+
+- [x] אבחון: Sobel על קו שחור מייצר שני קווים מקבילים (שני קצות) — הבעיה האמיתית
+- [x] הוספת thinBinary() — Zhang-Suen ישירות על binary (לא על Sobel output)
+- [x] הוספת aiTracePipeline() — blur(1.5) + threshold(220) + thinBinary + traceCenterlines
+- [x] עדכון aiTraceRoute Step 2 להשתמש ב-aiTracePipeline
+- [x] 62 בדיקות עוברות (3 בדיקות חדשות ל-thinBinary)

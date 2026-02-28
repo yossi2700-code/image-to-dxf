@@ -22,7 +22,7 @@ import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { checkUsageLimit } from "./usageLimits";
 import { generateImage } from "./_core/imageGeneration";
-import { convertImageToDxf } from "./imageProcessor";
+import { aiTracePipeline } from "./imageProcessor";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
@@ -212,14 +212,14 @@ router.post(
         return res.status(400).json({ error: "NO_PNG", message: "לא סופק PNG לעיבוד" });
       }
 
-      // ── Centerline pipeline ───────────────────────────────────────────────────
-      // threshold=200: already pre-thresholded in Step 1, but apply again for safety
-      // simplifyTolerance=1.5: Douglas-Peucker epsilon — good balance of smooth vs detail
-      // minSegmentLength=3: filter out tiny noise dots
-      const result = await convertImageToDxf(pngBuffer, {
-        threshold: 200,
+      // ── AI Trace pipeline ─────────────────────────────────────────────────────
+      // Uses Gaussian blur + high threshold + Zhang-Suen thinning on binary
+      // (NOT Sobel edge detection, which creates double lines)
+      // threshold=220: high threshold after blur to keep only clearly dark pixels
+      // simplifyTolerance=1.5: Douglas-Peucker epsilon
+      const result = await aiTracePipeline(pngBuffer, {
+        threshold: 220,
         simplifyTolerance: 1.5,
-        minSegmentLength: 3,
       });
 
       const { dxf, svgPreview, segmentCount, realWidth, realHeight } = result;

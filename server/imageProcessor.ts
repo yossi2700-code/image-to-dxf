@@ -765,6 +765,132 @@ export function polylinesToSvg(
 }
 
 /**
+ * Thin a binary image (0=black/foreground, 255=white/background) using Zhang-Suen.
+ * Unlike thinEdges (which works on Sobel output), this works directly on the
+ * black pixels of a line drawing — producing the TRUE skeleton/centerline.
+ *
+ * Input: binary image where 0 = black (line), 255 = white (background)
+ * Output: thinned image in same format
+ */
+export function thinBinary(
+  binary: Uint8Array,
+  width: number,
+  height: number
+): Uint8Array {
+  // Convert: 0 (black) → 1 (foreground), 255 (white) → 0 (background)
+  const img = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) img[i] = binary[i] === 0 ? 1 : 0;
+
+  const idx = (x: number, y: number) => y * width + x;
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (let pass = 0; pass < 2; pass++) {
+      const toDelete: number[] = [];
+      for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+          if (img[idx(x, y)] !== 1) continue;
+          const p2 = img[idx(x,     y - 1)];
+          const p3 = img[idx(x + 1, y - 1)];
+          const p4 = img[idx(x + 1, y    )];
+          const p5 = img[idx(x + 1, y + 1)];
+          const p6 = img[idx(x,     y + 1)];
+          const p7 = img[idx(x - 1, y + 1)];
+          const p8 = img[idx(x - 1, y    )];
+          const p9 = img[idx(x - 1, y - 1)];
+          const B = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
+          if (B < 2 || B > 6) continue;
+          const seq = [p2, p3, p4, p5, p6, p7, p8, p9, p2];
+          let A = 0;
+          for (let k = 0; k < 8; k++) if (seq[k] === 0 && seq[k + 1] === 1) A++;
+          if (A !== 1) continue;
+          if (pass === 0) {
+            if (p2 * p4 * p6 !== 0) continue;
+            if (p4 * p6 * p8 !== 0) continue;
+          } else {
+            if (p2 * p4 * p8 !== 0) continue;
+            if (p2 * p6 * p8 !== 0) continue;
+          }
+          toDelete.push(idx(x, y));
+        }
+      }
+      if (toDelete.length > 0) {
+        changed = true;
+        for (const i of toDelete) img[i] = 0;
+      }
+    }
+  }
+
+  // Convert back: 1 → 255 (edge pixel), 0 → 0 (background)
+  const result = new Uint8Array(binary.length);
+  for (let i = 0; i < img.length; i++) result[i] = img[i] === 1 ? 255 : 0;
+  return result;
+}
+
+/**
+ * AI Trace pipeline: image buffer → DXF string
+ *
+ * Optimised for AI-generated line drawings (black lines on white background).
+ * Skips Sobel edge detection (which creates double lines) and instead:
+ *   1. Grayscale + threshold → binary (black pixels = lines)
+ *   2. Zhang-Suen thinning DIRECTLY on binary → single-pixel skeleton
+ *   3. 8-connectivity tracing + Douglas-Peucker → smooth polylines
+ *   4. DXF + SVG output
+ */
+export async function aiTracePipeline(
+  buffer: Buffer,
+  options: ProcessingOptions
+): Promise<{
+  dxf: string;
+  svgPreview: string;
+  segmentCount: number;
+  width: number;
+  height: number;
+  realWidth: number;
+  realHeight: number;
+}> {
+  // Get image dimensions first
+  const { width, height } = await imageToGrayscale(buffer);
+
+  // Apply Gaussian blur before threshold to smooth anti-aliased edges
+  // This prevents jagged "staircase" artifacts from anti-aliasing
+  const blurred = await sharp(buffer)
+    .grayscale()
+    .resize(width, height)
+    .blur(1.5)  // gentle Gaussian blur to merge anti-aliased pixels
+    .raw()
+    .toBuffer();
+  const blurredPixels = new Uint8Array(blurred);
+
+  // High threshold (220) to keep only clearly dark pixels
+  const binary = applyThreshold(blurredPixels, options.threshold ?? 220);
+
+  // Zhang-Suen thinning directly on binary (not on Sobel edges)
+  const thinned = thinBinary(binary, width, height);
+
+  // 8-connectivity tracing with Douglas-Peucker smoothing
+  const epsilon = Math.max(0.5, options.simplifyTolerance ?? 1.5);
+  const polylines = traceCenterlines(thinned, width, height, epsilon);
+
+  const segments = polylinesToSegments(polylines);
+  const dxf = segmentsToDxf(segments, width, height);
+  const svgPreview = polylinesToSvg(polylines, width, height);
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const seg of segments) {
+    minX = Math.min(minX, seg.x1, seg.x2);
+    minY = Math.min(minY, seg.y1, seg.y2);
+    maxX = Math.max(maxX, seg.x1, seg.x2);
+    maxY = Math.max(maxY, seg.y1, seg.y2);
+  }
+  const realWidth  = segments.length > 0 ? (maxX - minX) : width;
+  const realHeight = segments.length > 0 ? (maxY - minY) : height;
+
+  return { dxf, svgPreview, segmentCount: segments.length, width, height, realWidth, realHeight };
+}
+
+/**
  * Full pipeline: image buffer → DXF string
  *
  * Double-line mode (doubleLineOffset > 0):
