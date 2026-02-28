@@ -776,7 +776,7 @@ function AiGeneratorTab() {
                     style={{ minHeight: 180 }}
                     onClick={(e) => { e.stopPropagation(); setZoomImg({ src: img.imageUrl, alt: `${t("design")} ${idx + 1}` }); }}
                   >
-                    <img src={img.imageUrl} alt={`${t("design")} ${idx + 1}`} className="max-w-full object-contain" style={{ maxHeight: 220 }} />
+                    <img src={img.imageUrl} alt={`${t("design")} ${idx + 1}`} className="max-w-full object-contain" style={{ maxHeight: 200 }} />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                       <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
                     </div>
@@ -814,7 +814,7 @@ function AiGeneratorTab() {
                   style={{ minHeight: 200 }}
                   onClick={() => setZoomImg({ src: selected.imageUrl, alt: `${t("design")} ${selectedIdx! + 1}` })}
                 >
-                  <img src={selected.imageUrl} alt={`${t("design")} ${selectedIdx! + 1}`} className="max-w-full object-contain" style={{ maxHeight: 280 }} />
+                  <img src={selected.imageUrl} alt={`${t("design")} ${selectedIdx! + 1}`} className="max-w-full object-contain" style={{ maxHeight: 320 }} />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                     <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
                   </div>

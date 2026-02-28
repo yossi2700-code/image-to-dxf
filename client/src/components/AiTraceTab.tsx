@@ -146,7 +146,7 @@ function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) 
           className="border rounded-lg overflow-hidden bg-white mb-3 relative group cursor-zoom-in"
           onClick={() => onZoom(image.imageUrl, label)}
         >
-          <img src={image.imageUrl} alt={`Variation ${index + 1}`} className="w-full h-auto block" />
+          <img src={image.imageUrl} alt={`Variation ${index + 1}`} className="w-full block" style={{ maxHeight: 320, objectFit: "contain" }} />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
             <ZoomIn className="w-7 h-7 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
           </div>
@@ -502,16 +502,18 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               </Card>
             )}
 
-            {result.images.map((image, idx) => (
-              <ImageCard
-                key={idx}
-                image={image}
-                index={idx}
-                isRtl={isRtl}
-                onDownload={setDownloadTarget}
-                onZoom={(src, alt) => setZoomImg({ src, alt })}
-              />
-            ))}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {result.images.map((image, idx) => (
+                <ImageCard
+                  key={idx}
+                  image={image}
+                  index={idx}
+                  isRtl={isRtl}
+                  onDownload={setDownloadTarget}
+                  onZoom={(src, alt) => setZoomImg({ src, alt })}
+                />
+              ))}
+            </div>
 
             <Button variant="outline" size="sm" className="w-full" onClick={reset}>
               {t("aiTraceNewImage")}
