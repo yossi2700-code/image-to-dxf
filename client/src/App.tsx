@@ -9,6 +9,8 @@ import Home from "./pages/Home";
 import Admin from "./pages/Admin";
 import History from "./pages/History";
 import Share from "./pages/Share";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 
 function Router() {
   return (
@@ -17,6 +19,8 @@ function Router() {
       <Route path={"/admin"} component={Admin} />
       <Route path={"/history"} component={History} />
       <Route path={"/share/:token"} component={Share} />
+      <Route path={"/terms"} component={Terms} />
+      <Route path={"/privacy"} component={Privacy} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

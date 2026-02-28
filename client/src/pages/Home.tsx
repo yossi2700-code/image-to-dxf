@@ -844,8 +844,19 @@ export default function Home() {
       </main>
 
       <footer className="border-t bg-white/50 mt-6">
-        <div className="container py-3 text-center text-xs text-muted-foreground">
-          {t("appFooter")}
+        <div className="container py-4 text-center text-xs text-muted-foreground space-y-1.5">
+          <div>{t("appFooter")}</div>
+          <div className="flex items-center justify-center gap-3">
+            <a href="/terms" className="hover:underline hover:text-foreground transition-colors">
+              {isRtl ? "תנאי שימוש" : "Terms of Service"}
+            </a>
+            <span>·</span>
+            <a href="/privacy" className="hover:underline hover:text-foreground transition-colors">
+              {isRtl ? "מדיניות פרטיות" : "Privacy Policy"}
+            </a>
+            <span>·</span>
+            <span>© 2026 Image to DXF</span>
+          </div>
         </div>
       </footer>
     </div>

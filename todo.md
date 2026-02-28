@@ -325,3 +325,27 @@
 
 - [x] המרת התמונה לשחור-לבן עם ניגודיות גבוהה לפני שליחה ל-GPT-4o
 - [x] שמירת גם התמונה המקורית וגם ה-B&W לתצוגה
+
+## היסטוריה - מחיקה
+
+- [ ] הוספת tRPC procedure למחיקת פריט מההיסטוריה
+- [ ] כפתור מחיקה בכל כרטיס היסטוריה עם אישור
+
+## תיקון AI Trace - SVG Parse Error
+- [x] תיקון פרסינג SVG - טיפול בתגובות שמתחילות בטקסט לפני ה-SVG
+- [x] תיקון חילוץ תוכן ממערך array (Gemini thinking blocks)
+- [x] שיפור prompt כדי להבטיח SVG נקי ללא טקסט מסביב
+
+## AI Trace - Edge Only Mode
+- [x] הוספת edge detection (Sobel + thinning) על התמונה לפני שליחה ל-GPT-4o
+- [x] שינוי prompt להסביר ל-AI שהוא רואה edge map
+
+## SEO
+- [x] הוספת meta tags (description, og:title, og:image, og:description, twitter card, structured data)
+- [x] robots.txt ו-sitemap.xml
+- [ ] favicon מותאם
+
+## Terms of Service & Privacy Policy
+- [x] דף Terms of Service
+- [x] דף Privacy Policy
+- [x] קישורים ב-footer

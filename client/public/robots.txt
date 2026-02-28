@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://imagetodxf-hndfdlkz.manus.space/sitemap.xml

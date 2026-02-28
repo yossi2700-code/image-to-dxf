@@ -23,7 +23,7 @@ import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { checkUsageLimit } from "./usageLimits";
-import { convertImageToDxf } from "./imageProcessor";
+import { convertImageToDxf, imageToGrayscale, sobelEdgeDetection, thinEdges, applyThreshold } from "./imageProcessor";
 import { invokeLLM } from "./_core/llm";
 
 const router = Router();
@@ -37,17 +37,13 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 
  */
 function buildTracePrompt(): string {
   return `You are a professional vector illustrator creating laser engraving files.
-
-The image you see has been converted to black and white. Look carefully at it.
-
+The image you see is an EDGE MAP of an object: black lines on a white background showing the exact outlines and details of the original object.
 PHASE 1 — RECOGNIZE (think silently, do not output this):
-- What is this object exactly? (brand, model, type)
-- What specific visual details are visible? (logos, patterns, stitching, hardware, text, emblems)
+- What is this object? (brand, model, type)
+- What specific details are visible in the edge lines? (logos, patterns, stitching, hardware, text, emblems)
 - What are the proportions and main shapes?
-
 PHASE 2 — TRACE (output only this):
-Draw an SVG that traces exactly what you see in the image. Do not draw from memory — look at the actual shapes, curves, and details visible and reproduce them as line art.
-
+Draw an SVG that reproduces the edge lines you see. Follow the black lines precisely — do not add or remove details.
 SVG RULES:
 1. Output ONLY raw SVG XML — start with <svg and end with </svg>, nothing else
 2. NO markdown fences, NO explanations, NO text before or after the SVG
@@ -55,13 +51,12 @@ SVG RULES:
 4. viewBox must match the object's actual proportions as seen in the image
 5. ALL elements: stroke="black" stroke-width="2" fill="none"
 6. NO colored fills — only black strokes on white background
-7. Draw in layers: outer silhouette → major edges and divisions → fine details (logos, patterns, hardware, stitching)
-8. Smooth bezier curves (C/c) for organic shapes; straight lines (L/l) for straight edges
-9. 40 to 100 path elements — capture all visible details faithfully
-10. Every path must trace a real visible edge or feature from the image
-11. The result must look like a precise coloring-book tracing of this specific image
-
-Output the SVG tracing now:`;
+7. Trace in layers: outer silhouette → major internal edges → fine details (logos, patterns, hardware, stitching)
+8. Smooth bezier curves (C/c) for curved lines; straight lines (L/l) for straight edges
+9. 30 to 80 path elements — follow the visible edge lines faithfully
+10. Every path must trace a real black line visible in the edge map
+11. Preserve the proportions and layout exactly as shown
+Output the SVG now:`;
 }
 
 /** Convert buffer to base64 data URL for Vision API */
@@ -79,6 +74,43 @@ function extractSvg(raw: string): string {
   }
   svg = svg.slice(start, end + 6);
   return svg;
+}
+
+/**
+ * Convert an image buffer to an edge-map PNG (white background, black edges).
+ * This gives GPT-4o the clearest possible view of the object's outlines.
+ */
+async function imageToEdgeMap(imageBuffer: Buffer, targetSize = 768): Promise<Buffer> {
+  // First resize to target size
+  const resized = await sharp(imageBuffer)
+    .resize(targetSize, targetSize, { fit: "inside", withoutEnlargement: true })
+    .grayscale()
+    .normalise()
+    .png()
+    .toBuffer();
+
+  const meta = await sharp(resized).metadata();
+  const w = meta.width!;
+  const h = meta.height!;
+
+  // Get raw pixel data
+  const { data } = await sharp(resized).raw().toBuffer({ resolveWithObject: true });
+  const pixels = new Uint8Array(data.buffer);
+
+  // Run Sobel edge detection
+  const edges = sobelEdgeDetection(pixels, w, h);
+  const thinned = thinEdges(edges, w, h);
+
+  // Invert: edges are black on white background (better for tracing)
+  const inverted = new Uint8Array(thinned.length);
+  for (let i = 0; i < thinned.length; i++) {
+    inverted[i] = thinned[i] > 0 ? 0 : 255;
+  }
+
+  // Convert back to PNG
+  return sharp(Buffer.from(inverted), { raw: { width: w, height: h, channels: 1 } })
+    .png()
+    .toBuffer();
 }
 
 /**
@@ -151,25 +183,33 @@ router.post(
         return res.status(400).json({ error: "No image provided" });
       }
 
-      // ── Resize to max 1024px ──────────────────────────────────────────────────
+      // ── Resize to max 1024px ────────────────────────────────────────────────
       const resized = await sharp(imageBuffer)
         .resize(1024, 1024, { fit: "inside", withoutEnlargement: true })
         .jpeg({ quality: 85 })
         .toBuffer();
 
-      // ── Convert to high-contrast B&W before sending to GPT-4o ────────────────
-      // Grayscale + normalise + linear boost helps GPT-4o see edges clearly
-      // without being distracted by colors, gradients, or backgrounds.
+      // ── Generate edge map: white background + black edges ──────────────────────
+      // This gives GPT-4o the clearest possible view of the object's outlines
+      // without color distractions. We also keep a B&W version as fallback.
+      const edgeMapBuffer = await imageToEdgeMap(imageBuffer, 768);
+      const edgeMapDataUrl = bufferToDataUrl(edgeMapBuffer, "image/png");
+
+      // Also prepare a B&W high-contrast version for context
       const bwImage = await sharp(resized)
         .grayscale()
-        .normalise()        // auto-stretch contrast to full 0-255 range
-        .linear(1.4, -30)   // further boost contrast: multiply + shift
+        .normalise()
+        .linear(1.4, -30)
         .jpeg({ quality: 90 })
         .toBuffer();
+      const bwDataUrl = bufferToDataUrl(bwImage, "image/jpeg");
 
-      const dataUrl = bufferToDataUrl(bwImage, "image/jpeg");
+      // We send BOTH: the edge map (for precise tracing) and B&W (for context/proportions)
+      const dataUrl = edgeMapDataUrl;
+      const contextDataUrl = bwDataUrl;
 
-      // ── STEP 1: GPT-4o Vision traces the B&W image as SVG ────────────────────
+      // ── STEP 1: GPT-4o Vision traces the edge map as SVG ──────────────────────
+      void contextDataUrl; // available for future use in prompt
       const completion = await invokeLLM({
         messages: [
           {
@@ -188,12 +228,32 @@ router.post(
         ],
       });
 
-      const rawResponse = (completion.choices[0]?.message?.content as string) ?? "";
+      // The model (Gemini 2.5 Flash with thinking) may return content as an array
+      // of blocks (thinking + text). Extract all text parts and join them.
+      const rawContent = completion.choices[0]?.message?.content;
+      let rawResponse: string;
+      if (typeof rawContent === "string") {
+        rawResponse = rawContent;
+      } else if (Array.isArray(rawContent)) {
+        // Join all text-type blocks (skip thinking/image blocks)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        rawResponse = (rawContent as any[])
+          .filter((block) => block.type === "text")
+          .map((block) => (block.text as string) ?? "")
+          .join("");
+      } else {
+        rawResponse = "";
+      }
+
       if (!rawResponse) {
         throw new Error("Empty response from AI");
       }
 
-      // ── Extract SVG from response ─────────────────────────────────────────────
+      console.log("[aiTrace] Raw response length:", rawResponse.length);
+      console.log("[aiTrace] Has <svg:", rawResponse.includes("<svg"));
+      console.log("[aiTrace] Preview:", rawResponse.substring(0, 200));
+
+      // ── Extract SVG from response ────────────────────────────────────────────
       const svgContent = extractSvg(rawResponse);
 
       // ── STEP 2: Render SVG → PNG ──────────────────────────────────────────────
