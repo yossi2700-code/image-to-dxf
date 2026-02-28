@@ -408,7 +408,13 @@ export default function History() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t("deleteDesign")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("deleteConfirm")} "{deleteTarget?.description ?? (isRtl ? "העיצוב" : "this design")}"? {t("deleteWarning")}
+              {t("deleteConfirm")} "{(() => {
+                const desc = deleteTarget?.description ?? "";
+                if (!desc) return isRtl ? "העיצוב" : "this design";
+                // Take only first sentence or first 40 chars
+                const firstSentence = desc.split(/[.!?]/)[0].trim();
+                return firstSentence.length > 40 ? firstSentence.slice(0, 40) + "…" : firstSentence;
+              })()}"? {t("deleteWarning")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className={isRtl ? "flex-row-reverse gap-2" : "gap-2"}>
