@@ -101,11 +101,13 @@ router.post(
       // must reduce, which can lose detail.
       const userDesc = (req.body?.description || "").trim();
       const prompt = [
-        "Create a clean black-and-white line art drawing of the object in this image.",
-        "Pure white background (#FFFFFF). Thin crisp black outlines (1-2px stroke width).",
+        "Create a detailed black-and-white technical line art drawing of the object in this image.",
+        "Pure white background (#FFFFFF). Thin crisp black lines (1-2px stroke width).",
         "No fill, no shading, no gradients — only pure black (#000000) lines on white.",
-        "High contrast: every line must be clearly visible. Like a technical illustration or blueprint.",
-        "Single centered object, complete, not cropped. Suitable for laser cutting and CNC engraving.",
+        "Include ALL details: surface texture lines, fabric folds, stitching, seams, depth lines, shadow lines, material texture, decorative patterns, and structural details.",
+        "Draw every visible edge, crease, fold, stitch, and surface contour. The more lines the better — this is for CNC engraving where detail matters.",
+        "Style: like a detailed product technical illustration or exploded engineering drawing. Rich in line work.",
+        "Single centered object, complete, not cropped. Show front view clearly.",
         userDesc ? `The object is: ${userDesc}.` : "",
       ]
         .filter(Boolean)
