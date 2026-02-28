@@ -21,6 +21,7 @@ import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { checkUsageLimit } from "./usageLimits";
+import { deductTokens } from "./tokenService";
 import { invokeLLM } from "./_core/llm";
 import OpenAI from "openai";
 import { svgToDxf } from "./svgToDxf";
@@ -190,23 +191,14 @@ router.post(
         });
       }
 
-      // ── Usage limit check ─────────────────────────────────────────────────────
-      const limitCheck = await checkUsageLimit(appUser.userId);
-      if (!limitCheck.allowed) {
-        const isExpired = limitCheck.reason === "expired";
-        const isDaily = limitCheck.reason === "daily";
-        return res.status(429).json({
-          error: "QUOTA_EXCEEDED",
-          message: isExpired
-            ? "תקופת הניסיון החינמית הסתיימה. לפרטים נוספים פנה למפתח התוכנה — רובוטיקה וטכנולוגיה."
-            : isDaily
-            ? `הגעת למכסה היומית (${limitCheck.max} עיצובים ליום). נסה שוב מחר.`
-            : "הגעת למגבלת השימוש. לפרטים נוספים פנה למפתח התוכנה — רובוטיקה וטכנולוגיה.",
-          messageEn: isExpired
-            ? "Your free trial has ended. Contact the developer for more info — Robotics & Technology."
-            : isDaily
-            ? `Daily limit reached (${limitCheck.max} designs/day). Try again tomorrow.`
-            : "Usage limit reached. Contact the developer for more info.",
+      // ── Token check & deduction ───────────────────────────────────────────────
+      const tokenResult = await deductTokens(appUser.userId, "ai_trace");
+      if (!tokenResult.success) {
+        return res.status(402).json({
+          error: "INSUFFICIENT_TOKENS",
+          balance: tokenResult.balance,
+          message: "נגמרו לך האסימונים. ליצירת קשר ורכישת אסימונים נוספים פנה לרובוטיקה וטכנולוגיה.",
+          messageEn: "You have run out of tokens. To purchase more tokens, contact Robotics & Technology.",
         });
       }
 

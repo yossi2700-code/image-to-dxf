@@ -61,6 +61,8 @@ export const appUsers = mysqlTable("app_users", {
   emailVerified: int("emailVerified").default(0).notNull(),
   /** Max number of actions allowed (null = unlimited) */
   maxActions: int("maxActions").default(10),
+  /** Token (credit) balance — starts at 20 for new users */
+  tokenBalance: int("tokenBalance").default(20).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   lastLoginAt: timestamp("lastLoginAt").defaultNow().notNull(),
 });
@@ -118,3 +120,22 @@ export const passwordResets = mysqlTable("password_resets", {
 });
 
 export type PasswordReset = typeof passwordResets.$inferSelect;
+
+// Token transactions — every debit/credit of tokens
+export const tokenTransactions = mysqlTable("token_transactions", {
+  id: int("id").autoincrement().primaryKey(),
+  /** App user who owns the tokens */
+  appUserId: int("appUserId").notNull(),
+  /** Positive = credit (added), Negative = debit (spent) */
+  amount: int("amount").notNull(),
+  /** Reason: signup_bonus, ai_trace, ai_generate, ai_refine, convert, admin_add */
+  reason: varchar("reason", { length: 64 }).notNull(),
+  /** Optional description / reference */
+  description: text("description"),
+  /** Balance after this transaction */
+  balanceAfter: int("balanceAfter").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type TokenTransaction = typeof tokenTransactions.$inferSelect;
+export type InsertTokenTransaction = typeof tokenTransactions.$inferInsert;

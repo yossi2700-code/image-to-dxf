@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -611,7 +612,8 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
 
 // ─── AI Generator Tab ────────────────────────────────────────────────────────
 function AiGeneratorTab() {
-  const { t, isRtl } = useLanguage();
+  const { t, isRtl, language } = useLanguage();
+  const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
   const [prompt, setPrompt] = useState("");
   const [modifications, setModifications] = useState("");
   const [status, setStatus] = useState<Status>("idle");
@@ -643,11 +645,19 @@ function AiGeneratorTab() {
         }),
       });
       const data = await res.json();
+      if (data.error === "INSUFFICIENT_TOKENS") {
+        const msg = language === "he" ? data.message : data.messageEn;
+        setErrorMsg(msg);
+        setStatus("error");
+        refetchTokens();
+        return;
+      }
       if (!res.ok || !data.success) throw new Error(data.message ?? data.error ?? t("aiError"));
       setImages(data.images as AiImage[]);
       setStatus("success");
       setShowModify(false);
       setModifications("");
+      refetchTokens();
       toast.success(t("aiSuccess"));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t("aiError");
@@ -925,10 +935,12 @@ function AiGeneratorTab() {
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 export default function Home() {
-  const { t, isRtl } = useLanguage();
+  const { t, isRtl, language } = useLanguage();
   const [appUser, setAppUser] = useState<{ id: number; email: string; name: string | null } | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
+  const { data: tokenData, refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: !!appUser, refetchInterval: 30000 });
+  const tokenBalance = tokenData?.balance ?? 0;
 
   useEffect(() => {
     fetch("/api/app-auth/me")
@@ -979,6 +991,10 @@ export default function Home() {
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <UserCircle className="w-4 h-4" />
                 <span>{appUser.name ?? appUser.email}</span>
+              </div>
+              <div className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                <Sparkles className="w-3 h-3" />
+                <span>{tokenBalance}</span>
               </div>
               <Button variant="ghost" size="sm" onClick={() => window.location.href = "/history"} className="text-xs gap-1">
                 <History className="w-3.5 h-3.5" />

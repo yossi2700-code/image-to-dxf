@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { trpc } from "@/lib/trpc";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
 import {
   Download,
@@ -189,7 +190,8 @@ function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) 
 interface AiTraceTabProps { onOpenAuth: () => void; }
 
 export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
-  const { t, isRtl } = useLanguage();
+  const { t, isRtl, language } = useLanguage();
+  const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [description, setDescription] = useState("");
@@ -233,14 +235,15 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       const data = await res.json();
       if (!res.ok) {
         if (data.error === "UNAUTHORIZED") { onOpenAuth(); setStatus("idle"); return; }
-        if (data.error === "QUOTA_EXCEEDED") {
-          const msg = isRtl ? (data.message || t("quotaExceeded")) : (data.messageEn || t("quotaExceeded"));
-          toast.error(msg); setErrorMsg(msg); setStatus("error"); return;
+        if (data.error === "QUOTA_EXCEEDED" || data.error === "INSUFFICIENT_TOKENS") {
+          const msg = language === "he" ? (data.message || t("quotaExceeded")) : (data.messageEn || data.message || t("quotaExceeded"));
+          toast.error(msg); setErrorMsg(msg); setStatus("error"); refetchTokens(); return;
         }
         throw new Error(isRtl ? (data.message || data.error) : (data.messageEn || data.error || "Error"));
       }
       setResult(data as TraceResult);
       setStatus("success");
+      refetchTokens();
       toast.success(isRtl ? `3 עיצובים מוכנים! בחר את המועדף ולחץ הורד DXF` : `3 designs ready! Choose your favorite and download DXF`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : (isRtl ? "שגיאה בעיבוד" : "Processing error");

@@ -7,9 +7,10 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers, userActions } from "../drizzle/schema";
-import { desc, eq, and } from "drizzle-orm";
+import { appUsers, userActions, tokenTransactions } from "../drizzle/schema";
+import { desc, eq, and, sql } from "drizzle-orm";
 import { getAppUserFromCookie } from "./appAuth";
+import { getTokenBalance, addTokens, getTokenTransactions } from "./tokenService";
 
 const ADMIN_COOKIE = "admin_session";
 
@@ -153,6 +154,57 @@ export const appRouter = router({
           .where(eq(appUsers.id, input.userId));
         return { success: true };
       }),
+
+    /** Registered users with token balance and action count */
+    usersWithTokens: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      const rows = await db
+        .select({
+          id: appUsers.id,
+          name: appUsers.name,
+          email: appUsers.email,
+          tokenBalance: appUsers.tokenBalance,
+          createdAt: appUsers.createdAt,
+          lastLoginAt: appUsers.lastLoginAt,
+        })
+        .from(appUsers)
+        .orderBy(desc(appUsers.createdAt))
+        .limit(200);
+      return rows;
+    }),
+
+    /** Token transactions for a specific user */
+    userTokenHistory: adminProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ input }) => {
+        return getTokenTransactions(input.userId, 50);
+      }),
+
+    /** Add tokens to a user (admin action) */
+    addTokens: adminProcedure
+      .input(z.object({ userId: z.number(), amount: z.number().min(1).max(10000), note: z.string().optional() }))
+      .mutation(async ({ input }) => {
+        const balanceAfter = await addTokens(
+          input.userId,
+          input.amount,
+          "admin_add",
+          input.note ?? `Admin added ${input.amount} tokens`
+        );
+        return { success: true, balanceAfter };
+      }),
+  }),
+
+  /** Token balance for the logged-in user */
+  tokens: router({
+    balance: publicProcedure.query(async ({ ctx }) => {
+      const appUser = getAppUserFromCookie(
+        (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
+      );
+      if (!appUser) return { balance: 0, loggedIn: false };
+      const balance = await getTokenBalance(appUser.userId);
+      return { balance, loggedIn: true };
+    }),
   }),
 
   /** History — returns the logged-in app user's own actions */

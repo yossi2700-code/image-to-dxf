@@ -5,6 +5,7 @@ import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { checkUsageLimit } from "./usageLimits";
+import { deductTokens } from "./tokenService";
 import OpenAI from "openai";
 import { svgToDxf } from "./svgToDxf";
 import potrace from "potrace";
@@ -69,22 +70,14 @@ router.post("/api/ai-refine", async (req, res) => {
       });
     }
 
-    // Check usage limit (counts as one action)
-    const limitCheck = await checkUsageLimit(appUser.userId);
-    if (!limitCheck.allowed) {
-      let quotaMessage: string;
-      if (limitCheck.reason === "daily") {
-        quotaMessage = `הגעת למכסה החינמית של ${limitCheck.max} עיצובים ליום. לפרטים נוספים ולשדרוג, פנה למפתח התוכנה — רובוטיקה וטכנולוגיה.`;
-      } else if (limitCheck.reason === "expired") {
-        quotaMessage = `תקופת הניסיון החינמית הסתיימה. לפרטים נוספים ולשדרוג, פנה למפתח התוכנה — רובוטיקה וטכנולוגיה.`;
-      } else {
-        quotaMessage = `הגעת למכסה החינמית. לפרטים נוספים ולשדרוג, פנה למפתח התוכנה — רובוטיקה וטכנולוגיה.`;
-      }
-      return res.status(403).json({
-        error: "QUOTA_EXCEEDED",
-        message: quotaMessage,
-        used: limitCheck.used,
-        max: limitCheck.max,
+    // Token check & deduction (ai_refine = 2 tokens)
+    const tokenResult = await deductTokens(appUser.userId, "ai_refine", instruction);
+    if (!tokenResult.success) {
+      return res.status(402).json({
+        error: "INSUFFICIENT_TOKENS",
+        balance: tokenResult.balance,
+        message: "נגמרו לך האסימונים. ליצירת קשר ורכישת אסימונים נוספים פנה לרובוטיקה וטכנולוגיה.",
+        messageEn: "You have run out of tokens. To purchase more tokens, contact Robotics & Technology.",
       });
     }
 

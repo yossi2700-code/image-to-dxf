@@ -28,6 +28,9 @@ import {
   ChevronDown,
   ChevronUp,
   FileCode2,
+  Coins,
+  Plus,
+  History,
 } from "lucide-react";
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
@@ -142,11 +145,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const { data: stats, isLoading: statsLoading } = trpc.admin.stats.useQuery();
   const { data: daily, isLoading: dailyLoading } = trpc.admin.dailyActivity.useQuery();
   const { data: recent, isLoading: recentLoading } = trpc.admin.recentEvents.useQuery();
-  const { data: registeredUsers, isLoading: usersLoading, refetch: refetchUsers } = trpc.admin.users.useQuery();
+  const { data: registeredUsers, isLoading: usersLoading, refetch: refetchUsers } = trpc.admin.usersWithTokens.useQuery();
   const { data: userActionsData, isLoading: actionsLoading } = trpc.admin.userActions.useQuery();
   const [expandedUser, setExpandedUser] = useState<number | null>(null);
   const [editingLimit, setEditingLimit] = useState<number | null>(null);
   const [limitInput, setLimitInput] = useState("");
+  const [addingTokensUser, setAddingTokensUser] = useState<number | null>(null);
+  const [tokenInput, setTokenInput] = useState("");
+  const [tokenHistoryUser, setTokenHistoryUser] = useState<number | null>(null);
 
   const setUserLimitMutation = trpc.admin.setUserLimit.useMutation({
     onSuccess: () => {
@@ -156,6 +162,21 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     },
     onError: (err) => toast.error(err.message ?? "שגיאה בעדכון"),
   });
+
+  const addTokensMutation = trpc.admin.addTokens.useMutation({
+    onSuccess: (data) => {
+      toast.success(`אסימונים נוספו! יתרה חדשה: ${data.balanceAfter}`);
+      setAddingTokensUser(null);
+      setTokenInput("");
+      refetchUsers();
+    },
+    onError: (err) => toast.error(err.message ?? "שגיאה בהוספת אסימונים"),
+  });
+
+  const { data: tokenHistory, isLoading: tokenHistoryLoading } = trpc.admin.userTokenHistory.useQuery(
+    { userId: tokenHistoryUser ?? 0 },
+    { enabled: tokenHistoryUser !== null }
+  );
 
   const logoutMutation = trpc.admin.logout.useMutation({
     onSuccess: () => {
@@ -363,56 +384,56 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             <span>כניסה אחרונה: {new Date(u.lastLoginAt).toLocaleDateString("he-IL")}</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
                           <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
                             {actions.length} פעולות
                           </span>
-                          {/* Limit badge + edit */}
-                          {editingLimit === u.id ? (
+                          {/* Token balance badge + add */}
+                          {addingTokensUser === u.id ? (
                             <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                               <Input
                                 type="number"
-                                min={0}
-                                placeholder="מגבלה"
-                                value={limitInput}
-                                onChange={(e) => setLimitInput(e.target.value)}
+                                min={1}
+                                max={10000}
+                                placeholder="כמות"
+                                value={tokenInput}
+                                onChange={(e) => setTokenInput(e.target.value)}
                                 className="w-16 h-6 text-xs px-1 py-0"
                                 dir="ltr"
                                 autoFocus
                               />
                               <Button
                                 size="sm"
-                                className="h-6 px-2 text-xs"
-                                disabled={setUserLimitMutation.isPending}
+                                className="h-6 px-2 text-xs bg-blue-600 hover:bg-blue-700"
+                                disabled={addTokensMutation.isPending}
                                 onClick={() => {
-                                  const val = limitInput === "" ? null : parseInt(limitInput, 10);
-                                  setUserLimitMutation.mutate({ userId: u.id, maxActions: val });
+                                  const val = parseInt(tokenInput, 10);
+                                  if (val > 0) addTokensMutation.mutate({ userId: u.id, amount: val });
                                 }}
                               >
-                                שמור
+                                הוסף
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-6 px-1 text-xs"
-                                onClick={() => setEditingLimit(null)}
-                              >
-                                ✕
-                              </Button>
+                              <Button size="sm" variant="ghost" className="h-6 px-1 text-xs" onClick={() => setAddingTokensUser(null)}>✕</Button>
                             </div>
                           ) : (
                             <button
-                              className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium hover:bg-orange-200 transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingLimit(u.id);
-                                setLimitInput("");
-                              }}
-                              title="לחץ לשינוי מגבלה"
+                              className="flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium hover:bg-blue-200 transition-colors"
+                              onClick={(e) => { e.stopPropagation(); setAddingTokensUser(u.id); setTokenInput(""); }}
+                              title="לחץ להוספת אסימונים"
                             >
-                              מגבלה: {(u as { maxActions?: number | null }).maxActions ?? 10}
+                              <Coins className="w-3 h-3" />
+                              {u.tokenBalance ?? 0} אסימונים
+                              <Plus className="w-3 h-3" />
                             </button>
                           )}
+                          {/* Token history toggle */}
+                          <button
+                            className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                            onClick={(e) => { e.stopPropagation(); setTokenHistoryUser(tokenHistoryUser === u.id ? null : u.id); }}
+                            title="היסטוריית אסימונים"
+                          >
+                            <History className="w-3.5 h-3.5" />
+                          </button>
                           {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                         </div>
                       </button>
@@ -458,6 +479,50 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                         </a>
                                       ) : "—"}
                                     </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          )}
+                        </div>
+                      )}
+                      {/* Token history panel */}
+                      {tokenHistoryUser === u.id && (
+                        <div className="border-t bg-blue-50/50 px-3 py-2">
+                          <p className="text-xs font-semibold text-blue-700 mb-2 flex items-center gap-1">
+                            <Coins className="w-3 h-3" /> היסטוריית אסימונים
+                          </p>
+                          {tokenHistoryLoading ? (
+                            <div className="h-8 bg-muted animate-pulse rounded" />
+                          ) : !tokenHistory || tokenHistory.length === 0 ? (
+                            <p className="text-xs text-muted-foreground">אין היסטוריה עדיין.</p>
+                          ) : (
+                            <table className="w-full text-xs">
+                              <thead>
+                                <tr className="text-muted-foreground border-b">
+                                  <th className="text-right py-1 font-medium">סוג</th>
+                                  <th className="text-right py-1 font-medium">כמות</th>
+                                  <th className="text-right py-1 font-medium">יתרה</th>
+                                  <th className="text-right py-1 font-medium">תאריך</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {tokenHistory.map((tx) => (
+                                  <tr key={tx.id} className="border-b last:border-0">
+                                    <td className="py-1">
+                                      <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                                        tx.reason === "signup_grant" ? "bg-green-100 text-green-700" :
+                                        tx.reason === "admin_add" ? "bg-blue-100 text-blue-700" :
+                                        "bg-red-100 text-red-700"
+                                      }`}>
+                                        {tx.reason === "signup_grant" ? "מתנה" : tx.reason === "admin_add" ? "הוספה" : "ניכוי"}
+                                      </span>
+                                    </td>
+                                    <td className={`py-1 font-mono font-semibold ${
+                                      tx.amount > 0 ? "text-green-600" : "text-red-600"
+                                    }`}>{tx.amount > 0 ? "+" : ""}{tx.amount}</td>
+                                    <td className="py-1 font-mono">{tx.balanceAfter}</td>
+                                    <td className="py-1 text-muted-foreground">{new Date(tx.createdAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}</td>
                                   </tr>
                                 ))}
                               </tbody>
