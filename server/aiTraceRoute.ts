@@ -68,27 +68,47 @@ const STYLE_VARIATIONS = [
 ];
 
 /**
- * Generate 4-5 contextual improvement suggestions based on the identified object.
- * These are shown as clickable chips in the UI so the user can quickly refine.
+ * Generate 5 contextual improvement suggestions based on the identified object.
+ * Suggestions are in the user's UI language (he/en).
+ * Also includes suggestions for other objects detected in the image.
  */
-async function generateImprovementSuggestions(objectDescription: string): Promise<string[]> {
+async function generateImprovementSuggestions(
+  objectDescription: string,
+  imageBase64: string,
+  lang: "he" | "en"
+): Promise<string[]> {
   try {
+    const isHebrew = lang === "he";
+    const systemPrompt = isHebrew
+      ? "אתה עוזר יצירתי שמסייע למשתמשים לשפר עיצובי קו לחריטת CNC/לייזר. " +
+        "בהינתן תיאור של אובייקט ותמונה מקורית, צור 5 הצעות שיפור קצרות וספציפיות. " +
+        "3 הצעות יתייחסו לאובייקט הראשי (שינוי סגנון, הוספת פרטים, גרסה שונה). " +
+        "2 הצעות יתייחסו לאובייקטים/פרטים נוספים שרואים בתמונה (למשל: 'רק הנדנדה', 'הוסף את הכיסא'). " +
+        "כל הצעה: 2-5 מילים בעברית. " +
+        "פלט JSON בלבד: {\"suggestions\": [\"...\", ...]}"
+      : "You are a creative assistant helping users refine line art designs for CNC/laser engraving. " +
+        "Given an object description and the original image, generate 5 short specific improvement suggestions. " +
+        "3 suggestions should modify the main object (style change, add details, different version). " +
+        "2 suggestions should reference other objects/elements visible in the image (e.g. 'only the swing', 'add the chair'). " +
+        "Each suggestion: 2-5 words in English. " +
+        "Output JSON only: {\"suggestions\": [\"...\", ...]}";
+
+    const userPrompt = isHebrew
+      ? `צור 5 הצעות שיפור לאובייקט הזה: ${objectDescription}`
+      : `Generate 5 improvement suggestions for this object: ${objectDescription}`;
+
     const response = await invokeLLM({
       messages: [
-        {
-          role: "system",
-          content:
-            "You are a creative assistant helping users refine line art designs for CNC/laser engraving. " +
-            "Given a description of an object, generate 5 short, specific, creative improvement suggestions. " +
-            "Each suggestion should be a brief action phrase (3-6 words max) that modifies the design. " +
-            "Make them relevant and specific to THIS object — not generic. " +
-            "Examples for a dog: 'add fur texture', 'make it angry', 'add a collar', 'smaller cuter version', 'cartoon style'. " +
-            "Examples for a dragon: 'add wings', 'breathing fire', 'more scales detail', 'baby dragon version', 'fierce expression'. " +
-            "Output ONLY a JSON array of 5 strings, no explanation. Example: [\"add wings\", \"breathing fire\", \"more scales\", \"baby version\", \"fierce expression\"]",
-        },
+        { role: "system", content: systemPrompt },
         {
           role: "user",
-          content: `Generate 5 improvement suggestions for this object: ${objectDescription}`,
+          content: [
+            {
+              type: "image_url",
+              image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "low" },
+            },
+            { type: "text", text: userPrompt },
+          ],
         },
       ],
       response_format: {
@@ -99,10 +119,7 @@ async function generateImprovementSuggestions(objectDescription: string): Promis
           schema: {
             type: "object",
             properties: {
-              suggestions: {
-                type: "array",
-                items: { type: "string" },
-              },
+              suggestions: { type: "array", items: { type: "string" } },
             },
             required: ["suggestions"],
             additionalProperties: false,
@@ -337,9 +354,10 @@ router.post(
       });
 
       // Run suggestions generation in parallel with image generation
+      const lang = ((req.body?.lang as string) || "en") === "he" ? "he" : "en";
       const [images, suggestions] = await Promise.all([
         Promise.all(generationPromises),
-        generateImprovementSuggestions(objectDescription),
+        generateImprovementSuggestions(objectDescription, imageBase64, lang),
       ]);
 
       // ── Log usage ─────────────────────────────────────────────────────────────

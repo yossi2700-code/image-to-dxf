@@ -228,6 +228,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       formData.append("image", imageFile);
       if (description.trim()) formData.append("description", description.trim());
       if (focusText.trim()) formData.append("focusText", focusText.trim());
+      formData.append("lang", isRtl ? "he" : "en");
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
       const data = await res.json();
       if (!res.ok) {
