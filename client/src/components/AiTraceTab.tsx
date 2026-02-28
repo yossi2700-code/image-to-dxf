@@ -1,7 +1,8 @@
 /**
- * AiTraceTab.tsx — Two-step AI Trace flow:
- *  STEP 1: User uploads photo → AI draws a B&W PNG line drawing → preview shown
- *  STEP 2: User approves → clicks "Convert to DXF" → potrace pipeline → DXF ready
+ * AiTraceTab.tsx — Redesigned to match AI Generate tab quality:
+ *  User uploads photo → LLM analyzes → gpt-image-1 draws 3 clean B&W variations from scratch
+ *  → potrace → DXF ready (same pipeline as generateRoute)
+ *  No two-step process needed — results arrive in one shot.
  */
 
 import { useState, useRef, useCallback } from "react";
@@ -10,10 +11,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
-import { AiRefinePanel, type RefineResult } from "@/components/AiRefinePanel";
 import {
   Download,
-  CheckCircle2,
   AlertCircle,
   ImageIcon,
   Scan,
@@ -22,27 +21,30 @@ import {
   ZoomOut,
   Maximize2,
   Wand2,
-  ArrowRight,
+  CheckCircle2,
 } from "lucide-react";
 
-interface PreviewResult {
-  previewPngUrl: string;
-  previewPngBase64: string;
+interface GeneratedImage {
   imageUrl: string;
-  description: string;
-}
-
-interface DxfResult {
   svgPreview: string;
   dxfUrl: string;
-  imageUrl: string;
+  dxfFilename: string;
   segmentCount: number;
-  realWidth?: number;
-  realHeight?: number;
-  filename?: string;
+  width: number;
+  height: number;
+  realWidth: number;
+  realHeight: number;
 }
 
-type Status = "idle" | "loading-ai" | "preview" | "loading-dxf" | "success" | "error";
+interface TraceResult {
+  images: GeneratedImage[];
+  objectDescription: string;
+}
+
+type Status = "idle" | "loading" | "success" | "error";
+
+const VARIATION_LABELS = ["פשוט", "מפורט", "דקורטיבי"];
+const VARIATION_LABELS_EN = ["Simple", "Detailed", "Decorative"];
 
 function SvgViewer({ svgContent }: { svgContent: string }) {
   const [scale, setScale] = useState(1);
@@ -66,6 +68,65 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
   );
 }
 
+interface ImageCardProps {
+  image: GeneratedImage;
+  index: number;
+  isRtl: boolean;
+  onDownload: (image: GeneratedImage) => void;
+}
+
+function ImageCard({ image, index, isRtl, onDownload }: ImageCardProps) {
+  const [showVector, setShowVector] = useState(false);
+  const label = isRtl ? VARIATION_LABELS[index] : VARIATION_LABELS_EN[index];
+
+  return (
+    <Card className="border-primary/20">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{label}</span>
+          <span className="text-xs text-muted-foreground">{image.segmentCount.toLocaleString()} {isRtl ? "קווים" : "lines"}</span>
+        </div>
+
+        {/* AI Drawing preview */}
+        <div className="border rounded-lg overflow-hidden bg-white mb-3 flex items-center justify-center" style={{ minHeight: 200 }}>
+          <img src={image.imageUrl} alt={`Variation ${index + 1}`} className="max-w-full object-contain" style={{ maxHeight: 280 }} />
+        </div>
+
+        {/* Toggle vector preview */}
+        <button
+          onClick={() => setShowVector(!showVector)}
+          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 mb-2 w-full justify-center"
+        >
+          <Eye className="w-3 h-3" />
+          {showVector ? (isRtl ? "הסתר וקטור" : "Hide vector") : (isRtl ? "הצג וקטור DXF" : "Show DXF vector")}
+        </button>
+
+        {showVector && (
+          <div className="mb-3">
+            <SvgViewer svgContent={image.svgPreview} />
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-2 mb-3 text-center">
+          <div className="bg-muted/30 rounded p-1.5">
+            <p className="text-xs font-semibold">{image.realWidth ? (image.realWidth / 3.7795).toFixed(0) : "—"} mm</p>
+            <p className="text-xs text-muted-foreground">{isRtl ? "רוחב" : "Width"}</p>
+          </div>
+          <div className="bg-muted/30 rounded p-1.5">
+            <p className="text-xs font-semibold">{image.realHeight ? (image.realHeight / 3.7795).toFixed(0) : "—"} mm</p>
+            <p className="text-xs text-muted-foreground">{isRtl ? "גובה" : "Height"}</p>
+          </div>
+        </div>
+
+        <Button size="sm" className="w-full bg-green-600 hover:bg-green-700 font-semibold" onClick={() => onDownload(image)}>
+          <Download className="w-3.5 h-3.5 ml-1.5" />
+          {isRtl ? "הורד DXF" : "Download DXF"}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 interface AiTraceTabProps { onOpenAuth: () => void; }
 
 export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
@@ -74,10 +135,9 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<Status>("idle");
-  const [previewResult, setPreviewResult] = useState<PreviewResult | null>(null);
-  const [dxfResult, setDxfResult] = useState<DxfResult | null>(null);
+  const [result, setResult] = useState<TraceResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
-  const [downloadOpen, setDownloadOpen] = useState(false);
+  const [downloadTarget, setDownloadTarget] = useState<GeneratedImage | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,8 +146,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
     if (!allowed.includes(file.type)) { toast.error(isRtl ? "פורמט לא נתמך." : "Unsupported format."); return; }
     if (file.size > 16 * 1024 * 1024) { toast.error(isRtl ? "הקובץ גדול מדי. מקסימום 16 MB." : "File too large. Max 16 MB."); return; }
     setImageFile(file);
-    setPreviewResult(null);
-    setDxfResult(null);
+    setResult(null);
     setStatus("idle");
     const reader = new FileReader();
     reader.onload = (e) => setImagePreview(e.target?.result as string);
@@ -101,7 +160,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
 
   const handleTrace = async () => {
     if (!imageFile) return;
-    setStatus("loading-ai"); setPreviewResult(null); setDxfResult(null); setErrorMsg("");
+    setStatus("loading"); setResult(null); setErrorMsg("");
     try {
       const formData = new FormData();
       formData.append("image", imageFile);
@@ -116,55 +175,31 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
         }
         throw new Error(isRtl ? (data.message || data.error) : (data.messageEn || data.error || "Error"));
       }
-      setPreviewResult(data as PreviewResult);
-      setStatus("preview");
-      toast.success(isRtl ? "ה-AI סיים לצייר! בדוק ולחץ המר ל-DXF" : "AI drawing ready! Review and convert to DXF");
+      setResult(data as TraceResult);
+      setStatus("success");
+      toast.success(isRtl ? `3 עיצובים מוכנים! בחר את המועדף ולחץ הורד DXF` : `3 designs ready! Choose your favorite and download DXF`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : (isRtl ? "שגיאה בעיבוד" : "Processing error");
       setErrorMsg(msg); setStatus("error"); toast.error(msg);
     }
   };
 
-  const handleConvertToDxf = async () => {
-    if (!previewResult) return;
-    setStatus("loading-dxf"); setErrorMsg("");
-    try {
-      const res = await fetch("/api/ai-trace/convert", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          previewPngBase64: previewResult.previewPngBase64,
-          previewPngUrl: previewResult.previewPngUrl,
-          description: previewResult.description,
-          imageUrl: previewResult.imageUrl,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(isRtl ? (data.message || data.error) : (data.messageEn || data.error || "Error"));
-      setDxfResult({ ...data, imageUrl: previewResult.imageUrl });
-      setStatus("success");
-      toast.success(isRtl ? `DXF מוכן! ${data.segmentCount.toLocaleString()} קווים` : `DXF ready! ${data.segmentCount.toLocaleString()} lines`);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : (isRtl ? "שגיאת המרה" : "Conversion error");
-      setErrorMsg(msg); setStatus("error"); toast.error(msg);
-    }
-  };
-
   const reset = () => {
-    setImageFile(null); setImagePreview(null); setPreviewResult(null); setDxfResult(null);
+    setImageFile(null); setImagePreview(null); setResult(null);
     setStatus("idle"); setErrorMsg("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   return (
     <>
-      {dxfResult && downloadOpen && (
+      {downloadTarget && (
         <DxfDownloadDialog
-          open={downloadOpen} onClose={() => setDownloadOpen(false)}
-          svgContent={dxfResult.svgPreview} dxfUrl={dxfResult.dxfUrl}
-          defaultFilename={dxfResult.filename ?? `ai-trace-${Date.now()}.dxf`}
-          segmentCount={dxfResult.segmentCount} svgWidth={dxfResult.realWidth ?? 500} svgHeight={dxfResult.realHeight ?? 500}
+          open={!!downloadTarget} onClose={() => setDownloadTarget(null)}
+          svgContent={downloadTarget.svgPreview} dxfUrl={downloadTarget.dxfUrl}
+          defaultFilename={downloadTarget.dxfFilename ?? `ai-trace-${Date.now()}.dxf`}
+          segmentCount={downloadTarget.segmentCount}
+          svgWidth={downloadTarget.realWidth ?? 500}
+          svgHeight={downloadTarget.realHeight ?? 500}
         />
       )}
 
@@ -210,10 +245,10 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               className="w-full text-sm border rounded-lg px-3 py-2 bg-background mb-3 placeholder:text-muted-foreground/50" />
 
             <Button size="lg" className="w-full font-semibold"
-              disabled={!imageFile || status === "loading-ai" || status === "loading-dxf"}
+              disabled={!imageFile || status === "loading"}
               onClick={handleTrace}>
-              {status === "loading-ai" ? (
-                <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin ml-2" />{isRtl ? "ה-AI מצייר..." : "AI is drawing..."}</>
+              {status === "loading" ? (
+                <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin ml-2" />{isRtl ? "ה-AI מנתח ומצייר..." : "AI is analyzing and drawing..."}</>
               ) : (
                 <><Wand2 className="w-4 h-4 ml-2" />{isRtl ? "צור outline בAI" : "Create AI Outline"}</>
               )}
@@ -221,8 +256,8 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
           </CardContent>
         </Card>
 
-        {/* STEP 1 Loading */}
-        {status === "loading-ai" && (
+        {/* Loading */}
+        {status === "loading" && (
           <Card>
             <CardContent className="p-8 flex flex-col items-center gap-3 text-center">
               <div className="relative w-16 h-16">
@@ -230,28 +265,13 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                 <div className="absolute inset-0 rounded-full border-4 border-t-primary animate-spin" />
                 <Wand2 className="absolute inset-0 m-auto w-6 h-6 text-primary" />
               </div>
-              <p className="font-semibold text-sm">{isRtl ? "ה-AI מנתח ומצייר..." : "AI is analyzing and drawing..."}</p>
-              <p className="text-xs text-muted-foreground">{isRtl ? "זה עשוי לקחת 20-40 שניות" : "This may take 20-40 seconds"}</p>
+              <p className="font-semibold text-sm">{isRtl ? "ה-AI מנתח את התמונה ומצייר 3 עיצובים..." : "AI is analyzing your image and drawing 3 designs..."}</p>
+              <p className="text-xs text-muted-foreground">{isRtl ? "זה עשוי לקחת 30-60 שניות" : "This may take 30-60 seconds"}</p>
               <div className="flex gap-1.5">
                 {[0, 1, 2].map((i) => (
                   <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* STEP 2 Loading */}
-        {status === "loading-dxf" && (
-          <Card>
-            <CardContent className="p-8 flex flex-col items-center gap-3 text-center">
-              <div className="relative w-16 h-16">
-                <div className="absolute inset-0 rounded-full border-4 border-green-200" />
-                <div className="absolute inset-0 rounded-full border-4 border-t-green-500 animate-spin" />
-                <ArrowRight className="absolute inset-0 m-auto w-6 h-6 text-green-600" />
-              </div>
-              <p className="font-semibold text-sm">{isRtl ? "ממיר לקווי DXF..." : "Converting to DXF lines..."}</p>
-              <p className="text-xs text-muted-foreground">{isRtl ? "מריץ potrace על הציור..." : "Running potrace on the drawing..."}</p>
             </CardContent>
           </Card>
         )}
@@ -268,94 +288,40 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
           </Card>
         )}
 
-        {/* PNG Preview (Step 1 result) */}
-        {status === "preview" && previewResult && (
-          <Card className="border-blue-200 bg-blue-50/50">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                <span className="font-semibold text-sm text-blue-800">
-                  {isRtl ? "ה-AI סיים לצייר — בדוק את התוצאה" : "AI drawing ready — review below"}
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-3 mb-4">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1.5 font-medium text-center">{isRtl ? "ציור AI (שחור-לבן)" : "AI Drawing (B&W)"}</p>
-                  <div className="border rounded-lg overflow-hidden bg-white flex items-center justify-center p-2" style={{ minHeight: 340 }}>
-                    <img src={previewResult.previewPngBase64} alt="AI Drawing" className="max-w-full object-contain" style={{ maxHeight: 500 }} />
-                  </div>
+        {/* Results — 3 variations */}
+        {status === "success" && result && (
+          <>
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <CheckCircle2 className="w-4 h-4 text-primary" />
+                  <span className="font-semibold text-sm">
+                    {isRtl ? "3 עיצובים מוכנים — בחר את המועדף" : "3 designs ready — choose your favorite"}
+                  </span>
                 </div>
-                <details>
-                  <summary className="text-xs text-muted-foreground cursor-pointer text-center py-1">{isRtl ? "הצג תמונה מקורית" : "Show original photo"}</summary>
-                  <div className="border rounded-lg overflow-hidden bg-white flex items-center justify-center p-2 mt-2" style={{ minHeight: 200 }}>
-                    <img src={imagePreview!} alt="Original" className="max-w-full object-contain" style={{ maxHeight: 300 }} />
-                  </div>
-                </details>
-              </div>
+                {result.objectDescription && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                    <span className="font-medium">{isRtl ? "תיאור AI: " : "AI description: "}</span>
+                    {result.objectDescription}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
 
-              <p className="text-xs text-muted-foreground text-center mb-4">
-                {isRtl ? "אם הציור נראה טוב — לחץ 'המר ל-DXF'. אם לא — לחץ 'נסה שוב'." : "If the drawing looks good — click 'Convert to DXF'. Otherwise — click 'Try Again'."}
-              </p>
+            {result.images.map((image, idx) => (
+              <ImageCard
+                key={idx}
+                image={image}
+                index={idx}
+                isRtl={isRtl}
+                onDownload={setDownloadTarget}
+              />
+            ))}
 
-              <div className="flex gap-2">
-                <Button size="lg" className="flex-1 bg-green-600 hover:bg-green-700 font-semibold" onClick={handleConvertToDxf}>
-                  <ArrowRight className="w-4 h-4 ml-2" />{isRtl ? "המר ל-DXF" : "Convert to DXF"}
-                </Button>
-                <Button variant="outline" size="lg" onClick={reset}>{isRtl ? "נסה שוב" : "Try Again"}</Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* DXF Result (Step 2 result) */}
-        {status === "success" && dxfResult && (
-          <Card className="border-primary/30 bg-primary/5">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <CheckCircle2 className="w-4 h-4 text-primary" />
-                <span className="font-semibold text-sm">{t("aiTraceSuccess")}</span>
-              </div>
-
-              <div className="flex flex-col gap-3 mb-4">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1.5 font-medium text-center">{isRtl ? "ציור AI" : "AI Drawing"}</p>
-                  <div className="border rounded-lg overflow-hidden bg-white flex items-center justify-center p-2" style={{ minHeight: 200 }}>
-                    <img src={previewResult?.previewPngBase64} alt="AI Drawing" className="max-w-full object-contain" style={{ maxHeight: 300 }} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="mb-4"><SvgViewer svgContent={dxfResult.svgPreview} /></div>
-
-              <div className="grid grid-cols-3 gap-2 mb-4">
-                <div className="bg-white rounded-lg p-2 text-center border">
-                  <p className="text-base font-bold text-primary">{dxfResult.segmentCount.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">{t("lines")}</p>
-                </div>
-                <div className="bg-white rounded-lg p-2 text-center border">
-                  <p className="text-base font-bold text-primary">{dxfResult.realWidth ? (dxfResult.realWidth / 3.7795).toFixed(1) : "—"}</p>
-                  <p className="text-xs text-muted-foreground">{t("widthMm")}</p>
-                </div>
-                <div className="bg-white rounded-lg p-2 text-center border">
-                  <p className="text-base font-bold text-primary">{dxfResult.realHeight ? (dxfResult.realHeight / 3.7795).toFixed(1) : "—"}</p>
-                  <p className="text-xs text-muted-foreground">{t("heightMm")}</p>
-                </div>
-              </div>
-
-              <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 font-semibold mb-3" onClick={() => setDownloadOpen(true)}>
-                <Download className="w-4 h-4 ml-2" />{t("downloadDxf")}
-              </Button>
-
-              <AiRefinePanel imageUrl={dxfResult.imageUrl}
-                onRefined={(refined: RefineResult) => {
-                  setDxfResult({ svgPreview: refined.svgPreview, dxfUrl: refined.dxfUrl, imageUrl: refined.imageUrl, segmentCount: refined.segmentCount, realWidth: refined.realWidth, realHeight: refined.realHeight, filename: refined.dxfFilename });
-                  toast.success(isRtl ? "העיצוב עודכן!" : "Design refined!");
-                }} />
-
-              <Button variant="outline" size="sm" className="w-full mt-3" onClick={reset}>{t("aiTraceNewImage")}</Button>
-            </CardContent>
-          </Card>
+            <Button variant="outline" size="sm" className="w-full" onClick={reset}>
+              {t("aiTraceNewImage")}
+            </Button>
+          </>
         )}
 
         {/* Tips */}
@@ -365,7 +331,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             <ul className="space-y-1.5 text-sm text-blue-700">
               <li className="flex gap-2"><span className="shrink-0">•</span><span>{t("aiTraceTip1")}</span></li>
               <li className="flex gap-2"><span className="shrink-0">•</span><span>{t("aiTraceTip2")}</span></li>
-              <li className="flex gap-2"><span className="shrink-0">•</span><span>{isRtl ? "בדוק את ציור ה-AI לפני ההמרה — אם לא מדויק, לחץ 'נסה שוב'" : "Review the AI drawing before converting — if not accurate, click 'Try Again'"}</span></li>
+              <li className="flex gap-2"><span className="shrink-0">•</span><span>{isRtl ? "ה-AI מנתח את התמונה ומצייר מחדש — 3 סגנונות שונים לבחירה" : "AI analyzes your image and redraws it — 3 different styles to choose from"}</span></li>
             </ul>
           </CardContent>
         </Card>

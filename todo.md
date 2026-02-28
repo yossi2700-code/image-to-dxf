@@ -415,3 +415,10 @@
 ## שיפור prompt - יותר פרטים בציור
 
 - [x] עדכון prompt לבקש יותר קווים ופרטים (קפלים, תפרים, עומק, מרקם)
+
+## עיצוב מחדש של AI Trace
+
+- [x] קריאת generateRoute.ts להבנת ה-pipeline המוצלח
+- [x] שינוי AI Trace: LLM (GPT-4o vision) מנתח תמונה → מייצר תיאור → gpt-image-1 מצייר 3 ווריאציות
+- [x] אותו pipeline כמו Tab יצירת AI (potrace → svgToDxf)
+- [x] עדכון UI ל-AiTraceTab להציג 3 ווריאציות כמו Tab יצירת AI

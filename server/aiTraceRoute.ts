@@ -1,14 +1,14 @@
 /**
- * AI Trace Route — Two-step pipeline:
+ * AI Trace Route — Two-step pipeline (same quality as AI Generate tab):
  *
  * STEP 1 — POST /api/ai-trace
- *   User uploads photo → generateImage() sees original image → generates a B&W PNG line drawing
- *   Returns: { previewPngUrl, previewPngBase64 }
+ *   User uploads photo
+ *   → GPT-4o vision analyzes the image and extracts a detailed object description
+ *   → gpt-image-1 draws 3 clean B&W line art variations FROM SCRATCH (same as generateRoute)
+ *   Returns: { images: Array<{ imageUrl, svgPreview, dxfUrl, ... }> }
  *
- * STEP 2 — POST /api/ai-trace/convert
- *   User approves the PNG preview → centerline pipeline → DXF
- *   Uses Sobel + Zhang-Suen thinning + 8-connectivity tracing + Douglas-Peucker smoothing.
- *   This produces TRUE SINGLE-LINE vectors (not double outlines like potrace).
+ * STEP 2 — POST /api/ai-trace/convert  (kept for backward compat, now just re-converts a PNG)
+ *   Accepts a PNG URL and runs potrace → svgToDxf (same as generateRoute)
  *   Returns: { svgPreview, dxfUrl, segmentCount, realWidth, realHeight, filename }
  */
 
@@ -21,13 +21,16 @@ import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { checkUsageLimit } from "./usageLimits";
-import { generateImage } from "./_core/imageGeneration";
-import { aiTracePipeline } from "./imageProcessor";
+import { invokeLLM } from "./_core/llm";
+import OpenAI from "openai";
+import { svgToDxf } from "./svgToDxf";
+import potrace from "potrace";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
-/** Convert prompt text to safe filename */
+/** Convert description to safe filename */
 function buildFilename(description: string): string {
   const safe = description
     .replace(/[^\u0590-\u05FFa-zA-Z0-9\s]/g, "")
@@ -37,7 +40,66 @@ function buildFilename(description: string): string {
   return safe || "ai_trace";
 }
 
-// ─── STEP 1: AI generates B&W PNG drawing ────────────────────────────────────
+/**
+ * Three distinct style variations — same as generateRoute.
+ */
+const STYLE_VARIATIONS = [
+  {
+    label: "simple",
+    style:
+      "Simple clean outline only. Bold outer contour lines, minimal internal lines. " +
+      "Icon/sticker style. NO texture, NO hatching, NO shading, NO fill. " +
+      "Only 2-4 main structural lines inside the shape.",
+  },
+  {
+    label: "detailed",
+    style:
+      "Clean outline with moderate internal details. Bold outer contour plus clear structural " +
+      "inner lines showing main features. NO texture, NO hatching, NO shading, NO fill. " +
+      "Like a coloring book page — clear distinct lines only.",
+  },
+  {
+    label: "decorative",
+    style:
+      "Decorative artistic outline style. Bold outer contour with elegant decorative inner lines. " +
+      "Art nouveau or mandala-inspired clean line work. NO texture, NO hatching, NO shading, NO fill. " +
+      "All lines must be clean, distinct, and suitable for laser cutting.",
+  },
+];
+
+function buildLineArtPrompt(objectDescription: string, variationIndex: number): string {
+  const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
+  return (
+    `Clean black and white line art of ${objectDescription}. ` +
+    "Pure white background (#FFFFFF). " +
+    "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
+    "High contrast: only pure black (#000000) lines on white. " +
+    `${variation.style} ` +
+    "Single centered object, complete, not cropped. " +
+    "No text, no watermarks, no grey tones."
+  );
+}
+
+/**
+ * Convert a PNG buffer to SVG using potrace.
+ * Same function as in generateRoute.
+ */
+function pngToSvg(pngBuffer: Buffer): Promise<string> {
+  return new Promise((resolve, reject) => {
+    potrace.trace(pngBuffer, {
+      threshold: 180,
+      turdSize: 8,
+      alphaMax: 1,
+      optCurve: true,
+      optTolerance: 0.2,
+    }, (err: Error | null, svg: string) => {
+      if (err) reject(err);
+      else resolve(svg);
+    });
+  });
+}
+
+// ─── STEP 1: Analyze image with LLM → draw from scratch with gpt-image-1 ──────
 
 router.post(
   "/api/ai-trace",
@@ -85,80 +147,160 @@ router.post(
         return res.status(400).json({ error: "NO_IMAGE", message: "לא סופקה תמונה" });
       }
 
-      // ── Resize image for image generation API (max 1024px) ───────────────────
+      // ── Resize for LLM analysis ───────────────────────────────────────────────
       const resized = await sharp(imageBuffer)
         .resize(1024, 1024, { fit: "inside", withoutEnlargement: true })
         .jpeg({ quality: 90 })
         .toBuffer();
 
-      // ── Upload original to S3 for reference ──────────────────────────────────
-      const imageKey = `ai-trace-original/${nanoid()}.jpg`;
-      const { url: imageUrl } = await storagePut(imageKey, resized, "image/jpeg");
-
-      // ── Build prompt: request clean B&W line drawing ──────────────────────────
-      // NOTE: We ask for THIN lines (1-2px) because the centerline tracer works
-      // best with thin strokes — thick strokes produce wider bands that thinning
-      // must reduce, which can lose detail.
+      const imageBase64 = resized.toString("base64");
       const userDesc = (req.body?.description || "").trim();
-      const prompt = [
-        "Create a detailed black-and-white technical line art drawing of the object in this image.",
-        "Pure white background (#FFFFFF). Thin crisp black lines (1-2px stroke width).",
-        "No fill, no shading, no gradients — only pure black (#000000) lines on white.",
-        "Include ALL details: surface texture lines, fabric folds, stitching, seams, depth lines, shadow lines, material texture, decorative patterns, and structural details.",
-        "Draw every visible edge, crease, fold, stitch, and surface contour. The more lines the better — this is for CNC engraving where detail matters.",
-        "Style: like a detailed product technical illustration or exploded engineering drawing. Rich in line work.",
-        "Single centered object, complete, not cropped. Show front view clearly.",
-        userDesc ? `The object is: ${userDesc}.` : "",
-      ]
-        .filter(Boolean)
-        .join(" ");
 
-      console.log("[aiTrace] Calling generateImage with prompt:", prompt.substring(0, 100));
+      // ── Step A: LLM analyzes image → extracts detailed object description ─────
+      // We use GPT-4o vision to understand what's in the image and describe it
+      // in a way that gpt-image-1 can draw from scratch (same as AI Generate tab).
+      console.log("[aiTrace] Analyzing image with LLM...");
 
-      const generated = await generateImage({
-        prompt,
-        originalImages: [{ url: imageUrl, mimeType: "image/jpeg" }],
+      const llmResponse = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are an expert at describing objects for line art generation. " +
+              "Analyze the image and provide a concise, detailed description of the main object " +
+              "suitable for generating clean line art. " +
+              "Focus on: shape, structure, key features, style, proportions. " +
+              "Output ONLY the description (2-4 sentences), no preamble.",
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:image/jpeg;base64,${imageBase64}`,
+                  detail: "high",
+                },
+              },
+              {
+                type: "text",
+                text: userDesc
+                  ? `Describe this object for line art generation. Additional context: ${userDesc}`
+                  : "Describe this object for line art generation.",
+              },
+            ],
+          },
+        ],
       });
 
-      if (!generated.url) {
-        throw new Error("Image generation returned no URL");
-      }
+      const objectDescription =
+        (llmResponse as { choices?: Array<{ message?: { content?: string } }> })
+          ?.choices?.[0]?.message?.content?.trim() ||
+        userDesc ||
+        "the object in the image";
 
-      console.log("[aiTrace] Generated image URL:", generated.url);
+      console.log("[aiTrace] Object description:", objectDescription.substring(0, 120));
 
-      // ── Download the generated image ──────────────────────────────────────────
-      const genResponse = await fetch(generated.url);
-      const genBuffer = Buffer.from(await genResponse.arrayBuffer());
+      const baseFilename = buildFilename(userDesc || objectDescription);
 
-      // ── Keep original quality PNG for preview (no threshold = full detail) ─────
-      // We show the original grayscale PNG to the user so small text is readable.
-      // The threshold is applied ONLY during DXF conversion (Step 2).
-      const previewBuffer = await sharp(genBuffer)
-        .grayscale()
-        .png()
-        .toBuffer();
+      // ── Step B: Generate 3 line art variations with gpt-image-1 ──────────────
+      // Exactly the same pipeline as generateRoute — draw from scratch, no image reference.
+      // This guarantees the same clean output quality as the AI Generate tab.
+      const generationPromises = Array.from({ length: 3 }, async (_, idx) => {
+        const imagePrompt = buildLineArtPrompt(objectDescription, idx);
 
-      // ── Upload preview PNG to S3 ───────────────────────────────────────────────────────
-      const pngKey = `ai-trace-preview/${nanoid()}.png`;
-      const { url: previewPngUrl } = await storagePut(pngKey, previewBuffer, "image/png");
+        const response = await openai.images.generate({
+          model: "gpt-image-1",
+          prompt: imagePrompt,
+          n: 1,
+          size: "1024x1024",
+          quality: "medium",
+        });
 
-      const previewPngBase64 = `data:image/png;base64,${previewBuffer.toString("base64")}`;
+        const imageData = response.data?.[0];
+        if (!imageData) throw new Error("לא הצלחנו לייצר תמונה");
+
+        let rawBuffer: Buffer;
+        if (imageData.b64_json) {
+          rawBuffer = Buffer.from(imageData.b64_json, "base64");
+        } else if (imageData.url) {
+          const imgResponse = await fetch(imageData.url);
+          if (!imgResponse.ok) throw new Error("שגיאה בהורדת התמונה שנוצרה");
+          rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
+        } else {
+          throw new Error("לא התקבלה תמונה מה-AI");
+        }
+
+        // Pre-process: grayscale + threshold for potrace (same as generateRoute)
+        const processedBuffer = await sharp(rawBuffer)
+          .grayscale()
+          .threshold(200)
+          .png()
+          .toBuffer();
+
+        // Vectorize with potrace → smooth SVG Bezier curves
+        const rawSvg = await pngToSvg(processedBuffer);
+
+        // Convert filled paths to stroke-only for SVG preview
+        const svgContent = rawSvg
+          .replace(/fill="[^"]*"/g, 'fill="none"')
+          .replace(/fill:[^;"']*(;|(?="))/g, 'fill:none$1')
+          .replace(/<path /g, '<path stroke="black" stroke-width="1.5" fill="none" ');
+        const cleanSvg = svgContent.replace(
+          /stroke="black" stroke-width="1.5" fill="none" ([^>]*?)fill="none"/g,
+          'stroke="black" stroke-width="1.5" fill="none" $1'
+        );
+
+        // Convert SVG to DXF
+        const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg);
+
+        // Upload original PNG to S3
+        const imgKey = `ai-trace-generated/${nanoid()}.png`;
+        const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
+
+        // Upload DXF to S3
+        const variation = STYLE_VARIATIONS[idx % STYLE_VARIATIONS.length];
+        const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
+        const dxfKey = `ai-trace-dxf/${nanoid()}-${dxfFilename}`;
+        const { url: dxfUrl } = await storagePut(
+          dxfKey,
+          Buffer.from(dxf, "utf-8"),
+          "application/dxf"
+        );
+
+        return { imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight };
+      });
+
+      const images = await Promise.all(generationPromises);
 
       // ── Log usage ─────────────────────────────────────────────────────────────
       const ip = req.headers["x-forwarded-for"]?.toString() || req.socket.remoteAddress || "";
+      const totalSegments = images.reduce((s, img) => s + img.segmentCount, 0);
       await logUsageEvent({
         type: "ai_generate",
-        segmentCount: 0,
+        segmentCount: Math.round(totalSegments / images.length),
         ipAnon: anonymizeIp(ip),
-        imageUrl,
       });
 
+      // Record user actions
+      for (const img of images) {
+        void recordUserAction({
+          appUserId: appUser.userId,
+          actionType: "ai_generate",
+          description: objectDescription.slice(0, 200),
+          segmentCount: img.segmentCount,
+          dxfUrl: img.dxfUrl,
+          imageUrl: img.imageUrl,
+          svgPreview: img.svgPreview,
+        });
+      }
+
       return res.json({
-        previewPngUrl,
-        previewPngBase64,
-        imageUrl,
-        description: userDesc || "ai_trace",
+        success: true,
+        images,
+        objectDescription,
       });
+
     } catch (err: unknown) {
       console.error("[aiTraceRoute] Step 1 Error:", err);
       const message = err instanceof Error ? err.message : "Unknown error";
@@ -178,31 +320,22 @@ router.post(
   }
 );
 
-// ─── STEP 2: Convert approved PNG to DXF using centerline tracing ─────────────
-// Uses: Sobel edge detection → Zhang-Suen thinning → 8-connectivity tracing
-//       → Douglas-Peucker smoothing → polylinesToSvg + segmentsToDxf
-// Result: TRUE SINGLE-LINE vectors (not double outlines like potrace)
+// ─── STEP 2 (legacy): Re-convert a PNG to DXF using potrace ───────────────────
+// Kept for backward compatibility. Now uses potrace → svgToDxf (same as generateRoute).
 
 router.post(
   "/api/ai-trace/convert",
   async (req, res) => {
     try {
-      // ── Auth check ────────────────────────────────────────────────────────────
       const appUser = getAppUserFromCookie(req.cookies);
       if (!appUser) {
-        return res.status(401).json({
-          error: "UNAUTHORIZED",
-          message: "יש להתחבר כדי להשתמש ב-AI Trace",
-          messageEn: "Please log in to use AI Trace",
-        });
+        return res.status(401).json({ error: "UNAUTHORIZED", message: "יש להתחבר" });
       }
 
-      // ── Get PNG from request ──────────────────────────────────────────────────
       const { previewPngUrl, previewPngBase64, description, imageUrl } = req.body;
 
       let pngBuffer: Buffer;
       if (previewPngBase64) {
-        // Strip data URL prefix if present
         const base64Data = previewPngBase64.includes(",")
           ? previewPngBase64.split(",")[1]
           : previewPngBase64;
@@ -214,25 +347,30 @@ router.post(
         return res.status(400).json({ error: "NO_PNG", message: "לא סופק PNG לעיבוד" });
       }
 
-      // ── AI Trace pipeline ─────────────────────────────────────────────────────
-      // Uses Gaussian blur + high threshold + Zhang-Suen thinning on binary
-      // (NOT Sobel edge detection, which creates double lines)
-      // threshold=220: high threshold after blur to keep only clearly dark pixels
-      // simplifyTolerance=1.5: Douglas-Peucker epsilon
-      const result = await aiTracePipeline(pngBuffer, {
-        threshold: 220,
-        simplifyTolerance: 1.5,
-      });
+      // Pre-process and run potrace (same as generateRoute)
+      const processedBuffer = await sharp(pngBuffer)
+        .grayscale()
+        .threshold(200)
+        .png()
+        .toBuffer();
 
-      const { dxf, svgPreview, segmentCount, realWidth, realHeight } = result;
+      const rawSvg = await pngToSvg(processedBuffer);
+      const svgContent = rawSvg
+        .replace(/fill="[^"]*"/g, 'fill="none"')
+        .replace(/fill:[^;"']*(;|(?="))/g, 'fill:none$1')
+        .replace(/<path /g, '<path stroke="black" stroke-width="1.5" fill="none" ');
+      const svgPreview = svgContent.replace(
+        /stroke="black" stroke-width="1.5" fill="none" ([^>]*?)fill="none"/g,
+        'stroke="black" stroke-width="1.5" fill="none" $1'
+      );
 
-      // ── Upload DXF to S3 ──────────────────────────────────────────────────────
+      const { dxf, segmentCount, realWidth, realHeight } = svgToDxf(rawSvg);
+
       const desc = description || "ai_trace";
       const filename = buildFilename(desc);
       const dxfKey = `ai-trace-dxf/${nanoid()}.dxf`;
       const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
 
-      // ── Record user action ────────────────────────────────────────────────────
       await recordUserAction({
         appUserId: appUser.userId,
         actionType: "ai_generate",
