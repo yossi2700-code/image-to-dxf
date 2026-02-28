@@ -39,6 +39,7 @@ interface GeneratedImage {
 interface TraceResult {
   images: GeneratedImage[];
   objectDescription: string;
+  suggestions: string[];
 }
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -401,6 +402,37 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                 )}
               </CardContent>
             </Card>
+
+            {/* AI Suggestions chips */}
+            {result.suggestions && result.suggestions.length > 0 && (
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Wand2 className="w-4 h-4 text-blue-600" />
+                    <span className="text-xs font-semibold text-blue-700">
+                      {isRtl ? "הצעות שיפור מה-AI:" : "AI Improvement Suggestions:"}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {result.suggestions.map((suggestion, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setFocusText(suggestion);
+                          handleTrace();
+                        }}
+                        className="text-xs px-3 py-1.5 rounded-full border border-blue-300 bg-white hover:bg-blue-100 active:bg-blue-200 text-blue-700 font-medium transition-colors shadow-sm"
+                      >
+                        ✨ {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-blue-500 mt-2">
+                    {isRtl ? "לחץ על הצעה ליצירת 3 עיצובים חדשים" : "Click a suggestion to generate 3 new designs"}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
             {result.images.map((image, idx) => (
               <ImageCard

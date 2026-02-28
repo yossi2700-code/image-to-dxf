@@ -452,3 +452,9 @@
 
 - [x] AI Generate tab: show AI image first by default (with fill/color), vector (lines only) shown only after clicking Show Vector button
 - [x] AI Trace tab: add focus text field to specify which object to draw (default: dominant object, user can type "only chairs" etc.)
+
+## הצעות שיפור אוטומטיות ב-AI Trace
+
+- [x] Backend: לאחר זיהוי האובייקט, LLM מייצר 4-5 הצעות שיפור רלוונטיות (לפי סוג האובייקט)
+- [x] Frontend: הצגת chips של הצעות שיפור מתחת לתוצאות ב-AI Trace
+- [x] Frontend: לחיצה על chip ממלאת את שדה focusText ומפעילה trace מחדש

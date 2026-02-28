@@ -67,6 +67,63 @@ const STYLE_VARIATIONS = [
   },
 ];
 
+/**
+ * Generate 4-5 contextual improvement suggestions based on the identified object.
+ * These are shown as clickable chips in the UI so the user can quickly refine.
+ */
+async function generateImprovementSuggestions(objectDescription: string): Promise<string[]> {
+  try {
+    const response = await invokeLLM({
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a creative assistant helping users refine line art designs for CNC/laser engraving. " +
+            "Given a description of an object, generate 5 short, specific, creative improvement suggestions. " +
+            "Each suggestion should be a brief action phrase (3-6 words max) that modifies the design. " +
+            "Make them relevant and specific to THIS object — not generic. " +
+            "Examples for a dog: 'add fur texture', 'make it angry', 'add a collar', 'smaller cuter version', 'cartoon style'. " +
+            "Examples for a dragon: 'add wings', 'breathing fire', 'more scales detail', 'baby dragon version', 'fierce expression'. " +
+            "Output ONLY a JSON array of 5 strings, no explanation. Example: [\"add wings\", \"breathing fire\", \"more scales\", \"baby version\", \"fierce expression\"]",
+        },
+        {
+          role: "user",
+          content: `Generate 5 improvement suggestions for this object: ${objectDescription}`,
+        },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "suggestions",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              suggestions: {
+                type: "array",
+                items: { type: "string" },
+              },
+            },
+            required: ["suggestions"],
+            additionalProperties: false,
+          },
+        },
+      },
+    });
+    const content = (response as { choices?: Array<{ message?: { content?: string } }> })
+      ?.choices?.[0]?.message?.content;
+    if (content) {
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed.suggestions)) {
+        return parsed.suggestions.slice(0, 5);
+      }
+    }
+  } catch (e) {
+    console.warn("[aiTrace] Failed to generate suggestions:", e);
+  }
+  return [];
+}
+
 function buildLineArtPrompt(objectDescription: string, variationIndex: number): string {
   const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
   return (
@@ -279,7 +336,11 @@ router.post(
         return { imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight };
       });
 
-      const images = await Promise.all(generationPromises);
+      // Run suggestions generation in parallel with image generation
+      const [images, suggestions] = await Promise.all([
+        Promise.all(generationPromises),
+        generateImprovementSuggestions(objectDescription),
+      ]);
 
       // ── Log usage ─────────────────────────────────────────────────────────────
       const ip = req.headers["x-forwarded-for"]?.toString() || req.socket.remoteAddress || "";
@@ -307,6 +368,7 @@ router.post(
         success: true,
         images,
         objectDescription,
+        suggestions,
       });
 
     } catch (err: unknown) {
