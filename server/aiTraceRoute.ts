@@ -1,9 +1,12 @@
 /**
  * aiTraceRoute.ts
  *
- * AI Trace feature: user uploads a photo → GPT-4o Vision analyzes it and
- * generates a clean SVG outline suitable for laser engraving / CNC cutting.
- * The SVG is then converted to DXF using the existing svgToDxf utility.
+ * AI Trace feature:
+ *   1. User uploads a photo
+ *   2. GPT-4o Vision analyzes it and draws a clean SVG outline (black lines on white)
+ *   3. The SVG is rendered to a high-res PNG using sharp (rsvg)
+ *   4. The PNG is processed through the same edge-detection + potrace pipeline
+ *      as regular image uploads → clean, accurate DXF vector lines
  *
  * POST /api/ai-trace
  *   Body: multipart/form-data with field "image" (file) or "imageUrl" (string)
@@ -19,15 +22,16 @@ import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { checkUsageLimit } from "./usageLimits";
-import { svgToDxf } from "./svgToDxf";
+import { convertImageToDxf } from "./imageProcessor";
 import { invokeLLM } from "./_core/llm";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
 
 /**
- * Build the GPT-4o Vision prompt for generating a clean engraving outline.
- * Two-step approach: identify the specific object, then draw it faithfully.
+ * Build the GPT-4o Vision prompt.
+ * We ask for a clean black-on-white SVG — it will be rendered to PNG and
+ * then processed by the same edge-detection pipeline as regular uploads.
  */
 function buildTracePrompt(): string {
   return `You are an expert vector illustrator specializing in laser engraving and CNC cutting files.
@@ -42,43 +46,51 @@ STEP 2 — DRAW a faithful SVG outline that captures those specific details:
 SVG REQUIREMENTS:
 1. Output ONLY raw SVG XML — start with <svg and end with </svg>, nothing else
 2. NO markdown fences, NO explanations, NO text before or after the SVG
-3. viewBox must match the object's actual proportions (e.g. "0 0 600 400" for landscape)
-4. ALL elements must have: stroke="black" stroke-width="1.5" fill="none"
-5. NO fills, NO colors, NO background shapes, NO decorative borders
-6. Structure: outer silhouette first → major interior divisions → distinctive details
-7. Include brand-specific elements: logos, monograms, patterns, hardware, text outlines
-8. Use bezier curves (C/c commands) for smooth organic shapes
-9. Use 20 to 60 path elements — enough detail to be recognizable, not cluttered
-10. Every line must be purposeful — represent a real edge, seam, or feature of the object
-11. Result must be suitable for laser engraving: clean, no overlapping strokes
+3. White background: add <rect width="100%" height="100%" fill="white"/>
+4. viewBox must match the object's actual proportions (e.g. "0 0 600 400" for landscape)
+5. ALL stroke elements must have: stroke="black" stroke-width="2" fill="none"
+6. NO colored fills — only black strokes on white background
+7. Structure: outer silhouette first → major interior divisions → distinctive details
+8. Include brand-specific elements: logos, monograms, patterns, hardware, text outlines
+9. Use bezier curves (C/c commands) for smooth organic shapes
+10. Use 20 to 60 path elements — enough detail to be recognizable, not cluttered
+11. Every line must be purposeful — represent a real edge, seam, or feature of the object
+12. Result must look like a clean coloring-book line drawing of the specific object
 
 IMPORTANT: Do NOT draw a generic silhouette. Capture the SPECIFIC object with its unique identifying features.
 
 Output the SVG now:`;
 }
 
-/** Convert buffer to base64 data URL for OpenAI Vision */
+/** Convert buffer to base64 data URL for Vision API */
 function bufferToDataUrl(buffer: Buffer, mimeType: string): string {
   return `data:${mimeType};base64,${buffer.toString("base64")}`;
 }
 
 /** Sanitize SVG from GPT response — strip markdown fences if present */
 function extractSvg(raw: string): string {
-  // Remove markdown code fences
   let svg = raw.replace(/```(?:svg|xml)?\s*/gi, "").replace(/```\s*/g, "").trim();
-  // Find the SVG element
   const start = svg.indexOf("<svg");
   const end = svg.lastIndexOf("</svg>");
   if (start === -1 || end === -1) {
     throw new Error("No valid SVG found in AI response");
   }
   svg = svg.slice(start, end + 6);
-  // Ensure all paths have fill=none
-  svg = svg.replace(/fill="(?!none)[^"]*"/g, 'fill="none"');
-  // Add fill=none to paths that don't have it
-  svg = svg.replace(/<path(?![^>]*fill=)/g, '<path fill="none"');
-  svg = svg.replace(/<polyline(?![^>]*fill=)/g, '<polyline fill="none"');
   return svg;
+}
+
+/**
+ * Render an SVG string to a PNG buffer using sharp (libvips + librsvg).
+ * We render at 1024px wide to give the edge-detection pipeline enough resolution.
+ */
+async function svgToPng(svgContent: string, targetSize = 1024): Promise<Buffer> {
+  const svgBuffer = Buffer.from(svgContent, "utf-8");
+  const png = await sharp(svgBuffer)
+    .resize(targetSize, targetSize, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+    .flatten({ background: { r: 255, g: 255, b: 255 } })
+    .png()
+    .toBuffer();
+  return png;
 }
 
 /** Convert prompt text to safe filename */
@@ -131,11 +143,9 @@ router.post(
       let mimeType = "image/jpeg";
 
       if (req.file) {
-        // Uploaded file
         imageBuffer = req.file.buffer;
         mimeType = req.file.mimetype || "image/jpeg";
       } else if (req.body?.imageUrl) {
-        // URL provided
         const response = await fetch(req.body.imageUrl);
         imageBuffer = Buffer.from(await response.arrayBuffer());
         mimeType = response.headers.get("content-type") || "image/jpeg";
@@ -143,7 +153,7 @@ router.post(
         return res.status(400).json({ error: "No image provided" });
       }
 
-      // ── Resize image for Vision API (max 1024px, keep aspect ratio) ──────────
+      // ── Resize photo for Vision API (max 1024px) ─────────────────────────────
       const resized = await sharp(imageBuffer)
         .resize(1024, 1024, { fit: "inside", withoutEnlargement: true })
         .jpeg({ quality: 85 })
@@ -151,7 +161,7 @@ router.post(
 
       const dataUrl = bufferToDataUrl(resized, "image/jpeg");
 
-      // ── Call Vision AI via Manus Forge API ────────────────────────────────
+      // ── STEP 1: Call GPT-4o Vision → get SVG outline ─────────────────────────
       const completion = await invokeLLM({
         messages: [
           {
@@ -175,27 +185,39 @@ router.post(
         throw new Error("Empty response from AI");
       }
 
-      // ── Extract and validate SVG ─────────────────────────────────────────────
+      // ── Extract SVG from response ────────────────────────────────────────────
       const svgContent = extractSvg(rawResponse);
 
-      // ── Convert SVG → DXF ────────────────────────────────────────────────────
-      const dxfResult = svgToDxf(svgContent);
+      // ── STEP 2: Render SVG → PNG ─────────────────────────────────────────────
+      // This gives us a clean black-on-white raster image that the edge-detection
+      // pipeline can process just like a regular uploaded image.
+      const pngBuffer = await svgToPng(svgContent, 1024);
 
-      // ── Upload original image to S3 ──────────────────────────────────────────
-      const imageKey = `ai-trace/${nanoid()}.jpg`;
-      const { url: imageUrl } = await storagePut(imageKey, resized, "image/jpeg");
+      // ── STEP 3: Run edge-detection + potrace pipeline (same as upload tab) ───
+      // threshold=180 (high, since SVG lines are crisp black on white)
+      // simplifyTolerance=2 (smooth curves)
+      // minSegmentLength=3 (filter tiny noise)
+      const result = await convertImageToDxf(pngBuffer, {
+        threshold: 180,
+        simplifyTolerance: 2,
+        minSegmentLength: 3,
+      });
 
       // ── Upload DXF to S3 ─────────────────────────────────────────────────────
       const description = req.body?.description || "ai_trace";
       const filename = buildFilename(description);
       const dxfKey = `ai-trace-dxf/${nanoid()}.dxf`;
-      const { url: dxfUrl } = await storagePut(dxfKey, dxfResult.dxf, "application/dxf");
+      const { url: dxfUrl } = await storagePut(dxfKey, result.dxf, "application/dxf");
+
+      // ── Upload original photo to S3 (for reference only) ─────────────────────
+      const imageKey = `ai-trace/${nanoid()}.jpg`;
+      const { url: imageUrl } = await storagePut(imageKey, resized, "image/jpeg");
 
       // ── Log usage ────────────────────────────────────────────────────────────
       const ip = req.headers["x-forwarded-for"]?.toString() || req.socket.remoteAddress || "";
       await logUsageEvent({
         type: "ai_generate",
-        segmentCount: dxfResult.segmentCount,
+        segmentCount: result.segmentCount,
         ipAnon: anonymizeIp(ip),
         imageUrl,
       });
@@ -204,26 +226,25 @@ router.post(
         appUserId: appUser.userId,
         actionType: "ai_generate",
         description: description,
-        segmentCount: dxfResult.segmentCount,
+        segmentCount: result.segmentCount,
         dxfUrl,
         imageUrl,
-        svgPreview: svgContent,
+        svgPreview: result.svgPreview,
       });
 
       return res.json({
-        svgPreview: svgContent,
+        svgPreview: result.svgPreview,
         dxfUrl,
         imageUrl,
-        segmentCount: dxfResult.segmentCount,
-        realWidth: dxfResult.realWidth,
-        realHeight: dxfResult.realHeight,
+        segmentCount: result.segmentCount,
+        realWidth: result.realWidth,
+        realHeight: result.realHeight,
         filename: `${filename}.dxf`,
       });
     } catch (err: unknown) {
       console.error("[aiTraceRoute] Error:", err);
       const message = err instanceof Error ? err.message : "Unknown error";
 
-      // OpenAI quota / billing errors
       if (message.includes("429") || message.includes("quota") || message.includes("billing")) {
         return res.status(429).json({
           error: "OPENAI_QUOTA",

@@ -309,3 +309,10 @@
 - [ ] חיבור ל-aiTraceRoute.ts (כבר קיים בשרת)
 - [x] שיפור prompt של AI Trace - תוצאות נקיות ומדויקות יותר
 - [x] היסטוריה: הצגת ווקטור בלבד (ללא תמונה מקורית)
+
+## AI Trace - שיפור Pipeline
+
+- [x] שינוי pipeline: SVG מ-GPT-4o → render ל-PNG → potrace → DXF (כמו המרת תמונה רגילה)
+- [x] שימוש ב-sharp לrender SVG ל-PNG
+- [x] הרצת potrace על ה-PNG לקבלת קווים נקיים
+- [x] המרת תוצאת potrace ל-DXF עם svgToDxf
