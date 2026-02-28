@@ -1,8 +1,7 @@
 /**
- * AiTraceTab.tsx
- *
- * Third tab: user uploads a photo → AI analyzes it and draws a clean
- * outline suitable for laser engraving / CNC cutting → auto-converts to DXF.
+ * AiTraceTab.tsx — Two-step AI Trace flow:
+ *  STEP 1: User uploads photo → AI draws a B&W PNG line drawing → preview shown
+ *  STEP 2: User approves → clicks "Convert to DXF" → potrace pipeline → DXF ready
  */
 
 import { useState, useRef, useCallback } from "react";
@@ -13,9 +12,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
 import { AiRefinePanel, type RefineResult } from "@/components/AiRefinePanel";
 import {
-  Upload,
   Download,
-  Loader2,
   CheckCircle2,
   AlertCircle,
   ImageIcon,
@@ -24,9 +21,18 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
+  Wand2,
+  ArrowRight,
 } from "lucide-react";
 
-interface TraceResult {
+interface PreviewResult {
+  previewPngUrl: string;
+  previewPngBase64: string;
+  imageUrl: string;
+  description: string;
+}
+
+interface DxfResult {
   svgPreview: string;
   dxfUrl: string;
   imageUrl: string;
@@ -36,55 +42,31 @@ interface TraceResult {
   filename?: string;
 }
 
-type Status = "idle" | "loading" | "success" | "error";
+type Status = "idle" | "loading-ai" | "preview" | "loading-dxf" | "success" | "error";
 
-// ─── Minimal SVG Viewer ───────────────────────────────────────────────────────
 function SvgViewer({ svgContent }: { svgContent: string }) {
   const [scale, setScale] = useState(1);
   const clamp = (s: number) => Math.min(8, Math.max(0.5, s));
   const styledSvg = svgContent.replace(/<svg /, '<svg style="width:100%;height:100%;" ');
-
   return (
     <div className="border rounded-lg overflow-hidden bg-white">
       <div className="flex items-center gap-1 px-3 py-1.5 border-b bg-muted/30">
         <Eye className="w-3.5 h-3.5 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground font-medium flex-1">Vector Preview</span>
-        <span className="text-xs text-muted-foreground/60">{Math.round(scale * 100)}%</span>
-        <button onClick={() => setScale((s) => clamp(+(s / 1.3).toFixed(2)))} className="w-6 h-6 rounded flex items-center justify-center hover:bg-muted">
-          <ZoomOut className="w-3.5 h-3.5 text-muted-foreground" />
-        </button>
-        <button onClick={() => setScale((s) => clamp(+(s * 1.3).toFixed(2)))} className="w-6 h-6 rounded flex items-center justify-center hover:bg-muted">
-          <ZoomIn className="w-3.5 h-3.5 text-muted-foreground" />
-        </button>
-        <button onClick={() => setScale(1)} className="w-6 h-6 rounded flex items-center justify-center hover:bg-muted">
-          <Maximize2 className="w-3.5 h-3.5 text-muted-foreground" />
-        </button>
+        <span className="text-xs text-muted-foreground flex-1">Vector Preview</span>
+        <button onClick={() => setScale(clamp(scale - 0.25))} className="p-1 hover:bg-muted rounded"><ZoomOut className="w-3.5 h-3.5" /></button>
+        <span className="text-xs w-10 text-center">{Math.round(scale * 100)}%</span>
+        <button onClick={() => setScale(clamp(scale + 0.25))} className="p-1 hover:bg-muted rounded"><ZoomIn className="w-3.5 h-3.5" /></button>
+        <button onClick={() => setScale(1)} className="p-1 hover:bg-muted rounded"><Maximize2 className="w-3.5 h-3.5" /></button>
       </div>
-      <div className="relative overflow-hidden bg-white" style={{ height: 280 }}>
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: `translate(-50%, -50%) scale(${scale})`,
-            transformOrigin: "center center",
-            width: "90%",
-            height: "90%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          dangerouslySetInnerHTML={{ __html: styledSvg }}
-        />
+      <div className="overflow-auto" style={{ maxHeight: 320 }}>
+        <div style={{ transform: `scale(${scale})`, transformOrigin: "top left", width: `${100 / scale}%` }}
+          dangerouslySetInnerHTML={{ __html: styledSvg }} />
       </div>
     </div>
   );
 }
 
-// ─── AI Trace Tab ─────────────────────────────────────────────────────────────
-interface AiTraceTabProps {
-  onOpenAuth: () => void;
-}
+interface AiTraceTabProps { onOpenAuth: () => void; }
 
 export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const { t, isRtl } = useLanguage();
@@ -92,7 +74,8 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<Status>("idle");
-  const [result, setResult] = useState<TraceResult | null>(null);
+  const [previewResult, setPreviewResult] = useState<PreviewResult | null>(null);
+  const [dxfResult, setDxfResult] = useState<DxfResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -100,16 +83,11 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
 
   const handleFile = useCallback((file: File) => {
     const allowed = ["image/png", "image/jpeg", "image/bmp", "image/webp", "image/gif"];
-    if (!allowed.includes(file.type)) {
-      toast.error(isRtl ? "פורמט לא נתמך. השתמש ב-PNG, JPG, BMP או WebP." : "Unsupported format. Use PNG, JPG, BMP or WebP.");
-      return;
-    }
-    if (file.size > 16 * 1024 * 1024) {
-      toast.error(isRtl ? "הקובץ גדול מדי. מקסימום 16 MB." : "File too large. Maximum 16 MB.");
-      return;
-    }
+    if (!allowed.includes(file.type)) { toast.error(isRtl ? "פורמט לא נתמך." : "Unsupported format."); return; }
+    if (file.size > 16 * 1024 * 1024) { toast.error(isRtl ? "הקובץ גדול מדי. מקסימום 16 MB." : "File too large. Max 16 MB."); return; }
     setImageFile(file);
-    setResult(null);
+    setPreviewResult(null);
+    setDxfResult(null);
     setStatus("idle");
     const reader = new FileReader();
     reader.onload = (e) => setImagePreview(e.target?.result as string);
@@ -117,76 +95,76 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   }, [isRtl]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
+    e.preventDefault(); setDragOver(false);
+    const file = e.dataTransfer.files[0]; if (file) handleFile(file);
   }, [handleFile]);
 
   const handleTrace = async () => {
     if (!imageFile) return;
-    setStatus("loading");
-    setResult(null);
-    setErrorMsg("");
-
+    setStatus("loading-ai"); setPreviewResult(null); setDxfResult(null); setErrorMsg("");
     try {
       const formData = new FormData();
       formData.append("image", imageFile);
-      if (description.trim()) {
-        formData.append("description", description.trim());
-      }
-
+      if (description.trim()) formData.append("description", description.trim());
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
       const data = await res.json();
-
       if (!res.ok) {
-        if (data.error === "UNAUTHORIZED") {
-          onOpenAuth();
-          setStatus("idle");
-          return;
-        }
+        if (data.error === "UNAUTHORIZED") { onOpenAuth(); setStatus("idle"); return; }
         if (data.error === "QUOTA_EXCEEDED") {
           const msg = isRtl ? (data.message || t("quotaExceeded")) : (data.messageEn || t("quotaExceeded"));
-          toast.error(msg);
-          setErrorMsg(msg);
-          setStatus("error");
-          return;
+          toast.error(msg); setErrorMsg(msg); setStatus("error"); return;
         }
         throw new Error(isRtl ? (data.message || data.error) : (data.messageEn || data.error || "Error"));
       }
-
-      setResult(data as TraceResult);
-      setStatus("success");
-      toast.success(isRtl ? `AI Trace הושלם! ${data.segmentCount.toLocaleString()} קווים` : `AI Trace complete! ${data.segmentCount.toLocaleString()} lines`);
+      setPreviewResult(data as PreviewResult);
+      setStatus("preview");
+      toast.success(isRtl ? "ה-AI סיים לצייר! בדוק ולחץ המר ל-DXF" : "AI drawing ready! Review and convert to DXF");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : (isRtl ? "שגיאה בעיבוד" : "Processing error");
-      setErrorMsg(msg);
-      setStatus("error");
-      toast.error(msg);
+      setErrorMsg(msg); setStatus("error"); toast.error(msg);
+    }
+  };
+
+  const handleConvertToDxf = async () => {
+    if (!previewResult) return;
+    setStatus("loading-dxf"); setErrorMsg("");
+    try {
+      const res = await fetch("/api/ai-trace/convert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          previewPngBase64: previewResult.previewPngBase64,
+          previewPngUrl: previewResult.previewPngUrl,
+          description: previewResult.description,
+          imageUrl: previewResult.imageUrl,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(isRtl ? (data.message || data.error) : (data.messageEn || data.error || "Error"));
+      setDxfResult({ ...data, imageUrl: previewResult.imageUrl });
+      setStatus("success");
+      toast.success(isRtl ? `DXF מוכן! ${data.segmentCount.toLocaleString()} קווים` : `DXF ready! ${data.segmentCount.toLocaleString()} lines`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (isRtl ? "שגיאת המרה" : "Conversion error");
+      setErrorMsg(msg); setStatus("error"); toast.error(msg);
     }
   };
 
   const reset = () => {
-    setImageFile(null);
-    setImagePreview(null);
-    setResult(null);
-    setStatus("idle");
-    setErrorMsg("");
+    setImageFile(null); setImagePreview(null); setPreviewResult(null); setDxfResult(null);
+    setStatus("idle"); setErrorMsg("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   return (
     <>
-      {result && downloadOpen && (
+      {dxfResult && downloadOpen && (
         <DxfDownloadDialog
-          open={downloadOpen}
-          onClose={() => setDownloadOpen(false)}
-          svgContent={result.svgPreview}
-          dxfUrl={result.dxfUrl}
-          defaultFilename={result.filename ?? `ai-trace-${Date.now()}.dxf`}
-          segmentCount={result.segmentCount}
-          svgWidth={result.realWidth ?? 500}
-          svgHeight={result.realHeight ?? 500}
+          open={downloadOpen} onClose={() => setDownloadOpen(false)}
+          svgContent={dxfResult.svgPreview} dxfUrl={dxfResult.dxfUrl}
+          defaultFilename={dxfResult.filename ?? `ai-trace-${Date.now()}.dxf`}
+          segmentCount={dxfResult.segmentCount} svgWidth={dxfResult.realWidth ?? 500} svgHeight={dxfResult.realHeight ?? 500}
         />
       )}
 
@@ -198,129 +176,82 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               <Scan className="w-4 h-4 text-primary" />
               <h2 className="font-semibold text-sm">{t("aiTraceTitle")}</h2>
             </div>
-            <p className="text-xs text-muted-foreground mb-4">{t("aiTraceSubtitle")}</p>
 
-            {/* Drop zone */}
             <div
-              className={`relative border-2 border-dashed rounded-xl transition-all cursor-pointer
-                ${dragOver ? "border-primary bg-primary/5 scale-[1.01]" : "border-border hover:border-primary/50 hover:bg-muted/30"}
-                ${imagePreview ? "border-solid border-primary/30" : ""}`}
+              className={`border-2 border-dashed rounded-xl transition-colors cursor-pointer mb-3 ${dragOver ? "border-primary bg-primary/5" : "border-muted-foreground/20 hover:border-primary/50"} ${imagePreview ? "p-2" : "p-8"}`}
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={onDrop}
               onClick={() => fileInputRef.current?.click()}
             >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/bmp,image/webp"
-                className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
-              />
               {imagePreview ? (
-                <div className="relative">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-full max-h-56 object-contain rounded-xl p-2"
-                  />
-                  <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors rounded-xl flex items-center justify-center opacity-0 hover:opacity-100">
-                    <span className="text-white text-xs font-medium bg-black/50 px-3 py-1 rounded-full">
-                      {isRtl ? "לחץ להחלפה" : "Click to change"}
-                    </span>
+                <div className="flex items-center gap-3">
+                  <img src={imagePreview} alt="Preview" className="w-16 h-16 object-cover rounded-lg border" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{imageFile?.name}</p>
+                    <p className="text-xs text-muted-foreground">{isRtl ? "לחץ להחלפה" : "Click to change"}</p>
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-3 py-10 text-center px-4">
-                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-                    <ImageIcon className="w-7 h-7 text-primary" />
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <ImageIcon className="w-6 h-6 text-primary" />
                   </div>
-                  <div>
-                    <p className="font-medium text-sm">{t("aiTraceDrop")}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{t("aiTraceFormats")}</p>
-                  </div>
+                  <p className="font-medium text-sm">{t("aiTraceDrop")}</p>
+                  <p className="text-xs text-muted-foreground">{t("aiTraceFormats")}</p>
                 </div>
               )}
             </div>
+            <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/bmp,image/webp,image/gif" className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
 
-            {/* Optional description */}
-            {imagePreview && (
-              <div className="mt-3">
-                <label className="text-xs font-medium text-muted-foreground block mb-1.5">
-                  {isRtl ? "תיאור אופציונלי (לשם הקובץ):" : "Optional description (for filename):"}
-                </label>
-                <input
-                  type="text"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder={isRtl ? "למשל: חתול, פרח, לוגו..." : "e.g. cat, flower, logo..."}
-                  className="w-full text-sm border rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  dir={isRtl ? "rtl" : "ltr"}
-                />
-              </div>
-            )}
+            <input type="text" value={description} onChange={(e) => setDescription(e.target.value)}
+              placeholder={isRtl ? "תיאור אופציונלי (לשם הקובץ):" : "Optional description (for filename):"}
+              className="w-full text-sm border rounded-lg px-3 py-2 bg-background mb-3 placeholder:text-muted-foreground/50" />
 
-            <Button
-              size="lg"
-              className="w-full mt-4 h-11 font-semibold"
-              disabled={!imageFile || status === "loading"}
-              onClick={handleTrace}
-            >
-              {status === "loading"
-                ? <><Loader2 className="w-4 h-4 ml-2 animate-spin" />{t("aiTraceProcessing")}</>
-                : <><Scan className="w-4 h-4 ml-2" />{t("aiTraceButton")}</>}
+            <Button size="lg" className="w-full font-semibold"
+              disabled={!imageFile || status === "loading-ai" || status === "loading-dxf"}
+              onClick={handleTrace}>
+              {status === "loading-ai" ? (
+                <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin ml-2" />{isRtl ? "ה-AI מצייר..." : "AI is drawing..."}</>
+              ) : (
+                <><Wand2 className="w-4 h-4 ml-2" />{isRtl ? "צור outline בAI" : "Create AI Outline"}</>
+              )}
             </Button>
           </CardContent>
         </Card>
 
-        {/* Loading */}
-        {status === "loading" && (
+        {/* STEP 1 Loading */}
+        {status === "loading-ai" && (
           <Card>
-            <CardContent className="p-5">
-              <div className="flex flex-col gap-4">
-                {/* Show original image while processing */}
-                {imagePreview && (
-                  <div className="relative rounded-xl overflow-hidden border bg-white">
-                    <img
-                      src={imagePreview}
-                      alt="Processing"
-                      className="w-full max-h-56 object-contain"
-                    />
-                    {/* Animated scan overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-primary/10 animate-pulse" />
-                    <div
-                      className="absolute left-0 right-0 h-0.5 bg-primary/60 shadow-[0_0_8px_2px_rgba(99,102,241,0.5)]"
-                      style={{
-                        animation: "scanLine 2s ease-in-out infinite",
-                        top: "50%",
-                      }}
-                    />
-                    <style>{`
-                      @keyframes scanLine {
-                        0% { top: 10%; }
-                        50% { top: 90%; }
-                        100% { top: 10%; }
-                      }
-                    `}</style>
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs px-3 py-1 rounded-full flex items-center gap-2">
-                      <Scan className="w-3 h-3 animate-pulse" />
-                      {isRtl ? "ה-AI מנתח את התמונה..." : "AI is analyzing..."}
-                    </div>
-                  </div>
-                )}
-                <div className="flex flex-col items-center gap-3 text-center">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
-                    <p className="font-semibold text-sm">{t("aiTraceProcessing")}</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{t("aiTraceProcessingSubtitle")}</p>
-                  <div className="flex gap-1.5">
-                    {[0, 1, 2].map((i) => (
-                      <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-                    ))}
-                  </div>
-                </div>
+            <CardContent className="p-8 flex flex-col items-center gap-3 text-center">
+              <div className="relative w-16 h-16">
+                <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
+                <div className="absolute inset-0 rounded-full border-4 border-t-primary animate-spin" />
+                <Wand2 className="absolute inset-0 m-auto w-6 h-6 text-primary" />
               </div>
+              <p className="font-semibold text-sm">{isRtl ? "ה-AI מנתח ומצייר..." : "AI is analyzing and drawing..."}</p>
+              <p className="text-xs text-muted-foreground">{isRtl ? "זה עשוי לקחת 20-40 שניות" : "This may take 20-40 seconds"}</p>
+              <div className="flex gap-1.5">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* STEP 2 Loading */}
+        {status === "loading-dxf" && (
+          <Card>
+            <CardContent className="p-8 flex flex-col items-center gap-3 text-center">
+              <div className="relative w-16 h-16">
+                <div className="absolute inset-0 rounded-full border-4 border-green-200" />
+                <div className="absolute inset-0 rounded-full border-4 border-t-green-500 animate-spin" />
+                <ArrowRight className="absolute inset-0 m-auto w-6 h-6 text-green-600" />
+              </div>
+              <p className="font-semibold text-sm">{isRtl ? "ממיר לקווי DXF..." : "Converting to DXF lines..."}</p>
+              <p className="text-xs text-muted-foreground">{isRtl ? "מריץ potrace על הציור..." : "Running potrace on the drawing..."}</p>
             </CardContent>
           </Card>
         )}
@@ -337,8 +268,48 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
           </Card>
         )}
 
-        {/* Result */}
-        {status === "success" && result && (
+        {/* PNG Preview (Step 1 result) */}
+        {status === "preview" && previewResult && (
+          <Card className="border-blue-200 bg-blue-50/50">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                <span className="font-semibold text-sm text-blue-800">
+                  {isRtl ? "ה-AI סיים לצייר — בדוק את התוצאה" : "AI drawing ready — review below"}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1.5 font-medium text-center">{isRtl ? "תמונה מקורית" : "Original"}</p>
+                  <div className="border rounded-lg overflow-hidden bg-white aspect-square flex items-center justify-center p-2">
+                    <img src={imagePreview!} alt="Original" className="max-w-full max-h-full object-contain" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1.5 font-medium text-center">{isRtl ? "ציור AI (שחור-לבן)" : "AI Drawing (B&W)"}</p>
+                  <div className="border rounded-lg overflow-hidden bg-white aspect-square flex items-center justify-center p-2">
+                    <img src={previewResult.previewPngBase64} alt="AI Drawing" className="max-w-full max-h-full object-contain" />
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground text-center mb-4">
+                {isRtl ? "אם הציור נראה טוב — לחץ 'המר ל-DXF'. אם לא — לחץ 'נסה שוב'." : "If the drawing looks good — click 'Convert to DXF'. Otherwise — click 'Try Again'."}
+              </p>
+
+              <div className="flex gap-2">
+                <Button size="lg" className="flex-1 bg-green-600 hover:bg-green-700 font-semibold" onClick={handleConvertToDxf}>
+                  <ArrowRight className="w-4 h-4 ml-2" />{isRtl ? "המר ל-DXF" : "Convert to DXF"}
+                </Button>
+                <Button variant="outline" size="lg" onClick={reset}>{isRtl ? "נסה שוב" : "Try Again"}</Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* DXF Result (Step 2 result) */}
+        {status === "success" && dxfResult && (
           <Card className="border-primary/30 bg-primary/5">
             <CardContent className="p-5">
               <div className="flex items-center gap-2 mb-3">
@@ -346,87 +317,50 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                 <span className="font-semibold text-sm">{t("aiTraceSuccess")}</span>
               </div>
 
-              {/* Side by side: original + vector */}
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1.5 font-medium text-center">
-                    {isRtl ? "תמונה מקורית" : "Original"}
-                  </p>
+                  <p className="text-xs text-muted-foreground mb-1.5 font-medium text-center">{isRtl ? "ציור AI" : "AI Drawing"}</p>
                   <div className="border rounded-lg overflow-hidden bg-white aspect-square flex items-center justify-center p-2">
-                    <img src={result.imageUrl} alt="Original" className="max-w-full max-h-full object-contain" />
+                    <img src={previewResult?.previewPngBase64} alt="AI Drawing" className="max-w-full max-h-full object-contain" />
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1.5 font-medium text-center">
-                    {isRtl ? "וקטור לחריטה" : "Engraving Vector"}
-                  </p>
+                  <p className="text-xs text-muted-foreground mb-1.5 font-medium text-center">{isRtl ? "וקטור לחריטה" : "Engraving Vector"}</p>
                   <div className="border rounded-lg overflow-hidden bg-white aspect-square flex items-center justify-center p-2">
-                    <div
-                      className="w-full h-full flex items-center justify-center"
-                      dangerouslySetInnerHTML={{
-                        __html: result.svgPreview.replace(
-                          /<svg /,
-                          '<svg style="max-width:100%;max-height:100%;width:auto;height:auto;" '
-                        ),
-                      }}
-                    />
+                    <div className="w-full h-full flex items-center justify-center"
+                      dangerouslySetInnerHTML={{ __html: dxfResult.svgPreview.replace(/<svg /, '<svg style="max-width:100%;max-height:100%;width:auto;height:auto;" ') }} />
                   </div>
                 </div>
               </div>
 
-              {/* Full SVG viewer */}
-              <div className="mb-4">
-                <SvgViewer svgContent={result.svgPreview} />
-              </div>
+              <div className="mb-4"><SvgViewer svgContent={dxfResult.svgPreview} /></div>
 
-              {/* Stats */}
               <div className="grid grid-cols-3 gap-2 mb-4">
                 <div className="bg-white rounded-lg p-2 text-center border">
-                  <p className="text-base font-bold text-primary">{result.segmentCount.toLocaleString()}</p>
+                  <p className="text-base font-bold text-primary">{dxfResult.segmentCount.toLocaleString()}</p>
                   <p className="text-xs text-muted-foreground">{t("lines")}</p>
                 </div>
                 <div className="bg-white rounded-lg p-2 text-center border">
-                  <p className="text-base font-bold text-primary">
-                    {result.realWidth ? (result.realWidth / 3.7795).toFixed(1) : "—"}
-                  </p>
+                  <p className="text-base font-bold text-primary">{dxfResult.realWidth ? (dxfResult.realWidth / 3.7795).toFixed(1) : "—"}</p>
                   <p className="text-xs text-muted-foreground">{t("widthMm")}</p>
                 </div>
                 <div className="bg-white rounded-lg p-2 text-center border">
-                  <p className="text-base font-bold text-primary">
-                    {result.realHeight ? (result.realHeight / 3.7795).toFixed(1) : "—"}
-                  </p>
+                  <p className="text-base font-bold text-primary">{dxfResult.realHeight ? (dxfResult.realHeight / 3.7795).toFixed(1) : "—"}</p>
                   <p className="text-xs text-muted-foreground">{t("heightMm")}</p>
                 </div>
               </div>
 
-              <Button
-                size="lg"
-                className="w-full bg-green-600 hover:bg-green-700 font-semibold mb-3"
-                onClick={() => setDownloadOpen(true)}
-              >
+              <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 font-semibold mb-3" onClick={() => setDownloadOpen(true)}>
                 <Download className="w-4 h-4 ml-2" />{t("downloadDxf")}
               </Button>
 
-              {/* AI Refine Panel */}
-              <AiRefinePanel
-                imageUrl={result.imageUrl}
+              <AiRefinePanel imageUrl={dxfResult.imageUrl}
                 onRefined={(refined: RefineResult) => {
-                  setResult({
-                    svgPreview: refined.svgPreview,
-                    dxfUrl: refined.dxfUrl,
-                    imageUrl: refined.imageUrl,
-                    segmentCount: refined.segmentCount,
-                    realWidth: refined.realWidth,
-                    realHeight: refined.realHeight,
-                    filename: refined.dxfFilename,
-                  });
+                  setDxfResult({ svgPreview: refined.svgPreview, dxfUrl: refined.dxfUrl, imageUrl: refined.imageUrl, segmentCount: refined.segmentCount, realWidth: refined.realWidth, realHeight: refined.realHeight, filename: refined.dxfFilename });
                   toast.success(isRtl ? "העיצוב עודכן!" : "Design refined!");
-                }}
-              />
+                }} />
 
-              <Button variant="outline" size="sm" className="w-full mt-3" onClick={reset}>
-                {t("aiTraceNewImage")}
-              </Button>
+              <Button variant="outline" size="sm" className="w-full mt-3" onClick={reset}>{t("aiTraceNewImage")}</Button>
             </CardContent>
           </Card>
         )}
@@ -438,7 +372,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             <ul className="space-y-1.5 text-sm text-blue-700">
               <li className="flex gap-2"><span className="shrink-0">•</span><span>{t("aiTraceTip1")}</span></li>
               <li className="flex gap-2"><span className="shrink-0">•</span><span>{t("aiTraceTip2")}</span></li>
-              <li className="flex gap-2"><span className="shrink-0">•</span><span>{t("aiTraceTip3")}</span></li>
+              <li className="flex gap-2"><span className="shrink-0">•</span><span>{isRtl ? "בדוק את ציור ה-AI לפני ההמרה — אם לא מדויק, לחץ 'נסה שוב'" : "Review the AI drawing before converting — if not accurate, click 'Try Again'"}</span></li>
             </ul>
           </CardContent>
         </Card>

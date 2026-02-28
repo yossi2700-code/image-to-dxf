@@ -349,3 +349,10 @@
 - [x] דף Terms of Service
 - [x] דף Privacy Policy
 - [x] קישורים ב-footer
+
+## AI Trace - עיצוב מחדש של ה-Flow (PNG Preview + Convert to DXF)
+
+- [x] Backend: AI רואה תמונה מקורית ומחזיר PNG שחור-לבן (ציור פיקסל, לא SVG)
+- [x] Backend: endpoint נפרד להמרת PNG ל-DXF (potrace pipeline)
+- [x] Frontend: הצגת PNG preview אחרי AI
+- [x] Frontend: כפתור "המר ל-DXF" נפרד אחרי אישור המשתמש

@@ -1,0 +1,43 @@
+{
+  "query": "SELECT * FROM app_users LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT * FROM app_users LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Test User",
+      "email": "test@example.com",
+      "passwordHash": "$2b$10$QUGzQCreEjtS0xRdzxjPM.C.NHZYKT.i/oteA3AXAyikAFYq964Am",
+      "googleId": "NULL",
+      "createdAt": "2026-02-26 03:58:14",
+      "lastLoginAt": "2026-02-26 03:58:20",
+      "emailVerified": "0",
+      "maxActions": "NULL"
+    },
+    {
+      "id": "30001",
+      "name": "יוסף",
+      "email": "yossi2700@gmail.com",
+      "passwordHash": "$2b$10$yTEBp.fABG72yaxz3MmiP.KkINTeZ7zqP6qivlL40.1bFon0rt1TO",
+      "googleId": "NULL",
+      "createdAt": "2026-02-26 17:30:52",
+      "lastLoginAt": "2026-02-27 15:29:42",
+      "emailVerified": "0",
+      "maxActions": "NULL"
+    },
+    {
+      "id": "60001",
+      "name": "ליאורה",
+      "email": "rbnlr1282@gmail.com",
+      "passwordHash": "$2b$10$RLks2ee4.UcwLBDduiBgtuyKvyKzNQwDTOnVQJvcOgpV6gojtHzRO",
+      "googleId": "NULL",
+      "createdAt": "2026-02-27 15:18:56",
+      "lastLoginAt": "2026-02-27 15:18:56",
+      "emailVerified": "0",
+      "maxActions": "10"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tpasswordHash\tgoogleId\tcreatedAt\tlastLoginAt\temailVerified\tmaxActions\n1\tTest User\ttest@example.com\t$2b$10$QUGzQCreEjtS0xRdzxjPM.C.NHZYKT.i/oteA3AXAyikAFYq964Am\tNULL\t2026-02-26 03:58:14\t2026-02-26 03:58:20\t0\tNULL\n30001\tיוסף\tyossi2700@gmail.com\t$2b$10$yTEBp.fABG72yaxz3MmiP.KkINTeZ7zqP6qivlL40.1bFon0rt1TO\tNULL\t2026-02-26 17:30:52\t2026-02-27 15:29:42\t0\tNULL\n60001\tליאורה\trbnlr1282@gmail.com\t$2b$10$RLks2ee4.UcwLBDduiBgtuyKvyKzNQwDTOnVQJvcOgpV6gojtHzRO\tNULL\t2026-02-27 15:18:56\t2026-02-27 15:18:56\t0\t10\n",
+  "stderr": "",
+  "execution_time_ms": 1626
+}

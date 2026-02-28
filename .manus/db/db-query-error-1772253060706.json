@@ -1,0 +1,18 @@
+{
+  "query": "DESCRIBE app_users; SELECT id, name, role, max_actions, created_at FROM app_users LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute DESCRIBE app_users; SELECT id, name, role, max_actions, created_at FROM app_users LIMIT 10;",
+  "returncode": 1,
+  "logs": [
+    "Field\tType\tNull\tKey\tDefault\tExtra",
+    "id\tint\tNO\tPRI\tNULL\tauto_increment",
+    "name\tvarchar(128)\tYES\t\tNULL\t",
+    "email\tvarchar(320)\tNO\tUNI\tNULL\t",
+    "passwordHash\ttext\tYES\t\tNULL\t",
+    "googleId\tvarchar(128)\tYES\tUNI\tNULL\t",
+    "createdAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t",
+    "lastLoginAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t",
+    "emailVerified\tint\tNO\t\t0\t",
+    "maxActions\tint\tYES\t\t10",
+    "ERROR 1054 (42S22) at line 1: Unknown column 'role' in 'field list'"
+  ]
+}

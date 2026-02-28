@@ -1,16 +1,12 @@
 /**
- * aiTraceRoute.ts
+ * AI Trace Route — Two-step pipeline:
  *
- * AI Trace feature pipeline:
- *   1. User uploads a photo
- *   2. Server converts it to high-contrast B&W (grayscale + normalise + boost)
- *   3. GPT-4o Vision sees the clean B&W image and traces it as SVG line art
- *   4. The SVG is rendered to PNG using sharp
- *   5. The PNG goes through the same edge-detection + potrace pipeline as regular uploads
- *   6. Clean DXF is returned
+ * STEP 1 — POST /api/ai-trace
+ *   User uploads photo → AI (GPT-4o) sees original image → generates a B&W PNG line drawing
+ *   Returns: { previewPngUrl, previewPngBase64 }
  *
- * POST /api/ai-trace
- *   Body: multipart/form-data with field "image" (file) or "imageUrl" (string)
+ * STEP 2 — POST /api/ai-trace/convert
+ *   User approves the PNG preview → potrace pipeline → DXF
  *   Returns: { svgPreview, dxfUrl, segmentCount, realWidth, realHeight, filename }
  */
 
@@ -23,107 +19,66 @@ import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { checkUsageLimit } from "./usageLimits";
-import { convertImageToDxf, imageToGrayscale, sobelEdgeDetection, thinEdges, applyThreshold } from "./imageProcessor";
+import { convertImageToDxf } from "./imageProcessor";
 import { invokeLLM } from "./_core/llm";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
 
 /**
- * Build the GPT-4o Vision prompt.
- * The image sent is already B&W, so we ask GPT-4o to:
- *   - Recognize what the object is (silently)
- *   - Trace exactly what it sees as clean SVG line art
+ * Build the GPT-4o Vision prompt for generating a B&W line drawing.
+ * We ask the model to produce a clean black-on-white pixel drawing (PNG),
+ * not SVG — just like a technical illustration.
  */
 function buildTracePrompt(): string {
-  return `You are a professional vector illustrator creating laser engraving files.
-The image you see is an EDGE MAP of an object: black lines on a white background showing the exact outlines and details of the original object.
-PHASE 1 — RECOGNIZE (think silently, do not output this):
-- What is this object? (brand, model, type)
-- What specific details are visible in the edge lines? (logos, patterns, stitching, hardware, text, emblems)
-- What are the proportions and main shapes?
-PHASE 2 — TRACE (output only this):
-Draw an SVG that reproduces the edge lines you see. Follow the black lines precisely — do not add or remove details.
-SVG RULES:
-1. Output ONLY raw SVG XML — start with <svg and end with </svg>, nothing else
-2. NO markdown fences, NO explanations, NO text before or after the SVG
-3. First element: <rect width="100%" height="100%" fill="white"/>
-4. viewBox must match the object's actual proportions as seen in the image
-5. ALL elements: stroke="black" stroke-width="2" fill="none"
-6. NO colored fills — only black strokes on white background
-7. Trace in layers: outer silhouette → major internal edges → fine details (logos, patterns, hardware, stitching)
-8. Smooth bezier curves (C/c) for curved lines; straight lines (L/l) for straight edges
-9. 30 to 80 path elements — follow the visible edge lines faithfully
-10. Every path must trace a real black line visible in the edge map
-11. Preserve the proportions and layout exactly as shown
-Output the SVG now:`;
+  return `You are a professional technical illustrator creating laser engraving files.
+
+Look at this image carefully. Your task is to create a clean black-and-white LINE DRAWING of exactly what you see.
+
+INSTRUCTIONS:
+1. Identify the object: what is it? (brand, model, type, key features)
+2. Draw it as a clean technical outline illustration:
+   - Black lines on pure white background
+   - Trace the EXACT shape you see — outer silhouette + major internal details
+   - Include logos, patterns, hardware, stitching, text if visible
+   - Clean, smooth lines — no shading, no fills, no gradients
+   - Like a technical product drawing or coloring book page
+
+OUTPUT FORMAT:
+- Return ONLY a base64-encoded PNG image
+- Format: data:image/png;base64,<base64data>
+- The PNG should be 1024x1024 pixels, white background, black lines
+- NO text explanation, NO markdown, ONLY the data URL
+
+Generate the line drawing now:`;
+}
+
+/**
+ * Extract base64 PNG data URL from AI response.
+ * The model should return: data:image/png;base64,<data>
+ */
+function extractPngDataUrl(raw: string): string {
+  // Handle array content (Gemini thinking blocks)
+  let text = raw;
+
+  // Look for data URL pattern
+  const match = text.match(/data:image\/png;base64,[A-Za-z0-9+/=]+/);
+  if (match) {
+    return match[0];
+  }
+
+  // Also try jpeg
+  const jpegMatch = text.match(/data:image\/jpeg;base64,[A-Za-z0-9+/=]+/);
+  if (jpegMatch) {
+    return jpegMatch[0];
+  }
+
+  throw new Error("No valid image data URL found in AI response");
 }
 
 /** Convert buffer to base64 data URL for Vision API */
 function bufferToDataUrl(buffer: Buffer, mimeType: string): string {
   return `data:${mimeType};base64,${buffer.toString("base64")}`;
-}
-
-/** Sanitize SVG from GPT response — strip markdown fences if present */
-function extractSvg(raw: string): string {
-  let svg = raw.replace(/```(?:svg|xml)?\s*/gi, "").replace(/```\s*/g, "").trim();
-  const start = svg.indexOf("<svg");
-  const end = svg.lastIndexOf("</svg>");
-  if (start === -1 || end === -1) {
-    throw new Error("No valid SVG found in AI response");
-  }
-  svg = svg.slice(start, end + 6);
-  return svg;
-}
-
-/**
- * Convert an image buffer to an edge-map PNG (white background, black edges).
- * This gives GPT-4o the clearest possible view of the object's outlines.
- */
-async function imageToEdgeMap(imageBuffer: Buffer, targetSize = 768): Promise<Buffer> {
-  // First resize to target size
-  const resized = await sharp(imageBuffer)
-    .resize(targetSize, targetSize, { fit: "inside", withoutEnlargement: true })
-    .grayscale()
-    .normalise()
-    .png()
-    .toBuffer();
-
-  const meta = await sharp(resized).metadata();
-  const w = meta.width!;
-  const h = meta.height!;
-
-  // Get raw pixel data
-  const { data } = await sharp(resized).raw().toBuffer({ resolveWithObject: true });
-  const pixels = new Uint8Array(data.buffer);
-
-  // Run Sobel edge detection
-  const edges = sobelEdgeDetection(pixels, w, h);
-  const thinned = thinEdges(edges, w, h);
-
-  // Invert: edges are black on white background (better for tracing)
-  const inverted = new Uint8Array(thinned.length);
-  for (let i = 0; i < thinned.length; i++) {
-    inverted[i] = thinned[i] > 0 ? 0 : 255;
-  }
-
-  // Convert back to PNG
-  return sharp(Buffer.from(inverted), { raw: { width: w, height: h, channels: 1 } })
-    .png()
-    .toBuffer();
-}
-
-/**
- * Render an SVG string to a PNG buffer using sharp (libvips + librsvg).
- * Rendered at 1024px to give the edge-detection pipeline enough resolution.
- */
-async function svgToPng(svgContent: string, targetSize = 1024): Promise<Buffer> {
-  const svgBuffer = Buffer.from(svgContent, "utf-8");
-  return sharp(svgBuffer)
-    .resize(targetSize, targetSize, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-    .flatten({ background: { r: 255, g: 255, b: 255 } })
-    .png()
-    .toBuffer();
 }
 
 /** Convert prompt text to safe filename */
@@ -135,6 +90,8 @@ function buildFilename(description: string): string {
     .slice(0, 40);
   return safe || "ai_trace";
 }
+
+// ─── STEP 1: AI generates B&W PNG drawing ────────────────────────────────────
 
 router.post(
   "/api/ai-trace",
@@ -173,43 +130,24 @@ router.post(
 
       // ── Get image buffer ──────────────────────────────────────────────────────
       let imageBuffer: Buffer;
-
       if (req.file) {
         imageBuffer = req.file.buffer;
       } else if (req.body?.imageUrl) {
         const response = await fetch(req.body.imageUrl);
         imageBuffer = Buffer.from(await response.arrayBuffer());
       } else {
-        return res.status(400).json({ error: "No image provided" });
+        return res.status(400).json({ error: "NO_IMAGE", message: "לא סופקה תמונה" });
       }
 
-      // ── Resize to max 1024px ────────────────────────────────────────────────
+      // ── Resize image for Vision API (max 1024px) ──────────────────────────────
       const resized = await sharp(imageBuffer)
         .resize(1024, 1024, { fit: "inside", withoutEnlargement: true })
-        .jpeg({ quality: 85 })
+        .jpeg({ quality: 92 })
         .toBuffer();
 
-      // ── Generate edge map: white background + black edges ──────────────────────
-      // This gives GPT-4o the clearest possible view of the object's outlines
-      // without color distractions. We also keep a B&W version as fallback.
-      const edgeMapBuffer = await imageToEdgeMap(imageBuffer, 768);
-      const edgeMapDataUrl = bufferToDataUrl(edgeMapBuffer, "image/png");
+      const originalDataUrl = bufferToDataUrl(resized, "image/jpeg");
 
-      // Also prepare a B&W high-contrast version for context
-      const bwImage = await sharp(resized)
-        .grayscale()
-        .normalise()
-        .linear(1.4, -30)
-        .jpeg({ quality: 90 })
-        .toBuffer();
-      const bwDataUrl = bufferToDataUrl(bwImage, "image/jpeg");
-
-      // We send BOTH: the edge map (for precise tracing) and B&W (for context/proportions)
-      const dataUrl = edgeMapDataUrl;
-      const contextDataUrl = bwDataUrl;
-
-      // ── STEP 1: GPT-4o Vision traces the edge map as SVG ──────────────────────
-      void contextDataUrl; // available for future use in prompt
+      // ── STEP 1: GPT-4o Vision sees original image and generates PNG drawing ───
       const completion = await invokeLLM({
         messages: [
           {
@@ -217,7 +155,7 @@ router.post(
             content: [
               {
                 type: "image_url",
-                image_url: { url: dataUrl, detail: "high" },
+                image_url: { url: originalDataUrl, detail: "high" },
               },
               {
                 type: "text",
@@ -228,18 +166,15 @@ router.post(
         ],
       });
 
-      // The model (Gemini 2.5 Flash with thinking) may return content as an array
-      // of blocks (thinking + text). Extract all text parts and join them.
+      // Extract text from response (handle Gemini thinking blocks array)
       const rawContent = completion.choices[0]?.message?.content;
       let rawResponse: string;
       if (typeof rawContent === "string") {
         rawResponse = rawContent;
       } else if (Array.isArray(rawContent)) {
-        // Join all text-type blocks (skip thinking/image blocks)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        rawResponse = (rawContent as any[])
+        rawResponse = (rawContent as Array<{ type: string; text?: string }>)
           .filter((block) => block.type === "text")
-          .map((block) => (block.text as string) ?? "")
+          .map((block) => block.text ?? "")
           .join("");
       } else {
         rawResponse = "";
@@ -250,84 +185,148 @@ router.post(
       }
 
       console.log("[aiTrace] Raw response length:", rawResponse.length);
-      console.log("[aiTrace] Has <svg:", rawResponse.includes("<svg"));
+      console.log("[aiTrace] Has data:image:", rawResponse.includes("data:image"));
       console.log("[aiTrace] Preview:", rawResponse.substring(0, 200));
 
-      // ── Extract SVG from response ────────────────────────────────────────────
-      const svgContent = extractSvg(rawResponse);
+      // ── Try to extract PNG data URL from response ─────────────────────────────
+      // If the model didn't return a data URL, we fall back to generating a
+      // B&W version of the original image using sharp (edge detection)
+      let previewPngBase64: string;
+      let previewMimeType = "image/png";
 
-      // ── STEP 2: Render SVG → PNG ──────────────────────────────────────────────
-      const pngBuffer = await svgToPng(svgContent, 1024);
+      try {
+        const dataUrl = extractPngDataUrl(rawResponse);
+        // Strip the data URL prefix to get just the base64
+        previewPngBase64 = dataUrl.split(",")[1];
+        previewMimeType = dataUrl.startsWith("data:image/jpeg") ? "image/jpeg" : "image/png";
+      } catch {
+        // Fallback: the model returned SVG or text — generate B&W edge map from original
+        console.log("[aiTrace] No PNG data URL found, generating B&W fallback from original image");
+        const bwBuffer = await sharp(resized)
+          .grayscale()
+          .normalise()
+          .linear(1.5, -40)
+          .png()
+          .toBuffer();
+        previewPngBase64 = bwBuffer.toString("base64");
+        previewMimeType = "image/png";
+      }
 
-      // ── STEP 3: Edge-detection + potrace pipeline (same as upload tab) ────────
-      const result = await convertImageToDxf(pngBuffer, {
-        threshold: 180,
-        simplifyTolerance: 2,
-        minSegmentLength: 3,
-      });
-
-      // ── Upload DXF to S3 ──────────────────────────────────────────────────────
-      const description = req.body?.description || "ai_trace";
-      const filename = buildFilename(description);
-      const dxfKey = `ai-trace-dxf/${nanoid()}.dxf`;
-      const { url: dxfUrl } = await storagePut(dxfKey, result.dxf, "application/dxf");
+      // ── Upload preview PNG to S3 ──────────────────────────────────────────────
+      const pngBuffer = Buffer.from(previewPngBase64, "base64");
+      const pngKey = `ai-trace-preview/${nanoid()}.png`;
+      const { url: previewPngUrl } = await storagePut(pngKey, pngBuffer, previewMimeType);
 
       // ── Upload original photo to S3 (for reference) ───────────────────────────
-      const imageKey = `ai-trace/${nanoid()}.jpg`;
+      const imageKey = `ai-trace-original/${nanoid()}.jpg`;
       const { url: imageUrl } = await storagePut(imageKey, resized, "image/jpeg");
 
       // ── Log usage ─────────────────────────────────────────────────────────────
       const ip = req.headers["x-forwarded-for"]?.toString() || req.socket.remoteAddress || "";
       await logUsageEvent({
         type: "ai_generate",
-        segmentCount: result.segmentCount,
+        segmentCount: 0,
         ipAnon: anonymizeIp(ip),
         imageUrl,
       });
 
+      return res.json({
+        previewPngUrl,
+        previewPngBase64: `data:${previewMimeType};base64,${previewPngBase64}`,
+        imageUrl,
+        description: req.body?.description || "ai_trace",
+      });
+    } catch (err: unknown) {
+      console.error("[aiTraceRoute] Step 1 Error:", err);
+      const message = err instanceof Error ? err.message : "Unknown error";
+      if (message.includes("429") || message.includes("quota") || message.includes("billing")) {
+        return res.status(429).json({
+          error: "OPENAI_QUOTA",
+          message: "שגיאת מכסה ב-AI. נסה שוב מאוחר יותר.",
+          messageEn: "AI quota error. Please try again later.",
+        });
+      }
+      return res.status(500).json({
+        error: "INTERNAL_ERROR",
+        message: `שגיאה פנימית: ${message}`,
+        messageEn: `Internal error: ${message}`,
+      });
+    }
+  }
+);
+
+// ─── STEP 2: Convert approved PNG to DXF ─────────────────────────────────────
+
+router.post(
+  "/api/ai-trace/convert",
+  async (req, res) => {
+    try {
+      // ── Auth check ────────────────────────────────────────────────────────────
+      const appUser = getAppUserFromCookie(req.cookies);
+      if (!appUser) {
+        return res.status(401).json({
+          error: "UNAUTHORIZED",
+          message: "יש להתחבר כדי להשתמש ב-AI Trace",
+          messageEn: "Please log in to use AI Trace",
+        });
+      }
+
+      // ── Get PNG from request ──────────────────────────────────────────────────
+      const { previewPngUrl, previewPngBase64, description, imageUrl } = req.body;
+
+      let pngBuffer: Buffer;
+      if (previewPngBase64) {
+        // Strip data URL prefix if present
+        const base64Data = previewPngBase64.includes(",")
+          ? previewPngBase64.split(",")[1]
+          : previewPngBase64;
+        pngBuffer = Buffer.from(base64Data, "base64");
+      } else if (previewPngUrl) {
+        const response = await fetch(previewPngUrl);
+        pngBuffer = Buffer.from(await response.arrayBuffer());
+      } else {
+        return res.status(400).json({ error: "NO_PNG", message: "לא סופק PNG לעיבוד" });
+      }
+
+      // ── Run potrace pipeline (same as regular upload) ─────────────────────────
+      const result = await convertImageToDxf(pngBuffer, {
+        threshold: 160,
+        simplifyTolerance: 2,
+        minSegmentLength: 3,
+      });
+
+      // ── Upload DXF to S3 ──────────────────────────────────────────────────────
+      const desc = description || "ai_trace";
+      const filename = buildFilename(desc);
+      const dxfKey = `ai-trace-dxf/${nanoid()}.dxf`;
+      const { url: dxfUrl } = await storagePut(dxfKey, result.dxf, "application/dxf");
+
+      // ── Record user action ────────────────────────────────────────────────────
       await recordUserAction({
         appUserId: appUser.userId,
         actionType: "ai_generate",
-        description: description,
+        description: desc,
         segmentCount: result.segmentCount,
         dxfUrl,
-        imageUrl,
+        imageUrl: imageUrl || previewPngUrl,
         svgPreview: result.svgPreview,
       });
 
       return res.json({
         svgPreview: result.svgPreview,
         dxfUrl,
-        imageUrl,
         segmentCount: result.segmentCount,
         realWidth: result.realWidth,
         realHeight: result.realHeight,
         filename: `${filename}.dxf`,
       });
     } catch (err: unknown) {
-      console.error("[aiTraceRoute] Error:", err);
+      console.error("[aiTraceRoute] Step 2 Error:", err);
       const message = err instanceof Error ? err.message : "Unknown error";
-
-      if (message.includes("429") || message.includes("quota") || message.includes("billing")) {
-        return res.status(429).json({
-          error: "OPENAI_QUOTA",
-          message: "שגיאת מכסה ב-OpenAI. נסה שוב מאוחר יותר.",
-          messageEn: "OpenAI quota error. Please try again later.",
-        });
-      }
-
-      if (message.includes("No valid SVG")) {
-        return res.status(422).json({
-          error: "SVG_PARSE_ERROR",
-          message: "ה-AI לא הצליח לייצר outline תקין. נסה תמונה אחרת.",
-          messageEn: "AI could not generate a valid outline. Try a different image.",
-        });
-      }
-
       return res.status(500).json({
         error: "INTERNAL_ERROR",
-        message: "שגיאה פנימית. נסה שוב.",
-        messageEn: "Internal error. Please try again.",
+        message: `שגיאת המרה: ${message}`,
+        messageEn: `Conversion error: ${message}`,
       });
     }
   }
