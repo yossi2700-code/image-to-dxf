@@ -168,6 +168,159 @@ export function thinEdges(
 }
 
 /**
+ * Douglas-Peucker polyline simplification.
+ * Reduces the number of points while preserving shape.
+ * epsilon = max allowed deviation in pixels.
+ */
+export function douglasPeucker(
+  points: Polyline,
+  epsilon: number
+): Polyline {
+  if (points.length <= 2) return points;
+
+  // Find the point with max distance from the line between first and last
+  let maxDist = 0;
+  let maxIdx = 0;
+  const [x1, y1] = points[0];
+  const [x2, y2] = points[points.length - 1];
+  const lineLen = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+
+  for (let i = 1; i < points.length - 1; i++) {
+    const [px, py] = points[i];
+    let dist: number;
+    if (lineLen < 0.001) {
+      dist = Math.sqrt((px - x1) ** 2 + (py - y1) ** 2);
+    } else {
+      // Perpendicular distance from point to line
+      dist = Math.abs((y2 - y1) * px - (x2 - x1) * py + x2 * y1 - y2 * x1) / lineLen;
+    }
+    if (dist > maxDist) {
+      maxDist = dist;
+      maxIdx = i;
+    }
+  }
+
+  if (maxDist > epsilon) {
+    const left = douglasPeucker(points.slice(0, maxIdx + 1), epsilon);
+    const right = douglasPeucker(points.slice(maxIdx), epsilon);
+    return [...left.slice(0, -1), ...right];
+  } else {
+    return [points[0], points[points.length - 1]];
+  }
+}
+
+/**
+ * 8-connectivity centerline tracing.
+ * Traces thinned edge pixels following 8-connected neighbours (including diagonals).
+ * Returns polylines — each is an ordered list of pixel coordinates.
+ *
+ * This produces smooth diagonal lines instead of the staircase effect
+ * from the horizontal/vertical-only edgesToSegments approach.
+ */
+export function traceCenterlines(
+  edges: Uint8Array,
+  width: number,
+  height: number,
+  simplifyEpsilon = 1.5
+): Polyline[] {
+  const visited = new Uint8Array(edges.length);
+  const polylines: Polyline[] = [];
+
+  // 8-connected neighbours in order
+  const DIRS = [
+    [-1, -1], [0, -1], [1, -1],
+    [-1,  0],          [1,  0],
+    [-1,  1], [0,  1], [1,  1],
+  ];
+
+  const idx = (x: number, y: number) => y * width + x;
+  const isEdge = (x: number, y: number) =>
+    x >= 0 && x < width && y >= 0 && y < height && edges[idx(x, y)] === 255;
+
+  // Count neighbours for a pixel
+  const countNeighbours = (x: number, y: number): number => {
+    let count = 0;
+    for (const [dx, dy] of DIRS) {
+      if (isEdge(x + dx, y + dy) && !visited[idx(x + dx, y + dy)]) count++;
+    }
+    return count;
+  };
+
+  // Trace a single polyline starting from (startX, startY)
+  const traceFrom = (startX: number, startY: number): Polyline => {
+    const poly: Polyline = [[startX, startY]];
+    visited[idx(startX, startY)] = 1;
+    let cx = startX, cy = startY;
+
+    while (true) {
+      let bestX = -1, bestY = -1;
+      let bestScore = -1;
+
+      for (const [dx, dy] of DIRS) {
+        const nx = cx + dx;
+        const ny = cy + dy;
+        if (!isEdge(nx, ny) || visited[idx(nx, ny)]) continue;
+        // Prefer continuing in the same direction (momentum)
+        const lastPt = poly.length >= 2 ? poly[poly.length - 2] : null;
+        const momentum = lastPt
+          ? (dx === (cx - lastPt[0]) && dy === (cy - lastPt[1]) ? 2 : 1)
+          : 1;
+        const score = momentum;
+        if (score > bestScore) {
+          bestScore = score;
+          bestX = nx;
+          bestY = ny;
+        }
+      }
+
+      if (bestX === -1) break;
+      visited[idx(bestX, bestY)] = 1;
+      poly.push([bestX, bestY]);
+      cx = bestX;
+      cy = bestY;
+    }
+
+    return poly;
+  };
+
+  // Find all endpoint pixels (degree 1) first — start traces from endpoints
+  // Then handle loops (degree 2+ with no unvisited endpoints)
+  const endpoints: Array<[number, number]> = [];
+  const junctions: Array<[number, number]> = [];
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (edges[idx(x, y)] !== 255) continue;
+      const n = countNeighbours(x, y);
+      if (n <= 1) endpoints.push([x, y]);
+      else if (n >= 3) junctions.push([x, y]);
+    }
+  }
+
+  // Trace from endpoints first
+  for (const [ex, ey] of endpoints) {
+    if (visited[idx(ex, ey)]) continue;
+    const poly = traceFrom(ex, ey);
+    if (poly.length >= 2) {
+      polylines.push(simplifyEpsilon > 0 ? douglasPeucker(poly, simplifyEpsilon) : poly);
+    }
+  }
+
+  // Trace remaining unvisited pixels (loops and isolated segments)
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (edges[idx(x, y)] !== 255 || visited[idx(x, y)]) continue;
+      const poly = traceFrom(x, y);
+      if (poly.length >= 2) {
+        polylines.push(simplifyEpsilon > 0 ? douglasPeucker(poly, simplifyEpsilon) : poly);
+      }
+    }
+  }
+
+  return polylines;
+}
+
+/**
  * Convert edge pixels to horizontal and vertical line segments.
  * Groups consecutive edge pixels in rows and columns into segments.
  */
@@ -640,21 +793,12 @@ export async function convertImageToDxf(
   const rawEdges = sobelEdgeDetection(binary, width, height);
   // Thin the edges to single-pixel width — eliminates double-line artifacts
   const edges = thinEdges(rawEdges, width, height);
-  const rawSegments = edgesToSegments(edges, width, height, options);
 
-  // Filter out very short segments (noise/artifacts) before further processing
-  const minLen = options.minSegmentLength ?? 0;
-  const filteredSegments = minLen > 0
-    ? rawSegments.filter((s) => {
-        const dx = s.x2 - s.x1;
-        const dy = s.y2 - s.y1;
-        return Math.sqrt(dx * dx + dy * dy) >= minLen;
-      })
-    : rawSegments;
-
-  // Always chain segments into continuous polylines for smooth output.
-  // This eliminates the "dashed line" effect caused by many short disconnected segments.
-  const polylines = chainSegmentsToPolylines(filteredSegments, 2);
+  // Use 8-connectivity centerline tracing with Douglas-Peucker smoothing.
+  // This replaces the old edgesToSegments (H/V only) + chainSegmentsToPolylines approach
+  // and produces smooth diagonal lines instead of a staircase effect.
+  const epsilon = Math.max(0.5, options.simplifyTolerance ?? 1.5);
+  const polylines = traceCenterlines(edges, width, height, epsilon);
 
   let outputPolylines: Polyline[];
 

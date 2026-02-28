@@ -380,3 +380,14 @@
 - [x] pipeline חדש: PNG → threshold(200) → potrace → SVG Bezier curves → svgToDxf → DXF
 - [x] עדכון prompt: קווים עבים ונקיים (3-5px) לתוצאות potrace טובות יותר
 - [x] 52 בדיקות עוברות
+
+## תיקון קו יחיד - centerline tracing
+
+- [x] אבחון: potrace מייצר קווים כפולים (filled outlines) — לא מתאים לחריטה
+- [x] הוספת douglasPeucker() לimageProcessor.ts — חלקות קווים
+- [x] הוספת traceCenterlines() — 8-connectivity tracing עם momentum + Douglas-Peucker
+- [x] עדכון convertImageToDxf להשתמש ב-traceCenterlines במקום edgesToSegments (H/V בלבד)
+- [x] עדכון aiTraceRoute Step 2 להשתמש ב-convertImageToDxf (centerline) במקום potrace
+- [x] עדכון prompt: קווים דקים 1-2px (לא 3-5px) לתוצאות centerline טובות יותר
+- [x] תיקון שגיאות TypeScript (הסרת potrace/svgToDxf שלא בשימוש)
+- [x] 59 בדיקות עוברות (7 בדיקות חדשות לdouglasPeucker ו-traceCenterlines)

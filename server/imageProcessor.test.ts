@@ -344,3 +344,75 @@ describe("polylinesToSegments", () => {
     expect(segs[0]).toEqual({ x1: 1, y1: 2, x2: 3, y2: 4 });
   });
 });
+
+import { douglasPeucker, traceCenterlines } from "./imageProcessor";
+
+describe("douglasPeucker", () => {
+  it("should return unchanged polyline with 2 points", () => {
+    const pts: [number, number][] = [[0, 0], [10, 10]];
+    expect(douglasPeucker(pts, 1)).toEqual(pts);
+  });
+
+  it("should remove collinear middle points", () => {
+    // Straight line with extra collinear points
+    const pts: [number, number][] = [[0, 0], [5, 0], [10, 0], [15, 0]];
+    const result = douglasPeucker(pts, 0.5);
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual([0, 0]);
+    expect(result[result.length - 1]).toEqual([15, 0]);
+  });
+
+  it("should keep corner points that deviate more than epsilon", () => {
+    // L-shaped path: corner at (10, 0) deviates from straight line (0,0)→(10,10)
+    const pts: [number, number][] = [[0, 0], [10, 0], [10, 10]];
+    const result = douglasPeucker(pts, 0.5);
+    // Corner should be preserved
+    expect(result).toHaveLength(3);
+  });
+
+  it("should reduce many collinear points to 2", () => {
+    const pts: [number, number][] = Array.from({ length: 20 }, (_, i) => [i, 0] as [number, number]);
+    const result = douglasPeucker(pts, 0.1);
+    expect(result).toHaveLength(2);
+  });
+});
+
+describe("traceCenterlines", () => {
+  it("should return empty array for blank image", () => {
+    const edges = new Uint8Array(100).fill(0);
+    const result = traceCenterlines(edges, 10, 10, 0.5);
+    expect(result).toHaveLength(0);
+  });
+
+  it("should trace a horizontal line as a single polyline", () => {
+    // 10x5 image with a horizontal line of edge pixels in the middle row
+    const width = 10;
+    const height = 5;
+    const edges = new Uint8Array(width * height).fill(0);
+    // Row 2: all pixels are edge
+    for (let x = 1; x < 9; x++) edges[2 * width + x] = 255;
+    const result = traceCenterlines(edges, width, height, 0.5);
+    expect(result.length).toBeGreaterThanOrEqual(1);
+    // All points should be on row 2
+    for (const poly of result) {
+      for (const [, y] of poly) {
+        expect(y).toBe(2);
+      }
+    }
+  });
+
+  it("should produce single-pixel-wide output (no duplicate y for horizontal line)", () => {
+    const width = 20;
+    const height = 10;
+    const edges = new Uint8Array(width * height).fill(0);
+    // Draw a 1px horizontal line
+    for (let x = 2; x < 18; x++) edges[5 * width + x] = 255;
+    const result = traceCenterlines(edges, width, height, 0);
+    // Should be a single polyline
+    expect(result.length).toBe(1);
+    // All y-values should be 5 (single row)
+    for (const [, y] of result[0]) {
+      expect(y).toBe(5);
+    }
+  });
+});
