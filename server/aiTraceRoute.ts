@@ -1,12 +1,13 @@
 /**
  * aiTraceRoute.ts
  *
- * AI Trace feature:
+ * AI Trace feature pipeline:
  *   1. User uploads a photo
- *   2. GPT-4o Vision analyzes it and draws a clean SVG outline (black lines on white)
- *   3. The SVG is rendered to a high-res PNG using sharp (rsvg)
- *   4. The PNG is processed through the same edge-detection + potrace pipeline
- *      as regular image uploads → clean, accurate DXF vector lines
+ *   2. Server converts it to high-contrast B&W (grayscale + normalise + boost)
+ *   3. GPT-4o Vision sees the clean B&W image and traces it as SVG line art
+ *   4. The SVG is rendered to PNG using sharp
+ *   5. The PNG goes through the same edge-detection + potrace pipeline as regular uploads
+ *   6. Clean DXF is returned
  *
  * POST /api/ai-trace
  *   Body: multipart/form-data with field "image" (file) or "imageUrl" (string)
@@ -30,36 +31,37 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 
 
 /**
  * Build the GPT-4o Vision prompt.
- * We ask for a clean black-on-white SVG — it will be rendered to PNG and
- * then processed by the same edge-detection pipeline as regular uploads.
+ * The image sent is already B&W, so we ask GPT-4o to:
+ *   - Recognize what the object is (silently)
+ *   - Trace exactly what it sees as clean SVG line art
  */
 function buildTracePrompt(): string {
-  return `You are an expert vector illustrator specializing in laser engraving and CNC cutting files.
+  return `You are a professional vector illustrator creating laser engraving files.
 
-STEP 1 — IDENTIFY the object in the image with maximum specificity:
-- What exact object is this? (brand, model, specific variant if visible)
-- What are its most distinctive visual features? (logos, patterns, hardware, text, stitching, emblems)
-- What is the overall shape and proportions?
+The image you see has been converted to black and white. Look carefully at it.
 
-STEP 2 — DRAW a faithful SVG outline that captures those specific details:
+PHASE 1 — RECOGNIZE (think silently, do not output this):
+- What is this object exactly? (brand, model, type)
+- What specific visual details are visible? (logos, patterns, stitching, hardware, text, emblems)
+- What are the proportions and main shapes?
 
-SVG REQUIREMENTS:
+PHASE 2 — TRACE (output only this):
+Draw an SVG that traces exactly what you see in the image. Do not draw from memory — look at the actual shapes, curves, and details visible and reproduce them as line art.
+
+SVG RULES:
 1. Output ONLY raw SVG XML — start with <svg and end with </svg>, nothing else
 2. NO markdown fences, NO explanations, NO text before or after the SVG
-3. White background: add <rect width="100%" height="100%" fill="white"/>
-4. viewBox must match the object's actual proportions (e.g. "0 0 600 400" for landscape)
-5. ALL stroke elements must have: stroke="black" stroke-width="2" fill="none"
+3. First element: <rect width="100%" height="100%" fill="white"/>
+4. viewBox must match the object's actual proportions as seen in the image
+5. ALL elements: stroke="black" stroke-width="2" fill="none"
 6. NO colored fills — only black strokes on white background
-7. Structure: outer silhouette first → major interior divisions → distinctive details
-8. Include brand-specific elements: logos, monograms, patterns, hardware, text outlines
-9. Use bezier curves (C/c commands) for smooth organic shapes
-10. Use 20 to 60 path elements — enough detail to be recognizable, not cluttered
-11. Every line must be purposeful — represent a real edge, seam, or feature of the object
-12. Result must look like a clean coloring-book line drawing of the specific object
+7. Draw in layers: outer silhouette → major edges and divisions → fine details (logos, patterns, hardware, stitching)
+8. Smooth bezier curves (C/c) for organic shapes; straight lines (L/l) for straight edges
+9. 40 to 100 path elements — capture all visible details faithfully
+10. Every path must trace a real visible edge or feature from the image
+11. The result must look like a precise coloring-book tracing of this specific image
 
-IMPORTANT: Do NOT draw a generic silhouette. Capture the SPECIFIC object with its unique identifying features.
-
-Output the SVG now:`;
+Output the SVG tracing now:`;
 }
 
 /** Convert buffer to base64 data URL for Vision API */
@@ -81,16 +83,15 @@ function extractSvg(raw: string): string {
 
 /**
  * Render an SVG string to a PNG buffer using sharp (libvips + librsvg).
- * We render at 1024px wide to give the edge-detection pipeline enough resolution.
+ * Rendered at 1024px to give the edge-detection pipeline enough resolution.
  */
 async function svgToPng(svgContent: string, targetSize = 1024): Promise<Buffer> {
   const svgBuffer = Buffer.from(svgContent, "utf-8");
-  const png = await sharp(svgBuffer)
+  return sharp(svgBuffer)
     .resize(targetSize, targetSize, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
     .flatten({ background: { r: 255, g: 255, b: 255 } })
     .png()
     .toBuffer();
-  return png;
 }
 
 /** Convert prompt text to safe filename */
@@ -108,7 +109,7 @@ router.post(
   upload.single("image"),
   async (req, res) => {
     try {
-      // ── Auth check ──────────────────────────────────────────────────────────
+      // ── Auth check ────────────────────────────────────────────────────────────
       const appUser = getAppUserFromCookie(req.cookies);
       if (!appUser) {
         return res.status(401).json({
@@ -118,7 +119,7 @@ router.post(
         });
       }
 
-      // ── Usage limit check ───────────────────────────────────────────────────
+      // ── Usage limit check ─────────────────────────────────────────────────────
       const limitCheck = await checkUsageLimit(appUser.userId);
       if (!limitCheck.allowed) {
         const isExpired = limitCheck.reason === "expired";
@@ -138,30 +139,37 @@ router.post(
         });
       }
 
-      // ── Get image buffer ─────────────────────────────────────────────────────
+      // ── Get image buffer ──────────────────────────────────────────────────────
       let imageBuffer: Buffer;
-      let mimeType = "image/jpeg";
 
       if (req.file) {
         imageBuffer = req.file.buffer;
-        mimeType = req.file.mimetype || "image/jpeg";
       } else if (req.body?.imageUrl) {
         const response = await fetch(req.body.imageUrl);
         imageBuffer = Buffer.from(await response.arrayBuffer());
-        mimeType = response.headers.get("content-type") || "image/jpeg";
       } else {
         return res.status(400).json({ error: "No image provided" });
       }
 
-      // ── Resize photo for Vision API (max 1024px) ─────────────────────────────
+      // ── Resize to max 1024px ──────────────────────────────────────────────────
       const resized = await sharp(imageBuffer)
         .resize(1024, 1024, { fit: "inside", withoutEnlargement: true })
         .jpeg({ quality: 85 })
         .toBuffer();
 
-      const dataUrl = bufferToDataUrl(resized, "image/jpeg");
+      // ── Convert to high-contrast B&W before sending to GPT-4o ────────────────
+      // Grayscale + normalise + linear boost helps GPT-4o see edges clearly
+      // without being distracted by colors, gradients, or backgrounds.
+      const bwImage = await sharp(resized)
+        .grayscale()
+        .normalise()        // auto-stretch contrast to full 0-255 range
+        .linear(1.4, -30)   // further boost contrast: multiply + shift
+        .jpeg({ quality: 90 })
+        .toBuffer();
 
-      // ── STEP 1: Call GPT-4o Vision → get SVG outline ─────────────────────────
+      const dataUrl = bufferToDataUrl(bwImage, "image/jpeg");
+
+      // ── STEP 1: GPT-4o Vision traces the B&W image as SVG ────────────────────
       const completion = await invokeLLM({
         messages: [
           {
@@ -185,35 +193,30 @@ router.post(
         throw new Error("Empty response from AI");
       }
 
-      // ── Extract SVG from response ────────────────────────────────────────────
+      // ── Extract SVG from response ─────────────────────────────────────────────
       const svgContent = extractSvg(rawResponse);
 
-      // ── STEP 2: Render SVG → PNG ─────────────────────────────────────────────
-      // This gives us a clean black-on-white raster image that the edge-detection
-      // pipeline can process just like a regular uploaded image.
+      // ── STEP 2: Render SVG → PNG ──────────────────────────────────────────────
       const pngBuffer = await svgToPng(svgContent, 1024);
 
-      // ── STEP 3: Run edge-detection + potrace pipeline (same as upload tab) ───
-      // threshold=180 (high, since SVG lines are crisp black on white)
-      // simplifyTolerance=2 (smooth curves)
-      // minSegmentLength=3 (filter tiny noise)
+      // ── STEP 3: Edge-detection + potrace pipeline (same as upload tab) ────────
       const result = await convertImageToDxf(pngBuffer, {
         threshold: 180,
         simplifyTolerance: 2,
         minSegmentLength: 3,
       });
 
-      // ── Upload DXF to S3 ─────────────────────────────────────────────────────
+      // ── Upload DXF to S3 ──────────────────────────────────────────────────────
       const description = req.body?.description || "ai_trace";
       const filename = buildFilename(description);
       const dxfKey = `ai-trace-dxf/${nanoid()}.dxf`;
       const { url: dxfUrl } = await storagePut(dxfKey, result.dxf, "application/dxf");
 
-      // ── Upload original photo to S3 (for reference only) ─────────────────────
+      // ── Upload original photo to S3 (for reference) ───────────────────────────
       const imageKey = `ai-trace/${nanoid()}.jpg`;
       const { url: imageUrl } = await storagePut(imageKey, resized, "image/jpeg");
 
-      // ── Log usage ────────────────────────────────────────────────────────────
+      // ── Log usage ─────────────────────────────────────────────────────────────
       const ip = req.headers["x-forwarded-for"]?.toString() || req.socket.remoteAddress || "";
       await logUsageEvent({
         type: "ai_generate",
