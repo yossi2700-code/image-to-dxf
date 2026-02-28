@@ -121,15 +121,12 @@ router.post(
 
       console.log("[aiTrace] Generated image URL:", generated.url);
 
-      // ── Download the generated image and convert to high-contrast B&W PNG ────
+      // ── Download the generated image — it's already a clean B&W line drawing ──
       const genResponse = await fetch(generated.url);
       const genBuffer = Buffer.from(await genResponse.arrayBuffer());
 
-      // Enhance contrast to make lines crisp for potrace
+      // Minimal processing: just convert to PNG (no threshold — the AI already drew clean lines)
       const enhancedBuffer = await sharp(genBuffer)
-        .grayscale()
-        .normalise()
-        .threshold(180)  // Hard threshold: pixels above 180 → white, below → black
         .png()
         .toBuffer();
 
