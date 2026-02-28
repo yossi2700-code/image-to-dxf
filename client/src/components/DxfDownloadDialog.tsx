@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Download, X, FileCode2 } from "lucide-react";
+import { Download, X, FileCode2, FileText, Loader2 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -101,6 +101,7 @@ export function DxfDownloadDialog({
   const [filename, setFilename] = useState(defaultFilename.replace(/\.dxf$/i, ""));
   const [scalePercent, setScalePercent] = useState(100);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   // Reset when dialog opens
   useEffect(() => {
@@ -122,6 +123,39 @@ export function DxfDownloadDialog({
 
   const outputWidthMm = svgWidth * scaleFactor;
   const outputHeightMm = svgHeight * scaleFactor;
+
+  const handleDownloadPdf = async () => {
+    if (!svgContent) return;
+    setIsDownloadingPdf(true);
+    try {
+      const resp = await fetch("/api/export-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          svg: svgContent,
+          filename: filename.trim() || "design",
+          scaleMm: {
+            width: outputWidthMm,
+            height: outputHeightMm,
+          },
+        }),
+      });
+      if (!resp.ok) throw new Error("שגיאה ביצירת PDF");
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${filename.trim() || "design"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("PDF export error:", err);
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -238,19 +272,33 @@ export function DxfDownloadDialog({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 pt-1">
-            <Button
-              size="lg"
-              className="flex-1 bg-green-600 hover:bg-green-700 font-semibold"
-              onClick={handleDownload}
-              disabled={isDownloading}
-            >
-              <Download className="w-4 h-4 ml-2" />
-              {isDownloading ? "מוריד..." : "הורד DXF"}
-            </Button>
-            <Button variant="outline" size="lg" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
+          <div className="flex flex-col gap-2 pt-1">
+            <div className="flex gap-2">
+              <Button
+                size="lg"
+                className="flex-1 bg-green-600 hover:bg-green-700 font-semibold"
+                onClick={handleDownload}
+                disabled={isDownloading || isDownloadingPdf}
+              >
+                {isDownloading ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Download className="w-4 h-4 ml-2" />}
+                {isDownloading ? "מוריד..." : "הורד DXF"}
+              </Button>
+              <Button variant="outline" size="lg" onClick={onClose} disabled={isDownloading || isDownloadingPdf}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            {svgContent && (
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 font-semibold"
+                onClick={handleDownloadPdf}
+                disabled={isDownloading || isDownloadingPdf}
+              >
+                {isDownloadingPdf ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <FileText className="w-4 h-4 ml-2" />}
+                {isDownloadingPdf ? "יוצר PDF..." : "הורד PDF (וקטורי)"}
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>

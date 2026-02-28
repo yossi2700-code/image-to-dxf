@@ -34,7 +34,14 @@ import {
   Ban,
   ShieldCheck,
   RefreshCw,
+  Settings,
+  BarChart2,
+  Save,
+  KeyRound,
+  MessageSquare,
+  Wrench,
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
 function StatCard({
@@ -141,6 +148,245 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
+// ─── Settings Panel ──────────────────────────────────────────────────────────
+function SettingsPanel() {
+  const { data: settings, isLoading, refetch } = trpc.admin.getSettings.useQuery();
+
+  // PIN change
+  const [currentPin, setCurrentPin] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [showPins, setShowPins] = useState(false);
+
+  // Welcome message
+  const [welcomeMsg, setWelcomeMsg] = useState("");
+
+  // Maintenance mode
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+
+  // Default token grant for new users
+  const [defaultTokens, setDefaultTokens] = useState("20");
+
+  // Daily free limit
+  const [dailyFreeLimit, setDailyFreeLimit] = useState("3");
+
+  // Sync state from DB
+  useEffect(() => {
+    if (!settings) return;
+    setWelcomeMsg(settings["welcome_message"] ?? "");
+    setMaintenanceMode(settings["maintenance_mode"] === "true");
+    setDefaultTokens(settings["default_token_grant"] ?? "20");
+    setDailyFreeLimit(settings["daily_free_limit"] ?? "3");
+  }, [settings]);
+
+  const changePinMutation = trpc.admin.changePin.useMutation({
+    onSuccess: () => {
+      toast.success("קוד הגישה שונה בהצלחה");
+      setCurrentPin(""); setNewPin(""); setConfirmPin("");
+    },
+    onError: (err) => toast.error(err.message ?? "שגיאה בשינוי קוד"),
+  });
+
+  const setSettingMutation = trpc.admin.setSetting.useMutation({
+    onSuccess: () => { toast.success("ההגדרה נשמרה"); refetch(); },
+    onError: (err) => toast.error(err.message ?? "שגיאה בשמירה"),
+  });
+
+  const handleChangePin = () => {
+    if (!currentPin || !newPin) return toast.error("יש למלא את כל השדות");
+    if (newPin !== confirmPin) return toast.error("קודי הגישה החדשים אינם תואמים");
+    if (newPin.length < 4) return toast.error("קוד הגישה חייב להכיל לפחות 4 תווים");
+    changePinMutation.mutate({ currentPin, newPin });
+  };
+
+  if (isLoading) return <div className="h-32 flex items-center justify-center"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+
+  return (
+    <div className="space-y-6" dir="rtl">
+
+      {/* PIN Change */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <KeyRound className="w-4 h-4 text-primary" />
+            שינוי קוד גישה לניהול
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div>
+            <label className="text-sm font-medium block mb-1">קוד גישה נוכחי</label>
+            <div className="flex gap-2">
+              <Input
+                type={showPins ? "text" : "password"}
+                value={currentPin}
+                onChange={(e) => setCurrentPin(e.target.value)}
+                placeholder="הקוד הנוכחי..."
+                className="text-right"
+                dir="rtl"
+              />
+              <button type="button" onClick={() => setShowPins(v => !v)} className="px-3 border rounded-md hover:bg-muted transition-colors">
+                {showPins ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-medium block mb-1">קוד גישה חדש (מינימום 4 תווים)</label>
+            <Input
+              type={showPins ? "text" : "password"}
+              value={newPin}
+              onChange={(e) => setNewPin(e.target.value)}
+              placeholder="קוד חדש..."
+              className="text-right"
+              dir="rtl"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium block mb-1">אימות קוד חדש</label>
+            <Input
+              type={showPins ? "text" : "password"}
+              value={confirmPin}
+              onChange={(e) => setConfirmPin(e.target.value)}
+              placeholder="חזור על הקוד החדש..."
+              className="text-right"
+              dir="rtl"
+            />
+          </div>
+          <Button
+            onClick={handleChangePin}
+            disabled={changePinMutation.isPending}
+            className="w-full"
+          >
+            {changePinMutation.isPending ? "שומר..." : <><Save className="w-4 h-4 ml-2" />שנה קוד גישה</>}
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            הקוד החדש נשמר במסד הנתונים ומחליף את קוד ברירת המחדל מה-Secrets.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Welcome Message */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-primary" />
+            הודעת ברוכים הבאים
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Textarea
+            value={welcomeMsg}
+            onChange={(e) => setWelcomeMsg(e.target.value)}
+            placeholder="הודעה שתופיע למשתמשים בכניסה לאתר (ריק = ללא הודעה)"
+            className="text-right min-h-[80px]"
+            dir="rtl"
+          />
+          <Button
+            variant="outline"
+            onClick={() => setSettingMutation.mutate({ key: "welcome_message", value: welcomeMsg })}
+            disabled={setSettingMutation.isPending}
+          >
+            <Save className="w-4 h-4 ml-2" />שמור הודעה
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Token Settings */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Coins className="w-4 h-4 text-primary" />
+            הגדרות אסימונים
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="text-sm font-medium block mb-1">אסימונים למשתמש חדש (ברירת מחדל: 20)</label>
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                min="0"
+                max="1000"
+                value={defaultTokens}
+                onChange={(e) => setDefaultTokens(e.target.value)}
+                className="text-right w-32"
+                dir="rtl"
+              />
+              <Button
+                variant="outline"
+                onClick={() => setSettingMutation.mutate({ key: "default_token_grant", value: defaultTokens })}
+                disabled={setSettingMutation.isPending}
+              >
+                <Save className="w-4 h-4 ml-2" />שמור
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">מספר האסימונים שמשתמש חדש מקבל בהרשמה</p>
+          </div>
+          <div>
+            <label className="text-sm font-medium block mb-1">מכסת המרות יומית חינמית (ברירת מחדל: 3)</label>
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                value={dailyFreeLimit}
+                onChange={(e) => setDailyFreeLimit(e.target.value)}
+                className="text-right w-32"
+                dir="rtl"
+              />
+              <Button
+                variant="outline"
+                onClick={() => setSettingMutation.mutate({ key: "daily_free_limit", value: dailyFreeLimit })}
+                disabled={setSettingMutation.isPending}
+              >
+                <Save className="w-4 h-4 ml-2" />שמור
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">כמה המרות חינמיות כל משתמש מקבל ביום</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Maintenance Mode */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Wrench className="w-4 h-4 text-primary" />
+            מצב תחזוקה
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between p-3 border rounded-lg">
+            <div>
+              <p className="font-medium text-sm">הפעל מצב תחזוקה</p>
+              <p className="text-xs text-muted-foreground">כשפעיל, משתמשים יראו הודעת תחזוקה ולא יוכלו להשתמש</p>
+            </div>
+            <button
+              onClick={() => {
+                const newVal = !maintenanceMode;
+                setMaintenanceMode(newVal);
+                setSettingMutation.mutate({ key: "maintenance_mode", value: String(newVal) });
+              }}
+              className={`relative w-12 h-6 rounded-full transition-colors ${
+                maintenanceMode ? "bg-red-500" : "bg-muted"
+              }`}
+            >
+              <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                maintenanceMode ? "translate-x-7" : "translate-x-1"
+              }`} />
+            </button>
+          </div>
+          {maintenanceMode && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              <Wrench className="w-4 h-4 shrink-0" />
+              מצב תחזוקה פעיל — משתמשים רגילים אינם יכולים להשתמש באתר
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 function Dashboard({ onLogout }: { onLogout: () => void }) {
   const utils = trpc.useUtils();
@@ -156,6 +402,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [addingTokensUser, setAddingTokensUser] = useState<number | null>(null);
   const [tokenInput, setTokenInput] = useState("");
   const [tokenHistoryUser, setTokenHistoryUser] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<"stats" | "settings">("stats");
 
   const setUserLimitMutation = trpc.admin.setUserLimit.useMutation({
     onSuccess: () => {
@@ -255,8 +502,37 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         </div>
       </header>
 
+      {/* Tab Navigation */}
+      <div className="border-b bg-white/80 backdrop-blur-sm">
+        <div className="container flex gap-1 py-1" dir="rtl">
+          <button
+            onClick={() => setActiveTab("stats")}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              activeTab === "stats"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+          >
+            <BarChart2 className="w-4 h-4" />
+            סטטיסטיקות ומשתמשים
+          </button>
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              activeTab === "settings"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+          >
+            <Settings className="w-4 h-4" />
+            הגדרות
+          </button>
+        </div>
+      </div>
+
       <main className="container py-6 space-y-6" dir="rtl">
-        {/* Stats */}
+        {activeTab === "settings" && <SettingsPanel />}
+        {activeTab === "stats" && <>
         {statsLoading ? (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
@@ -589,6 +865,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             )}
           </CardContent>
         </Card>
+        </>}
       </main>
     </div>
   );
