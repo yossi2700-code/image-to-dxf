@@ -367,3 +367,8 @@
 - [x] Gaussian blur קל (0.5) + threshold 210 לפני potrace
 - [x] simplifyTolerance 0.8 + minSegmentLength 1.5 לקווים חלקים יותר
 - [x] הגדלת תצוגה מקדימה של ציור ה-AI ב-AiTraceTab (רוחב מלא + גובה 500px)
+
+## AI Trace - מעבר ל-SVG pipeline (כמו יצירת AI)
+
+- [ ] בדיקת aiRefineRoute.ts להבנת pipeline ה-SVG
+- [x] עדכון prompt לקווים עבים (4-6px) לשיפור potrace
