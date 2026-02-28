@@ -73,9 +73,10 @@ interface ImageCardProps {
   index: number;
   isRtl: boolean;
   onDownload: (image: GeneratedImage) => void;
+  onZoom: (src: string, alt: string) => void;
 }
 
-function ImageCard({ image, index, isRtl, onDownload }: ImageCardProps) {
+function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) {
   const [showVector, setShowVector] = useState(false);
   const label = isRtl ? VARIATION_LABELS[index] : VARIATION_LABELS_EN[index];
 
@@ -88,8 +89,15 @@ function ImageCard({ image, index, isRtl, onDownload }: ImageCardProps) {
         </div>
 
         {/* AI Drawing preview */}
-        <div className="border rounded-lg overflow-hidden bg-white mb-3 flex items-center justify-center" style={{ minHeight: 200 }}>
+        <div
+          className="border rounded-lg overflow-hidden bg-white mb-3 flex items-center justify-center relative group cursor-zoom-in"
+          style={{ minHeight: 200 }}
+          onClick={() => onZoom(image.imageUrl, label)}
+        >
           <img src={image.imageUrl} alt={`Variation ${index + 1}`} className="max-w-full object-contain" style={{ maxHeight: 280 }} />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+            <ZoomIn className="w-7 h-7 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
+          </div>
         </div>
 
         {/* Toggle vector preview */}
@@ -138,6 +146,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const [result, setResult] = useState<TraceResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [downloadTarget, setDownloadTarget] = useState<GeneratedImage | null>(null);
+  const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -192,6 +201,25 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
 
   return (
     <>
+      {zoomImg && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 flex flex-col"
+          onClick={(e) => { if (e.target === e.currentTarget) setZoomImg(null); }}
+        >
+          <div className="flex items-center gap-2 px-4 py-2 bg-black/60 text-white shrink-0">
+            <span className="text-xs flex-1 truncate opacity-70">{zoomImg.alt}</span>
+            <button onClick={() => setZoomImg(null)} className="p-1.5 rounded hover:bg-white/10 text-lg font-bold">✕</button>
+          </div>
+          <div className="flex-1 flex items-center justify-center overflow-hidden p-4">
+            <img
+              src={zoomImg.src}
+              alt={zoomImg.alt}
+              style={{ maxWidth: "90vw", maxHeight: "80vh", objectFit: "contain" }}
+            />
+          </div>
+          <p className="text-center text-xs text-white/40 py-2 shrink-0">{isRtl ? "לחץ מחוץ לתמונה לסגירה" : "Click outside image to close"}</p>
+        </div>
+      )}
       {downloadTarget && (
         <DxfDownloadDialog
           open={!!downloadTarget} onClose={() => setDownloadTarget(null)}
@@ -315,6 +343,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                 index={idx}
                 isRtl={isRtl}
                 onDownload={setDownloadTarget}
+                onZoom={(src, alt) => setZoomImg({ src, alt })}
               />
             ))}
 

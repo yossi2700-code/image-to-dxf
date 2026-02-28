@@ -422,3 +422,8 @@
 - [x] שינוי AI Trace: LLM (GPT-4o vision) מנתח תמונה → מייצר תיאור → gpt-image-1 מצייר 3 ווריאציות
 - [x] אותו pipeline כמו Tab יצירת AI (potrace → svgToDxf)
 - [x] עדכון UI ל-AiTraceTab להציג 3 ווריאציות כמו Tab יצירת AI
+
+## תיקון תמונה חתוכה + zoom
+
+- [x] תיקון overflow בתמונות בכרטיסי תוצאה (object-contain + aspect-ratio)
+- [x] הוספת zoom/fullscreen על תמונות AI בלחיצה (modal עם ZoomIn/ZoomOut/pan)

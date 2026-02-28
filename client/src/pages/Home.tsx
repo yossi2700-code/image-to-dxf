@@ -60,6 +60,103 @@ interface AiImage {
   realHeight?: number;
 }
 
+// ─── Image Zoom Modal ────────────────────────────────────────────────────────
+function ImageZoomModal({ src, alt, onClose }: { src: string; alt: string; onClose: () => void }) {
+  const [scale, setScale] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const panStart = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
+  const lastPinchDist = useRef<number | null>(null);
+
+  const clamp = (s: number) => Math.min(8, Math.max(0.5, s));
+  const reset = () => { setScale(1); setOffset({ x: 0, y: 0 }); };
+
+  const onWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    setScale((s) => clamp(+(s * (e.deltaY < 0 ? 1.15 : 1 / 1.15)).toFixed(3)));
+  };
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    setIsPanning(true);
+    panStart.current = { x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y };
+  };
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isPanning || !panStart.current) return;
+    setOffset({ x: panStart.current.ox + e.clientX - panStart.current.x, y: panStart.current.oy + e.clientY - panStart.current.y });
+  };
+  const onMouseUp = () => { setIsPanning(false); panStart.current = null; };
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastPinchDist.current = Math.hypot(dx, dy);
+    } else if (e.touches.length === 1) {
+      panStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, ox: offset.x, oy: offset.y };
+    }
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
+    if (e.touches.length === 2 && lastPinchDist.current !== null) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.hypot(dx, dy);
+      setScale((s) => clamp(+(s * dist / lastPinchDist.current!).toFixed(3)));
+      lastPinchDist.current = dist;
+    } else if (e.touches.length === 1 && panStart.current) {
+      setOffset({ x: panStart.current.ox + e.touches[0].clientX - panStart.current.x, y: panStart.current.oy + e.touches[0].clientY - panStart.current.y });
+    }
+  };
+  const onTouchEnd = () => { lastPinchDist.current = null; panStart.current = null; };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/80 flex flex-col"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      {/* Toolbar */}
+      <div className="flex items-center gap-2 px-4 py-2 bg-black/60 text-white shrink-0">
+        <span className="text-xs flex-1 truncate opacity-70">{alt}</span>
+        <span className="text-xs opacity-60">{Math.round(scale * 100)}%</span>
+        <button onClick={() => setScale((s) => clamp(+(s / 1.3).toFixed(2)))} className="p-1.5 rounded hover:bg-white/10"><ZoomOut className="w-4 h-4" /></button>
+        <button onClick={() => setScale((s) => clamp(+(s * 1.3).toFixed(2)))} className="p-1.5 rounded hover:bg-white/10"><ZoomIn className="w-4 h-4" /></button>
+        <button onClick={reset} className="p-1.5 rounded hover:bg-white/10"><Maximize2 className="w-4 h-4" /></button>
+        <button onClick={onClose} className="p-1.5 rounded hover:bg-white/10 ml-2 text-lg font-bold">✕</button>
+      </div>
+      {/* Image area */}
+      <div
+        className="flex-1 overflow-hidden relative select-none"
+        style={{ cursor: isPanning ? "grabbing" : "grab" }}
+        onWheel={onWheel}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        <img
+          src={src}
+          alt={alt}
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`,
+            transformOrigin: "center center",
+            maxWidth: "90vw",
+            maxHeight: "80vh",
+            objectFit: "contain",
+            userSelect: "none",
+            pointerEvents: "none",
+          }}
+        />
+      </div>
+      <p className="text-center text-xs text-white/40 py-2 shrink-0">גרור להזזה • גלגלת/פינצ׳ לזום • לחץ מחוץ לתמונה לסגירה</p>
+    </div>
+  );
+}
+
 // ─── SVG Zoom Viewer ──────────────────────────────────────────────────────────
 interface SvgZoomViewerProps {
   svgContent: string;
@@ -460,6 +557,7 @@ function AiGeneratorTab() {
   const [errorMsg, setErrorMsg] = useState("");
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [downloadImg, setDownloadImg] = useState<AiImage | null>(null);
+  const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
 
   const generate = async (isModify = false) => {
     if (!prompt.trim()) {
@@ -503,6 +601,9 @@ function AiGeneratorTab() {
 
   return (
     <>
+    {zoomImg && (
+      <ImageZoomModal src={zoomImg.src} alt={zoomImg.alt} onClose={() => setZoomImg(null)} />
+    )}
     {downloadImg && downloadOpen && (
       <DxfDownloadDialog
         open={downloadOpen}
@@ -595,20 +696,28 @@ function AiGeneratorTab() {
                       : "border-border hover:border-primary/50 hover:shadow-md"}`}
                   onClick={() => setSelectedIdx(idx)}
                 >
-                  <div className="aspect-square overflow-hidden bg-white flex items-center justify-center p-2">
+                  <div
+                    className="bg-white flex items-center justify-center p-2 relative group cursor-zoom-in"
+                    style={{ minHeight: 180, maxHeight: 240 }}
+                    onClick={(e) => { e.stopPropagation(); setZoomImg({ src: img.imageUrl, alt: `${t("design")} ${idx + 1}` }); }}
+                  >
                     {img.svgPreview ? (
                       <div
-                        className="w-full h-full flex items-center justify-center"
+                        className="w-full flex items-center justify-center"
+                        style={{ maxHeight: 220 }}
                         dangerouslySetInnerHTML={{
                           __html: img.svgPreview.replace(
                             /<svg /,
-                            '<svg style="max-width:100%;max-height:100%;width:auto;height:auto;" '
+                            '<svg style="max-width:100%;max-height:220px;width:auto;height:auto;display:block;margin:auto;" '
                           ),
                         }}
                       />
                     ) : (
-                      <img src={img.imageUrl} alt={`${t("design")} ${idx + 1}`} className="w-full h-full object-contain" />
+                      <img src={img.imageUrl} alt={`${t("design")} ${idx + 1}`} className="max-w-full max-h-52 object-contain" />
                     )}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                      <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
+                    </div>
                   </div>
                   <div className="px-2 py-1.5 border-t bg-muted/30 flex items-center justify-between">
                     <span className="text-xs font-medium text-muted-foreground">{t("variation")} {idx + 1}</span>
