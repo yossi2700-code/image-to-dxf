@@ -128,19 +128,19 @@ router.post(
       const genResponse = await fetch(generated.url);
       const genBuffer = Buffer.from(await genResponse.arrayBuffer());
 
-      // ── Pre-process: grayscale + high threshold → clean binary B&W ─────────
-      // threshold(200): pixels brighter than 200 → white, rest → black
-      const enhancedBuffer = await sharp(genBuffer)
+      // ── Keep original quality PNG for preview (no threshold = full detail) ─────
+      // We show the original grayscale PNG to the user so small text is readable.
+      // The threshold is applied ONLY during DXF conversion (Step 2).
+      const previewBuffer = await sharp(genBuffer)
         .grayscale()
-        .threshold(200)
         .png()
         .toBuffer();
 
-      // ── Upload enhanced preview PNG to S3 ────────────────────────────────────
+      // ── Upload preview PNG to S3 ───────────────────────────────────────────────────────
       const pngKey = `ai-trace-preview/${nanoid()}.png`;
-      const { url: previewPngUrl } = await storagePut(pngKey, enhancedBuffer, "image/png");
+      const { url: previewPngUrl } = await storagePut(pngKey, previewBuffer, "image/png");
 
-      const previewPngBase64 = `data:image/png;base64,${enhancedBuffer.toString("base64")}`;
+      const previewPngBase64 = `data:image/png;base64,${previewBuffer.toString("base64")}`;
 
       // ── Log usage ─────────────────────────────────────────────────────────────
       const ip = req.headers["x-forwarded-for"]?.toString() || req.socket.remoteAddress || "";

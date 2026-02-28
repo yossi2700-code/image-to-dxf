@@ -399,3 +399,15 @@
 - [x] הוספת aiTracePipeline() — blur(1.5) + threshold(220) + thinBinary + traceCenterlines
 - [x] עדכון aiTraceRoute Step 2 להשתמש ב-aiTracePipeline
 - [x] 62 בדיקות עוברות (3 בדיקות חדשות ל-thinBinary)
+
+## שיפור איכות תמונת AI
+
+- [ ] בדיקת ה-prompt הנוכחי ב-aiTraceRoute
+- [ ] עדכון prompt לתמונות נקיות יותר (קווים דקים, ללא מילוי, ללא הצללה)
+- [ ] הגדלת רזולוציה של תמונת ה-AI (1024x1024 → 1792x1024 או גדול יותר)
+
+## שיפור רזולוציה תמונת AI
+
+- [x] הגדלת resize מ-1024 ל-2048px לפני שליחה ל-AI (API מחזיר גודל קבוע)
+- [x] הגדלת preview PNG (ללא threshold שמקטין פרטים) לתצוגה ברורה — שמירת grayscale מלא לpreview
+- [x] threshold מוחל רק בשלב ה-DXF conversion (Step 2), לא בתצוגה
