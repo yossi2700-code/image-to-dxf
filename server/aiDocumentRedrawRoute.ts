@@ -54,11 +54,11 @@ function pngToSvg(pngBuffer: Buffer): Promise<string> {
     potrace.trace(
       pngBuffer,
       {
-        threshold: 180,
-        turdSize: 8,
-        alphaMax: 1,
+        threshold: 128,  // strict mid-point: only pure black pixels become lines, grey is ignored
+        turdSize: 4,     // remove tiny noise specks
+        alphaMax: 0.5,   // tighter corner detection → sharper angles
         optCurve: true,
-        optTolerance: 0.2,
+        optTolerance: 0.1, // less smoothing → more faithful to original shape
       },
       (err: Error | null, svg: string) => {
         if (err) reject(err);
@@ -78,6 +78,7 @@ async function processImageToDxf(rawBuffer: Buffer, baseFilename: string, prefix
   const targetH = originalAspect ? Math.round(1024 / originalAspect) : 1024;
 
   // Pre-process: add generous white padding to prevent edge cropping
+  // Use high contrast normalization + strict threshold to produce clean B&W before potrace
   const processedBuffer = await sharp(rawBuffer)
     .extend({
       top: 120,
@@ -88,7 +89,8 @@ async function processImageToDxf(rawBuffer: Buffer, baseFilename: string, prefix
     })
     .resize(targetW, targetH, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
     .grayscale()
-    .threshold(200)
+    .linear(1.8, -(1.8 * 128) + 128) // boost contrast: amplify difference between lines and background
+    .threshold(160) // strict threshold: only near-black pixels become lines
     .png()
     .toBuffer();
 
@@ -231,24 +233,20 @@ async function runDocumentRedrawJob(
       .toBuffer();
 
     const imagePrompt =
-      `Convert this image into clean laser engraving line art. ` +
-      `REPRODUCE THE EXACT SAME LAYOUT, ELEMENTS, AND POSITIONS as in the original image.\n\n` +
-      `WHAT TO KEEP (reproduce faithfully):\n` +
-      `- The overall shape/silhouette of the composition (${aspectDesc})\n` +
-      `- Every decorative graphic element: borders, frames, ornaments, symbols, flowers, animals, geometric shapes\n` +
-      `- The exact position of each element (top/bottom/left/right/center — same as original)\n` +
-      `- Symmetric arrangements (if two roses flank the sides in original, draw two roses flanking the sides)\n` +
-      `- The relative size of each element compared to the whole composition\n\n` +
-      `WHAT TO REMOVE:\n` +
-      `- ALL text, letters, words, numbers — erase completely\n` +
-      `- Stone texture, photo background, shadows, gradients, grey tones\n\n` +
-      `OUTPUT STYLE:\n` +
-      `- Pure white background (#FFFFFF)\n` +
-      `- Only pure black (#000000) clean lines\n` +
-      `- No fill, no shading, no grey — only outlines\n` +
-      `- Suitable for laser engraving / CNC cutting\n` +
-      `- Leave 10% white margin on all edges\n\n` +
-      (objectDescription ? `ELEMENT REFERENCE (from image analysis):\n${objectDescription.slice(0, 800)}` : "");
+      `Redraw this image as a SINGLE-STROKE OUTLINE drawing for CNC laser engraving. ` +
+      `Match the original image layout EXACTLY — same composition, same element positions, same proportions (${aspectDesc}).\n\n` +
+      `CRITICAL RULES — MUST FOLLOW EXACTLY:\n` +
+      `1. SINGLE STROKE ONLY: Every shape edge is drawn with ONE thin black line. NEVER draw double lines, parallel lines, or repeated strokes around the same edge. Each outline appears exactly once.\n` +
+      `2. ZERO SHADING: No grey tones, no cross-hatching, no hatching, no stippling, no gradients. The ONLY colors are pure black (#000000) lines on pure white (#FFFFFF) background.\n` +
+      `3. OPEN OUTLINES: All shapes are hollow outlines only — no filled areas, no solid black regions, no black fills.\n` +
+      `4. CLEAN INTERSECTIONS: Where lines cross (e.g. Star of David triangles overlapping), draw clean sharp intersections with no smudging, no blurring, no extra strokes at crossing points.\n` +
+      `5. MATCH ORIGINAL LAYOUT: Reproduce every decorative element in its exact original position and size. If original has a circle with Star of David inside and flowers on sides — draw exactly that.\n\n` +
+      `REMOVE COMPLETELY:\n` +
+      `- ALL text, letters, words, numbers\n` +
+      `- Photo texture, stone texture, background, shadows, depth effects\n` +
+      `- Any grey pixel — output must be pure black lines on pure white ONLY\n\n` +
+      `STYLE TARGET: Technical coloring-book outline. Like a clean engineering drawing or stencil. NOT sketchy, NOT artistic, NOT hand-drawn. Precise, mechanical, single-weight lines throughout.\n\n` +
+      (objectDescription ? `LAYOUT REFERENCE from original image analysis:\n${objectDescription.slice(0, 800)}` : "");
 
     const response = await openai.images.edit({
       model: "gpt-image-1",

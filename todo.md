@@ -732,3 +732,11 @@
 - [x] AI מתמונה: שמירת תמונת קלט ב-localStorage כדי שתוצג כשחוזרים לטאב
 - [x] AI יצירה: שמירת הפרומפט ב-localStorage כדי שיוצג כשחוזרים לטאב באמצע עיבוד
 - [x] וידוא שה-polling מסיים ומציג תוצאה בכל הטאבים
+
+## תיקון פרומפט AI מסמך — קווים נקיים לחריטת CNC
+
+- [x] שכתוב פרומפט יצירת תמונה: קו יחיד נקי, ללא קווים כפולים, ללא shading, ללא fill
+- [x] הנחיה מפורשת: "single stroke outline only, no double lines, no cross-hatching, no shading"
+- [x] הנחיה לתאימות: "faithful to original layout and proportions"
+- [x] שיפור הגדרות potrace: threshold=128, alphaMax=0.5, optTolerance=0.1
+- [x] שיפור עיבוד sharp: הגברת קונטרסט + threshold=160 לפני potrace
