@@ -43,7 +43,43 @@ function scaleDxfContent(dxfText: string, scaleFactor: number): string {
   );
 }
 
-// ─── PDF Export via jspdf + svg2pdf ──────────────────────────────────────────
+// ─── PDF Export via SVG → Canvas → PNG → jsPDF ───────────────────────────────
+// This approach works on all browsers including iOS Safari.
+// svg2pdf.js requires the element to be rendered on-screen which fails on mobile.
+
+async function svgToPngDataUrl(
+  svgContent: string,
+  widthPx: number,
+  heightPx: number
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    // Ensure SVG has explicit width/height
+    const svgWithSize = svgContent
+      .replace(/<svg([^>]*)>/, (_m, attrs) => {
+        const cleaned = attrs
+          .replace(/\bwidth="[^"]*"/g, "")
+          .replace(/\bheight="[^"]*"/g, "");
+        return `<svg${cleaned} width="${widthPx}" height="${heightPx}">`;
+      });
+
+    const blob = new Blob([svgWithSize], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = widthPx;
+      canvas.height = heightPx;
+      const ctx = canvas.getContext("2d")!;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, widthPx, heightPx);
+      ctx.drawImage(img, 0, 0, widthPx, heightPx);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("SVG render failed")); };
+    img.src = url;
+  });
+}
 
 async function exportToPdf(
   svgContent: string,
@@ -52,43 +88,23 @@ async function exportToPdf(
   filename: string
 ): Promise<void> {
   const { jsPDF } = await import("jspdf");
-  const { svg2pdf } = await import("svg2pdf.js");
 
-  // Parse SVG into DOM element
-  const parser = new DOMParser();
-  const svgDoc = parser.parseFromString(svgContent, "image/svg+xml");
-  const svgEl = svgDoc.querySelector("svg");
-  if (!svgEl) throw new Error("Invalid SVG");
+  // Render at 3× resolution for crisp output
+  const DPI = 3;
+  const widthPx = Math.round(widthMm * DPI);
+  const heightPx = Math.round(heightMm * DPI);
 
-  // Set explicit dimensions on the SVG element
-  svgEl.setAttribute("width", `${widthMm}mm`);
-  svgEl.setAttribute("height", `${heightMm}mm`);
+  const pngDataUrl = await svgToPngDataUrl(svgContent, widthPx, heightPx);
 
-  // Append temporarily to DOM (svg2pdf needs it in the document)
-  svgEl.style.position = "absolute";
-  svgEl.style.top = "-9999px";
-  svgEl.style.left = "-9999px";
-  document.body.appendChild(svgEl);
+  const orientation = widthMm >= heightMm ? "landscape" : "portrait";
+  const pdf = new jsPDF({
+    orientation,
+    unit: "mm",
+    format: [widthMm, heightMm],
+  });
 
-  try {
-    const orientation = widthMm >= heightMm ? "landscape" : "portrait";
-    const pdf = new jsPDF({
-      orientation,
-      unit: "mm",
-      format: [widthMm, heightMm],
-    });
-
-    await svg2pdf(svgEl, pdf, {
-      x: 0,
-      y: 0,
-      width: widthMm,
-      height: heightMm,
-    });
-
-    pdf.save(`${filename}.pdf`);
-  } finally {
-    document.body.removeChild(svgEl);
-  }
+  pdf.addImage(pngDataUrl, "PNG", 0, 0, widthMm, heightMm);
+  pdf.save(`${filename}.pdf`);
 }
 
 // ─── SVG Mini Preview ─────────────────────────────────────────────────────────
