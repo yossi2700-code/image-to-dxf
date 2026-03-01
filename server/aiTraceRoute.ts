@@ -121,7 +121,8 @@ function buildLandscapePrompt(sceneDescription: string, variationIndex: number):
     "CRITICAL: The entire scene MUST fit completely inside the square frame with white margin on all sides. " +
     "Do NOT let any element touch or go beyond the image border. Leave at least 5% white margin on every edge. " +
     "Square composition, all elements fully visible, nothing cropped. " +
-    "No text, no watermarks, no grey tones."
+    "DO NOT include any text, letters, words, numbers, labels, or captions anywhere in the image. " +
+    "No watermarks, no grey tones."
   );
 }
 
@@ -213,7 +214,8 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number): 
     "Show depth and structure with clear internal lines. " +
     `${variation.style} ` +
     "Single centered object, complete, fully inside the frame, with generous white margin around it. " +
-    "No text, no watermarks, no grey tones, no background elements."
+    "DO NOT include any text, letters, words, numbers, labels, or captions anywhere in the image. " +
+    "No watermarks, no grey tones, no background elements."
   );
 }
 

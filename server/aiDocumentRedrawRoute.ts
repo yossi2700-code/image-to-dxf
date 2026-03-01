@@ -30,7 +30,11 @@ import { createJob, getJob, updateJob, cancelJob } from "./jobStore";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY ?? "",
+  timeout: 180_000, // 3 minutes — gpt-image-1 can take up to 2 min
+  maxRetries: 0,    // don't retry on timeout — let the job fail cleanly
+});
 
 /** Convert description to safe filename — capped at 15 chars for clean download names */
 function buildFilename(description: string): string {

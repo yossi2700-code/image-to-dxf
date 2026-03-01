@@ -740,3 +740,10 @@
 - [x] הנחיה לתאימות: "faithful to original layout and proportions"
 - [x] שיפור הגדרות potrace: threshold=128, alphaMax=0.5, optTolerance=0.1
 - [x] שיפור עיבוד sharp: הגברת קונטרסט + threshold=160 לפני potrace
+
+## תיקון: AI מסמך תקוע + הוספת "ללא טקסט" ל-AI יצירה ו-AI מתמונה
+
+- [x] בדיקת לוגים ל-AI מסמך — מה גורם לתקיעה/timeout
+- [x] תיקון timeout: OpenAI client עם timeout=3min, jobStore מסמן jobs תקועים אחרי 5 דקות
+- [x] הוספת הנחיה "ללא טקסט" ל-AI יצירה (generateRoute)
+- [x] הוספת הנחיה "ללא טקסט" ל-AI מתמונה (aiTraceRoute)

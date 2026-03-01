@@ -21,13 +21,24 @@ export interface Job {
 
 const jobs = new Map<string, Job>();
 
-// Auto-clean jobs older than 2 hours
+// Auto-clean jobs older than 2 hours; also mark stale "processing" jobs as error after 5 min
 setInterval(() => {
   const cutoff = Date.now() - 2 * 60 * 60 * 1000;
+  const staleCutoff = Date.now() - 5 * 60 * 1000; // 5 minutes
   for (const [id, job] of Array.from(jobs.entries())) {
-    if (job.createdAt < cutoff) jobs.delete(id);
+    if (job.createdAt < cutoff) {
+      jobs.delete(id);
+    } else if (
+      (job.status === "processing" || job.status === "pending") &&
+      job.updatedAt < staleCutoff
+    ) {
+      // Job has been stuck for 5+ minutes — mark as error so client stops polling
+      job.status = "error";
+      job.error = "Processing timed out after 5 minutes";
+      job.updatedAt = Date.now();
+    }
   }
-}, 10 * 60 * 1000);
+}, 60 * 1000); // check every minute
 
 export function createJob(id: string, userId: number, tokenAction: string): Job {
   const job: Job = {

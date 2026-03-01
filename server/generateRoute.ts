@@ -105,6 +105,7 @@ function buildLandscapePrompt(userPrompt: string, variationIndex: number): strin
     "Leave at least 10% white margin on EVERY edge (top, bottom, left, right). " +
     "NOTHING must touch or go beyond the image border. All elements fully visible, nothing cropped. " +
     textInstruction +
+    "DO NOT include any text, letters, words, numbers, labels, or captions anywhere in the image. " +
     "No watermarks, no grey tones."
   );
 }
@@ -129,6 +130,7 @@ function buildLineArtPrompt(userPrompt: string, variationIndex: number): string 
     "Show depth and structure with clear internal lines. " +
     `${variation.style} ` +
     textInstruction +
+    "DO NOT include any text, letters, words, numbers, labels, or captions anywhere in the image. " +
     "No watermarks, no grey tones, no background elements."
   );
 }
