@@ -25,46 +25,12 @@ import { deductTokens, addTokens, TOKEN_COSTS, TokenAction } from "./tokenServic
 import { invokeLLM } from "./_core/llm";
 import { createJob, getJob, updateJob, cancelJob } from "./jobStore";
 import { svgToDxf } from "./svgToDxf";
-import { ENV } from "./_core/env";
+import OpenAI from "openai";
 import potrace from "potrace";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
-
-/**
- * Call Manus Forge image generation API with a source image.
- * The model sees the actual image and redraws it faithfully — preserving exact
- * positions, proportions, poses, and directions.
- */
-async function forgeGenerateImage(prompt: string, sourceB64: string, sourceMimeType: string): Promise<Buffer> {
-  if (!ENV.forgeApiUrl) throw new Error("BUILT_IN_FORGE_API_URL is not configured");
-  if (!ENV.forgeApiKey) throw new Error("BUILT_IN_FORGE_API_KEY is not configured");
-
-  const baseUrl = ENV.forgeApiUrl.endsWith("/") ? ENV.forgeApiUrl : `${ENV.forgeApiUrl}/`;
-  const fullUrl = new URL("images.v1.ImageService/GenerateImage", baseUrl).toString();
-
-  const response = await fetch(fullUrl, {
-    method: "POST",
-    headers: {
-      accept: "application/json",
-      "content-type": "application/json",
-      "connect-protocol-version": "1",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
-    },
-    body: JSON.stringify({
-      prompt,
-      original_images: [{ b64Json: sourceB64, mimeType: sourceMimeType }],
-    }),
-  });
-
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    throw new Error(`Image generation failed (${response.status})${detail ? `: ${detail}` : ""}`);
-  }
-
-  const result = (await response.json()) as { image: { b64Json: string; mimeType: string } };
-  return Buffer.from(result.image.b64Json, "base64");
-}
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
 /** Convert description to safe filename — capped at 15 chars for clean download names */
 function buildFilename(description: string): string {
@@ -207,6 +173,7 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number): 
   const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
   return (
     `Professional black and white line art illustration of ${objectDescription}. ` +
+    "CRITICAL: Reproduce the EXACT pose, facing direction, and orientation described above — do NOT mirror, rotate, or change the direction of any figure or object. " +
     "Pure white background (#FFFFFF). " +
     "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
     "High contrast: only pure black (#000000) lines on white. " +
@@ -277,15 +244,19 @@ async function runTraceJob(
         {
           role: "system",
           content:
-            "You are an expert at describing objects for line art generation. " +
-            "Analyze the image and provide a concise, detailed description suitable for generating clean line art. " +
-            "Focus on: shape, structure, key features, style, proportions. " +
-            "Output ONLY the description (2-4 sentences), no preamble.",
+            "You are an expert at describing objects and figures for line art generation. " +
+            "Analyze the image and provide a precise description for generating clean line art that EXACTLY matches the original. " +
+            "CRITICAL — you MUST describe: " +
+            "(1) The exact facing direction of any person/animal/figure (facing left, facing right, facing forward, facing backward, profile view, 3/4 view, etc.). " +
+            "(2) The exact body pose and position (standing, sitting, crouching, arms raised, arms at sides, walking, etc.). " +
+            "(3) The exact orientation of all objects (which way they face, tilt angle, perspective). " +
+            "(4) Key structural features, proportions, and distinctive details. " +
+            "Output ONLY the description (3-5 sentences), no preamble. Be specific about directions.",
         },
         {
           role: "user",
           content: [
-            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "low" } },
+            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "high" } },
             { type: "text", text: analysisInstruction },
           ],
         },
@@ -303,15 +274,33 @@ async function runTraceJob(
 
     const baseFilename = buildFilename(userDesc || objectDescription);
 
-    // Step B: Generate 3 line art variations using Forge API with original image
-    // By sending the original image as originalImages, the model sees the actual
-    // pose, direction, and composition — producing faithful reproductions.
+    // Step B: Generate 3 line art variations using gpt-image-1
     const generationPromises = Array.from({ length: 3 }, async (_, idx) => {
       const imagePrompt = landscapeMode
         ? buildFullImagePrompt(objectDescription, idx)
         : buildLineArtPrompt(objectDescription, idx);
 
-      const rawBuffer = await forgeGenerateImage(imagePrompt, imageBase64, "image/jpeg");
+      const response = await openai.images.generate({
+        model: "gpt-image-1",
+        prompt: imagePrompt,
+        n: 1,
+        size: "1024x1024",
+        quality: "medium",
+      });
+
+      const imageData = response.data?.[0];
+      if (!imageData) throw new Error("לא הצלחנו לייצר תמונה");
+
+      let rawBuffer: Buffer;
+      if (imageData.b64_json) {
+        rawBuffer = Buffer.from(imageData.b64_json, "base64");
+      } else if (imageData.url) {
+        const imgResponse = await fetch(imageData.url);
+        if (!imgResponse.ok) throw new Error("שגיאה בהורדת התמונה שנוצרה");
+        rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
+      } else {
+        throw new Error("לא התקבלה תמונה מה-AI");
+      }
 
       const processedBuffer = await sharp(rawBuffer)
         .extend({ top: 120, bottom: 120, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })

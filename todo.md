@@ -783,6 +783,6 @@
 
 ## תיקונים - מרץ 2026
 
-- [x] AI מתמונה: שיפור דיוק — שליחת תמונה מקורית ל-Forge API עם originalImages (הדמות/כיוון זהים)
+- [x] AI מתמונה: שיפור דיוק — LLM מתאר תנוחה/כיוון מדויק, ו-gpt-image-1 מצייר לפי התיאור (חזר ל-openai.images.generate שעובד)
 - [x] AI מתמונה: הצגת preview של התמונה שהועלתה עם אנימציית סריקה ויזואלית
 - [x] AI מסמך: תיקון — החלפת openai.images.edit (404) ב-Forge API עם originalImages
