@@ -43,9 +43,9 @@ function scaleDxfContent(dxfText: string, scaleFactor: number): string {
   );
 }
 
-// ─── PDF Export via window.print() ──────────────────────────────────────────
-// Uses the browser's native print dialog — works on ALL devices including iOS.
-// Opens a hidden iframe with the SVG centered on the page, then triggers print.
+// ─── PDF Export via window.open() + print ─────────────────────────────────────
+// Opens a new window with the SVG and triggers the browser's native print dialog.
+// Must be called synchronously from a click handler to avoid popup blockers on iOS.
 
 function exportToPdf(
   svgContent: string,
@@ -53,54 +53,44 @@ function exportToPdf(
   heightMm: number,
   _filename: string
 ): Promise<void> {
-  return new Promise((resolve) => {
-    // Ensure SVG has explicit dimensions
-    const svgWithSize = svgContent
-      .replace(/<svg([^>]*)>/, (_m, attrs) => {
-        const cleaned = attrs
-          .replace(/\bwidth="[^"]*"/g, "")
-          .replace(/\bheight="[^"]*"/g, "");
-        return `<svg${cleaned} width="${widthMm}mm" height="${heightMm}mm">`;
-      });
+  // Ensure SVG has explicit dimensions
+  const svgWithSize = svgContent
+    .replace(/<svg([^>]*)>/, (_m, attrs) => {
+      const cleaned = attrs
+        .replace(/\bwidth="[^"]*"/g, "")
+        .replace(/\bheight="[^"]*"/g, "");
+      return `<svg${cleaned} width="${widthMm}mm" height="${heightMm}mm">`;
+    });
 
-    const html = `<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
 <style>
   @page { size: ${widthMm}mm ${heightMm}mm; margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: white; display: flex; align-items: center; justify-content: center; width: ${widthMm}mm; height: ${heightMm}mm; }
+  body { background: white; }
   svg { display: block; width: ${widthMm}mm; height: ${heightMm}mm; }
 </style>
 </head>
-<body>${svgWithSize}</body>
+<body>
+${svgWithSize}
+<script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; };<\/script>
+</body>
 </html>`;
 
-    const iframe = document.createElement("iframe");
-    iframe.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;";
-    document.body.appendChild(iframe);
-
-    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (!iframeDoc) { document.body.removeChild(iframe); resolve(); return; }
-
-    iframeDoc.open();
-    iframeDoc.write(html);
-    iframeDoc.close();
-
-    // Wait for content to load then print
-    setTimeout(() => {
-      try {
-        iframe.contentWindow?.focus();
-        iframe.contentWindow?.print();
-      } finally {
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-          resolve();
-        }, 1000);
-      }
-    }, 500);
-  });
+  // Open synchronously from click event (required for iOS popup policy)
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    // Fallback: data URL in same tab
+    const encoded = encodeURIComponent(html);
+    window.location.href = `data:text/html;charset=utf-8,${encoded}`;
+    return Promise.resolve();
+  }
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+  return Promise.resolve();
 }
 
 // ─── SVG Mini Preview ─────────────────────────────────────────────────────────
@@ -203,17 +193,16 @@ export function DxfDownloadDialog({
 
   // ── PDF Export ────────────────────────────────────────────────────────────
 
-  const handlePdfExport = async () => {
+  const handlePdfExport = () => {
     if (!svgContent) return;
-    setIsPdfLoading(true);
+    // exportToPdf must be called synchronously from the click handler
+    // so iOS Safari allows window.open() without popup blocker.
     setError(null);
     try {
-      await exportToPdf(svgContent, outputWidthMm, outputHeightMm, cleanFilename);
+      exportToPdf(svgContent, outputWidthMm, outputHeightMm, cleanFilename);
     } catch (err) {
       console.error("PDF export error:", err);
       setError("שגיאה בייצוא PDF. נסה שוב.");
-    } finally {
-      setIsPdfLoading(false);
     }
   };
 

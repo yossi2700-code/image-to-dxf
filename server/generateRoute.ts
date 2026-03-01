@@ -17,32 +17,38 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
 /**
  * Three distinct style variations for the same subject.
- * Each produces visually different line art for potrace vectorization.
+ * V1: Simple clean outline — minimal lines
+ * V2: Sharp precise — all structural details, crisp edges
+ * V3: Laser-engraving fill — dense parallel lines/cross-hatch for tonal fill
  */
 const STYLE_VARIATIONS = [
   {
     label: "simple",
     style:
-      "Clean professional line art with bold outer contour and key structural lines. " +
-      "Show depth and form with 3-5 internal lines indicating main surfaces and edges. " +
-      "Technical illustration style — like a product blueprint or engineering drawing. " +
-      "NO texture, NO hatching, NO shading, NO fill. Pure black lines on white.",
+      "VARIATION 1 — SIMPLE CLEAN OUTLINE: Draw only the essential outer contour and 3-5 main structural lines. " +
+      "Bold single-weight lines, no interior detail, no texture, no hatching, no shading, no fill. " +
+      "Like a basic coloring-book outline. PRESERVE the exact shape and proportions of the object. " +
+      "Pure black lines on white background only.",
   },
   {
     label: "detailed",
     style:
-      "Highly detailed professional line art. Bold outer contour with rich internal line work " +
-      "showing all structural features, surfaces, depth cues, and fine details. " +
-      "Like a professional technical illustration or detailed product drawing. " +
-      "NO texture, NO hatching, NO shading, NO fill. Clean distinct lines only.",
+      "VARIATION 2 — SHARP PRECISE DETAILED: Draw the complete object with all structural features, " +
+      "surfaces, edges, and fine mechanical/architectural details. " +
+      "Bold outer contour with crisp precise inner lines showing every visible component. " +
+      "Like a professional technical illustration or engineering drawing. " +
+      "NO texture, NO hatching, NO shading, NO fill. PRESERVE the exact shape. Clean sharp lines only.",
   },
   {
-    label: "decorative",
+    label: "engraving",
     style:
-      "Elegant decorative line art with artistic flair. Bold outer contour with flowing " +
-      "decorative inner lines. Ornamental, architectural, or art nouveau style. " +
-      "Rich detail suitable for laser engraving on wood or metal. " +
-      "NO texture, NO hatching, NO shading, NO fill. All lines clean and precise.",
+      "VARIATION 3 — LASER ENGRAVING FILL: Draw the complete object with all details PLUS dense parallel " +
+      "line fill (hatching) inside surfaces to create tonal areas. " +
+      "Use fine parallel lines or cross-hatching to fill dark areas, giving the appearance of shading through lines. " +
+      "This creates a rich filled appearance suitable for laser engraving as a photographic image. " +
+      "CRITICAL: DO NOT change the shape or proportions — only ADD fill lines inside the existing form. " +
+      "All lines must be clean, straight or gently curved. No smearing, no gradients, no grey tones. " +
+      "Pure black lines on white background only.",
   },
 ];
 
