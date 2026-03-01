@@ -747,3 +747,10 @@
 - [x] תיקון timeout: OpenAI client עם timeout=3min, jobStore מסמן jobs תקועים אחרי 5 דקות
 - [x] הוספת הנחיה "ללא טקסט" ל-AI יצירה (generateRoute)
 - [x] הוספת הנחיה "ללא טקסט" ל-AI מתמונה (aiTraceRoute)
+
+## איפוס מלא של AI מסמך — גישה חדשה
+
+- [x] מחיקת לוגיקת images.edit הנוכחית — עבר ל-images.generate
+- [x] שלב A: LLM מנתח את התמונה ומתאר כל אלמנט בפירוט (צורה, מיקום, גודל יחסי)
+- [x] שלב B: gpt-image-1 מצייר מחדש כ-clean line art outline בלי טקסט
+- [x] פרומפט מכוון לתוצאה כמו ChatGPT: outline נקי, קו יחיד, ללא שרטוטים כפולים

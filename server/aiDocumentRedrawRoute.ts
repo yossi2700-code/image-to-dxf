@@ -222,42 +222,34 @@ async function runDocumentRedrawJob(
     console.log("[aiDocumentRedraw] Illustrations found:", objectDescription.substring(0, 200));
     const baseFilename = buildFilename(userDesc || objectDescription);
 
-    // ── Step B: Redraw using gpt-image-1 image editing — sends the ORIGINAL IMAGE directly ──
-    // Using images.edit so the model sees the actual photo and can faithfully reproduce its layout.
+    // ── Step B: Generate clean line art using gpt-image-1 with detailed description ──
+    // Using images.generate (not images.edit) so there's no file-size limit and no timeout risk.
+    // The detailed LLM analysis from Step A drives the faithful reproduction.
     const aspectDesc = originalAspect > 1.2
       ? "wider than tall (landscape orientation)"
       : originalAspect < 0.8
       ? "taller than wide (portrait orientation)"
       : "approximately square";
 
-    // Prepare a clean PNG version of the original image for editing
-    const editInputBuffer = await sharp(imageBuffer)
-      .resize(1024, 1024, { fit: "inside", withoutEnlargement: true })
-      .png()
-      .toBuffer();
-
     const imagePrompt =
-      `Redraw this image as a SINGLE-STROKE OUTLINE drawing for CNC laser engraving. ` +
-      `Match the original image layout EXACTLY — same composition, same element positions, same proportions (${aspectDesc}).\n\n` +
-      `CRITICAL RULES — MUST FOLLOW EXACTLY:\n` +
-      `1. SINGLE STROKE ONLY: Every shape edge is drawn with ONE thin black line. NEVER draw double lines, parallel lines, or repeated strokes around the same edge. Each outline appears exactly once.\n` +
-      `2. ZERO SHADING: No grey tones, no cross-hatching, no hatching, no stippling, no gradients. The ONLY colors are pure black (#000000) lines on pure white (#FFFFFF) background.\n` +
-      `3. OPEN OUTLINES: All shapes are hollow outlines only — no filled areas, no solid black regions, no black fills.\n` +
-      `4. CLEAN INTERSECTIONS: Where lines cross (e.g. Star of David triangles overlapping), draw clean sharp intersections with no smudging, no blurring, no extra strokes at crossing points.\n` +
-      `5. MATCH ORIGINAL LAYOUT: Reproduce every decorative element in its exact original position and size. If original has a circle with Star of David inside and flowers on sides — draw exactly that.\n\n` +
-      `REMOVE COMPLETELY:\n` +
-      `- ALL text, letters, words, numbers\n` +
-      `- Photo texture, stone texture, background, shadows, depth effects\n` +
-      `- Any grey pixel — output must be pure black lines on pure white ONLY\n\n` +
-      `STYLE TARGET: Technical coloring-book outline. Like a clean engineering drawing or stencil. NOT sketchy, NOT artistic, NOT hand-drawn. Precise, mechanical, single-weight lines throughout.\n\n` +
-      (objectDescription ? `LAYOUT REFERENCE from original image analysis:\n${objectDescription.slice(0, 800)}` : "");
+      `Create a clean BLACK AND WHITE LINE ART OUTLINE drawing for CNC laser engraving, based on the following detailed description of the original image.\n\n` +
+      `LAYOUT DESCRIPTION (reproduce this EXACTLY):\n${objectDescription.slice(0, 1200)}\n\n` +
+      `DRAWING RULES — MUST FOLLOW ALL:\n` +
+      `1. SINGLE STROKE: Every shape edge drawn with ONE thin black line. NO double lines, NO parallel strokes around same edge.\n` +
+      `2. ZERO SHADING: No grey, no cross-hatching, no stippling, no gradients. Only pure black (#000000) lines on pure white (#FFFFFF).\n` +
+      `3. HOLLOW OUTLINES: All shapes are open outlines — no filled areas, no solid black regions.\n` +
+      `4. CLEAN INTERSECTIONS: Where lines cross (e.g. Star of David triangles), draw clean sharp crossings — no smudging.\n` +
+      `5. NO TEXT: Do NOT draw any letters, words, numbers, or text of any kind.\n` +
+      `6. PROPORTIONS: The overall shape is ${aspectDesc}. Reproduce the exact composition and element positions from the description above.\n\n` +
+      `STYLE: Technical coloring-book outline. Like a clean stencil or engineering drawing. NOT sketchy, NOT artistic. Precise single-weight lines.\n` +
+      `OUTPUT: Pure black outlines on pure white background. No textures, no backgrounds, no shadows.`;
 
-    const response = await openai.images.edit({
+    const response = await openai.images.generate({
       model: "gpt-image-1",
-      image: new File([new Uint8Array(editInputBuffer)], "source.png", { type: "image/png" }),
       prompt: imagePrompt,
       n: 1,
       size: "1024x1024",
+      quality: "high",
     });
 
     // Check if cancelled after image generation
