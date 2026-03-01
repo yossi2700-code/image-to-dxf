@@ -48,6 +48,7 @@ type HistoryItem = {
   shareToken: string | null;
   groupId: string | null;
   variationLabel: string | null;
+  sourceImageUrl: string | null;
   createdAt: Date;
 };
 
@@ -161,19 +162,22 @@ function cleanDesc(desc: string | null, fallback: string): string {
 
 // ─── Group Card ───────────────────────────────────────────────────────────────
 function GroupCard({
-  group, onViewVariation, onDelete, onEditAgain, onDownload,
+  group, onViewVariation, onDelete, onEditAgain, onDownload, onTryAgain,
 }: {
   group: HistoryGroup;
   onViewVariation: (item: HistoryItem) => void;
   onDelete: (group: HistoryGroup) => void;
   onEditAgain: (item: HistoryItem) => void;
   onDownload: (item: HistoryItem) => void;
+  onTryAgain: (item: HistoryItem) => void;
 }) {
   const { isRtl, language } = useLanguage();
   const [activeIdx, setActiveIdx] = useState(0);
+  const [showSource, setShowSource] = useState(false);
   const isAi = group.actionType === "ai_generate";
   const isGroup = group.items.length > 1;
   const activeItem = group.items[activeIdx];
+  const hasSource = !!activeItem?.sourceImageUrl;
 
   const date = new Date(group.createdAt).toLocaleString(language === "he" ? "he-IL" : "en-US", {
     dateStyle: "medium", timeStyle: "short",
@@ -185,7 +189,9 @@ function GroupCard({
     <Card className="overflow-hidden hover:shadow-md transition-shadow">
       {/* Preview */}
       <div className="relative bg-white aspect-square overflow-hidden">
-        {activeItem?.svgPreview ? (
+        {showSource && hasSource ? (
+          <img src={activeItem.sourceImageUrl!} alt="original" className="w-full h-full object-contain cursor-pointer" onClick={() => setShowSource(false)} />
+        ) : activeItem?.svgPreview ? (
           <div className="w-full h-full cursor-pointer" onClick={() => onViewVariation(activeItem)}>
             <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: activeItem.svgPreview.replace(/<svg /, '<svg style="width:100%;height:100%;display:block;" ') }} />
           </div>
@@ -199,6 +205,16 @@ function GroupCard({
         <button onClick={() => onViewVariation(activeItem)} className="absolute bottom-2 left-2 w-7 h-7 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center transition-colors">
           <ZoomIn className="w-3.5 h-3.5 text-white" />
         </button>
+        {hasSource && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowSource((v) => !v); }}
+            className={`absolute bottom-2 right-2 text-xs px-2 py-0.5 rounded-full font-semibold transition-colors ${
+              showSource ? "bg-purple-600 text-white" : "bg-black/30 hover:bg-black/50 text-white"
+            }`}
+          >
+            {showSource ? (isRtl ? "וקטור" : "Vector") : (isRtl ? "מקור" : "Source")}
+          </button>
+        )}
         {isGroup && (
           <div className="absolute top-2 right-2 flex items-center gap-1">
             <button onClick={(e) => { e.stopPropagation(); setActiveIdx((i) => Math.max(0, i - 1)); }} disabled={activeIdx === 0} className="w-6 h-6 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center disabled:opacity-30 transition-colors">
@@ -241,6 +257,12 @@ function GroupCard({
             <button onClick={() => onEditAgain(activeItem)} className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold transition-colors">
               <Wand2 className="w-3.5 h-3.5" />
               {isRtl ? "ערוך מחדש" : "Re-edit"}
+            </button>
+          )}
+          {isAi && hasSource && (
+            <button onClick={() => onTryAgain(activeItem)} className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold transition-colors">
+              <Sparkles className="w-3.5 h-3.5" />
+              {isRtl ? "נסה שוב" : "Try Again"}
             </button>
           )}
           {activeItem?.dxfUrl && (
@@ -418,6 +440,16 @@ export default function History() {
     setTimeout(() => setDownloadOpen(true), 100);
   };
 
+  const handleTryAgain = (item: HistoryItem) => {
+    if (item.sourceImageUrl) {
+      sessionStorage.setItem("tryAgainItem", JSON.stringify({
+        sourceImageUrl: item.sourceImageUrl,
+        description: item.description,
+      }));
+    }
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50" dir={isRtl ? "rtl" : "ltr"}>
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
@@ -496,6 +528,7 @@ export default function History() {
                   onDelete={setDeleteTarget}
                   onEditAgain={handleEditAgain}
                   onDownload={handleDownload}
+                  onTryAgain={handleTryAgain}
                 />
               ))}
             </div>

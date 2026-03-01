@@ -327,6 +327,7 @@ export const appRouter = router({
           shareToken: userActions.shareToken,
           groupId: userActions.groupId,
           variationLabel: userActions.variationLabel,
+          sourceImageUrl: userActions.sourceImageUrl,
           createdAt: userActions.createdAt,
         })
         .from(userActions)

@@ -249,6 +249,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const [dragOver, setDragOver] = useState(false);
   const [fullImageMode, setFullImageMode] = useState(false);
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("ai_trace_jobId"));
+  const [tryAgainUrl, setTryAgainUrl] = useState<string | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -300,6 +301,21 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
     if (savedId) {
       setStatus("loading");
       startPolling(savedId);
+    }
+    // Handle "Try Again" from history — load source image URL and auto-submit
+    const tryAgainRaw = sessionStorage.getItem("tryAgainItem");
+    if (tryAgainRaw) {
+      sessionStorage.removeItem("tryAgainItem");
+      try {
+        const tryAgainData = JSON.parse(tryAgainRaw) as { sourceImageUrl: string; description?: string | null };
+        if (tryAgainData.sourceImageUrl) {
+          // Set preview from the source URL
+          setImagePreviewPersisted(tryAgainData.sourceImageUrl);
+          if (tryAgainData.description) setDescription(tryAgainData.description);
+          // Store the URL so handleTraceFromUrl can use it
+          setTryAgainUrl(tryAgainData.sourceImageUrl);
+        }
+      } catch (_) { /* ignore */ }
     }
     return () => { if (pollIntervalRef.current) clearInterval(pollIntervalRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -373,11 +389,51 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
     }
   };
 
+  // Handle Try Again from history — fetch source image URL and re-submit
+  const handleTraceFromUrl = async (sourceUrl: string) => {
+    setStatus("loading"); setResult(null); setErrorMsg("");
+    try {
+      // Fetch the image as a blob from S3
+      const resp = await fetch(sourceUrl);
+      if (!resp.ok) throw new Error("Failed to fetch source image");
+      const blob = await resp.blob();
+      const file = new File([blob], "source.jpg", { type: blob.type || "image/jpeg" });
+      setImageFile(file);
+      const formData = new FormData();
+      formData.append("image", file);
+      if (description.trim()) formData.append("description", description.trim());
+      if (focusText.trim()) formData.append("focusText", focusText.trim());
+      formData.append("lang", isRtl ? "he" : "en");
+      formData.append("landscapeMode", fullImageMode ? "true" : "false");
+      const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.error === "UNAUTHORIZED") { onOpenAuth(); setStatus("idle"); return; }
+        if (data.error === "QUOTA_EXCEEDED" || data.error === "INSUFFICIENT_TOKENS") {
+          const msg = language === "he" ? (data.message || t("quotaExceeded")) : (data.messageEn || data.message || t("quotaExceeded"));
+          toast.error(msg); setErrorMsg(msg); setStatus("error"); refetchTokens(); return;
+        }
+        throw new Error(isRtl ? (data.message || data.error) : (data.messageEn || data.error || "Error"));
+      }
+      if (data.jobId) {
+        setJobIdPersisted(data.jobId);
+        startPolling(data.jobId);
+      } else {
+        setResult(data as TraceResult);
+        setStatus("success");
+        refetchTokens();
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (isRtl ? "שגיאה בעיבוד" : "Processing error");
+      setErrorMsg(msg); setStatus("error"); toast.error(msg);
+    }
+  };
+
   const reset = () => {
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     setImageFile(null); setImagePreviewPersisted(null); setResult(null);
     setStatus("idle"); setErrorMsg(""); setFocusText(""); setCustomImprovement("");
-    setJobIdPersisted(null);
+    setJobIdPersisted(null); setTryAgainUrl(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -547,24 +603,37 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             </div>
             <input type="hidden" value={description} onChange={(e) => setDescription(e.target.value)} />
 
-            <button
-              className="w-full font-bold text-base h-12 rounded-lg flex items-center justify-center gap-2 transition-all"
-              style={{
-                background: !imageFile || status === "loading" ? '#99f6e4' : '#0d9488',
-                color: 'white',
-                border: 'none',
-                boxShadow: !imageFile || status === "loading" ? 'none' : '0 2px 8px rgba(13,148,136,0.30)',
-                cursor: !imageFile || status === "loading" ? 'not-allowed' : 'pointer',
-              }}
-              disabled={!imageFile || status === "loading"}
-              onClick={handleTrace}
-            >
-              {status === "loading" ? (
-                <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />{isRtl ? "ה-AI מנתח ומצייר..." : "AI is analyzing and drawing..."}</>
-              ) : (
-                <><Wand2 className="w-4 h-4" />{isRtl ? "צור outline בAI" : "Create AI Outline"}</>
+            <div className="flex gap-2">
+              <button
+                className="flex-1 font-bold text-base h-12 rounded-lg flex items-center justify-center gap-2 transition-all"
+                style={{
+                  background: !imageFile || status === "loading" ? '#99f6e4' : '#0d9488',
+                  color: 'white',
+                  border: 'none',
+                  boxShadow: !imageFile || status === "loading" ? 'none' : '0 2px 8px rgba(13,148,136,0.30)',
+                  cursor: !imageFile || status === "loading" ? 'not-allowed' : 'pointer',
+                }}
+                disabled={!imageFile || status === "loading"}
+                onClick={handleTrace}
+              >
+                {status === "loading" ? (
+                  <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />{isRtl ? "ה-AI מנתח ומצייר..." : "AI is analyzing and drawing..."}</>
+                ) : (
+                  <><Wand2 className="w-4 h-4" />{isRtl ? "צור outline בAI" : "Create AI Outline"}</>
+                )}
+              </button>
+              {tryAgainUrl && status !== "loading" && (
+                <button
+                  className="h-12 px-4 rounded-lg font-bold text-sm flex items-center justify-center gap-1.5 transition-all"
+                  style={{ background: '#0f766e', color: 'white', border: 'none', boxShadow: '0 2px 8px rgba(13,148,136,0.25)' }}
+                  onClick={() => handleTraceFromUrl(tryAgainUrl)}
+                  title={isRtl ? "נסה שוב עם אותה תמונה" : "Try again with same image"}
+                >
+                  <Scan className="w-4 h-4" />
+                  {isRtl ? "נסה שוב" : "Try Again"}
+                </button>
               )}
-            </button>
+            </div>
         </div>
 
         {/* Loading */}

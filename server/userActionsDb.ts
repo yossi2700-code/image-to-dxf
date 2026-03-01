@@ -19,6 +19,8 @@ export interface RecordActionParams {
   groupId?: string;
   /** Variation label within the group (e.g. 'simple', 'detailed', 'complex') */
   variationLabel?: string;
+  /** URL of the original uploaded image (for AI from Image) */
+  sourceImageUrl?: string;
 }
 
 export async function recordUserAction(params: RecordActionParams): Promise<void> {
@@ -35,6 +37,7 @@ export async function recordUserAction(params: RecordActionParams): Promise<void
       svgPreview: params.svgPreview ?? null,
       groupId: params.groupId ?? null,
       variationLabel: params.variationLabel ?? null,
+      sourceImageUrl: params.sourceImageUrl ?? null,
     });
   } catch (err) {
     // Non-critical — don't fail the request if logging fails

@@ -97,6 +97,8 @@ export const userActions = mysqlTable("user_actions", {
   groupId: varchar("groupId", { length: 64 }),
   /** Variation label within the group (e.g. 'simple', 'detailed', 'complex') */
   variationLabel: varchar("variationLabel", { length: 32 }),
+  /** URL of the original uploaded image (for AI from Image feature) */
+  sourceImageUrl: text("sourceImageUrl"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

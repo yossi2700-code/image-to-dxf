@@ -228,7 +228,8 @@ async function runTraceJob(
   landscapeMode: boolean,
   lang: "he" | "en",
   appUserId: number,
-  ipAnon: string
+  ipAnon: string,
+  sourceImageUrl?: string
 ) {
   try {
     updateJob(jobId, { status: "processing" });
@@ -378,6 +379,7 @@ async function runTraceJob(
         svgPreview: img.svgPreview,
         groupId,
         variationLabel: variationLabels[i] ?? `v${i + 1}`,
+        sourceImageUrl: sourceImageUrl ?? undefined,
       });
     }
 
@@ -459,11 +461,25 @@ router.post(
       const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
       const ipAnon = anonymizeIp(rawIp);
 
+      // Upload original image to S3 for history display
+      let uploadedSourceImageUrl: string | undefined;
+      try {
+        const srcKey = `source-images/${appUser.userId}-${nanoid(8)}.jpg`;
+        const jpegBuf = await sharp(imageBuffer)
+          .resize(800, 800, { fit: "inside", withoutEnlargement: true })
+          .jpeg({ quality: 85 })
+          .toBuffer();
+        const { url } = await storagePut(srcKey, jpegBuf, "image/jpeg");
+        uploadedSourceImageUrl = url;
+      } catch (e) {
+        console.warn("[aiTraceRoute] Failed to upload source image:", e);
+      }
+
       // Create job and start background processing
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "ai_trace");
 
-      runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "")
+      runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl)
         .catch((err) => console.error("[aiTraceRoute] Unhandled job error:", err));
 
       return res.json({ jobId });
