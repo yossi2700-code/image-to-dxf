@@ -1134,7 +1134,7 @@ export default function Home() {
               <span className="hidden xs:inline">{isRtl ? "✨ AI יצירה" : "✨ AI Create"}</span>
               <span className="xs:hidden">{isRtl ? "AI יצירה" : "AI Create"}</span>
             </TabsTrigger>
-            <TabsTrigger value="trace" className="flex-1 gap-1.5 text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white">
+            <TabsTrigger value="trace" className="flex-1 gap-1.5 text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-emerald-500 data-[state=active]:text-white">
               <Scan className="w-4 h-4" />
               <span className="hidden xs:inline">{isRtl ? "📷 AI מתמונה" : "📷 AI Trace"}</span>
               <span className="xs:hidden">{isRtl ? "AI מתמונה" : "AI Trace"}</span>

@@ -303,7 +303,13 @@ router.post("/api/generate-images", async (req, res) => {
     });
 
     // Record user action (user is guaranteed logged in at this point)
-    for (const img of images) {
+    // All 3 variations share the same groupId so History can group them
+    const groupId = nanoid(12);
+    const variationLabels = landscapeMode
+      ? ["simple", "detailed", "decorative"]
+      : ["simple", "detailed", "complex"];
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
       void recordUserAction({
         appUserId: appUser.userId,
         actionType: "ai_generate",
@@ -312,6 +318,8 @@ router.post("/api/generate-images", async (req, res) => {
         dxfUrl: img.dxfUrl,
         imageUrl: img.imageUrl,
         svgPreview: img.svgPreview,
+        groupId,
+        variationLabel: variationLabels[i] ?? `v${i + 1}`,
       });
     }
 

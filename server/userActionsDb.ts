@@ -15,6 +15,10 @@ export interface RecordActionParams {
   dxfUrl?: string;
   imageUrl?: string;
   svgPreview?: string;
+  /** Groups related variations from the same generation request */
+  groupId?: string;
+  /** Variation label within the group (e.g. 'simple', 'detailed', 'complex') */
+  variationLabel?: string;
 }
 
 export async function recordUserAction(params: RecordActionParams): Promise<void> {
@@ -29,6 +33,8 @@ export async function recordUserAction(params: RecordActionParams): Promise<void
       dxfUrl: params.dxfUrl ?? null,
       imageUrl: params.imageUrl ?? null,
       svgPreview: params.svgPreview ?? null,
+      groupId: params.groupId ?? null,
+      variationLabel: params.variationLabel ?? null,
     });
   } catch (err) {
     // Non-critical — don't fail the request if logging fails

@@ -325,12 +325,14 @@ export const appRouter = router({
           imageUrl: userActions.imageUrl,
           svgPreview: userActions.svgPreview,
           shareToken: userActions.shareToken,
+          groupId: userActions.groupId,
+          variationLabel: userActions.variationLabel,
           createdAt: userActions.createdAt,
         })
         .from(userActions)
         .where(eq(userActions.appUserId, appUser.userId))
         .orderBy(desc(userActions.createdAt))
-        .limit(100);
+        .limit(200);
     }),
 
     /** Create a share link for a specific action */

@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -23,7 +24,6 @@ import {
   ArrowLeft,
   Download,
   Sparkles,
-  Upload,
   Clock,
   FileCode2,
   ImageIcon,
@@ -31,10 +31,12 @@ import {
   Wand2,
   X,
   ZoomIn,
+  Search,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
 type HistoryItem = {
   id: number;
   actionType: "convert" | "ai_generate" | "download";
@@ -43,11 +45,21 @@ type HistoryItem = {
   dxfUrl: string | null;
   imageUrl: string | null;
   svgPreview: string | null;
+  shareToken: string | null;
+  groupId: string | null;
+  variationLabel: string | null;
   createdAt: Date;
 };
 
-// ─── SVG Zoom Viewer ─────────────────────────────────────────────────────────
+type HistoryGroup = {
+  groupId: string | null;
+  items: HistoryItem[];
+  createdAt: Date;
+  description: string | null;
+  actionType: "convert" | "ai_generate" | "download";
+};
 
+// ─── SVG Zoom Viewer ─────────────────────────────────────────────────────────
 function SvgViewer({ svg }: { svg: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -61,10 +73,7 @@ function SvgViewer({ svg }: { svg: string }) {
     setTranslate({ x: 0, y: 0 });
   }, [svg]);
 
-  const styledSvg = svg.replace(
-    /<svg /,
-    '<svg style="width:100%;height:100%;display:block;" '
-  );
+  const styledSvg = svg.replace(/<svg /, '<svg style="width:100%;height:100%;display:block;" ');
 
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
@@ -86,31 +95,28 @@ function SvgViewer({ svg }: { svg: string }) {
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 1) {
-      const t = e.touches[0];
-      setDragging(true);
-      dragStartRef.current = { x: t.clientX, y: t.clientY, tx: translate.x, ty: translate.y };
-    } else if (e.touches.length === 2) {
+    if (e.touches.length === 2) {
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       lastPinchDistRef.current = Math.sqrt(dx * dx + dy * dy);
+    } else if (e.touches.length === 1) {
+      setDragging(true);
+      dragStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, tx: translate.x, ty: translate.y };
     }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (e.touches.length === 1 && dragging) {
-      const t = e.touches[0];
-      setTranslate({
-        x: dragStartRef.current.tx + (t.clientX - dragStartRef.current.x),
-        y: dragStartRef.current.ty + (t.clientY - dragStartRef.current.y),
-      });
-    } else if (e.touches.length === 2 && lastPinchDistRef.current !== null) {
+    if (e.touches.length === 2 && lastPinchDistRef.current !== null) {
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      const ratio = dist / lastPinchDistRef.current;
-      setScale((s) => Math.min(10, Math.max(0.3, s * ratio)));
+      setScale((s) => Math.min(10, Math.max(0.3, s * (dist / lastPinchDistRef.current!))));
       lastPinchDistRef.current = dist;
+    } else if (e.touches.length === 1 && dragging) {
+      setTranslate({
+        x: dragStartRef.current.tx + (e.touches[0].clientX - dragStartRef.current.x),
+        y: dragStartRef.current.ty + (e.touches[0].clientY - dragStartRef.current.y),
+      });
     }
   };
 
@@ -128,109 +134,133 @@ function SvgViewer({ svg }: { svg: string }) {
       onTouchEnd={() => { setDragging(false); lastPinchDistRef.current = null; }}
     >
       <div
-        style={{
-          transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
-          transformOrigin: "center center",
-          width: "100%",
-          height: "100%",
-        }}
+        style={{ transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`, transformOrigin: "center center", width: "100%", height: "100%" }}
         dangerouslySetInnerHTML={{ __html: styledSvg }}
       />
     </div>
   );
 }
 
-// ─── History Card ─────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function varLabel(label: string | null, isRtl: boolean): string {
+  if (!label) return "";
+  const map: Record<string, { he: string; en: string }> = {
+    simple: { he: "פשוט", en: "Simple" },
+    detailed: { he: "מפורט", en: "Detailed" },
+    complex: { he: "מורכב", en: "Complex" },
+    decorative: { he: "דקורטיבי", en: "Decorative" },
+  };
+  return isRtl ? (map[label]?.he ?? label) : (map[label]?.en ?? label);
+}
 
-function HistoryCard({
-  item,
-  onView,
-  onDelete,
-  onEditAgain,
-  onDownload,
+function cleanDesc(desc: string | null, fallback: string): string {
+  if (!desc) return fallback;
+  const clean = desc.replace(/^(Professional black and white line art illustration of |Clean black and white line art of a landscape scene: )/i, "");
+  return clean.length > 55 ? clean.slice(0, 55) + "…" : clean;
+}
+
+// ─── Group Card ───────────────────────────────────────────────────────────────
+function GroupCard({
+  group, onViewVariation, onDelete, onEditAgain, onDownload,
 }: {
-  item: HistoryItem;
-  onView: (item: HistoryItem) => void;
-  onDelete: (item: HistoryItem) => void;
+  group: HistoryGroup;
+  onViewVariation: (item: HistoryItem) => void;
+  onDelete: (group: HistoryGroup) => void;
   onEditAgain: (item: HistoryItem) => void;
   onDownload: (item: HistoryItem) => void;
 }) {
-  const { t, isRtl, language } = useLanguage();
-  const isAi = item.actionType === "ai_generate";
-  const date = new Date(item.createdAt).toLocaleDateString(language === "he" ? "he-IL" : "en-US", {
-    month: "short",
-    day: "numeric",
+  const { isRtl, language } = useLanguage();
+  const [activeIdx, setActiveIdx] = useState(0);
+  const isAi = group.actionType === "ai_generate";
+  const isGroup = group.items.length > 1;
+  const activeItem = group.items[activeIdx];
+
+  const date = new Date(group.createdAt).toLocaleString(language === "he" ? "he-IL" : "en-US", {
+    dateStyle: "medium", timeStyle: "short",
   });
 
+  const shortDesc = cleanDesc(group.description, isRtl ? "עיצוב" : "Design");
+
   return (
-    <Card
-      className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow group"
-      onClick={() => onView(item)}
-    >
-      <div className="relative h-40 bg-white flex items-center justify-center overflow-hidden">
-        {item.svgPreview ? (
-          <div
-            className="w-full h-full p-2"
-            dangerouslySetInnerHTML={{
-              __html: item.svgPreview.replace(
-                /<svg /,
-                '<svg style="width:100%;height:100%;object-fit:contain;" '
-              ),
-            }}
-          />
-        ) : item.imageUrl ? (
-          <img src={item.imageUrl} alt="" className="w-full h-full object-contain" />
+    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+      {/* Preview */}
+      <div className="relative bg-white aspect-square overflow-hidden">
+        {activeItem?.svgPreview ? (
+          <div className="w-full h-full cursor-pointer" onClick={() => onViewVariation(activeItem)}>
+            <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: activeItem.svgPreview.replace(/<svg /, '<svg style="width:100%;height:100%;display:block;" ') }} />
+          </div>
+        ) : activeItem?.imageUrl ? (
+          <img src={activeItem.imageUrl} alt={shortDesc} className="w-full h-full object-contain cursor-pointer" onClick={() => onViewVariation(activeItem)} />
         ) : (
-          <div className="flex flex-col items-center gap-2 text-muted-foreground">
-            <ImageIcon className="w-8 h-8" />
+          <div className="w-full h-full flex items-center justify-center bg-muted">
+            <ImageIcon className="w-10 h-10 text-muted-foreground" />
           </div>
         )}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
-          <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-60 transition-opacity drop-shadow" />
-        </div>
-        <div className="absolute top-2 right-2">
-          <Badge variant={isAi ? "default" : "secondary"} className="text-xs px-1.5 py-0.5">
-            {isAi ? <Sparkles className="w-3 h-3" /> : <Upload className="w-3 h-3" />}
-          </Badge>
-        </div>
+        <button onClick={() => onViewVariation(activeItem)} className="absolute bottom-2 left-2 w-7 h-7 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center transition-colors">
+          <ZoomIn className="w-3.5 h-3.5 text-white" />
+        </button>
+        {isGroup && (
+          <div className="absolute top-2 right-2 flex items-center gap-1">
+            <button onClick={(e) => { e.stopPropagation(); setActiveIdx((i) => Math.max(0, i - 1)); }} disabled={activeIdx === 0} className="w-6 h-6 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center disabled:opacity-30 transition-colors">
+              <ChevronRight className="w-3.5 h-3.5 text-white" />
+            </button>
+            <span className="text-white text-xs font-bold bg-black/40 rounded-full px-1.5 py-0.5">{activeIdx + 1}/{group.items.length}</span>
+            <button onClick={(e) => { e.stopPropagation(); setActiveIdx((i) => Math.min(group.items.length - 1, i + 1)); }} disabled={activeIdx === group.items.length - 1} className="w-6 h-6 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center disabled:opacity-30 transition-colors">
+              <ChevronLeft className="w-3.5 h-3.5 text-white" />
+            </button>
+          </div>
+        )}
       </div>
-      <CardContent className="p-3 space-y-1.5">
-        <p className="text-sm font-medium leading-tight line-clamp-2 text-right">
-          {item.description ?? (isAi ? t("aiDesign") : t("imageConversion"))}
-        </p>
+
+      <CardContent className="p-3 space-y-2">
+        <div className="flex items-start gap-1.5">
+          {isAi ? <Sparkles className="w-3.5 h-3.5 text-purple-500 mt-0.5 shrink-0" /> : <FileCode2 className="w-3.5 h-3.5 text-blue-500 mt-0.5 shrink-0" />}
+          <p className="text-xs font-medium leading-snug flex-1 min-w-0 break-words">{shortDesc}</p>
+        </div>
+
+        {isGroup && (
+          <div className="flex gap-1 flex-wrap">
+            {group.items.map((item, i) => (
+              <button key={item.id} onClick={() => setActiveIdx(i)}
+                className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${i === activeIdx ? "bg-purple-600 text-white border-purple-600" : "bg-muted text-muted-foreground border-border hover:border-purple-400"}`}>
+                {varLabel(item.variationLabel, isRtl)}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            {date}
-          </span>
-          {item.segmentCount != null && item.segmentCount > 0 && (
-            <span>{item.segmentCount.toLocaleString()} {t("lines")}</span>
+          <span>{date}</span>
+          {activeItem?.segmentCount != null && activeItem.segmentCount > 0 && (
+            <span>{activeItem.segmentCount.toLocaleString()} {isRtl ? "קווים" : "lines"}</span>
           )}
         </div>
-        {/* Direct download button on card */}
-        {item.dxfUrl && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onDownload(item); }}
-            className="w-full mt-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-green-600 hover:bg-green-700 active:bg-green-800 text-white text-xs font-semibold transition-colors"
-          >
-            <Download className="w-3.5 h-3.5" />
-            {isRtl ? "הורד DXF / PDF" : "Download DXF / PDF"}
+
+        <div className="flex gap-1.5 flex-wrap pt-0.5">
+          {isAi && activeItem?.svgPreview && (
+            <button onClick={() => onEditAgain(activeItem)} className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold transition-colors">
+              <Wand2 className="w-3.5 h-3.5" />
+              {isRtl ? "ערוך מחדש" : "Re-edit"}
+            </button>
+          )}
+          {activeItem?.dxfUrl && (
+            <button onClick={() => onDownload(activeItem)} className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md bg-green-600 hover:bg-green-700 text-white text-xs font-semibold transition-colors">
+              <Download className="w-3.5 h-3.5" />
+              {isRtl ? "הורד DXF" : "Download DXF"}
+            </button>
+          )}
+          <button onClick={() => onDelete(group)} className="w-8 h-8 flex items-center justify-center rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
+            <Trash2 className="w-3.5 h-3.5" />
           </button>
-        )}
+        </div>
       </CardContent>
     </Card>
   );
 }
 
 // ─── Detail Dialog ─────────────────────────────────────────────────────────────
-
 function DetailDialog({
-  item,
-  onClose,
-  onDelete,
-  onEditAgain,
-  onDownload,
+  item, onClose, onDelete, onEditAgain, onDownload,
 }: {
   item: HistoryItem | null;
   onClose: () => void;
@@ -238,78 +268,58 @@ function DetailDialog({
   onEditAgain: (item: HistoryItem) => void;
   onDownload: (item: HistoryItem) => void;
 }) {
-  const { t, isRtl, language } = useLanguage();
+  const { isRtl, language } = useLanguage();
   if (!item) return null;
   const isAi = item.actionType === "ai_generate";
-  const date = new Date(item.createdAt).toLocaleString(language === "he" ? "he-IL" : "en-US", {
-    dateStyle: "long",
-    timeStyle: "short",
-  });
+  const date = new Date(item.createdAt).toLocaleString(language === "he" ? "he-IL" : "en-US", { dateStyle: "long", timeStyle: "short" });
+  const displayDesc = cleanDesc(item.description, isRtl ? "עיצוב AI" : "AI Design");
 
   return (
     <Dialog open={!!item} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl w-full" dir={isRtl ? "rtl" : "ltr"}>
-        {/* Large custom close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 z-50 w-10 h-10 rounded-full bg-muted hover:bg-muted/80 border border-border flex items-center justify-center transition-colors shadow-sm"
-          aria-label="Close"
-        >
+        <button onClick={onClose} className="absolute top-3 right-3 z-50 w-10 h-10 rounded-full bg-muted hover:bg-muted/80 border border-border flex items-center justify-center transition-colors shadow-sm" aria-label="Close">
           <X className="w-5 h-5 text-foreground" />
         </button>
-
         <DialogHeader>
           <DialogTitle className={`flex items-center gap-2 ${isRtl ? "text-right" : "text-left"} pr-12`}>
-            {isAi ? <Sparkles className="w-4 h-4 text-purple-600" /> : <Upload className="w-4 h-4 text-blue-600" />}
-            {item.description ?? (isAi ? t("aiDesign") : t("imageConversion"))}
+            {isAi ? <Sparkles className="w-4 h-4 text-purple-600" /> : <FileCode2 className="w-4 h-4 text-blue-600" />}
+            {displayDesc}
           </DialogTitle>
         </DialogHeader>
-
         <div className="space-y-4">
           {item.svgPreview && (
             <div className="h-72 rounded-lg overflow-hidden border bg-white">
               <SvgViewer svg={item.svgPreview} />
             </div>
           )}
-
-          <div className={`flex gap-3 items-start`} dir={isRtl ? "rtl" : "ltr"}>
-            <div className={`text-sm space-y-1 ${isRtl ? "text-right" : "text-left"}`}>
-              <p className="text-muted-foreground">{date}</p>
-              {item.segmentCount != null && item.segmentCount > 0 && (
-                <p className="text-muted-foreground">{item.segmentCount.toLocaleString()} {isRtl ? "קווי וקטור" : "vector lines"}</p>
-              )}
+          {!item.svgPreview && item.imageUrl && (
+            <div className="h-72 rounded-lg overflow-hidden border bg-white flex items-center justify-center">
+              <img src={item.imageUrl} alt="" className="max-h-full max-w-full object-contain" />
             </div>
+          )}
+          <div className={`text-sm space-y-1.5 ${isRtl ? "text-right" : "text-left"}`}>
+            <p className="text-muted-foreground">{date}</p>
+            {item.segmentCount != null && item.segmentCount > 0 && (
+              <p className="text-muted-foreground">{item.segmentCount.toLocaleString()} {isRtl ? "קווי וקטור" : "vector lines"}</p>
+            )}
+            {item.variationLabel && (
+              <Badge variant="secondary" className="text-xs">{varLabel(item.variationLabel, isRtl)}</Badge>
+            )}
           </div>
-
           <div className="flex gap-2 justify-between flex-wrap">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50"
-              onClick={() => { onClose(); onDelete(item); }}
-            >
+            <Button variant="outline" size="sm" className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50" onClick={() => { onClose(); onDelete(item); }}>
               <Trash2 className="w-4 h-4" />
-              {t("delete")}
+              {isRtl ? "מחק" : "Delete"}
             </Button>
             <div className="flex gap-2 flex-wrap">
-              {/* Edit Again */}
               {isAi && item.svgPreview && (
-                <Button
-                  size="sm"
-                  className="gap-1.5 bg-purple-600 hover:bg-purple-700"
-                  onClick={() => { onClose(); onEditAgain(item); }}
-                >
+                <Button size="sm" className="gap-1.5 bg-purple-600 hover:bg-purple-700" onClick={() => { onClose(); onEditAgain(item); }}>
                   <Wand2 className="w-4 h-4" />
-                  {isRtl ? "ערוך מחדש" : "Edit Again"}
+                  {isRtl ? "ערוך מחדש" : "Re-edit"}
                 </Button>
               )}
-              {/* Download DXF / PDF — opens top-level DxfDownloadDialog */}
               {item.dxfUrl && (
-                <Button
-                  size="sm"
-                  className="gap-1.5 bg-green-600 hover:bg-green-700 font-semibold"
-                  onClick={() => { onClose(); onDownload(item); }}
-                >
+                <Button size="sm" className="gap-1.5 bg-green-600 hover:bg-green-700 font-semibold" onClick={() => { onClose(); onDownload(item); }}>
                   <Download className="w-4 h-4" />
                   {isRtl ? "הורד DXF / PDF" : "Download DXF / PDF"}
                 </Button>
@@ -323,36 +333,71 @@ function DetailDialog({
 }
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
-
 export default function History() {
   const { t, isRtl } = useLanguage();
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
   const { data: items, isLoading } = trpc.history.list.useQuery();
   const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<HistoryItem | null>(null);
-
-  // Download dialog state — lifted to top level so it's never nested inside another dialog
+  const [deleteTarget, setDeleteTarget] = useState<HistoryGroup | null>(null);
   const [downloadTarget, setDownloadTarget] = useState<HistoryItem | null>(null);
   const [downloadOpen, setDownloadOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
+  // Group items by groupId
+  const groups = useMemo<HistoryGroup[]>(() => {
+    if (!items) return [];
+    const groupMap = new Map<string, HistoryItem[]>();
+    const ungrouped: HistoryItem[] = [];
+
+    for (const item of items as HistoryItem[]) {
+      if (item.groupId) {
+        const existing = groupMap.get(item.groupId) ?? [];
+        existing.push(item);
+        groupMap.set(item.groupId, existing);
+      } else {
+        ungrouped.push(item);
+      }
+    }
+
+    const result: HistoryGroup[] = [];
+    const varOrder = ["simple", "detailed", "complex", "decorative"];
+
+    for (const [gid, gItems] of Array.from(groupMap.entries())) {
+      gItems.sort((a: HistoryItem, b: HistoryItem) => {
+        const ai = varOrder.indexOf(a.variationLabel ?? "");
+        const bi = varOrder.indexOf(b.variationLabel ?? "");
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      });
+      result.push({ groupId: gid, items: gItems, createdAt: gItems[0].createdAt, description: gItems[0].description, actionType: gItems[0].actionType });
+    }
+
+    for (const item of ungrouped) {
+      result.push({ groupId: null, items: [item], createdAt: item.createdAt, description: item.description, actionType: item.actionType });
+    }
+
+    result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return result;
+  }, [items]);
+
+  // Search filter
+  const filteredGroups = useMemo(() => {
+    if (!searchQuery.trim()) return groups;
+    const q = searchQuery.toLowerCase();
+    return groups.filter((g) => (g.description ?? "").toLowerCase().includes(q));
+  }, [groups, searchQuery]);
+
+  // Delete group (all items)
   const deleteMutation = trpc.history.delete.useMutation({
-    onSuccess: () => {
-      void utils.history.list.invalidate();
-      setDeleteTarget(null);
-    },
+    onSuccess: () => void utils.history.list.invalidate(),
   });
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
-    deleteMutation.mutate({ id: deleteTarget.id });
-  };
-
-  const handleDownload = (item: HistoryItem) => {
-    // Set target first, then open — avoids race with conditional render
-    setDownloadTarget(item);
-    // Use requestAnimationFrame to ensure state is committed before opening
-    requestAnimationFrame(() => setDownloadOpen(true));
+    for (const item of deleteTarget.items) {
+      await deleteMutation.mutateAsync({ id: item.id });
+    }
+    setDeleteTarget(null);
   };
 
   const handleEditAgain = (item: HistoryItem) => {
@@ -368,16 +413,16 @@ export default function History() {
     navigate("/");
   };
 
+  const handleDownload = (item: HistoryItem) => {
+    setDownloadTarget(item);
+    setTimeout(() => setDownloadOpen(true), 100);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50" dir={isRtl ? "rtl" : "ltr"}>
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container py-3 flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/")}
-            className="gap-1.5 text-muted-foreground"
-          >
+          <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="gap-1.5 text-muted-foreground">
             {isRtl ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
             {t("back")}
           </Button>
@@ -389,7 +434,20 @@ export default function History() {
         </div>
       </header>
 
-      <main className="container py-6">
+      <main className="container py-6 space-y-4">
+        {!isLoading && groups.length > 0 && (
+          <div className="relative max-w-sm">
+            <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRtl ? "right-3" : "left-3"}`} />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={isRtl ? "חיפוש לפי תיאור..." : "Search by description..."}
+              className={isRtl ? "pr-9 text-right" : "pl-9"}
+              dir={isRtl ? "rtl" : "ltr"}
+            />
+          </div>
+        )}
+
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {[...Array(8)].map((_, i) => (
@@ -402,7 +460,7 @@ export default function History() {
               </Card>
             ))}
           </div>
-        ) : !items || items.length === 0 ? (
+        ) : groups.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
               <Clock className="w-8 h-8 text-muted-foreground" />
@@ -416,17 +474,25 @@ export default function History() {
               {isRtl ? "צור עיצוב ראשון" : "Create First Design"}
             </Button>
           </div>
+        ) : filteredGroups.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+            <Search className="w-10 h-10 text-muted-foreground" />
+            <p className="text-base font-semibold">{isRtl ? "לא נמצאו תוצאות" : "No results found"}</p>
+            <p className="text-sm text-muted-foreground">{isRtl ? `אין עיצובים עם "${searchQuery}"` : `No designs matching "${searchQuery}"`}</p>
+            <Button variant="outline" size="sm" onClick={() => setSearchQuery("")}>{isRtl ? "נקה חיפוש" : "Clear search"}</Button>
+          </div>
         ) : (
           <>
-            <p className="text-sm text-muted-foreground mb-4">
-              {items.length} {t("designs")}
+            <p className="text-sm text-muted-foreground">
+              {filteredGroups.length} {isRtl ? "בקשות" : "requests"}
+              {searchQuery && ` (${isRtl ? "מסונן" : "filtered"})`}
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {items.map((item) => (
-                <HistoryCard
-                  key={item.id}
-                  item={item as HistoryItem}
-                  onView={setSelectedItem}
+              {filteredGroups.map((group) => (
+                <GroupCard
+                  key={group.groupId ?? group.items[0].id}
+                  group={group}
+                  onViewVariation={setSelectedItem}
                   onDelete={setDeleteTarget}
                   onEditAgain={handleEditAgain}
                   onDownload={handleDownload}
@@ -437,25 +503,22 @@ export default function History() {
         )}
       </main>
 
-      {/* Detail Dialog */}
       <DetailDialog
         item={selectedItem}
         onClose={() => setSelectedItem(null)}
         onDelete={(item) => {
           setSelectedItem(null);
-          setDeleteTarget(item);
+          const group = groups.find((g) => g.items.some((i) => i.id === item.id));
+          if (group) setDeleteTarget(group);
         }}
         onEditAgain={handleEditAgain}
         onDownload={(item) => {
-          // Store the item immediately before closing the detail dialog
           setDownloadTarget(item);
           setSelectedItem(null);
-          // Open download dialog after detail dialog has animated out
           setTimeout(() => setDownloadOpen(true), 200);
         }}
       />
 
-      {/* DXF / PDF Download Dialog — top level, never nested */}
       <DxfDownloadDialog
         open={downloadOpen && !!downloadTarget?.dxfUrl}
         onClose={() => { setDownloadOpen(false); setTimeout(() => setDownloadTarget(null), 300); }}
@@ -465,27 +528,23 @@ export default function History() {
         segmentCount={downloadTarget?.segmentCount ?? 0}
       />
 
-      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent dir={isRtl ? "rtl" : "ltr"}>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("deleteDesign")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {deleteTarget && deleteTarget.items.length > 1
+                ? isRtl ? `מחק ${deleteTarget.items.length} וריאציות?` : `Delete ${deleteTarget.items.length} variations?`
+                : isRtl ? "מחק עיצוב?" : "Delete design?"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("deleteConfirm")} "{(() => {
-                const desc = deleteTarget?.description ?? "";
-                if (!desc) return isRtl ? "העיצוב" : "this design";
-                const firstSentence = desc.split(/[.!?]/)[0].trim();
-                return firstSentence.length > 40 ? firstSentence.slice(0, 40) + "…" : firstSentence;
-              })()}"? {t("deleteWarning")}
+              {isRtl
+                ? `פעולה זו תמחק את כל הוריאציות של "${cleanDesc(deleteTarget?.description ?? null, "העיצוב")}". לא ניתן לשחזר.`
+                : `This will permanently delete all variations of "${cleanDesc(deleteTarget?.description ?? null, "this design")}". Cannot be undone.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className={isRtl ? "flex-row-reverse gap-2" : "gap-2"}>
             <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              className="bg-red-600 hover:bg-red-700"
-              disabled={deleteMutation.isPending}
-            >
+            <AlertDialogAction onClick={() => void handleDeleteConfirm()} className="bg-red-600 hover:bg-red-700" disabled={deleteMutation.isPending}>
               {deleteMutation.isPending ? t("deleting") : t("delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
