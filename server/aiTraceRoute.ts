@@ -174,7 +174,13 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number): 
   const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
   return (
     `Professional black and white line art illustration of ${objectDescription}. ` +
-    "CRITICAL: Reproduce the EXACT pose, facing direction, and orientation described above — do NOT mirror, rotate, or change the direction of any figure or object. " +
+    "=== CAMERA ANGLE / VIEW — MOST CRITICAL RULE === " +
+    "You MUST draw the object from the EXACT same camera angle and view described above. " +
+    "If the description says 'pure side view' or 'profile view' — draw it as a FLAT 90-DEGREE SIDE VIEW, NOT a 3/4 angle. " +
+    "If the description says 'front view' — draw it facing directly toward the viewer. " +
+    "DO NOT change the camera angle. DO NOT add perspective or 3D effect unless explicitly described. " +
+    "DO NOT mirror or flip the object. " +
+    "=== END CAMERA ANGLE RULE === " +
     "Pure white background (#FFFFFF). " +
     "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
     "High contrast: only pure black (#000000) lines on white. " +
@@ -182,7 +188,7 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number): 
     "Rule 1: The ENTIRE object MUST be 100% visible — NOTHING cut off, NOTHING touching the edge. " +
     "Rule 2: Scale the object DOWN so it fits entirely inside the frame with large white margins. " +
     "Rule 3: Leave AT LEAST 20% white empty space on EVERY side (top, bottom, left, right). " +
-    "Rule 4: If the object is wide (like a bicycle or car), make it shorter and wider within the frame — still with 20% margin on all sides. " +
+    "Rule 4: If the object is wide (like a bicycle or car), make it smaller within the frame — still with 20% margin on all sides. " +
     "Rule 5: The object must occupy NO MORE than 60% of the image width AND 60% of the image height. " +
     "=== END FRAMING RULES === " +
     "Show depth and structure with clear internal lines. " +
@@ -250,12 +256,12 @@ async function runTraceJob(
           content:
             "You are an expert at describing objects and figures for line art generation. " +
             "Analyze the image and provide a precise description for generating clean line art that EXACTLY matches the original. " +
-            "CRITICAL — you MUST describe: " +
-            "(1) The exact facing direction of any person/animal/figure (facing left, facing right, facing forward, facing backward, profile view, 3/4 view, etc.). " +
-            "(2) The exact body pose and position (standing, sitting, crouching, arms raised, arms at sides, walking, etc.). " +
-            "(3) The exact orientation of all objects (which way they face, tilt angle, perspective). " +
+            "CRITICAL — you MUST describe ALL of the following: " +
+            "(1) CAMERA ANGLE / VIEW TYPE — this is the most important: Is it a PURE SIDE VIEW (90 degrees, profile, like looking at it from the side)? A FRONT VIEW (facing camera)? A REAR VIEW? A 3/4 ANGLE VIEW (diagonal)? A TOP-DOWN VIEW? Be extremely specific. For example: 'pure left-side profile view', 'front-facing view', '3/4 angle from the front-right'. " +
+            "(2) The exact facing direction of any person/animal/figure/vehicle (facing left, facing right, facing forward, etc.). " +
+            "(3) The exact body pose and position (standing, sitting, crouching, arms raised, walking, etc.). " +
             "(4) Key structural features, proportions, and distinctive details. " +
-            "Output ONLY the description (3-5 sentences), no preamble. Be specific about directions.",
+            "Start your description with the camera angle/view type. Output ONLY the description (3-5 sentences), no preamble.",
         },
         {
           role: "user",
