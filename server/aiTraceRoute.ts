@@ -24,13 +24,47 @@ import { checkUsageLimit } from "./usageLimits";
 import { deductTokens, addTokens, TOKEN_COSTS, TokenAction } from "./tokenService";
 import { invokeLLM } from "./_core/llm";
 import { createJob, getJob, updateJob, cancelJob } from "./jobStore";
-import OpenAI from "openai";
 import { svgToDxf } from "./svgToDxf";
+import { ENV } from "./_core/env";
 import potrace from "potrace";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
+
+/**
+ * Call Manus Forge image generation API with a source image.
+ * The model sees the actual image and redraws it faithfully — preserving exact
+ * positions, proportions, poses, and directions.
+ */
+async function forgeGenerateImage(prompt: string, sourceB64: string, sourceMimeType: string): Promise<Buffer> {
+  if (!ENV.forgeApiUrl) throw new Error("BUILT_IN_FORGE_API_URL is not configured");
+  if (!ENV.forgeApiKey) throw new Error("BUILT_IN_FORGE_API_KEY is not configured");
+
+  const baseUrl = ENV.forgeApiUrl.endsWith("/") ? ENV.forgeApiUrl : `${ENV.forgeApiUrl}/`;
+  const fullUrl = new URL("images.v1.ImageService/GenerateImage", baseUrl).toString();
+
+  const response = await fetch(fullUrl, {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+      "connect-protocol-version": "1",
+      authorization: `Bearer ${ENV.forgeApiKey}`,
+    },
+    body: JSON.stringify({
+      prompt,
+      original_images: [{ b64Json: sourceB64, mimeType: sourceMimeType }],
+    }),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Image generation failed (${response.status})${detail ? `: ${detail}` : ""}`);
+  }
+
+  const result = (await response.json()) as { image: { b64Json: string; mimeType: string } };
+  return Buffer.from(result.image.b64Json, "base64");
+}
 
 /** Convert description to safe filename — capped at 15 chars for clean download names */
 function buildFilename(description: string): string {
@@ -269,33 +303,15 @@ async function runTraceJob(
 
     const baseFilename = buildFilename(userDesc || objectDescription);
 
-    // Step B: Generate 3 line art variations
+    // Step B: Generate 3 line art variations using Forge API with original image
+    // By sending the original image as originalImages, the model sees the actual
+    // pose, direction, and composition — producing faithful reproductions.
     const generationPromises = Array.from({ length: 3 }, async (_, idx) => {
       const imagePrompt = landscapeMode
         ? buildFullImagePrompt(objectDescription, idx)
         : buildLineArtPrompt(objectDescription, idx);
 
-      const response = await openai.images.generate({
-        model: "gpt-image-1",
-        prompt: imagePrompt,
-        n: 1,
-        size: "1024x1024",
-        quality: "medium",
-      });
-
-      const imageData = response.data?.[0];
-      if (!imageData) throw new Error("לא הצלחנו לייצר תמונה");
-
-      let rawBuffer: Buffer;
-      if (imageData.b64_json) {
-        rawBuffer = Buffer.from(imageData.b64_json, "base64");
-      } else if (imageData.url) {
-        const imgResponse = await fetch(imageData.url);
-        if (!imgResponse.ok) throw new Error("שגיאה בהורדת התמונה שנוצרה");
-        rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
-      } else {
-        throw new Error("לא התקבלה תמונה מה-AI");
-      }
+      const rawBuffer = await forgeGenerateImage(imagePrompt, imageBase64, "image/jpeg");
 
       const processedBuffer = await sharp(rawBuffer)
         .extend({ top: 120, bottom: 120, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })

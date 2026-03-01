@@ -886,8 +886,8 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
         </button>
       )}
 
-      {/* Processing state */}
-      {status === "loading" && (
+      {/* Processing state — shown below the image when no preview available */}
+      {status === "loading" && !imagePreview && (
         <div
           className="rounded-2xl p-8 text-center space-y-3"
           style={{

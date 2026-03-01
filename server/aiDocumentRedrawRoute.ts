@@ -22,18 +22,13 @@ import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { deductTokens, addTokens, TOKEN_COSTS, TokenAction } from "./tokenService";
-import OpenAI from "openai";
 import { svgToDxf } from "./svgToDxf";
 import potrace from "potrace";
 import { createJob, getJob, updateJob, cancelJob } from "./jobStore";
+import { ENV } from "./_core/env";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY ?? "",
-  timeout: 180_000, // 3 minutes — gpt-image-1 can take up to 2 min
-  maxRetries: 0,    // don't retry on timeout — let the job fail cleanly
-});
 
 /** Convert description to safe filename — capped at 15 chars for clean download names */
 function buildFilename(description: string): string {
@@ -69,6 +64,40 @@ function pngToSvg(pngBuffer: Buffer): Promise<string> {
       }
     );
   });
+}
+
+/**
+ * Call Manus Forge image generation API with optional source image.
+ * Uses originalImages to make the model see the actual image and redraw faithfully.
+ */
+async function forgeGenerateImage(prompt: string, sourceB64: string, sourceMimeType: string): Promise<Buffer> {
+  if (!ENV.forgeApiUrl) throw new Error("BUILT_IN_FORGE_API_URL is not configured");
+  if (!ENV.forgeApiKey) throw new Error("BUILT_IN_FORGE_API_KEY is not configured");
+
+  const baseUrl = ENV.forgeApiUrl.endsWith("/") ? ENV.forgeApiUrl : `${ENV.forgeApiUrl}/`;
+  const fullUrl = new URL("images.v1.ImageService/GenerateImage", baseUrl).toString();
+
+  const response = await fetch(fullUrl, {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+      "connect-protocol-version": "1",
+      authorization: `Bearer ${ENV.forgeApiKey}`,
+    },
+    body: JSON.stringify({
+      prompt,
+      original_images: [{ b64Json: sourceB64, mimeType: sourceMimeType }],
+    }),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Image generation failed (${response.status})${detail ? `: ${detail}` : ""}`);
+  }
+
+  const result = (await response.json()) as { image: { b64Json: string; mimeType: string } };
+  return Buffer.from(result.image.b64Json, "base64");
 }
 
 /**
@@ -144,7 +173,7 @@ async function runDocumentRedrawJob(
     const jobCheck = getJob(jobId);
     if (!jobCheck || jobCheck.status === "cancelled") return;
 
-    console.log("[aiDocumentRedraw] Preparing image for direct gpt-image-1 edit...");
+    console.log("[aiDocumentRedraw] Preparing image for Forge API edit...");
     const baseFilename = buildFilename(userDesc || "document");
 
     // Prepare image: resize to max 1024px, keep aspect ratio, convert to PNG
@@ -153,52 +182,35 @@ async function runDocumentRedrawJob(
       .png()
       .toBuffer();
 
+    const sourceB64 = editInputBuffer.toString("base64");
+
     // Check if cancelled before generation
     const jobBeforeGen = getJob(jobId);
     if (!jobBeforeGen || jobBeforeGen.status === "cancelled") return;
 
-    // ── Direct gpt-image-1 edit: send original image + simple clear instruction ──
-    // No LLM analysis step — the model sees the actual image and redraws it faithfully.
+    // ── Direct image edit via Forge API: send original image + clear instruction ──
+    // The model sees the actual image and redraws it faithfully — preserving exact
+    // positions, proportions, poses, and directions.
     const imagePrompt =
       `Redraw this entire image as a professional black and white engraving-style line art for CNC laser engraving.\n\n` +
       `STYLE: Fine art engraving — like a master woodcut or steel engraving. Lines should vary in weight: thicker for main outlines, thinner for interior details and textures. Decorative elements (flowers, leaves, scrollwork, ornaments) should have intricate, detailed linework with visible internal structure — NOT simplified childish outlines.\n\n` +
-      `WHAT TO DRAW: Every visible graphic element, decoration, shape, symbol, and ornamental detail in the image — faithfully reproduced in their exact positions and proportions. Capture fine details: petal veins on flowers, texture on objects, decorative scrollwork, filigree, etc.\n\n` +
+      `WHAT TO DRAW: Every visible graphic element, decoration, shape, symbol, and ornamental detail in the image — faithfully reproduced in their EXACT positions, proportions, and orientations. CRITICAL: preserve the exact pose, direction, and facing of every figure or object — do NOT mirror, rotate, or change the orientation of anything.\n\n` +
       `STRICT RULES:\n` +
       `1. NO TEXT: Remove ALL text, letters, words, numbers, and inscriptions. Draw ONLY the graphic/decorative elements.\n` +
       `2. ARTISTIC LINE WEIGHT: Use varied line thickness — bold outlines for shapes, fine lines for internal details and textures. This creates depth and artistic quality.\n` +
       `3. NO FILLS: No solid black areas, no grey fills, no gradients. Only black lines on white background.\n` +
       `4. RICH DETAIL: Include all decorative details visible in the original — do not simplify or omit fine ornamental elements.\n` +
-      `5. FAITHFUL COMPOSITION: Preserve the exact layout, proportions, and arrangement of the original image.\n\n` +
+      `5. FAITHFUL COMPOSITION: Preserve the exact layout, proportions, arrangement, and orientation of the original image.\n\n` +
       (userDesc ? `User note: ${userDesc}\n\n` : "") +
       `OUTPUT: Professional engraving-style line art. Black lines on pure white background. Artistic quality suitable for laser engraving on stone or metal.`;
 
-    const response = await openai.images.edit({
-      model: "gpt-image-1",
-      image: new File([new Uint8Array(editInputBuffer)], "source.png", { type: "image/png" }),
-      prompt: imagePrompt,
-      n: 1,
-      size: "1024x1024",
-    });
+    const rawBuffer = await forgeGenerateImage(imagePrompt, sourceB64, "image/png");
 
     const objectDescription = userDesc || "document redraw";
 
     // Check if cancelled after image generation
     const jobAfterGen = getJob(jobId);
     if (!jobAfterGen || jobAfterGen.status === "cancelled") return;
-
-    const imageData = response.data?.[0];
-    if (!imageData) throw new Error("לא הצלחנו לייצר תמונה");
-
-    let rawBuffer: Buffer;
-    if (imageData.b64_json) {
-      rawBuffer = Buffer.from(imageData.b64_json, "base64");
-    } else if (imageData.url) {
-      const imgResponse = await fetch(imageData.url);
-      if (!imgResponse.ok) throw new Error("שגיאה בהורדת התמונה שנוצרה");
-      rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
-    } else {
-      throw new Error("לא התקבלה תמונה מה-AI");
-    }
 
     // ── Step C: Vectorize ─────────────────────────────────────────────────────
     const result = await processImageToDxf(rawBuffer, baseFilename, "ai-document-redraw", originalAspect);
@@ -234,7 +246,7 @@ async function runDocumentRedrawJob(
     const message = err instanceof Error ? err.message : "Unknown error";
     updateJob(jobId, { status: "error", error: message });
     // Refund tokens on error
-      try { await addTokens(appUserId, TOKEN_COSTS["ai_trace"], "refund", "Job error — tokens refunded"); } catch (_) { /* ignore */ }
+    try { await addTokens(appUserId, TOKEN_COSTS["ai_trace"], "refund", "Job error — tokens refunded"); } catch (_) { /* ignore */ }
   }
 }
 
@@ -445,36 +457,23 @@ router.post(
       if (!imgResponse.ok) throw new Error("שגיאה בהורדת התמונה");
       const sourceBuffer = Buffer.from(await imgResponse.arrayBuffer());
 
-      // ── Refine with gpt-image-1 ───────────────────────────────────────────────
+      // Prepare as PNG for Forge API
+      const pngBuffer = await sharp(sourceBuffer)
+        .resize(1024, 1024, { fit: "inside", withoutEnlargement: true })
+        .png()
+        .toBuffer();
+      const sourceB64 = pngBuffer.toString("base64");
+
+      // ── Refine with Forge API ─────────────────────────────────────────────────
       const refinePrompt =
         `Apply this correction to the line art: ${instruction.trim()}. ` +
         (origDesc ? `Original design: ${origDesc}. ` : "") +
-        "Keep all other elements exactly as they are — same angles, same positions, same proportions. " +
+        "Keep all other elements exactly as they are — same angles, same positions, same proportions, same orientation. " +
         "Maintain the same clean black-and-white line art style. " +
         "Pure black lines on white background. No grey tones, no gradients. " +
         "The complete design must fit inside the frame with 12% margin.";
 
-      const response = await openai.images.edit({
-        model: "gpt-image-1",
-        image: new File([sourceBuffer], "source.png", { type: "image/png" }),
-        prompt: refinePrompt,
-        n: 1,
-        size: "1024x1024",
-      });
-
-      const imageData = response.data?.[0];
-      if (!imageData) throw new Error("לא הצלחנו לייצר תמונה");
-
-      let rawBuffer: Buffer;
-      if (imageData.b64_json) {
-        rawBuffer = Buffer.from(imageData.b64_json, "base64");
-      } else if (imageData.url) {
-        const dlResponse = await fetch(imageData.url);
-        if (!dlResponse.ok) throw new Error("שגיאה בהורדת התמונה שנוצרה");
-        rawBuffer = Buffer.from(await dlResponse.arrayBuffer());
-      } else {
-        throw new Error("לא התקבלה תמונה מה-AI");
-      }
+      const rawBuffer = await forgeGenerateImage(refinePrompt, sourceB64, "image/png");
 
       const baseFilename = buildFilename(origDesc || instruction);
       const result = await processImageToDxf(rawBuffer, baseFilename, "ai-document-refine");

@@ -570,13 +570,51 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
         {/* Loading */}
         {status === "loading" && (
           <div
-            className="rounded-xl p-8 flex flex-col items-center gap-3 text-center"
+            className="rounded-xl overflow-hidden"
             style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
           >
-              <div className="relative w-16 h-16">
-                <div className="absolute inset-0 rounded-full" style={{border: '3px solid #ccfbf1', borderTopColor: '#0d9488', animation: 'spin 1s linear infinite'}} />
-                <Wand2 className="absolute inset-0 m-auto w-6 h-6 text-teal-600" />
+            {/* Image preview with scanning animation */}
+            {imagePreview && (
+              <div className="relative overflow-hidden" style={{ maxHeight: 280 }}>
+                <img
+                  src={imagePreview}
+                  alt="Processing"
+                  className="w-full object-contain block"
+                  style={{ maxHeight: 280, filter: 'brightness(0.85)' }}
+                />
+                {/* Scanning line */}
+                <div
+                  className="absolute left-0 right-0 pointer-events-none"
+                  style={{
+                    top: 0,
+                    height: '3px',
+                    background: 'linear-gradient(90deg, transparent, #0d9488, #5eead4, #0d9488, transparent)',
+                    boxShadow: '0 0 12px 4px rgba(13,148,136,0.6)',
+                    animation: 'scanLine 2s ease-in-out infinite',
+                  }}
+                />
+                {/* Scanning glow overlay */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: 'linear-gradient(180deg, rgba(13,148,136,0.08) 0%, transparent 40%, transparent 60%, rgba(13,148,136,0.08) 100%)',
+                    animation: 'scanGlow 2s ease-in-out infinite',
+                  }}
+                />
+                {/* AI badge overlay */}
+                <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold" style={{background: 'rgba(13,148,136,0.9)', color: 'white'}}>
+                  <div className="w-3 h-3 rounded-full border-2 border-white/40 border-t-white" style={{animation: 'spin 0.8s linear infinite'}} />
+                  {isRtl ? 'AI מנתח...' : 'AI analyzing...'}
+                </div>
               </div>
+            )}
+            <div className="p-5 flex flex-col items-center gap-3 text-center">
+              {!imagePreview && (
+                <div className="relative w-14 h-14">
+                  <div className="absolute inset-0 rounded-full" style={{border: '3px solid #ccfbf1', borderTopColor: '#0d9488', animation: 'spin 1s linear infinite'}} />
+                  <Wand2 className="absolute inset-0 m-auto w-5 h-5 text-teal-600" />
+                </div>
+              )}
               <p className="font-semibold text-sm text-gray-700">{isRtl ? "ה-AI מנתח את התמונה ומצייר 3 עיצובים..." : "AI is analyzing your image and drawing 3 designs..."}</p>
               <p className="text-xs text-gray-400">{isRtl ? "זה עשוי לקחת 30-60 שניות" : "This may take 30-60 seconds"}</p>
               <div className="flex gap-1.5">
@@ -599,6 +637,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   {isRtl ? "בטל והחזר אסימונים" : "Cancel & Refund Tokens"}
                 </button>
               )}
+            </div>
           </div>
         )}
 

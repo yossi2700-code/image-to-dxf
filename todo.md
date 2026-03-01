@@ -780,3 +780,9 @@
 
 - [x] polling localStorage כל 2 שניות לזיהוי jobs פעילים
 - [x] הצגת badge כתום עם animate-ping על כל טאב כשיש job פעיל
+
+## תיקונים - מרץ 2026
+
+- [x] AI מתמונה: שיפור דיוק — שליחת תמונה מקורית ל-Forge API עם originalImages (הדמות/כיוון זהים)
+- [x] AI מתמונה: הצגת preview של התמונה שהועלתה עם אנימציית סריקה ויזואלית
+- [x] AI מסמך: תיקון — החלפת openai.images.edit (404) ב-Forge API עם originalImages
