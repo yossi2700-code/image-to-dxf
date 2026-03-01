@@ -5,7 +5,7 @@
  *  No two-step process needed — results arrive in one shot.
  */
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -248,9 +248,15 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [landscapeMode, setLandscapeMode] = useState(false);
-  const [jobId, setJobId] = useState<string | null>(null);
+  const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("ai_trace_jobId"));
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const setJobIdPersisted = useCallback((id: string | null) => {
+    if (id) localStorage.setItem("ai_trace_jobId", id);
+    else localStorage.removeItem("ai_trace_jobId");
+    setJobId(id);
+  }, []);
 
   // Poll job status every 3 seconds
   const startPolling = useCallback((id: string) => {
@@ -263,7 +269,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           setResult(data.result as TraceResult);
           setStatus("success");
-          setJobId(null);
+          setJobIdPersisted(null);
           refetchTokens();
           toast.success(isRtl ? `3 עיצובים מוכנים! בחר את המועדף ולחץ הורד DXF` : `3 designs ready! Choose your favorite and download DXF`);
         } else if (data.status === "error") {
@@ -271,16 +277,27 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
           const msg = data.message || (isRtl ? "שגיאה בעיבוד" : "Processing error");
           setErrorMsg(msg);
           setStatus("error");
-          setJobId(null);
+          setJobIdPersisted(null);
           toast.error(msg);
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           setStatus("idle");
-          setJobId(null);
+          setJobIdPersisted(null);
         }
       } catch (_) { /* network error, keep trying */ }
     }, 3000);
-  }, [isRtl, refetchTokens]);
+  }, [isRtl, refetchTokens, setJobIdPersisted]);
+
+  // On mount: resume polling if a jobId was saved (survived tab switch)
+  useEffect(() => {
+    const savedId = localStorage.getItem("ai_trace_jobId");
+    if (savedId) {
+      setStatus("loading");
+      startPolling(savedId);
+    }
+    return () => { if (pollIntervalRef.current) clearInterval(pollIntervalRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCancel = useCallback(async () => {
     if (!jobId) return;
@@ -294,8 +311,8 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       }
     } catch (_) { /* ignore */ }
     setStatus("idle");
-    setJobId(null);
-  }, [jobId, isRtl, refetchTokens]);
+    setJobIdPersisted(null);
+  }, [jobId, isRtl, refetchTokens, setJobIdPersisted]);
 
   const handleFile = useCallback((file: File) => {
     const allowed = ["image/png", "image/jpeg", "image/bmp", "image/webp", "image/gif"];
@@ -336,7 +353,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       }
       // Server returns jobId — start polling (background processing)
       if (data.jobId) {
-        setJobId(data.jobId);
+        setJobIdPersisted(data.jobId);
         startPolling(data.jobId);
       } else {
         // Legacy direct response
@@ -355,7 +372,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     setImageFile(null); setImagePreview(null); setResult(null);
     setStatus("idle"); setErrorMsg(""); setFocusText(""); setCustomImprovement("");
-    setJobId(null);
+    setJobIdPersisted(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 

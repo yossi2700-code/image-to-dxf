@@ -216,43 +216,46 @@ async function runDocumentRedrawJob(
     console.log("[aiDocumentRedraw] Illustrations found:", objectDescription.substring(0, 200));
     const baseFilename = buildFilename(userDesc || objectDescription);
 
-    // ── Step B: Draw ONLY the extracted illustrations with gpt-image-1 ──────────
-    // Determine aspect ratio string for the prompt
+    // ── Step B: Redraw using gpt-image-1 image editing — sends the ORIGINAL IMAGE directly ──
+    // Using images.edit so the model sees the actual photo and can faithfully reproduce its layout.
     const aspectDesc = originalAspect > 1.2
       ? "wider than tall (landscape orientation)"
       : originalAspect < 0.8
       ? "taller than wide (portrait orientation)"
       : "approximately square";
 
-    const imagePrompt =
-      `LASER ENGRAVING LINE ART REPRODUCTION — EXACT COPY REQUIRED.\n\n` +
-      `BLUEPRINT DESCRIPTION TO REPRODUCE:\n${objectDescription}\n\n` +
-      `DRAWING INSTRUCTIONS — FOLLOW IN ORDER:\n` +
-      `STEP 1 — DRAW THE OUTER SILHOUETTE: Draw the exact container shape described in SHAPE section. ` +
-      `If it says 'tombstone with arched top', draw that precise silhouette. If it says 'portrait rectangle', draw portrait rectangle. ` +
-      `The outer silhouette MUST match the described shape and proportions EXACTLY.\n` +
-      `STEP 2 — DRAW THE BORDER/FRAME: Add the border exactly as described in BORDER section — same shape as silhouette, same thickness, same decorative pattern.\n` +
-      `STEP 3 — PLACE ELEMENTS BY GRID: Use the 3x3 grid layout from GRID section. ` +
-      `Place each element in its EXACT grid cell. 'top-center' = top-center. 'bottom-left' = bottom-left. ` +
-      `Do NOT move elements from their described positions.\n` +
-      `STEP 4 — DRAW EACH ELEMENT: For each element in ELEMENTS section, draw it at the described SIZE (use percentages), ` +
-      `ORIENTATION (upright/tilted/rotated), and DETAIL LEVEL. Reproduce the correct COUNT of sub-elements ` +
-      `(e.g. if menorah has 7 candles, draw exactly 7 candles).\n` +
-      `STEP 5 — CHECK SYMMETRY: If elements are described as symmetric pairs, ensure they are perfectly mirrored.\n\n` +
-      `ABSOLUTE CONSTRAINTS:\n` +
-      `- NO text, NO letters, NO words, NO numbers — ONLY graphic/decorative elements.\n` +
-      `- Pure white background (#FFFFFF). Only pure black (#000000) lines. NO grey, NO fill, NO shading, NO gradients.\n` +
-      `- Clean thin lines suitable for laser engraving/CNC cutting.\n` +
-      `- The composition is ${aspectDesc}. Respect this orientation.\n` +
-      `- Leave 10% white margin on every edge — nothing cropped or touching the border.\n` +
-      `- ACCURACY IS THE ONLY GOAL — match the original layout exactly. Do not add artistic interpretation.`;
+    // Prepare a clean PNG version of the original image for editing
+    const editInputBuffer = await sharp(imageBuffer)
+      .resize(1024, 1024, { fit: "inside", withoutEnlargement: true })
+      .png()
+      .toBuffer();
 
-    const response = await openai.images.generate({
+    const imagePrompt =
+      `Convert this image into clean laser engraving line art. ` +
+      `REPRODUCE THE EXACT SAME LAYOUT, ELEMENTS, AND POSITIONS as in the original image.\n\n` +
+      `WHAT TO KEEP (reproduce faithfully):\n` +
+      `- The overall shape/silhouette of the composition (${aspectDesc})\n` +
+      `- Every decorative graphic element: borders, frames, ornaments, symbols, flowers, animals, geometric shapes\n` +
+      `- The exact position of each element (top/bottom/left/right/center — same as original)\n` +
+      `- Symmetric arrangements (if two roses flank the sides in original, draw two roses flanking the sides)\n` +
+      `- The relative size of each element compared to the whole composition\n\n` +
+      `WHAT TO REMOVE:\n` +
+      `- ALL text, letters, words, numbers — erase completely\n` +
+      `- Stone texture, photo background, shadows, gradients, grey tones\n\n` +
+      `OUTPUT STYLE:\n` +
+      `- Pure white background (#FFFFFF)\n` +
+      `- Only pure black (#000000) clean lines\n` +
+      `- No fill, no shading, no grey — only outlines\n` +
+      `- Suitable for laser engraving / CNC cutting\n` +
+      `- Leave 10% white margin on all edges\n\n` +
+      (objectDescription ? `ELEMENT REFERENCE (from image analysis):\n${objectDescription.slice(0, 800)}` : "");
+
+    const response = await openai.images.edit({
       model: "gpt-image-1",
+      image: new File([new Uint8Array(editInputBuffer)], "source.png", { type: "image/png" }),
       prompt: imagePrompt,
       n: 1,
       size: "1024x1024",
-      quality: "high",
     });
 
     // Check if cancelled after image generation

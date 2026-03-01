@@ -10,7 +10,7 @@
  * 
  * One result + option to request correction.
  */
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -484,6 +484,8 @@ interface AiDocumentRedrawTabProps {
   onOpenAuth: () => void;
 }
 
+const LS_KEY_DOC = "doc_redraw_jobId";
+
 export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
   const { isRtl } = useLanguage();
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
@@ -497,7 +499,7 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
   const [dragOver, setDragOver] = useState(false);
   const [downloadTarget, setDownloadTarget] = useState<RedrawImage | null>(null);
   const [zoomImg, setZoomImg] = useState<string | null>(null);
-  const [jobId, setJobId] = useState<string | null>(null);
+  const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem(LS_KEY_DOC));
   const [scanLine, setScanLine] = useState(0); // 0-100 percent for scanning animation
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -522,6 +524,13 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
     setScanLine(0);
   }, []);
 
+  // Persist jobId to localStorage whenever it changes
+  const setJobIdPersisted = useCallback((id: string | null) => {
+    if (id) localStorage.setItem(LS_KEY_DOC, id);
+    else localStorage.removeItem(LS_KEY_DOC);
+    setJobId(id);
+  }, []);
+
   // Poll job status
   const startPolling = useCallback((id: string) => {
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
@@ -534,6 +543,7 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
           stopScanAnimation();
           setResult(data.result as RedrawResult);
           setStatus("success");
+          setJobIdPersisted(null);
           refetchTokens();
           toast.success(isRtl ? "הציור מחדש הושלם בהצלחה!" : "Redraw completed successfully!");
         } else if (data.status === "error") {
@@ -542,17 +552,33 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
           const msg = data.message || (isRtl ? "שגיאה בעיבוד" : "Processing error");
           setErrorMsg(msg);
           setStatus("error");
+          setJobIdPersisted(null);
           refetchTokens();
           toast.error(msg);
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           stopScanAnimation();
           setStatus("idle");
+          setJobIdPersisted(null);
         }
         // pending/processing → keep polling
       } catch (_) { /* network error, keep trying */ }
     }, 3000);
   }, [isRtl, refetchTokens, stopScanAnimation]);
+
+  // On mount: if there's a saved jobId, resume polling (survived tab switch)
+  useEffect(() => {
+    const savedId = localStorage.getItem(LS_KEY_DOC);
+    if (savedId) {
+      setStatus("loading");
+      startScanAnimation();
+      startPolling(savedId);
+    }
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleFile = useCallback((file: File) => {
     const allowed = ["image/png", "image/jpeg", "image/bmp", "image/webp", "image/gif", "image/heic", "image/heif"];
@@ -621,7 +647,7 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
 
       // Server returned a jobId — start polling
       if (data.jobId) {
-        setJobId(data.jobId);
+        setJobIdPersisted(data.jobId);
         startPolling(data.jobId);
       } else {
         // Legacy direct response (shouldn't happen)
@@ -655,9 +681,8 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
       }
     } catch (_) { /* ignore */ }
     setStatus("idle");
-    setJobId(null);
+    setJobIdPersisted(null);
   };
-
   const reset = () => {
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     stopScanAnimation();
@@ -667,8 +692,8 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
     setStatus("idle");
     setErrorMsg("");
     setDescription("");
-    setJobId(null);
-  };
+    setJobIdPersisted(null);
+  };;
 
   return (
     <div className="space-y-4" dir={isRtl ? "rtl" : "ltr"}>

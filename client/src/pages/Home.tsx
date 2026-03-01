@@ -649,8 +649,14 @@ function AiGeneratorTab() {
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   const [showVector, setShowVector] = useState(false);
   const [landscapeMode, setLandscapeMode] = useState(false);
-  const [jobId, setJobId] = useState<string | null>(null);
+  const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("ai_generate_jobId"));
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const setJobIdPersisted = useCallback((id: string | null) => {
+    if (id) localStorage.setItem("ai_generate_jobId", id);
+    else localStorage.removeItem("ai_generate_jobId");
+    setJobId(id);
+  }, []);
 
   // Poll job status every 3 seconds
   const startPolling = useCallback((id: string) => {
@@ -667,7 +673,7 @@ function AiGeneratorTab() {
           setStatus("success");
           setShowModify(false);
           setModifications("");
-          setJobId(null);
+          setJobIdPersisted(null);
           refetchTokens();
           toast.success(t("aiSuccess"));
         } else if (data.status === "error") {
@@ -675,16 +681,27 @@ function AiGeneratorTab() {
           const msg = data.message || t("aiError");
           setErrorMsg(msg);
           setStatus("error");
-          setJobId(null);
+          setJobIdPersisted(null);
           toast.error(msg);
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           setStatus("idle");
-          setJobId(null);
+          setJobIdPersisted(null);
         }
       } catch (_) { /* network error, keep trying */ }
     }, 3000);
-  }, [t, refetchTokens]);
+  }, [t, refetchTokens, setJobIdPersisted]);
+
+  // On mount: resume polling if a jobId was saved (survived tab switch)
+  useEffect(() => {
+    const savedId = localStorage.getItem("ai_generate_jobId");
+    if (savedId) {
+      setStatus("loading");
+      startPolling(savedId);
+    }
+    return () => { if (pollIntervalRef.current) clearInterval(pollIntervalRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCancel = useCallback(async () => {
     if (!jobId) return;
@@ -698,8 +715,8 @@ function AiGeneratorTab() {
       }
     } catch (_) { /* ignore */ }
     setStatus("idle");
-    setJobId(null);
-  }, [jobId, isRtl, refetchTokens]);
+    setJobIdPersisted(null);
+  }, [jobId, isRtl, refetchTokens, setJobIdPersisted]);
 
   // Handle "Edit Again" from History page — restore previous design
   useEffect(() => {
@@ -768,7 +785,7 @@ function AiGeneratorTab() {
       if (!res.ok) throw new Error(data.message ?? data.error ?? t("aiError"));
       // Server returns jobId — start polling (background processing)
       if (data.jobId) {
-        setJobId(data.jobId);
+        setJobIdPersisted(data.jobId);
         startPolling(data.jobId);
       } else {
         // Legacy direct response
