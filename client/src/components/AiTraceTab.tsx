@@ -334,12 +334,11 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               <h2 className="font-semibold text-sm">{t("aiTraceTitle")}</h2>
             </div>
 
-            {/* Hidden file input */}
+            {/* Hidden file input — no capture attr so iPhone shows gallery + camera choice */}
             <input
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              capture="environment"
               className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
             />

@@ -147,11 +147,13 @@ function HistoryCard({
   onView,
   onDelete,
   onEditAgain,
+  onDownload,
 }: {
   item: HistoryItem;
   onView: (item: HistoryItem) => void;
   onDelete: (item: HistoryItem) => void;
   onEditAgain: (item: HistoryItem) => void;
+  onDownload: (item: HistoryItem) => void;
 }) {
   const { t, isRtl, language } = useLanguage();
   const isAi = item.actionType === "ai_generate";
@@ -205,6 +207,17 @@ function HistoryCard({
             <span>{item.segmentCount.toLocaleString()} {t("lines")}</span>
           )}
         </div>
+        {/* Direct download button on card */}
+        {item.dxfUrl && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onDownload(item); }}
+            className="w-full mt-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-green-600 hover:bg-green-700 active:bg-green-800 text-white text-xs font-semibold transition-colors"
+          >
+            <Download className="w-3.5 h-3.5" />
+            {isRtl ? "הורד DXF / PDF" : "Download DXF / PDF"}
+          </button>
+        )}
       </CardContent>
     </Card>
   );
@@ -336,8 +349,10 @@ export default function History() {
   };
 
   const handleDownload = (item: HistoryItem) => {
+    // Set target first, then open — avoids race with conditional render
     setDownloadTarget(item);
-    setDownloadOpen(true);
+    // Use requestAnimationFrame to ensure state is committed before opening
+    requestAnimationFrame(() => setDownloadOpen(true));
   };
 
   const handleEditAgain = (item: HistoryItem) => {
@@ -414,6 +429,7 @@ export default function History() {
                   onView={setSelectedItem}
                   onDelete={setDeleteTarget}
                   onEditAgain={handleEditAgain}
+                  onDownload={handleDownload}
                 />
               ))}
             </div>
@@ -431,23 +447,23 @@ export default function History() {
         }}
         onEditAgain={handleEditAgain}
         onDownload={(item) => {
+          // Store the item immediately before closing the detail dialog
+          setDownloadTarget(item);
           setSelectedItem(null);
-          // Small delay so detail dialog closes before download dialog opens
-          setTimeout(() => handleDownload(item), 150);
+          // Open download dialog after detail dialog has animated out
+          setTimeout(() => setDownloadOpen(true), 200);
         }}
       />
 
       {/* DXF / PDF Download Dialog — top level, never nested */}
-      {downloadTarget && downloadTarget.dxfUrl && (
-        <DxfDownloadDialog
-          open={downloadOpen}
-          onClose={() => { setDownloadOpen(false); setDownloadTarget(null); }}
-          svgContent={downloadTarget.svgPreview ?? ""}
-          dxfUrl={downloadTarget.dxfUrl}
-          defaultFilename={`${downloadTarget.description ?? "design"}.dxf`}
-          segmentCount={downloadTarget.segmentCount ?? 0}
-        />
-      )}
+      <DxfDownloadDialog
+        open={downloadOpen && !!downloadTarget?.dxfUrl}
+        onClose={() => { setDownloadOpen(false); setTimeout(() => setDownloadTarget(null), 300); }}
+        svgContent={downloadTarget?.svgPreview ?? ""}
+        dxfUrl={downloadTarget?.dxfUrl ?? ""}
+        defaultFilename={`${downloadTarget?.description ?? "design"}.dxf`}
+        segmentCount={downloadTarget?.segmentCount ?? 0}
+      />
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
