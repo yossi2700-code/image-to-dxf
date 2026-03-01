@@ -153,16 +153,16 @@ async function runDocumentRedrawJob(
           role: "system",
           content:
             "You are a precise graphic analyst for laser engraving reproduction. " +
-            "Your ONLY job: describe ALL non-text decorative graphic elements in the image so they can be redrawn EXACTLY as they appear — same angles, same proportions, same positions, same sizes relative to each other. " +
+            "Your ONLY job: produce a COMPLETE technical description of the image so an AI can redraw it EXACTLY — same overall shape, same angles, same proportions, same element positions, same sizes. " +
             "\n\nCRITICAL RULES:\n" +
-            "1. SCAN THE ENTIRE IMAGE — top, bottom, left, right, center, corners. Do NOT miss any element.\n" +
-            "2. Describe EVERY decorative element: flowers, leaves, vines, birds, geometric ornaments, corner decorations, border patterns, symbols, portraits, animals, scrollwork, etc.\n" +
-            "3. For EACH element specify: exact position (top-left corner, center, surrounding border, etc.), shape, size relative to others, orientation/angle, and style.\n" +
-            "4. If there are MULTIPLE FLOWERS or repeated motifs, describe ALL of them with their exact arrangement.\n" +
-            "5. If there is a BORDER or FRAME, describe the complete border pattern including corners.\n" +
+            "1. FIRST: Describe the OVERALL SHAPE/SILHOUETTE of the main object — e.g. 'tombstone with arched top and curved shoulders', 'rectangular frame with rounded corners', 'oval medallion', 'shield shape'. Include exact proportions (wider than tall? portrait? square?).\n" +
+            "2. THEN: Describe the OUTER BORDER/FRAME if present — its exact shape, thickness, and any decorative edge pattern.\n" +
+            "3. THEN: Scan the ENTIRE image — top, bottom, left, right, center, corners. Describe EVERY decorative element with its EXACT POSITION (e.g. 'centered at top inside arch', 'bottom-left quadrant', 'flanking left side from top to bottom').\n" +
+            "4. For EACH element specify: exact position, shape, size relative to overall composition, orientation/angle, and style.\n" +
+            "5. If there are MULTIPLE SIMILAR elements (e.g. two candelabras, two vine branches), describe ALL of them and their mirror/symmetric arrangement.\n" +
             "6. NEVER describe text, letters, numbers, or plain background material.\n" +
             "7. If there are NO illustrations at all (only text and plain background), respond with exactly: NO_ILLUSTRATIONS\n" +
-            "8. Output a structured description: start with 'COMPOSITION OVERVIEW:' then list each element with its position and proportions.",
+            "8. Output structured description starting with 'SHAPE:' (overall silhouette), then 'BORDER:' (frame/border), then 'ELEMENTS:' (each decorative element with position).",
         },
         {
           role: "user",
@@ -177,8 +177,8 @@ async function runDocumentRedrawJob(
             {
               type: "text",
               text: userDesc
-                ? `Scan the ENTIRE image and describe ALL decorative graphic elements with their exact positions, angles, and proportions. Do NOT miss any element. Do NOT describe text or background. Additional context: ${userDesc}`
-                : "Scan the ENTIRE image carefully. Describe ALL decorative graphic elements — check every corner, every edge. List each element with its exact position, angle, and size relative to the overall composition. If there are multiple flowers or ornaments, describe ALL of them. Do NOT describe text, letters, or background.",
+                ? `First describe the OVERALL SHAPE of the main object (arch, rectangle, oval, etc.) and its proportions. Then describe the border/frame. Then scan the ENTIRE image and describe ALL decorative graphic elements with their exact positions, angles, and proportions. Do NOT describe text or background. Additional context: ${userDesc}`
+                : "First describe the OVERALL SHAPE/SILHOUETTE of the main object (e.g. tombstone with arched top, rectangular frame, oval shape) and its proportions. Then describe the border/frame if present. Then scan the ENTIRE image carefully — every corner, every edge. List each decorative element with its EXACT POSITION (top-center, bottom-left, flanking sides, etc.), angle, and size. If there are symmetric pairs, describe both. Do NOT describe text, letters, or background.",
             },
           ],
         },
@@ -216,17 +216,19 @@ async function runDocumentRedrawJob(
       : "approximately square";
 
     const imagePrompt =
-      `Professional laser engraving line art. Reproduce EXACTLY this complete composition as it appears in the original: ${objectDescription}. ` +
-      "\n\nCRITICAL REQUIREMENTS:\n" +
-      "1. REPRODUCE THE COMPLETE COMPOSITION FAITHFULLY — draw EVERY element described, in its exact described position. If there are 4 corner ornaments, draw all 4. If there is a surrounding border, draw the full border.\n" +
-      "2. MAINTAIN EXACT ANGLES AND PROPORTIONS — reproduce each element at the same angle and size as in the original. Do NOT rotate, resize, or reposition elements.\n" +
-      `3. MAINTAIN ORIGINAL ORIENTATION — the composition is ${aspectDesc}. Respect this orientation.\n` +
-      "4. NO text, NO letters, NO words, NO numbers — only the graphic/decorative elements.\n" +
-      "5. Pure white background (#FFFFFF). Only pure black (#000000) lines. NO grey tones, NO fills, NO gradients, NO shading.\n" +
-      "6. Clean, precise, thin lines suitable for laser engraving.\n" +
-      "7. The complete composition MUST fit entirely inside the frame with 12% white margin on every edge — nothing cropped.\n" +
-      "8. Style: professional engraving quality line art — clean outlines with precise inner detail lines.\n" +
-      "9. Maximum fidelity to the original — this will be used for laser engraving and must match the original design exactly.";
+      `Technical laser engraving line art reproduction. Draw EXACTLY this composition: ${objectDescription}. ` +
+      "\n\nCRITICAL REQUIREMENTS — READ CAREFULLY:\n" +
+      "1. DRAW THE OVERALL SHAPE FIRST — if the description says 'tombstone with arched top and curved shoulders', draw that exact silhouette outline as the main container shape. The outer shape/silhouette MUST match the original.\n" +
+      "2. DRAW THE BORDER/FRAME exactly as described — same shape, same thickness, same decorative pattern.\n" +
+      "3. PLACE EVERY ELEMENT IN ITS EXACT DESCRIBED POSITION — 'top-center' means top-center, 'bottom-left' means bottom-left, 'flanking both sides' means symmetric on both sides. Do NOT rearrange elements.\n" +
+      "4. REPRODUCE EVERY ELEMENT FAITHFULLY — draw each decorative element (Star of David, candelabra, Torah scroll, vine branches, flowers, etc.) in its exact described position, size, and orientation.\n" +
+      "5. MAINTAIN EXACT PROPORTIONS — if the original is taller than wide, the drawing must be taller than wide. Same aspect ratio.\n" +
+      `6. MAINTAIN ORIGINAL ORIENTATION — the composition is ${aspectDesc}. Respect this orientation.\n` +
+      "7. NO text, NO letters, NO words, NO numbers — only the graphic/decorative elements.\n" +
+      "8. Pure white background (#FFFFFF). Only pure black (#000000) lines. NO grey tones, NO fills, NO gradients, NO shading.\n" +
+      "9. Clean, precise lines suitable for laser engraving — not artistic interpretation, but faithful technical reproduction.\n" +
+      "10. The complete composition MUST fit entirely inside the frame with 12% white margin on every edge — nothing cropped.\n" +
+      "11. ACCURACY OVER BEAUTY — it is more important to match the original layout exactly than to make it look beautiful.";
 
     const response = await openai.images.generate({
       model: "gpt-image-1",

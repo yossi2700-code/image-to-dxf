@@ -37,6 +37,7 @@ import {
   Maximize2,
   Scan,
   FileEdit,
+  X,
 } from "lucide-react";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -648,6 +649,57 @@ function AiGeneratorTab() {
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   const [showVector, setShowVector] = useState(false);
   const [landscapeMode, setLandscapeMode] = useState(false);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Poll job status every 3 seconds
+  const startPolling = useCallback((id: string) => {
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    pollIntervalRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/generate-images/job/${id}`, { credentials: "include" });
+        const data = await res.json();
+        if (data.status === "done") {
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          const result = data.result as { success: boolean; images: AiImage[] };
+          setImages(result.images);
+          setSelectedIdx(null);
+          setStatus("success");
+          setShowModify(false);
+          setModifications("");
+          setJobId(null);
+          refetchTokens();
+          toast.success(t("aiSuccess"));
+        } else if (data.status === "error") {
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          const msg = data.message || t("aiError");
+          setErrorMsg(msg);
+          setStatus("error");
+          setJobId(null);
+          toast.error(msg);
+        } else if (data.status === "cancelled") {
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          setStatus("idle");
+          setJobId(null);
+        }
+      } catch (_) { /* network error, keep trying */ }
+    }, 3000);
+  }, [t, refetchTokens]);
+
+  const handleCancel = useCallback(async () => {
+    if (!jobId) return;
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    try {
+      const res = await fetch(`/api/generate-images/cancel/${jobId}`, { method: "POST", credentials: "include" });
+      const data = await res.json();
+      if (data.cancelled) {
+        toast.success(isRtl ? "העיבוד בוטל והאסימונים הוחזרו" : "Processing cancelled — tokens refunded");
+        refetchTokens();
+      }
+    } catch (_) { /* ignore */ }
+    setStatus("idle");
+    setJobId(null);
+  }, [jobId, isRtl, refetchTokens]);
 
   // Handle "Edit Again" from History page — restore previous design
   useEffect(() => {
@@ -690,6 +742,7 @@ function AiGeneratorTab() {
       const res = await fetch("/api/generate-images", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           prompt: prompt.trim(),
           modifications: isModify ? modifications.trim() : undefined,
@@ -697,6 +750,10 @@ function AiGeneratorTab() {
         }),
       });
       const data = await res.json();
+      if (data.error === "REGISTRATION_REQUIRED" || data.error === "UNAUTHORIZED") {
+        setStatus("idle");
+        return;
+      }
       if (data.error === "INSUFFICIENT_TOKENS") {
         const msg = language === "he" ? data.message : data.messageEn;
         setErrorMsg(msg);
@@ -708,13 +765,20 @@ function AiGeneratorTab() {
         });
         return;
       }
-      if (!res.ok || !data.success) throw new Error(data.message ?? data.error ?? t("aiError"));
-      setImages(data.images as AiImage[]);
-      setStatus("success");
-      setShowModify(false);
-      setModifications("");
-      refetchTokens();
-      toast.success(t("aiSuccess"));
+      if (!res.ok) throw new Error(data.message ?? data.error ?? t("aiError"));
+      // Server returns jobId — start polling (background processing)
+      if (data.jobId) {
+        setJobId(data.jobId);
+        startPolling(data.jobId);
+      } else {
+        // Legacy direct response
+        setImages(data.images as AiImage[]);
+        setStatus("success");
+        setShowModify(false);
+        setModifications("");
+        refetchTokens();
+        toast.success(t("aiSuccess"));
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t("aiError");
       setErrorMsg(msg);
@@ -848,6 +912,21 @@ function AiGeneratorTab() {
                   <div key={i} className="w-2 h-2 rounded-full bg-indigo-400" style={{animation: `bounce 1s infinite ${i * 0.15}s`}} />
                 ))}
               </div>
+              {jobId && (
+                <p className="text-xs text-gray-400">
+                  {isRtl ? "תוכל לעבור לטאב אחר — ה-AI ימשיך לעבד ברקע" : "You can switch tabs — AI keeps processing in background"}
+                </p>
+              )}
+              {jobId && (
+                <button
+                  onClick={handleCancel}
+                  className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg transition-all"
+                  style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}
+                >
+                  <X className="w-4 h-4" />
+                  {isRtl ? "בטל והחזר אסימונים" : "Cancel & Refund Tokens"}
+                </button>
+              )}
             </div>
         </div>
       )}

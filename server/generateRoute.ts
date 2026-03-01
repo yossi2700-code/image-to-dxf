@@ -4,8 +4,8 @@ import { nanoid } from "nanoid";
 import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
-import { checkUsageLimit } from "./usageLimits";
-import { deductTokens } from "./tokenService";
+import { deductTokens, addTokens, TOKEN_COSTS, TokenAction } from "./tokenService";
+import { createJob, getJob, updateJob, cancelJob } from "./jobStore";
 import OpenAI from "openai";
 import { svgToDxf } from "./svgToDxf";
 import potrace from "potrace";
@@ -17,9 +17,6 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
 /**
  * Three distinct style variations for the same subject.
- * V1: Artistic clean outline — professional, elegant, not childish
- * V2: Sharp precise — structural details, fewer lines than V3
- * V3: Moderately complex — slightly more elements/details than V2, not excessive
  */
 const STYLE_VARIATIONS = [
   {
@@ -61,10 +58,6 @@ const STYLE_VARIATIONS = [
   },
 ];
 
-/**
- * Three distinct style variations for LANDSCAPE mode.
- * Designed to capture the full scene: sky, horizon, foreground, buildings, nature.
- */
 const LANDSCAPE_STYLE_VARIATIONS = [
   {
     label: "simple",
@@ -80,7 +73,6 @@ const LANDSCAPE_STYLE_VARIATIONS = [
       "Detailed landscape line art. Clear horizon with rich detail in all layers: sky elements (clouds, sun), " +
       "background (mountains, distant buildings), midground (trees, structures), foreground (ground, plants, paths). " +
       "Every visible element drawn with clean distinct lines. NO texture, NO hatching, NO shading, NO fill. " +
-      "Like a detailed panoramic illustration or travel sketch. " +
       "CRITICAL FRAMING: The entire scene must fit within 75% of the image. Leave at least 10% white margin on every edge.",
   },
   {
@@ -89,7 +81,6 @@ const LANDSCAPE_STYLE_VARIATIONS = [
       "Elegant decorative landscape line art. Flowing artistic lines capturing the full scenic view. " +
       "Detailed silhouettes of all scene elements with decorative inner line work. " +
       "NO texture, NO hatching, NO shading, NO fill. " +
-      "Like a fine art engraving of a landscape — beautiful and suitable for laser cutting. " +
       "CRITICAL FRAMING: The entire scene must fit within 75% of the image. Leave at least 10% white margin on every edge.",
   },
 ];
@@ -120,7 +111,6 @@ function buildLandscapePrompt(userPrompt: string, variationIndex: number): strin
 
 function buildLineArtPrompt(userPrompt: string, variationIndex: number): string {
   const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
-  // Detect if the user prompt contains Hebrew characters — if so, include a text accuracy instruction
   const hasHebrew = /[\u0590-\u05FF]/.test(userPrompt);
   const textInstruction = hasHebrew
     ? `CRITICAL TEXT ACCURACY: If the design includes Hebrew text, you MUST spell every word EXACTLY as written in the prompt: "${userPrompt}". ` +
@@ -143,7 +133,6 @@ function buildLineArtPrompt(userPrompt: string, variationIndex: number): string 
   );
 }
 
-/** Convert a user prompt to a safe filename — capped at 15 chars for clean download names */
 function promptToFilename(prompt: string): string {
   const words = prompt
     .trim()
@@ -159,18 +148,14 @@ function promptToFilename(prompt: string): string {
   return (name || "design").slice(0, 15);
 }
 
-/**
- * Convert a PNG buffer to SVG using potrace.
- * potrace traces the bitmap contours into smooth Bezier curves.
- */
 function pngToSvg(pngBuffer: Buffer): Promise<string> {
   return new Promise((resolve, reject) => {
     potrace.trace(pngBuffer, {
-      threshold: 180,       // pixels darker than this become foreground
-      turdSize: 8,          // ignore speckles smaller than this (noise removal)
-      alphaMax: 1,          // corner smoothness (0=sharp, 1.33=smooth)
-      optCurve: true,       // optimize curves
-      optTolerance: 0.2,    // curve optimization tolerance
+      threshold: 180,
+      turdSize: 8,
+      alphaMax: 1,
+      optCurve: true,
+      optTolerance: 0.2,
     }, (err: Error | null, svg: string) => {
       if (err) reject(err);
       else resolve(svg);
@@ -179,70 +164,30 @@ function pngToSvg(pngBuffer: Buffer): Promise<string> {
 }
 
 /**
- * POST /api/generate-images
- * Body: { prompt: string, modifications?: string }
- * Returns: { images: Array<{ imageUrl, svgPreview, dxfUrl, segmentCount, width, height }> }
+ * Core processing function — runs in background after job is created.
  */
-router.post("/api/generate-images", async (req, res) => {
+async function runGenerateJob(
+  jobId: string,
+  prompt: string,
+  modifications: string | undefined,
+  landscapeMode: boolean,
+  appUserId: number,
+  ipAnon: string
+) {
   try {
-    const { prompt, modifications, landscapeMode } = req.body as {
-      prompt?: string;
-      modifications?: string;
-      landscapeMode?: boolean;
-    };
+    updateJob(jobId, { status: "processing" });
 
-    if (!prompt || prompt.trim().length < 2) {
-      return res.status(400).json({ error: "נא להזין תיאור של התמונה הרצויה" });
-    }
+    const jobCheck = getJob(jobId);
+    if (!jobCheck || jobCheck.status === "cancelled") return;
 
-    const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
-    const ipAnon = anonymizeIp(rawIp);
-    const appUser = getAppUserFromCookie(req.cookies);
-
-    // Only registered users may generate
-    if (!appUser?.userId) {
-      return res.status(401).json({ error: "REGISTRATION_REQUIRED", message: "נדרשת הרשמה כדי ליצור עיצובי AI" });
-    }
-
-    // Block check
-    const { getDb } = await import("./db");
-    const { appUsers } = await import("../drizzle/schema");
-    const { eq } = await import("drizzle-orm");
-    const dbConn = await getDb();
-    if (dbConn) {
-      const [userRow] = await dbConn.select({ isBlocked: appUsers.isBlocked }).from(appUsers).where(eq(appUsers.id, appUser.userId)).limit(1);
-      if (userRow?.isBlocked) {
-        return res.status(403).json({
-          error: "USER_BLOCKED",
-          message: "חשבונך חסום. לפרטים פנה לרובוטיקה וטכנולוגיה.",
-          messageEn: "Your account has been blocked. Please contact Robotics & Technology.",
-        });
-      }
-    }
-
-    // Token check & deduction
-    const tokenResult = await deductTokens(appUser.userId, "ai_generate", prompt);
-    if (!tokenResult.success) {
-      return res.status(402).json({
-        error: "INSUFFICIENT_TOKENS",
-        balance: tokenResult.balance,
-        message: "נגמרו לך האסימונים. ליצירת קשר ורכישת אסימונים נוספים פנה לרובוטיקה וטכנולוגיה.",
-        messageEn: "You have run out of tokens. To purchase more tokens, contact Robotics & Technology.",
-      });
-    }
-
-    const fullPrompt = modifications
-      ? `${prompt}. Modifications: ${modifications}`
-      : prompt;
-
+    const fullPrompt = modifications ? `${prompt}. Modifications: ${modifications}` : prompt;
     const baseFilename = promptToFilename(prompt);
 
-    // Generate 3 images in parallel using gpt-image-1 — each with a different style variation
     const generationPromises = Array.from({ length: 3 }, async (_, idx) => {
       const imagePrompt = landscapeMode
         ? buildLandscapePrompt(fullPrompt, idx)
         : buildLineArtPrompt(fullPrompt, idx);
-      // Step 1: Generate PNG with AI
+
       const response = await openai.images.generate({
         model: "gpt-image-1",
         prompt: imagePrompt,
@@ -265,11 +210,9 @@ router.post("/api/generate-images", async (req, res) => {
         throw new Error("לא התקבלה תמונה מה-AI");
       }
 
-      // Step 2: Pre-process — add generous white padding to prevent edge cropping, then high-contrast grayscale
-      // Use larger top/bottom padding since tall characters (clowns, people) are most often cropped vertically
       const paddedBuffer = await sharp(rawBuffer)
         .extend({
-          top: 140,    // ~14% of 1024px — extra top padding for tall figures
+          top: 140,
           bottom: 140,
           left: 100,
           right: 100,
@@ -277,43 +220,40 @@ router.post("/api/generate-images", async (req, res) => {
         })
         .resize(1024, 1024, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .grayscale()
-        .threshold(200)   // hard threshold: pixels > 200 → white, rest → black
+        .threshold(200)
         .png()
         .toBuffer();
-      const processedBuffer = paddedBuffer;
 
-      // Step 3: Vectorize with potrace (bitmap → smooth SVG Bezier curves)
-      const rawSvg = await pngToSvg(processedBuffer);
-      // potrace fills paths with black by default — convert to stroke-only for preview
+      const rawSvg = await pngToSvg(paddedBuffer);
       const svgContent = rawSvg
         .replace(/fill="[^"]*"/g, 'fill="none"')
         .replace(/fill:[^;"']*(;|(?="))/g, 'fill:none$1')
         .replace(/<path /g, '<path stroke="black" stroke-width="1.5" fill="none" ');
-      // Remove duplicate fill/stroke attrs that might appear after replacement
       const cleanSvg = svgContent.replace(/stroke="black" stroke-width="1.5" fill="none" ([^>]*?)fill="none"/g, 'stroke="black" stroke-width="1.5" fill="none" $1');
 
-      // Step 4: Convert SVG to DXF (use raw SVG for DXF — fill doesn't matter there)
       const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg);
 
-      // Upload original PNG to S3 for preview thumbnail
       const imgKey = `ai-generated/${nanoid()}.png`;
       const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
 
-      // Upload DXF to S3 — use prompt-based filename
       const variation = STYLE_VARIATIONS[idx % STYLE_VARIATIONS.length];
       const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
       const dxfKey = `dxf-ai/${nanoid()}-${dxfFilename}`;
-      const { url: dxfUrl } = await storagePut(
-        dxfKey,
-        Buffer.from(dxf, "utf-8"),
-        "application/dxf"
-      );
+      const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
 
-      // Use cleanSvg (stroke-only) for visual preview
       return { imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight };
     });
 
-    const images = await Promise.all(generationPromises);
+    // Check cancelled after each image
+    const images: Array<{ imageUrl: string; svgPreview: string; dxfUrl: string; dxfFilename: string; segmentCount: number; width: number; height: number; realWidth: number; realHeight: number }> = [];
+    for (let i = 0; i < 3; i++) {
+      const jobMid = getJob(jobId);
+      if (!jobMid || jobMid.status === "cancelled") return;
+      images.push(await generationPromises[i]);
+    }
+
+    const jobAfterGen = getJob(jobId);
+    if (!jobAfterGen || jobAfterGen.status === "cancelled") return;
 
     // Log usage
     const totalSegments = images.reduce((s, img) => s + img.segmentCount, 0);
@@ -323,8 +263,7 @@ router.post("/api/generate-images", async (req, res) => {
       ipAnon: anonymizeIp(ipAnon ?? undefined),
     });
 
-    // Record user action (user is guaranteed logged in at this point)
-    // All 3 variations share the same groupId so History can group them
+    // Record user actions
     const groupId = nanoid(12);
     const variationLabels = landscapeMode
       ? ["simple", "detailed", "decorative"]
@@ -332,7 +271,7 @@ router.post("/api/generate-images", async (req, res) => {
     for (let i = 0; i < images.length; i++) {
       const img = images[i];
       void recordUserAction({
-        appUserId: appUser.userId,
+        appUserId,
         actionType: "ai_generate",
         description: fullPrompt.slice(0, 200),
         segmentCount: img.segmentCount,
@@ -344,45 +283,123 @@ router.post("/api/generate-images", async (req, res) => {
       });
     }
 
-    return res.json({ success: true, images });
-  } catch (err: unknown) {
-    console.error("[generate-images]", err);
+    updateJob(jobId, { status: "done", result: { success: true, images } });
 
-    // Handle OpenAI-specific errors with friendly Hebrew messages
-    if (err && typeof err === "object" && "status" in err) {
-      const apiErr = err as { status: number; message?: string; code?: string };
-      if (apiErr.status === 429) {
-        return res.status(503).json({
-          error: "SERVICE_UNAVAILABLE",
-          message: "שירות ה-AI עמוס כרגע. אנא נסה שוב בעוד מספר דקות.",
-        });
-      }
-      if (apiErr.status === 402 || apiErr.code === "insufficient_quota") {
-        return res.status(503).json({
-          error: "SERVICE_UNAVAILABLE",
-          message: "שירות ה-AI אינו זמין כרגע. אנא נסה שוב מאוחר יותר.",
-        });
-      }
-      if (apiErr.status === 400) {
-        return res.status(400).json({
-          error: "INVALID_PROMPT",
-          message: "הפרומפט אינו תקין. נסה תיאור אחר.",
+  } catch (err: unknown) {
+    console.error("[generateRoute] Job error:", err);
+    const message = err instanceof Error ? err.message : "Unknown error";
+    updateJob(jobId, { status: "error", error: message });
+  }
+}
+
+// ─── POST /api/generate-images ────────────────────────────────────────────────
+router.post("/api/generate-images", async (req, res) => {
+  try {
+    const { prompt, modifications, landscapeMode } = req.body as {
+      prompt?: string;
+      modifications?: string;
+      landscapeMode?: boolean;
+    };
+
+    if (!prompt || prompt.trim().length < 2) {
+      return res.status(400).json({ error: "נא להזין תיאור של התמונה הרצויה" });
+    }
+
+    const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+    const ipAnon = anonymizeIp(rawIp);
+    const appUser = getAppUserFromCookie(req.cookies);
+
+    if (!appUser?.userId) {
+      return res.status(401).json({ error: "REGISTRATION_REQUIRED", message: "נדרשת הרשמה כדי ליצור עיצובי AI" });
+    }
+
+    const { getDb } = await import("./db");
+    const { appUsers } = await import("../drizzle/schema");
+    const { eq } = await import("drizzle-orm");
+    const dbConn = await getDb();
+    if (dbConn) {
+      const [userRow] = await dbConn.select({ isBlocked: appUsers.isBlocked }).from(appUsers).where(eq(appUsers.id, appUser.userId)).limit(1);
+      if (userRow?.isBlocked) {
+        return res.status(403).json({
+          error: "USER_BLOCKED",
+          message: "חשבונך חסום. לפרטים פנה לרובוטיקה וטכנולוגיה.",
+          messageEn: "Your account has been blocked. Please contact Robotics & Technology.",
         });
       }
     }
 
-    // Check error message for quota/billing keywords
-    const errMsg = err instanceof Error ? err.message : String(err);
-    if (errMsg.toLowerCase().includes("quota") || errMsg.toLowerCase().includes("billing") || errMsg.toLowerCase().includes("insufficient")) {
-      return res.status(503).json({
-        error: "SERVICE_UNAVAILABLE",
-        message: "שירות ה-AI אינו זמין כרגע. אנא נסה שוב מאוחר יותר.",
+    const tokenResult = await deductTokens(appUser.userId, "ai_generate", prompt);
+    if (!tokenResult.success) {
+      return res.status(402).json({
+        error: "INSUFFICIENT_TOKENS",
+        balance: tokenResult.balance,
+        message: "נגמרו לך האסימונים. ליצירת קשר ורכישת אסימונים נוספים פנה לרובוטיקה וטכנולוגיה.",
+        messageEn: "You have run out of tokens. To purchase more tokens, contact Robotics & Technology.",
       });
     }
 
-    const message = err instanceof Error ? err.message : "שגיאה ביצירת התמונות";
-    return res.status(500).json({ error: message });
+    const jobId = nanoid(12);
+    createJob(jobId, appUser.userId, "ai_generate");
+
+    runGenerateJob(jobId, prompt.trim(), modifications, !!landscapeMode, appUser.userId, ipAnon ?? "")
+      .catch((err) => console.error("[generateRoute] Unhandled job error:", err));
+
+    return res.json({ jobId });
+
+  } catch (err: unknown) {
+    console.error("[generate-images]", err);
+    const errMsg = err instanceof Error ? err.message : String(err);
+    if (errMsg.toLowerCase().includes("quota") || errMsg.toLowerCase().includes("billing")) {
+      return res.status(503).json({ error: "SERVICE_UNAVAILABLE", message: "שירות ה-AI אינו זמין כרגע." });
+    }
+    return res.status(500).json({ error: errMsg });
   }
+});
+
+// ─── GET /api/generate-images/job/:jobId ──────────────────────────────────────
+router.get("/api/generate-images/job/:jobId", (req, res) => {
+  const appUser = getAppUserFromCookie(req.cookies);
+  if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
+
+  const job = getJob(req.params.jobId);
+  if (!job) return res.status(404).json({ error: "JOB_NOT_FOUND" });
+  if (job.userId !== appUser.userId) return res.status(403).json({ error: "FORBIDDEN" });
+
+  if (job.status === "done") {
+    return res.json({ status: "done", result: job.result });
+  } else if (job.status === "error") {
+    return res.json({ status: "error", error: job.error, message: `שגיאה: ${job.error}` });
+  } else if (job.status === "cancelled") {
+    return res.json({ status: "cancelled" });
+  } else {
+    return res.json({ status: job.status });
+  }
+});
+
+// ─── POST /api/generate-images/cancel/:jobId ──────────────────────────────────
+router.post("/api/generate-images/cancel/:jobId", async (req, res) => {
+  const appUser = getAppUserFromCookie(req.cookies);
+  if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
+
+  const job = getJob(req.params.jobId);
+  if (!job) return res.status(404).json({ error: "JOB_NOT_FOUND" });
+  if (job.userId !== appUser.userId) return res.status(403).json({ error: "FORBIDDEN" });
+
+  if (job.status === "done") {
+    return res.json({ cancelled: false, reason: "Job already completed" });
+  }
+
+  const wasCancelled = cancelJob(req.params.jobId);
+  if (wasCancelled) {
+    try {
+      await addTokens(appUser.userId, TOKEN_COSTS[(job.tokenAction as TokenAction) || "ai_generate"], "refund", "Job cancelled — tokens refunded");
+    } catch (refundErr) {
+      console.error("[generateRoute] Refund error:", refundErr);
+    }
+    return res.json({ cancelled: true });
+  }
+
+  return res.json({ cancelled: false, reason: "Job already finished" });
 });
 
 export default router;

@@ -23,6 +23,7 @@ import {
   Maximize2,
   Wand2,
   CheckCircle2,
+  X,
 } from "lucide-react";
 
 interface GeneratedImage {
@@ -247,7 +248,54 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [landscapeMode, setLandscapeMode] = useState(false);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Poll job status every 3 seconds
+  const startPolling = useCallback((id: string) => {
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    pollIntervalRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/ai-trace/job/${id}`, { credentials: "include" });
+        const data = await res.json();
+        if (data.status === "done") {
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          setResult(data.result as TraceResult);
+          setStatus("success");
+          setJobId(null);
+          refetchTokens();
+          toast.success(isRtl ? `3 עיצובים מוכנים! בחר את המועדף ולחץ הורד DXF` : `3 designs ready! Choose your favorite and download DXF`);
+        } else if (data.status === "error") {
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          const msg = data.message || (isRtl ? "שגיאה בעיבוד" : "Processing error");
+          setErrorMsg(msg);
+          setStatus("error");
+          setJobId(null);
+          toast.error(msg);
+        } else if (data.status === "cancelled") {
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          setStatus("idle");
+          setJobId(null);
+        }
+      } catch (_) { /* network error, keep trying */ }
+    }, 3000);
+  }, [isRtl, refetchTokens]);
+
+  const handleCancel = useCallback(async () => {
+    if (!jobId) return;
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    try {
+      const res = await fetch(`/api/ai-trace/cancel/${jobId}`, { method: "POST", credentials: "include" });
+      const data = await res.json();
+      if (data.cancelled) {
+        toast.success(isRtl ? "העיבוד בוטל והאסימונים הוחזרו" : "Processing cancelled — tokens refunded");
+        refetchTokens();
+      }
+    } catch (_) { /* ignore */ }
+    setStatus("idle");
+    setJobId(null);
+  }, [jobId, isRtl, refetchTokens]);
 
   const handleFile = useCallback((file: File) => {
     const allowed = ["image/png", "image/jpeg", "image/bmp", "image/webp", "image/gif"];
@@ -286,10 +334,17 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
         }
         throw new Error(isRtl ? (data.message || data.error) : (data.messageEn || data.error || "Error"));
       }
-      setResult(data as TraceResult);
-      setStatus("success");
-      refetchTokens();
-      toast.success(isRtl ? `3 עיצובים מוכנים! בחר את המועדף ולחץ הורד DXF` : `3 designs ready! Choose your favorite and download DXF`);
+      // Server returns jobId — start polling (background processing)
+      if (data.jobId) {
+        setJobId(data.jobId);
+        startPolling(data.jobId);
+      } else {
+        // Legacy direct response
+        setResult(data as TraceResult);
+        setStatus("success");
+        refetchTokens();
+        toast.success(isRtl ? `3 עיצובים מוכנים! בחר את המועדף ולחץ הורד DXF` : `3 designs ready! Choose your favorite and download DXF`);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : (isRtl ? "שגיאה בעיבוד" : "Processing error");
       setErrorMsg(msg); setStatus("error"); toast.error(msg);
@@ -297,8 +352,10 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   };
 
   const reset = () => {
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     setImageFile(null); setImagePreview(null); setResult(null);
     setStatus("idle"); setErrorMsg(""); setFocusText(""); setCustomImprovement("");
+    setJobId(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -505,6 +562,21 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   <div key={i} className="w-1.5 h-1.5 rounded-full bg-teal-400" style={{animation: `bounce 1s infinite ${i * 0.15}s`}} />
                 ))}
               </div>
+              {jobId && (
+                <p className="text-xs text-gray-400">
+                  {isRtl ? "תוכל לעבור לטאב אחר — ה-AI ימשיך לעבד ברקע" : "You can switch tabs — AI keeps processing in background"}
+                </p>
+              )}
+              {jobId && (
+                <button
+                  onClick={handleCancel}
+                  className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg transition-all"
+                  style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}
+                >
+                  <X className="w-4 h-4" />
+                  {isRtl ? "בטל והחזר אסימונים" : "Cancel & Refund Tokens"}
+                </button>
+              )}
           </div>
         )}
 

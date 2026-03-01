@@ -21,8 +21,9 @@ import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { checkUsageLimit } from "./usageLimits";
-import { deductTokens } from "./tokenService";
+import { deductTokens, addTokens, TOKEN_COSTS, TokenAction } from "./tokenService";
 import { invokeLLM } from "./_core/llm";
+import { createJob, getJob, updateJob, cancelJob } from "./jobStore";
 import OpenAI from "openai";
 import { svgToDxf } from "./svgToDxf";
 import potrace from "potrace";
@@ -235,6 +236,172 @@ function pngToSvg(pngBuffer: Buffer): Promise<string> {
   });
 }
 
+// ─── Background job runner for AI Trace ──────────────────────────────────────
+async function runTraceJob(
+  jobId: string,
+  imageBuffer: Buffer,
+  imageBase64: string,
+  userDesc: string,
+  focusText: string,
+  landscapeMode: boolean,
+  lang: "he" | "en",
+  appUserId: number,
+  ipAnon: string
+) {
+  try {
+    updateJob(jobId, { status: "processing" });
+    const jobCheck = getJob(jobId);
+    if (!jobCheck || jobCheck.status === "cancelled") return;
+
+    // Step A: LLM analyzes image
+    let analysisInstruction: string;
+    if (landscapeMode) {
+      analysisInstruction = focusText
+        ? `Describe this landscape scene for line art generation, focusing on: "${focusText}". Include ALL visible elements: sky, horizon, background, midground, foreground. Describe the full panoramic composition. Output ONLY the description (3-5 sentences), no preamble.`
+        : "Describe this landscape/scene for line art generation. Include ALL visible elements: sky, horizon, background (mountains/buildings), midground (trees/structures), foreground (ground/plants). Describe the full panoramic composition. Output ONLY the description (3-5 sentences), no preamble.";
+    } else if (focusText) {
+      analysisInstruction = `The user wants to draw: "${focusText}". Describe ONLY that specific element from the image in detail for line art generation. Focus on its shape, structure, key features, style, and proportions. Output ONLY the description (2-4 sentences), no preamble.`;
+    } else {
+      analysisInstruction = userDesc
+        ? `Describe the main object for line art generation. Additional context: ${userDesc}`
+        : "Describe the main/dominant object in this image for line art generation.";
+    }
+
+    const llmResponse = await invokeLLM({
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an expert at describing objects for line art generation. " +
+            "Analyze the image and provide a concise, detailed description suitable for generating clean line art. " +
+            "Focus on: shape, structure, key features, style, proportions. " +
+            "Output ONLY the description (2-4 sentences), no preamble.",
+        },
+        {
+          role: "user",
+          content: [
+            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "low" } },
+            { type: "text", text: analysisInstruction },
+          ],
+        },
+      ],
+    });
+
+    const jobAfterLlm = getJob(jobId);
+    if (!jobAfterLlm || jobAfterLlm.status === "cancelled") return;
+
+    const objectDescription =
+      (llmResponse as { choices?: Array<{ message?: { content?: string } }> })
+        ?.choices?.[0]?.message?.content?.trim() ||
+      userDesc ||
+      "the object in the image";
+
+    const baseFilename = buildFilename(userDesc || objectDescription);
+
+    // Step B: Generate 3 line art variations
+    const generationPromises = Array.from({ length: 3 }, async (_, idx) => {
+      const imagePrompt = landscapeMode
+        ? buildLandscapePrompt(objectDescription, idx)
+        : buildLineArtPrompt(objectDescription, idx);
+
+      const response = await openai.images.generate({
+        model: "gpt-image-1",
+        prompt: imagePrompt,
+        n: 1,
+        size: "1024x1024",
+        quality: "medium",
+      });
+
+      const imageData = response.data?.[0];
+      if (!imageData) throw new Error("לא הצלחנו לייצר תמונה");
+
+      let rawBuffer: Buffer;
+      if (imageData.b64_json) {
+        rawBuffer = Buffer.from(imageData.b64_json, "base64");
+      } else if (imageData.url) {
+        const imgResponse = await fetch(imageData.url);
+        if (!imgResponse.ok) throw new Error("שגיאה בהורדת התמונה שנוצרה");
+        rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
+      } else {
+        throw new Error("לא התקבלה תמונה מה-AI");
+      }
+
+      const processedBuffer = await sharp(rawBuffer)
+        .extend({ top: 120, bottom: 120, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .resize(1024, 1024, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .grayscale()
+        .threshold(200)
+        .png()
+        .toBuffer();
+
+      const rawSvg = await pngToSvg(processedBuffer);
+      const svgContent = rawSvg
+        .replace(/fill="[^"]*"/g, 'fill="none"')
+        .replace(/fill:[^;"']*(;|(?="))/g, 'fill:none$1')
+        .replace(/<path /g, '<path stroke="black" stroke-width="1.5" fill="none" ');
+      const cleanSvg = svgContent.replace(
+        /stroke="black" stroke-width="1.5" fill="none" ([^>]*?)fill="none"/g,
+        'stroke="black" stroke-width="1.5" fill="none" $1'
+      );
+
+      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg);
+      const imgKey = `ai-trace-generated/${nanoid()}.png`;
+      const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
+      const variation = STYLE_VARIATIONS[idx % STYLE_VARIATIONS.length];
+      const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
+      const dxfKey = `ai-trace-dxf/${nanoid()}-${dxfFilename}`;
+      const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
+
+      return { imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight };
+    });
+
+    // Check cancelled before image gen
+    const jobBeforeGen = getJob(jobId);
+    if (!jobBeforeGen || jobBeforeGen.status === "cancelled") return;
+
+    const [images, suggestions] = await Promise.all([
+      Promise.all(generationPromises),
+      generateImprovementSuggestions(objectDescription, imageBase64, lang),
+    ]);
+
+    const jobAfterGen = getJob(jobId);
+    if (!jobAfterGen || jobAfterGen.status === "cancelled") return;
+
+    // Log usage
+    const totalSegments = images.reduce((s, img) => s + img.segmentCount, 0);
+    void logUsageEvent({
+      type: "ai_generate",
+      segmentCount: Math.round(totalSegments / images.length),
+      ipAnon: anonymizeIp(ipAnon),
+    });
+
+    // Record user actions
+    const groupId = nanoid(12);
+    const variationLabels = landscapeMode ? ["simple", "detailed", "decorative"] : ["simple", "detailed", "decorative"];
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
+      void recordUserAction({
+        appUserId,
+        actionType: "ai_generate",
+        description: objectDescription.slice(0, 200),
+        segmentCount: img.segmentCount,
+        dxfUrl: img.dxfUrl,
+        imageUrl: img.imageUrl,
+        svgPreview: img.svgPreview,
+        groupId,
+        variationLabel: variationLabels[i] ?? `v${i + 1}`,
+      });
+    }
+
+    updateJob(jobId, { status: "done", result: { success: true, images, objectDescription, suggestions } });
+
+  } catch (err: unknown) {
+    console.error("[aiTraceRoute] Job error:", err);
+    const message = err instanceof Error ? err.message : "Unknown error";
+    updateJob(jobId, { status: "error", error: message });
+  }
+}
+
 // ─── STEP 1: Analyze image with LLM → draw from scratch with gpt-image-1 ──────
 
 router.post(
@@ -290,189 +457,28 @@ router.post(
         return res.status(400).json({ error: "NO_IMAGE", message: "לא סופקה תמונה" });
       }
 
-      // ── Resize for LLM analysis (512px = fewer Vision tokens = lower cost) ──────
+      // Resize for LLM analysis
       const resized = await sharp(imageBuffer)
         .resize(512, 512, { fit: "inside", withoutEnlargement: true })
         .jpeg({ quality: 85 })
         .toBuffer();
-
       const imageBase64 = resized.toString("base64");
+
       const userDesc = (req.body?.description || "").trim();
       const focusText = (req.body?.focusText || "").trim();
       const landscapeMode = req.body?.landscapeMode === "true" || req.body?.landscapeMode === true;
-
-      // ── Step A: LLM analyzes image → extracts detailed object description ─────
-      // We use GPT-4o vision to understand what's in the image and describe it
-      // in a way that gpt-image-1 can draw from scratch (same as AI Generate tab).
-      console.log("[aiTrace] Analyzing image with LLM...");
-
-      // Build the user instruction based on landscapeMode / focusText
-      let analysisInstruction: string;
-      if (landscapeMode) {
-        analysisInstruction = focusText
-          ? `Describe this landscape scene for line art generation, focusing on: "${focusText}". Include ALL visible elements: sky, horizon, background, midground, foreground. Describe the full panoramic composition. Output ONLY the description (3-5 sentences), no preamble.`
-          : "Describe this landscape/scene for line art generation. Include ALL visible elements: sky, horizon, background (mountains/buildings), midground (trees/structures), foreground (ground/plants). Describe the full panoramic composition. Output ONLY the description (3-5 sentences), no preamble.";
-      } else if (focusText) {
-        analysisInstruction = `The user wants to draw: "${focusText}". Describe ONLY that specific element from the image in detail for line art generation. Focus on its shape, structure, key features, style, and proportions. Output ONLY the description (2-4 sentences), no preamble.`;
-      } else {
-        analysisInstruction = userDesc
-          ? `Describe the main object for line art generation. Additional context: ${userDesc}`
-          : "Describe the main/dominant object in this image for line art generation.";
-      }
-
-      const llmResponse = await invokeLLM({
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are an expert at describing objects for line art generation. " +
-              "Analyze the image and provide a concise, detailed description suitable for generating clean line art. " +
-              "Focus on: shape, structure, key features, style, proportions. " +
-              "Output ONLY the description (2-4 sentences), no preamble.",
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:image/jpeg;base64,${imageBase64}`,
-                  detail: "low",
-                },
-              },
-              {
-                type: "text",
-                text: analysisInstruction,
-              },
-            ],
-          },
-        ],
-      });
-
-      const objectDescription =
-        (llmResponse as { choices?: Array<{ message?: { content?: string } }> })
-          ?.choices?.[0]?.message?.content?.trim() ||
-        userDesc ||
-        "the object in the image";
-
-      console.log("[aiTrace] Object description:", objectDescription.substring(0, 120));
-
-      const baseFilename = buildFilename(userDesc || objectDescription);
-
-      // ── Step B: Generate 3 line art variations with gpt-image-1 ──────────────
-      // Exactly the same pipeline as generateRoute — draw from scratch, no image reference.
-      // This guarantees the same clean output quality as the AI Generate tab.
-      const generationPromises = Array.from({ length: 3 }, async (_, idx) => {
-        const imagePrompt = landscapeMode
-          ? buildLandscapePrompt(objectDescription, idx)
-          : buildLineArtPrompt(objectDescription, idx);
-
-        const response = await openai.images.generate({
-          model: "gpt-image-1",
-          prompt: imagePrompt,
-          n: 1,
-          size: "1024x1024",
-          quality: "medium",
-        });
-
-        const imageData = response.data?.[0];
-        if (!imageData) throw new Error("לא הצלחנו לייצר תמונה");
-
-        let rawBuffer: Buffer;
-        if (imageData.b64_json) {
-          rawBuffer = Buffer.from(imageData.b64_json, "base64");
-        } else if (imageData.url) {
-          const imgResponse = await fetch(imageData.url);
-          if (!imgResponse.ok) throw new Error("שגיאה בהורדת התמונה שנוצרה");
-          rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
-        } else {
-          throw new Error("לא התקבלה תמונה מה-AI");
-        }
-
-        // Pre-process: add generous white padding to prevent edge cropping, then grayscale + threshold
-        // The AI sometimes generates objects touching the edges — padding ensures nothing is cut off
-        const processedBuffer = await sharp(rawBuffer)
-          .extend({
-            top: 120,    // ~12% of 1024px — generous top/bottom padding
-            bottom: 120,
-            left: 80,
-            right: 80,
-            background: { r: 255, g: 255, b: 255, alpha: 1 },
-          })
-          .resize(1024, 1024, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-          .grayscale()
-          .threshold(200)
-          .png()
-          .toBuffer();
-
-        // Vectorize with potrace → smooth SVG Bezier curves
-        const rawSvg = await pngToSvg(processedBuffer);
-
-        // Convert filled paths to stroke-only for SVG preview
-        const svgContent = rawSvg
-          .replace(/fill="[^"]*"/g, 'fill="none"')
-          .replace(/fill:[^;"']*(;|(?="))/g, 'fill:none$1')
-          .replace(/<path /g, '<path stroke="black" stroke-width="1.5" fill="none" ');
-        const cleanSvg = svgContent.replace(
-          /stroke="black" stroke-width="1.5" fill="none" ([^>]*?)fill="none"/g,
-          'stroke="black" stroke-width="1.5" fill="none" $1'
-        );
-
-        // Convert SVG to DXF
-        const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg);
-
-        // Upload original PNG to S3
-        const imgKey = `ai-trace-generated/${nanoid()}.png`;
-        const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
-
-        // Upload DXF to S3
-        const variation = STYLE_VARIATIONS[idx % STYLE_VARIATIONS.length];
-        const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
-        const dxfKey = `ai-trace-dxf/${nanoid()}-${dxfFilename}`;
-        const { url: dxfUrl } = await storagePut(
-          dxfKey,
-          Buffer.from(dxf, "utf-8"),
-          "application/dxf"
-        );
-
-        return { imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight };
-      });
-
-      // Run suggestions generation in parallel with image generation
       const lang = ((req.body?.lang as string) || "en") === "he" ? "he" : "en";
-      const [images, suggestions] = await Promise.all([
-        Promise.all(generationPromises),
-        generateImprovementSuggestions(objectDescription, imageBase64, lang),
-      ]);
+      const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+      const ipAnon = anonymizeIp(rawIp);
 
-      // ── Log usage ─────────────────────────────────────────────────────────────
-      const ip = req.headers["x-forwarded-for"]?.toString() || req.socket.remoteAddress || "";
-      const totalSegments = images.reduce((s, img) => s + img.segmentCount, 0);
-      await logUsageEvent({
-        type: "ai_generate",
-        segmentCount: Math.round(totalSegments / images.length),
-        ipAnon: anonymizeIp(ip),
-      });
+      // Create job and start background processing
+      const jobId = nanoid(12);
+      createJob(jobId, appUser.userId, "ai_trace");
 
-      // Record user actions
-      for (const img of images) {
-        void recordUserAction({
-          appUserId: appUser.userId,
-          actionType: "ai_generate",
-          description: objectDescription.slice(0, 200),
-          segmentCount: img.segmentCount,
-          dxfUrl: img.dxfUrl,
-          imageUrl: img.imageUrl,
-          svgPreview: img.svgPreview,
-        });
-      }
+      runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "")
+        .catch((err) => console.error("[aiTraceRoute] Unhandled job error:", err));
 
-      return res.json({
-        success: true,
-        images,
-        objectDescription,
-        suggestions,
-      });
+      return res.json({ jobId });
 
     } catch (err: unknown) {
       console.error("[aiTraceRoute] Step 1 Error:", err);
@@ -492,6 +498,52 @@ router.post(
     }
   }
 );
+
+// ─── GET /api/ai-trace/job/:jobId ─────────────────────────────────────────────
+router.get("/api/ai-trace/job/:jobId", (req, res) => {
+  const appUser = getAppUserFromCookie(req.cookies);
+  if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
+
+  const job = getJob(req.params.jobId);
+  if (!job) return res.status(404).json({ error: "JOB_NOT_FOUND" });
+  if (job.userId !== appUser.userId) return res.status(403).json({ error: "FORBIDDEN" });
+
+  if (job.status === "done") {
+    return res.json({ status: "done", result: job.result });
+  } else if (job.status === "error") {
+    return res.json({ status: "error", error: job.error, message: `שגיאה: ${job.error}` });
+  } else if (job.status === "cancelled") {
+    return res.json({ status: "cancelled" });
+  } else {
+    return res.json({ status: job.status });
+  }
+});
+
+// ─── POST /api/ai-trace/cancel/:jobId ─────────────────────────────────────────
+router.post("/api/ai-trace/cancel/:jobId", async (req, res) => {
+  const appUser = getAppUserFromCookie(req.cookies);
+  if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
+
+  const job = getJob(req.params.jobId);
+  if (!job) return res.status(404).json({ error: "JOB_NOT_FOUND" });
+  if (job.userId !== appUser.userId) return res.status(403).json({ error: "FORBIDDEN" });
+
+  if (job.status === "done") {
+    return res.json({ cancelled: false, reason: "Job already completed" });
+  }
+
+  const wasCancelled = cancelJob(req.params.jobId);
+  if (wasCancelled) {
+    try {
+      await addTokens(appUser.userId, TOKEN_COSTS[(job.tokenAction as TokenAction) || "ai_trace"], "refund", "Job cancelled — tokens refunded");
+    } catch (refundErr) {
+      console.error("[aiTraceRoute] Refund error:", refundErr);
+    }
+    return res.json({ cancelled: true });
+  }
+
+  return res.json({ cancelled: false, reason: "Job already finished" });
+});
 
 // ─── STEP 2 (legacy): Re-convert a PNG to DXF using potrace ───────────────────
 // Kept for backward compatibility. Now uses potrace → svgToDxf (same as generateRoute).

@@ -698,3 +698,20 @@
 - [x] עיבוד job-based בשרת: העיבוד ממשיך גם אם המשתמש יוצא מהאפליקציה
 - [x] כפתור ביטול עיבוד שמחזיר אסימונים
 - [x] polling מהלקוח לבדיקת סטאטוס ה-job
+
+## עיבוד ברקע + ביטול בכל הפיצ'רים - מרץ 2026
+- [ ] AI יצירה: job-based background processing + כפתור ביטול + החזר אסימונים
+- [ ] AI מתמונה: job-based background processing + כפתור ביטול + החזר אסימונים
+- [ ] עדכון UI: polling + כפתור ביטול + אנימציית סורק ב-AI יצירה ו-AI מתמונה
+
+## שיפור דיוק AI מסמך - תיאור צורה + מיקום מדויק - מרץ 2026
+- [ ] עדכון פרומפט LLM: תיאור צורת האובייקט הכוללת (מצבה, קשת, מסגרת) + מיקום מדויק של כל אלמנט
+- [ ] עדכון פרומפט ציור: שמירה על צורת האובייקט + מיקום מדויק של כל אלמנט ללא טקסט
+
+## Background Job Processing - כל הטאבים
+
+- [x] AI יצירה (generateRoute): background job + polling + cancel + refund
+- [x] AI מתמונה (aiTraceRoute): background job + polling + cancel + refund
+- [x] AI מסמך (aiDocumentRedrawRoute): background job + polling + cancel + refund
+- [x] UI: כפתור ביטול + החזר אסימונים בכל 3 הטאבים
+- [x] UI: הודעה "תוכל לעבור לטאב אחר — ה-AI ימשיך לעבד ברקע"
