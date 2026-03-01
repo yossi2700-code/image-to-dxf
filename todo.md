@@ -586,3 +586,14 @@
 - [x] UI: אפשרות "בקש תיקון" עם textarea לתיאור השינוי הרצוי
 - [x] אינטגרציה: הוספת טאב חדש ל-Home.tsx
 - [x] בדיקות Vitest: 9 בדיקות עוברות לשני ה-endpoints
+
+## הסרת טאב העלאה ללא AI
+- [x] הסרת TabsTrigger "upload" מ-Home.tsx
+- [x] הסרת TabsContent "upload" מ-Home.tsx
+
+## תיקון בעיית חיתוך/ריבוי קווים - מרץ 2026
+- [ ] תיקון prompt וריאציה 3 — ללא hatching/texture/crosshatch, קווים נקיים בלבד
+- [ ] תיקון כל 3 וריאציות — הגבלת מספר קווים מקסימלי
+- [ ] שיפור preprocessing ב-sharp לפני potrace — סף threshold גבוה יותר לדחיית אפור
+- [ ] הגדלת simplifyTolerance ל-AI images לצמצום קווים
+- [ ] הוספת מגבלת maxSegments לאחר potrace

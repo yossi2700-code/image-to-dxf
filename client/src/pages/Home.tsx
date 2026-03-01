@@ -1144,11 +1144,6 @@ export default function Home() {
               <span className="hidden xs:inline">{isRtl ? "✏️ AI מסמך" : "✏️ AI Doc"}</span>
               <span className="xs:hidden">{isRtl ? "AI מסמך" : "AI Doc"}</span>
             </TabsTrigger>
-            <TabsTrigger value="upload" className="flex-1 gap-1.5 text-sm font-semibold">
-              <Upload className="w-4 h-4" />
-              <span className="hidden xs:inline">{isRtl ? "העלאת קובץ" : "Upload File"}</span>
-              <span className="xs:hidden">{isRtl ? "העלאה" : "Upload"}</span>
-            </TabsTrigger>
           </TabsList>
           <TabsContent value="ai">
             <AiGeneratorTab />
@@ -1158,9 +1153,6 @@ export default function Home() {
           </TabsContent>
           <TabsContent value="redraw">
             <AiDocumentRedrawTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
-          </TabsContent>
-          <TabsContent value="upload">
-            <UploadTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
           </TabsContent>
         </Tabs>
       </main>
