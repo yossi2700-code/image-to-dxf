@@ -247,7 +247,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const [downloadTarget, setDownloadTarget] = useState<GeneratedImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   const [dragOver, setDragOver] = useState(false);
-  const [landscapeMode, setLandscapeMode] = useState(false);
+  const [fullImageMode, setFullImageMode] = useState(false);
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("ai_trace_jobId"));
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -345,7 +345,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       if (description.trim()) formData.append("description", description.trim());
       if (focusText.trim()) formData.append("focusText", focusText.trim());
       formData.append("lang", isRtl ? "he" : "en");
-      formData.append("landscapeMode", landscapeMode ? "true" : "false");
+      formData.append("landscapeMode", fullImageMode ? "true" : "false");
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
       const data = await res.json();
       if (!res.ok) {
@@ -494,7 +494,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               />
             )}
 
-            {/* Landscape mode toggle */}
+            {/* Mode toggle: Object vs Full Image */}
             <div className="mb-3">
               <div
                 className="flex rounded-lg overflow-hidden"
@@ -502,9 +502,9 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               >
                 <button
                   type="button"
-                  onClick={() => setLandscapeMode(false)}
+                  onClick={() => setFullImageMode(false)}
                   className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all"
-                  style={!landscapeMode ? {
+                  style={!fullImageMode ? {
                     background: '#0d9488', color: 'white', borderRadius: '0.375rem', margin: '2px',
                   } : {color: '#6b7280'}}
                 >
@@ -513,19 +513,19 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setLandscapeMode(true)}
+                  onClick={() => setFullImageMode(true)}
                   className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all"
-                  style={landscapeMode ? {
+                  style={fullImageMode ? {
                     background: '#059669', color: 'white', borderRadius: '0.375rem', margin: '2px',
                   } : {color: '#6b7280'}}
                 >
-                  <span className="text-base">🌄</span>
-                  <span>{isRtl ? "נוף" : "Landscape"}</span>
+                  <span className="text-base">🖼️</span>
+                  <span>{isRtl ? "כל הפריטים" : "Full Image"}</span>
                 </button>
               </div>
               <p className="text-xs mt-1 px-1 text-gray-400">
-                {landscapeMode
-                  ? (isRtl ? "מצייר את כל הסצנה: שמיים, רקע, עצים, בניינים, קדמת תמונה" : "Draws the entire scene: sky, background, trees, buildings, foreground")
+                {fullImageMode
+                  ? (isRtl ? "מצייר את כל הפריטים שרואים בתמונה בדיוק כפי שהם" : "Draws all elements visible in the image exactly as they appear")
                   : (isRtl ? "מתמקד באובייקט הראשי בתמונה" : "Focuses on the main object in the image")}
               </p>
             </div>

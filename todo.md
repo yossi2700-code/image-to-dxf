@@ -763,3 +763,15 @@
 ## שיפור סגנון AI מסמך — אומנותי יותר
 
 - [x] עדכון פרומפט: engraving style, fine details, artistic line weight variation, not childish coloring book
+
+## AI מתמונה — החלפת מצב נוף
+
+- [ ] הסרת מצב "נוף" והחלפה ב-"כל הפריטים" (trace all elements in the image)
+- [ ] עדכון פרומפט ב-aiTraceRoute לפי המצב החדש
+- [ ] שני המצבים יצייר בדיוק מה שרואים בתמונה (לא אלמנטים גנריים)
+
+## AI מתמונה — החלפת מצב נוף
+
+- [x] הסרת מצב "נוף" והחלפה ב-"כל הפריטים" (trace all elements in the image)
+- [x] עדכון פרומפט buildFullImagePrompt ב-aiTraceRoute לציור מדויק של כל הפריטים
+- [x] שני המצבים מציירים בדיוק מה שרואים בתמונה (לא אלמנטים גנריים)
