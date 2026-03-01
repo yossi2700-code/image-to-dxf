@@ -98,10 +98,10 @@ function buildLineArtPrompt(userPrompt: string, variationIndex: number): string 
     "Pure white background (#FFFFFF). " +
     "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
     "High contrast: only pure black (#000000) lines on white. " +
-    "Draw the object with clear three-dimensional perspective — show depth, volume, and structure. " +
-    "Include visible surface details, edges, and characteristic features that make it recognizable. " +
+    "Draw the complete object centered in the frame, fully visible, not cropped. " +
+    "Show depth and structure with clear internal lines. " +
     `${variation.style} ` +
-    "Single centered object, complete, not cropped, viewed from a 3/4 angle showing depth. " +
+    "Single centered object, complete, fully inside the frame, with generous white margin around it. " +
     "No text, no watermarks, no grey tones, no background elements."
   );
 }

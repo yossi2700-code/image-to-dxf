@@ -853,27 +853,32 @@ function AiGeneratorTab() {
         <>
           <div>
             <p className="text-sm font-semibold mb-3 text-muted-foreground">{t("selectDesign")}</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="flex flex-col gap-3">
               {images.map((img, idx) => (
                 <div
                   key={idx}
-                  className={`relative rounded-xl border-2 cursor-pointer transition-all bg-white
+                  className={`relative rounded-xl border-2 cursor-pointer transition-all bg-white w-full
                     ${selectedIdx === idx
-                      ? "border-primary shadow-xl ring-2 ring-primary/30 scale-[1.02]"
+                      ? "border-primary shadow-xl ring-2 ring-primary/30"
                       : "border-border hover:border-primary/50 hover:shadow-md"}`}
                   onClick={() => setSelectedIdx(idx)}
                 >
                   <div
-                    className="bg-white flex items-center justify-center p-2 relative group cursor-zoom-in rounded-t-xl overflow-hidden"
-                    style={{ minHeight: 180 }}
+                    className="bg-white flex items-center justify-center p-3 relative group cursor-zoom-in rounded-t-xl overflow-hidden"
+                    style={{ minHeight: 220 }}
                     onClick={(e) => { e.stopPropagation(); setZoomImg({ src: img.imageUrl, alt: `${t("design")} ${idx + 1}` }); }}
                   >
-                    <img src={img.imageUrl} alt={`${t("design")} ${idx + 1}`} className="max-w-full object-contain" style={{ maxHeight: 200 }} />
+                    <img
+                      src={img.imageUrl}
+                      alt={`${t("design")} ${idx + 1}`}
+                      className="w-full h-auto object-contain"
+                      style={{ maxHeight: 280 }}
+                    />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                       <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
                     </div>
                   </div>
-                  <div className="px-2 py-1.5 border-t bg-muted/30 flex items-center justify-between">
+                  <div className="px-3 py-2 border-t bg-muted/30 flex items-center justify-between">
                     <span className="text-xs font-medium text-muted-foreground">{t("variation")} {idx + 1}</span>
                     <span className="text-xs text-muted-foreground">{img.segmentCount.toLocaleString()} {t("lines")}</span>
                   </div>
