@@ -485,13 +485,14 @@ interface AiDocumentRedrawTabProps {
 }
 
 const LS_KEY_DOC = "doc_redraw_jobId";
+const LS_KEY_DOC_IMG = "doc_redraw_imagePreview";
 
 export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
   const { isRtl } = useLanguage();
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(() => localStorage.getItem(LS_KEY_DOC_IMG));
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<RedrawResult | null>(null);
@@ -527,8 +528,15 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
   // Persist jobId to localStorage whenever it changes
   const setJobIdPersisted = useCallback((id: string | null) => {
     if (id) localStorage.setItem(LS_KEY_DOC, id);
-    else localStorage.removeItem(LS_KEY_DOC);
+    else { localStorage.removeItem(LS_KEY_DOC); localStorage.removeItem(LS_KEY_DOC_IMG); }
     setJobId(id);
+  }, []);
+
+  // Persist imagePreview to localStorage
+  const setImagePreviewPersisted = useCallback((preview: string | null) => {
+    if (preview) localStorage.setItem(LS_KEY_DOC_IMG, preview);
+    else localStorage.removeItem(LS_KEY_DOC_IMG);
+    setImagePreview(preview);
   }, []);
 
   // Poll job status
@@ -595,9 +603,9 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
     setStatus("idle");
     setErrorMsg("");
     const reader = new FileReader();
-    reader.onload = (e) => setImagePreview(e.target?.result as string);
+    reader.onload = (e) => setImagePreviewPersisted(e.target?.result as string);
     reader.readAsDataURL(file);
-  }, [isRtl]);
+  }, [isRtl, setImagePreviewPersisted]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -687,13 +695,13 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     stopScanAnimation();
     setImageFile(null);
-    setImagePreview(null);
+    setImagePreviewPersisted(null);
     setResult(null);
     setStatus("idle");
     setErrorMsg("");
     setDescription("");
     setJobIdPersisted(null);
-  };;
+  };
 
   return (
     <div className="space-y-4" dir={isRtl ? "rtl" : "ltr"}>

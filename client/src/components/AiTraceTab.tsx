@@ -237,7 +237,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const { t, isRtl, language } = useLanguage();
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(() => localStorage.getItem("ai_trace_imagePreview"));
   const [description, setDescription] = useState("");
   const [focusText, setFocusText] = useState("");
   const [customImprovement, setCustomImprovement] = useState("");
@@ -254,8 +254,14 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
 
   const setJobIdPersisted = useCallback((id: string | null) => {
     if (id) localStorage.setItem("ai_trace_jobId", id);
-    else localStorage.removeItem("ai_trace_jobId");
+    else { localStorage.removeItem("ai_trace_jobId"); localStorage.removeItem("ai_trace_imagePreview"); }
     setJobId(id);
+  }, []);
+
+  const setImagePreviewPersisted = useCallback((preview: string | null) => {
+    if (preview) localStorage.setItem("ai_trace_imagePreview", preview);
+    else localStorage.removeItem("ai_trace_imagePreview");
+    setImagePreview(preview);
   }, []);
 
   // Poll job status every 3 seconds
@@ -322,10 +328,9 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
     setResult(null);
     setStatus("idle");
     const reader = new FileReader();
-    reader.onload = (e) => setImagePreview(e.target?.result as string);
+    reader.onload = (e) => setImagePreviewPersisted(e.target?.result as string);
     reader.readAsDataURL(file);
-  }, [isRtl]);
-
+  }, [isRtl, setImagePreviewPersisted]);
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setDragOver(false);
     const file = e.dataTransfer.files[0]; if (file) handleFile(file);
@@ -370,7 +375,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
 
   const reset = () => {
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-    setImageFile(null); setImagePreview(null); setResult(null);
+    setImageFile(null); setImagePreviewPersisted(null); setResult(null);
     setStatus("idle"); setErrorMsg(""); setFocusText(""); setCustomImprovement("");
     setJobIdPersisted(null);
     if (fileInputRef.current) fileInputRef.current.value = "";

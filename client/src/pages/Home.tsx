@@ -637,7 +637,12 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
 function AiGeneratorTab() {
   const { t, isRtl, language } = useLanguage();
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState(() => localStorage.getItem("ai_generate_prompt") ?? "");
+
+  const setPromptPersisted = useCallback((v: string) => {
+    localStorage.setItem("ai_generate_prompt", v);
+    setPrompt(v);
+  }, []);
   const [modifications, setModifications] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [images, setImages] = useState<AiImage[]>([]);
@@ -657,6 +662,8 @@ function AiGeneratorTab() {
     else localStorage.removeItem("ai_generate_jobId");
     setJobId(id);
   }, []);
+
+  // Show the prompt text when returning to tab mid-processing (prompt is already persisted via setPromptPersisted)
 
   // Poll job status every 3 seconds
   const startPolling = useCallback((id: string) => {
@@ -843,7 +850,7 @@ function AiGeneratorTab() {
           <Textarea
             placeholder={t("aiPromptPlaceholder")}
             value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
+            onChange={(e) => setPromptPersisted(e.target.value)}
             className="resize-none text-base min-h-[90px] text-gray-800 bg-gray-50 border-gray-200"
             style={{ textAlign: isRtl ? "right" : "left" }}
             dir={isRtl ? "rtl" : "ltr"}
