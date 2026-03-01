@@ -88,8 +88,9 @@ function buildFullImagePrompt(sceneDescription: string, variationIndex: number):
     "CRITICAL: Draw ALL elements visible in the image EXACTLY as described — every object, decoration, symbol, and detail in their correct positions and proportions. " +
     "Do NOT substitute or replace any element with a generic version. Draw the SPECIFIC items described. " +
     `${variation.style} ` +
-    "The entire composition MUST fit completely inside the square frame with white margin on all sides. " +
-    "Leave at least 5% white margin on every edge. All elements fully visible, nothing cropped. " +
+    "=== MANDATORY FRAMING RULES === " +
+    "The entire composition MUST fit completely inside the frame. Leave AT LEAST 15% white margin on every edge. All elements fully visible, NOTHING cropped or touching the border. " +
+    "=== END FRAMING RULES === " +
     "DO NOT include any text, letters, words, numbers, labels, or captions anywhere in the image. " +
     "No watermarks, no grey tones."
   );
@@ -177,10 +178,13 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number): 
     "Pure white background (#FFFFFF). " +
     "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
     "High contrast: only pure black (#000000) lines on white. " +
-    "CRITICAL FRAMING RULE: The object MUST be scaled small enough to fit entirely within the CENTER of the image. " +
-    "The object must occupy NO MORE than 65% of the image width AND height. " +
-    "There MUST be at least 17% white empty space on EVERY side (top, bottom, left, right). " +
-    "The object must be FULLY VISIBLE — nothing cut off, nothing touching or near the border. " +
+    "=== MANDATORY FRAMING RULES (NEVER VIOLATE) === " +
+    "Rule 1: The ENTIRE object MUST be 100% visible — NOTHING cut off, NOTHING touching the edge. " +
+    "Rule 2: Scale the object DOWN so it fits entirely inside the frame with large white margins. " +
+    "Rule 3: Leave AT LEAST 20% white empty space on EVERY side (top, bottom, left, right). " +
+    "Rule 4: If the object is wide (like a bicycle or car), make it shorter and wider within the frame — still with 20% margin on all sides. " +
+    "Rule 5: The object must occupy NO MORE than 60% of the image width AND 60% of the image height. " +
+    "=== END FRAMING RULES === " +
     "Show depth and structure with clear internal lines. " +
     `${variation.style} ` +
     "Single centered object, complete, fully inside the frame, with generous white margin around it. " +

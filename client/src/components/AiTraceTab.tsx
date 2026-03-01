@@ -447,7 +447,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                 className="flex items-center gap-3 mb-3 p-3 rounded-xl"
                 style={{background: '#f0fdf9', border: '1px solid #99f6e4'}}
               >
-                <img src={imagePreview} alt="Preview" className="w-16 h-16 object-cover rounded-lg shrink-0 border border-gray-200" />
+                <img src={imagePreview} alt="Preview" className="w-16 h-16 object-contain rounded-lg shrink-0 border border-gray-200 bg-white" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate text-gray-700">{imageFile?.name}</p>
                   <p className="text-xs mb-2 text-gray-400">{isRtl ? "תמונה נבחרה" : "Image selected"}</p>
