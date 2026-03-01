@@ -1180,7 +1180,7 @@ export default function Home() {
                 <span className="text-xs font-semibold text-amber-700">{isRtl ? "דוגמה — צלם מצבה/מסמך, ה-AI יחלץ רק את האיורים והעיטורים" : "Example — photo a gravestone/document, AI extracts only the illustrations"}</span>
               </div>
               <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/tab-ai-document-example-QoZwntRNm865KeXQYR48i5.webp"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/tab-ai-document-gravestone-example-iZQeZi44ULmSVwCE4peRBS.webp"
                 alt="AI Document Redraw Example"
                 className="w-full max-h-44 object-contain rounded-lg bg-white"
               />

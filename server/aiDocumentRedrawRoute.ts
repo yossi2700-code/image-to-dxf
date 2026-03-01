@@ -275,6 +275,7 @@ router.post(
         appUserId: appUser.userId,
       });
 
+      const groupId = `doc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       await recordUserAction({
         appUserId: appUser.userId,
         actionType: "ai_generate",
@@ -283,6 +284,8 @@ router.post(
         dxfUrl: result.dxfUrl,
         imageUrl: result.imageUrl,
         svgPreview: result.svgPreview,
+        groupId,
+        variationLabel: "document-redraw",
       });
 
       return res.json({

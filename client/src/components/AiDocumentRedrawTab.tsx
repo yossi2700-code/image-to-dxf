@@ -304,9 +304,11 @@ interface ResultCardProps {
   onDownload: () => void;
   onZoom: (src: string) => void;
   onRefined: (image: RedrawImage) => void;
+  originalPreview?: string | null;
 }
-function ResultCard({ image, objectDescription, isRtl, onDownload, onZoom, onRefined }: ResultCardProps) {
+function ResultCard({ image, objectDescription, isRtl, onDownload, onZoom, onRefined, originalPreview }: ResultCardProps) {
   const [showVector, setShowVector] = useState(false);
+  const [showComparison, setShowComparison] = useState(false);
 
   return (
     <Card className="border-primary/20 shadow-md">
@@ -321,21 +323,66 @@ function ResultCard({ image, objectDescription, isRtl, onDownload, onZoom, onRef
           </span>
         </div>
 
-        {/* AI Drawing preview */}
-        <div
-          className="border rounded-lg overflow-hidden bg-white mb-3 relative group cursor-zoom-in"
-          onClick={() => onZoom(image.imageUrl)}
-        >
-          <img
-            src={image.imageUrl}
-            alt={isRtl ? "ציור מחדש AI" : "AI Redraw"}
-            className="w-full block"
-            style={{ maxHeight: 360, objectFit: "contain" }}
-          />
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-            <ZoomIn className="w-7 h-7 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
+        {/* Before/After toggle button */}
+        {originalPreview && (
+          <button
+            onClick={() => setShowComparison(!showComparison)}
+            className={`w-full flex items-center justify-center gap-2 py-2 px-3 mb-3 rounded-lg border text-xs font-semibold transition-all ${
+              showComparison
+                ? "border-amber-500 bg-amber-500 text-white"
+                : "border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100"
+            }`}
+          >
+            <span>{showComparison ? "🔄" : "👁"}</span>
+            {showComparison
+              ? (isRtl ? "הצג תוצאה בלבד" : "Show result only")
+              : (isRtl ? "השווה לפני / אחרי" : "Compare Before / After")}
+          </button>
+        )}
+
+        {/* Before/After comparison OR single preview */}
+        {showComparison && originalPreview ? (
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-xs font-bold text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full">
+                {isRtl ? "לפני" : "Before"}
+              </span>
+              <div
+                className="border rounded-lg overflow-hidden bg-gray-100 w-full cursor-zoom-in"
+                onClick={() => onZoom(originalPreview)}
+              >
+                <img src={originalPreview} alt="original" className="w-full object-contain" style={{ maxHeight: 200 }} />
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                {isRtl ? "אחרי" : "After"}
+              </span>
+              <div
+                className="border rounded-lg overflow-hidden bg-white w-full cursor-zoom-in"
+                onClick={() => onZoom(image.imageUrl)}
+              >
+                <img src={image.imageUrl} alt="redraw" className="w-full object-contain" style={{ maxHeight: 200 }} />
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Normal single AI Drawing preview */
+          <div
+            className="border rounded-lg overflow-hidden bg-white mb-3 relative group cursor-zoom-in"
+            onClick={() => onZoom(image.imageUrl)}
+          >
+            <img
+              src={image.imageUrl}
+              alt={isRtl ? "ציור מחדש AI" : "AI Redraw"}
+              className="w-full block"
+              style={{ maxHeight: 360, objectFit: "contain" }}
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+              <ZoomIn className="w-7 h-7 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
+            </div>
+          </div>
+        )}
 
         {/* Toggle vector preview */}
         <button
@@ -668,6 +715,7 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
             isRtl={isRtl}
             onDownload={() => setDownloadTarget(result.image)}
             onZoom={(src) => setZoomImg(src)}
+            originalPreview={imagePreview}
             onRefined={(newImage) => {
               setResult((prev) => prev ? { ...prev, image: newImage } : null);
               toast.success(isRtl ? "גרסה מתוקנת מוכנה!" : "Corrected version ready!");
