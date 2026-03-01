@@ -43,69 +43,64 @@ function scaleDxfContent(dxfText: string, scaleFactor: number): string {
   );
 }
 
-// ─── PDF Export via SVG → Canvas → PNG → jsPDF ───────────────────────────────
-// This approach works on all browsers including iOS Safari.
-// svg2pdf.js requires the element to be rendered on-screen which fails on mobile.
+// ─── PDF Export via window.print() ──────────────────────────────────────────
+// Uses the browser's native print dialog — works on ALL devices including iOS.
+// Opens a hidden iframe with the SVG centered on the page, then triggers print.
 
-async function svgToPngDataUrl(
+function exportToPdf(
   svgContent: string,
-  widthPx: number,
-  heightPx: number
-): Promise<string> {
-  return new Promise((resolve, reject) => {
-    // Ensure SVG has explicit width/height
+  widthMm: number,
+  heightMm: number,
+  _filename: string
+): Promise<void> {
+  return new Promise((resolve) => {
+    // Ensure SVG has explicit dimensions
     const svgWithSize = svgContent
       .replace(/<svg([^>]*)>/, (_m, attrs) => {
         const cleaned = attrs
           .replace(/\bwidth="[^"]*"/g, "")
           .replace(/\bheight="[^"]*"/g, "");
-        return `<svg${cleaned} width="${widthPx}" height="${heightPx}">`;
+        return `<svg${cleaned} width="${widthMm}mm" height="${heightMm}mm">`;
       });
 
-    // Use base64 data URL instead of blob URL — blob URLs are blocked on iOS Safari
-    const base64 = btoa(unescape(encodeURIComponent(svgWithSize)));
-    const dataUrl = `data:image/svg+xml;base64,${base64}`;
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: ${widthMm}mm ${heightMm}mm; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: white; display: flex; align-items: center; justify-content: center; width: ${widthMm}mm; height: ${heightMm}mm; }
+  svg { display: block; width: ${widthMm}mm; height: ${heightMm}mm; }
+</style>
+</head>
+<body>${svgWithSize}</body>
+</html>`;
 
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = widthPx;
-      canvas.height = heightPx;
-      const ctx = canvas.getContext("2d")!;
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, widthPx, heightPx);
-      ctx.drawImage(img, 0, 0, widthPx, heightPx);
-      resolve(canvas.toDataURL("image/png"));
-    };
-    img.onerror = () => reject(new Error("SVG render failed"));
-    img.src = dataUrl;
+    const iframe = document.createElement("iframe");
+    iframe.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;";
+    document.body.appendChild(iframe);
+
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!iframeDoc) { document.body.removeChild(iframe); resolve(); return; }
+
+    iframeDoc.open();
+    iframeDoc.write(html);
+    iframeDoc.close();
+
+    // Wait for content to load then print
+    setTimeout(() => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } finally {
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+          resolve();
+        }, 1000);
+      }
+    }, 500);
   });
-}
-
-async function exportToPdf(
-  svgContent: string,
-  widthMm: number,
-  heightMm: number,
-  filename: string
-): Promise<void> {
-  const { jsPDF } = await import("jspdf");
-
-  // Render at 3× resolution for crisp output
-  const DPI = 3;
-  const widthPx = Math.round(widthMm * DPI);
-  const heightPx = Math.round(heightMm * DPI);
-
-  const pngDataUrl = await svgToPngDataUrl(svgContent, widthPx, heightPx);
-
-  const orientation = widthMm >= heightMm ? "landscape" : "portrait";
-  const pdf = new jsPDF({
-    orientation,
-    unit: "mm",
-    format: [widthMm, heightMm],
-  });
-
-  pdf.addImage(pngDataUrl, "PNG", 0, 0, widthMm, heightMm);
-  pdf.save(`${filename}.pdf`);
 }
 
 // ─── SVG Mini Preview ─────────────────────────────────────────────────────────

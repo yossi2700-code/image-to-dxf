@@ -555,3 +555,7 @@
 ## תיקון PDF iOS - מרץ 2026 (סבב 7)
 
 - [x] PDF שגיאה ב-iOS — תוקן: הוחלף blob URL ב-base64 data URL (עובד ב-iOS Safari)
+
+## תיקון PDF - מרץ 2026 (סבב 8)
+
+- [x] PDF שגיאה ב-iOS — תוקן: חזרה ל-window.print() ב-iframe נסתר עם CSS מותאם (עובד בכל מכשיר)
