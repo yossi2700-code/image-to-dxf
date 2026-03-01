@@ -330,7 +330,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
         <Card>
           <CardContent className="p-5 relative">
             <div className="flex items-center gap-2 mb-3">
-              <Scan className="w-4 h-4 text-primary" />
+              <Scan className="w-4 h-4 text-teal-600" />
               <h2 className="font-semibold text-sm">{t("aiTraceTitle")}</h2>
             </div>
 
@@ -365,13 +365,13 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-3 py-5 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 active:bg-primary/15 transition-colors"
+                  className="w-full flex items-center justify-center gap-3 py-5 rounded-xl border-2 border-dashed border-teal-400/50 bg-teal-50/20 hover:bg-teal-50/40 active:bg-teal-50/60 transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-                    <ImageIcon className="w-5 h-5 text-primary" />
+                  <div className="w-10 h-10 rounded-full bg-teal-100/60 flex items-center justify-center shrink-0">
+                    <ImageIcon className="w-5 h-5 text-teal-600" />
                   </div>
                   <div className="text-start">
-                    <p className="font-semibold text-sm text-primary">{isRtl ? "בחר תמונה" : "Choose Photo"}</p>
+                    <p className="font-semibold text-sm text-teal-700">{isRtl ? "בחר תמונה" : "Choose Photo"}</p>
                     <p className="text-xs text-muted-foreground">{isRtl ? "מהגלריה או הצלם חדש" : "From gallery or take new photo"}</p>
                   </div>
                 </button>
@@ -386,7 +386,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             {!imagePreview && (
               <div
                 className={`hidden sm:block absolute inset-0 rounded-xl transition-colors pointer-events-none ${
-                  dragOver ? "bg-primary/10 border-2 border-primary" : ""
+                  dragOver ? "bg-teal-100/30 border-2 border-teal-500" : ""
                 }`}
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
@@ -402,7 +402,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   onClick={() => setLandscapeMode(false)}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all ${
                     !landscapeMode
-                      ? "bg-primary text-primary-foreground shadow-sm"
+                      ? "bg-teal-500 text-white shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -446,7 +446,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             </div>
             <input type="hidden" value={description} onChange={(e) => setDescription(e.target.value)} />
 
-            <Button size="lg" className="w-full font-semibold"
+            <Button size="lg" className="w-full font-bold text-base h-12 bg-teal-600 hover:bg-teal-700 text-white gap-2"
               disabled={!imageFile || status === "loading"}
               onClick={handleTrace}>
               {status === "loading" ? (
@@ -463,15 +463,15 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
           <Card>
             <CardContent className="p-8 flex flex-col items-center gap-3 text-center">
               <div className="relative w-16 h-16">
-                <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
-                <div className="absolute inset-0 rounded-full border-4 border-t-primary animate-spin" />
-                <Wand2 className="absolute inset-0 m-auto w-6 h-6 text-primary" />
+                <div className="absolute inset-0 rounded-full border-4 border-teal-200" />
+                <div className="absolute inset-0 rounded-full border-4 border-t-teal-500 animate-spin" />
+                <Wand2 className="absolute inset-0 m-auto w-6 h-6 text-teal-600" />
               </div>
               <p className="font-semibold text-sm">{isRtl ? "ה-AI מנתח את התמונה ומצייר 3 עיצובים..." : "AI is analyzing your image and drawing 3 designs..."}</p>
               <p className="text-xs text-muted-foreground">{isRtl ? "זה עשוי לקחת 30-60 שניות" : "This may take 30-60 seconds"}</p>
               <div className="flex gap-1.5">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-teal-400/60 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
                 ))}
               </div>
             </CardContent>
@@ -488,7 +488,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               <div className="flex gap-2 flex-wrap justify-center">
                 <Button variant="outline" size="sm" onClick={reset}>{isRtl ? "נסה שוב" : "Try Again"}</Button>
                 {errorMsg && (errorMsg.includes("אסימונים") || errorMsg.toLowerCase().includes("token")) && (
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => window.location.href = "/tokens"}>
+                  <Button size="sm" className="bg-teal-600 hover:bg-teal-700" onClick={() => window.location.href = "/tokens"}>
                     {isRtl ? "רכוש אסימונים" : "Buy Tokens"}
                   </Button>
                 )}
@@ -500,10 +500,10 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
         {/* Results — 3 variations */}
         {status === "success" && result && (
           <>
-            <Card className="border-primary/30 bg-primary/5">
+            <Card className="border-teal-300/40 bg-teal-50/30">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <CheckCircle2 className="w-4 h-4 text-primary" />
+                  <CheckCircle2 className="w-4 h-4 text-teal-600" />
                   <span className="font-semibold text-sm">
                     {isRtl ? "3 עיצובים מוכנים — בחר את המועדף" : "3 designs ready — choose your favorite"}
                   </span>
@@ -519,18 +519,18 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
 
             {/* AI Suggestions + custom improvement */}
             {result.suggestions && result.suggestions.length > 0 && (
-              <Card className="border-blue-200 bg-blue-50">
+              <Card className="border-teal-200 bg-teal-50">
                 <CardContent className="p-4">
                   {/* Header */}
                   <div className="flex items-center gap-2 mb-3">
-                    <Wand2 className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm font-semibold text-blue-700">
+                    <Wand2 className="w-4 h-4 text-teal-600" />
+                    <span className="text-sm font-semibold text-teal-700">
                       {isRtl ? "שפר את העיצוב" : "Improve the design"}
                     </span>
                   </div>
 
                   {/* Style variation chips */}
-                  <p className="text-xs text-blue-600 font-medium mb-1.5">
+                  <p className="text-xs text-teal-600 font-medium mb-1.5">
                     {isRtl ? "שנה סגנון:" : "Change style:"}
                   </p>
                   <div className="flex flex-wrap gap-2 mb-3">
@@ -541,7 +541,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                           setFocusText(label);
                           handleTrace();
                         }}
-                        className="text-xs px-3 py-1.5 rounded-full border border-indigo-300 bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200 text-indigo-700 font-medium transition-colors shadow-sm"
+                        className="text-xs px-3 py-1.5 rounded-full border border-teal-300 bg-teal-50 hover:bg-teal-100 active:bg-teal-200 text-teal-700 font-medium transition-colors shadow-sm"
                       >
                         🎨 {label}
                       </button>
@@ -549,7 +549,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   </div>
 
                   {/* AI suggestions */}
-                  <p className="text-xs text-blue-600 font-medium mb-1.5">
+                  <p className="text-xs text-teal-600 font-medium mb-1.5">
                     {isRtl ? "הצעות ה-AI:" : "AI suggestions:"}
                   </p>
                   <div className="flex flex-wrap gap-2 mb-4">
@@ -560,7 +560,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                           setFocusText(suggestion);
                           handleTrace();
                         }}
-                        className="text-xs px-3 py-1.5 rounded-full border border-blue-300 bg-white hover:bg-blue-100 active:bg-blue-200 text-blue-700 font-medium transition-colors shadow-sm"
+                        className="text-xs px-3 py-1.5 rounded-full border border-teal-300 bg-white hover:bg-teal-100 active:bg-teal-200 text-teal-700 font-medium transition-colors shadow-sm"
                       >
                         ✨ {suggestion}
                       </button>
@@ -568,7 +568,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   </div>
 
                   {/* Free-text custom improvement */}
-                  <p className="text-xs text-blue-600 font-medium mb-1.5">
+                  <p className="text-xs text-teal-600 font-medium mb-1.5">
                     {isRtl ? "או הקלד בקשה משלהך:" : "Or type your own request:"}
                   </p>
                   <div className="flex gap-2">
@@ -584,7 +584,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                         }
                       }}
                       placeholder={isRtl ? "לדוגמה: הוסף פרטים, שנה סגנון, עשה יותר קטן..." : "e.g. add more detail, make it cuter, cartoon style..."}
-                      className="flex-1 text-sm border border-blue-300 rounded-lg px-3 py-2 bg-white placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className="flex-1 text-sm border border-teal-300 rounded-lg px-3 py-2 bg-white placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-teal-400"
                       dir={isRtl ? "rtl" : "ltr"}
                     />
                     <button
@@ -596,7 +596,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                         }
                       }}
                       disabled={!customImprovement.trim()}
-                      className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-sm font-semibold transition-colors"
+                      className="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white text-sm font-semibold transition-colors"
                     >
                       {isRtl ? "החל" : "Go"}
                     </button>
@@ -625,10 +625,10 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
         )}
 
         {/* Tips */}
-        <Card className="bg-blue-50 border-blue-100">
+        <Card className="bg-teal-50 border-teal-100">
           <CardContent className="p-4">
-            <h3 className="font-semibold text-sm text-blue-800 mb-2">{t("tipsTitle")}</h3>
-            <ul className="space-y-1.5 text-sm text-blue-700">
+            <h3 className="font-semibold text-sm text-teal-800 mb-2">{t("tipsTitle")}</h3>
+            <ul className="space-y-1.5 text-sm text-teal-700">
               <li className="flex gap-2"><span className="shrink-0">•</span><span>{t("aiTraceTip1")}</span></li>
               <li className="flex gap-2"><span className="shrink-0">•</span><span>{t("aiTraceTip2")}</span></li>
               <li className="flex gap-2"><span className="shrink-0">•</span><span>{isRtl ? "ה-AI מנתח את התמונה ומצייר מחדש — 3 סגנונות שונים לבחירה" : "AI analyzes your image and redraws it — 3 different styles to choose from"}</span></li>
