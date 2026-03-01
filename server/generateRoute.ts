@@ -96,6 +96,11 @@ const LANDSCAPE_STYLE_VARIATIONS = [
 
 function buildLandscapePrompt(userPrompt: string, variationIndex: number): string {
   const variation = LANDSCAPE_STYLE_VARIATIONS[variationIndex % LANDSCAPE_STYLE_VARIATIONS.length];
+  const hasHebrew = /[\u0590-\u05FF]/.test(userPrompt);
+  const textInstruction = hasHebrew
+    ? `CRITICAL TEXT ACCURACY: If the design includes Hebrew text, you MUST spell every word EXACTLY as written in the prompt: "${userPrompt}". ` +
+      "Double-check every Hebrew letter — do NOT add, remove, or change any letter. Render each word with perfect letter-by-letter accuracy. "
+    : "";
   return (
     `Clean black and white line art of a landscape scene: ${userPrompt}. ` +
     "Pure white background (#FFFFFF). " +
@@ -108,12 +113,20 @@ function buildLandscapePrompt(userPrompt: string, variationIndex: number): strin
     "Scale the scene so it occupies at most 80% of the canvas. " +
     "Leave at least 10% white margin on EVERY edge (top, bottom, left, right). " +
     "NOTHING must touch or go beyond the image border. All elements fully visible, nothing cropped. " +
-    "No text, no watermarks, no grey tones."
+    textInstruction +
+    "No watermarks, no grey tones."
   );
 }
 
 function buildLineArtPrompt(userPrompt: string, variationIndex: number): string {
   const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
+  // Detect if the user prompt contains Hebrew characters — if so, include a text accuracy instruction
+  const hasHebrew = /[\u0590-\u05FF]/.test(userPrompt);
+  const textInstruction = hasHebrew
+    ? `CRITICAL TEXT ACCURACY: If the design includes Hebrew text, you MUST spell every word EXACTLY as written in the prompt: "${userPrompt}". ` +
+      "Double-check every Hebrew letter — do NOT add, remove, or change any letter. " +
+      "For example: פורים שמח = פ-ו-ר-י-ם (5 letters) ש-מ-ח (3 letters). Render each word with perfect letter-by-letter accuracy. "
+    : "";
   return (
     `Professional black and white line art illustration of ${userPrompt}. ` +
     "Pure white background (#FFFFFF). " +
@@ -125,7 +138,8 @@ function buildLineArtPrompt(userPrompt: string, variationIndex: number): string 
     "The object must be FULLY VISIBLE — nothing cut off, nothing touching or near the border. " +
     "Show depth and structure with clear internal lines. " +
     `${variation.style} ` +
-    "No text, no watermarks, no grey tones, no background elements."
+    textInstruction +
+    "No watermarks, no grey tones, no background elements."
   );
 }
 
