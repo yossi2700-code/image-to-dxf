@@ -749,32 +749,48 @@ function AiGeneratorTab() {
     )}
     <div className="flex flex-col gap-5">
       {/* Prompt Input */}
-      <Card>
-        <CardContent className="p-5">
+      <div
+        className="rounded-2xl p-5"
+        style={{
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.09)',
+          backdropFilter: 'blur(12px)',
+        }}
+      >
           <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <h2 className="font-semibold text-sm">{t("describeDesign")}</h2>
+            <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'rgba(99,102,241,0.25)'}}>
+              <Sparkles className="w-3.5 h-3.5" style={{color: '#a5b4fc'}} />
+            </div>
+            <h2 className="font-semibold text-sm" style={{color: '#e2e8f0'}}>{t("describeDesign")}</h2>
           </div>
           <Textarea
             placeholder={t("aiPromptPlaceholder")}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             className="resize-none text-base min-h-[90px]"
-            style={{ textAlign: isRtl ? "right" : "left" }}
+            style={{
+              textAlign: isRtl ? "right" : "left",
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.10)',
+              color: '#e2e8f0',
+            }}
             dir={isRtl ? "rtl" : "ltr"}
             disabled={status === "loading"}
           />
-          {/* Landscape mode toggle — clean segmented control */}
+          {/* Landscape mode toggle */}
           <div className="mt-3 mb-1">
-            <div className="flex rounded-xl overflow-hidden border border-muted-foreground/20 bg-muted/20">
+            <div
+              className="flex rounded-xl overflow-hidden"
+              style={{background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)'}}
+            >
               <button
                 type="button"
                 onClick={() => setLandscapeMode(false)}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all ${
-                  !landscapeMode
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all"
+                style={!landscapeMode ? {
+                  background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                  color: 'white',
+                } : {color: 'rgba(148,163,184,0.7)'}}
               >
                 <span className="text-base">📷</span>
                 <span>{isRtl ? "אובייקט" : "Object"}</span>
@@ -782,124 +798,164 @@ function AiGeneratorTab() {
               <button
                 type="button"
                 onClick={() => setLandscapeMode(true)}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all ${
-                  landscapeMode
-                    ? "bg-green-600 text-white shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all"
+                style={landscapeMode ? {
+                  background: 'linear-gradient(135deg, #059669, #10b981)',
+                  color: 'white',
+                } : {color: 'rgba(148,163,184,0.7)'}}
               >
                 <span className="text-base">🌄</span>
                 <span>{isRtl ? "נוף" : "Landscape"}</span>
               </button>
             </div>
-            <p className="text-xs text-muted-foreground mt-1 px-1">
+            <p className="text-xs mt-1 px-1" style={{color: 'rgba(148,163,184,0.55)'}}>
               {landscapeMode
                 ? (isRtl ? "מצייר את כל הסצנה: שמיים, רקע, עצים, בניינים, קדמת תמונה" : "Draws the entire scene: sky, background, trees, buildings, foreground")
                 : (isRtl ? "מתמקד באובייקט הראשי בתמונה" : "Focuses on the main object in the image")}
             </p>
           </div>
-          <p className="text-xs text-muted-foreground mt-2">{t("aiTabSubtitle")}</p>
-          <Button
-            className="w-full mt-3 h-11 font-semibold"
+          <p className="text-xs mt-2" style={{color: 'rgba(148,163,184,0.6)'}}>{t("aiTabSubtitle")}</p>
+          <button
+            className="w-full mt-3 h-11 font-semibold rounded-xl flex items-center justify-center gap-2 transition-all"
+            style={{
+              background: status === "loading" || !prompt.trim()
+                ? 'rgba(99,102,241,0.2)'
+                : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+              color: status === "loading" || !prompt.trim() ? 'rgba(165,180,252,0.5)' : 'white',
+              border: '1px solid rgba(99,102,241,0.3)',
+              boxShadow: status === "loading" || !prompt.trim() ? 'none' : '0 4px 15px rgba(99,102,241,0.35)',
+              cursor: status === "loading" || !prompt.trim() ? 'not-allowed' : 'pointer',
+            }}
             onClick={() => generate(false)}
             disabled={status === "loading" || !prompt.trim()}
           >
             {status === "loading"
-              ? <><Loader2 className="w-4 h-4 ml-2 animate-spin" />{t("creating")}</>
-              : <><Wand2 className="w-4 h-4 ml-2" />{t("create3Designs")}</>}
-          </Button>
-        </CardContent>
-      </Card>
+              ? <><Loader2 className="w-4 h-4 animate-spin" />{t("creating")}</>
+              : <><Wand2 className="w-4 h-4" />{t("create3Designs")}</>}
+          </button>
+      </div>
 
       {/* Loading */}
       {status === "loading" && (
-        <Card>
-          <CardContent className="p-8">
+        <div
+          className="rounded-2xl p-8"
+          style={{
+            background: 'rgba(99,102,241,0.06)',
+            border: '1px solid rgba(99,102,241,0.15)',
+            backdropFilter: 'blur(12px)',
+          }}
+        >
             <div className="flex flex-col items-center gap-4 text-center">
               <div className="relative">
-                <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-                <Sparkles className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                <div className="w-16 h-16 rounded-full" style={{border: '3px solid rgba(99,102,241,0.15)', borderTopColor: '#818cf8', animation: 'spin 1s linear infinite'}} />
+                <Sparkles className="w-6 h-6 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style={{color: '#a5b4fc'}} />
               </div>
               <div>
-                <p className="font-semibold text-base">{t("aiCreating")}</p>
-                <p className="text-sm text-muted-foreground mt-1">{t("aiCreatingSubtitle")}</p>
+                <p className="font-semibold text-base" style={{color: '#e2e8f0'}}>{t("aiCreating")}</p>
+                <p className="text-sm mt-1" style={{color: 'rgba(148,163,184,0.7)'}}>{t("aiCreatingSubtitle")}</p>
               </div>
               <div className="flex gap-1.5 mt-1">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="w-2 h-2 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                  <div key={i} className="w-2 h-2 rounded-full" style={{background: '#818cf8', animation: `bounce 1s infinite ${i * 0.15}s`}} />
                 ))}
               </div>
             </div>
-          </CardContent>
-        </Card>
+        </div>
       )}
 
       {/* Error */}
       {status === "error" && (
-        <Card>
-          <CardContent className="p-6 flex flex-col items-center gap-3 text-center">
-            <AlertCircle className="w-10 h-10 text-red-400" />
-            <p className="font-semibold text-red-600">{t("aiError")}</p>
-            <p className="text-sm text-muted-foreground">{errorMsg}</p>
+        <div
+          className="rounded-2xl p-6 flex flex-col items-center gap-3 text-center"
+          style={{
+            background: 'rgba(239,68,68,0.06)',
+            border: '1px solid rgba(239,68,68,0.20)',
+            backdropFilter: 'blur(12px)',
+          }}
+        >
+            <AlertCircle className="w-10 h-10" style={{color: '#f87171'}} />
+            <p className="font-semibold" style={{color: '#fca5a5'}}>{t("aiError")}</p>
+            <p className="text-sm" style={{color: 'rgba(148,163,184,0.7)'}}>{errorMsg}</p>
             <div className="flex gap-2 flex-wrap justify-center">
-              <Button variant="outline" size="sm" onClick={() => setStatus("idle")}>{isRtl ? "נסה שוב" : "Try Again"}</Button>
+              <button
+                className="text-sm px-4 py-2 rounded-xl font-medium transition-all"
+                style={{background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: '#e2e8f0'}}
+                onClick={() => setStatus("idle")}
+              >{isRtl ? "נסה שוב" : "Try Again"}</button>
               {errorMsg && (errorMsg.includes("אסימונים") || errorMsg.toLowerCase().includes("token")) && (
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => window.location.href = "/tokens"}>
+                <button
+                  className="text-sm px-4 py-2 rounded-xl font-semibold transition-all"
+                  style={{background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: 'none'}}
+                  onClick={() => window.location.href = "/tokens"}
+                >
                   {isRtl ? "רכוש אסימונים" : "Buy Tokens"}
-                </Button>
+                </button>
               )}
             </div>
-          </CardContent>
-        </Card>
+        </div>
       )}
 
       {/* Gallery */}
       {status === "success" && images.length > 0 && (
         <>
           <div>
-            <p className="text-sm font-semibold mb-3 text-muted-foreground">{t("selectDesign")}</p>
+            <p className="text-sm font-semibold mb-3" style={{color: 'rgba(148,163,184,0.8)'}}>{t("selectDesign")}</p>
             <div className="flex flex-col gap-3">
               {images.map((img, idx) => (
                 <div
                   key={idx}
-                  className={`relative rounded-xl border-2 cursor-pointer transition-all bg-white w-full
-                    ${selectedIdx === idx
-                      ? "border-primary shadow-xl ring-2 ring-primary/30"
-                      : "border-border hover:border-primary/50 hover:shadow-md"}`}
+                  className="relative rounded-2xl cursor-pointer transition-all overflow-hidden"
+                  style={{
+                    background: selectedIdx === idx ? 'rgba(99,102,241,0.10)' : 'rgba(255,255,255,0.04)',
+                    border: selectedIdx === idx
+                      ? '2px solid rgba(99,102,241,0.50)'
+                      : '1px solid rgba(255,255,255,0.09)',
+                    boxShadow: selectedIdx === idx ? '0 0 20px rgba(99,102,241,0.20)' : 'none',
+                    backdropFilter: 'blur(10px)',
+                  }}
                   onClick={() => setSelectedIdx(idx)}
                 >
                 <div
-                  className="bg-white flex items-center justify-center p-3 relative rounded-t-xl overflow-hidden"
-                  style={{ minHeight: 220 }}
+                  className="flex items-center justify-center p-3 relative overflow-hidden"
+                  style={{ minHeight: 220, background: 'rgba(255,255,255,0.03)' }}
                 >
                   <img
                     src={img.imageUrl}
                     alt={`${t("design")} ${idx + 1}`}
-                    className="w-full h-auto object-contain"
+                    className="w-full h-auto object-contain rounded-xl"
                     style={{ maxHeight: 280 }}
                   />
-                  {/* Zoom button — explicit button so it works on iOS without stopPropagation issues */}
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setZoomImg({ src: img.imageUrl, alt: `${t("design")} ${idx + 1}` }); }}
-                    className="absolute bottom-2 left-2 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center transition-colors"
+                    className="absolute bottom-2 left-2 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                    style={{background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)'}}
                     title="תצוגה מקדימה"
                   >
                     <ZoomIn className="w-4 h-4 text-white" />
                   </button>
                 </div>
-                  <div className="px-3 py-2 border-t bg-muted/30 flex items-center justify-between">
-                    <span className="text-xs font-medium text-muted-foreground">{t("variation")} {idx + 1}</span>
-                    <span className="text-xs text-muted-foreground">{img.segmentCount.toLocaleString()} {t("lines")}</span>
+                  <div
+                    className="px-3 py-2 flex items-center justify-between"
+                    style={{borderTop: '1px solid rgba(255,255,255,0.06)'}}
+                  >
+                    <span className="text-xs font-medium" style={{color: 'rgba(148,163,184,0.7)'}}>{t("variation")} {idx + 1}</span>
+                    <span className="text-xs" style={{color: 'rgba(148,163,184,0.5)'}}>{img.segmentCount.toLocaleString()} {t("lines")}</span>
                   </div>
                   {selectedIdx === idx && (
-                    <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-primary flex items-center justify-center shadow-md">
+                    <div
+                      className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center shadow-md"
+                      style={{background: 'linear-gradient(135deg, #6366f1, #8b5cf6)'}}
+                    >
                       <CheckCircle2 className="w-5 h-5 text-white" />
                     </div>
                   )}
                   {selectedIdx !== idx && (
-                    <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 border-2 border-border flex items-center justify-center">
-                      <div className="w-3 h-3 rounded-full bg-transparent" />
+                    <div
+                      className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center"
+                      style={{background: 'rgba(255,255,255,0.08)', border: '2px solid rgba(255,255,255,0.15)'}}
+                    >
+                      <div className="w-3 h-3 rounded-full" />
                     </div>
                   )}
                 </div>
@@ -909,11 +965,17 @@ function AiGeneratorTab() {
 
           {/* Selected detail */}
           {selected && (
-            <Card className="border-primary/30 bg-primary/5">
-              <CardContent className="p-5">
+            <div
+              className="rounded-2xl p-5"
+              style={{
+                background: 'rgba(99,102,241,0.07)',
+                border: '1px solid rgba(99,102,241,0.20)',
+                backdropFilter: 'blur(12px)',
+              }}
+            >
                 <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle2 className="w-4 h-4 text-primary" />
-                  <span className="font-semibold text-sm">{t("variation")} {selectedIdx! + 1} {t("selected")}</span>
+                  <CheckCircle2 className="w-4 h-4" style={{color: '#a5b4fc'}} />
+                  <span className="font-semibold text-sm" style={{color: '#e2e8f0'}}>{t("variation")} {selectedIdx! + 1} {t("selected")}</span>
                 </div>
                 {/* AI Image preview (always shown) */}
                 <div
@@ -948,26 +1010,25 @@ function AiGeneratorTab() {
                   </div>
                 )}
                 <div className="grid grid-cols-3 gap-2 mb-3">
-                  <div className="bg-white rounded-lg p-2 text-center border">
-                    <p className="text-base font-bold text-primary">{selected.segmentCount.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">{t("lines")}</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-2 text-center border">
-                    <p className="text-base font-bold text-primary">{((selected.width / 96) * 25.4).toFixed(1)}</p>
-                    <p className="text-xs text-muted-foreground">{t("widthMm")}</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-2 text-center border">
-                    <p className="text-base font-bold text-primary">{((selected.height / 96) * 25.4).toFixed(1)}</p>
-                    <p className="text-xs text-muted-foreground">{t("heightMm")}</p>
-                  </div>
+                  {[{v: selected.segmentCount.toLocaleString(), l: t("lines")}, {v: ((selected.width / 96) * 25.4).toFixed(1), l: t("widthMm")}, {v: ((selected.height / 96) * 25.4).toFixed(1), l: t("heightMm")}].map(({v, l}, i) => (
+                    <div key={i} className="rounded-xl p-2 text-center" style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)'}}>
+                      <p className="text-base font-bold" style={{color: '#a5b4fc'}}>{v}</p>
+                      <p className="text-xs" style={{color: 'rgba(148,163,184,0.6)'}}>{l}</p>
+                    </div>
+                  ))}
                 </div>
-                <Button
-                  size="lg"
-                  className="w-full bg-green-600 hover:bg-green-700 font-bold text-base h-12 mb-2"
+                <button
+                  className="w-full h-12 font-bold text-base rounded-xl flex items-center justify-center gap-2 mb-2 transition-all"
+                  style={{
+                    background: 'linear-gradient(135deg, #059669, #10b981)',
+                    color: 'white',
+                    border: 'none',
+                    boxShadow: '0 4px 15px rgba(16,185,129,0.30)',
+                  }}
                   onClick={() => handleDownload(selected)}
                 >
-                  <Download className="w-5 h-5 ml-2" />{isRtl ? "הורד DXF / PDF" : "Download DXF / PDF"}
-                </Button>
+                  <Download className="w-5 h-5" />{isRtl ? "הורד DXF / PDF" : "Download DXF / PDF"}
+                </button>
                 {/* AI Refine Panel */}
                 <AiRefinePanel
                   imageUrl={selected.imageUrl}
@@ -992,18 +1053,29 @@ function AiGeneratorTab() {
                   }}
                 />
                 <div className="flex gap-2 mt-2">
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => setShowModify(!showModify)}>
-                    <RefreshCw className="w-3.5 h-3.5 ml-1.5" />
+                  <button
+                    className="flex-1 flex items-center justify-center gap-1.5 text-sm py-2 rounded-xl transition-all"
+                    style={{background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', color: '#cbd5e1'}}
+                    onClick={() => setShowModify(!showModify)}
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
                     {t("requestChanges")}
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => { setImages([]); setSelectedIdx(null); setStatus("idle"); }}>
-                    <ChevronLeft className="w-3.5 h-3.5 ml-1.5" />
+                  </button>
+                  <button
+                    className="flex-1 flex items-center justify-center gap-1.5 text-sm py-2 rounded-xl transition-all"
+                    style={{background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', color: '#cbd5e1'}}
+                    onClick={() => { setImages([]); setSelectedIdx(null); setStatus("idle"); }}
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
                     {isRtl ? "עיצוב חדש" : "New Design"}
-                  </Button>
+                  </button>
                 </div>
                 {showModify && (
-                  <div className="mt-3 p-3 bg-white rounded-lg border">
-                    <p className="text-xs font-medium mb-2 text-muted-foreground">
+                  <div
+                    className="mt-3 p-3 rounded-xl"
+                    style={{background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)'}}
+                  >
+                    <p className="text-xs font-medium mb-2" style={{color: 'rgba(148,163,184,0.7)'}}>
                       {isRtl ? "תאר את השינויים הרצויים:" : "Describe the desired changes:"}
                     </p>
                     <Textarea
@@ -1011,33 +1083,47 @@ function AiGeneratorTab() {
                       value={modifications}
                       onChange={(e) => setModifications(e.target.value)}
                       className="resize-none text-sm min-h-[70px] mb-2"
-                      style={{ textAlign: isRtl ? "right" : "left" }}
+                      style={{ textAlign: isRtl ? "right" : "left", background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', color: '#e2e8f0' }}
                       dir={isRtl ? "rtl" : "ltr"}
                     />
-                    <Button size="sm" className="w-full" onClick={() => generate(true)} disabled={!modifications.trim()}>
-                      <Wand2 className="w-3.5 h-3.5 ml-1.5" />
+                    <button
+                      className="w-full py-2 text-sm font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all"
+                      style={{
+                        background: modifications.trim() ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'rgba(99,102,241,0.2)',
+                        color: modifications.trim() ? 'white' : 'rgba(165,180,252,0.5)',
+                        border: 'none',
+                        cursor: modifications.trim() ? 'pointer' : 'not-allowed',
+                      }}
+                      onClick={() => generate(true)}
+                      disabled={!modifications.trim()}
+                    >
+                      <Wand2 className="w-3.5 h-3.5" />
                       {isRtl ? "צור 3 עיצובים מעודכנים" : "Create 3 Updated Designs"}
-                    </Button>
+                    </button>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+            </div>
           )}
         </>
       )}
 
       {/* Tips */}
-      <Card className="bg-purple-50 border-purple-100">
-        <CardContent className="p-4">
-          <h3 className="font-semibold text-sm text-purple-800 mb-2">{t("tipsTitle")}</h3>
-          <ul className="space-y-1.5 text-sm text-purple-700">
-            <li className="flex gap-2"><span className="shrink-0">•</span><span>{t("tip1")}</span></li>
-            <li className="flex gap-2"><span className="shrink-0">•</span><span>{t("tip2")}</span></li>
-            <li className="flex gap-2"><span className="shrink-0">•</span><span>{t("tip3")}</span></li>
+      <div
+        className="rounded-2xl p-4"
+        style={{
+          background: 'rgba(99,102,241,0.06)',
+          border: '1px solid rgba(99,102,241,0.15)',
+          backdropFilter: 'blur(10px)',
+        }}
+      >
+          <h3 className="font-semibold text-sm mb-2" style={{color: '#a5b4fc'}}>{t("tipsTitle")}</h3>
+          <ul className="space-y-1.5 text-sm" style={{color: 'rgba(148,163,184,0.8)'}}>
+            <li className="flex gap-2"><span className="shrink-0" style={{color: '#818cf8'}}>•</span><span>{t("tip1")}</span></li>
+            <li className="flex gap-2"><span className="shrink-0" style={{color: '#818cf8'}}>•</span><span>{t("tip2")}</span></li>
+            <li className="flex gap-2"><span className="shrink-0" style={{color: '#818cf8'}}>•</span><span>{t("tip3")}</span></li>
             <li className="flex gap-2"><span className="shrink-0">💡</span><span>{t("tip4")}</span></li>
           </ul>
-        </CardContent>
-      </Card>
+      </div>
     </div>
     </>
   );
@@ -1066,18 +1152,64 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50" dir={isRtl ? "rtl" : "ltr"}>
+    <div
+      className="min-h-screen"
+      style={{
+        background: 'linear-gradient(160deg, #0a0f1e 0%, #0f1a2e 35%, #0d1f1a 70%, #0a0f1e 100%)',
+      }}
+      dir={isRtl ? "rtl" : "ltr"}
+    >
+      {/* Ambient background orbs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{zIndex: 0}}>
+        <div style={{
+          position: 'absolute', top: '-15%', left: '-10%',
+          width: '50vw', height: '50vw',
+          background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)',
+          borderRadius: '50%',
+        }} />
+        <div style={{
+          position: 'absolute', bottom: '10%', right: '-15%',
+          width: '45vw', height: '45vw',
+          background: 'radial-gradient(circle, rgba(20,184,166,0.07) 0%, transparent 70%)',
+          borderRadius: '50%',
+        }} />
+        <div style={{
+          position: 'absolute', top: '40%', left: '30%',
+          width: '35vw', height: '35vw',
+          background: 'radial-gradient(circle, rgba(245,158,11,0.05) 0%, transparent 70%)',
+          borderRadius: '50%',
+        }} />
+      </div>
+
       {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+      <header
+        className="sticky top-0 z-20"
+        style={{
+          background: 'rgba(10,15,30,0.80)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(255,255,255,0.07)',
+          boxShadow: '0 1px 20px rgba(0,0,0,0.4)',
+        }}
+      >
         <div className="container py-3 flex items-center gap-3">
-          <img
-            src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663365044246/SslVmktvndMoFSwH.png"
-            alt={t("logoAlt")}
-            className="w-10 h-10 rounded-lg object-contain shrink-0"
-          />
-          <div className="flex-1">
-            <h1 className="text-base font-bold leading-tight">{t("appTitle")}</h1>
-            <p className="text-xs text-muted-foreground">{t("appSubtitle")}</p>
+          <div
+            className="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center"
+            style={{
+              background: 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(20,184,166,0.2))',
+              border: '1px solid rgba(255,255,255,0.12)',
+              boxShadow: '0 2px 12px rgba(99,102,241,0.25)',
+            }}
+          >
+            <img
+              src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663365044246/SslVmktvndMoFSwH.png"
+              alt={t("logoAlt")}
+              className="w-7 h-7 object-contain"
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-base font-bold leading-tight" style={{color: '#f1f5f9'}}>{t("appTitle")}</h1>
+            <p className="text-xs truncate" style={{color: 'rgba(148,163,184,0.8)'}}>{t("appSubtitle")}</p>
           </div>
           <LanguageSwitcher />
         </div>
@@ -1093,96 +1225,193 @@ export default function Home() {
         }}
       />
 
-      <main className="container py-6">
+      <main className="container py-5" style={{position: 'relative', zIndex: 1}}>
         {/* Auth bar */}
         <div className="flex justify-end mb-4">
           {appUser ? (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <UserCircle className="w-4 h-4" />
-                <span>{appUser.name ?? appUser.email}</span>
-              </div>
-              <div className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+            <div
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.09)',
+                backdropFilter: 'blur(10px)',
+              }}
+            >
+              <UserCircle className="w-3.5 h-3.5" style={{color: 'rgba(148,163,184,0.8)'}} />
+              <span className="text-xs" style={{color: 'rgba(148,163,184,0.9)'}}>{appUser.name ?? appUser.email}</span>
+              <div
+                className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full mx-1"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.3))',
+                  border: '1px solid rgba(99,102,241,0.4)',
+                  color: '#a5b4fc',
+                }}
+              >
                 <Sparkles className="w-3 h-3" />
                 <span>{tokenBalance}</span>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => window.location.href = "/tokens"} className="text-xs gap-1 text-blue-600 hover:text-blue-700">
-                <Sparkles className="w-3.5 h-3.5" />
+              <button
+                onClick={() => window.location.href = "/tokens"}
+                className="text-xs px-2 py-0.5 rounded-full transition-colors"
+                style={{color: '#818cf8'}}
+              >
                 {isRtl ? "אסימונים" : "Tokens"}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => window.location.href = "/history"} className="text-xs gap-1">
-                <History className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => window.location.href = "/history"}
+                className="text-xs px-2 py-0.5 rounded-full transition-colors flex items-center gap-1"
+                style={{color: 'rgba(148,163,184,0.8)'}}
+              >
+                <History className="w-3 h-3" />
                 {t("history")}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs">
-                <LogOut className="w-3.5 h-3.5 ml-1" />
-                {t("logout")}
-              </Button>
+              </button>
+              <button
+                onClick={handleLogout}
+                className="text-xs px-2 py-0.5 rounded-full transition-colors flex items-center gap-1"
+                style={{color: 'rgba(148,163,184,0.6)'}}
+              >
+                <LogOut className="w-3 h-3" />
+              </button>
             </div>
           ) : (
-            <Button size="sm" variant="outline" onClick={() => { setLimitReached(false); setAuthOpen(true); }} className="text-xs gap-1.5">
+            <button
+              onClick={() => { setLimitReached(false); setAuthOpen(true); }}
+              className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-full font-semibold transition-all"
+              style={{
+                background: 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.20))',
+                border: '1px solid rgba(99,102,241,0.35)',
+                color: '#a5b4fc',
+                backdropFilter: 'blur(10px)',
+              }}
+            >
               <LogIn className="w-3.5 h-3.5" />
               {t("loginRegister")}
-            </Button>
+            </button>
           )}
         </div>
 
+        {/* Tabs */}
         <Tabs defaultValue="ai" dir={isRtl ? "rtl" : "ltr"}>
-          <TabsList className="w-full mb-5 h-12 gap-1 p-1">
-            <TabsTrigger value="ai" className="flex-1 gap-1.5 text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white">
+          <TabsList
+            className="w-full mb-5 h-13 gap-1 p-1.5"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '1rem',
+              backdropFilter: 'blur(12px)',
+            }}
+          >
+            <TabsTrigger
+              value="ai"
+              className="flex-1 gap-1.5 text-sm font-semibold transition-all rounded-xl"
+              style={{
+                color: 'rgba(148,163,184,0.8)',
+              }}
+            >
               <Sparkles className="w-4 h-4" />
-              <span className="hidden xs:inline">{isRtl ? "✨ AI יצירה" : "✨ AI Create"}</span>
-              <span className="xs:hidden">{isRtl ? "AI יצירה" : "AI Create"}</span>
+              <span>{isRtl ? "✨ AI יצירה" : "✨ AI Create"}</span>
             </TabsTrigger>
-            <TabsTrigger value="trace" className="flex-1 gap-1.5 text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-emerald-500 data-[state=active]:text-white">
+            <TabsTrigger
+              value="trace"
+              className="flex-1 gap-1.5 text-sm font-semibold transition-all rounded-xl"
+              style={{
+                color: 'rgba(148,163,184,0.8)',
+              }}
+            >
               <Scan className="w-4 h-4" />
-              <span className="hidden xs:inline">{isRtl ? "📷 AI מתמונה" : "📷 AI Trace"}</span>
-              <span className="xs:hidden">{isRtl ? "AI מתמונה" : "AI Trace"}</span>
+              <span>{isRtl ? "📷 AI מתמונה" : "📷 AI Trace"}</span>
             </TabsTrigger>
-            <TabsTrigger value="redraw" className="flex-1 gap-1.5 text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white">
+            <TabsTrigger
+              value="redraw"
+              className="flex-1 gap-1.5 text-sm font-semibold transition-all rounded-xl"
+              style={{
+                color: 'rgba(148,163,184,0.8)',
+              }}
+            >
               <FileEdit className="w-4 h-4" />
-              <span className="hidden xs:inline">{isRtl ? "✏️ AI מסמך" : "✏️ AI Doc"}</span>
-              <span className="xs:hidden">{isRtl ? "AI מסמך" : "AI Doc"}</span>
+              <span>{isRtl ? "✏️ AI מסמך" : "✏️ AI Doc"}</span>
             </TabsTrigger>
           </TabsList>
+
           <TabsContent value="ai">
-            <div className="mb-4 rounded-xl overflow-hidden border border-purple-100 bg-gradient-to-br from-purple-50 to-blue-50 p-3">
+            {/* Demo banner — AI Create */}
+            <div
+              className="mb-4 rounded-2xl overflow-hidden p-3"
+              style={{
+                background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08))',
+                border: '1px solid rgba(99,102,241,0.20)',
+                backdropFilter: 'blur(10px)',
+              }}
+            >
               <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-4 h-4 text-purple-600" />
-                <span className="text-xs font-semibold text-purple-700">{isRtl ? "דוגמה — תאר עיצוב בטקסט, ה-AI יצייר קווים לחריטה" : "Example — describe a design in text, AI draws engraving lines"}</span>
+                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{background: 'rgba(99,102,241,0.25)'}}>
+                  <Sparkles className="w-3 h-3" style={{color: '#a5b4fc'}} />
+                </div>
+                <span className="text-xs font-semibold" style={{color: '#a5b4fc'}}>
+                  {isRtl ? "דוגמה — תאר עיצוב בטקסט, ה-AI יצייר קווים לחריטה" : "Example — describe a design in text, AI draws engraving lines"}
+                </span>
               </div>
               <img
                 src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/tab-ai-generate-example-ET9bJiJNTYLq53nXmxgioT.webp"
                 alt="AI Generate Example"
-                className="w-full max-h-44 object-contain rounded-lg bg-white"
+                className="w-full max-h-44 object-contain rounded-xl"
+                style={{background: 'rgba(255,255,255,0.05)'}}
               />
             </div>
             <AiGeneratorTab />
           </TabsContent>
+
           <TabsContent value="trace">
-            <div className="mb-4 rounded-xl overflow-hidden border border-teal-100 bg-gradient-to-br from-teal-50 to-emerald-50 p-3">
+            {/* Demo banner — AI Trace */}
+            <div
+              className="mb-4 rounded-2xl overflow-hidden p-3"
+              style={{
+                background: 'linear-gradient(135deg, rgba(20,184,166,0.12), rgba(16,185,129,0.08))',
+                border: '1px solid rgba(20,184,166,0.20)',
+                backdropFilter: 'blur(10px)',
+              }}
+            >
               <div className="flex items-center gap-2 mb-2">
-                <Scan className="w-4 h-4 text-teal-600" />
-                <span className="text-xs font-semibold text-teal-700">{isRtl ? "דוגמה — העלה תמונה, ה-AI יהפוך אותה לקווים נקיים לחריטה" : "Example — upload a photo, AI converts it to clean engraving lines"}</span>
+                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{background: 'rgba(20,184,166,0.25)'}}>
+                  <Scan className="w-3 h-3" style={{color: '#5eead4'}} />
+                </div>
+                <span className="text-xs font-semibold" style={{color: '#5eead4'}}>
+                  {isRtl ? "דוגמה — העלה תמונה, ה-AI יהפוך אותה לקווים נקיים לחריטה" : "Example — upload a photo, AI converts it to clean engraving lines"}
+                </span>
               </div>
               <img
                 src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/tab-ai-trace-lv-example-v2-hM6RghsZyzvy3mooS3ymTh.webp"
-                alt="AI Trace Example - Louis Vuitton bag before and after vector"
-                className="w-full max-h-44 object-contain rounded-lg bg-white"
+                alt="AI Trace Example"
+                className="w-full max-h-44 object-contain rounded-xl"
+                style={{background: 'rgba(255,255,255,0.05)'}}
               />
             </div>
             <AiTraceTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
           </TabsContent>
+
           <TabsContent value="redraw">
-            <div className="mb-4 rounded-xl overflow-hidden border border-amber-100 bg-gradient-to-br from-amber-50 to-orange-50 p-3">
+            {/* Demo banner — AI Document */}
+            <div
+              className="mb-4 rounded-2xl overflow-hidden p-3"
+              style={{
+                background: 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(249,115,22,0.08))',
+                border: '1px solid rgba(245,158,11,0.20)',
+                backdropFilter: 'blur(10px)',
+              }}
+            >
               <div className="flex items-center gap-2 mb-2">
-                <FileEdit className="w-4 h-4 text-amber-600" />
-                <span className="text-xs font-semibold text-amber-700">{isRtl ? "דוגמה — צלם מסמך/ציור, ה-AI יחלץ רק את האיורים והעיטורים" : "Example — photo a document/drawing, AI extracts only the illustrations"}</span>
+                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{background: 'rgba(245,158,11,0.25)'}}>
+                  <FileEdit className="w-3 h-3" style={{color: '#fcd34d'}} />
+                </div>
+                <span className="text-xs font-semibold" style={{color: '#fcd34d'}}>
+                  {isRtl ? "דוגמה — צלם מסמך/ציור, ה-AI יחלץ רק את האיורים והעיטורים" : "Example — photo a document/drawing, AI extracts only the illustrations"}
+                </span>
               </div>
               <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/tab-ai-document-flower-example-FCQLfaRWkpJhyYFRrsba8K.webp"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/tab-ai-doc-demo-v2-ERRyD4Xbd5DBFP9YDBozrf.webp"
                 alt="AI Document Redraw Example"
-                className="w-full max-h-44 object-contain rounded-lg bg-white"
+                className="w-full max-h-44 object-contain rounded-xl"
+                style={{background: 'rgba(255,255,255,0.05)'}}
               />
             </div>
             <AiDocumentRedrawTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
@@ -1190,15 +1419,24 @@ export default function Home() {
         </Tabs>
       </main>
 
-      <footer className="border-t bg-white/50 mt-6">
-        <div className="container py-4 text-center text-xs text-muted-foreground space-y-1.5">
-          <div>{t("appFooter")}</div>
-          <div className="flex items-center justify-center gap-3">
-            <a href="/terms" className="hover:underline hover:text-foreground transition-colors">
+      <footer
+        className="mt-8"
+        style={{
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          background: 'rgba(10,15,30,0.60)',
+          backdropFilter: 'blur(10px)',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        <div className="container py-4 text-center space-y-1.5">
+          <div className="text-xs" style={{color: 'rgba(148,163,184,0.5)'}}>{t("appFooter")}</div>
+          <div className="flex items-center justify-center gap-3 text-xs" style={{color: 'rgba(148,163,184,0.4)'}}>
+            <a href="/terms" className="hover:underline transition-colors" style={{color: 'rgba(148,163,184,0.5)'}}>
               {isRtl ? "תנאי שימוש" : "Terms of Service"}
             </a>
             <span>·</span>
-            <a href="/privacy" className="hover:underline hover:text-foreground transition-colors">
+            <a href="/privacy" className="hover:underline transition-colors" style={{color: 'rgba(148,163,184,0.5)'}}>
               {isRtl ? "מדיניות פרטיות" : "Privacy Policy"}
             </a>
             <span>·</span>

@@ -42,70 +42,72 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ── Light theme (default) ── */
 :root {
   --radius: 0.75rem;
-  --background: oklch(0.99 0.002 240);
+  --background: oklch(0.97 0.003 240);
   --foreground: oklch(0.13 0.015 240);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.13 0.015 240);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.13 0.015 240);
-  --primary: oklch(0.45 0.22 264);
+  --primary: oklch(0.48 0.22 264);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.96 0.005 240);
+  --secondary: oklch(0.95 0.005 240);
   --secondary-foreground: oklch(0.35 0.015 240);
-  --muted: oklch(0.96 0.004 240);
+  --muted: oklch(0.95 0.004 240);
   --muted-foreground: oklch(0.52 0.012 240);
-  --accent: oklch(0.94 0.012 264);
+  --accent: oklch(0.93 0.012 264);
   --accent-foreground: oklch(0.35 0.18 264);
   --destructive: oklch(0.58 0.22 27);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.91 0.005 240);
-  --input: oklch(0.91 0.005 240);
-  --ring: oklch(0.45 0.22 264);
-  --chart-1: oklch(0.45 0.22 264);
-  --chart-2: oklch(0.55 0.20 264);
-  --chart-3: oklch(0.65 0.18 264);
-  --chart-4: oklch(0.75 0.14 264);
-  --chart-5: oklch(0.85 0.10 264);
-  --sidebar: oklch(0.98 0.003 240);
+  --border: oklch(0.90 0.005 240);
+  --input: oklch(0.90 0.005 240);
+  --ring: oklch(0.48 0.22 264);
+  --chart-1: oklch(0.48 0.22 264);
+  --chart-2: oklch(0.58 0.20 264);
+  --chart-3: oklch(0.68 0.18 264);
+  --chart-4: oklch(0.78 0.14 264);
+  --chart-5: oklch(0.88 0.10 264);
+  --sidebar: oklch(0.97 0.003 240);
   --sidebar-foreground: oklch(0.13 0.015 240);
-  --sidebar-primary: oklch(0.45 0.22 264);
+  --sidebar-primary: oklch(0.48 0.22 264);
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.94 0.012 264);
+  --sidebar-accent: oklch(0.93 0.012 264);
   --sidebar-accent-foreground: oklch(0.35 0.18 264);
-  --sidebar-border: oklch(0.91 0.005 240);
-  --sidebar-ring: oklch(0.45 0.22 264);
+  --sidebar-border: oklch(0.90 0.005 240);
+  --sidebar-ring: oklch(0.48 0.22 264);
 }
 
+/* ── Dark theme ── */
 .dark {
-  --background: oklch(0.10 0.008 240);
-  --foreground: oklch(0.93 0.005 240);
-  --card: oklch(0.14 0.008 240);
-  --card-foreground: oklch(0.93 0.005 240);
-  --popover: oklch(0.14 0.008 240);
-  --popover-foreground: oklch(0.93 0.005 240);
-  --primary: oklch(0.62 0.22 264);
+  --background: oklch(0.09 0.010 240);
+  --foreground: oklch(0.94 0.005 240);
+  --card: oklch(0.13 0.010 240);
+  --card-foreground: oklch(0.94 0.005 240);
+  --popover: oklch(0.13 0.010 240);
+  --popover-foreground: oklch(0.94 0.005 240);
+  --primary: oklch(0.65 0.22 264);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.18 0.008 240);
-  --secondary-foreground: oklch(0.75 0.008 240);
-  --muted: oklch(0.18 0.008 240);
-  --muted-foreground: oklch(0.58 0.010 240);
-  --accent: oklch(0.22 0.015 264);
-  --accent-foreground: oklch(0.80 0.15 264);
-  --destructive: oklch(0.70 0.19 22);
+  --secondary: oklch(0.17 0.010 240);
+  --secondary-foreground: oklch(0.78 0.008 240);
+  --muted: oklch(0.17 0.010 240);
+  --muted-foreground: oklch(0.56 0.010 240);
+  --accent: oklch(0.21 0.016 264);
+  --accent-foreground: oklch(0.82 0.15 264);
+  --destructive: oklch(0.68 0.20 22);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.62 0.22 264);
-  --sidebar: oklch(0.12 0.008 240);
-  --sidebar-foreground: oklch(0.93 0.005 240);
-  --sidebar-primary: oklch(0.62 0.22 264);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 11%);
+  --ring: oklch(0.65 0.22 264);
+  --sidebar: oklch(0.11 0.010 240);
+  --sidebar-foreground: oklch(0.94 0.005 240);
+  --sidebar-primary: oklch(0.65 0.22 264);
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.22 0.015 264);
-  --sidebar-accent-foreground: oklch(0.80 0.15 264);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.62 0.22 264);
+  --sidebar-accent: oklch(0.21 0.016 264);
+  --sidebar-accent-foreground: oklch(0.82 0.15 264);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --sidebar-ring: oklch(0.65 0.22 264);
 }
 
 @layer base {
@@ -131,24 +133,11 @@
 }
 
 @layer components {
-  /**
-   * Custom container utility that centers content and adds responsive padding.
-   *
-   * This overrides Tailwind's default container behavior to:
-   * - Auto-center content (mx-auto)
-   * - Add responsive horizontal padding
-   * - Set max-width for large screens
-   *
-   * Usage: <div className="container">...</div>
-   *
-   * For custom widths, use max-w-* utilities directly:
-   * <div className="max-w-6xl mx-auto px-4">...</div>
-   */
   .container {
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem; /* 16px - mobile padding */
+    padding-left: 1rem;
     padding-right: 1rem;
   }
 
@@ -159,36 +148,95 @@
 
   @media (min-width: 640px) {
     .container {
-      padding-left: 1.5rem; /* 24px - tablet padding */
+      padding-left: 1.5rem;
       padding-right: 1.5rem;
     }
   }
 
   @media (min-width: 1024px) {
     .container {
-      padding-left: 2rem; /* 32px - desktop padding */
+      padding-left: 2rem;
       padding-right: 2rem;
-      max-width: 1280px; /* Standard content width */
+      max-width: 1280px;
     }
   }
-}
 
-@layer components {
+  /* ── Premium glass card ── */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  /* ── Glow effects ── */
+  .glow-purple {
+    box-shadow: 0 0 30px oklch(0.55 0.25 264 / 25%), 0 4px 16px rgba(0,0,0,0.3);
+  }
+  .glow-teal {
+    box-shadow: 0 0 30px oklch(0.60 0.20 185 / 25%), 0 4px 16px rgba(0,0,0,0.3);
+  }
+  .glow-amber {
+    box-shadow: 0 0 30px oklch(0.70 0.18 65 / 25%), 0 4px 16px rgba(0,0,0,0.3);
+  }
+
+  /* ── Gradient text ── */
+  .gradient-text-purple {
+    background: linear-gradient(135deg, oklch(0.75 0.20 264), oklch(0.80 0.18 290));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .gradient-text-teal {
+    background: linear-gradient(135deg, oklch(0.72 0.18 185), oklch(0.76 0.16 165));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .gradient-text-amber {
+    background: linear-gradient(135deg, oklch(0.78 0.18 65), oklch(0.82 0.16 45));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── Tab pill active states ── */
+  .tab-active-purple {
+    background: linear-gradient(135deg, oklch(0.48 0.24 264), oklch(0.52 0.22 290)) !important;
+    color: white !important;
+    box-shadow: 0 2px 12px oklch(0.48 0.24 264 / 40%) !important;
+  }
+  .tab-active-teal {
+    background: linear-gradient(135deg, oklch(0.52 0.20 185), oklch(0.56 0.18 165)) !important;
+    color: white !important;
+    box-shadow: 0 2px 12px oklch(0.52 0.20 185 / 40%) !important;
+  }
+  .tab-active-amber {
+    background: linear-gradient(135deg, oklch(0.62 0.18 65), oklch(0.66 0.16 45)) !important;
+    color: white !important;
+    box-shadow: 0 2px 12px oklch(0.62 0.18 65 / 40%) !important;
+  }
+
+  /* ── Brand button ── */
   .btn-brand {
-    background: linear-gradient(135deg, oklch(0.45 0.22 264), oklch(0.52 0.24 290));
+    background: linear-gradient(135deg, oklch(0.48 0.22 264), oklch(0.52 0.24 290));
     color: white;
     border: none;
     transition: opacity 0.15s, transform 0.15s, box-shadow 0.15s;
-    box-shadow: 0 1px 3px oklch(0.45 0.22 264 / 30%), 0 4px 12px oklch(0.45 0.22 264 / 20%);
+    box-shadow: 0 1px 3px oklch(0.48 0.22 264 / 30%), 0 4px 12px oklch(0.48 0.22 264 / 20%);
   }
   .btn-brand:hover:not(:disabled) {
     opacity: 0.92;
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px oklch(0.45 0.22 264 / 35%), 0 8px 20px oklch(0.45 0.22 264 / 25%);
+    box-shadow: 0 2px 6px oklch(0.48 0.22 264 / 35%), 0 8px 20px oklch(0.48 0.22 264 / 25%);
   }
   .btn-brand:active:not(:disabled) {
     transform: translateY(0);
   }
+
+  /* ── Drop zone ── */
   .drop-zone {
     border: 2px dashed oklch(0.82 0.010 264);
     background: oklch(0.97 0.006 264);
@@ -199,12 +247,8 @@
     border-color: oklch(0.55 0.20 264);
     background: oklch(0.94 0.012 264);
   }
-  .gradient-text {
-    background: linear-gradient(135deg, oklch(0.45 0.22 264), oklch(0.52 0.24 290));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+
+  /* ── Badge subtle ── */
   .badge-subtle {
     display: inline-flex;
     align-items: center;
@@ -216,6 +260,27 @@
     background: oklch(0.94 0.012 264);
     color: oklch(0.40 0.18 264);
     border: 1px solid oklch(0.88 0.015 264);
+  }
+
+  /* ── Shine animation for loading states ── */
+  .shine {
+    position: relative;
+    overflow: hidden;
+  }
+  .shine::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -75%;
+    width: 50%;
+    height: 200%;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent);
+    transform: skewX(-20deg);
+    animation: shine 2s infinite;
+  }
+  @keyframes shine {
+    0% { left: -75%; }
+    100% { left: 125%; }
   }
 }
 

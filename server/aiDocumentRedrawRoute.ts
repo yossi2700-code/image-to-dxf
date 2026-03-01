@@ -172,21 +172,23 @@ router.post(
       const userDesc = (req.body?.description || "").trim();
 
       // ── Step A: LLM analyzes image → finds ONLY illustrations/decorations (no text, no background) ──
-      console.log("[aiDocumentRedraw] Analyzing image for illustrations...");
+      console.log("[aiDocumentRedraw] Analyzing image for ALL decorative elements...");
       const llmResponse = await invokeLLM({
         messages: [
           {
             role: "system",
             content:
-              "You are an expert at identifying decorative illustrations, ornaments, and graphic elements " +
-              "in photos of memorial stones, documents, signs, and certificates. " +
-              "Your task is to find and describe ONLY the non-text, non-background graphic elements: " +
-              "flowers, leaves, vines, birds, Stars of David, menorahs, candles, geometric ornaments, " +
-              "decorative borders with patterns, pictorial symbols, portraits, animals, or any illustrated artwork. " +
-              "IGNORE completely: any text/letters/words/numbers, the stone/paper/background material, " +
-              "plain rectangular borders without decoration, and photographic elements. " +
-              "If you find illustrations, describe their shape, style, position, and details precisely (3-6 sentences). " +
-              "If there are NO illustrations (only text and plain background), respond with exactly: NO_ILLUSTRATIONS",
+              "You are a precise graphic analyst for laser engraving reproduction. " +
+              "Your ONLY job: describe ALL non-text decorative graphic elements in the image so they can be redrawn exactly. " +
+              "\n\nCRITICAL RULES:\n" +
+              "1. SCAN THE ENTIRE IMAGE — top, bottom, left, right, center, corners. Do NOT miss any element.\n" +
+              "2. Describe EVERY decorative element you see: flowers, leaves, vines, birds, geometric ornaments, corner decorations, border patterns, symbols, portraits, animals, scrollwork, etc.\n" +
+              "3. For EACH element specify: its position in the composition (top-left corner, center, surrounding border, etc.), its shape, size relative to others, and style.\n" +
+              "4. If there are MULTIPLE FLOWERS or repeated motifs, describe ALL of them and their arrangement (e.g., '4 roses in the corners, 2 tulips on the sides, central sunflower').\n" +
+              "5. If there is a BORDER or FRAME with decorative patterns, describe the complete border pattern.\n" +
+              "6. NEVER describe text, letters, numbers, or plain background material.\n" +
+              "7. If there are NO illustrations at all (only text and plain background), respond with exactly: NO_ILLUSTRATIONS\n" +
+              "8. Output a structured description: start with 'COMPOSITION OVERVIEW:' then list each element with its position.",
           },
           {
             role: "user",
@@ -201,8 +203,8 @@ router.post(
               {
                 type: "text",
                 text: userDesc
-                  ? `Find and describe ONLY the illustrations, decorations, and graphic artwork in this image (NOT text, NOT background). Additional context: ${userDesc}`
-                  : "Find and describe ONLY the illustrations, decorations, flowers, symbols, and graphic artwork in this image. Do NOT describe any text or the background material.",
+                  ? `Scan the ENTIRE image and describe ALL decorative graphic elements (flowers, ornaments, borders, symbols, etc.) with their exact positions and arrangement. Do NOT miss any element — check every corner and edge. Do NOT describe text or background. Additional context from user: ${userDesc}`
+                  : "Scan the ENTIRE image carefully. Describe ALL decorative graphic elements — check every corner, every edge, every part of the image. List each element with its position (e.g., 'top-left corner: rose with 5 petals and 3 leaves', 'surrounding border: vine pattern with small flowers', 'center: Star of David'). If there are multiple flowers or ornaments, describe ALL of them. Do NOT describe text, letters, or background.",
               },
             ],
           },
@@ -227,15 +229,16 @@ router.post(
 
       // ── Step B: Draw ONLY the extracted illustrations with gpt-image-1 ──────────────────────────
       const imagePrompt =
-        `Clean black and white line art illustration of the following decorative elements: ${objectDescription}. ` +
-        "CRITICAL REQUIREMENTS: " +
-        "1. Draw ONLY the decorative illustrations and graphic elements described — NO text, NO letters, NO words. " +
-        "2. Pure white background (#FFFFFF). Only pure black (#000000) lines. NO grey tones, NO fills, NO gradients. " +
-        "3. Clean, precise lines suitable for laser engraving on wood or metal. " +
-        "4. Faithful to the described shapes, proportions, and style. " +
-        "5. The complete illustration MUST fit entirely inside the square frame with 10% white margin on every edge. " +
-        "6. Style: professional engraving quality line art — bold outlines with clean inner detail lines. " +
-        "7. Centered composition, fully visible, nothing cropped.";
+        `Professional laser engraving line art. Reproduce EXACTLY this complete composition: ${objectDescription}. ` +
+        "\n\nCRITICAL REQUIREMENTS:\n" +
+        "1. REPRODUCE THE COMPLETE COMPOSITION — draw EVERY element described, in its described position. If there are 4 corner ornaments, draw all 4. If there is a surrounding border, draw the full border. If there are multiple flowers, draw all of them.\n" +
+        "2. MAINTAIN SPATIAL ARRANGEMENT — place each element exactly where described (corners, center, borders, sides).\n" +
+        "3. NO text, NO letters, NO words, NO numbers — only the graphic/decorative elements.\n" +
+        "4. Pure white background (#FFFFFF). Only pure black (#000000) lines. NO grey tones, NO fills, NO gradients, NO shading.\n" +
+        "5. Clean, precise, thin lines suitable for laser engraving.\n" +
+        "6. The complete composition MUST fit entirely inside the frame with 10% white margin on every edge — nothing cropped.\n" +
+        "7. Style: professional engraving quality line art — clean outlines with precise inner detail lines.\n" +
+        "8. Scale: make the composition fill the available space proportionally — not too small, not too large.";
 
       const response = await openai.images.generate({
         model: "gpt-image-1",

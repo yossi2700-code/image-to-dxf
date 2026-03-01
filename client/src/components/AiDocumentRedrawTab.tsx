@@ -240,18 +240,23 @@ function CorrectionPanel({ imageUrl, objectDescription, onRefined, isRtl }: Corr
   };
 
   return (
-    <div className="mt-3 rounded-xl border border-amber-400/30 bg-amber-50/30 dark:bg-amber-950/20 overflow-hidden" dir={isRtl ? "rtl" : "ltr"}>
+    <div
+      className="mt-3 rounded-xl overflow-hidden"
+      style={{background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)'}}
+      dir={isRtl ? "rtl" : "ltr"}
+    >
       <button
         onClick={() => setIsOpen((v) => !v)}
-        className="w-full flex items-center gap-2 px-4 py-3 text-sm font-semibold text-amber-700 dark:text-amber-400 hover:bg-amber-50/50 transition-colors"
+        className="w-full flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-colors"
+        style={{color: '#fbbf24'}}
       >
         <Wand2 className="w-4 h-4 shrink-0" />
         <span className="flex-1 text-start">{isRtl ? "בקש תיקון מה-AI" : "Request AI Correction"}</span>
-        {isOpen ? <ChevronUp className="w-4 h-4 shrink-0 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground" />}
+        {isOpen ? <ChevronUp className="w-4 h-4 shrink-0" style={{color: 'rgba(148,163,184,0.6)'}} /> : <ChevronDown className="w-4 h-4 shrink-0" style={{color: 'rgba(148,163,184,0.6)'}} />}
       </button>
       {isOpen && (
         <div className="px-4 pb-4 space-y-3">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs" style={{color: 'rgba(148,163,184,0.7)'}}>
             {isRtl
               ? "תאר מה לשנות בציור — ה-AI יחיל את התיקון ויצור גרסה חדשה"
               : "Describe what to change — AI will apply the correction and create a new version"}
@@ -261,7 +266,8 @@ function CorrectionPanel({ imageUrl, objectDescription, onRefined, isRtl }: Corr
               <button
                 key={ex}
                 onClick={() => setInstruction(ex)}
-                className="text-xs px-2.5 py-1 rounded-full bg-background border border-border hover:border-amber-400/50 hover:bg-amber-50/30 transition-colors text-muted-foreground hover:text-foreground"
+                className="text-xs px-2.5 py-1 rounded-full transition-colors"
+                style={{background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', color: '#94a3b8'}}
               >
                 {ex}
               </button>
@@ -272,22 +278,29 @@ function CorrectionPanel({ imageUrl, objectDescription, onRefined, isRtl }: Corr
             onChange={(e) => setInstruction(e.target.value)}
             placeholder={isRtl ? "לדוגמה: הגדל את הכתב, הוסף מסגרת, הסר פרטים מיותרים..." : "e.g. make the text larger, add a frame, remove unnecessary details..."}
             className="min-h-[80px] text-sm resize-none"
+            style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', color: '#e2e8f0'}}
             disabled={isLoading}
             dir={isRtl ? "rtl" : "ltr"}
             onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleRefine(); }}
           />
-          <Button
+          <button
             onClick={handleRefine}
             disabled={isLoading || !instruction.trim()}
-            className="w-full bg-amber-600 hover:bg-amber-700 text-white h-10 text-sm gap-2"
+            className="w-full h-10 text-sm rounded-xl flex items-center justify-center gap-2 font-semibold transition-all"
+            style={{
+              background: isLoading || !instruction.trim() ? 'rgba(251,191,36,0.15)' : 'linear-gradient(135deg, #d97706, #f59e0b)',
+              color: isLoading || !instruction.trim() ? 'rgba(251,191,36,0.4)' : 'white',
+              border: 'none',
+              cursor: isLoading || !instruction.trim() ? 'not-allowed' : 'pointer',
+            }}
           >
             {isLoading ? (
               <><Loader2 className="w-4 h-4 animate-spin" />{isRtl ? "מחיל תיקון..." : "Applying correction..."}</>
             ) : (
               <><Wand2 className="w-4 h-4" />{isRtl ? "החל תיקון" : "Apply Correction"}</>
             )}
-          </Button>
-          <p className="text-xs text-muted-foreground text-center">
+          </button>
+          <p className="text-xs text-center" style={{color: 'rgba(148,163,184,0.5)'}}>
             {isRtl ? "טיפ: ככל שהתיאור מדויק יותר, כך התוצאה טובה יותר" : "Tip: The more specific the description, the better the result"}
           </p>
         </div>
@@ -311,14 +324,23 @@ function ResultCard({ image, objectDescription, isRtl, onDownload, onZoom, onRef
   const [showComparison, setShowComparison] = useState(false);
 
   return (
-    <Card className="border-primary/20 shadow-md">
-      <CardContent className="p-4">
+    <div
+      className="rounded-2xl p-4"
+      style={{
+        background: 'rgba(255,255,255,0.04)',
+        border: '1px solid rgba(255,255,255,0.09)',
+        backdropFilter: 'blur(12px)',
+      }}
+    >
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full flex items-center gap-1.5">
+          <span
+            className="text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5"
+            style={{background: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.25)'}}
+          >
             <Sparkles className="w-3 h-3" />
             {isRtl ? "ציור מחדש AI" : "AI Redraw"}
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs" style={{color: 'rgba(148,163,184,0.6)'}}>
             {image.segmentCount.toLocaleString()} {isRtl ? "קווים" : "lines"}
           </span>
         </div>
@@ -327,11 +349,16 @@ function ResultCard({ image, objectDescription, isRtl, onDownload, onZoom, onRef
         {originalPreview && (
           <button
             onClick={() => setShowComparison(!showComparison)}
-            className={`w-full flex items-center justify-center gap-2 py-2 px-3 mb-3 rounded-lg border text-xs font-semibold transition-all ${
-              showComparison
-                ? "border-amber-500 bg-amber-500 text-white"
-                : "border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100"
-            }`}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 mb-3 rounded-xl text-xs font-semibold transition-all"
+            style={showComparison ? {
+              background: 'linear-gradient(135deg, #d97706, #f59e0b)',
+              color: 'white',
+              border: 'none',
+            } : {
+              background: 'rgba(251,191,36,0.10)',
+              border: '1px solid rgba(251,191,36,0.25)',
+              color: '#fbbf24',
+            }}
           >
             <span>{showComparison ? "🔄" : "👁"}</span>
             {showComparison
@@ -344,22 +371,30 @@ function ResultCard({ image, objectDescription, isRtl, onDownload, onZoom, onRef
         {showComparison && originalPreview ? (
           <div className="grid grid-cols-2 gap-2 mb-3">
             <div className="flex flex-col items-center gap-1">
-              <span className="text-xs font-bold text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full">
+              <span
+                className="text-xs font-bold px-2 py-0.5 rounded-full"
+                style={{background: 'rgba(255,255,255,0.08)', color: 'rgba(148,163,184,0.8)'}}
+              >
                 {isRtl ? "לפני" : "Before"}
               </span>
               <div
-                className="border rounded-lg overflow-hidden bg-gray-100 w-full cursor-zoom-in"
+                className="rounded-xl overflow-hidden w-full cursor-zoom-in"
+                style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)'}}
                 onClick={() => onZoom(originalPreview)}
               >
                 <img src={originalPreview} alt="original" className="w-full object-contain" style={{ maxHeight: 200 }} />
               </div>
             </div>
             <div className="flex flex-col items-center gap-1">
-              <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+              <span
+                className="text-xs font-bold px-2 py-0.5 rounded-full"
+                style={{background: 'rgba(251,191,36,0.15)', color: '#fbbf24'}}
+              >
                 {isRtl ? "אחרי" : "After"}
               </span>
               <div
-                className="border rounded-lg overflow-hidden bg-white w-full cursor-zoom-in"
+                className="rounded-xl overflow-hidden w-full cursor-zoom-in"
+                style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)'}}
                 onClick={() => onZoom(image.imageUrl)}
               >
                 <img src={image.imageUrl} alt="redraw" className="w-full object-contain" style={{ maxHeight: 200 }} />
@@ -367,9 +402,9 @@ function ResultCard({ image, objectDescription, isRtl, onDownload, onZoom, onRef
             </div>
           </div>
         ) : (
-          /* Normal single AI Drawing preview */
           <div
-            className="border rounded-lg overflow-hidden bg-white mb-3 relative group cursor-zoom-in"
+            className="rounded-xl overflow-hidden mb-3 relative group cursor-zoom-in"
+            style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)'}}
             onClick={() => onZoom(image.imageUrl)}
           >
             <img
@@ -378,7 +413,7 @@ function ResultCard({ image, objectDescription, isRtl, onDownload, onZoom, onRef
               className="w-full block"
               style={{ maxHeight: 360, objectFit: "contain" }}
             />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
               <ZoomIn className="w-7 h-7 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
             </div>
           </div>
@@ -387,14 +422,20 @@ function ResultCard({ image, objectDescription, isRtl, onDownload, onZoom, onRef
         {/* Toggle vector preview */}
         <button
           onClick={() => setShowVector(!showVector)}
-          className={`w-full flex items-center justify-center gap-2.5 py-3 px-4 mb-3 rounded-xl border-2 transition-all font-semibold text-sm shadow-sm active:scale-[0.98]
-            ${showVector
-              ? "border-primary bg-primary text-white hover:bg-primary/90"
-              : "border-primary bg-gradient-to-r from-primary/10 to-blue-500/10 text-primary hover:from-primary/20 hover:to-blue-500/20"}`}
+          className="w-full flex items-center justify-center gap-2.5 py-3 px-4 mb-3 rounded-xl transition-all font-semibold text-sm"
+          style={showVector ? {
+            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+            color: 'white',
+            border: 'none',
+          } : {
+            background: 'rgba(99,102,241,0.10)',
+            border: '1px solid rgba(99,102,241,0.25)',
+            color: '#a5b4fc',
+          }}
         >
           {showVector ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           <FileCode2 className="w-4 h-4" />
-          {showVector ? (isRtl ? "הסתר וקטור ⬆" : "⬆ Hide Vector") : (isRtl ? "הצג וקטור DXF ⬇" : "⬇ Show DXF Vector")}
+          {showVector ? (isRtl ? "הסתיר וקטור ⬆" : "⬆ Hide Vector") : (isRtl ? "הצג וקטור DXF ⬇" : "⬇ Show DXF Vector")}
         </button>
 
         {showVector && (
@@ -406,26 +447,29 @@ function ResultCard({ image, objectDescription, isRtl, onDownload, onZoom, onRef
         {/* Dimensions */}
         {(image.realWidth || image.realHeight) && (
           <div className="grid grid-cols-2 gap-2 mb-3 text-center">
-            <div className="bg-muted/30 rounded p-1.5">
-              <p className="text-xs font-semibold">{image.realWidth ? (image.realWidth / 3.7795).toFixed(0) : "—"} mm</p>
-              <p className="text-xs text-muted-foreground">{isRtl ? "רוחב" : "Width"}</p>
-            </div>
-            <div className="bg-muted/30 rounded p-1.5">
-              <p className="text-xs font-semibold">{image.realHeight ? (image.realHeight / 3.7795).toFixed(0) : "—"} mm</p>
-              <p className="text-xs text-muted-foreground">{isRtl ? "גובה" : "Height"}</p>
-            </div>
+            {[{v: image.realWidth ? (image.realWidth / 3.7795).toFixed(0) + ' mm' : '—', l: isRtl ? 'רוחב' : 'Width'}, {v: image.realHeight ? (image.realHeight / 3.7795).toFixed(0) + ' mm' : '—', l: isRtl ? 'גובה' : 'Height'}].map(({v, l}, i) => (
+              <div key={i} className="rounded-xl p-1.5" style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)'}}>
+                <p className="text-xs font-semibold" style={{color: '#a5b4fc'}}>{v}</p>
+                <p className="text-xs" style={{color: 'rgba(148,163,184,0.6)'}}>{l}</p>
+              </div>
+            ))}
           </div>
         )}
 
         {/* Download button */}
-        <Button
-          size="lg"
-          className="w-full bg-green-600 hover:bg-green-700 font-bold text-base h-12"
+        <button
+          className="w-full h-12 font-bold text-base rounded-xl flex items-center justify-center gap-2"
+          style={{
+            background: 'linear-gradient(135deg, #059669, #10b981)',
+            color: 'white',
+            border: 'none',
+            boxShadow: '0 4px 15px rgba(16,185,129,0.25)',
+          }}
           onClick={onDownload}
         >
-          <Download className="w-5 h-5 ml-2" />
+          <Download className="w-5 h-5" />
           {isRtl ? "הורד DXF / PDF" : "Download DXF / PDF"}
-        </Button>
+        </button>
 
         {/* Correction panel */}
         <CorrectionPanel
@@ -434,8 +478,7 @@ function ResultCard({ image, objectDescription, isRtl, onDownload, onZoom, onRef
           onRefined={onRefined}
           isRtl={isRtl}
         />
-      </CardContent>
-    </Card>
+    </div>
   );
 }
 
@@ -548,11 +591,11 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
     <div className="space-y-4" dir={isRtl ? "rtl" : "ltr"}>
       {/* Header */}
       <div className="text-center space-y-1 pb-1">
-        <h2 className="text-lg font-bold flex items-center justify-center gap-2">
-          <Wand2 className="w-5 h-5 text-amber-600" />
+        <h2 className="text-lg font-bold flex items-center justify-center gap-2" style={{color: '#e2e8f0'}}>
+          <Wand2 className="w-5 h-5" style={{color: '#fbbf24'}} />
           {isRtl ? "עריכת AI מצילום/מסמך" : "AI Document Redraw"}
         </h2>
-        <p className="text-xs text-muted-foreground leading-relaxed">
+        <p className="text-xs leading-relaxed" style={{color: 'rgba(148,163,184,0.7)'}}>
           {isRtl
             ? "צלם ציור, מסמך, שלט — ה-AI יצייר מחדש כקווים נקיים לחריטה"
             : "Photo a drawing, document, sign, or stone — AI redraws as clean lines for engraving"}
@@ -598,24 +641,25 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="w-full flex items-center justify-center gap-3 py-6 rounded-xl border-2 border-dashed border-amber-400/50 bg-amber-50/20 hover:bg-amber-50/40 active:bg-amber-50/60 transition-colors"
+              className="w-full flex items-center justify-center gap-3 py-6 rounded-xl transition-colors"
+              style={{border: '2px dashed rgba(251,191,36,0.30)', background: 'rgba(251,191,36,0.05)'}}
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={onDrop}
             >
-              <div className="w-12 h-12 rounded-full bg-amber-100/60 flex items-center justify-center shrink-0">
-                <ImageIcon className="w-6 h-6 text-amber-600" />
+              <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{background: 'rgba(251,191,36,0.15)'}}>
+                <ImageIcon className="w-6 h-6" style={{color: '#fbbf24'}} />
               </div>
               <div className="text-start">
-                <p className="font-semibold text-sm text-amber-700">
+                <p className="font-semibold text-sm" style={{color: '#fbbf24'}}>
                   {isRtl ? "צלם או בחר תמונה" : "Take or Choose Photo"}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs" style={{color: 'rgba(148,163,184,0.6)'}}>
                   {isRtl ? "ציור, מסמך, שלט..." : "Drawing, document, sign..."}
                 </p>
               </div>
             </button>
-            <p className="hidden sm:block text-xs text-center text-muted-foreground">
+            <p className="hidden sm:block text-xs text-center" style={{color: 'rgba(148,163,184,0.5)'}}>
               {isRtl ? "או גרור תמונה לכאן" : "or drag & drop an image here"}
             </p>
           </div>
@@ -629,7 +673,7 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
 
       {/* Optional description */}
       <div>
-        <label className="block text-xs font-semibold text-muted-foreground mb-1">
+        <label className="block text-xs font-semibold mb-1" style={{color: 'rgba(148,163,184,0.7)'}}>
           {isRtl ? "הערות / הסבר (אופציונלי)" : "Notes / Context (optional)"}
         </label>
         <input
@@ -637,49 +681,62 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder={isRtl ? "לדוגמה: לוגו חברה, ציור עם פרחים, שלט עם עיטור..." : "e.g. company logo, drawing with flowers, sign with ornament..."}
-          className="w-full text-sm border rounded-lg px-3 py-2 bg-background placeholder:text-muted-foreground/50"
-          style={{ textAlign: isRtl ? "right" : "left" }}
+          className="w-full text-sm rounded-lg px-3 py-2"
+          style={{
+            textAlign: isRtl ? "right" : "left",
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.10)',
+            color: '#e2e8f0',
+          }}
           dir={isRtl ? "rtl" : "ltr"}
         />
       </div>
 
       {/* Submit button */}
-      <Button
-        size="lg"
-        className="w-full font-bold text-base h-12 bg-amber-600 hover:bg-amber-700 text-white gap-2"
+      <button
+        className="w-full font-bold text-base h-12 rounded-xl flex items-center justify-center gap-2 transition-all"
+        style={{
+          background: !imageFile || status === "loading"
+            ? 'rgba(251,191,36,0.15)'
+            : 'linear-gradient(135deg, #d97706, #f59e0b)',
+          color: !imageFile || status === "loading" ? 'rgba(251,191,36,0.4)' : 'white',
+          border: '1px solid rgba(251,191,36,0.25)',
+          boxShadow: !imageFile || status === "loading" ? 'none' : '0 4px 15px rgba(245,158,11,0.30)',
+          cursor: !imageFile || status === "loading" ? 'not-allowed' : 'pointer',
+        }}
         disabled={!imageFile || status === "loading"}
         onClick={handleRedraw}
       >
         {status === "loading" ? (
-          <>
-            <Loader2 className="w-5 h-5 animate-spin" />
-            {isRtl ? "ה-AI מצייר מחדש..." : "AI is redrawing..."}
-          </>
+          <><Loader2 className="w-5 h-5 animate-spin" />{isRtl ? "ה-AI מצייר מחדש..." : "AI is redrawing..."}</>
         ) : (
-          <>
-            <Wand2 className="w-5 h-5" />
-            {isRtl ? "צייר מחדש עם AI" : "Redraw with AI"}
-          </>
+          <><Wand2 className="w-5 h-5" />{isRtl ? "צייר מחדש עם AI" : "Redraw with AI"}</>
         )}
-      </Button>
+      </button>
 
       {/* Processing state */}
       {status === "loading" && (
-        <div className="text-center py-6 space-y-3">
+        <div
+          className="rounded-2xl p-8 text-center space-y-3"
+          style={{
+            background: 'rgba(251,191,36,0.06)',
+            border: '1px solid rgba(251,191,36,0.15)',
+            backdropFilter: 'blur(12px)',
+          }}
+        >
           <div className="relative w-16 h-16 mx-auto">
-            <div className="absolute inset-0 rounded-full border-4 border-amber-200 animate-pulse" />
-            <div className="absolute inset-2 rounded-full border-4 border-amber-500 border-t-transparent animate-spin" />
-            <Wand2 className="absolute inset-0 m-auto w-6 h-6 text-amber-600" />
+            <div className="absolute inset-0 rounded-full" style={{border: '3px solid rgba(251,191,36,0.15)', borderTopColor: '#fbbf24', animation: 'spin 1s linear infinite'}} />
+            <Wand2 className="absolute inset-0 m-auto w-6 h-6" style={{color: '#fbbf24'}} />
           </div>
           <div>
-            <p className="font-semibold text-sm">{isRtl ? "ה-AI מנתח ומצייר מחדש..." : "AI analyzing and redrawing..."}</p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="font-semibold text-sm" style={{color: '#e2e8f0'}}>{isRtl ? "ה-AI מנתח ומצייר מחדש..." : "AI analyzing and redrawing..."}</p>
+            <p className="text-xs mt-1" style={{color: 'rgba(148,163,184,0.7)'}}>
               {isRtl ? "מזהה כל אלמנט ומצייר קווים נקיים לחריטה" : "Identifying every element and drawing clean engraving lines"}
             </p>
           </div>
-          <div className="flex justify-center gap-1.5 mt-2">
+          <div className="flex justify-center gap-1.5">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="w-2 h-2 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+              <div key={i} className="w-2 h-2 rounded-full" style={{background: '#fbbf24', animation: `bounce 1s infinite ${i * 0.15}s`}} />
             ))}
           </div>
         </div>
@@ -687,11 +744,14 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
 
       {/* Error state */}
       {status === "error" && errorMsg && (
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+        <div
+          className="flex items-start gap-2 p-3 rounded-xl text-sm"
+          style={{background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.20)'}}
+        >
+          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" style={{color: '#f87171'}} />
           <div>
-            <p className="font-medium">{isRtl ? "שגיאה" : "Error"}</p>
-            <p className="text-xs mt-0.5 opacity-80">{errorMsg}</p>
+            <p className="font-medium" style={{color: '#fca5a5'}}>{isRtl ? "שגיאה" : "Error"}</p>
+            <p className="text-xs mt-0.5" style={{color: 'rgba(148,163,184,0.7)'}}>{errorMsg}</p>
           </div>
         </div>
       )}
@@ -701,11 +761,14 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
         <div className="space-y-3">
           {/* AI description */}
           {result.objectDescription && (
-            <div className="p-3 rounded-lg bg-muted/30 border border-muted">
-              <p className="text-xs font-semibold text-muted-foreground mb-1">
+            <div
+              className="p-3 rounded-xl"
+              style={{background: 'rgba(251,191,36,0.07)', border: '1px solid rgba(251,191,36,0.15)'}}
+            >
+              <p className="text-xs font-semibold mb-1" style={{color: 'rgba(251,191,36,0.8)'}}>
                 {isRtl ? "ה-AI זיהה:" : "AI identified:"}
               </p>
-              <p className="text-xs leading-relaxed line-clamp-3">{result.objectDescription}</p>
+              <p className="text-xs leading-relaxed line-clamp-3" style={{color: 'rgba(148,163,184,0.8)'}}>{result.objectDescription}</p>
             </div>
           )}
 
@@ -723,10 +786,14 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
           />
 
           {/* New image button */}
-          <Button variant="outline" className="w-full gap-2" onClick={reset}>
+          <button
+            className="w-full py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all"
+            style={{background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', color: '#94a3b8'}}
+            onClick={reset}
+          >
             <RefreshCw className="w-4 h-4" />
             {isRtl ? "תמונה חדשה" : "New Image"}
-          </Button>
+          </button>
         </div>
       )}
 

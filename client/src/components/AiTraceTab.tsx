@@ -158,20 +158,30 @@ function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) 
   const label = isRtl ? VARIATION_LABELS[index] : VARIATION_LABELS_EN[index];
 
   return (
-    <Card className="border-primary/20">
-      <CardContent className="p-4">
+    <div
+      className="rounded-2xl p-4"
+      style={{
+        background: 'rgba(255,255,255,0.04)',
+        border: '1px solid rgba(255,255,255,0.09)',
+        backdropFilter: 'blur(12px)',
+      }}
+    >
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{label}</span>
-          <span className="text-xs text-muted-foreground">{image.segmentCount.toLocaleString()} {isRtl ? "קווים" : "lines"}</span>
+          <span
+            className="text-xs font-semibold px-2 py-0.5 rounded-full"
+            style={{background: 'rgba(20,184,166,0.15)', color: '#5eead4', border: '1px solid rgba(20,184,166,0.25)'}}
+          >{label}</span>
+          <span className="text-xs" style={{color: 'rgba(148,163,184,0.6)'}}>{image.segmentCount.toLocaleString()} {isRtl ? "קווים" : "lines"}</span>
         </div>
 
         {/* AI Drawing preview */}
         <div
-          className="border rounded-lg overflow-hidden bg-white mb-3 relative group cursor-zoom-in"
+          className="rounded-xl overflow-hidden mb-3 relative group cursor-zoom-in"
+          style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)'}}
           onClick={() => onZoom(image.imageUrl, label)}
         >
           <img src={image.imageUrl} alt={`Variation ${index + 1}`} className="w-full block" style={{ maxHeight: 320, objectFit: "contain" }} />
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
             <ZoomIn className="w-7 h-7 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
           </div>
         </div>
@@ -179,13 +189,19 @@ function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) 
         {/* Toggle vector preview */}
         <button
           onClick={() => setShowVector(!showVector)}
-          className={`w-full flex items-center justify-center gap-2.5 py-3.5 px-4 mb-3 rounded-xl border-2 transition-all font-bold text-base shadow-md active:scale-[0.98]
-            ${showVector
-              ? "border-primary bg-primary text-white hover:bg-primary/90"
-              : "border-primary bg-gradient-to-r from-primary/20 to-blue-500/20 text-primary hover:from-primary/30 hover:to-blue-500/30"}`}
+          className="w-full flex items-center justify-center gap-2.5 py-3 px-4 mb-3 rounded-xl transition-all font-bold text-sm"
+          style={showVector ? {
+            background: 'linear-gradient(135deg, #0d9488, #14b8a6)',
+            color: 'white',
+            border: 'none',
+          } : {
+            background: 'rgba(20,184,166,0.10)',
+            border: '1px solid rgba(20,184,166,0.25)',
+            color: '#5eead4',
+          }}
         >
-          <Eye className="w-5 h-5" />
-          {showVector ? (isRtl ? "הסתר וקטור ⬆" : "⬆ Hide Vector") : (isRtl ? "הצג וקטור DXF ⬇" : "⬇ Show DXF Vector")}
+          <Eye className="w-4 h-4" />
+          {showVector ? (isRtl ? "הסתיר וקטור ⬆" : "⬆ Hide Vector") : (isRtl ? "הצג וקטור DXF ⬇" : "⬇ Show DXF Vector")}
         </button>
 
         {showVector && (
@@ -195,22 +211,28 @@ function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) 
         )}
 
         <div className="grid grid-cols-2 gap-2 mb-3 text-center">
-          <div className="bg-muted/30 rounded p-1.5">
-            <p className="text-xs font-semibold">{image.realWidth ? (image.realWidth / 3.7795).toFixed(0) : "—"} mm</p>
-            <p className="text-xs text-muted-foreground">{isRtl ? "רוחב" : "Width"}</p>
-          </div>
-          <div className="bg-muted/30 rounded p-1.5">
-            <p className="text-xs font-semibold">{image.realHeight ? (image.realHeight / 3.7795).toFixed(0) : "—"} mm</p>
-            <p className="text-xs text-muted-foreground">{isRtl ? "גובה" : "Height"}</p>
-          </div>
+          {[{v: image.realWidth ? (image.realWidth / 3.7795).toFixed(0) + ' mm' : '—', l: isRtl ? 'רוחב' : 'Width'}, {v: image.realHeight ? (image.realHeight / 3.7795).toFixed(0) + ' mm' : '—', l: isRtl ? 'גובה' : 'Height'}].map(({v, l}, i) => (
+            <div key={i} className="rounded-xl p-1.5" style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)'}}>
+              <p className="text-xs font-semibold" style={{color: '#a5b4fc'}}>{v}</p>
+              <p className="text-xs" style={{color: 'rgba(148,163,184,0.6)'}}>{l}</p>
+            </div>
+          ))}
         </div>
 
-        <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 font-bold text-base h-12" onClick={() => onDownload(image)}>
-          <Download className="w-5 h-5 ml-2" />
+        <button
+          className="w-full h-12 font-bold text-base rounded-xl flex items-center justify-center gap-2"
+          style={{
+            background: 'linear-gradient(135deg, #059669, #10b981)',
+            color: 'white',
+            border: 'none',
+            boxShadow: '0 4px 15px rgba(16,185,129,0.25)',
+          }}
+          onClick={() => onDownload(image)}
+        >
+          <Download className="w-5 h-5" />
           {isRtl ? "הורד DXF / PDF" : "Download DXF / PDF"}
-        </Button>
-      </CardContent>
-    </Card>
+        </button>
+    </div>
   );
 }
 
@@ -327,11 +349,19 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
 
       <div className="flex flex-col gap-5">
         {/* Upload area */}
-        <Card>
-          <CardContent className="p-5 relative">
+        <div
+          className="rounded-2xl p-5 relative"
+          style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.09)',
+            backdropFilter: 'blur(12px)',
+          }}
+        >
             <div className="flex items-center gap-2 mb-3">
-              <Scan className="w-4 h-4 text-teal-600" />
-              <h2 className="font-semibold text-sm">{t("aiTraceTitle")}</h2>
+              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'rgba(20,184,166,0.25)'}}>
+                <Scan className="w-3.5 h-3.5" style={{color: '#5eead4'}} />
+              </div>
+              <h2 className="font-semibold text-sm" style={{color: '#e2e8f0'}}>{t("aiTraceTitle")}</h2>
             </div>
 
             {/* Hidden file input — no capture attr so iPhone shows gallery + camera choice */}
@@ -344,39 +374,41 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             />
 
             {imagePreview ? (
-              /* Image selected — show preview with change/remove buttons */
-              <div className="flex items-center gap-3 mb-3 p-3 border rounded-xl bg-muted/20">
-                <img src={imagePreview} alt="Preview" className="w-16 h-16 object-cover rounded-lg border shrink-0" />
+              <div
+                className="flex items-center gap-3 mb-3 p-3 rounded-xl"
+                style={{background: 'rgba(20,184,166,0.08)', border: '1px solid rgba(20,184,166,0.20)'}}
+              >
+                <img src={imagePreview} alt="Preview" className="w-16 h-16 object-cover rounded-lg shrink-0" style={{border: '1px solid rgba(255,255,255,0.10)'}} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{imageFile?.name}</p>
-                  <p className="text-xs text-muted-foreground mb-2">{isRtl ? "תמונה נבחרה" : "Image selected"}</p>
+                  <p className="text-sm font-medium truncate" style={{color: '#e2e8f0'}}>{imageFile?.name}</p>
+                  <p className="text-xs mb-2" style={{color: 'rgba(148,163,184,0.7)'}}>{isRtl ? "תמונה נבחרה" : "Image selected"}</p>
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="text-xs text-primary font-medium hover:underline"
+                    className="text-xs font-medium"
+                    style={{color: '#5eead4'}}
                   >
                     {isRtl ? "החלף תמונה" : "Change image"}
                   </button>
                 </div>
               </div>
             ) : (
-              /* No image — show big prominent button for mobile */
               <div className="mb-3 space-y-2">
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-3 py-5 rounded-xl border-2 border-dashed border-teal-400/50 bg-teal-50/20 hover:bg-teal-50/40 active:bg-teal-50/60 transition-colors"
+                  className="w-full flex items-center justify-center gap-3 py-5 rounded-xl transition-colors"
+                  style={{border: '2px dashed rgba(20,184,166,0.35)', background: 'rgba(20,184,166,0.05)'}}
                 >
-                  <div className="w-10 h-10 rounded-full bg-teal-100/60 flex items-center justify-center shrink-0">
-                    <ImageIcon className="w-5 h-5 text-teal-600" />
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{background: 'rgba(20,184,166,0.15)'}}>
+                    <ImageIcon className="w-5 h-5" style={{color: '#5eead4'}} />
                   </div>
                   <div className="text-start">
-                    <p className="font-semibold text-sm text-teal-700">{isRtl ? "בחר תמונה" : "Choose Photo"}</p>
-                    <p className="text-xs text-muted-foreground">{isRtl ? "מהגלריה או הצלם חדש" : "From gallery or take new photo"}</p>
+                    <p className="font-semibold text-sm" style={{color: '#5eead4'}}>{isRtl ? "בחר תמונה" : "Choose Photo"}</p>
+                    <p className="text-xs" style={{color: 'rgba(148,163,184,0.6)'}}>{isRtl ? "מהגלריה או הצלם חדש" : "From gallery or take new photo"}</p>
                   </div>
                 </button>
-                {/* Drag & drop hint — desktop only */}
-                <p className="hidden sm:block text-xs text-center text-muted-foreground">
+                <p className="hidden sm:block text-xs text-center" style={{color: 'rgba(148,163,184,0.5)'}}>
                   {isRtl ? "או גרור תמונה לכאן" : "or drag & drop an image here"}
                 </p>
               </div>
@@ -394,17 +426,20 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               />
             )}
 
-            {/* Landscape mode toggle — clean segmented control */}
+            {/* Landscape mode toggle */}
             <div className="mb-3">
-              <div className="flex rounded-xl overflow-hidden border border-muted-foreground/20 bg-muted/20">
+              <div
+                className="flex rounded-xl overflow-hidden"
+                style={{background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)'}}
+              >
                 <button
                   type="button"
                   onClick={() => setLandscapeMode(false)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all ${
-                    !landscapeMode
-                      ? "bg-teal-500 text-white shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all"
+                  style={!landscapeMode ? {
+                    background: 'linear-gradient(135deg, #0d9488, #14b8a6)',
+                    color: 'white',
+                  } : {color: 'rgba(148,163,184,0.7)'}}
                 >
                   <span className="text-base">📷</span>
                   <span>{isRtl ? "אובייקט" : "Object"}</span>
@@ -412,17 +447,17 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                 <button
                   type="button"
                   onClick={() => setLandscapeMode(true)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all ${
-                    landscapeMode
-                      ? "bg-green-600 text-white shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all"
+                  style={landscapeMode ? {
+                    background: 'linear-gradient(135deg, #059669, #10b981)',
+                    color: 'white',
+                  } : {color: 'rgba(148,163,184,0.7)'}}
                 >
                   <span className="text-base">🌄</span>
                   <span>{isRtl ? "נוף" : "Landscape"}</span>
                 </button>
               </div>
-              <p className="text-xs text-muted-foreground mt-1 px-1">
+              <p className="text-xs mt-1 px-1" style={{color: 'rgba(148,163,184,0.55)'}}>
                 {landscapeMode
                   ? (isRtl ? "מצייר את כל הסצנה: שמיים, רקע, עצים, בניינים, קדמת תמונה" : "Draws the entire scene: sky, background, trees, buildings, foreground")
                   : (isRtl ? "מתמקד באובייקט הראשי בתמונה" : "Focuses on the main object in the image")}
@@ -431,7 +466,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
 
             {/* Focus text — what to draw */}
             <div className="mb-3">
-              <label className="block text-xs font-semibold text-muted-foreground mb-1">
+              <label className="block text-xs font-semibold mb-1" style={{color: 'rgba(148,163,184,0.7)'}}>
                 {isRtl ? "מה לצייר? (ברירת מחדל: האובייקט הדומיננטי)" : "What to draw? (default: dominant object)"}
               </label>
               <input
@@ -439,136 +474,171 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                 value={focusText}
                 onChange={(e) => setFocusText(e.target.value)}
                 placeholder={isRtl ? "לדוגמה: רק הכיסאות, רק העציץ, הכלב בלבד..." : "e.g. only the chairs, only the plant, just the dog..."}
-                className="w-full text-sm border rounded-lg px-3 py-2 bg-background placeholder:text-muted-foreground/50"
-                style={{ textAlign: isRtl ? "right" : "left" }}
+                className="w-full text-sm rounded-lg px-3 py-2"
+                style={{
+                  textAlign: isRtl ? "right" : "left",
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.10)',
+                  color: '#e2e8f0',
+                }}
                 dir={isRtl ? "rtl" : "ltr"}
               />
             </div>
             <input type="hidden" value={description} onChange={(e) => setDescription(e.target.value)} />
 
-            <Button size="lg" className="w-full font-bold text-base h-12 bg-teal-600 hover:bg-teal-700 text-white gap-2"
+            <button
+              className="w-full font-bold text-base h-12 rounded-xl flex items-center justify-center gap-2 transition-all"
+              style={{
+                background: !imageFile || status === "loading"
+                  ? 'rgba(20,184,166,0.15)'
+                  : 'linear-gradient(135deg, #0d9488, #14b8a6)',
+                color: !imageFile || status === "loading" ? 'rgba(94,234,212,0.4)' : 'white',
+                border: '1px solid rgba(20,184,166,0.25)',
+                boxShadow: !imageFile || status === "loading" ? 'none' : '0 4px 15px rgba(20,184,166,0.30)',
+                cursor: !imageFile || status === "loading" ? 'not-allowed' : 'pointer',
+              }}
               disabled={!imageFile || status === "loading"}
-              onClick={handleTrace}>
+              onClick={handleTrace}
+            >
               {status === "loading" ? (
-                <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin ml-2" />{isRtl ? "ה-AI מנתח ומצייר..." : "AI is analyzing and drawing..."}</>
+                <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />{isRtl ? "ה-AI מנתח ומצייר..." : "AI is analyzing and drawing..."}</>
               ) : (
-                <><Wand2 className="w-4 h-4 ml-2" />{isRtl ? "צור outline בAI" : "Create AI Outline"}</>
+                <><Wand2 className="w-4 h-4" />{isRtl ? "צור outline בAI" : "Create AI Outline"}</>
               )}
-            </Button>
-          </CardContent>
-        </Card>
+            </button>
+        </div>
 
         {/* Loading */}
         {status === "loading" && (
-          <Card>
-            <CardContent className="p-8 flex flex-col items-center gap-3 text-center">
+          <div
+            className="rounded-2xl p-8 flex flex-col items-center gap-3 text-center"
+            style={{
+              background: 'rgba(20,184,166,0.06)',
+              border: '1px solid rgba(20,184,166,0.15)',
+              backdropFilter: 'blur(12px)',
+            }}
+          >
               <div className="relative w-16 h-16">
-                <div className="absolute inset-0 rounded-full border-4 border-teal-200" />
-                <div className="absolute inset-0 rounded-full border-4 border-t-teal-500 animate-spin" />
-                <Wand2 className="absolute inset-0 m-auto w-6 h-6 text-teal-600" />
+                <div className="absolute inset-0 rounded-full" style={{border: '3px solid rgba(20,184,166,0.15)', borderTopColor: '#2dd4bf', animation: 'spin 1s linear infinite'}} />
+                <Wand2 className="absolute inset-0 m-auto w-6 h-6" style={{color: '#5eead4'}} />
               </div>
-              <p className="font-semibold text-sm">{isRtl ? "ה-AI מנתח את התמונה ומצייר 3 עיצובים..." : "AI is analyzing your image and drawing 3 designs..."}</p>
-              <p className="text-xs text-muted-foreground">{isRtl ? "זה עשוי לקחת 30-60 שניות" : "This may take 30-60 seconds"}</p>
+              <p className="font-semibold text-sm" style={{color: '#e2e8f0'}}>{isRtl ? "ה-AI מנתח את התמונה ומצייר 3 עיצובים..." : "AI is analyzing your image and drawing 3 designs..."}</p>
+              <p className="text-xs" style={{color: 'rgba(148,163,184,0.7)'}}>{isRtl ? "זה עשוי לקחת 30-60 שניות" : "This may take 30-60 seconds"}</p>
               <div className="flex gap-1.5">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-teal-400/60 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                  <div key={i} className="w-1.5 h-1.5 rounded-full" style={{background: '#2dd4bf', animation: `bounce 1s infinite ${i * 0.15}s`}} />
                 ))}
               </div>
-            </CardContent>
-          </Card>
+          </div>
         )}
 
         {/* Error */}
         {status === "error" && (
-          <Card>
-            <CardContent className="p-6 flex flex-col items-center gap-3 text-center">
-              <AlertCircle className="w-10 h-10 text-red-400" />
-              <p className="font-semibold text-red-600">{isRtl ? "שגיאה בעיבוד" : "Processing Error"}</p>
-              <p className="text-sm text-muted-foreground">{errorMsg}</p>
+          <div
+            className="rounded-2xl p-6 flex flex-col items-center gap-3 text-center"
+            style={{
+              background: 'rgba(239,68,68,0.06)',
+              border: '1px solid rgba(239,68,68,0.20)',
+              backdropFilter: 'blur(12px)',
+            }}
+          >
+              <AlertCircle className="w-10 h-10" style={{color: '#f87171'}} />
+              <p className="font-semibold" style={{color: '#fca5a5'}}>{isRtl ? "שגיאה בעיבוד" : "Processing Error"}</p>
+              <p className="text-sm" style={{color: 'rgba(148,163,184,0.7)'}}>{errorMsg}</p>
               <div className="flex gap-2 flex-wrap justify-center">
-                <Button variant="outline" size="sm" onClick={reset}>{isRtl ? "נסה שוב" : "Try Again"}</Button>
+                <button
+                  className="text-sm px-4 py-2 rounded-xl font-medium"
+                  style={{background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: '#e2e8f0'}}
+                  onClick={reset}
+                >{isRtl ? "נסה שוב" : "Try Again"}</button>
                 {errorMsg && (errorMsg.includes("אסימונים") || errorMsg.toLowerCase().includes("token")) && (
-                  <Button size="sm" className="bg-teal-600 hover:bg-teal-700" onClick={() => window.location.href = "/tokens"}>
+                  <button
+                    className="text-sm px-4 py-2 rounded-xl font-semibold"
+                    style={{background: 'linear-gradient(135deg, #0d9488, #14b8a6)', color: 'white', border: 'none'}}
+                    onClick={() => window.location.href = "/tokens"}
+                  >
                     {isRtl ? "רכוש אסימונים" : "Buy Tokens"}
-                  </Button>
+                  </button>
                 )}
               </div>
-            </CardContent>
-          </Card>
+          </div>
         )}
 
         {/* Results — 3 variations */}
         {status === "success" && result && (
           <>
-            <Card className="border-teal-300/40 bg-teal-50/30">
-              <CardContent className="p-4">
+            <div
+              className="rounded-2xl p-4"
+              style={{
+                background: 'rgba(20,184,166,0.08)',
+                border: '1px solid rgba(20,184,166,0.20)',
+                backdropFilter: 'blur(10px)',
+              }}
+            >
                 <div className="flex items-center gap-2 mb-1">
-                  <CheckCircle2 className="w-4 h-4 text-teal-600" />
-                  <span className="font-semibold text-sm">
+                  <CheckCircle2 className="w-4 h-4" style={{color: '#2dd4bf'}} />
+                  <span className="font-semibold text-sm" style={{color: '#e2e8f0'}}>
                     {isRtl ? "3 עיצובים מוכנים — בחר את המועדף" : "3 designs ready — choose your favorite"}
                   </span>
                 </div>
                 {result.objectDescription && (
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                    <span className="font-medium">{isRtl ? "תיאור AI: " : "AI description: "}</span>
+                  <p className="text-xs mt-1 line-clamp-2" style={{color: 'rgba(148,163,184,0.7)'}}>
+                    <span className="font-medium" style={{color: 'rgba(94,234,212,0.8)'}}>{isRtl ? "תיאור AI: " : "AI description: "}</span>
                     {result.objectDescription}
                   </p>
                 )}
-              </CardContent>
-            </Card>
+            </div>
 
             {/* AI Suggestions + custom improvement */}
             {result.suggestions && result.suggestions.length > 0 && (
-              <Card className="border-teal-200 bg-teal-50">
-                <CardContent className="p-4">
-                  {/* Header */}
+              <div
+                className="rounded-2xl p-4"
+                style={{
+                  background: 'rgba(20,184,166,0.06)',
+                  border: '1px solid rgba(20,184,166,0.15)',
+                  backdropFilter: 'blur(10px)',
+                }}
+              >
                   <div className="flex items-center gap-2 mb-3">
-                    <Wand2 className="w-4 h-4 text-teal-600" />
-                    <span className="text-sm font-semibold text-teal-700">
+                    <Wand2 className="w-4 h-4" style={{color: '#5eead4'}} />
+                    <span className="text-sm font-semibold" style={{color: '#e2e8f0'}}>
                       {isRtl ? "שפר את העיצוב" : "Improve the design"}
                     </span>
                   </div>
 
-                  {/* Style variation chips */}
-                  <p className="text-xs text-teal-600 font-medium mb-1.5">
+                  <p className="text-xs font-medium mb-1.5" style={{color: 'rgba(94,234,212,0.7)'}}>
                     {isRtl ? "שנה סגנון:" : "Change style:"}
                   </p>
                   <div className="flex flex-wrap gap-2 mb-3">
                     {(isRtl ? VARIATION_LABELS : VARIATION_LABELS_EN).map((label, idx) => (
                       <button
                         key={idx}
-                        onClick={() => {
-                          setFocusText(label);
-                          handleTrace();
-                        }}
-                        className="text-xs px-3 py-1.5 rounded-full border border-teal-300 bg-teal-50 hover:bg-teal-100 active:bg-teal-200 text-teal-700 font-medium transition-colors shadow-sm"
+                        onClick={() => { setFocusText(label); handleTrace(); }}
+                        className="text-xs px-3 py-1.5 rounded-full font-medium transition-all"
+                        style={{background: 'rgba(20,184,166,0.12)', border: '1px solid rgba(20,184,166,0.25)', color: '#5eead4'}}
                       >
                         🎨 {label}
                       </button>
                     ))}
                   </div>
 
-                  {/* AI suggestions */}
-                  <p className="text-xs text-teal-600 font-medium mb-1.5">
+                  <p className="text-xs font-medium mb-1.5" style={{color: 'rgba(94,234,212,0.7)'}}>
                     {isRtl ? "הצעות ה-AI:" : "AI suggestions:"}
                   </p>
                   <div className="flex flex-wrap gap-2 mb-4">
                     {result.suggestions.map((suggestion, idx) => (
                       <button
                         key={idx}
-                        onClick={() => {
-                          setFocusText(suggestion);
-                          handleTrace();
-                        }}
-                        className="text-xs px-3 py-1.5 rounded-full border border-teal-300 bg-white hover:bg-teal-100 active:bg-teal-200 text-teal-700 font-medium transition-colors shadow-sm"
+                        onClick={() => { setFocusText(suggestion); handleTrace(); }}
+                        className="text-xs px-3 py-1.5 rounded-full font-medium transition-all"
+                        style={{background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#94a3b8'}}
                       >
                         ✨ {suggestion}
                       </button>
                     ))}
                   </div>
 
-                  {/* Free-text custom improvement */}
-                  <p className="text-xs text-teal-600 font-medium mb-1.5">
+                  <p className="text-xs font-medium mb-1.5" style={{color: 'rgba(94,234,212,0.7)'}}>
                     {isRtl ? "או הקלד בקשה משלהך:" : "Or type your own request:"}
                   </p>
                   <div className="flex gap-2">
@@ -583,8 +653,13 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                           handleTrace();
                         }
                       }}
-                      placeholder={isRtl ? "לדוגמה: הוסף פרטים, שנה סגנון, עשה יותר קטן..." : "e.g. add more detail, make it cuter, cartoon style..."}
-                      className="flex-1 text-sm border border-teal-300 rounded-lg px-3 py-2 bg-white placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                      placeholder={isRtl ? "לדוגמה: הוסף פרטים, שנה סגנון..." : "e.g. add more detail, cartoon style..."}
+                      className="flex-1 text-sm rounded-lg px-3 py-2"
+                      style={{
+                        background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(255,255,255,0.10)',
+                        color: '#e2e8f0',
+                      }}
                       dir={isRtl ? "rtl" : "ltr"}
                     />
                     <button
@@ -596,13 +671,18 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                         }
                       }}
                       disabled={!customImprovement.trim()}
-                      className="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white text-sm font-semibold transition-colors"
+                      className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                      style={{
+                        background: customImprovement.trim() ? 'linear-gradient(135deg, #0d9488, #14b8a6)' : 'rgba(20,184,166,0.15)',
+                        color: customImprovement.trim() ? 'white' : 'rgba(94,234,212,0.4)',
+                        border: 'none',
+                        cursor: customImprovement.trim() ? 'pointer' : 'not-allowed',
+                      }}
                     >
                       {isRtl ? "החל" : "Go"}
                     </button>
                   </div>
-                </CardContent>
-              </Card>
+              </div>
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -618,23 +698,32 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               ))}
             </div>
 
-            <Button variant="outline" size="sm" className="w-full" onClick={reset}>
+            <button
+              className="w-full py-2.5 text-sm font-medium rounded-xl transition-all"
+              style={{background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', color: '#94a3b8'}}
+              onClick={reset}
+            >
               {t("aiTraceNewImage")}
-            </Button>
+            </button>
           </>
         )}
 
         {/* Tips */}
-        <Card className="bg-teal-50 border-teal-100">
-          <CardContent className="p-4">
-            <h3 className="font-semibold text-sm text-teal-800 mb-2">{t("tipsTitle")}</h3>
-            <ul className="space-y-1.5 text-sm text-teal-700">
-              <li className="flex gap-2"><span className="shrink-0">•</span><span>{t("aiTraceTip1")}</span></li>
-              <li className="flex gap-2"><span className="shrink-0">•</span><span>{t("aiTraceTip2")}</span></li>
-              <li className="flex gap-2"><span className="shrink-0">•</span><span>{isRtl ? "ה-AI מנתח את התמונה ומצייר מחדש — 3 סגנונות שונים לבחירה" : "AI analyzes your image and redraws it — 3 different styles to choose from"}</span></li>
+        <div
+          className="rounded-2xl p-4"
+          style={{
+            background: 'rgba(20,184,166,0.06)',
+            border: '1px solid rgba(20,184,166,0.12)',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+            <h3 className="font-semibold text-sm mb-2" style={{color: '#5eead4'}}>{t("tipsTitle")}</h3>
+            <ul className="space-y-1.5 text-sm" style={{color: 'rgba(148,163,184,0.8)'}}>
+              <li className="flex gap-2"><span className="shrink-0" style={{color: '#2dd4bf'}}>•</span><span>{t("aiTraceTip1")}</span></li>
+              <li className="flex gap-2"><span className="shrink-0" style={{color: '#2dd4bf'}}>•</span><span>{t("aiTraceTip2")}</span></li>
+              <li className="flex gap-2"><span className="shrink-0" style={{color: '#2dd4bf'}}>•</span><span>{isRtl ? "ה-AI מנתח את התמונה ומצייר מחדש — 3 סגנונות שונים לבחירה" : "AI analyzes your image and redraws it — 3 different styles to choose from"}</span></li>
             </ul>
-          </CardContent>
-        </Card>
+        </div>
       </div>
     </>
   );
