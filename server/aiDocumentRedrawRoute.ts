@@ -22,7 +22,6 @@ import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { deductTokens, addTokens, TOKEN_COSTS, TokenAction } from "./tokenService";
-import { invokeLLM } from "./_core/llm";
 import OpenAI from "openai";
 import { svgToDxf } from "./svgToDxf";
 import potrace from "potrace";
@@ -145,112 +144,42 @@ async function runDocumentRedrawJob(
     const jobCheck = getJob(jobId);
     if (!jobCheck || jobCheck.status === "cancelled") return;
 
-    // ── Step A: LLM analyzes image → finds ONLY illustrations/decorations (no text, no background) ──
-    console.log("[aiDocumentRedraw] Analyzing image for ALL decorative elements...");
-    const resized = await sharp(imageBuffer)
-      .resize(768, 768, { fit: "inside", withoutEnlargement: true })
-      .jpeg({ quality: 90 })
+    console.log("[aiDocumentRedraw] Preparing image for direct gpt-image-1 edit...");
+    const baseFilename = buildFilename(userDesc || "document");
+
+    // Prepare image: resize to max 1024px, keep aspect ratio, convert to PNG
+    const editInputBuffer = await sharp(imageBuffer)
+      .resize(1024, 1024, { fit: "inside", withoutEnlargement: true })
+      .png()
       .toBuffer();
-    const imageBase64 = resized.toString("base64");
 
-    const llmResponse = await invokeLLM({
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are an expert technical illustrator and graphic analyst specializing in laser engraving reproduction. " +
-            "Your ONLY job: produce an ULTRA-PRECISE technical blueprint description of the image so an AI image generator can redraw it with maximum accuracy — same overall shape, same exact angles, same proportions, same element positions, same relative sizes. " +
-            "\n\nSTRUCTURED OUTPUT FORMAT (use these exact section headers):\n" +
-            "SHAPE: Describe the OVERALL SILHOUETTE/CONTAINER shape in precise geometric terms. E.g.: 'Vertical rectangle with aspect ratio 2:3 (portrait). Top edge has a semicircular arch. Shoulders curve inward at 45 degrees from the arch base. Bottom edge is flat.' Include exact proportions.\n" +
-            "BORDER: Describe the OUTER BORDER/FRAME precisely — its exact geometric shape (must match SHAPE), line thickness (thin/medium/thick/double), and any decorative edge pattern (plain, dotted, wavy, ornate). If no border, write 'BORDER: None'.\n" +
-            "GRID: Mentally divide the image into a 3x3 grid (top-left, top-center, top-right / middle-left, center, middle-right / bottom-left, bottom-center, bottom-right). For EACH occupied cell, list what element is there.\n" +
-            "ELEMENTS: For EACH decorative element (NOT text, NOT letters, NOT background), provide:\n" +
-            "  - NAME: what it is (Star of David, menorah/candelabra, vine branch, flower, Torah scroll, etc.)\n" +
-            "  - POSITION: grid cell + precise alignment (e.g. 'top-center cell, centered horizontally, touching the inner arch')\n" +
-            "  - SIZE: percentage of total image width and height (e.g. '25% wide, 20% tall')\n" +
-            "  - ORIENTATION: upright/tilted/mirrored/rotated (specify degrees if tilted)\n" +
-            "  - DETAIL LEVEL: simple outline / medium detail / highly detailed\n" +
-            "  - SYMMETRY: if mirrored pair, specify 'LEFT COPY: [position]' and 'RIGHT COPY: [position]'\n" +
-            "  - COUNT: number of repeated sub-elements (e.g. '7 candles in menorah', '6 petals in flower')\n" +
-            "\nCRITICAL RULES:\n" +
-            "- NEVER describe text, letters, numbers, words, or plain background.\n" +
-            "- If there are NO graphic/decorative elements at all (only text and plain background), respond with exactly: NO_ILLUSTRATIONS\n" +
-            "- Be SPECIFIC with measurements and positions — vague descriptions like 'in the middle' are NOT acceptable. Use grid coordinates and percentages.\n" +
-            "- If elements are symmetric, explicitly state the symmetry axis and describe BOTH sides.\n" +
-            "- Count repeated elements precisely.\n",
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:image/jpeg;base64,${imageBase64}`,
-                detail: "high",
-              },
-            },
-            {
-              type: "text",
-              text: userDesc
-                ? `Analyze this image using the SHAPE / BORDER / GRID / ELEMENTS format. Be extremely precise with positions (use grid coordinates), sizes (use percentages), and counts. Do NOT describe text or background. Additional context from user: ${userDesc}`
-                : "Analyze this image using the SHAPE / BORDER / GRID / ELEMENTS format. Be extremely precise with positions (use grid coordinates like 'top-center cell'), sizes (use percentages like '30% wide'), orientations, and element counts. Do NOT describe text, letters, or background.",
-            },
-          ],
-        },
-      ],
-    });
+    // Check if cancelled before generation
+    const jobBeforeGen = getJob(jobId);
+    if (!jobBeforeGen || jobBeforeGen.status === "cancelled") return;
 
-    // Check if cancelled after LLM step
-    const jobAfterLlm = getJob(jobId);
-    if (!jobAfterLlm || jobAfterLlm.status === "cancelled") return;
-
-    const llmRaw =
-      (llmResponse as { choices?: Array<{ message?: { content?: string } }> })
-        ?.choices?.[0]?.message?.content?.trim() || "";
-
-    if (!llmRaw || llmRaw.toUpperCase().includes("NO_ILLUSTRATIONS")) {
-      updateJob(jobId, {
-        status: "error",
-        error: "NO_ILLUSTRATIONS_FOUND",
-      });
-      // Refund tokens since no useful work was done
-      await addTokens(appUserId, TOKEN_COSTS["ai_trace"], "refund", "Job cancelled — tokens refunded");
-      return;
-    }
-
-    const objectDescription = llmRaw;
-    console.log("[aiDocumentRedraw] Illustrations found:", objectDescription.substring(0, 200));
-    const baseFilename = buildFilename(userDesc || objectDescription);
-
-    // ── Step B: Generate clean line art using gpt-image-1 with detailed description ──
-    // Using images.generate (not images.edit) so there's no file-size limit and no timeout risk.
-    // The detailed LLM analysis from Step A drives the faithful reproduction.
-    const aspectDesc = originalAspect > 1.2
-      ? "wider than tall (landscape orientation)"
-      : originalAspect < 0.8
-      ? "taller than wide (portrait orientation)"
-      : "approximately square";
-
+    // ── Direct gpt-image-1 edit: send original image + simple clear instruction ──
+    // No LLM analysis step — the model sees the actual image and redraws it faithfully.
     const imagePrompt =
-      `Create a clean BLACK AND WHITE LINE ART OUTLINE drawing for CNC laser engraving, based on the following detailed description of the original image.\n\n` +
-      `LAYOUT DESCRIPTION (reproduce this EXACTLY):\n${objectDescription.slice(0, 1200)}\n\n` +
-      `DRAWING RULES — MUST FOLLOW ALL:\n` +
-      `1. SINGLE STROKE: Every shape edge drawn with ONE thin black line. NO double lines, NO parallel strokes around same edge.\n` +
-      `2. ZERO SHADING: No grey, no cross-hatching, no stippling, no gradients. Only pure black (#000000) lines on pure white (#FFFFFF).\n` +
-      `3. HOLLOW OUTLINES: All shapes are open outlines — no filled areas, no solid black regions.\n` +
-      `4. CLEAN INTERSECTIONS: Where lines cross (e.g. Star of David triangles), draw clean sharp crossings — no smudging.\n` +
-      `5. NO TEXT: Do NOT draw any letters, words, numbers, or text of any kind.\n` +
-      `6. PROPORTIONS: The overall shape is ${aspectDesc}. Reproduce the exact composition and element positions from the description above.\n\n` +
-      `STYLE: Technical coloring-book outline. Like a clean stencil or engineering drawing. NOT sketchy, NOT artistic. Precise single-weight lines.\n` +
-      `OUTPUT: Pure black outlines on pure white background. No textures, no backgrounds, no shadows.`;
+      `Redraw this entire image as a clean black and white line art outline for CNC laser engraving.\n\n` +
+      `WHAT TO DRAW: Every visible graphic element, decoration, shape, and symbol in the image \u2014 exactly as they appear, in their exact positions and proportions.\n\n` +
+      `STRICT RULES:\n` +
+      `1. NO TEXT: Remove ALL text, letters, words, numbers, and inscriptions. Draw ONLY the graphic/decorative elements.\n` +
+      `2. SINGLE STROKE: Each edge drawn with ONE thin black line. No double lines, no parallel strokes around the same edge.\n` +
+      `3. NO SHADING: No grey, no hatching, no gradients, no fills. Only pure black (#000000) lines on pure white (#FFFFFF) background.\n` +
+      `4. HOLLOW OUTLINES: All shapes are open outlines only \u2014 no solid black areas.\n` +
+      `5. FAITHFUL REPRODUCTION: Preserve the exact layout, composition, and proportions of the original. Do not add or remove graphic elements.\n\n` +
+      (userDesc ? `User note: ${userDesc}\n\n` : "") +
+      `OUTPUT: Clean technical coloring-book outline. Pure black lines on pure white background. No texture, no background, no shadows.`;
 
-    const response = await openai.images.generate({
+    const response = await openai.images.edit({
       model: "gpt-image-1",
+      image: new File([new Uint8Array(editInputBuffer)], "source.png", { type: "image/png" }),
       prompt: imagePrompt,
       n: 1,
       size: "1024x1024",
-      quality: "high",
     });
+
+    const objectDescription = userDesc || "document redraw";
 
     // Check if cancelled after image generation
     const jobAfterGen = getJob(jobId);
