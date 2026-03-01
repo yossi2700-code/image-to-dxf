@@ -1177,10 +1177,10 @@ export default function Home() {
             <div className="mb-4 rounded-xl overflow-hidden border border-amber-100 bg-gradient-to-br from-amber-50 to-orange-50 p-3">
               <div className="flex items-center gap-2 mb-2">
                 <FileEdit className="w-4 h-4 text-amber-600" />
-                <span className="text-xs font-semibold text-amber-700">{isRtl ? "דוגמה — צלם מצבה/מסמך, ה-AI יחלץ רק את האיורים והעיטורים" : "Example — photo a gravestone/document, AI extracts only the illustrations"}</span>
+                <span className="text-xs font-semibold text-amber-700">{isRtl ? "דוגמה — צלם מסמך/ציור, ה-AI יחלץ רק את האיורים והעיטורים" : "Example — photo a document/drawing, AI extracts only the illustrations"}</span>
               </div>
               <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/tab-ai-document-gravestone-example-iZQeZi44ULmSVwCE4peRBS.webp"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/tab-ai-document-flower-example-FCQLfaRWkpJhyYFRrsba8K.webp"
                 alt="AI Document Redraw Example"
                 className="w-full max-h-44 object-contain rounded-lg bg-white"
               />

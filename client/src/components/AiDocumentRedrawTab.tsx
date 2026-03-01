@@ -554,7 +554,7 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
         </h2>
         <p className="text-xs text-muted-foreground leading-relaxed">
           {isRtl
-            ? "צלם ציור, מסמך, שלט, מצבה — ה-AI יצייר מחדש כקווים נקיים לחריטה"
+            ? "צלם ציור, מסמך, שלט — ה-AI יצייר מחדש כקווים נקיים לחריטה"
             : "Photo a drawing, document, sign, or stone — AI redraws as clean lines for engraving"}
         </p>
       </div>
@@ -611,7 +611,7 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
                   {isRtl ? "צלם או בחר תמונה" : "Take or Choose Photo"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {isRtl ? "ציור, מסמך, שלט, מצבה..." : "Drawing, document, sign, stone..."}
+                  {isRtl ? "ציור, מסמך, שלט..." : "Drawing, document, sign..."}
                 </p>
               </div>
             </button>
@@ -636,7 +636,7 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder={isRtl ? "לדוגמה: מצבה עם שם ותאריך, לוגו חברה, ציור ידני..." : "e.g. memorial stone with name and date, company logo, hand drawing..."}
+          placeholder={isRtl ? "לדוגמה: לוגו חברה, ציור עם פרחים, שלט עם עיטור..." : "e.g. company logo, drawing with flowers, sign with ornament..."}
           className="w-full text-sm border rounded-lg px-3 py-2 bg-background placeholder:text-muted-foreground/50"
           style={{ textAlign: isRtl ? "right" : "left" }}
           dir={isRtl ? "rtl" : "ltr"}
