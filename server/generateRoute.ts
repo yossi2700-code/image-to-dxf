@@ -30,7 +30,10 @@ const STYLE_VARIATIONS = [
       "The style should look like a skilled artist's clean sketch — NOT a child's coloring book. " +
       "Think of a high-end brand logo or a professional product illustration. " +
       "Minimal but sophisticated. NO texture, NO hatching, NO shading, NO fill. " +
-      "PRESERVE the exact shape and proportions. Pure black lines on white background only.",
+      "PRESERVE the exact shape and proportions. Pure black lines on white background only. " +
+      "CRITICAL FRAMING: The object must occupy NO MORE than 75% of the image width and height. " +
+      "Leave at least 12% white margin on EVERY side (left, right, top, bottom). " +
+      "The object must be FULLY VISIBLE — nothing cut off, nothing touching the border.",
   },
   {
     label: "detailed",
@@ -39,16 +42,22 @@ const STYLE_VARIATIONS = [
       "and key details, but keep the line count moderate — not too sparse, not too dense. " +
       "Bold outer contour with clean inner lines showing the main components and surfaces. " +
       "Like a professional product catalog illustration. " +
-      "NO texture, NO hatching, NO shading, NO fill. PRESERVE the exact shape. Clean sharp lines only.",
+      "NO texture, NO hatching, NO shading, NO fill. PRESERVE the exact shape. Clean sharp lines only. " +
+      "CRITICAL FRAMING: The object must occupy NO MORE than 75% of the image width and height. " +
+      "Leave at least 12% white margin on EVERY side (left, right, top, bottom). " +
+      "The object must be FULLY VISIBLE — nothing cut off, nothing touching the border.",
   },
   {
     label: "complex",
     style:
       "VARIATION 3 — MODERATELY COMPLEX DETAILED: Draw the complete object with slightly more detail " +
-      "than variation 2 — add secondary features, surface textures as lines, subtle structural elements. " +
+      "than variation 2 — add secondary features and subtle structural elements. " +
       "A bit richer and more elaborate, but still clean and controlled — not overwhelming. " +
       "Like a detailed technical product illustration with extra refinement. " +
-      "NO hatching, NO shading, NO fill. PRESERVE the exact shape. All lines clean and precise.",
+      "NO hatching, NO shading, NO fill, NO crosshatching, NO texture fills. PRESERVE the exact shape. All lines clean and precise. " +
+      "CRITICAL FRAMING: The object must occupy NO MORE than 75% of the image width and height. " +
+      "Leave at least 12% white margin on EVERY side (left, right, top, bottom). " +
+      "The object must be FULLY VISIBLE — nothing cut off, nothing touching the border.",
   },
 ];
 
@@ -62,7 +71,8 @@ const LANDSCAPE_STYLE_VARIATIONS = [
     style:
       "Simple clean landscape outline. Bold horizon line, clear silhouettes of all elements (buildings, trees, mountains, sky). " +
       "Capture the full panoramic scene — foreground, midground, background. " +
-      "NO texture, NO hatching, NO shading, NO fill. Clean minimal lines only.",
+      "NO texture, NO hatching, NO shading, NO fill. Clean minimal lines only. " +
+      "CRITICAL FRAMING: The entire scene must fit within 75% of the image. Leave at least 10% white margin on every edge.",
   },
   {
     label: "detailed",
@@ -70,7 +80,8 @@ const LANDSCAPE_STYLE_VARIATIONS = [
       "Detailed landscape line art. Clear horizon with rich detail in all layers: sky elements (clouds, sun), " +
       "background (mountains, distant buildings), midground (trees, structures), foreground (ground, plants, paths). " +
       "Every visible element drawn with clean distinct lines. NO texture, NO hatching, NO shading, NO fill. " +
-      "Like a detailed panoramic illustration or travel sketch.",
+      "Like a detailed panoramic illustration or travel sketch. " +
+      "CRITICAL FRAMING: The entire scene must fit within 75% of the image. Leave at least 10% white margin on every edge.",
   },
   {
     label: "decorative",
@@ -78,7 +89,8 @@ const LANDSCAPE_STYLE_VARIATIONS = [
       "Elegant decorative landscape line art. Flowing artistic lines capturing the full scenic view. " +
       "Detailed silhouettes of all scene elements with decorative inner line work. " +
       "NO texture, NO hatching, NO shading, NO fill. " +
-      "Like a fine art engraving of a landscape — beautiful and suitable for laser cutting.",
+      "Like a fine art engraving of a landscape — beautiful and suitable for laser cutting. " +
+      "CRITICAL FRAMING: The entire scene must fit within 75% of the image. Leave at least 10% white margin on every edge.",
   },
 ];
 
@@ -92,9 +104,10 @@ function buildLandscapePrompt(userPrompt: string, variationIndex: number): strin
     "IMPORTANT: Draw the ENTIRE scene — all elements visible in the landscape (sky, horizon, buildings, trees, mountains, water, foreground). " +
     "Do NOT focus on a single object — capture the full panoramic view. " +
     `${variation.style} ` +
-    "CRITICAL: The entire scene MUST fit completely inside the square frame with white margin on all sides. " +
-    "Do NOT let any element touch or go beyond the image border. Leave at least 5% white margin on every edge. " +
-    "Square composition, all elements fully visible, nothing cropped. " +
+    "CRITICAL FRAMING: The entire scene MUST fit completely inside the square frame. " +
+    "Scale the scene so it occupies at most 80% of the canvas. " +
+    "Leave at least 10% white margin on EVERY edge (top, bottom, left, right). " +
+    "NOTHING must touch or go beyond the image border. All elements fully visible, nothing cropped. " +
     "No text, no watermarks, no grey tones."
   );
 }
@@ -106,10 +119,11 @@ function buildLineArtPrompt(userPrompt: string, variationIndex: number): string 
     "Pure white background (#FFFFFF). " +
     "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
     "High contrast: only pure black (#000000) lines on white. " +
-    "Draw the complete object centered in the frame, fully visible, not cropped. " +
+    "IMPORTANT: Draw the COMPLETE object — every part fully visible, NOTHING cropped or cut off at the edges. " +
+    "The object must be centered and scaled so it occupies at most 75% of the canvas width and height. " +
+    "There must be at least 12% white empty space on EVERY side (top, bottom, left, right). " +
     "Show depth and structure with clear internal lines. " +
     `${variation.style} ` +
-    "Single centered object, complete, fully inside the frame, with generous white margin around it. " +
     "No text, no watermarks, no grey tones, no background elements."
   );
 }
@@ -231,12 +245,21 @@ router.post("/api/generate-images", async (req, res) => {
         throw new Error("לא התקבלה תמונה מה-AI");
       }
 
-      // Step 2: Pre-process — convert to high-contrast grayscale for better potrace results
-      const processedBuffer = await sharp(rawBuffer)
+      // Step 2: Pre-process — add white padding to prevent edge cropping, then high-contrast grayscale
+      const paddedBuffer = await sharp(rawBuffer)
+        .extend({
+          top: 82,    // ~8% of 1024px
+          bottom: 82,
+          left: 82,
+          right: 82,
+          background: { r: 255, g: 255, b: 255, alpha: 1 },
+        })
+        .resize(1024, 1024, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .grayscale()
         .threshold(200)   // hard threshold: pixels > 200 → white, rest → black
         .png()
         .toBuffer();
+      const processedBuffer = paddedBuffer;
 
       // Step 3: Vectorize with potrace (bitmap → smooth SVG Bezier curves)
       const rawSvg = await pngToSvg(processedBuffer);

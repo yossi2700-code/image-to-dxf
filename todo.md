@@ -597,3 +597,8 @@
 - [ ] שיפור preprocessing ב-sharp לפני potrace — סף threshold גבוה יותר לדחיית אפור
 - [ ] הגדלת simplifyTolerance ל-AI images לצמצום קווים
 - [ ] הוספת מגבלת maxSegments לאחר potrace
+
+## תיקון חיתוך תמונות AI - מרץ 2026
+- [x] חיזוק אילוץ "fit inside frame" בכל ה-prompts (generateRoute + aiDocumentRedrawRoute)
+- [x] הוספת padding ב-sharp לאחר יצירת התמונה (8% שוליים) לפני potrace
+- [x] בדיקה: כל הוריאציות + landscape mode
