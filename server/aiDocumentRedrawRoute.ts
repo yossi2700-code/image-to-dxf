@@ -171,19 +171,22 @@ router.post(
       const imageBase64 = resized.toString("base64");
       const userDesc = (req.body?.description || "").trim();
 
-      // ── Step A: LLM analyzes image → extracts faithful description ────────────
-      console.log("[aiDocumentRedraw] Analyzing image with LLM...");
+      // ── Step A: LLM analyzes image → finds ONLY illustrations/decorations (no text, no background) ──
+      console.log("[aiDocumentRedraw] Analyzing image for illustrations...");
       const llmResponse = await invokeLLM({
         messages: [
           {
             role: "system",
             content:
-              "You are an expert at faithfully describing drawings, documents, and signs for redrawing as clean line art. " +
-              "Your goal is to describe EVERY element you see in the image with maximum fidelity: " +
-              "all text (transcribe it exactly as written), all shapes, borders, decorative elements, symbols, illustrations. " +
-              "Describe the exact layout, proportions, and spatial arrangement. " +
-              "This description will be used to redraw the image as clean black-and-white line art for laser engraving. " +
-              "Output ONLY the description (4-8 sentences), no preamble.",
+              "You are an expert at identifying decorative illustrations, ornaments, and graphic elements " +
+              "in photos of memorial stones, documents, signs, and certificates. " +
+              "Your task is to find and describe ONLY the non-text, non-background graphic elements: " +
+              "flowers, leaves, vines, birds, Stars of David, menorahs, candles, geometric ornaments, " +
+              "decorative borders with patterns, pictorial symbols, portraits, animals, or any illustrated artwork. " +
+              "IGNORE completely: any text/letters/words/numbers, the stone/paper/background material, " +
+              "plain rectangular borders without decoration, and photographic elements. " +
+              "If you find illustrations, describe their shape, style, position, and details precisely (3-6 sentences). " +
+              "If there are NO illustrations (only text and plain background), respond with exactly: NO_ILLUSTRATIONS",
           },
           {
             role: "user",
@@ -198,35 +201,41 @@ router.post(
               {
                 type: "text",
                 text: userDesc
-                  ? `Describe every element in this image faithfully for redrawing as line art. Additional context: ${userDesc}`
-                  : "Describe every element in this image faithfully for redrawing as clean line art. Include all text, shapes, borders, and decorative elements.",
+                  ? `Find and describe ONLY the illustrations, decorations, and graphic artwork in this image (NOT text, NOT background). Additional context: ${userDesc}`
+                  : "Find and describe ONLY the illustrations, decorations, flowers, symbols, and graphic artwork in this image. Do NOT describe any text or the background material.",
               },
             ],
           },
         ],
       });
-
-      const objectDescription =
+      const llmRaw =
         (llmResponse as { choices?: Array<{ message?: { content?: string } }> })
-          ?.choices?.[0]?.message?.content?.trim() ||
-        userDesc ||
-        "the drawing in the image";
+          ?.choices?.[0]?.message?.content?.trim() || "";
 
-      console.log("[aiDocumentRedraw] Description:", objectDescription.substring(0, 200));
+      // If no illustrations found, return a clear error to the user
+      if (!llmRaw || llmRaw.toUpperCase().includes("NO_ILLUSTRATIONS")) {
+        return res.status(422).json({
+          error: "NO_ILLUSTRATIONS_FOUND",
+          message: "לא נמצאו איורים או עיטורים בתמונה. נסה תמונה עם פרחים, סמלים, עיטורים או ציורים.",
+          messageEn: "No illustrations or decorations were found in the image. Try a photo with flowers, symbols, ornaments, or artwork.",
+        });
+      }
+
+      const objectDescription = llmRaw;
+      console.log("[aiDocumentRedraw] Illustrations found:", objectDescription.substring(0, 200));
       const baseFilename = buildFilename(userDesc || objectDescription);
 
-      // ── Step B: Redraw with gpt-image-1 ──────────────────────────────────────
+      // ── Step B: Draw ONLY the extracted illustrations with gpt-image-1 ──────────────────────────
       const imagePrompt =
-        `Faithful black and white line art redrawing of: ${objectDescription}. ` +
+        `Clean black and white line art illustration of the following decorative elements: ${objectDescription}. ` +
         "CRITICAL REQUIREMENTS: " +
-        "1. Reproduce EVERY element from the original with maximum fidelity — all text exactly as written, all shapes, borders, decorations. " +
-        "2. Pure white background (#FFFFFF). Only pure black (#000000) lines. " +
+        "1. Draw ONLY the decorative illustrations and graphic elements described — NO text, NO letters, NO words. " +
+        "2. Pure white background (#FFFFFF). Only pure black (#000000) lines. NO grey tones, NO fills, NO gradients. " +
         "3. Clean, precise lines suitable for laser engraving on wood or metal. " +
-        "4. Bold clear outlines for all elements. Text must be legible and exactly as in the original. " +
-        "5. Maintain the exact layout and proportions of the original. " +
-        "6. The complete design MUST fit entirely inside the square frame with 5% white margin on every edge. " +
-        "7. NO grey tones, NO gradients, NO fills — only clean black lines on white. " +
-        "8. Style: professional technical illustration / engraving quality.";
+        "4. Faithful to the described shapes, proportions, and style. " +
+        "5. The complete illustration MUST fit entirely inside the square frame with 10% white margin on every edge. " +
+        "6. Style: professional engraving quality line art — bold outlines with clean inner detail lines. " +
+        "7. Centered composition, fully visible, nothing cropped.";
 
       const response = await openai.images.generate({
         model: "gpt-image-1",

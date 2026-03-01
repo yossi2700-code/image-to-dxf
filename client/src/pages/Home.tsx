@@ -1146,12 +1146,45 @@ export default function Home() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="ai">
+            <div className="mb-4 rounded-xl overflow-hidden border border-purple-100 bg-gradient-to-br from-purple-50 to-blue-50 p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-4 h-4 text-purple-600" />
+                <span className="text-xs font-semibold text-purple-700">{isRtl ? "דוגמה — תאר עיצוב בטקסט, ה-AI יצייר קווים לחריטה" : "Example — describe a design in text, AI draws engraving lines"}</span>
+              </div>
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/tab-ai-generate-example-ET9bJiJNTYLq53nXmxgioT.webp"
+                alt="AI Generate Example"
+                className="w-full max-h-44 object-contain rounded-lg bg-white"
+              />
+            </div>
             <AiGeneratorTab />
           </TabsContent>
           <TabsContent value="trace">
+            <div className="mb-4 rounded-xl overflow-hidden border border-teal-100 bg-gradient-to-br from-teal-50 to-emerald-50 p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Scan className="w-4 h-4 text-teal-600" />
+                <span className="text-xs font-semibold text-teal-700">{isRtl ? "דוגמה — העלה תמונה, ה-AI יהפוך אותה לקווים נקיים לחריטה" : "Example — upload a photo, AI converts it to clean engraving lines"}</span>
+              </div>
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/tab-ai-trace-lv-example-v2-hM6RghsZyzvy3mooS3ymTh.webp"
+                alt="AI Trace Example - Louis Vuitton bag before and after vector"
+                className="w-full max-h-44 object-contain rounded-lg bg-white"
+              />
+            </div>
             <AiTraceTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
           </TabsContent>
           <TabsContent value="redraw">
+            <div className="mb-4 rounded-xl overflow-hidden border border-amber-100 bg-gradient-to-br from-amber-50 to-orange-50 p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <FileEdit className="w-4 h-4 text-amber-600" />
+                <span className="text-xs font-semibold text-amber-700">{isRtl ? "דוגמה — צלם מצבה/מסמך, ה-AI יחלץ רק את האיורים והעיטורים" : "Example — photo a gravestone/document, AI extracts only the illustrations"}</span>
+              </div>
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/tab-ai-document-example-QoZwntRNm865KeXQYR48i5.webp"
+                alt="AI Document Redraw Example"
+                className="w-full max-h-44 object-contain rounded-lg bg-white"
+              />
+            </div>
             <AiDocumentRedrawTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
           </TabsContent>
         </Tabs>
