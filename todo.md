@@ -551,3 +551,7 @@
 
 - [x] PDF ריק— תוקן: הוחלף svg2pdf ב-SVG→Canvas→PNG→jsPDF (עובד בכל דפדפן כולל iOS)
 - [x] blob URL בוואצאפ — זו התנהגות סטנדרטית של הדפדפן, לא ניתן לשנות
+
+## תיקון PDF iOS - מרץ 2026 (סבב 7)
+
+- [x] PDF שגיאה ב-iOS — תוקן: הוחלף blob URL ב-base64 data URL (עובד ב-iOS Safari)

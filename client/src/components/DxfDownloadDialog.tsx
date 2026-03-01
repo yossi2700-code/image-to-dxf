@@ -62,8 +62,10 @@ async function svgToPngDataUrl(
         return `<svg${cleaned} width="${widthPx}" height="${heightPx}">`;
       });
 
-    const blob = new Blob([svgWithSize], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
+    // Use base64 data URL instead of blob URL — blob URLs are blocked on iOS Safari
+    const base64 = btoa(unescape(encodeURIComponent(svgWithSize)));
+    const dataUrl = `data:image/svg+xml;base64,${base64}`;
+
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement("canvas");
@@ -73,11 +75,10 @@ async function svgToPngDataUrl(
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, widthPx, heightPx);
       ctx.drawImage(img, 0, 0, widthPx, heightPx);
-      URL.revokeObjectURL(url);
       resolve(canvas.toDataURL("image/png"));
     };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("SVG render failed")); };
-    img.src = url;
+    img.onerror = () => reject(new Error("SVG render failed"));
+    img.src = dataUrl;
   });
 }
 
