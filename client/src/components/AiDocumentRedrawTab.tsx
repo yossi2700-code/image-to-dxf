@@ -34,6 +34,7 @@ import {
   ZoomOut,
   Maximize2,
   FileCode2,
+  X,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -496,8 +497,62 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
   const [dragOver, setDragOver] = useState(false);
   const [downloadTarget, setDownloadTarget] = useState<RedrawImage | null>(null);
   const [zoomImg, setZoomImg] = useState<string | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [scanLine, setScanLine] = useState(0); // 0-100 percent for scanning animation
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scanAnimRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Scanning animation
+  const startScanAnimation = useCallback(() => {
+    setScanLine(0);
+    let pos = 0;
+    let dir = 1;
+    scanAnimRef.current = setInterval(() => {
+      pos += dir * 1.5;
+      if (pos >= 100) { pos = 100; dir = -1; }
+      if (pos <= 0) { pos = 0; dir = 1; }
+      setScanLine(pos);
+    }, 20);
+  }, []);
+
+  const stopScanAnimation = useCallback(() => {
+    if (scanAnimRef.current) { clearInterval(scanAnimRef.current); scanAnimRef.current = null; }
+    setScanLine(0);
+  }, []);
+
+  // Poll job status
+  const startPolling = useCallback((id: string) => {
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    pollIntervalRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/ai-document-redraw/job/${id}`, { credentials: "include" });
+        const data = await res.json();
+        if (data.status === "done") {
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          stopScanAnimation();
+          setResult(data.result as RedrawResult);
+          setStatus("success");
+          refetchTokens();
+          toast.success(isRtl ? "הציור מחדש הושלם בהצלחה!" : "Redraw completed successfully!");
+        } else if (data.status === "error") {
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          stopScanAnimation();
+          const msg = data.message || (isRtl ? "שגיאה בעיבוד" : "Processing error");
+          setErrorMsg(msg);
+          setStatus("error");
+          refetchTokens();
+          toast.error(msg);
+        } else if (data.status === "cancelled") {
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          stopScanAnimation();
+          setStatus("idle");
+        }
+        // pending/processing → keep polling
+      } catch (_) { /* network error, keep trying */ }
+    }, 3000);
+  }, [isRtl, refetchTokens, stopScanAnimation]);
 
   const handleFile = useCallback((file: File) => {
     const allowed = ["image/png", "image/jpeg", "image/bmp", "image/webp", "image/gif", "image/heic", "image/heif"];
@@ -530,6 +585,7 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
     setStatus("loading");
     setResult(null);
     setErrorMsg("");
+    startScanAnimation();
     try {
       const formData = new FormData();
       formData.append("image", imageFile);
@@ -543,6 +599,7 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
       const data = await res.json();
 
       if (!res.ok) {
+        stopScanAnimation();
         if (data.error === "UNAUTHORIZED") {
           onOpenAuth();
           setStatus("idle");
@@ -562,11 +619,19 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
         throw new Error(isRtl ? (data.message || data.error) : (data.messageEn || data.error || "Error"));
       }
 
-      setResult(data as RedrawResult);
-      setStatus("success");
-      refetchTokens();
-      toast.success(isRtl ? "הציור מחדש הושלם בהצלחה!" : "Redraw completed successfully!");
+      // Server returned a jobId — start polling
+      if (data.jobId) {
+        setJobId(data.jobId);
+        startPolling(data.jobId);
+      } else {
+        // Legacy direct response (shouldn't happen)
+        stopScanAnimation();
+        setResult(data as RedrawResult);
+        setStatus("success");
+        refetchTokens();
+      }
     } catch (err: unknown) {
+      stopScanAnimation();
       const msg = err instanceof Error ? err.message : (isRtl ? "שגיאה בעיבוד" : "Processing error");
       setErrorMsg(msg);
       setStatus("error");
@@ -574,13 +639,35 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
     }
   };
 
+  const handleCancel = async () => {
+    if (!jobId) return;
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    stopScanAnimation();
+    try {
+      const res = await fetch(`/api/ai-document-redraw/cancel/${jobId}`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.cancelled) {
+        toast.success(isRtl ? "העיבוד בוטל והאסימונים הוחזרו" : "Processing cancelled — tokens refunded");
+        refetchTokens();
+      }
+    } catch (_) { /* ignore */ }
+    setStatus("idle");
+    setJobId(null);
+  };
+
   const reset = () => {
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    stopScanAnimation();
     setImageFile(null);
     setImagePreview(null);
     setResult(null);
     setStatus("idle");
     setErrorMsg("");
     setDescription("");
+    setJobId(null);
   };
 
   return (
@@ -617,18 +704,58 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
                 alt={isRtl ? "תמונה שנבחרה" : "Selected image"}
                 className="w-full max-h-56 object-contain block"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-              <div className="absolute bottom-2 right-2 left-2 flex items-center justify-between">
-                <span className="text-xs text-white/90 bg-black/40 px-2 py-0.5 rounded-full truncate max-w-[60%]">
-                  {imageFile?.name}
-                </span>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="text-xs text-white bg-black/50 hover:bg-black/70 px-2.5 py-1 rounded-full transition-colors"
-                >
-                  {isRtl ? "החלף" : "Change"}
-                </button>
-              </div>
+              {/* Scanning animation overlay */}
+              {status === "loading" && (
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                  {/* Dark overlay */}
+                  <div className="absolute inset-0 bg-black/20" />
+                  {/* Scan line */}
+                  <div
+                    className="absolute left-0 right-0 h-0.5"
+                    style={{
+                      top: `${scanLine}%`,
+                      background: 'linear-gradient(90deg, transparent, #fbbf24, #f59e0b, #fbbf24, transparent)',
+                      boxShadow: '0 0 8px 2px rgba(251,191,36,0.8)',
+                      transition: 'top 20ms linear',
+                    }}
+                  />
+                  {/* Glow effect above scan line */}
+                  <div
+                    className="absolute left-0 right-0"
+                    style={{
+                      top: `${Math.max(0, scanLine - 3)}%`,
+                      height: '3%',
+                      background: 'linear-gradient(180deg, transparent, rgba(251,191,36,0.15))',
+                    }}
+                  />
+                  {/* Corner brackets */}
+                  <div className="absolute top-2 left-2 w-5 h-5 border-t-2 border-l-2 border-amber-400" />
+                  <div className="absolute top-2 right-2 w-5 h-5 border-t-2 border-r-2 border-amber-400" />
+                  <div className="absolute bottom-2 left-2 w-5 h-5 border-b-2 border-l-2 border-amber-400" />
+                  <div className="absolute bottom-2 right-2 w-5 h-5 border-b-2 border-r-2 border-amber-400" />
+                  {/* Scanning label */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                    <div className="bg-black/60 text-amber-400 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                      {isRtl ? "סורק..." : "Scanning..."}
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" style={{opacity: status === 'loading' ? 0 : 1}} />
+              {status !== 'loading' && (
+                <div className="absolute bottom-2 right-2 left-2 flex items-center justify-between">
+                  <span className="text-xs text-white/90 bg-black/40 px-2 py-0.5 rounded-full truncate max-w-[60%]">
+                    {imageFile?.name}
+                  </span>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-xs text-white bg-black/50 hover:bg-black/70 px-2.5 py-1 rounded-full transition-colors"
+                  >
+                    {isRtl ? "החלף" : "Change"}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -709,6 +836,22 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
           <><Wand2 className="w-5 h-5" />{isRtl ? "צייר מחדש עם AI" : "Redraw with AI"}</>
         )}
       </button>
+
+      {/* Cancel button — shown only during processing */}
+      {status === "loading" && jobId && (
+        <button
+          onClick={handleCancel}
+          className="w-full font-semibold text-sm h-10 rounded-xl flex items-center justify-center gap-2 transition-all"
+          style={{
+            background: 'rgba(239,68,68,0.08)',
+            color: '#ef4444',
+            border: '1px solid rgba(239,68,68,0.25)',
+          }}
+        >
+          <X className="w-4 h-4" />
+          {isRtl ? "בטל עיבוד והחזר אסימונים" : "Cancel & Refund Tokens"}
+        </button>
+      )}
 
       {/* Processing state */}
       {status === "loading" && (
