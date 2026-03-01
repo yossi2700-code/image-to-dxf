@@ -7,7 +7,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers, userActions, tokenTransactions, appSettings } from "../drizzle/schema";
+import { appUsers, userActions, tokenTransactions } from "../drizzle/schema";
 import { desc, eq, and, sql } from "drizzle-orm";
 import { getAppUserFromCookie } from "./appAuth";
 import { getTokenBalance, addTokens, getTokenTransactions } from "./tokenService";
@@ -97,22 +97,12 @@ export const appRouter = router({
     /** Login with PIN — sets an admin session cookie */
     login: publicProcedure
       .input(z.object({ pin: z.string().min(1) }))
-      .mutation(async ({ ctx, input }) => {
+      .mutation(({ ctx, input }) => {
         const ip = getClientIp(ctx.req as Parameters<typeof getClientIp>[0]);
         // Check if IP is currently blocked
         checkRateLimit(ip);
 
-        // Check DB PIN override first, fall back to env
-        let effectivePin = ENV.adminPin;
-        try {
-          const db = await getDb();
-          if (db) {
-            const rows = await db.select().from(appSettings).where(eq(appSettings.key, "admin_pin_override"));
-            if (rows.length > 0) effectivePin = rows[0].value;
-          }
-        } catch { /* ignore DB errors during login */ }
-
-        if (!effectivePin || input.pin !== effectivePin) {
+        if (!ENV.adminPin || input.pin !== ENV.adminPin) {
           recordFailedAttempt(ip);
           const entry = loginAttempts.get(ip);
           const remaining = MAX_ATTEMPTS - (entry?.attempts ?? 0);
@@ -293,61 +283,6 @@ export const appRouter = router({
         await db.update(appUsers).set({ isBlocked: 0 }).where(eq(appUsers.id, input.userId));
         return { success: true };
       }),
-
-    /** Get all app settings */
-    getSettings: adminProcedure.query(async () => {
-      const db = await getDb();
-      if (!db) return {};
-      const rows = await db.select().from(appSettings);
-      const result: Record<string, string> = {};
-      for (const row of rows) result[row.key] = row.value;
-      return result;
-    }),
-
-    /** Update a single setting */
-    setSetting: adminProcedure
-      .input(z.object({ key: z.string().min(1).max(128), value: z.string().max(2000) }))
-      .mutation(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-        await db
-          .insert(appSettings)
-          .values({ key: input.key, value: input.value })
-          .onDuplicateKeyUpdate({ set: { value: input.value } });
-        return { success: true };
-      }),
-
-    /** Change admin PIN (stores new PIN in env is not possible at runtime,
-     *  so we store a hashed override in the DB and check it first) */
-    changePin: adminProcedure
-      .input(z.object({ currentPin: z.string().min(1), newPin: z.string().min(4).max(64) }))
-      .mutation(async ({ ctx, input }) => {
-        // Verify current PIN against env (or DB override)
-        const db = await getDb();
-        let effectivePin = ENV.adminPin;
-        if (db) {
-          const rows = await db.select().from(appSettings).where(eq(appSettings.key, "admin_pin_override"));
-          if (rows.length > 0) effectivePin = rows[0].value;
-        }
-        if (input.currentPin !== effectivePin) {
-          throw new TRPCError({ code: "UNAUTHORIZED", message: "קוד הגישה הנוכחי שגוי" });
-        }
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-        // Store new PIN override in DB
-        await db
-          .insert(appSettings)
-          .values({ key: "admin_pin_override", value: input.newPin })
-          .onDuplicateKeyUpdate({ set: { value: input.newPin } });
-        // Re-issue admin cookie so current session stays valid
-        ctx.res.cookie(ADMIN_COOKIE, "authenticated", {
-          httpOnly: true,
-          secure: ENV.isProduction,
-          sameSite: ENV.isProduction ? "none" : "lax",
-          maxAge: 7 * 24 * 60 * 60 * 1000,
-          path: "/",
-        });
-        return { success: true };
-      }),
   }),
 
   /** Token balance for the logged-in user */
@@ -359,6 +294,15 @@ export const appRouter = router({
       if (!appUser) return { balance: 0, loggedIn: false };
       const balance = await getTokenBalance(appUser.userId);
       return { balance, loggedIn: true };
+    }),
+
+    /** Transaction history for the logged-in user */
+    history: publicProcedure.query(async ({ ctx }) => {
+      const appUser = getAppUserFromCookie(
+        (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
+      );
+      if (!appUser) return [];
+      return getTokenTransactions(appUser.userId, 50);
     }),
   }),
 

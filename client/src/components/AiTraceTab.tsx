@@ -325,63 +325,101 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       <div className="flex flex-col gap-5">
         {/* Upload area */}
         <Card>
-          <CardContent className="p-5">
+          <CardContent className="p-5 relative">
             <div className="flex items-center gap-2 mb-3">
               <Scan className="w-4 h-4 text-primary" />
               <h2 className="font-semibold text-sm">{t("aiTraceTitle")}</h2>
             </div>
 
-            <div
-              className={`border-2 border-dashed rounded-xl transition-colors cursor-pointer mb-3 ${dragOver ? "border-primary bg-primary/5" : "border-muted-foreground/20 hover:border-primary/50"} ${imagePreview ? "p-2" : "p-8"}`}
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={onDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {imagePreview ? (
-                <div className="flex items-center gap-3">
-                  <img src={imagePreview} alt="Preview" className="w-16 h-16 object-cover rounded-lg border" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{imageFile?.name}</p>
-                    <p className="text-xs text-muted-foreground">{isRtl ? "לחץ להחלפה" : "Click to change"}</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-2 text-center">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <ImageIcon className="w-6 h-6 text-primary" />
-                  </div>
-                  <p className="font-medium text-sm">{t("aiTraceDrop")}</p>
-                  <p className="text-xs text-muted-foreground">{t("aiTraceFormats")}</p>
-                </div>
-              )}
-            </div>
-            <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/bmp,image/webp,image/gif" className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+            />
 
-            {/* Landscape mode toggle */}
-            <div className="mb-3">
-              <button
-                type="button"
-                onClick={() => setLandscapeMode((v) => !v)}
-                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border-2 transition-colors font-semibold text-sm ${
-                  landscapeMode
-                    ? "border-green-500 bg-green-50 text-green-700"
-                    : "border-muted-foreground/20 bg-muted/30 text-muted-foreground hover:border-primary/40"
+            {imagePreview ? (
+              /* Image selected — show preview with change/remove buttons */
+              <div className="flex items-center gap-3 mb-3 p-3 border rounded-xl bg-muted/20">
+                <img src={imagePreview} alt="Preview" className="w-16 h-16 object-cover rounded-lg border shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{imageFile?.name}</p>
+                  <p className="text-xs text-muted-foreground mb-2">{isRtl ? "תמונה נבחרה" : "Image selected"}</p>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-xs text-primary font-medium hover:underline"
+                  >
+                    {isRtl ? "החלף תמונה" : "Change image"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* No image — show big prominent button for mobile */
+              <div className="mb-3 space-y-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-3 py-5 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 active:bg-primary/15 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                    <ImageIcon className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="text-start">
+                    <p className="font-semibold text-sm text-primary">{isRtl ? "בחר תמונה" : "Choose Photo"}</p>
+                    <p className="text-xs text-muted-foreground">{isRtl ? "מהגלריה או הצלם חדש" : "From gallery or take new photo"}</p>
+                  </div>
+                </button>
+                {/* Drag & drop hint — desktop only */}
+                <p className="hidden sm:block text-xs text-center text-muted-foreground">
+                  {isRtl ? "או גרור תמונה לכאן" : "or drag & drop an image here"}
+                </p>
+              </div>
+            )}
+
+            {/* Drag overlay — desktop only */}
+            {!imagePreview && (
+              <div
+                className={`hidden sm:block absolute inset-0 rounded-xl transition-colors pointer-events-none ${
+                  dragOver ? "bg-primary/10 border-2 border-primary" : ""
                 }`}
-              >
-                <span className="flex items-center gap-2">
-                  <span className="text-lg">{landscapeMode ? "🌄" : "📷"}</span>
-                  <span>{landscapeMode ? (isRtl ? "מצב נוף פעיל" : "Landscape Mode ON") : (isRtl ? "מצב רגיל" : "Normal Mode")}</span>
-                </span>
-                <span className={`w-10 h-5 rounded-full transition-colors flex items-center px-0.5 ${
-                  landscapeMode ? "bg-green-500" : "bg-muted-foreground/30"
-                }`}>
-                  <span className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                    landscapeMode ? "translate-x-5" : "translate-x-0"
-                  }`} />
-                </span>
-              </button>
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={onDrop}
+              />
+            )}
+
+            {/* Landscape mode toggle — clean segmented control */}
+            <div className="mb-3">
+              <div className="flex rounded-xl overflow-hidden border border-muted-foreground/20 bg-muted/20">
+                <button
+                  type="button"
+                  onClick={() => setLandscapeMode(false)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all ${
+                    !landscapeMode
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span className="text-base">📷</span>
+                  <span>{isRtl ? "אובייקט" : "Object"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLandscapeMode(true)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all ${
+                    landscapeMode
+                      ? "bg-green-600 text-white shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span className="text-base">🌄</span>
+                  <span>{isRtl ? "נוף" : "Landscape"}</span>
+                </button>
+              </div>
               <p className="text-xs text-muted-foreground mt-1 px-1">
                 {landscapeMode
                   ? (isRtl ? "מצייר את כל הסצנה: שמיים, רקע, עצים, בניינים, קדמת תמונה" : "Draws the entire scene: sky, background, trees, buildings, foreground")
@@ -445,7 +483,14 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               <AlertCircle className="w-10 h-10 text-red-400" />
               <p className="font-semibold text-red-600">{isRtl ? "שגיאה בעיבוד" : "Processing Error"}</p>
               <p className="text-sm text-muted-foreground">{errorMsg}</p>
-              <Button variant="outline" size="sm" onClick={reset}>{isRtl ? "נסה שוב" : "Try Again"}</Button>
+              <div className="flex gap-2 flex-wrap justify-center">
+                <Button variant="outline" size="sm" onClick={reset}>{isRtl ? "נסה שוב" : "Try Again"}</Button>
+                {errorMsg && (errorMsg.includes("אסימונים") || errorMsg.toLowerCase().includes("token")) && (
+                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => window.location.href = "/tokens"}>
+                    {isRtl ? "רכוש אסימונים" : "Buy Tokens"}
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         )}

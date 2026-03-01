@@ -438,39 +438,56 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
       <div className="flex flex-col gap-4">
         <Card className="overflow-hidden">
           <CardContent className="p-0">
-            <div
-              className={`relative border-2 border-dashed rounded-xl transition-all cursor-pointer min-h-[200px] flex flex-col items-center justify-center gap-3 p-5
-                ${dragOver ? "border-primary bg-primary/5 scale-[1.01]" : "border-border hover:border-primary/50 hover:bg-muted/30"}`}
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={onDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/bmp,image/webp"
-                className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
-              />
-              {imagePreview ? (
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+            />
+
+            {imagePreview ? (
+              /* Image selected */
+              <div
+                className="relative border-2 border-dashed rounded-xl transition-all cursor-pointer min-h-[200px] flex flex-col items-center justify-center gap-3 p-5 border-primary/30 bg-primary/5"
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={onDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
                 <div className="w-full flex flex-col items-center gap-2">
                   <img src={imagePreview} alt="preview" className="max-h-44 max-w-full object-contain rounded-lg shadow" />
                   <p className="text-sm text-muted-foreground">{imageFile?.name}</p>
+                  <p className="text-xs text-primary font-medium">{isRtl ? "לחץ להחלפת התמונה" : "Tap to change image"}</p>
                 </div>
-              ) : (
-                <>
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                    <ImageIcon className="w-6 h-6 text-primary" />
+              </div>
+            ) : (
+              /* No image — prominent button for mobile */
+              <div
+                className={`relative border-2 border-dashed rounded-xl transition-all min-h-[180px] flex flex-col items-center justify-center gap-3 p-5
+                  ${dragOver ? "border-primary bg-primary/5" : "border-border"}`}
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={onDrop}
+              >
+                {/* Big tap target for mobile */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex flex-col items-center gap-3 w-full py-4 rounded-xl hover:bg-muted/30 active:bg-muted/50 transition-colors"
+                >
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <ImageIcon className="w-7 h-7 text-primary" />
                   </div>
                   <div className="text-center">
-                    <p className="font-semibold">{t("dragImageHere")}</p>
-                    <p className="text-sm text-muted-foreground mt-1">{t("orClickToSelect")}</p>
+                    <p className="font-semibold text-base">{isRtl ? "בחר תמונה" : "Choose Image"}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{isRtl ? "מהגלריה, המצלמה או גרור לכאן" : "From gallery, camera, or drag & drop"}</p>
                     <p className="text-xs text-muted-foreground/70 mt-1">{t("supportedFormats")}</p>
                   </div>
-                </>
-              )}
-            </div>
+                </button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -627,6 +644,34 @@ function AiGeneratorTab() {
   const [showVector, setShowVector] = useState(false);
   const [landscapeMode, setLandscapeMode] = useState(false);
 
+  // Handle "Edit Again" from History page — restore previous design
+  useEffect(() => {
+    const stored = sessionStorage.getItem("editAgainItem");
+    if (stored) {
+      sessionStorage.removeItem("editAgainItem");
+      try {
+        const item = JSON.parse(stored) as {
+          svgPreview: string; dxfUrl: string; imageUrl?: string;
+          segmentCount?: number; description?: string;
+        };
+        if (item.svgPreview && item.dxfUrl) {
+          const restored: AiImage = {
+            imageUrl: item.imageUrl ?? "",
+            svgPreview: item.svgPreview,
+            dxfUrl: item.dxfUrl,
+            segmentCount: item.segmentCount ?? 0,
+            width: 1024, height: 1024,
+          };
+          setImages([restored]);
+          setSelectedIdx(0);
+          setStatus("success");
+          if (item.description) setPrompt(item.description);
+          toast.success(isRtl ? "עיצוב נטען מחדש לעריכה" : "Design loaded for editing");
+        }
+      } catch { /* ignore */ }
+    }
+  }, [isRtl]);
+
   const generate = async (isModify = false) => {
     if (!prompt.trim()) {
       toast.error(t("enterDescription"));
@@ -652,6 +697,10 @@ function AiGeneratorTab() {
         setErrorMsg(msg);
         setStatus("error");
         refetchTokens();
+        toast.error(msg, {
+          action: { label: language === "he" ? "רכוש אסימונים" : "Buy Tokens", onClick: () => { window.location.href = "/tokens"; } },
+          duration: 6000,
+        });
         return;
       }
       if (!res.ok || !data.success) throw new Error(data.message ?? data.error ?? t("aiError"));
@@ -710,29 +759,34 @@ function AiGeneratorTab() {
             dir={isRtl ? "rtl" : "ltr"}
             disabled={status === "loading"}
           />
-          {/* Landscape mode toggle */}
+          {/* Landscape mode toggle — clean segmented control */}
           <div className="mt-3 mb-1">
-            <button
-              type="button"
-              onClick={() => setLandscapeMode((v) => !v)}
-              className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border-2 transition-colors font-semibold text-sm ${
-                landscapeMode
-                  ? "border-green-500 bg-green-50 text-green-700"
-                  : "border-muted-foreground/20 bg-muted/30 text-muted-foreground hover:border-primary/40"
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <span className="text-lg">{landscapeMode ? "🌄" : "📷"}</span>
-                <span>{landscapeMode ? (isRtl ? "מצב נוף פעיל" : "Landscape Mode ON") : (isRtl ? "מצב רגיל" : "Normal Mode")}</span>
-              </span>
-              <span className={`w-10 h-5 rounded-full transition-colors flex items-center px-0.5 ${
-                landscapeMode ? "bg-green-500" : "bg-muted-foreground/30"
-              }`}>
-                <span className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                  landscapeMode ? "translate-x-5" : "translate-x-0"
-                }`} />
-              </span>
-            </button>
+            <div className="flex rounded-xl overflow-hidden border border-muted-foreground/20 bg-muted/20">
+              <button
+                type="button"
+                onClick={() => setLandscapeMode(false)}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all ${
+                  !landscapeMode
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <span className="text-base">📷</span>
+                <span>{isRtl ? "אובייקט" : "Object"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setLandscapeMode(true)}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all ${
+                  landscapeMode
+                    ? "bg-green-600 text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <span className="text-base">🌄</span>
+                <span>{isRtl ? "נוף" : "Landscape"}</span>
+              </button>
+            </div>
             <p className="text-xs text-muted-foreground mt-1 px-1">
               {landscapeMode
                 ? (isRtl ? "מצייר את כל הסצנה: שמיים, רקע, עצים, בניינים, קדמת תמונה" : "Draws the entire scene: sky, background, trees, buildings, foreground")
@@ -782,7 +836,14 @@ function AiGeneratorTab() {
             <AlertCircle className="w-10 h-10 text-red-400" />
             <p className="font-semibold text-red-600">{t("aiError")}</p>
             <p className="text-sm text-muted-foreground">{errorMsg}</p>
-            <Button variant="outline" size="sm" onClick={() => setStatus("idle")}>{isRtl ? "נסה שוב" : "Try Again"}</Button>
+            <div className="flex gap-2 flex-wrap justify-center">
+              <Button variant="outline" size="sm" onClick={() => setStatus("idle")}>{isRtl ? "נסה שוב" : "Try Again"}</Button>
+              {errorMsg && (errorMsg.includes("אסימונים") || errorMsg.toLowerCase().includes("token")) && (
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => window.location.href = "/tokens"}>
+                  {isRtl ? "רכוש אסימונים" : "Buy Tokens"}
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -987,22 +1048,18 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-ai-hero" dir={isRtl ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50" dir={isRtl ? "rtl" : "ltr"}>
       {/* Header */}
-      <header className="header-ai sticky top-0 z-10">
+      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container py-3 flex items-center gap-3">
-          <div className="relative shrink-0">
-            <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-ai-robotics-4ufLRLRwpeLsqvCczeWuY8.webp"
-              alt={t("logoAlt")}
-              className="w-10 h-10 rounded-xl object-contain"
-              style={{ filter: "drop-shadow(0 0 8px oklch(0.62 0.22 264 / 60%))" }}
-            />
-            <span className="ai-dot absolute -bottom-0.5 -right-0.5" />
-          </div>
+          <img
+            src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663365044246/SslVmktvndMoFSwH.png"
+            alt={t("logoAlt")}
+            className="w-10 h-10 rounded-lg object-contain shrink-0"
+          />
           <div className="flex-1">
-            <h1 className="text-base font-bold leading-tight text-white">{t("appTitle")}</h1>
-            <p className="text-xs" style={{ color: "oklch(0.70 0.08 264)" }}>{t("appSubtitle")}</p>
+            <h1 className="text-base font-bold leading-tight">{t("appTitle")}</h1>
+            <p className="text-xs text-muted-foreground">{t("appSubtitle")}</p>
           </div>
           <LanguageSwitcher />
         </div>
@@ -1027,10 +1084,14 @@ export default function Home() {
                 <UserCircle className="w-4 h-4" />
                 <span>{appUser.name ?? appUser.email}</span>
               </div>
-              <div className="token-badge flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full">
+              <div className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
                 <Sparkles className="w-3 h-3" />
                 <span>{tokenBalance}</span>
               </div>
+              <Button variant="ghost" size="sm" onClick={() => window.location.href = "/tokens"} className="text-xs gap-1 text-blue-600 hover:text-blue-700">
+                <Sparkles className="w-3.5 h-3.5" />
+                {isRtl ? "אסימונים" : "Tokens"}
+              </Button>
               <Button variant="ghost" size="sm" onClick={() => window.location.href = "/history"} className="text-xs gap-1">
                 <History className="w-3.5 h-3.5" />
                 {t("history")}
@@ -1048,37 +1109,37 @@ export default function Home() {
           )}
         </div>
 
-        {/* AI divider below auth bar */}
-        <div className="divider-ai mb-5" />
-
-        <Tabs defaultValue="upload" dir={isRtl ? "rtl" : "ltr"}>
-          <TabsList className="tab-ai w-full mb-5 h-12">
-            <TabsTrigger value="upload" className="flex-1 gap-2 text-sm font-semibold">
-              <Upload className="w-4 h-4" />
-              {t("uploadTab")}
-            </TabsTrigger>
-            <TabsTrigger value="ai" className="flex-1 gap-2 text-sm font-semibold">
+        <Tabs defaultValue="ai" dir={isRtl ? "rtl" : "ltr"}>
+          <TabsList className="w-full mb-5 h-12 gap-1 p-1">
+            <TabsTrigger value="ai" className="flex-1 gap-1.5 text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white">
               <Sparkles className="w-4 h-4" />
-              {t("aiTab")}
+              <span className="hidden xs:inline">{isRtl ? "✨ AI יצירה" : "✨ AI Create"}</span>
+              <span className="xs:hidden">{isRtl ? "AI יצירה" : "AI Create"}</span>
             </TabsTrigger>
-            <TabsTrigger value="trace" className="flex-1 gap-2 text-sm font-semibold">
+            <TabsTrigger value="trace" className="flex-1 gap-1.5 text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white">
               <Scan className="w-4 h-4" />
-              {t("aiTraceTab")}
+              <span className="hidden xs:inline">{isRtl ? "📷 AI מתמונה" : "📷 AI Trace"}</span>
+              <span className="xs:hidden">{isRtl ? "AI מתמונה" : "AI Trace"}</span>
+            </TabsTrigger>
+            <TabsTrigger value="upload" className="flex-1 gap-1.5 text-sm font-semibold">
+              <Upload className="w-4 h-4" />
+              <span className="hidden xs:inline">{isRtl ? "העלאת קובץ" : "Upload File"}</span>
+              <span className="xs:hidden">{isRtl ? "העלאה" : "Upload"}</span>
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="upload">
-            <UploadTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
-          </TabsContent>
           <TabsContent value="ai">
             <AiGeneratorTab />
           </TabsContent>
           <TabsContent value="trace">
             <AiTraceTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
           </TabsContent>
+          <TabsContent value="upload">
+            <UploadTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
+          </TabsContent>
         </Tabs>
       </main>
 
-      <footer className="mt-6" style={{ borderTop: "1px solid oklch(0.88 0.015 264 / 40%)", background: "oklch(0.97 0.006 264 / 50%)" }}>
+      <footer className="border-t bg-white/50 mt-6">
         <div className="container py-4 text-center text-xs text-muted-foreground space-y-1.5">
           <div>{t("appFooter")}</div>
           <div className="flex items-center justify-center gap-3">

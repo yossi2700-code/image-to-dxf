@@ -28,6 +28,8 @@ import {
   FileCode2,
   ImageIcon,
   Trash2,
+  Wand2,
+  X,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -155,13 +157,14 @@ function HistoryCard({
   item,
   onView,
   onDelete,
+  onEditAgain,
 }: {
   item: HistoryItem;
   onView: (item: HistoryItem) => void;
   onDelete: (item: HistoryItem) => void;
+  onEditAgain: (item: HistoryItem) => void;
 }) {
   const { t, isRtl, language } = useLanguage();
-  const [downloadOpen, setDownloadOpen] = useState(false);
   const isAi = item.actionType === "ai_generate";
   const date = new Date(item.createdAt).toLocaleString(language === "he" ? "he-IL" : "en-US", {
     dateStyle: "short",
@@ -184,10 +187,21 @@ function HistoryCard({
         ) : (
           <ImageIcon className="w-10 h-10 text-muted-foreground" />
         )}
+        {/* Hover overlay with action buttons */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
           <Button size="sm" variant="secondary" onClick={() => onView(item)}>
             {isRtl ? "הצג" : "View"}
           </Button>
+          {isAi && item.svgPreview && (
+            <Button
+              size="sm"
+              className="bg-purple-600 hover:bg-purple-700 text-white gap-1"
+              onClick={(e) => { e.stopPropagation(); onEditAgain(item); }}
+            >
+              <Wand2 className="w-3 h-3" />
+              {isRtl ? "ערוך" : "Edit"}
+            </Button>
+          )}
           <Button size="sm" variant="destructive" onClick={(e) => { e.stopPropagation(); onDelete(item); }}>
             <Trash2 className="w-3.5 h-3.5" />
           </Button>
@@ -214,23 +228,10 @@ function HistoryCard({
           )}
         </div>
         {item.dxfUrl && (
-          <button
-            onClick={(e) => { e.stopPropagation(); setDownloadOpen(true); }}
-            className="flex items-center gap-1 text-xs text-primary hover:underline"
-          >
+          <a href={item.dxfUrl} download className="flex items-center gap-1 text-xs text-primary hover:underline">
             <FileCode2 className="w-3 h-3" />
-            {isRtl ? "שמור קובץ" : "Save File"}
-          </button>
-        )}
-        {item.dxfUrl && downloadOpen && (
-          <DxfDownloadDialog
-            open={downloadOpen}
-            onClose={() => setDownloadOpen(false)}
-            svgContent={item.svgPreview ?? ""}
-            dxfUrl={item.dxfUrl}
-            defaultFilename={`${item.description ?? "design"}.dxf`}
-            segmentCount={item.segmentCount ?? 0}
-          />
+            {isRtl ? "הורד DXF" : "Download DXF"}
+          </a>
         )}
       </CardContent>
     </Card>
@@ -243,10 +244,12 @@ function DetailDialog({
   item,
   onClose,
   onDelete,
+  onEditAgain,
 }: {
   item: HistoryItem | null;
   onClose: () => void;
   onDelete: (item: HistoryItem) => void;
+  onEditAgain: (item: HistoryItem) => void;
 }) {
   const { t, isRtl, language } = useLanguage();
   const [dxfDownloadOpen, setDxfDownloadOpen] = useState(false);
@@ -260,8 +263,17 @@ function DetailDialog({
   return (
     <Dialog open={!!item} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl w-full" dir={isRtl ? "rtl" : "ltr"}>
+        {/* Large custom close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 z-50 w-10 h-10 rounded-full bg-muted hover:bg-muted/80 border border-border flex items-center justify-center transition-colors shadow-sm"
+          aria-label="Close"
+        >
+          <X className="w-5 h-5 text-foreground" />
+        </button>
+
         <DialogHeader>
-          <DialogTitle className={`flex items-center gap-2 ${isRtl ? "text-right" : "text-left"}`}>
+          <DialogTitle className={`flex items-center gap-2 ${isRtl ? "text-right" : "text-left"} pr-12`}>
             {isAi ? <Sparkles className="w-4 h-4 text-purple-600" /> : <Upload className="w-4 h-4 text-blue-600" />}
             {item.description ?? (isAi ? t("aiDesign") : t("imageConversion"))}
           </DialogTitle>
@@ -294,6 +306,17 @@ function DetailDialog({
               {t("delete")}
             </Button>
             <div className="flex gap-2 flex-wrap">
+              {/* Edit Again button */}
+              {isAi && item.svgPreview && (
+                <Button
+                  size="sm"
+                  className="gap-1.5 bg-purple-600 hover:bg-purple-700"
+                  onClick={() => { onClose(); onEditAgain(item); }}
+                >
+                  <Wand2 className="w-4 h-4" />
+                  {isRtl ? "ערוך מחדש" : "Edit Again"}
+                </Button>
+              )}
               {item.dxfUrl && (
                 <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setDxfDownloadOpen(true)}>
                   <Download className="w-4 h-4" />
@@ -339,6 +362,23 @@ export default function History() {
   const handleDeleteConfirm = () => {
     if (!deleteTarget) return;
     deleteMutation.mutate({ id: deleteTarget.id });
+  };
+
+  /**
+   * "Edit Again" — navigate to home page with the design's SVG pre-loaded.
+   * We pass the item data via sessionStorage so the home page can pick it up.
+   */
+  const handleEditAgain = (item: HistoryItem) => {
+    if (item.svgPreview && item.dxfUrl) {
+      sessionStorage.setItem("editAgainItem", JSON.stringify({
+        svgPreview: item.svgPreview,
+        dxfUrl: item.dxfUrl,
+        imageUrl: item.imageUrl,
+        segmentCount: item.segmentCount,
+        description: item.description,
+      }));
+    }
+    navigate("/");
   };
 
   return (
@@ -401,6 +441,7 @@ export default function History() {
                   item={item as HistoryItem}
                   onView={setSelectedItem}
                   onDelete={setDeleteTarget}
+                  onEditAgain={handleEditAgain}
                 />
               ))}
             </div>
@@ -415,6 +456,7 @@ export default function History() {
           setSelectedItem(null);
           setDeleteTarget(item);
         }}
+        onEditAgain={handleEditAgain}
       />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

@@ -13,7 +13,6 @@ import generateRoute from "../generateRoute";
 import appAuthRoute from "../appAuth";
 import aiTraceRoute from "../aiTraceRoute";
 import aiRefineRoute from "../aiRefineRoute";
-import pdfRoute from "../pdfRoute";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -54,8 +53,6 @@ async function startServer() {
   app.use(aiTraceRoute);
   // AI Refine route (existing image + instruction → refined image → DXF)
   app.use(aiRefineRoute);
-  // PDF export route (SVG → PDF)
-  app.use(pdfRoute);
   // tRPC API
   app.use(
     "/api/trpc",

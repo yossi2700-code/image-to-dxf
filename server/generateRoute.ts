@@ -23,23 +23,26 @@ const STYLE_VARIATIONS = [
   {
     label: "simple",
     style:
-      "Simple clean outline only. Bold outer contour lines, minimal internal lines. " +
-      "Icon/sticker style. NO texture, NO hatching, NO shading, NO fill. " +
-      "Only 2-4 main structural lines inside the shape.",
+      "Clean professional line art with bold outer contour and key structural lines. " +
+      "Show depth and form with 3-5 internal lines indicating main surfaces and edges. " +
+      "Technical illustration style — like a product blueprint or engineering drawing. " +
+      "NO texture, NO hatching, NO shading, NO fill. Pure black lines on white.",
   },
   {
     label: "detailed",
     style:
-      "Clean outline with moderate internal details. Bold outer contour plus clear structural " +
-      "inner lines showing main features. NO texture, NO hatching, NO shading, NO fill. " +
-      "Like a coloring book page — clear distinct lines only.",
+      "Highly detailed professional line art. Bold outer contour with rich internal line work " +
+      "showing all structural features, surfaces, depth cues, and fine details. " +
+      "Like a professional technical illustration or detailed product drawing. " +
+      "NO texture, NO hatching, NO shading, NO fill. Clean distinct lines only.",
   },
   {
     label: "decorative",
     style:
-      "Decorative artistic outline style. Bold outer contour with elegant decorative inner lines. " +
-      "Art nouveau or mandala-inspired clean line work. NO texture, NO hatching, NO shading, NO fill. " +
-      "All lines must be clean, distinct, and suitable for laser cutting.",
+      "Elegant decorative line art with artistic flair. Bold outer contour with flowing " +
+      "decorative inner lines. Ornamental, architectural, or art nouveau style. " +
+      "Rich detail suitable for laser engraving on wood or metal. " +
+      "NO texture, NO hatching, NO shading, NO fill. All lines clean and precise.",
   },
 ];
 
@@ -91,13 +94,15 @@ function buildLandscapePrompt(userPrompt: string, variationIndex: number): strin
 function buildLineArtPrompt(userPrompt: string, variationIndex: number): string {
   const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
   return (
-    `Clean black and white line art of ${userPrompt}. ` +
+    `Professional black and white line art illustration of ${userPrompt}. ` +
     "Pure white background (#FFFFFF). " +
     "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
     "High contrast: only pure black (#000000) lines on white. " +
+    "Draw the object with clear three-dimensional perspective — show depth, volume, and structure. " +
+    "Include visible surface details, edges, and characteristic features that make it recognizable. " +
     `${variation.style} ` +
-    "Single centered object, complete, not cropped. " +
-    "No text, no watermarks, no grey tones."
+    "Single centered object, complete, not cropped, viewed from a 3/4 angle showing depth. " +
+    "No text, no watermarks, no grey tones, no background elements."
   );
 }
 

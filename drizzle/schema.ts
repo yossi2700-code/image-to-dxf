@@ -141,15 +141,3 @@ export const tokenTransactions = mysqlTable("token_transactions", {
 
 export type TokenTransaction = typeof tokenTransactions.$inferSelect;
 export type InsertTokenTransaction = typeof tokenTransactions.$inferInsert;
-
-// App settings table — key/value store for admin-configurable settings
-export const appSettings = mysqlTable("app_settings", {
-  id: int("id").autoincrement().primaryKey(),
-  /** Setting key (unique) */
-  key: varchar("key", { length: 128 }).notNull().unique(),
-  /** Setting value (JSON or plain string) */
-  value: text("value").notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
-export type AppSetting = typeof appSettings.$inferSelect;

@@ -8,6 +8,7 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
 import History from "./pages/History";
+import Tokens from "./pages/Tokens";
 import Share from "./pages/Share";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
@@ -18,6 +19,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/admin"} component={Admin} />
       <Route path={"/history"} component={History} />
+      <Route path={"/tokens"} component={Tokens} />
       <Route path={"/share/:token"} component={Share} />
       <Route path={"/terms"} component={Terms} />
       <Route path={"/privacy"} component={Privacy} />

@@ -55,8 +55,12 @@ export function AiRefinePanel({ imageUrl, originalPrompt, onRefined }: AiRefineP
       if (!response.ok) {
         if (data.error === "REGISTRATION_REQUIRED") {
           toast.error(t("registrationRequired"));
-        } else if (data.error === "QUOTA_EXCEEDED") {
-          toast.error(data.message || t("quotaExceeded"));
+        } else if (data.error === "QUOTA_EXCEEDED" || data.error === "INSUFFICIENT_TOKENS") {
+          const msg = isRtl ? (data.message || t("quotaExceeded")) : (data.messageEn || data.message || t("quotaExceeded"));
+          toast.error(msg, {
+            action: { label: isRtl ? "רכוש אסימונים" : "Buy Tokens", onClick: () => { window.location.href = "/tokens"; } },
+            duration: 6000,
+          });
         } else {
           toast.error(data.error || t("refineError"));
         }
