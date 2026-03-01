@@ -978,9 +978,9 @@ function AiGeneratorTab() {
                 )}
                 <div className="grid grid-cols-3 gap-2 mb-3">
                   {[{v: selected.segmentCount.toLocaleString(), l: t("lines")}, {v: ((selected.width / 96) * 25.4).toFixed(1), l: t("widthMm")}, {v: ((selected.height / 96) * 25.4).toFixed(1), l: t("heightMm")}].map(({v, l}, i) => (
-                    <div key={i} className="rounded-xl p-2 text-center" style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)'}}>
-                      <p className="text-base font-bold" style={{color: '#a5b4fc'}}>{v}</p>
-                      <p className="text-xs" style={{color: 'rgba(148,163,184,0.6)'}}>{l}</p>
+                    <div key={i} className="rounded-xl p-2 text-center" style={{background: '#f8f9ff', border: '1px solid #e0e7ff'}}>
+                      <p className="text-base font-bold text-indigo-600">{v}</p>
+                      <p className="text-xs text-gray-500">{l}</p>
                     </div>
                   ))}
                 </div>
@@ -1022,7 +1022,7 @@ function AiGeneratorTab() {
                 <div className="flex gap-2 mt-2">
                   <button
                     className="flex-1 flex items-center justify-center gap-1.5 text-sm py-2 rounded-xl transition-all"
-                    style={{background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', color: '#cbd5e1'}}
+                    style={{background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#374151'}}
                     onClick={() => setShowModify(!showModify)}
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
@@ -1030,7 +1030,7 @@ function AiGeneratorTab() {
                   </button>
                   <button
                     className="flex-1 flex items-center justify-center gap-1.5 text-sm py-2 rounded-xl transition-all"
-                    style={{background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', color: '#cbd5e1'}}
+                    style={{background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#374151'}}
                     onClick={() => { setImages([]); setSelectedIdx(null); setStatus("idle"); }}
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
@@ -1040,24 +1040,24 @@ function AiGeneratorTab() {
                 {showModify && (
                   <div
                     className="mt-3 p-3 rounded-xl"
-                    style={{background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)'}}
+                    style={{background: '#f8f9ff', border: '1px solid #e0e7ff'}}
                   >
-                    <p className="text-xs font-medium mb-2" style={{color: 'rgba(148,163,184,0.7)'}}>
+                    <p className="text-xs font-medium mb-2 text-gray-600">
                       {isRtl ? "תאר את השינויים הרצויים:" : "Describe the desired changes:"}
                     </p>
                     <Textarea
                       placeholder={t("changesPlaceholder")}
                       value={modifications}
                       onChange={(e) => setModifications(e.target.value)}
-                      className="resize-none text-sm min-h-[70px] mb-2"
-                      style={{ textAlign: isRtl ? "right" : "left", background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', color: '#e2e8f0' }}
+                      className="resize-none text-sm min-h-[70px] mb-2 bg-white border-gray-200 text-gray-800"
+                      style={{ textAlign: isRtl ? "right" : "left" }}
                       dir={isRtl ? "rtl" : "ltr"}
                     />
                     <button
                       className="w-full py-2 text-sm font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all"
                       style={{
-                        background: modifications.trim() ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'rgba(99,102,241,0.2)',
-                        color: modifications.trim() ? 'white' : 'rgba(165,180,252,0.5)',
+                        background: modifications.trim() ? '#4f46e5' : '#e0e7ff',
+                        color: modifications.trim() ? 'white' : '#a5b4fc',
                         border: 'none',
                         cursor: modifications.trim() ? 'pointer' : 'not-allowed',
                       }}
@@ -1076,18 +1076,17 @@ function AiGeneratorTab() {
 
       {/* Tips */}
       <div
-        className="rounded-2xl p-4"
+        className="rounded-xl p-4"
         style={{
-          background: 'rgba(99,102,241,0.06)',
-          border: '1px solid rgba(99,102,241,0.15)',
-          backdropFilter: 'blur(10px)',
+          background: '#f8f9ff',
+          border: '1px solid #e0e7ff',
         }}
       >
-          <h3 className="font-semibold text-sm mb-2" style={{color: '#a5b4fc'}}>{t("tipsTitle")}</h3>
-          <ul className="space-y-1.5 text-sm" style={{color: 'rgba(148,163,184,0.8)'}}>
-            <li className="flex gap-2"><span className="shrink-0" style={{color: '#818cf8'}}>•</span><span>{t("tip1")}</span></li>
-            <li className="flex gap-2"><span className="shrink-0" style={{color: '#818cf8'}}>•</span><span>{t("tip2")}</span></li>
-            <li className="flex gap-2"><span className="shrink-0" style={{color: '#818cf8'}}>•</span><span>{t("tip3")}</span></li>
+          <h3 className="font-semibold text-sm mb-2 text-indigo-700">{t("tipsTitle")}</h3>
+          <ul className="space-y-1.5 text-sm text-gray-600">
+            <li className="flex gap-2"><span className="shrink-0 text-indigo-400">•</span><span>{t("tip1")}</span></li>
+            <li className="flex gap-2"><span className="shrink-0 text-indigo-400">•</span><span>{t("tip2")}</span></li>
+            <li className="flex gap-2"><span className="shrink-0 text-indigo-400">•</span><span>{t("tip3")}</span></li>
             <li className="flex gap-2"><span className="shrink-0">💡</span><span>{t("tip4")}</span></li>
           </ul>
       </div>
@@ -1166,6 +1165,8 @@ export default function Home() {
       />
 
       <main className="container py-5">
+        {/* Center content on desktop */}
+        <div className="mx-auto" style={{ maxWidth: '780px' }}>
         {/* Auth bar */}
         <div className="flex justify-end mb-4">
           {appUser ? (
@@ -1342,6 +1343,7 @@ export default function Home() {
             <AiDocumentRedrawTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
           </TabsContent>
         </Tabs>
+        </div>{/* end centering wrapper */}
       </main>
 
       <footer
