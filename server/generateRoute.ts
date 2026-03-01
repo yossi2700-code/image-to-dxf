@@ -31,9 +31,9 @@ const STYLE_VARIATIONS = [
       "Think of a high-end brand logo or a professional product illustration. " +
       "Minimal but sophisticated. NO texture, NO hatching, NO shading, NO fill. " +
       "PRESERVE the exact shape and proportions. Pure black lines on white background only. " +
-      "CRITICAL FRAMING: The object must occupy NO MORE than 75% of the image width and height. " +
-      "Leave at least 12% white margin on EVERY side (left, right, top, bottom). " +
-      "The object must be FULLY VISIBLE — nothing cut off, nothing touching the border.",
+      "CRITICAL FRAMING: The object must occupy NO MORE than 65% of the image width AND height. " +
+      "Leave at least 17% white margin on EVERY side (left, right, top, bottom). " +
+      "The object must be FULLY VISIBLE — nothing cut off, nothing touching or near the border.",
   },
   {
     label: "detailed",
@@ -43,9 +43,9 @@ const STYLE_VARIATIONS = [
       "Bold outer contour with clean inner lines showing the main components and surfaces. " +
       "Like a professional product catalog illustration. " +
       "NO texture, NO hatching, NO shading, NO fill. PRESERVE the exact shape. Clean sharp lines only. " +
-      "CRITICAL FRAMING: The object must occupy NO MORE than 75% of the image width and height. " +
-      "Leave at least 12% white margin on EVERY side (left, right, top, bottom). " +
-      "The object must be FULLY VISIBLE — nothing cut off, nothing touching the border.",
+      "CRITICAL FRAMING: The object must occupy NO MORE than 65% of the image width AND height. " +
+      "Leave at least 17% white margin on EVERY side (left, right, top, bottom). " +
+      "The object must be FULLY VISIBLE — nothing cut off, nothing touching or near the border.",
   },
   {
     label: "complex",
@@ -55,9 +55,9 @@ const STYLE_VARIATIONS = [
       "A bit richer and more elaborate, but still clean and controlled — not overwhelming. " +
       "Like a detailed technical product illustration with extra refinement. " +
       "NO hatching, NO shading, NO fill, NO crosshatching, NO texture fills. PRESERVE the exact shape. All lines clean and precise. " +
-      "CRITICAL FRAMING: The object must occupy NO MORE than 75% of the image width and height. " +
-      "Leave at least 12% white margin on EVERY side (left, right, top, bottom). " +
-      "The object must be FULLY VISIBLE — nothing cut off, nothing touching the border.",
+      "CRITICAL FRAMING: The object must occupy NO MORE than 65% of the image width AND height. " +
+      "Leave at least 17% white margin on EVERY side (left, right, top, bottom). " +
+      "The object must be FULLY VISIBLE — nothing cut off, nothing touching or near the border.",
   },
 ];
 
@@ -119,9 +119,10 @@ function buildLineArtPrompt(userPrompt: string, variationIndex: number): string 
     "Pure white background (#FFFFFF). " +
     "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
     "High contrast: only pure black (#000000) lines on white. " +
-    "IMPORTANT: Draw the COMPLETE object — every part fully visible, NOTHING cropped or cut off at the edges. " +
-    "The object must be centered and scaled so it occupies at most 75% of the canvas width and height. " +
-    "There must be at least 12% white empty space on EVERY side (top, bottom, left, right). " +
+    "CRITICAL FRAMING RULE: The object MUST be scaled small enough to fit entirely within the CENTER of the image. " +
+    "The object must occupy NO MORE than 65% of the image width AND height. " +
+    "There MUST be at least 17% white empty space on EVERY side (top, bottom, left, right). " +
+    "The object must be FULLY VISIBLE — nothing cut off, nothing touching or near the border. " +
     "Show depth and structure with clear internal lines. " +
     `${variation.style} ` +
     "No text, no watermarks, no grey tones, no background elements."
@@ -250,13 +251,14 @@ router.post("/api/generate-images", async (req, res) => {
         throw new Error("לא התקבלה תמונה מה-AI");
       }
 
-      // Step 2: Pre-process — add white padding to prevent edge cropping, then high-contrast grayscale
+      // Step 2: Pre-process — add generous white padding to prevent edge cropping, then high-contrast grayscale
+      // Use larger top/bottom padding since tall characters (clowns, people) are most often cropped vertically
       const paddedBuffer = await sharp(rawBuffer)
         .extend({
-          top: 82,    // ~8% of 1024px
-          bottom: 82,
-          left: 82,
-          right: 82,
+          top: 140,    // ~14% of 1024px — extra top padding for tall figures
+          bottom: 140,
+          left: 100,
+          right: 100,
           background: { r: 255, g: 255, b: 255, alpha: 1 },
         })
         .resize(1024, 1024, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })

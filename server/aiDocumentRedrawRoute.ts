@@ -70,8 +70,16 @@ function pngToSvg(pngBuffer: Buffer): Promise<string> {
  * Process a raw PNG buffer through potrace → SVG → DXF pipeline.
  */
 async function processImageToDxf(rawBuffer: Buffer, baseFilename: string, prefix: string) {
-  // Pre-process: grayscale + threshold for potrace
+  // Pre-process: add generous white padding to prevent edge cropping, then grayscale + threshold
   const processedBuffer = await sharp(rawBuffer)
+    .extend({
+      top: 140,    // ~14% of 1024px — extra padding for tall figures
+      bottom: 140,
+      left: 100,
+      right: 100,
+      background: { r: 255, g: 255, b: 255, alpha: 1 },
+    })
+    .resize(1024, 1024, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
     .grayscale()
     .threshold(200)
     .png()

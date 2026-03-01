@@ -205,7 +205,10 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number): 
     "Pure white background (#FFFFFF). " +
     "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
     "High contrast: only pure black (#000000) lines on white. " +
-    "Draw the complete object centered in the frame, fully visible, not cropped. " +
+    "CRITICAL FRAMING RULE: The object MUST be scaled small enough to fit entirely within the CENTER of the image. " +
+    "The object must occupy NO MORE than 65% of the image width AND height. " +
+    "There MUST be at least 17% white empty space on EVERY side (top, bottom, left, right). " +
+    "The object must be FULLY VISIBLE — nothing cut off, nothing touching or near the border. " +
     "Show depth and structure with clear internal lines. " +
     `${variation.style} ` +
     "Single centered object, complete, fully inside the frame, with generous white margin around it. " +
@@ -386,8 +389,17 @@ router.post(
           throw new Error("לא התקבלה תמונה מה-AI");
         }
 
-        // Pre-process: grayscale + threshold for potrace (same as generateRoute)
+        // Pre-process: add generous white padding to prevent edge cropping, then grayscale + threshold
+        // The AI sometimes generates objects touching the edges — padding ensures nothing is cut off
         const processedBuffer = await sharp(rawBuffer)
+          .extend({
+            top: 120,    // ~12% of 1024px — generous top/bottom padding
+            bottom: 120,
+            left: 80,
+            right: 80,
+            background: { r: 255, g: 255, b: 255, alpha: 1 },
+          })
+          .resize(1024, 1024, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .grayscale()
           .threshold(200)
           .png()
