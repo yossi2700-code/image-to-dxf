@@ -43,54 +43,45 @@ function scaleDxfContent(dxfText: string, scaleFactor: number): string {
   );
 }
 
-// ─── PDF Export via window.open() + print ─────────────────────────────────────
-// Opens a new window with the SVG and triggers the browser's native print dialog.
-// Must be called synchronously from a click handler to avoid popup blockers on iOS.
+// ─── PDF Export via jsPDF + svg2pdf.js ───────────────────────────────────────
+// Generates a real PDF file (Blob) in the browser — no print dialog needed.
+// Returns the PDF as a Uint8Array for download or Web Share API.
 
-function exportToPdf(
+async function generatePdfBlob(
   svgContent: string,
   widthMm: number,
-  heightMm: number,
-  _filename: string
-): Promise<void> {
-  // Ensure SVG has explicit dimensions
-  const svgWithSize = svgContent
-    .replace(/<svg([^>]*)>/, (_m, attrs) => {
-      const cleaned = attrs
-        .replace(/\bwidth="[^"]*"/g, "")
-        .replace(/\bheight="[^"]*"/g, "");
-      return `<svg${cleaned} width="${widthMm}mm" height="${heightMm}mm">`;
-    });
+  heightMm: number
+): Promise<ArrayBuffer> {
+  const { jsPDF } = await import("jspdf");
+  const { svg2pdf } = await import("svg2pdf.js");
 
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-  @page { size: ${widthMm}mm ${heightMm}mm; margin: 0; }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: white; }
-  svg { display: block; width: ${widthMm}mm; height: ${heightMm}mm; }
-</style>
-</head>
-<body>
-${svgWithSize}
-<script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; };<\/script>
-</body>
-</html>`;
+  // Ensure SVG has explicit px dimensions (jsPDF needs px, not mm)
+  const PX_PER_MM = 96 / 25.4;
+  const widthPx = widthMm * PX_PER_MM;
+  const heightPx = heightMm * PX_PER_MM;
 
-  // Open synchronously from click event (required for iOS popup policy)
-  const printWindow = window.open("", "_blank");
-  if (!printWindow) {
-    // Fallback: data URL in same tab
-    const encoded = encodeURIComponent(html);
-    window.location.href = `data:text/html;charset=utf-8,${encoded}`;
-    return Promise.resolve();
-  }
-  printWindow.document.open();
-  printWindow.document.write(html);
-  printWindow.document.close();
-  return Promise.resolve();
+  const svgWithSize = svgContent.replace(/<svg([^>]*)>/, (_m, attrs) => {
+    const cleaned = attrs
+      .replace(/\bwidth="[^"]*"/g, "")
+      .replace(/\bheight="[^"]*"/g, "");
+    return `<svg${cleaned} width="${widthPx}" height="${heightPx}" xmlns="http://www.w3.org/2000/svg">`;
+  });
+
+  // Parse SVG into a DOM element
+  const parser = new DOMParser();
+  const svgDoc = parser.parseFromString(svgWithSize, "image/svg+xml");
+  const svgElement = svgDoc.documentElement as unknown as SVGSVGElement;
+
+  // Create jsPDF document in mm
+  const pdf = new jsPDF({
+    orientation: widthMm >= heightMm ? "landscape" : "portrait",
+    unit: "mm",
+    format: [widthMm, heightMm],
+  });
+
+  await svg2pdf(svgElement, pdf, { x: 0, y: 0, width: widthMm, height: heightMm });
+
+  return pdf.output("arraybuffer") as ArrayBuffer;
 }
 
 // ─── SVG Mini Preview ─────────────────────────────────────────────────────────
@@ -195,21 +186,67 @@ export function DxfDownloadDialog({
     }
   };
 
-  // ── PDF Export ────────────────────────────────────────────────────────────
+  // ── PDF Download ────────────────────────────────────────────
+  // Generates a real PDF file and triggers download (no print dialog)
 
-  const handlePdfExport = () => {
+  const handlePdfExport = async () => {
     if (!svgContent) return;
-    // exportToPdf must be called synchronously from the click handler
-    // so iOS Safari allows window.open() without popup blocker.
+    setIsPdfLoading(true);
     setError(null);
     try {
-      exportToPdf(svgContent, outputWidthMm, outputHeightMm, cleanFilename);
+      const pdfBytes = await generatePdfBlob(svgContent, outputWidthMm, outputHeightMm);
+      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${cleanFilename}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error("PDF export error:", err);
       setError("שגיאה בייצוא PDF. נסה שוב.");
+    } finally {
+      setIsPdfLoading(false);
     }
   };
 
+  // ── Share PDF (Web Share API) ──────────────────────────────────────
+  // Generates a real PDF and shares it via native share sheet on iOS/Android
+
+  const [isSharePdfLoading, setIsSharePdfLoading] = useState(false);
+
+  const handleSharePdf = async () => {
+    if (!svgContent) return;
+    setIsSharePdfLoading(true);
+    setError(null);
+    try {
+      const pdfBytes = await generatePdfBlob(svgContent, outputWidthMm, outputHeightMm);
+      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const file = new File([blob], `${cleanFilename}.pdf`, { type: "application/pdf" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: cleanFilename });
+      } else {
+        // Fallback: download the PDF
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${cleanFilename}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name !== "AbortError") {
+        console.error("Share PDF error:", err);
+        setError("שגיאה בשיתוף PDF. נסה להוריד ולשתף ידנית.");
+      }
+    } finally {
+      setIsSharePdfLoading(false);
+    }
+  };
   // ── Share File (Web Share API) ────────────────────────────────────────────
   // Shares the actual DXF file directly — on iOS this opens the native share sheet
   // allowing the user to send the file via WhatsApp, AirDrop, Mail, etc.
@@ -260,7 +297,7 @@ export function DxfDownloadDialog({
     }
   };
 
-  const isLoading = isDxfLoading || isPdfLoading || isShareLoading;
+  const isLoading = isDxfLoading || isPdfLoading || isShareLoading || isSharePdfLoading;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && !isLoading && onClose()}>
@@ -370,21 +407,41 @@ export function DxfDownloadDialog({
               </Button>
             )}
 
-            {/* PDF Export */}
+            {/* PDF Download + Share PDF */}
             {svgContent && (
-              <Button
-                size="lg"
-                className="w-full bg-blue-600 hover:bg-blue-700 font-bold text-base h-12 text-white"
-                onClick={handlePdfExport}
-                disabled={isLoading}
-              >
-                {isPdfLoading ? (
-                  <Loader2 className="w-5 h-5 ml-2 animate-spin" />
-                ) : (
-                  <FileText className="w-5 h-5 ml-2" />
+              <>
+                <Button
+                  size="lg"
+                  className="w-full bg-blue-600 hover:bg-blue-700 font-bold text-base h-12 text-white"
+                  onClick={handlePdfExport}
+                  disabled={isLoading}
+                >
+                  {isPdfLoading ? (
+                    <Loader2 className="w-5 h-5 ml-2 animate-spin" />
+                  ) : (
+                    <FileText className="w-5 h-5 ml-2" />
+                  )}
+                  {isPdfLoading ? "מייצא PDF..." : "הורד PDF"}
+                </Button>
+
+                {/* Share PDF — Web Share API */}
+                {canShareFiles && (
+                  <Button
+                    size="lg"
+                    className="w-full font-bold text-base h-12"
+                    style={{ background: '#1a73e8', color: 'white' }}
+                    onClick={handleSharePdf}
+                    disabled={isLoading}
+                  >
+                    {isSharePdfLoading ? (
+                      <Loader2 className="w-5 h-5 ml-2 animate-spin" />
+                    ) : (
+                      <Share2 className="w-5 h-5 ml-2" />
+                    )}
+                    {isSharePdfLoading ? "מייצא PDF..." : "שתף PDF (WhatsApp / AirDrop)"}
+                  </Button>
                 )}
-                {isPdfLoading ? "מייצא PDF..." : "ייצא PDF"}
-              </Button>
+              </>
             )}
 
             {/* Cancel */}

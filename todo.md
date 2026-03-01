@@ -679,3 +679,7 @@
 - [x] תיקון שיתוף: שליחת הקובץ עצמו (DXF) ולא קישור לאתר
 - [x] שימוש ב-Web Share API עם File object (navigator.share עם files[]) — פותח native share sheet ב-iOS
 - [x] fallback: SVG אם DXF לא נתמך, ו-URL אם גם SVG לא נתמך
+
+## תיקון PDF - מרץ 2026
+- [x] החלפת "ייצא PDF" מחלון הדפסה לקובץ PDF אמיתי (jsPDF + svg2pdf.js)
+- [x] הוספת כפתור "שתף PDF (WhatsApp / AirDrop)" עם Web Share API
