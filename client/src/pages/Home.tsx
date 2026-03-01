@@ -866,21 +866,26 @@ function AiGeneratorTab() {
                       : "border-border hover:border-primary/50 hover:shadow-md"}`}
                   onClick={() => setSelectedIdx(idx)}
                 >
-                  <div
-                    className="bg-white flex items-center justify-center p-3 relative group cursor-zoom-in rounded-t-xl overflow-hidden"
-                    style={{ minHeight: 220 }}
+                <div
+                  className="bg-white flex items-center justify-center p-3 relative rounded-t-xl overflow-hidden"
+                  style={{ minHeight: 220 }}
+                >
+                  <img
+                    src={img.imageUrl}
+                    alt={`${t("design")} ${idx + 1}`}
+                    className="w-full h-auto object-contain"
+                    style={{ maxHeight: 280 }}
+                  />
+                  {/* Zoom button — explicit button so it works on iOS without stopPropagation issues */}
+                  <button
+                    type="button"
                     onClick={(e) => { e.stopPropagation(); setZoomImg({ src: img.imageUrl, alt: `${t("design")} ${idx + 1}` }); }}
+                    className="absolute bottom-2 left-2 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center transition-colors"
+                    title="תצוגה מקדימה"
                   >
-                    <img
-                      src={img.imageUrl}
-                      alt={`${t("design")} ${idx + 1}`}
-                      className="w-full h-auto object-contain"
-                      style={{ maxHeight: 280 }}
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                      <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
-                    </div>
-                  </div>
+                    <ZoomIn className="w-4 h-4 text-white" />
+                  </button>
+                </div>
                   <div className="px-3 py-2 border-t bg-muted/30 flex items-center justify-between">
                     <span className="text-xs font-medium text-muted-foreground">{t("variation")} {idx + 1}</span>
                     <span className="text-xs text-muted-foreground">{img.segmentCount.toLocaleString()} {t("lines")}</span>
