@@ -30,14 +30,20 @@ const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
-/** Convert description to safe filename */
+/** Convert description to safe filename — capped at 15 chars for clean download names */
 function buildFilename(description: string): string {
-  const safe = description
+  const words = description
     .replace(/[^\u0590-\u05FFa-zA-Z0-9\s]/g, "")
     .trim()
-    .replace(/\s+/g, "_")
-    .slice(0, 40);
-  return safe || "document_redraw";
+    .split(/\s+/)
+    .filter(Boolean);
+  let name = "";
+  for (const w of words) {
+    const next = name ? `${name}_${w}` : w;
+    if (next.length > 15) break;
+    name = next;
+  }
+  return (name || "doc_redraw").slice(0, 15);
 }
 
 /** Convert a PNG buffer to SVG using potrace. */

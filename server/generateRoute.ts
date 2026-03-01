@@ -128,15 +128,20 @@ function buildLineArtPrompt(userPrompt: string, variationIndex: number): string 
   );
 }
 
-/** Convert a user prompt to a safe filename (Hebrew + ASCII supported) */
+/** Convert a user prompt to a safe filename — capped at 15 chars for clean download names */
 function promptToFilename(prompt: string): string {
-  // Keep Hebrew, Latin letters, digits, spaces; replace spaces with underscore; trim to 40 chars
-  const safe = prompt
+  const words = prompt
     .trim()
     .replace(/[^\u0590-\u05FF\w\s]/g, "")
-    .replace(/\s+/g, "_")
-    .slice(0, 40);
-  return safe || "design";
+    .split(/\s+/)
+    .filter(Boolean);
+  let name = "";
+  for (const w of words) {
+    const next = name ? `${name}_${w}` : w;
+    if (next.length > 15) break;
+    name = next;
+  }
+  return (name || "design").slice(0, 15);
 }
 
 /**
