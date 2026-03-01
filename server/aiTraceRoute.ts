@@ -302,9 +302,11 @@ async function runTraceJob(
         throw new Error("לא התקבלה תמונה מה-AI");
       }
 
+      // Add white padding around the AI-generated image, then resize to max 1400px
+      // while PRESERVING the aspect ratio (fit: inside) so nothing gets cropped.
       const processedBuffer = await sharp(rawBuffer)
         .extend({ top: 120, bottom: 120, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-        .resize(1024, 1024, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .resize(1400, 1400, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .grayscale()
         .threshold(200)
         .png()

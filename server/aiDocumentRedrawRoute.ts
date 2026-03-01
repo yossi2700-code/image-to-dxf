@@ -110,7 +110,7 @@ async function processImageToDxf(rawBuffer: Buffer, baseFilename: string, prefix
   const targetH = originalAspect ? Math.round(1024 / originalAspect) : 1024;
 
   // Pre-process: add generous white padding to prevent edge cropping
-  // Use high contrast normalization + strict threshold to produce clean B&W before potrace
+  // Use fit:inside to preserve aspect ratio — never crop or distort the image.
   const processedBuffer = await sharp(rawBuffer)
     .extend({
       top: 120,
@@ -119,7 +119,7 @@ async function processImageToDxf(rawBuffer: Buffer, baseFilename: string, prefix
       right: 100,
       background: { r: 255, g: 255, b: 255, alpha: 1 },
     })
-    .resize(targetW, targetH, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+    .resize(1400, 1400, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
     .grayscale()
     .linear(1.8, -(1.8 * 128) + 128) // boost contrast: amplify difference between lines and background
     .threshold(160) // strict threshold: only near-black pixels become lines
