@@ -674,3 +674,8 @@
 
 ## תיקון כתיב עברי ב-AI יצירה - מרץ 2026
 - [x] עדכון פרומפט generateRoute: הוסף הוראה מפורשת לכתיבת טקסט עברי מדויק ללא שגיאות כתיב (זיהוי אוטומטי של עברית + הוראת letter-by-letter)
+
+## תיקון שיתוף קובץ DXF - מרץ 2026
+- [x] תיקון שיתוף: שליחת הקובץ עצמו (DXF) ולא קישור לאתר
+- [x] שימוש ב-Web Share API עם File object (navigator.share עם files[]) — פותח native share sheet ב-iOS
+- [x] fallback: SVG אם DXF לא נתמך, ו-URL אם גם SVG לא נתמך

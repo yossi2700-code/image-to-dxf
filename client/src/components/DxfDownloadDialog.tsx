@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Download, X, FileCode2, FileText, Loader2 } from "lucide-react";
+import { Download, X, FileCode2, FileText, Loader2, Share2 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -137,7 +137,11 @@ export function DxfDownloadDialog({
   const [scalePercent, setScalePercent] = useState(100);
   const [isDxfLoading, setIsDxfLoading] = useState(false);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [isShareLoading, setIsShareLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Detect if Web Share API supports file sharing (iOS Safari 15+, Android Chrome)
+  const canShareFiles = typeof navigator !== "undefined" && !!navigator.share && !!navigator.canShare;
 
   useEffect(() => {
     if (open) {
@@ -206,7 +210,57 @@ export function DxfDownloadDialog({
     }
   };
 
-  const isLoading = isDxfLoading || isPdfLoading;
+  // ── Share File (Web Share API) ────────────────────────────────────────────
+  // Shares the actual DXF file directly — on iOS this opens the native share sheet
+  // allowing the user to send the file via WhatsApp, AirDrop, Mail, etc.
+
+  const handleShareFile = async () => {
+    setIsShareLoading(true);
+    setError(null);
+    try {
+      const resp = await fetch(dxfUrl);
+      if (!resp.ok) throw new Error("שגיאה בהורדת הקובץ");
+      const originalDxf = await resp.text();
+      const scaledDxf = scaleDxfContent(originalDxf, scaleFactor);
+      const blob = new Blob([scaledDxf], { type: "application/octet-stream" });
+      const file = new File([blob], `${cleanFilename}.dxf`, { type: "application/octet-stream" });
+
+      // Check if this browser/device can share files
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: cleanFilename,
+        });
+      } else {
+        // Fallback: share as SVG file if DXF not supported
+        const svgBlob = new Blob([svgContent], { type: "image/svg+xml" });
+        const svgFile = new File([svgBlob], `${cleanFilename}.svg`, { type: "image/svg+xml" });
+        if (navigator.canShare && navigator.canShare({ files: [svgFile] })) {
+          await navigator.share({
+            files: [svgFile],
+            title: cleanFilename,
+          });
+        } else {
+          // Last fallback: share URL only
+          await navigator.share({
+            title: cleanFilename,
+            text: `עיצוב וקטורי: ${cleanFilename}`,
+            url: window.location.href,
+          });
+        }
+      }
+    } catch (err: unknown) {
+      // User cancelled share — not an error
+      if (err instanceof Error && err.name !== "AbortError") {
+        console.error("Share error:", err);
+        setError("שגיאה בשיתוף הקובץ. נסה להוריד ולשתף ידנית.");
+      }
+    } finally {
+      setIsShareLoading(false);
+    }
+  };
+
+  const isLoading = isDxfLoading || isPdfLoading || isShareLoading;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && !isLoading && onClose()}>
@@ -297,6 +351,24 @@ export function DxfDownloadDialog({
               )}
               {isDxfLoading ? "מוריד..." : "הורד DXF"}
             </Button>
+
+            {/* Share File — Web Share API (iOS/Android native share sheet) */}
+            {canShareFiles && (
+              <Button
+                size="lg"
+                className="w-full font-bold text-base h-12"
+                style={{ background: '#25D366', color: 'white' }}
+                onClick={handleShareFile}
+                disabled={isLoading}
+              >
+                {isShareLoading ? (
+                  <Loader2 className="w-5 h-5 ml-2 animate-spin" />
+                ) : (
+                  <Share2 className="w-5 h-5 ml-2" />
+                )}
+                {isShareLoading ? "שולח..." : "שתף קובץ (WhatsApp / AirDrop)"}
+              </Button>
+            )}
 
             {/* PDF Export */}
             {svgContent && (
