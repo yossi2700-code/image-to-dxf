@@ -17,38 +17,38 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
 /**
  * Three distinct style variations for the same subject.
- * V1: Simple clean outline — minimal lines
- * V2: Sharp precise — all structural details, crisp edges
- * V3: Laser-engraving fill — dense parallel lines/cross-hatch for tonal fill
+ * V1: Artistic clean outline — professional, elegant, not childish
+ * V2: Sharp precise — structural details, fewer lines than V3
+ * V3: Moderately complex — slightly more elements/details than V2, not excessive
  */
 const STYLE_VARIATIONS = [
   {
     label: "simple",
     style:
-      "VARIATION 1 — SIMPLE CLEAN OUTLINE: Draw only the essential outer contour and 3-5 main structural lines. " +
-      "Bold single-weight lines, no interior detail, no texture, no hatching, no shading, no fill. " +
-      "Like a basic coloring-book outline. PRESERVE the exact shape and proportions of the object. " +
-      "Pure black lines on white background only.",
+      "VARIATION 1 — ARTISTIC CLEAN OUTLINE: Draw a professional, elegant line art illustration. " +
+      "Bold confident outer contour with 5-8 key structural lines that define the form. " +
+      "The style should look like a skilled artist's clean sketch — NOT a child's coloring book. " +
+      "Think of a high-end brand logo or a professional product illustration. " +
+      "Minimal but sophisticated. NO texture, NO hatching, NO shading, NO fill. " +
+      "PRESERVE the exact shape and proportions. Pure black lines on white background only.",
   },
   {
     label: "detailed",
     style:
-      "VARIATION 2 — SHARP PRECISE DETAILED: Draw the complete object with all structural features, " +
-      "surfaces, edges, and fine mechanical/architectural details. " +
-      "Bold outer contour with crisp precise inner lines showing every visible component. " +
-      "Like a professional technical illustration or engineering drawing. " +
+      "VARIATION 2 — SHARP PRECISE MODERATE: Draw the complete object with all main structural features " +
+      "and key details, but keep the line count moderate — not too sparse, not too dense. " +
+      "Bold outer contour with clean inner lines showing the main components and surfaces. " +
+      "Like a professional product catalog illustration. " +
       "NO texture, NO hatching, NO shading, NO fill. PRESERVE the exact shape. Clean sharp lines only.",
   },
   {
-    label: "engraving",
+    label: "complex",
     style:
-      "VARIATION 3 — LASER ENGRAVING FILL: Draw the complete object with all details PLUS dense parallel " +
-      "line fill (hatching) inside surfaces to create tonal areas. " +
-      "Use fine parallel lines or cross-hatching to fill dark areas, giving the appearance of shading through lines. " +
-      "This creates a rich filled appearance suitable for laser engraving as a photographic image. " +
-      "CRITICAL: DO NOT change the shape or proportions — only ADD fill lines inside the existing form. " +
-      "All lines must be clean, straight or gently curved. No smearing, no gradients, no grey tones. " +
-      "Pure black lines on white background only.",
+      "VARIATION 3 — MODERATELY COMPLEX DETAILED: Draw the complete object with slightly more detail " +
+      "than variation 2 — add secondary features, surface textures as lines, subtle structural elements. " +
+      "A bit richer and more elaborate, but still clean and controlled — not overwhelming. " +
+      "Like a detailed technical product illustration with extra refinement. " +
+      "NO hatching, NO shading, NO fill. PRESERVE the exact shape. All lines clean and precise.",
   },
 ];
 

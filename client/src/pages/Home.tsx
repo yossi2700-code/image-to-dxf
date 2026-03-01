@@ -10,6 +10,7 @@ import { AuthDialog } from "@/components/AuthDialog";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
 import { AiRefinePanel, type RefineResult } from "@/components/AiRefinePanel";
 import { AiTraceTab } from "@/components/AiTraceTab";
+import { AiDocumentRedrawTab } from "@/components/AiDocumentRedrawTab";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
@@ -35,6 +36,7 @@ import {
   ZoomOut,
   Maximize2,
   Scan,
+  FileEdit,
 } from "lucide-react";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -1137,6 +1139,11 @@ export default function Home() {
               <span className="hidden xs:inline">{isRtl ? "📷 AI מתמונה" : "📷 AI Trace"}</span>
               <span className="xs:hidden">{isRtl ? "AI מתמונה" : "AI Trace"}</span>
             </TabsTrigger>
+            <TabsTrigger value="redraw" className="flex-1 gap-1.5 text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white">
+              <FileEdit className="w-4 h-4" />
+              <span className="hidden xs:inline">{isRtl ? "✏️ AI מסמך" : "✏️ AI Doc"}</span>
+              <span className="xs:hidden">{isRtl ? "AI מסמך" : "AI Doc"}</span>
+            </TabsTrigger>
             <TabsTrigger value="upload" className="flex-1 gap-1.5 text-sm font-semibold">
               <Upload className="w-4 h-4" />
               <span className="hidden xs:inline">{isRtl ? "העלאת קובץ" : "Upload File"}</span>
@@ -1148,6 +1155,9 @@ export default function Home() {
           </TabsContent>
           <TabsContent value="trace">
             <AiTraceTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
+          </TabsContent>
+          <TabsContent value="redraw">
+            <AiDocumentRedrawTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
           </TabsContent>
           <TabsContent value="upload">
             <UploadTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
