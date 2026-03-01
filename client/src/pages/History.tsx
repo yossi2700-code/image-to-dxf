@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ import {
   Trash2,
   Wand2,
   X,
+  ZoomIn,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -60,98 +61,86 @@ function SvgViewer({ svg }: { svg: string }) {
     setTranslate({ x: 0, y: 0 });
   }, [svg]);
 
+  const styledSvg = svg.replace(
+    /<svg /,
+    '<svg style="width:100%;height:100%;display:block;" '
+  );
+
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? 0.85 : 1.15;
-    setScale((s) => Math.min(10, Math.max(0.2, s * delta)));
+    setScale((s) => Math.min(10, Math.max(0.3, s * delta)));
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setDragging(true);
     dragStartRef.current = { x: e.clientX, y: e.clientY, tx: translate.x, ty: translate.y };
   };
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+
+  const handleMouseMove = (e: React.MouseEvent) => {
     if (!dragging) return;
-    const dx = e.clientX - dragStartRef.current.x;
-    const dy = e.clientY - dragStartRef.current.y;
-    setTranslate({ x: dragStartRef.current.tx + dx, y: dragStartRef.current.ty + dy });
-  }, [dragging]);
-  const handleMouseUp = () => setDragging(false);
+    setTranslate({
+      x: dragStartRef.current.tx + (e.clientX - dragStartRef.current.x),
+      y: dragStartRef.current.ty + (e.clientY - dragStartRef.current.y),
+    });
+  };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 2) {
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      setDragging(true);
+      dragStartRef.current = { x: t.clientX, y: t.clientY, tx: translate.x, ty: translate.y };
+    } else if (e.touches.length === 2) {
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
-      lastPinchDistRef.current = Math.hypot(dx, dy);
-    } else if (e.touches.length === 1) {
-      dragStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, tx: translate.x, ty: translate.y };
-      setDragging(true);
+      lastPinchDistRef.current = Math.sqrt(dx * dx + dy * dy);
     }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    e.preventDefault();
-    if (e.touches.length === 2 && lastPinchDistRef.current !== null) {
+    if (e.touches.length === 1 && dragging) {
+      const t = e.touches[0];
+      setTranslate({
+        x: dragStartRef.current.tx + (t.clientX - dragStartRef.current.x),
+        y: dragStartRef.current.ty + (t.clientY - dragStartRef.current.y),
+      });
+    } else if (e.touches.length === 2 && lastPinchDistRef.current !== null) {
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
-      const dist = Math.hypot(dx, dy);
+      const dist = Math.sqrt(dx * dx + dy * dy);
       const ratio = dist / lastPinchDistRef.current;
+      setScale((s) => Math.min(10, Math.max(0.3, s * ratio)));
       lastPinchDistRef.current = dist;
-      setScale((s) => Math.min(10, Math.max(0.2, s * ratio)));
-    } else if (e.touches.length === 1 && dragging) {
-      const dx = e.touches[0].clientX - dragStartRef.current.x;
-      const dy = e.touches[0].clientY - dragStartRef.current.y;
-      setTranslate({ x: dragStartRef.current.tx + dx, y: dragStartRef.current.ty + dy });
     }
   };
-
-  const handleTouchEnd = () => {
-    setDragging(false);
-    lastPinchDistRef.current = null;
-  };
-
-  const resetView = () => { setScale(1); setTranslate({ x: 0, y: 0 }); };
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full overflow-hidden bg-white border rounded-lg select-none"
+      className="w-full h-full overflow-hidden cursor-grab active:cursor-grabbing select-none"
       onWheel={handleWheel}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
+      onMouseUp={() => setDragging(false)}
+      onMouseLeave={() => setDragging(false)}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      style={{ cursor: dragging ? "grabbing" : "grab", touchAction: "none" }}
+      onTouchEnd={() => { setDragging(false); lastPinchDistRef.current = null; }}
     >
       <div
         style={{
-          transform: `translate(calc(-50% + ${translate.x}px), calc(-50% + ${translate.y}px)) scale(${scale})`,
+          transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
           transformOrigin: "center center",
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          width: "90%",
-          height: "90%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          width: "100%",
+          height: "100%",
         }}
-        dangerouslySetInnerHTML={{ __html: svg }}
+        dangerouslySetInnerHTML={{ __html: styledSvg }}
       />
-      <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-white/95 rounded-lg shadow-md px-2 py-1 text-xs border">
-        <button onClick={() => setScale((s) => Math.min(10, s * 1.25))} className="w-7 h-7 flex items-center justify-center rounded hover:bg-muted font-bold text-base">+</button>
-        <span className="w-12 text-center font-mono">{Math.round(scale * 100)}%</span>
-        <button onClick={() => setScale((s) => Math.max(0.2, s * 0.8))} className="w-7 h-7 flex items-center justify-center rounded hover:bg-muted font-bold text-base">−</button>
-        <button onClick={resetView} className="w-7 h-7 flex items-center justify-center rounded hover:bg-muted text-sm">⊙</button>
-      </div>
     </div>
   );
 }
 
-// ─── History Item Card ─────────────────────────────────────────────────────────
+// ─── History Card ─────────────────────────────────────────────────────────────
 
 function HistoryCard({
   item,
@@ -166,56 +155,45 @@ function HistoryCard({
 }) {
   const { t, isRtl, language } = useLanguage();
   const isAi = item.actionType === "ai_generate";
-  const date = new Date(item.createdAt).toLocaleString(language === "he" ? "he-IL" : "en-US", {
-    dateStyle: "short",
-    timeStyle: "short",
+  const date = new Date(item.createdAt).toLocaleDateString(language === "he" ? "he-IL" : "en-US", {
+    month: "short",
+    day: "numeric",
   });
 
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow group">
-      <div className="relative h-40 bg-muted/30 flex items-center justify-center overflow-hidden">
+    <Card
+      className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow group"
+      onClick={() => onView(item)}
+    >
+      <div className="relative h-40 bg-white flex items-center justify-center overflow-hidden">
         {item.svgPreview ? (
           <div
-            className="w-full h-full p-2 flex items-center justify-center bg-white"
+            className="w-full h-full p-2"
             dangerouslySetInnerHTML={{
               __html: item.svgPreview.replace(
                 /<svg /,
-                '<svg style="max-width:100%;max-height:100%;width:auto;height:auto;display:block;" '
+                '<svg style="width:100%;height:100%;object-fit:contain;" '
               ),
             }}
           />
+        ) : item.imageUrl ? (
+          <img src={item.imageUrl} alt="" className="w-full h-full object-contain" />
         ) : (
-          <ImageIcon className="w-10 h-10 text-muted-foreground" />
+          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+            <ImageIcon className="w-8 h-8" />
+          </div>
         )}
-        {/* Hover overlay with action buttons */}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-          <Button size="sm" variant="secondary" onClick={() => onView(item)}>
-            {isRtl ? "הצג" : "View"}
-          </Button>
-          {isAi && item.svgPreview && (
-            <Button
-              size="sm"
-              className="bg-purple-600 hover:bg-purple-700 text-white gap-1"
-              onClick={(e) => { e.stopPropagation(); onEditAgain(item); }}
-            >
-              <Wand2 className="w-3 h-3" />
-              {isRtl ? "ערוך" : "Edit"}
-            </Button>
-          )}
-          <Button size="sm" variant="destructive" onClick={(e) => { e.stopPropagation(); onDelete(item); }}>
-            <Trash2 className="w-3.5 h-3.5" />
-          </Button>
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
+          <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-60 transition-opacity drop-shadow" />
         </div>
         <div className="absolute top-2 right-2">
-          <Badge variant={isAi ? "default" : "secondary"} className="text-xs gap-1">
+          <Badge variant={isAi ? "default" : "secondary"} className="text-xs px-1.5 py-0.5">
             {isAi ? <Sparkles className="w-3 h-3" /> : <Upload className="w-3 h-3" />}
-            {isAi ? "AI" : (isRtl ? "המרה" : "Convert")}
           </Badge>
         </div>
       </div>
-
-      <CardContent className="p-3 space-y-1.5" dir={isRtl ? "rtl" : "ltr"}>
-        <p className="text-sm font-medium truncate text-foreground">
+      <CardContent className="p-3 space-y-1.5">
+        <p className="text-sm font-medium leading-tight line-clamp-2 text-right">
           {item.description ?? (isAi ? t("aiDesign") : t("imageConversion"))}
         </p>
         <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -227,12 +205,6 @@ function HistoryCard({
             <span>{item.segmentCount.toLocaleString()} {t("lines")}</span>
           )}
         </div>
-        {item.dxfUrl && (
-          <a href={item.dxfUrl} download className="flex items-center gap-1 text-xs text-primary hover:underline">
-            <FileCode2 className="w-3 h-3" />
-            {isRtl ? "הורד DXF" : "Download DXF"}
-          </a>
-        )}
       </CardContent>
     </Card>
   );
@@ -245,14 +217,15 @@ function DetailDialog({
   onClose,
   onDelete,
   onEditAgain,
+  onDownload,
 }: {
   item: HistoryItem | null;
   onClose: () => void;
   onDelete: (item: HistoryItem) => void;
   onEditAgain: (item: HistoryItem) => void;
+  onDownload: (item: HistoryItem) => void;
 }) {
   const { t, isRtl, language } = useLanguage();
-  const [dxfDownloadOpen, setDxfDownloadOpen] = useState(false);
   if (!item) return null;
   const isAi = item.actionType === "ai_generate";
   const date = new Date(item.createdAt).toLocaleString(language === "he" ? "he-IL" : "en-US", {
@@ -306,7 +279,7 @@ function DetailDialog({
               {t("delete")}
             </Button>
             <div className="flex gap-2 flex-wrap">
-              {/* Edit Again button */}
+              {/* Edit Again */}
               {isAi && item.svgPreview && (
                 <Button
                   size="sm"
@@ -317,25 +290,19 @@ function DetailDialog({
                   {isRtl ? "ערוך מחדש" : "Edit Again"}
                 </Button>
               )}
+              {/* Download DXF / PDF — opens top-level DxfDownloadDialog */}
               {item.dxfUrl && (
-                <Button size="sm" className="gap-1.5 bg-green-600 hover:bg-green-700 font-semibold" onClick={() => setDxfDownloadOpen(true)}>
+                <Button
+                  size="sm"
+                  className="gap-1.5 bg-green-600 hover:bg-green-700 font-semibold"
+                  onClick={() => { onClose(); onDownload(item); }}
+                >
                   <Download className="w-4 h-4" />
                   {isRtl ? "הורד DXF / PDF" : "Download DXF / PDF"}
                 </Button>
               )}
             </div>
           </div>
-
-          {item.dxfUrl && dxfDownloadOpen && (
-            <DxfDownloadDialog
-              open={dxfDownloadOpen}
-              onClose={() => setDxfDownloadOpen(false)}
-              svgContent={item.svgPreview ?? ""}
-              dxfUrl={item.dxfUrl}
-              defaultFilename={`${item.description ?? "design"}.dxf`}
-              segmentCount={item.segmentCount ?? 0}
-            />
-          )}
         </div>
       </DialogContent>
     </Dialog>
@@ -352,6 +319,10 @@ export default function History() {
   const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<HistoryItem | null>(null);
 
+  // Download dialog state — lifted to top level so it's never nested inside another dialog
+  const [downloadTarget, setDownloadTarget] = useState<HistoryItem | null>(null);
+  const [downloadOpen, setDownloadOpen] = useState(false);
+
   const deleteMutation = trpc.history.delete.useMutation({
     onSuccess: () => {
       void utils.history.list.invalidate();
@@ -364,10 +335,11 @@ export default function History() {
     deleteMutation.mutate({ id: deleteTarget.id });
   };
 
-  /**
-   * "Edit Again" — navigate to home page with the design's SVG pre-loaded.
-   * We pass the item data via sessionStorage so the home page can pick it up.
-   */
+  const handleDownload = (item: HistoryItem) => {
+    setDownloadTarget(item);
+    setDownloadOpen(true);
+  };
+
   const handleEditAgain = (item: HistoryItem) => {
     if (item.svgPreview && item.dxfUrl) {
       sessionStorage.setItem("editAgainItem", JSON.stringify({
@@ -449,6 +421,7 @@ export default function History() {
         )}
       </main>
 
+      {/* Detail Dialog */}
       <DetailDialog
         item={selectedItem}
         onClose={() => setSelectedItem(null)}
@@ -457,8 +430,26 @@ export default function History() {
           setDeleteTarget(item);
         }}
         onEditAgain={handleEditAgain}
+        onDownload={(item) => {
+          setSelectedItem(null);
+          // Small delay so detail dialog closes before download dialog opens
+          setTimeout(() => handleDownload(item), 150);
+        }}
       />
 
+      {/* DXF / PDF Download Dialog — top level, never nested */}
+      {downloadTarget && downloadTarget.dxfUrl && (
+        <DxfDownloadDialog
+          open={downloadOpen}
+          onClose={() => { setDownloadOpen(false); setDownloadTarget(null); }}
+          svgContent={downloadTarget.svgPreview ?? ""}
+          dxfUrl={downloadTarget.dxfUrl}
+          defaultFilename={`${downloadTarget.description ?? "design"}.dxf`}
+          segmentCount={downloadTarget.segmentCount ?? 0}
+        />
+      )}
+
+      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent dir={isRtl ? "rtl" : "ltr"}>
           <AlertDialogHeader>
@@ -467,7 +458,6 @@ export default function History() {
               {t("deleteConfirm")} "{(() => {
                 const desc = deleteTarget?.description ?? "";
                 if (!desc) return isRtl ? "העיצוב" : "this design";
-                // Take only first sentence or first 40 chars
                 const firstSentence = desc.split(/[.!?]/)[0].trim();
                 return firstSentence.length > 40 ? firstSentence.slice(0, 40) + "…" : firstSentence;
               })()}"? {t("deleteWarning")}
