@@ -775,3 +775,8 @@
 - [x] הסרת מצב "נוף" והחלפה ב-"כל הפריטים" (trace all elements in the image)
 - [x] עדכון פרומפט buildFullImagePrompt ב-aiTraceRoute לציור מדויק של כל הפריטים
 - [x] שני המצבים מציירים בדיוק מה שרואים בתמונה (לא אלמנטים גנריים)
+
+## חיווי ויזואלי על טאב עם עיבוד פעיל
+
+- [x] polling localStorage כל 2 שניות לזיהוי jobs פעילים
+- [x] הצגת badge כתום עם animate-ping על כל טאב כשיש job פעיל

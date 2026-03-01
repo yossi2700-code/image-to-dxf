@@ -1202,6 +1202,25 @@ function AiGeneratorTab() {
 export default function Home() {
   const { t, isRtl, language } = useLanguage();
   const [appUser, setAppUser] = useState<{ id: number; email: string; name: string | null } | null>(null);
+
+  // Track active background jobs across all AI tabs
+  const [activeJobs, setActiveJobs] = useState<{ generate: boolean; trace: boolean; doc: boolean }>(() => ({
+    generate: !!localStorage.getItem("ai_generate_jobId"),
+    trace: !!localStorage.getItem("ai_trace_jobId"),
+    doc: !!localStorage.getItem("doc_redraw_jobId"),
+  }));
+
+  // Poll localStorage every 2s to detect job changes (even from child components)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveJobs({
+        generate: !!localStorage.getItem("ai_generate_jobId"),
+        trace: !!localStorage.getItem("ai_trace_jobId"),
+        doc: !!localStorage.getItem("doc_redraw_jobId"),
+      });
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
   const [authOpen, setAuthOpen] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
   const { data: tokenData, refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: !!appUser, refetchInterval: 30000 });
@@ -1331,24 +1350,42 @@ export default function Home() {
           >
             <TabsTrigger
               value="ai"
-              className="flex-1 gap-1.5 text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm"
+              className="flex-1 gap-1.5 text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm relative"
             >
               <Sparkles className="w-4 h-4" />
               <span>{isRtl ? "✨ AI יצירה" : "✨ AI Create"}</span>
+              {activeJobs.generate && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
+                </span>
+              )}
             </TabsTrigger>
             <TabsTrigger
               value="trace"
-              className="flex-1 gap-1.5 text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-sm"
+              className="flex-1 gap-1.5 text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-sm relative"
             >
               <Scan className="w-4 h-4" />
               <span>{isRtl ? "📷 AI מתמונה" : "📷 AI Trace"}</span>
+              {activeJobs.trace && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
+                </span>
+              )}
             </TabsTrigger>
             <TabsTrigger
               value="redraw"
-              className="flex-1 gap-1.5 text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:shadow-sm"
+              className="flex-1 gap-1.5 text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:shadow-sm relative"
             >
               <FileEdit className="w-4 h-4" />
               <span>{isRtl ? "✏️ AI מסמך" : "✏️ AI Doc"}</span>
+              {activeJobs.doc && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
+                </span>
+              )}
             </TabsTrigger>
           </TabsList>
 
