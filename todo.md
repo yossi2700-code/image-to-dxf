@@ -759,3 +759,7 @@
 
 - [x] הסרת שלב LLM — שליחת תמונה ישירות ל-gpt-image-1 עם images.edit
 - [x] פרומפט פשוט: "צייר את כל מה שרואים כ-outline נקי, ללא טקסט"
+
+## שיפור סגנון AI מסמך — אומנותי יותר
+
+- [x] עדכון פרומפט: engraving style, fine details, artistic line weight variation, not childish coloring book

@@ -160,16 +160,17 @@ async function runDocumentRedrawJob(
     // ── Direct gpt-image-1 edit: send original image + simple clear instruction ──
     // No LLM analysis step — the model sees the actual image and redraws it faithfully.
     const imagePrompt =
-      `Redraw this entire image as a clean black and white line art outline for CNC laser engraving.\n\n` +
-      `WHAT TO DRAW: Every visible graphic element, decoration, shape, and symbol in the image \u2014 exactly as they appear, in their exact positions and proportions.\n\n` +
+      `Redraw this entire image as a professional black and white engraving-style line art for CNC laser engraving.\n\n` +
+      `STYLE: Fine art engraving — like a master woodcut or steel engraving. Lines should vary in weight: thicker for main outlines, thinner for interior details and textures. Decorative elements (flowers, leaves, scrollwork, ornaments) should have intricate, detailed linework with visible internal structure — NOT simplified childish outlines.\n\n` +
+      `WHAT TO DRAW: Every visible graphic element, decoration, shape, symbol, and ornamental detail in the image — faithfully reproduced in their exact positions and proportions. Capture fine details: petal veins on flowers, texture on objects, decorative scrollwork, filigree, etc.\n\n` +
       `STRICT RULES:\n` +
       `1. NO TEXT: Remove ALL text, letters, words, numbers, and inscriptions. Draw ONLY the graphic/decorative elements.\n` +
-      `2. SINGLE STROKE: Each edge drawn with ONE thin black line. No double lines, no parallel strokes around the same edge.\n` +
-      `3. NO SHADING: No grey, no hatching, no gradients, no fills. Only pure black (#000000) lines on pure white (#FFFFFF) background.\n` +
-      `4. HOLLOW OUTLINES: All shapes are open outlines only \u2014 no solid black areas.\n` +
-      `5. FAITHFUL REPRODUCTION: Preserve the exact layout, composition, and proportions of the original. Do not add or remove graphic elements.\n\n` +
+      `2. ARTISTIC LINE WEIGHT: Use varied line thickness — bold outlines for shapes, fine lines for internal details and textures. This creates depth and artistic quality.\n` +
+      `3. NO FILLS: No solid black areas, no grey fills, no gradients. Only black lines on white background.\n` +
+      `4. RICH DETAIL: Include all decorative details visible in the original — do not simplify or omit fine ornamental elements.\n` +
+      `5. FAITHFUL COMPOSITION: Preserve the exact layout, proportions, and arrangement of the original image.\n\n` +
       (userDesc ? `User note: ${userDesc}\n\n` : "") +
-      `OUTPUT: Clean technical coloring-book outline. Pure black lines on pure white background. No texture, no background, no shadows.`;
+      `OUTPUT: Professional engraving-style line art. Black lines on pure white background. Artistic quality suitable for laser engraving on stone or metal.`;
 
     const response = await openai.images.edit({
       model: "gpt-image-1",
