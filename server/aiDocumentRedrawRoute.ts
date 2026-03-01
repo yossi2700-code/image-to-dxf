@@ -152,17 +152,26 @@ async function runDocumentRedrawJob(
         {
           role: "system",
           content:
-            "You are a precise graphic analyst for laser engraving reproduction. " +
-            "Your ONLY job: produce a COMPLETE technical description of the image so an AI can redraw it EXACTLY — same overall shape, same angles, same proportions, same element positions, same sizes. " +
-            "\n\nCRITICAL RULES:\n" +
-            "1. FIRST: Describe the OVERALL SHAPE/SILHOUETTE of the main object — e.g. 'tombstone with arched top and curved shoulders', 'rectangular frame with rounded corners', 'oval medallion', 'shield shape'. Include exact proportions (wider than tall? portrait? square?).\n" +
-            "2. THEN: Describe the OUTER BORDER/FRAME if present — its exact shape, thickness, and any decorative edge pattern.\n" +
-            "3. THEN: Scan the ENTIRE image — top, bottom, left, right, center, corners. Describe EVERY decorative element with its EXACT POSITION (e.g. 'centered at top inside arch', 'bottom-left quadrant', 'flanking left side from top to bottom').\n" +
-            "4. For EACH element specify: exact position, shape, size relative to overall composition, orientation/angle, and style.\n" +
-            "5. If there are MULTIPLE SIMILAR elements (e.g. two candelabras, two vine branches), describe ALL of them and their mirror/symmetric arrangement.\n" +
-            "6. NEVER describe text, letters, numbers, or plain background material.\n" +
-            "7. If there are NO illustrations at all (only text and plain background), respond with exactly: NO_ILLUSTRATIONS\n" +
-            "8. Output structured description starting with 'SHAPE:' (overall silhouette), then 'BORDER:' (frame/border), then 'ELEMENTS:' (each decorative element with position).",
+            "You are an expert technical illustrator and graphic analyst specializing in laser engraving reproduction. " +
+            "Your ONLY job: produce an ULTRA-PRECISE technical blueprint description of the image so an AI image generator can redraw it with maximum accuracy — same overall shape, same exact angles, same proportions, same element positions, same relative sizes. " +
+            "\n\nSTRUCTURED OUTPUT FORMAT (use these exact section headers):\n" +
+            "SHAPE: Describe the OVERALL SILHOUETTE/CONTAINER shape in precise geometric terms. E.g.: 'Vertical rectangle with aspect ratio 2:3 (portrait). Top edge has a semicircular arch. Shoulders curve inward at 45 degrees from the arch base. Bottom edge is flat.' Include exact proportions.\n" +
+            "BORDER: Describe the OUTER BORDER/FRAME precisely — its exact geometric shape (must match SHAPE), line thickness (thin/medium/thick/double), and any decorative edge pattern (plain, dotted, wavy, ornate). If no border, write 'BORDER: None'.\n" +
+            "GRID: Mentally divide the image into a 3x3 grid (top-left, top-center, top-right / middle-left, center, middle-right / bottom-left, bottom-center, bottom-right). For EACH occupied cell, list what element is there.\n" +
+            "ELEMENTS: For EACH decorative element (NOT text, NOT letters, NOT background), provide:\n" +
+            "  - NAME: what it is (Star of David, menorah/candelabra, vine branch, flower, Torah scroll, etc.)\n" +
+            "  - POSITION: grid cell + precise alignment (e.g. 'top-center cell, centered horizontally, touching the inner arch')\n" +
+            "  - SIZE: percentage of total image width and height (e.g. '25% wide, 20% tall')\n" +
+            "  - ORIENTATION: upright/tilted/mirrored/rotated (specify degrees if tilted)\n" +
+            "  - DETAIL LEVEL: simple outline / medium detail / highly detailed\n" +
+            "  - SYMMETRY: if mirrored pair, specify 'LEFT COPY: [position]' and 'RIGHT COPY: [position]'\n" +
+            "  - COUNT: number of repeated sub-elements (e.g. '7 candles in menorah', '6 petals in flower')\n" +
+            "\nCRITICAL RULES:\n" +
+            "- NEVER describe text, letters, numbers, words, or plain background.\n" +
+            "- If there are NO graphic/decorative elements at all (only text and plain background), respond with exactly: NO_ILLUSTRATIONS\n" +
+            "- Be SPECIFIC with measurements and positions — vague descriptions like 'in the middle' are NOT acceptable. Use grid coordinates and percentages.\n" +
+            "- If elements are symmetric, explicitly state the symmetry axis and describe BOTH sides.\n" +
+            "- Count repeated elements precisely.\n",
         },
         {
           role: "user",
@@ -177,8 +186,8 @@ async function runDocumentRedrawJob(
             {
               type: "text",
               text: userDesc
-                ? `First describe the OVERALL SHAPE of the main object (arch, rectangle, oval, etc.) and its proportions. Then describe the border/frame. Then scan the ENTIRE image and describe ALL decorative graphic elements with their exact positions, angles, and proportions. Do NOT describe text or background. Additional context: ${userDesc}`
-                : "First describe the OVERALL SHAPE/SILHOUETTE of the main object (e.g. tombstone with arched top, rectangular frame, oval shape) and its proportions. Then describe the border/frame if present. Then scan the ENTIRE image carefully — every corner, every edge. List each decorative element with its EXACT POSITION (top-center, bottom-left, flanking sides, etc.), angle, and size. If there are symmetric pairs, describe both. Do NOT describe text, letters, or background.",
+                ? `Analyze this image using the SHAPE / BORDER / GRID / ELEMENTS format. Be extremely precise with positions (use grid coordinates), sizes (use percentages), and counts. Do NOT describe text or background. Additional context from user: ${userDesc}`
+                : "Analyze this image using the SHAPE / BORDER / GRID / ELEMENTS format. Be extremely precise with positions (use grid coordinates like 'top-center cell'), sizes (use percentages like '30% wide'), orientations, and element counts. Do NOT describe text, letters, or background.",
             },
           ],
         },
@@ -216,19 +225,27 @@ async function runDocumentRedrawJob(
       : "approximately square";
 
     const imagePrompt =
-      `Technical laser engraving line art reproduction. Draw EXACTLY this composition: ${objectDescription}. ` +
-      "\n\nCRITICAL REQUIREMENTS — READ CAREFULLY:\n" +
-      "1. DRAW THE OVERALL SHAPE FIRST — if the description says 'tombstone with arched top and curved shoulders', draw that exact silhouette outline as the main container shape. The outer shape/silhouette MUST match the original.\n" +
-      "2. DRAW THE BORDER/FRAME exactly as described — same shape, same thickness, same decorative pattern.\n" +
-      "3. PLACE EVERY ELEMENT IN ITS EXACT DESCRIBED POSITION — 'top-center' means top-center, 'bottom-left' means bottom-left, 'flanking both sides' means symmetric on both sides. Do NOT rearrange elements.\n" +
-      "4. REPRODUCE EVERY ELEMENT FAITHFULLY — draw each decorative element (Star of David, candelabra, Torah scroll, vine branches, flowers, etc.) in its exact described position, size, and orientation.\n" +
-      "5. MAINTAIN EXACT PROPORTIONS — if the original is taller than wide, the drawing must be taller than wide. Same aspect ratio.\n" +
-      `6. MAINTAIN ORIGINAL ORIENTATION — the composition is ${aspectDesc}. Respect this orientation.\n` +
-      "7. NO text, NO letters, NO words, NO numbers — only the graphic/decorative elements.\n" +
-      "8. Pure white background (#FFFFFF). Only pure black (#000000) lines. NO grey tones, NO fills, NO gradients, NO shading.\n" +
-      "9. Clean, precise lines suitable for laser engraving — not artistic interpretation, but faithful technical reproduction.\n" +
-      "10. The complete composition MUST fit entirely inside the frame with 12% white margin on every edge — nothing cropped.\n" +
-      "11. ACCURACY OVER BEAUTY — it is more important to match the original layout exactly than to make it look beautiful.";
+      `LASER ENGRAVING LINE ART REPRODUCTION — EXACT COPY REQUIRED.\n\n` +
+      `BLUEPRINT DESCRIPTION TO REPRODUCE:\n${objectDescription}\n\n` +
+      `DRAWING INSTRUCTIONS — FOLLOW IN ORDER:\n` +
+      `STEP 1 — DRAW THE OUTER SILHOUETTE: Draw the exact container shape described in SHAPE section. ` +
+      `If it says 'tombstone with arched top', draw that precise silhouette. If it says 'portrait rectangle', draw portrait rectangle. ` +
+      `The outer silhouette MUST match the described shape and proportions EXACTLY.\n` +
+      `STEP 2 — DRAW THE BORDER/FRAME: Add the border exactly as described in BORDER section — same shape as silhouette, same thickness, same decorative pattern.\n` +
+      `STEP 3 — PLACE ELEMENTS BY GRID: Use the 3x3 grid layout from GRID section. ` +
+      `Place each element in its EXACT grid cell. 'top-center' = top-center. 'bottom-left' = bottom-left. ` +
+      `Do NOT move elements from their described positions.\n` +
+      `STEP 4 — DRAW EACH ELEMENT: For each element in ELEMENTS section, draw it at the described SIZE (use percentages), ` +
+      `ORIENTATION (upright/tilted/rotated), and DETAIL LEVEL. Reproduce the correct COUNT of sub-elements ` +
+      `(e.g. if menorah has 7 candles, draw exactly 7 candles).\n` +
+      `STEP 5 — CHECK SYMMETRY: If elements are described as symmetric pairs, ensure they are perfectly mirrored.\n\n` +
+      `ABSOLUTE CONSTRAINTS:\n` +
+      `- NO text, NO letters, NO words, NO numbers — ONLY graphic/decorative elements.\n` +
+      `- Pure white background (#FFFFFF). Only pure black (#000000) lines. NO grey, NO fill, NO shading, NO gradients.\n` +
+      `- Clean thin lines suitable for laser engraving/CNC cutting.\n` +
+      `- The composition is ${aspectDesc}. Respect this orientation.\n` +
+      `- Leave 10% white margin on every edge — nothing cropped or touching the border.\n` +
+      `- ACCURACY IS THE ONLY GOAL — match the original layout exactly. Do not add artistic interpretation.`;
 
     const response = await openai.images.generate({
       model: "gpt-image-1",
