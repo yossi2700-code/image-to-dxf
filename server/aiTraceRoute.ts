@@ -111,7 +111,9 @@ function buildLandscapePrompt(sceneDescription: string, variationIndex: number):
     "IMPORTANT: Draw the ENTIRE scene — all elements visible in the landscape (sky, horizon, buildings, trees, mountains, water, foreground). " +
     "Do NOT focus on a single object — capture the full panoramic view. " +
     `${variation.style} ` +
-    "Wide panoramic composition, complete, not cropped. " +
+    "CRITICAL: The entire scene MUST fit completely inside the square frame with white margin on all sides. " +
+    "Do NOT let any element touch or go beyond the image border. Leave at least 5% white margin on every edge. " +
+    "Square composition, all elements fully visible, nothing cropped. " +
     "No text, no watermarks, no grey tones."
   );
 }

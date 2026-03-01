@@ -571,10 +571,13 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                   <div>
                     <button
                       onClick={() => setShowSvgPreview((v) => !v)}
-                      className="w-full flex items-center justify-center gap-2 py-3 px-4 mb-3 rounded-xl border-2 border-primary bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors font-bold text-base text-primary shadow-sm"
+                      className={`w-full flex items-center justify-center gap-2.5 py-3.5 px-4 mb-3 rounded-xl border-2 transition-all font-bold text-base shadow-md active:scale-[0.98]
+                        ${showSvgPreview
+                          ? "border-primary bg-primary text-white hover:bg-primary/90"
+                          : "border-primary bg-gradient-to-r from-primary/20 to-blue-500/20 text-primary hover:from-primary/30 hover:to-blue-500/30"}`}
                     >
                       <Eye className="w-5 h-5" />
-                      {showSvgPreview ? (isRtl ? "⬆ הסתר וקטור" : "⬆ Hide Vector") : (isRtl ? "⬇ הצג וקטור" : "⬇ Show Vector")}
+                      {showSvgPreview ? (isRtl ? "הסתר וקטור ⬆" : "⬆ Hide Vector") : (isRtl ? "הצג וקטור DXF ⬇" : "⬇ Show DXF Vector")}
                     </button>
                     {showSvgPreview && (
                       <SvgZoomViewer
@@ -603,8 +606,8 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                   <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
                   <p className="text-sm font-medium text-green-700">{t("conversionSuccess")}</p>
                 </div>
-                <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 font-semibold" onClick={() => setDownloadOpen(true)}>
-                  <Download className="w-4 h-4 ml-2" />{t("downloadDxf")}
+                <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 font-bold text-base h-12" onClick={() => setDownloadOpen(true)}>
+                  <Download className="w-5 h-5 ml-2" />{isRtl ? "הורד DXF / PDF" : "Download DXF / PDF"}
                 </Button>
                 <Button variant="outline" size="sm" className="w-full" onClick={reset}>
                   {isRtl ? "המר תמונה חדשה" : "Convert New Image"}
@@ -920,10 +923,13 @@ function AiGeneratorTab() {
                   <div className="mb-3">
                     <button
                       onClick={() => setShowVector((v) => !v)}
-                      className="w-full flex items-center justify-center gap-2 py-3 px-4 mb-3 rounded-xl border-2 border-primary bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors font-bold text-base text-primary shadow-sm"
+                      className={`w-full flex items-center justify-center gap-2.5 py-3.5 px-4 mb-3 rounded-xl border-2 transition-all font-bold text-base shadow-md active:scale-[0.98]
+                        ${showVector
+                          ? "border-primary bg-primary text-white hover:bg-primary/90"
+                          : "border-primary bg-gradient-to-r from-primary/20 to-blue-500/20 text-primary hover:from-primary/30 hover:to-blue-500/30"}`}
                     >
                       <Eye className="w-5 h-5" />
-                      {showVector ? (isRtl ? "⬆ הסתר וקטור" : "⬆ Hide Vector") : (isRtl ? "⬇ הצג וקטור" : "⬇ Show Vector")}
+                      {showVector ? (isRtl ? "הסתר וקטור ⬆" : "⬆ Hide Vector") : (isRtl ? "הצג וקטור DXF ⬇" : "⬇ Show DXF Vector")}
                     </button>
                     {showVector && (
                       <SvgZoomViewer
@@ -950,10 +956,10 @@ function AiGeneratorTab() {
                 </div>
                 <Button
                   size="lg"
-                  className="w-full bg-green-600 hover:bg-green-700 font-semibold mb-2"
+                  className="w-full bg-green-600 hover:bg-green-700 font-bold text-base h-12 mb-2"
                   onClick={() => handleDownload(selected)}
                 >
-                  <Download className="w-4 h-4 ml-2" />{t("downloadDxf")}
+                  <Download className="w-5 h-5 ml-2" />{isRtl ? "הורד DXF / PDF" : "Download DXF / PDF"}
                 </Button>
                 {/* AI Refine Panel */}
                 <AiRefinePanel

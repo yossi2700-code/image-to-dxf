@@ -1,24 +1,17 @@
 /**
- * DxfDownloadDialog — dialog for downloading DXF with:
+ * DxfDownloadDialog — dialog for downloading DXF / PDF with:
  * - Custom filename input
  * - Real physical size (based on SVG dimensions at 96 DPI → mm)
- * - Proportional percentage scaling
+ * - Proportional percentage scaling (10% – 100%)
  * - SVG preview
- *
- * Size logic:
- *   potrace / GPT-4o SVG outputs at 96 DPI.
- *   1 px = 25.4 / 96 ≈ 0.2646 mm
- *   So a 500px design → ~132mm at 100%.
- *   The DXF coordinates are currently in px units; we scale them to mm.
- *   At 100% the output is the real physical size at 96 DPI.
- *   The user can scale up/down with the slider.
+ * - PDF export option
  */
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Download, X, FileCode2 } from "lucide-react";
+import { Download, X, FileCode2, FileText } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,13 +30,8 @@ export interface DxfDownloadDialogProps {
 
 // ─── Scale DXF content ────────────────────────────────────────────────────────
 
-/**
- * Re-scale all LINE coordinates in a DXF R12 string by a given factor.
- * Also updates $EXTMIN / $EXTMAX header values.
- */
 function scaleDxfContent(dxfText: string, scaleFactor: number): string {
   if (Math.abs(scaleFactor - 1) < 0.0001) return dxfText;
-
   return dxfText.replace(
     /^(10|11|20|21|30|31)\n(-?[0-9]+\.?[0-9]*(?:[eE][+-]?[0-9]+)?)/gm,
     (_match, group, value) => {
@@ -61,7 +49,7 @@ function SvgMiniPreview({ svg }: { svg: string }) {
     '<svg style="max-width:100%;max-height:100%;width:auto;height:auto;" '
   );
   return (
-    <div className="border rounded-lg bg-white overflow-hidden flex items-center justify-center p-3" style={{ height: 200 }}>
+    <div className="border-2 border-border rounded-xl bg-white overflow-hidden flex items-center justify-center p-3" style={{ height: 180 }}>
       <div
         className="w-full h-full flex items-center justify-center"
         dangerouslySetInnerHTML={{ __html: styledSvg }}
@@ -70,22 +58,74 @@ function SvgMiniPreview({ svg }: { svg: string }) {
   );
 }
 
+// ─── PDF Export ───────────────────────────────────────────────────────────────
+
+async function exportSvgToPdf(svgContent: string, widthMm: number, heightMm: number, filename: string) {
+  // Convert SVG to a data URL and print via hidden iframe
+  const styledSvg = svgContent.replace(
+    /<svg /,
+    `<svg style="width:${widthMm}mm;height:${heightMm}mm;" `
+  );
+  const svgBlob = new Blob([styledSvg], { type: "image/svg+xml" });
+  const svgUrl = URL.createObjectURL(svgBlob);
+
+  // Use canvas approach: draw SVG on canvas, export as PDF via print
+  const iframe = document.createElement("iframe");
+  iframe.style.position = "fixed";
+  iframe.style.top = "-9999px";
+  iframe.style.left = "-9999px";
+  iframe.style.width = `${widthMm}mm`;
+  iframe.style.height = `${heightMm}mm`;
+  document.body.appendChild(iframe);
+
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+  if (!iframeDoc) { URL.revokeObjectURL(svgUrl); document.body.removeChild(iframe); return; }
+
+  iframeDoc.open();
+  iframeDoc.write(`<!DOCTYPE html>
+<html>
+<head>
+<style>
+  @page { size: ${widthMm}mm ${heightMm}mm; margin: 0; }
+  body { margin: 0; padding: 0; background: white; }
+  img { width: 100%; height: 100%; display: block; }
+</style>
+</head>
+<body>
+  <img src="${svgUrl}" />
+</body>
+</html>`);
+  iframeDoc.close();
+
+  // Wait for image to load then print
+  await new Promise<void>((resolve) => {
+    const img = iframeDoc.querySelector("img");
+    if (img) {
+      img.onload = () => resolve();
+      setTimeout(resolve, 1500); // fallback
+    } else {
+      setTimeout(resolve, 500);
+    }
+  });
+
+  iframe.contentWindow?.focus();
+  iframe.contentWindow?.print();
+
+  setTimeout(() => {
+    document.body.removeChild(iframe);
+    URL.revokeObjectURL(svgUrl);
+  }, 2000);
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Format mm: if ≥ 10mm show as cm too */
-function formatSize(mm: number) {
-  if (mm >= 10) {
-    return `${mm.toFixed(0)} מ"מ (${(mm / 10).toFixed(1)} ס"מ)`;
-  }
-  return `${mm.toFixed(1)} מ"מ`;
+/** Format mm only */
+function formatMm(mm: number) {
+  return `${mm.toFixed(0)} מ"מ`;
 }
 
 // ─── Main Dialog ──────────────────────────────────────────────────────────────
 
-/**
- * Pixel → mm conversion at 96 DPI (standard screen resolution).
- * 1 px = 25.4 / 96 ≈ 0.2646 mm
- */
 const PX_TO_MM = 25.4 / 96;
 
 export function DxfDownloadDialog({
@@ -101,8 +141,8 @@ export function DxfDownloadDialog({
   const [filename, setFilename] = useState(defaultFilename.replace(/\.dxf$/i, ""));
   const [scalePercent, setScalePercent] = useState(100);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isPdfExporting, setIsPdfExporting] = useState(false);
 
-  // Reset when dialog opens
   useEffect(() => {
     if (open) {
       setFilename(defaultFilename.replace(/\.dxf$/i, ""));
@@ -110,16 +150,11 @@ export function DxfDownloadDialog({
     }
   }, [open, defaultFilename]);
 
-  // Real physical size at 100%:
-  // DXF coords are in px units → convert to mm at 96 DPI
   const realWidthMm = svgWidth * PX_TO_MM;
   const realHeightMm = svgHeight * PX_TO_MM;
 
-  // At 100% the output equals the real physical size.
-  // scaleFactor = (scalePercent / 100) * PX_TO_MM
-  // (we need to convert px→mm AND apply user scale)
+  // Scale: px→mm AND user percentage
   const scaleFactor = PX_TO_MM * (scalePercent / 100);
-
   const outputWidthMm = svgWidth * scaleFactor;
   const outputHeightMm = svgHeight * scaleFactor;
 
@@ -129,10 +164,7 @@ export function DxfDownloadDialog({
       const resp = await fetch(dxfUrl);
       if (!resp.ok) throw new Error("שגיאה בהורדת הקובץ");
       const originalDxf = await resp.text();
-
-      // Scale: convert px→mm and apply user percentage
       const scaledDxf = scaleDxfContent(originalDxf, scaleFactor);
-
       const blob = new Blob([scaledDxf], { type: "application/dxf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -142,11 +174,9 @@ export function DxfDownloadDialog({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-
       onClose();
     } catch (err) {
       console.error("Download error:", err);
-      // Fallback: direct download without scaling
       const a = document.createElement("a");
       a.href = dxfUrl;
       a.download = `${filename.trim() || "design"}.dxf`;
@@ -157,13 +187,22 @@ export function DxfDownloadDialog({
     }
   };
 
+  const handlePdfExport = async () => {
+    setIsPdfExporting(true);
+    try {
+      await exportSvgToPdf(svgContent, outputWidthMm, outputHeightMm, filename.trim() || "design");
+    } finally {
+      setIsPdfExporting(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md w-full" dir="rtl">
+      <DialogContent className="max-w-sm w-full" dir="rtl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-right">
-            <FileCode2 className="w-4 h-4 text-primary" />
-            הורדת קובץ DXF
+            <FileCode2 className="w-5 h-5 text-primary" />
+            הורדת קובץ
           </DialogTitle>
         </DialogHeader>
 
@@ -171,85 +210,91 @@ export function DxfDownloadDialog({
           {/* SVG Preview */}
           {svgContent && <SvgMiniPreview svg={svgContent} />}
 
-          {/* Stats */}
-          <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-            <span>{segmentCount.toLocaleString()} קווים</span>
-            <span>
-              גודל פלט: <strong>{outputWidthMm.toFixed(0)} × {outputHeightMm.toFixed(0)} מ"מ</strong>
+          {/* Stats row */}
+          <div className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-2 text-sm">
+            <span className="text-muted-foreground">{segmentCount.toLocaleString()} קווים</span>
+            <span className="font-semibold text-primary">
+              {formatMm(outputWidthMm)} × {formatMm(outputHeightMm)}
             </span>
           </div>
 
           {/* Filename */}
           <div>
-            <label className="text-sm font-medium block mb-1.5">שם הקובץ</label>
-            <div className="flex items-center gap-1">
+            <label className="text-sm font-semibold block mb-1.5">שם הקובץ</label>
+            <div className="flex items-center gap-1.5">
               <Input
                 value={filename}
                 onChange={(e) => setFilename(e.target.value)}
                 placeholder="שם הקובץ..."
-                className="text-right flex-1"
+                className="text-right flex-1 text-sm"
                 dir="rtl"
               />
-              <span className="text-sm text-muted-foreground shrink-0">.dxf</span>
+              <span className="text-sm text-muted-foreground shrink-0 font-mono">.dxf</span>
             </div>
           </div>
 
           {/* Scale */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-sm font-medium">גודל הפלט</label>
-              <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded text-primary font-semibold">
-                {scalePercent}%
-              </span>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-semibold">גודל הפלט</label>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-primary tabular-nums">{scalePercent}%</span>
+                <span className="text-xs text-muted-foreground">
+                  ({formatMm(outputWidthMm)} × {formatMm(outputHeightMm)})
+                </span>
+              </div>
             </div>
             <Slider
               min={10}
-              max={500}
+              max={100}
               step={5}
               value={[scalePercent]}
               onValueChange={([v]) => setScalePercent(v)}
+              className="mb-2"
             />
-            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+            <div className="flex justify-between text-xs text-muted-foreground">
               <span>קטן (10%)</span>
               <button
-                className="text-primary font-medium underline underline-offset-2 cursor-pointer"
+                className="text-primary font-semibold underline underline-offset-2 cursor-pointer"
                 onClick={() => setScalePercent(100)}
               >
                 גודל אמיתי (100%)
               </button>
-              <span>גדול (500%)</span>
-            </div>
-
-            {/* Size info table */}
-            <div className="mt-2 rounded-md bg-muted/50 p-2 text-xs space-y-1">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">גודל מקורי (100%):</span>
-                <span className="font-medium">
-                  {formatSize(realWidthMm)} × {formatSize(realHeightMm)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">גודל סופי ({scalePercent}%):</span>
-                <span className="font-semibold text-primary">
-                  {formatSize(outputWidthMm)} × {formatSize(outputHeightMm)}
-                </span>
-              </div>
+              <span>{formatMm(realWidthMm)} × {formatMm(realHeightMm)}</span>
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 pt-1">
+          {/* Action buttons */}
+          <div className="flex flex-col gap-2 pt-1">
+            {/* DXF Download */}
             <Button
               size="lg"
-              className="flex-1 bg-green-600 hover:bg-green-700 font-semibold"
+              className="w-full bg-green-600 hover:bg-green-700 font-bold text-base h-12"
               onClick={handleDownload}
-              disabled={isDownloading}
+              disabled={isDownloading || isPdfExporting}
             >
-              <Download className="w-4 h-4 ml-2" />
+              <Download className="w-5 h-5 ml-2" />
               {isDownloading ? "מוריד..." : "הורד DXF"}
             </Button>
-            <Button variant="outline" size="lg" onClick={onClose}>
-              <X className="w-4 h-4" />
+
+            {/* PDF Export */}
+            {svgContent && (
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full border-2 border-blue-500 text-blue-600 hover:bg-blue-50 font-bold text-base h-12"
+                onClick={handlePdfExport}
+                disabled={isDownloading || isPdfExporting}
+              >
+                <FileText className="w-5 h-5 ml-2" />
+                {isPdfExporting ? "מייצא PDF..." : "ייצא PDF"}
+              </Button>
+            )}
+
+            {/* Cancel */}
+            <Button variant="ghost" size="sm" onClick={onClose} className="w-full text-muted-foreground">
+              <X className="w-4 h-4 ml-1" />
+              ביטול
             </Button>
           </div>
         </div>

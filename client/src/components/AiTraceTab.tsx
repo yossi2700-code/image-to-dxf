@@ -179,10 +179,13 @@ function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) 
         {/* Toggle vector preview */}
         <button
           onClick={() => setShowVector(!showVector)}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 mb-3 rounded-xl border-2 border-primary bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors font-bold text-base text-primary shadow-sm"
+          className={`w-full flex items-center justify-center gap-2.5 py-3.5 px-4 mb-3 rounded-xl border-2 transition-all font-bold text-base shadow-md active:scale-[0.98]
+            ${showVector
+              ? "border-primary bg-primary text-white hover:bg-primary/90"
+              : "border-primary bg-gradient-to-r from-primary/20 to-blue-500/20 text-primary hover:from-primary/30 hover:to-blue-500/30"}`}
         >
           <Eye className="w-5 h-5" />
-          {showVector ? (isRtl ? "⬆ הסתר וקטור" : "⬆ Hide Vector") : (isRtl ? "⬇ הצג וקטור" : "⬇ Show Vector")}
+          {showVector ? (isRtl ? "הסתר וקטור ⬆" : "⬆ Hide Vector") : (isRtl ? "הצג וקטור DXF ⬇" : "⬇ Show DXF Vector")}
         </button>
 
         {showVector && (
@@ -202,9 +205,9 @@ function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) 
           </div>
         </div>
 
-        <Button size="sm" className="w-full bg-green-600 hover:bg-green-700 font-semibold" onClick={() => onDownload(image)}>
-          <Download className="w-3.5 h-3.5 ml-1.5" />
-          {isRtl ? "הורד DXF" : "Download DXF"}
+        <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 font-bold text-base h-12" onClick={() => onDownload(image)}>
+          <Download className="w-5 h-5 ml-2" />
+          {isRtl ? "הורד DXF / PDF" : "Download DXF / PDF"}
         </Button>
       </CardContent>
     </Card>

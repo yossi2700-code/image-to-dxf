@@ -318,9 +318,9 @@ function DetailDialog({
                 </Button>
               )}
               {item.dxfUrl && (
-                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setDxfDownloadOpen(true)}>
+                <Button size="sm" className="gap-1.5 bg-green-600 hover:bg-green-700 font-semibold" onClick={() => setDxfDownloadOpen(true)}>
                   <Download className="w-4 h-4" />
-                  {isRtl ? "הורד DXF" : "Download DXF"}
+                  {isRtl ? "הורד DXF / PDF" : "Download DXF / PDF"}
                 </Button>
               )}
             </div>
