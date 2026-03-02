@@ -294,7 +294,7 @@ async function runTraceJob(
         {
           role: "user",
           content: [
-            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "low" } },
+            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "high" } },
             { type: "text", text: analysisInstruction },
           ],
         },
@@ -336,14 +336,18 @@ async function runTraceJob(
       const editPrompt = landscapeMode
         ? buildFullImagePrompt(objectDescription, idx)
         : (
-            "ABSOLUTE RULE: NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS. " +
+            "ABSOLUTE RULE #1: NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS — EVER. " +
+            "ABSOLUTE RULE #2: PRESERVE THE EXACT SHAPE, SILHOUETTE, AND STRUCTURE OF THE ORIGINAL IMAGE. " +
             `Convert this image into a professional black and white line art illustration. ` +
-            `PRESERVE the EXACT shape, proportions, camera angle, and pose from the original image. ` +
-            `Do NOT change the viewpoint, orientation, or any structural element. ` +
-            "Pure white background (#FFFFFF). Bold black outlines only, no fill, no shading, no gradients. " +
+            `You MUST keep the EXACT same: (a) overall shape and silhouette, (b) camera angle and viewpoint, ` +
+            `(c) proportions and dimensions, (d) all visible structural details, patterns, logos, and decorative elements. ` +
+            `Do NOT simplify, generalize, or change ANY structural element. ` +
+            `Do NOT change the viewpoint, orientation, rotation, or scale. ` +
+            "Draw EVERY visible detail from the original: seams, handles, straps, patterns, hardware, logos, textures. " +
+            "Pure white background (#FFFFFF). Clean black outlines only, no fill, no shading, no gradients, no grey. " +
             `${variation.style} ` +
             "The entire object must be fully visible with 15% white margin on every side. " +
-            "FINAL REMINDER: Zero text, zero letters, zero numbers. Pure line art only."
+            "FINAL REMINDER: Zero text, zero letters, zero numbers anywhere in the image."
           );
 
       // Use images.edit with the original image as reference for maximum shape fidelity

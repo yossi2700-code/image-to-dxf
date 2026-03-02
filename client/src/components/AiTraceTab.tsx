@@ -434,14 +434,30 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
 
   const handleTrace = async () => {
     if (!imageFile && !imagePreview) return;
+
+    // Ensure imagePreview is set BEFORE status changes to loading
+    // (FileReader is async — preview may not be ready yet if user clicked fast)
+    let previewUrl = imagePreview;
+    if (imageFile && !imagePreview) {
+      previewUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result as string;
+          setImagePreviewPersisted(result);
+          resolve(result);
+        };
+        reader.readAsDataURL(imageFile);
+      });
+    }
+
     setStatus("loading"); setResult(null); setErrorMsg(""); setCurrentStep("");
     try {
       const formData = new FormData();
       if (imageFile) {
         formData.append("image", imageFile);
-      } else if (imagePreview) {
+      } else if (previewUrl) {
         // Convert base64/URL preview to blob
-        const resp = await fetch(imagePreview);
+        const resp = await fetch(previewUrl);
         const blob = await resp.blob();
         formData.append("image", blob, "image.jpg");
       }
