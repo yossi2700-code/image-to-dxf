@@ -828,3 +828,18 @@
 - [x] תיקון כפתור submit — מאפשר שליחה גם כשיש imagePreview בלבד (אחרי reload)
 - [x] תמיכה ב-imagePreview-only ב-handleRedraw (המרת base64 ל-blob)
 - [x] עדכון טסטים ל-aiDocumentRedraw לשקף job-based API (מחזיר jobId ולא תוצאה ישירה)
+
+## תיקוני AI Outline (מרץ 2026)
+
+- [ ] איפוס פרומפט AI Outline — הגדרה מחדש לדיוק מקסימלי (זוויות, פוזה, פרטים)
+- [ ] הצגת תמונה שהועלתה + אנימציית סורק בזמן עיבוד
+- [ ] הוספת הודעות שלבי עיבוד בזמן אמת (כמו AI יצירה)
+
+## תיקוני AI Outline - מרץ 2026
+
+- [x] איפוס פרומפט LLM לדיוק מקסימלי (זווית, פוזה, כיוון) - system prompt חדש
+- [x] איפוס buildLineArtPrompt לשמירה קפדנית על תיאור LLM
+- [x] תיקון כפתור submit — פעיל גם כשיש imagePreview בלבד (אחרי reload)
+- [x] הוספת step field ל-jobStore לתמיכה בהודעות שלבים
+- [x] עדכון server: step messages (מנתח → מייצר → ממיר) בזמן אמת
+- [x] עדכון UI: progress bar + הודעת שלב נוכחי בזמן עיבוד

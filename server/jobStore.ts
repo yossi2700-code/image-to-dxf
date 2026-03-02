@@ -17,6 +17,8 @@ export interface Job {
   result?: unknown;
   error?: string;
   tokenAction?: string; // e.g. "ai_trace" — used for refund on cancel
+  step?: string;        // Human-readable current step message (he/en)
+  stepEn?: string;      // English step message
 }
 
 const jobs = new Map<string, Job>();

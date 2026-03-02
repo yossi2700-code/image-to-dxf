@@ -322,6 +322,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const [fullImageMode, setFullImageMode] = useState(false);
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("ai_trace_jobId"));
   const [tryAgainUrl, setTryAgainUrl] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState<string>("");
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -348,6 +349,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           setResult(data.result as TraceResult);
           setStatus("success");
+          setCurrentStep("");
           setJobIdPersisted(null);
           refetchTokens();
           toast.success(isRtl ? `3 עיצובים מוכנים! בחר את המועדף ולחץ הורד DXF` : `3 designs ready! Choose your favorite and download DXF`);
@@ -356,12 +358,18 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
           const msg = data.message || (isRtl ? "שגיאה בעיבוד" : "Processing error");
           setErrorMsg(msg);
           setStatus("error");
+          setCurrentStep("");
           setJobIdPersisted(null);
           toast.error(msg);
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           setStatus("idle");
+          setCurrentStep("");
           setJobIdPersisted(null);
+        } else if (data.step || data.stepEn) {
+          // Update current step message
+          const stepMsg = isRtl ? (data.step || data.stepEn) : (data.stepEn || data.step);
+          if (stepMsg) setCurrentStep(stepMsg);
         }
       } catch (_) { /* network error, keep trying */ }
     }, 3000);
@@ -425,11 +433,18 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   }, [handleFile]);
 
   const handleTrace = async () => {
-    if (!imageFile) return;
-    setStatus("loading"); setResult(null); setErrorMsg("");
+    if (!imageFile && !imagePreview) return;
+    setStatus("loading"); setResult(null); setErrorMsg(""); setCurrentStep("");
     try {
       const formData = new FormData();
-      formData.append("image", imageFile);
+      if (imageFile) {
+        formData.append("image", imageFile);
+      } else if (imagePreview) {
+        // Convert base64/URL preview to blob
+        const resp = await fetch(imagePreview);
+        const blob = await resp.blob();
+        formData.append("image", blob, "image.jpg");
+      }
       if (description.trim()) formData.append("description", description.trim());
       if (focusText.trim()) formData.append("focusText", focusText.trim());
       formData.append("lang", isRtl ? "he" : "en");
@@ -679,13 +694,13 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               <button
                 className="flex-1 font-bold text-base h-12 rounded-lg flex items-center justify-center gap-2 transition-all"
                 style={{
-                  background: !imageFile || status === "loading" ? '#99f6e4' : '#0d9488',
+                  background: ((!imageFile && !imagePreview) || status === "loading") ? '#99f6e4' : '#0d9488',
                   color: 'white',
                   border: 'none',
-                  boxShadow: !imageFile || status === "loading" ? 'none' : '0 2px 8px rgba(13,148,136,0.30)',
-                  cursor: !imageFile || status === "loading" ? 'not-allowed' : 'pointer',
+                  boxShadow: ((!imageFile && !imagePreview) || status === "loading") ? 'none' : '0 2px 8px rgba(13,148,136,0.30)',
+                  cursor: ((!imageFile && !imagePreview) || status === "loading") ? 'not-allowed' : 'pointer',
                 }}
-                disabled={!imageFile || status === "loading"}
+                disabled={(!imageFile && !imagePreview) || status === "loading"}
                 onClick={handleTrace}
               >
                 {status === "loading" ? (
@@ -756,8 +771,29 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   <Wand2 className="absolute inset-0 m-auto w-5 h-5 text-teal-600" />
                 </div>
               )}
-              <p className="font-semibold text-sm text-gray-700">{isRtl ? "ה-AI מנתח את התמונה ומצייר 3 עיצובים..." : "AI is analyzing your image and drawing 3 designs..."}</p>
-              <p className="text-xs text-gray-400">{isRtl ? "זה עשוי לקחת 30-60 שניות" : "This may take 30-60 seconds"}</p>
+              {/* Step progress indicator */}
+              <div className="w-full max-w-xs">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-teal-400" style={{animation: 'pulse 1.5s ease-in-out infinite'}} />
+                  <p className="font-semibold text-sm text-gray-700 text-start">
+                    {currentStep || (isRtl ? "מנתח תמונה עם AI..." : "Analyzing image with AI...")}
+                  </p>
+                </div>
+                {/* Step progress bar */}
+                <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      background: 'linear-gradient(90deg, #0d9488, #5eead4)',
+                      width: currentStep.includes('יצר') || currentStep.includes('Generat') ? '66%'
+                        : currentStep.includes('ממיר') || currentStep.includes('Convert') ? '88%'
+                        : '33%',
+                      transition: 'width 0.8s ease-in-out',
+                    }}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-400">{isRtl ? "זה עשוי לקחת 30-90 שניות" : "This may take 30-90 seconds"}</p>
               <div className="flex gap-1.5">
                 {[0, 1, 2].map((i) => (
                   <div key={i} className="w-1.5 h-1.5 rounded-full bg-teal-400" style={{animation: `bounce 1s infinite ${i * 0.15}s`}} />

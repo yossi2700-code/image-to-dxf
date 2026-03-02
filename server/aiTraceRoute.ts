@@ -173,29 +173,30 @@ async function generateImprovementSuggestions(
 function buildLineArtPrompt(objectDescription: string, variationIndex: number): string {
   const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
   return (
-    `Professional black and white line art illustration of ${objectDescription}. ` +
-    "=== CAMERA ANGLE / VIEW — MOST CRITICAL RULE === " +
-    "You MUST draw the object from the EXACT same camera angle and view described above. " +
-    "If the description says 'pure side view' or 'profile view' — draw it as a FLAT 90-DEGREE SIDE VIEW, NOT a 3/4 angle. " +
-    "If the description says 'front view' — draw it facing directly toward the viewer. " +
-    "DO NOT change the camera angle. DO NOT add perspective or 3D effect unless explicitly described. " +
-    "DO NOT mirror or flip the object. " +
+    `Professional black and white line art illustration. ` +
+    `EXACT SUBJECT TO DRAW: ${objectDescription} ` +
+    "\n=== CAMERA ANGLE — ABSOLUTE RULE (MOST IMPORTANT) === " +
+    "You MUST reproduce the EXACT camera angle and view described in the subject description above. " +
+    "- If description says 'pure side profile' or 'side view' or 'profile view': draw FLAT 90-DEGREE SIDE VIEW. The viewer sees ONLY one side. Do NOT add any 3D perspective or 3/4 angle. " +
+    "- If description says 'front view' or 'facing viewer': draw the subject facing DIRECTLY toward the viewer, both sides symmetrical. " +
+    "- If description says '3/4 angle': draw with slight diagonal perspective as described. " +
+    "- If description says 'facing left': the subject's head/front points to the LEFT side of the image. " +
+    "- If description says 'facing right': the subject's head/front points to the RIGHT side of the image. " +
+    "DO NOT change, rotate, mirror, or reinterpret the camera angle. Draw EXACTLY what the description says. " +
     "=== END CAMERA ANGLE RULE === " +
+    "\n=== STYLE === " +
     "Pure white background (#FFFFFF). " +
-    "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
+    "Bold thick black outlines, no fill, no shading, no gradients, no grey tones. " +
     "High contrast: only pure black (#000000) lines on white. " +
-    "=== MANDATORY FRAMING RULES (NEVER VIOLATE) === " +
-    "Rule 1: The ENTIRE object MUST be 100% visible — NOTHING cut off, NOTHING touching the edge. " +
-    "Rule 2: Scale the object DOWN so it fits entirely inside the frame with large white margins. " +
-    "Rule 3: Leave AT LEAST 20% white empty space on EVERY side (top, bottom, left, right). " +
-    "Rule 4: If the object is wide (like a bicycle or car), make it smaller within the frame — still with 20% margin on all sides. " +
-    "Rule 5: The object must occupy NO MORE than 60% of the image width AND 60% of the image height. " +
-    "=== END FRAMING RULES === " +
-    "Show depth and structure with clear internal lines. " +
     `${variation.style} ` +
-    "Single centered object, complete, fully inside the frame, with generous white margin around it. " +
-    "DO NOT include any text, letters, words, numbers, labels, or captions anywhere in the image. " +
-    "No watermarks, no grey tones, no background elements."
+    "\n=== FRAMING RULES (NEVER VIOLATE) === " +
+    "The ENTIRE object MUST be 100% visible inside the frame with generous white margins. " +
+    "Leave AT LEAST 20% white empty space on EVERY side. " +
+    "Object must occupy NO MORE than 60% of image width AND 60% of image height. " +
+    "=== END FRAMING RULES === " +
+    "Single centered object, complete, fully inside the frame. " +
+    "DO NOT include any text, letters, words, numbers, labels, or captions. " +
+    "No watermarks, no background elements."
   );
 }
 
@@ -231,23 +232,39 @@ async function runTraceJob(
   ipAnon: string,
   sourceImageUrl?: string
 ) {
+  const isHe = lang === "he";
   try {
-    updateJob(jobId, { status: "processing" });
+    updateJob(jobId, {
+      status: "processing",
+      step: isHe ? "מנתח תמונה עם AI..." : "Analyzing image with AI...",
+      stepEn: "Analyzing image with AI...",
+    });
     const jobCheck = getJob(jobId);
     if (!jobCheck || jobCheck.status === "cancelled") return;
 
-    // Step A: LLM analyzes image
+    // Step A: LLM analyzes image with maximum accuracy
     let analysisInstruction: string;
     if (landscapeMode) {
       analysisInstruction = focusText
-        ? `Describe this landscape scene for line art generation, focusing on: "${focusText}". Include ALL visible elements: sky, horizon, background, midground, foreground. Describe the full panoramic composition. Output ONLY the description (3-5 sentences), no preamble.`
-        : "Describe this landscape/scene for line art generation. Include ALL visible elements: sky, horizon, background (mountains/buildings), midground (trees/structures), foreground (ground/plants). Describe the full panoramic composition. Output ONLY the description (3-5 sentences), no preamble.";
+        ? `Describe this landscape scene for line art generation, focusing on: "${focusText}". ` +
+          "Include ALL visible elements: sky, horizon, background, midground, foreground. " +
+          "Describe the full panoramic composition with exact positions of each element. " +
+          "Output ONLY the description (3-5 sentences), no preamble."
+        : "Describe this landscape/scene for line art generation. " +
+          "Include ALL visible elements: sky, horizon, background (mountains/buildings), midground (trees/structures), foreground (ground/plants). " +
+          "Describe the full panoramic composition with exact positions. Output ONLY the description (3-5 sentences), no preamble.";
     } else if (focusText) {
-      analysisInstruction = `The user wants to draw: "${focusText}". Describe ONLY that specific element from the image in detail for line art generation. Focus on its shape, structure, key features, style, and proportions. Output ONLY the description (2-4 sentences), no preamble.`;
+      analysisInstruction =
+        `The user wants to draw: "${focusText}". ` +
+        "Describe ONLY that specific element from the image in detail for line art generation. " +
+        "Focus on: exact camera angle/view, facing direction, body pose, shape, structure, key features, proportions. " +
+        "Output ONLY the description (2-4 sentences), no preamble.";
     } else {
       analysisInstruction = userDesc
-        ? `Describe the main object for line art generation. Additional context: ${userDesc}`
-        : "Describe the main/dominant object in this image for line art generation.";
+        ? `Describe the main object for line art generation. Additional context from user: ${userDesc}. ` +
+          "Focus on: exact camera angle/view, facing direction, body pose, shape, structure, key features, proportions."
+        : "Describe the main/dominant object in this image for line art generation. " +
+          "Focus on: exact camera angle/view, facing direction, body pose, shape, structure, key features, proportions.";
     }
 
     const llmResponse = await invokeLLM({
@@ -255,14 +272,23 @@ async function runTraceJob(
         {
           role: "system",
           content:
-            "You are an expert at describing objects and figures for line art generation. " +
-            "Analyze the image and provide a precise description for generating clean line art that EXACTLY matches the original. " +
-            "CRITICAL — you MUST describe ALL of the following: " +
-            "(1) CAMERA ANGLE / VIEW TYPE — this is the most important: Is it a PURE SIDE VIEW (90 degrees, profile, like looking at it from the side)? A FRONT VIEW (facing camera)? A REAR VIEW? A 3/4 ANGLE VIEW (diagonal)? A TOP-DOWN VIEW? Be extremely specific. For example: 'pure left-side profile view', 'front-facing view', '3/4 angle from the front-right'. " +
-            "(2) The exact facing direction of any person/animal/figure/vehicle (facing left, facing right, facing forward, etc.). " +
-            "(3) The exact body pose and position (standing, sitting, crouching, arms raised, walking, etc.). " +
-            "(4) Key structural features, proportions, and distinctive details. " +
-            "Start your description with the camera angle/view type. Output ONLY the description (3-5 sentences), no preamble.",
+            "You are a world-class expert at analyzing images for precise line art / engraving generation. " +
+            "Your analysis will be used to generate line art that EXACTLY reproduces what is in the image. " +
+            "Accuracy is critical — any mistake in your description will cause the generated art to look wrong. " +
+            "\n\nYou MUST describe ALL of the following with maximum precision:\n" +
+            "(1) CAMERA ANGLE / VIEW TYPE — THE MOST CRITICAL DETAIL. State it first and be extremely specific:\n" +
+            "    - PURE SIDE PROFILE: object is viewed from exactly 90 degrees to the side (like a coin profile). The viewer sees only one side.\n" +
+            "    - FRONT VIEW: object faces directly toward the viewer, both eyes/sides visible symmetrically.\n" +
+            "    - REAR VIEW: viewer sees the back of the object.\n" +
+            "    - 3/4 FRONT-LEFT: viewer sees front + left side (object faces slightly right).\n" +
+            "    - 3/4 FRONT-RIGHT: viewer sees front + right side (object faces slightly left).\n" +
+            "    - TOP-DOWN: viewed from directly above.\n" +
+            "    - LOW ANGLE: viewed from below looking up.\n" +
+            "(2) FACING DIRECTION: which direction is the subject facing? (facing left, facing right, facing viewer, facing away).\n" +
+            "(3) BODY POSE / POSITION: exact pose (standing upright, sitting, crouching, running, lying down, arms raised, etc.).\n" +
+            "(4) KEY STRUCTURAL FEATURES: main body parts, proportions, distinctive features, decorative elements.\n" +
+            "(5) STYLE NOTES: is it realistic, cartoon, stylized, ornamental, etc.?\n" +
+            "\nFormat: Start with 'Camera angle: [exact angle].' then describe the rest in 3-5 sentences. No preamble.",
         },
         {
           role: "user",
@@ -284,6 +310,12 @@ async function runTraceJob(
       "the object in the image";
 
     const baseFilename = buildFilename(userDesc || objectDescription);
+
+    // Update step: generating images
+    updateJob(jobId, {
+      step: isHe ? `מייצר 3 עיצובים מהתיאור: "${objectDescription.slice(0, 60)}..."` : `Generating 3 designs from: "${objectDescription.slice(0, 60)}..."`,
+      stepEn: `Generating 3 designs from: "${objectDescription.slice(0, 60)}..."`,
+    });
 
     // Step B: Generate 3 line art variations using gpt-image-1
     const generationPromises = Array.from({ length: 3 }, async (_, idx) => {
@@ -347,6 +379,11 @@ async function runTraceJob(
     // Check cancelled before image gen
     const jobBeforeGen = getJob(jobId);
     if (!jobBeforeGen || jobBeforeGen.status === "cancelled") return;
+
+    updateJob(jobId, {
+      step: isHe ? "ממיר לוקטור DXF..." : "Converting to vector DXF...",
+      stepEn: "Converting to vector DXF...",
+    });
 
     const [images, suggestions] = await Promise.all([
       Promise.all(generationPromises),
@@ -519,7 +556,7 @@ router.get("/api/ai-trace/job/:jobId", (req, res) => {
   } else if (job.status === "cancelled") {
     return res.json({ status: "cancelled" });
   } else {
-    return res.json({ status: job.status });
+    return res.json({ status: job.status, step: job.step, stepEn: job.stepEn });
   }
 });
 
