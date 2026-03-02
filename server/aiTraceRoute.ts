@@ -318,17 +318,44 @@ async function runTraceJob(
       stepEn: `Generating 3 designs from: "${objectDescription.slice(0, 60)}..."`,
     });
 
-    // Step B: Generate 3 line art variations using gpt-image-1
+    // Step B: Generate 3 line art variations using gpt-image-1 image editing
+    // We pass the ORIGINAL image as reference so the AI preserves the exact shape/angle.
     // Heartbeat every 30s during image generation to prevent stale-job timeout
     heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
-    const generationPromises = Array.from({ length: 3 }, async (_, idx) => {
-      const imagePrompt = landscapeMode
-        ? buildFullImagePrompt(objectDescription, idx)
-        : buildLineArtPrompt(objectDescription, idx);
 
-      const response = await openai.images.generate({
+    // Prepare a clean PNG version of the source image for the edit API (max 4MB, square)
+    const editSourceBuffer = await sharp(imageBuffer)
+      .resize(1024, 1024, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .png()
+      .toBuffer();
+
+    const generationPromises = Array.from({ length: 3 }, async (_, idx) => {
+      const variation = STYLE_VARIATIONS[idx % STYLE_VARIATIONS.length];
+
+      // Build a focused edit prompt: keep the shape, convert to line art
+      const editPrompt = landscapeMode
+        ? buildFullImagePrompt(objectDescription, idx)
+        : (
+            "ABSOLUTE RULE: NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS. " +
+            `Convert this image into a professional black and white line art illustration. ` +
+            `PRESERVE the EXACT shape, proportions, camera angle, and pose from the original image. ` +
+            `Do NOT change the viewpoint, orientation, or any structural element. ` +
+            "Pure white background (#FFFFFF). Bold black outlines only, no fill, no shading, no gradients. " +
+            `${variation.style} ` +
+            "The entire object must be fully visible with 15% white margin on every side. " +
+            "FINAL REMINDER: Zero text, zero letters, zero numbers. Pure line art only."
+          );
+
+      // Use images.edit with the original image as reference for maximum shape fidelity
+      const editFile = await (async () => {
+        const { toFile } = await import("openai");
+        return toFile(editSourceBuffer, "source.png", { type: "image/png" });
+      })();
+
+      const response = await openai.images.edit({
         model: "gpt-image-1",
-        prompt: imagePrompt,
+        image: editFile,
+        prompt: editPrompt,
         n: 1,
         size: "1024x1024",
         quality: "medium",
@@ -371,7 +398,6 @@ async function runTraceJob(
       const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg);
       const imgKey = `ai-trace-generated/${nanoid()}.png`;
       const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
-      const variation = STYLE_VARIATIONS[idx % STYLE_VARIATIONS.length];
       const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
       const dxfKey = `ai-trace-dxf/${nanoid()}-${dxfFilename}`;
       const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
