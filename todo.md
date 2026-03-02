@@ -867,3 +867,7 @@
 - [x] תיקון תצוגת תמונה ב-AI Outline — upload area מוסתר בזמן loading
 - [x] תיקון תצוגת תמונה ב-AI סקיצה — upload area מוסתר בזמן loading
 - [x] הוספת step messages ל-AI סקיצה כמו ב-AI Outline
+
+## תיקון AI יצירה - אין טקסט על האיור - מרץ 2026
+
+- [x] הוספת ABSOLUTE RULE לתחילת הפרומפט ו-FINAL REMINDER בסוף — איסור מוחלט על כל טקסט/כיתוב באיור

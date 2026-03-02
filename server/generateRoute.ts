@@ -87,38 +87,31 @@ const LANDSCAPE_STYLE_VARIATIONS = [
 
 function buildLandscapePrompt(userPrompt: string, variationIndex: number): string {
   const variation = LANDSCAPE_STYLE_VARIATIONS[variationIndex % LANDSCAPE_STYLE_VARIATIONS.length];
-  const hasHebrew = /[\u0590-\u05FF]/.test(userPrompt);
-  const textInstruction = hasHebrew
-    ? `CRITICAL TEXT ACCURACY: If the design includes Hebrew text, you MUST spell every word EXACTLY as written in the prompt: "${userPrompt}". ` +
-      "Double-check every Hebrew letter — do NOT add, remove, or change any letter. Render each word with perfect letter-by-letter accuracy. "
-    : "";
   return (
+    // Lead with the absolute no-text rule
+    "ABSOLUTE RULE \u2014 NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS ANYWHERE IN THE IMAGE. " +
+    "The user's description is WHAT TO DRAW, not what to write. Do NOT render any part of the description as text. " +
     `Clean black and white line art of a landscape scene: ${userPrompt}. ` +
     "Pure white background (#FFFFFF). " +
     "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
     "High contrast: only pure black (#000000) lines on white. " +
-    "IMPORTANT: Draw the ENTIRE scene — all elements visible in the landscape (sky, horizon, buildings, trees, mountains, water, foreground). " +
-    "Do NOT focus on a single object — capture the full panoramic view. " +
+    "IMPORTANT: Draw the ENTIRE scene \u2014 all elements visible in the landscape (sky, horizon, buildings, trees, mountains, water, foreground). " +
+    "Do NOT focus on a single object \u2014 capture the full panoramic view. " +
     `${variation.style} ` +
     "CRITICAL FRAMING: The entire scene MUST fit completely inside the square frame. " +
     "Scale the scene so it occupies at most 80% of the canvas. " +
     "Leave at least 10% white margin on EVERY edge (top, bottom, left, right). " +
     "NOTHING must touch or go beyond the image border. All elements fully visible, nothing cropped. " +
-    textInstruction +
-    "DO NOT include any text, letters, words, numbers, labels, or captions anywhere in the image. " +
-    "No watermarks, no grey tones."
+    "FINAL REMINDER: Zero text, zero letters, zero numbers anywhere. Pure illustration only."
   );
 }
 
 function buildLineArtPrompt(userPrompt: string, variationIndex: number): string {
   const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
-  const hasHebrew = /[\u0590-\u05FF]/.test(userPrompt);
-  const textInstruction = hasHebrew
-    ? `CRITICAL TEXT ACCURACY: If the design includes Hebrew text, you MUST spell every word EXACTLY as written in the prompt: "${userPrompt}". ` +
-      "Double-check every Hebrew letter — do NOT add, remove, or change any letter. " +
-      "For example: פורים שמח = פ-ו-ר-י-ם (5 letters) ש-מ-ח (3 letters). Render each word with perfect letter-by-letter accuracy. "
-    : "";
   return (
+    // Lead with the absolute no-text rule so the model cannot ignore it
+    "ABSOLUTE RULE \u2014 NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS ANYWHERE IN THE IMAGE. " +
+    "The user's description is WHAT TO DRAW, not what to write. Do NOT render any part of the description as text. " +
     `Professional black and white line art illustration of ${userPrompt}. ` +
     "Pure white background (#FFFFFF). " +
     "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
@@ -126,12 +119,10 @@ function buildLineArtPrompt(userPrompt: string, variationIndex: number): string 
     "CRITICAL FRAMING RULE: The object MUST be scaled small enough to fit entirely within the CENTER of the image. " +
     "The object must occupy NO MORE than 65% of the image width AND height. " +
     "There MUST be at least 17% white empty space on EVERY side (top, bottom, left, right). " +
-    "The object must be FULLY VISIBLE — nothing cut off, nothing touching or near the border. " +
+    "The object must be FULLY VISIBLE \u2014 nothing cut off, nothing touching or near the border. " +
     "Show depth and structure with clear internal lines. " +
     `${variation.style} ` +
-    textInstruction +
-    "DO NOT include any text, letters, words, numbers, labels, or captions anywhere in the image. " +
-    "No watermarks, no grey tones, no background elements."
+    "FINAL REMINDER: Zero text, zero letters, zero numbers anywhere. Pure illustration only."
   );
 }
 
