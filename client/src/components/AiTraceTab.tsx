@@ -826,7 +826,12 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
           >
               <AlertCircle className="w-10 h-10 text-red-400" />
               <p className="font-semibold text-red-600">{isRtl ? "שגיאה בעיבוד" : "Processing Error"}</p>
-              <p className="text-sm text-gray-500">{errorMsg}</p>
+              <p className="text-sm text-gray-500">
+                {errorMsg && (errorMsg.toLowerCase().includes("timeout") || errorMsg.includes("זמן"))
+                  ? (isRtl ? "העיבוד לקח יותר מדי זמן. נסה שוב — בדרך כלל לוקח 2-4 דקות." : "Processing took too long. Please try again — usually takes 2-4 minutes.")
+                  : errorMsg
+                }
+              </p>
               <div className="flex gap-2 flex-wrap justify-center">
                 <button
                   className="text-sm px-4 py-2 rounded-lg font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200"

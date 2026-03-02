@@ -23,10 +23,11 @@ export interface Job {
 
 const jobs = new Map<string, Job>();
 
-// Auto-clean jobs older than 2 hours; also mark stale "processing" jobs as error after 5 min
+// Auto-clean jobs older than 2 hours; also mark stale "processing" jobs as error after 10 min
+// (AI Outline + AI Sketch can take 3-5 minutes for 3 images, so 10 min is a safe ceiling)
 setInterval(() => {
   const cutoff = Date.now() - 2 * 60 * 60 * 1000;
-  const staleCutoff = Date.now() - 5 * 60 * 1000; // 5 minutes
+  const staleCutoff = Date.now() - 10 * 60 * 1000; // 10 minutes
   for (const [id, job] of Array.from(jobs.entries())) {
     if (job.createdAt < cutoff) {
       jobs.delete(id);
@@ -34,9 +35,9 @@ setInterval(() => {
       (job.status === "processing" || job.status === "pending") &&
       job.updatedAt < staleCutoff
     ) {
-      // Job has been stuck for 5+ minutes — mark as error so client stops polling
+      // Job has been stuck for 10+ minutes — mark as error so client stops polling
       job.status = "error";
-      job.error = "Processing timed out after 5 minutes";
+      job.error = "Processing timed out after 10 minutes";
       job.updatedAt = Date.now();
     }
   }
@@ -63,6 +64,18 @@ export function updateJob(id: string, update: Partial<Job>): void {
   const job = jobs.get(id);
   if (job) {
     Object.assign(job, update, { updatedAt: Date.now() });
+  }
+}
+
+/**
+ * Touch a job's updatedAt timestamp without changing any other field.
+ * Call this periodically during long-running operations (e.g. image generation)
+ * to prevent the stale-job watchdog from marking the job as timed out.
+ */
+export function heartbeatJob(id: string): void {
+  const job = jobs.get(id);
+  if (job && (job.status === "processing" || job.status === "pending")) {
+    job.updatedAt = Date.now();
   }
 }
 

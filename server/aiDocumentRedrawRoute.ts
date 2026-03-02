@@ -25,7 +25,7 @@ import { deductTokens, addTokens, TOKEN_COSTS, TokenAction } from "./tokenServic
 import { svgToDxf } from "./svgToDxf";
 import { invokeLLM } from "./_core/llm";
 import potrace from "potrace";
-import { createJob, getJob, updateJob, cancelJob } from "./jobStore";
+import { createJob, getJob, updateJob, cancelJob, heartbeatJob } from "./jobStore";
 import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
@@ -161,6 +161,7 @@ async function runDocumentRedrawJob(
   ipAnon: string,
   originalAspect: number
 ) {
+  let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
   try {
     updateJob(jobId, { status: "processing" });
 
@@ -197,7 +198,7 @@ async function runDocumentRedrawJob(
         {
           role: "user",
           content: [
-            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "high" } },
+            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "low" } },
             { type: "text", text: userDesc
               ? `Describe this image for engraving line art generation. User note: ${userDesc}`
               : "Describe this image for engraving line art generation. Include all decorative elements, figures, and their exact positions/orientations." },
@@ -218,6 +219,9 @@ async function runDocumentRedrawJob(
 
     // Step B: Generate with openai.images.generate (same as AI Outline — reliable, no timeout)
     const imagePrompt = buildDocumentLineArtPrompt(objectDescription + (userDesc ? `. User note: ${userDesc}` : ""));
+
+    // Heartbeat every 30s to prevent stale-job timeout during image generation
+    heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
 
     const genResponse = await openai.images.generate({
       model: "gpt-image-1",
@@ -241,6 +245,7 @@ async function runDocumentRedrawJob(
       throw new Error("לא התקבלה תמונה מה-AI");
     }
 
+    clearInterval(heartbeatInterval);
     // Check if cancelled after image generation
     const jobAfterGen = getJob(jobId);
     if (!jobAfterGen || jobAfterGen.status === "cancelled") return;
@@ -275,6 +280,7 @@ async function runDocumentRedrawJob(
     });
 
   } catch (err: unknown) {
+    if (heartbeatInterval) clearInterval(heartbeatInterval);
     console.error("[aiDocumentRedraw] Job error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     updateJob(jobId, { status: "error", error: message });

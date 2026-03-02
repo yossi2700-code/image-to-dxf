@@ -851,3 +851,11 @@
 - [x] חיבור ל-AI Outline (AiTraceTab)
 - [x] חיבור ל-AI סקיצה (AiGenerateTab)
 - [x] חיבור להמרת תמונה רגילה (ConvertTab)
+
+## תיקון AI Outline - שגיאה ואיטיות - מרץ 2026
+
+- [x] הגדלת timeout ל-10 דקות (מ-5) ב-jobStore
+- [x] הוספת heartbeat updates כל 30 שניות ב-runTraceJob
+- [x] שינוי LLM analysis ל-detail: "low" (מהיר יותר)
+- [x] הוספת heartbeat גם ב-runDocumentRedrawJob
+- [x] שיפור הודעת שגיאה timeout - מציג הסבר ידידותי

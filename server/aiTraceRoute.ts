@@ -23,7 +23,7 @@ import { recordUserAction } from "./userActionsDb";
 import { checkUsageLimit } from "./usageLimits";
 import { deductTokens, addTokens, TOKEN_COSTS, TokenAction } from "./tokenService";
 import { invokeLLM } from "./_core/llm";
-import { createJob, getJob, updateJob, cancelJob } from "./jobStore";
+import { createJob, getJob, updateJob, cancelJob, heartbeatJob } from "./jobStore";
 import { svgToDxf } from "./svgToDxf";
 import OpenAI from "openai";
 import potrace from "potrace";
@@ -233,6 +233,7 @@ async function runTraceJob(
   sourceImageUrl?: string
 ) {
   const isHe = lang === "he";
+  let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
   try {
     updateJob(jobId, {
       status: "processing",
@@ -293,7 +294,7 @@ async function runTraceJob(
         {
           role: "user",
           content: [
-            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "high" } },
+            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "low" } },
             { type: "text", text: analysisInstruction },
           ],
         },
@@ -318,6 +319,8 @@ async function runTraceJob(
     });
 
     // Step B: Generate 3 line art variations using gpt-image-1
+    // Heartbeat every 30s during image generation to prevent stale-job timeout
+    heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
     const generationPromises = Array.from({ length: 3 }, async (_, idx) => {
       const imagePrompt = landscapeMode
         ? buildFullImagePrompt(objectDescription, idx)
@@ -385,6 +388,7 @@ async function runTraceJob(
       stepEn: "Converting to vector DXF...",
     });
 
+    clearInterval(heartbeatInterval);
     const [images, suggestions] = await Promise.all([
       Promise.all(generationPromises),
       generateImprovementSuggestions(objectDescription, imageBase64, lang),
@@ -423,6 +427,7 @@ async function runTraceJob(
     updateJob(jobId, { status: "done", result: { success: true, images, objectDescription, suggestions } });
 
   } catch (err: unknown) {
+    clearInterval(heartbeatInterval);
     console.error("[aiTraceRoute] Job error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     updateJob(jobId, { status: "error", error: message });
