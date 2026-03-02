@@ -390,6 +390,25 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               icon: "/favicon.ico",
             });
           }
+        } else if (
+          data.status === "processing" &&
+          Array.isArray(data.partialImages) &&
+          data.partialImages.length > 0
+        ) {
+          // Streaming: show images as they complete, keep polling for more
+          const partial = data.partialImages as GeneratedImage[];
+          setResult((prev) => {
+            // Only update if we have more images than before
+            if (prev && prev.images.length >= partial.length) return prev;
+            return {
+              images: partial,
+              suggestions: prev?.suggestions ?? [],
+              objectDescription: prev?.objectDescription ?? "",
+            };
+          });
+          setStatus("success"); // Show result panel immediately with partial images
+          const stepMsg = isRtl ? (data.step || data.stepEn) : (data.stepEn || data.step);
+          if (stepMsg) setCurrentStep(stepMsg);
         } else if (data.status === "error") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           const msg = data.message || (isRtl ? "שגיאה בעיבוד" : "Processing error");

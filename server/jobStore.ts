@@ -19,6 +19,7 @@ export interface Job {
   tokenAction?: string; // e.g. "ai_trace" — used for refund on cancel
   step?: string;        // Human-readable current step message (he/en)
   stepEn?: string;      // English step message
+  partialImages?: unknown[]; // Partial results streamed as each image completes
 }
 
 const jobs = new Map<string, Job>();

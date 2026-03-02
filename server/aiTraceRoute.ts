@@ -294,7 +294,7 @@ async function runTraceJob(
         {
           role: "user",
           content: [
-            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "high" } },
+            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "low" } },
             { type: "text", text: analysisInstruction },
           ],
         },
@@ -323,11 +323,15 @@ async function runTraceJob(
     // Heartbeat every 30s during image generation to prevent stale-job timeout
     heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
 
-    // Prepare a clean PNG version of the source image for the edit API (max 4MB, square)
+    // Prepare a clean PNG version of the source image for the edit API.
+    // 512px is sufficient for gpt-image-1 edit — smaller = faster upload & processing.
     const editSourceBuffer = await sharp(imageBuffer)
-      .resize(1024, 1024, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-      .png()
+      .resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .png({ compressionLevel: 6 })
       .toBuffer();
+
+    // Initialize partialImages array for streaming results to client as each image completes
+    updateJob(jobId, { partialImages: [] });
 
     const generationPromises = Array.from({ length: 3 }, async (_, idx) => {
       const variation = STYLE_VARIATIONS[idx % STYLE_VARIATIONS.length];
@@ -399,11 +403,11 @@ async function runTraceJob(
         throw new Error("לא התקבלה תמונה מה-AI");
       }
 
-      // Add white padding around the AI-generated image, then resize to max 1400px
-      // while PRESERVING the aspect ratio (fit: inside) so nothing gets cropped.
+      // Add white padding around the AI-generated image, then resize to max 1024px
+      // (reduced from 1400 — potrace is O(n²) so smaller = much faster tracing)
       const processedBuffer = await sharp(rawBuffer)
-        .extend({ top: 120, bottom: 120, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-        .resize(1400, 1400, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .extend({ top: 80, bottom: 80, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .grayscale()
         .threshold(200)
         .png()
@@ -426,7 +430,23 @@ async function runTraceJob(
       const dxfKey = `ai-trace-dxf/${nanoid()}-${dxfFilename}`;
       const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
 
-      return { imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight };
+      const imageResult = { imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight };
+
+      // Stream partial result to client immediately as each image completes
+      const currentJob = getJob(jobId);
+      if (currentJob && currentJob.status !== "cancelled") {
+        const partialImages = (currentJob.partialImages as typeof imageResult[] | undefined) ?? [];
+        const completedCount = partialImages.length + 1;
+        updateJob(jobId, {
+          partialImages: [...partialImages, imageResult],
+          step: isHe
+            ? `השלם עיצוב ${completedCount}/3 — ממתין לשאר...`
+            : `Completed ${completedCount}/3 designs — waiting for rest...`,
+          stepEn: `Completed ${completedCount}/3 designs — waiting for rest...`,
+        });
+      }
+
+      return imageResult;
     });
 
     // Check cancelled before image gen
@@ -615,7 +635,13 @@ router.get("/api/ai-trace/job/:jobId", (req, res) => {
   } else if (job.status === "cancelled") {
     return res.json({ status: "cancelled" });
   } else {
-    return res.json({ status: job.status, step: job.step, stepEn: job.stepEn });
+    // Include partialImages so client can show streaming results as each image completes
+    return res.json({
+      status: job.status,
+      step: job.step,
+      stepEn: job.stepEn,
+      partialImages: job.partialImages ?? [],
+    });
   }
 });
 

@@ -917,3 +917,7 @@
 
 - [x] תיקון סיבוב תמונה — הוסף sharp().rotate() לתיקון EXIF orientation אוטומטי לפני כל עיבוד
 - [x] שיפור דמיון פנים ב-AI Outline — זיהוי אוטומטי פורטרט + prompt מיוחד לשמירת מאפייני פנים ספציפיים
+
+## שיפור מהירות AI Outline - מרץ 2026
+
+- [x] קיצור זמן עיבוד AI Outline: LLM detail=low, editSource 512px, potrace 1024px, streaming partial results
