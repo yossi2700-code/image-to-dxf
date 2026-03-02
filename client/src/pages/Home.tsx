@@ -656,6 +656,41 @@ function AiGeneratorTab() {
   const [landscapeMode, setLandscapeMode] = useState(false);
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("ai_generate_jobId"));
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [progressStep, setProgressStep] = useState(0);
+  const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Progress steps for AI Creation loading
+  const progressSteps = isRtl
+    ? [
+        { label: "מנתח את התיאור שלך...", duration: 8000 },
+        { label: "מייצר 3 עיצובים...", duration: 25000 },
+        { label: "מעבד קווים לחריטה...", duration: 20000 },
+        { label: "מסיים ומייעל...", duration: 15000 },
+      ]
+    : [
+        { label: "Analyzing your description...", duration: 8000 },
+        { label: "Generating 3 designs...", duration: 25000 },
+        { label: "Processing lines for engraving...", duration: 20000 },
+        { label: "Finalizing and optimizing...", duration: 15000 },
+      ];
+
+  const startProgressSteps = useCallback(() => {
+    setProgressStep(0);
+    let step = 0;
+    const advance = () => {
+      step++;
+      if (step < progressSteps.length) {
+        setProgressStep(step);
+        progressTimerRef.current = setTimeout(advance, progressSteps[step].duration);
+      }
+    };
+    progressTimerRef.current = setTimeout(advance, progressSteps[0].duration);
+  }, [isRtl]);
+
+  const stopProgressSteps = useCallback(() => {
+    if (progressTimerRef.current) clearTimeout(progressTimerRef.current);
+    setProgressStep(0);
+  }, []);
 
   const setJobIdPersisted = useCallback((id: string | null) => {
     if (id) localStorage.setItem("ai_generate_jobId", id);
@@ -674,6 +709,7 @@ function AiGeneratorTab() {
         const data = await res.json();
         if (data.status === "done") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          stopProgressSteps();
           const result = data.result as { success: boolean; images: AiImage[] };
           setImages(result.images);
           setSelectedIdx(null);
@@ -685,6 +721,7 @@ function AiGeneratorTab() {
           toast.success(t("aiSuccess"));
         } else if (data.status === "error") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          stopProgressSteps();
           const msg = data.message || t("aiError");
           setErrorMsg(msg);
           setStatus("error");
@@ -692,12 +729,13 @@ function AiGeneratorTab() {
           toast.error(msg);
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          stopProgressSteps();
           setStatus("idle");
           setJobIdPersisted(null);
         }
       } catch (_) { /* network error, keep trying */ }
     }, 3000);
-  }, [t, refetchTokens, setJobIdPersisted]);
+  }, [t, refetchTokens, setJobIdPersisted, stopProgressSteps]);
 
   // On mount: resume polling if a jobId was saved (survived tab switch)
   useEffect(() => {
@@ -762,6 +800,7 @@ function AiGeneratorTab() {
     setImages([]);
     setSelectedIdx(null);
     setErrorMsg("");
+    startProgressSteps();
     try {
       const res = await fetch("/api/generate-images", {
         method: "POST",
@@ -919,39 +958,77 @@ function AiGeneratorTab() {
       {/* Loading */}
       {status === "loading" && (
         <div
-          className="rounded-xl p-8"
+          className="rounded-xl p-6"
           style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
         >
-            <div className="flex flex-col items-center gap-4 text-center">
-              <div className="relative">
-                <div className="w-16 h-16 rounded-full" style={{border: '3px solid #e0e7ff', borderTopColor: '#4f46e5', animation: 'spin 1s linear infinite'}} />
-                <Sparkles className="w-6 h-6 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-500" />
-              </div>
-              <div>
-                <p className="font-semibold text-base text-gray-700">{t("aiCreating")}</p>
-                <p className="text-sm mt-1 text-gray-400">{t("aiCreatingSubtitle")}</p>
-              </div>
-              <div className="flex gap-1.5 mt-1">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="w-2 h-2 rounded-full bg-indigo-400" style={{animation: `bounce 1s infinite ${i * 0.15}s`}} />
-                ))}
-              </div>
-              {jobId && (
-                <p className="text-xs text-gray-400">
-                  {isRtl ? "תוכל לעבור לטאב אחר — ה-AI ימשיך לעבד ברקע" : "You can switch tabs — AI keeps processing in background"}
-                </p>
-              )}
-              {jobId && (
-                <button
-                  onClick={handleCancel}
-                  className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg transition-all"
-                  style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}
-                >
-                  <X className="w-4 h-4" />
-                  {isRtl ? "בטל והחזר אסימונים" : "Cancel & Refund Tokens"}
-                </button>
-              )}
+          <div className="flex flex-col items-center gap-5 text-center">
+            {/* Spinner */}
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full" style={{border: '3px solid #e0e7ff', borderTopColor: '#4f46e5', animation: 'spin 1s linear infinite'}} />
+              <Sparkles className="w-6 h-6 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-500" />
             </div>
+
+            {/* Current step label */}
+            <div>
+              <p className="font-semibold text-base text-gray-700">
+                {progressSteps[progressStep]?.label || (isRtl ? "מעבד..." : "Processing...")}
+              </p>
+              <p className="text-xs mt-1 text-gray-400">
+                {isRtl ? "זה עשוי לקחת 30-90 שניות" : "This may take 30-90 seconds"}
+              </p>
+            </div>
+
+            {/* Progress steps timeline */}
+            <div className="w-full flex flex-col gap-2 text-sm">
+              {progressSteps.map((step, i) => (
+                <div key={i} className="flex items-center gap-3" style={{direction: isRtl ? 'rtl' : 'ltr'}}>
+                  <div
+                    className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-500"
+                    style={{
+                      background: i < progressStep ? '#4f46e5' : i === progressStep ? '#818cf8' : '#e0e7ff',
+                      color: i <= progressStep ? 'white' : '#a5b4fc',
+                      boxShadow: i === progressStep ? '0 0 0 3px rgba(99,102,241,0.2)' : 'none',
+                    }}
+                  >
+                    {i < progressStep ? '✓' : i + 1}
+                  </div>
+                  <span
+                    className="transition-all duration-500"
+                    style={{
+                      color: i < progressStep ? '#6b7280' : i === progressStep ? '#1f2937' : '#9ca3af',
+                      fontWeight: i === progressStep ? 600 : 400,
+                    }}
+                  >
+                    {step.label}
+                  </span>
+                  {i === progressStep && (
+                    <div className="flex gap-0.5 ml-auto">
+                      {[0,1,2].map(j => (
+                        <div key={j} className="w-1.5 h-1.5 rounded-full bg-indigo-400" style={{animation: `bounce 1s infinite ${j*0.15}s`}} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Background hint + cancel */}
+            {jobId && (
+              <p className="text-xs text-gray-400">
+                {isRtl ? "תוכל לעבור לטאב אחר — ה-AI ימשיך לעבד ברקע" : "You can switch tabs — AI keeps processing in background"}
+              </p>
+            )}
+            {jobId && (
+              <button
+                onClick={handleCancel}
+                className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg transition-all"
+                style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}
+              >
+                <X className="w-4 h-4" />
+                {isRtl ? "בטל והחזר אסימונים" : "Cancel & Refund Tokens"}
+              </button>
+            )}
+          </div>
         </div>
       )}
 

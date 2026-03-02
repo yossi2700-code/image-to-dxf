@@ -137,32 +137,26 @@ describe("POST /api/ai-document-redraw", () => {
     expect(res.body.error).toBe("INSUFFICIENT_TOKENS");
   });
 
-  it("returns 200 with image result on success", async () => {
+  it("returns 200 with jobId on success (job-based async processing)", async () => {
     const res = await request(app)
       .post("/api/ai-document-redraw")
       .attach("image", Buffer.from("fake-image"), { filename: "test.jpg", contentType: "image/jpeg" });
 
     expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.image).toBeDefined();
-    expect(res.body.image.imageUrl).toBeTruthy();
-    expect(res.body.image.dxfUrl).toBeTruthy();
-    expect(res.body.image.svgPreview).toBeTruthy();
-    expect(res.body.image.segmentCount).toBe(42);
-    expect(res.body.objectDescription).toBeTruthy();
+    // Route returns jobId immediately — processing happens in background
+    expect(res.body.jobId).toBeTruthy();
+    expect(typeof res.body.jobId).toBe("string");
   });
 
   it("includes description in request when provided", async () => {
-    const { invokeLLM } = await import("./_core/llm");
-
     const res = await request(app)
       .post("/api/ai-document-redraw")
       .field("description", "מצבה עם שם ותאריך")
       .attach("image", Buffer.from("fake-image"), { filename: "test.jpg", contentType: "image/jpeg" });
 
     expect(res.status).toBe(200);
-    // LLM was called with the description context
-    expect(invokeLLM).toHaveBeenCalled();
+    // Route returns jobId immediately — LLM is called in background
+    expect(res.body.jobId).toBeTruthy();
   });
 });
 

@@ -816,3 +816,15 @@
 - [x] תיקון שגיאת PDF — canvg לצייר SVG על canvas
 - [x] כפתורי DXF/PDF/ווקטור ישירות מתחת לתמונה ב-AI Outline
 - [x] AI סקיצה — מעבר ל-LLM ניתוח + openai.images.generate (תיקון timeout)
+
+## בקשות חדשות - מרץ 2026 (3)
+
+- [ ] AI יצירה: שיפור חווית המתנה עם progress steps מפורטים
+- [ ] AI סקיצה: הוספת סורק תמונה ותצוגת preview של התמונה שהועלתה
+
+## AI Sketch - השלמת פיצ'רים (מרץ 2026)
+
+- [x] הוספת quick action buttons (DXF/PDF/Vector) ל-ResultCard ב-AI Sketch
+- [x] תיקון כפתור submit — מאפשר שליחה גם כשיש imagePreview בלבד (אחרי reload)
+- [x] תמיכה ב-imagePreview-only ב-handleRedraw (המרת base64 ל-blob)
+- [x] עדכון טסטים ל-aiDocumentRedraw לשקף job-based API (מחזיר jobId ולא תוצאה ישירה)
