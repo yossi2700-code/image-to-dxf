@@ -843,3 +843,11 @@
 - [x] הוספת step field ל-jobStore לתמיכה בהודעות שלבים
 - [x] עדכון server: step messages (מנתח → מייצר → ממיר) בזמן אמת
 - [x] עדכון UI: progress bar + הודעת שלב נוכחי בזמן עיבוד
+
+## הודעת הרשמה ללקוחות חדשים - מרץ 2026
+
+- [x] בניית modal/banner ברור עם קישור הרשמה חינם
+- [x] חיבור ל-AI יצירה (AiDocumentRedrawTab)
+- [x] חיבור ל-AI Outline (AiTraceTab)
+- [x] חיבור ל-AI סקיצה (AiGenerateTab)
+- [x] חיבור להמרת תמונה רגילה (ConvertTab)

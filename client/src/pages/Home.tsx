@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { AuthDialog } from "@/components/AuthDialog";
+import { AuthDialog, type AuthReason } from "@/components/AuthDialog";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
 import { AiRefinePanel, type RefineResult } from "@/components/AiRefinePanel";
 import { AiTraceTab } from "@/components/AiTraceTab";
@@ -634,7 +634,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
 }
 
 // ─── AI Generator Tab ────────────────────────────────────────────────────────
-function AiGeneratorTab() {
+function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
   const { t, isRtl, language } = useLanguage();
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
   const [prompt, setPrompt] = useState(() => localStorage.getItem("ai_generate_prompt") ?? "");
@@ -815,6 +815,8 @@ function AiGeneratorTab() {
       const data = await res.json();
       if (data.error === "REGISTRATION_REQUIRED" || data.error === "UNAUTHORIZED") {
         setStatus("idle");
+        stopProgressSteps();
+        if (onOpenAuth) onOpenAuth();
         return;
       }
       if (data.error === "INSUFFICIENT_TOKENS") {
@@ -1300,6 +1302,13 @@ export default function Home() {
   }, []);
   const [authOpen, setAuthOpen] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
+  const [authReason, setAuthReason] = useState<AuthReason>("generic");
+
+  const openAuthAs = (reason: AuthReason) => {
+    setAuthReason(reason);
+    setLimitReached(reason === "limit");
+    setAuthOpen(true);
+  };
   const { data: tokenData, refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: !!appUser, refetchInterval: 30000 });
   const tokenBalance = tokenData?.balance ?? 0;
 
@@ -1357,9 +1366,11 @@ export default function Home() {
         open={authOpen}
         onOpenChange={setAuthOpen}
         limitReached={limitReached}
+        authReason={authReason}
         onSuccess={(user) => {
           setAppUser(user);
           setLimitReached(false);
+          setAuthReason("generic");
         }}
       />
 
@@ -1498,7 +1509,7 @@ export default function Home() {
                 />
               </div>
             </div>
-            <AiGeneratorTab />
+            <AiGeneratorTab onOpenAuth={() => openAuthAs("unregistered")} />
           </TabsContent>
 
           <TabsContent value="trace">
@@ -1521,7 +1532,7 @@ export default function Home() {
                 className="w-full max-h-44 object-contain rounded-lg bg-gray-50"
               />
             </div>
-            <AiTraceTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
+            <AiTraceTab onOpenAuth={() => openAuthAs("unregistered")} />
           </TabsContent>
 
           <TabsContent value="redraw">
@@ -1557,7 +1568,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <AiDocumentRedrawTab onOpenAuth={() => { setLimitReached(true); setAuthOpen(true); }} />
+            <AiDocumentRedrawTab onOpenAuth={() => openAuthAs("unregistered")} />
           </TabsContent>
         </Tabs>
         </div>{/* end centering wrapper */}

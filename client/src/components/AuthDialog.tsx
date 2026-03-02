@@ -4,24 +4,95 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock, User, Sparkles } from "lucide-react";
+import { Loader2, Mail, Lock, User, Sparkles, Zap, Gift } from "lucide-react";
+
+/** Why the dialog was opened — controls the header message shown to the user */
+export type AuthReason = "unregistered" | "limit" | "generic";
 
 interface AuthDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** If true, show a "limit reached" message above the form */
+  /** @deprecated Use authReason instead */
   limitReached?: boolean;
+  /** Reason for opening — determines the header copy */
+  authReason?: AuthReason;
   onSuccess: (user: { id: number; email: string; name: string | null }) => void;
 }
 
 type Mode = "login" | "register";
 
-export function AuthDialog({ open, onOpenChange, limitReached, onSuccess }: AuthDialogProps) {
+function ReasonHeader({ reason }: { reason: AuthReason }) {
+  if (reason === "unregistered") {
+    return (
+      <>
+        <div className="flex items-center justify-center mb-3">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #eef2ff, #e0e7ff)', border: '1px solid #c7d2fe' }}>
+            <Gift className="w-8 h-8 text-indigo-500" />
+          </div>
+        </div>
+        <DialogTitle className="text-center text-xl font-bold text-gray-800">
+          הרשמה חינמית — 30 שניות בלבד
+        </DialogTitle>
+        <DialogDescription className="text-center text-sm mt-1">
+          כדי להשתמש ב-AI יש צורך בחשבון חינמי.
+        </DialogDescription>
+        {/* Benefits list */}
+        <div className="mt-3 space-y-2">
+          {[
+            { icon: "✨", text: "AI Outline — המר תמונה לקווי חריטה" },
+            { icon: "🎨", text: "AI יצירה — צור עיצוב מטקסט" },
+            { icon: "📄", text: "AI סקיצה — חלץ ציורים ממסמכים" },
+            { icon: "💾", text: "הורדת DXF / PDF / Vector" },
+          ].map(({ icon, text }, i) => (
+            <div key={i} className="flex items-center gap-2 text-sm text-gray-600">
+              <span className="text-base shrink-0">{icon}</span>
+              <span>{text}</span>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  if (reason === "limit") {
+    return (
+      <>
+        <div className="flex items-center justify-center mb-3">
+          <div className="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center">
+            <Zap className="w-7 h-7 text-orange-500" />
+          </div>
+        </div>
+        <DialogTitle className="text-center text-xl">הגעת למגבלת האסימונים</DialogTitle>
+        <DialogDescription className="text-center">
+          הירשם בחינם וקבל <strong>אסימונים נוספים</strong> לשימוש ב-AI!
+        </DialogDescription>
+      </>
+    );
+  }
+
+  // generic
+  return (
+    <>
+      <DialogTitle className="text-center text-xl">
+        הרשמה / כניסה
+      </DialogTitle>
+      <DialogDescription className="text-center">
+        צור חשבון חינמי או כנס לחשבון קיים
+      </DialogDescription>
+    </>
+  );
+}
+
+export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuccess }: AuthDialogProps) {
   const [mode, setMode] = useState<Mode>("register");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Resolve effective reason (support legacy limitReached prop)
+  const reason: AuthReason = authReason ?? (limitReached ? "limit" : "generic");
 
   const reset = () => {
     setName("");
@@ -66,28 +137,13 @@ export function AuthDialog({ open, onOpenChange, limitReached, onSuccess }: Auth
     <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
       <DialogContent className="sm:max-w-md" dir="rtl">
         <DialogHeader>
-          {limitReached ? (
-            <>
-              <div className="flex items-center justify-center mb-3">
-                <div className="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center">
-                  <Sparkles className="w-7 h-7 text-orange-500" />
-                </div>
-              </div>
-              <DialogTitle className="text-center text-xl">הגעת למגבלת ההמרות היומית</DialogTitle>
-              <DialogDescription className="text-center">
-                הירשם בחינם וקבל <strong>5 המרות ביום</strong> במקום 3!
-              </DialogDescription>
-            </>
+          {/* Show reason-specific header only when NOT in login mode */}
+          {mode === "register" ? (
+            <ReasonHeader reason={reason} />
           ) : (
             <>
-              <DialogTitle className="text-center text-xl">
-                {mode === "register" ? "הרשמה חינמית" : "כניסה לחשבון"}
-              </DialogTitle>
-              <DialogDescription className="text-center">
-                {mode === "register"
-                  ? "צור חשבון וקבל 5 המרות ביום"
-                  : "כנס לחשבון שלך"}
-              </DialogDescription>
+              <DialogTitle className="text-center text-xl">כניסה לחשבון</DialogTitle>
+              <DialogDescription className="text-center">כנס לחשבון שלך</DialogDescription>
             </>
           )}
         </DialogHeader>
@@ -146,11 +202,16 @@ export function AuthDialog({ open, onOpenChange, limitReached, onSuccess }: Auth
             </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button
+            type="submit"
+            className="w-full h-11 text-base font-bold"
+            style={mode === "register" ? { background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', border: 'none' } : {}}
+            disabled={loading}
+          >
             {loading ? (
               <><Loader2 className="w-4 h-4 ml-2 animate-spin" />מעבד...</>
             ) : mode === "register" ? (
-              "הרשם חינם"
+              <><Sparkles className="w-4 h-4 ml-1.5" />הרשם חינם עכשיו</>
             ) : (
               "כניסה"
             )}
@@ -163,7 +224,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, onSuccess }: Auth
               כבר יש לך חשבון?{" "}
               <button
                 type="button"
-                className="text-primary underline hover:no-underline"
+                className="text-primary underline hover:no-underline font-medium"
                 onClick={() => { setMode("login"); reset(); }}
               >
                 כנס כאן
@@ -174,7 +235,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, onSuccess }: Auth
               אין לך חשבון?{" "}
               <button
                 type="button"
-                className="text-primary underline hover:no-underline"
+                className="text-primary underline hover:no-underline font-medium"
                 onClick={() => { setMode("register"); reset(); }}
               >
                 הרשם חינם
