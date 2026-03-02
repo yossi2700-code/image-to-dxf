@@ -358,7 +358,9 @@ export function svgToDxf(svgContent: string): DxfResult {
       case "rect":     segs = parseRectElement(el); break;
     }
 
-    allSegments.push(...segs);
+    // Use for-loop instead of spread to avoid "Maximum call stack size exceeded"
+    // when segs is very large (complex images with 100k+ path segments)
+    for (let si = 0; si < segs.length; si++) allSegments.push(segs[si]);
   }
 
   // Compute tight bounding box of all drawn segments

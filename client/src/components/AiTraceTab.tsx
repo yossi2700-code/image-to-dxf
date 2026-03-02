@@ -313,8 +313,21 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const [description, setDescription] = useState("");
   const [focusText, setFocusText] = useState("");
   const [customImprovement, setCustomImprovement] = useState("");
-  const [status, setStatus] = useState<Status>("idle");
-  const [result, setResult] = useState<TraceResult | null>(null);
+  const [status, setStatus] = useState<Status>(() => {
+    if (localStorage.getItem("ai_trace_jobId")) return "idle";
+    if (localStorage.getItem("ai_trace_result")) return "success";
+    return "idle";
+  });
+  const [result, setResult] = useState<TraceResult | null>(() => {
+    // Restore cached result if no active job
+    if (!localStorage.getItem("ai_trace_jobId")) {
+      try {
+        const cached = localStorage.getItem("ai_trace_result");
+        if (cached) return JSON.parse(cached) as TraceResult;
+      } catch (_) { /* ignore */ }
+    }
+    return null;
+  });
   const [errorMsg, setErrorMsg] = useState("");
   const [downloadTarget, setDownloadTarget] = useState<GeneratedImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
@@ -334,6 +347,17 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
     setJobId(id);
   }, []);
 
+  // Cache result in localStorage so it survives page reload
+  const saveResultToCache = useCallback((r: TraceResult) => {
+    try {
+      localStorage.setItem("ai_trace_result", JSON.stringify(r));
+    } catch (_) { /* quota exceeded — ignore */ }
+  }, []);
+
+  const clearResultCache = useCallback(() => {
+    localStorage.removeItem("ai_trace_result");
+  }, []);
+
   const setImagePreviewPersisted = useCallback((preview: string | null) => {
     if (preview) localStorage.setItem("ai_trace_imagePreview", preview);
     else localStorage.removeItem("ai_trace_imagePreview");
@@ -350,12 +374,22 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
         const data = await res.json();
         if (data.status === "done") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-          setResult(data.result as TraceResult);
+          const traceResult = data.result as TraceResult;
+          setResult(traceResult);
+          saveResultToCache(traceResult);
           setStatus("success");
           setCurrentStep("");
           setJobIdPersisted(null);
           refetchTokens();
-          toast.success(isRtl ? `3 עיצובים מוכנים! בחר את המועדף ולחץ הורד DXF` : `3 designs ready! Choose your favorite and download DXF`);
+          const successMsg = isRtl ? `3 עיצובים מוכנים! בחר את המועדף ולחץ הורד DXF` : `3 designs ready! Choose your favorite and download DXF`;
+          toast.success(successMsg);
+          // Push notification when page is hidden (user left the browser)
+          if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+            new Notification(isRtl ? "✅ AI Outline הושלם!" : "✅ AI Outline Complete!", {
+              body: successMsg,
+              icon: "/favicon.ico",
+            });
+          }
         } else if (data.status === "error") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           const msg = data.message || (isRtl ? "שגיאה בעיבוד" : "Processing error");
@@ -519,6 +553,10 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       if (data.jobId) {
         setJobIdPersisted(data.jobId);
         startPolling(data.jobId);
+        // Request push notification permission so we can notify when done
+        if ("Notification" in window && Notification.permission === "default") {
+          Notification.requestPermission();
+        }
       } else {
         // Legacy direct response
         setResult(data as TraceResult);

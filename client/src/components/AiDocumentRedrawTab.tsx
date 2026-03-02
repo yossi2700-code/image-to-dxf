@@ -562,8 +562,12 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(() => localStorage.getItem(LS_KEY_DOC_IMG));
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<Status>("idle");
-  const [result, setResult] = useState<RedrawResult | null>(null);
+  const [status, setStatus] = useState<Status>(() => {
+    if (localStorage.getItem(LS_KEY_DOC)) return "idle";
+    if (localStorage.getItem("doc_redraw_result")) return "success";
+    return "idle";
+  });
+  // result is initialized above with cache restore
   const [errorMsg, setErrorMsg] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [downloadTarget, setDownloadTarget] = useState<RedrawImage | null>(null);
@@ -571,6 +575,16 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem(LS_KEY_DOC));
   const [scanLine, setScanLine] = useState(0); // 0-100 percent for scanning animation
   const [currentStep, setCurrentStep] = useState<string>("");
+  // Restore cached result on mount if no active job
+  const [result, setResult] = useState<RedrawResult | null>(() => {
+    if (!localStorage.getItem(LS_KEY_DOC)) {
+      try {
+        const cached = localStorage.getItem("doc_redraw_result");
+        if (cached) return JSON.parse(cached) as RedrawResult;
+      } catch (_) { /* ignore */ }
+    }
+    return null;
+  });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -619,12 +633,23 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
         if (data.status === "done") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           stopScanAnimation();
-          setResult(data.result as RedrawResult);
+          const redrawResult = data.result as RedrawResult;
+          setResult(redrawResult);
+          // Cache result so it survives page reload
+          try { localStorage.setItem("doc_redraw_result", JSON.stringify(redrawResult)); } catch (_) { /* quota */ }
           setStatus("success");
           setCurrentStep("");
           setJobIdPersisted(null);
           refetchTokens();
-          toast.success(isRtl ? "הציור מחדש הושלם בהצלחה!" : "Redraw completed successfully!");
+          const successMsg = isRtl ? "הציור מחדש הושלם בהצלחה!" : "Redraw completed successfully!";
+          toast.success(successMsg);
+          // Push notification when page is hidden
+          if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+            new Notification(isRtl ? "✅ AI סקיצה הושלמה!" : "✅ AI Sketch Complete!", {
+              body: successMsg,
+              icon: "/favicon.ico",
+            });
+          }
         } else if (data.status === "error") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           stopScanAnimation();
@@ -735,6 +760,10 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
       if (data.jobId) {
         setJobIdPersisted(data.jobId);
         startPolling(data.jobId);
+        // Request push notification permission so we can notify when done
+        if ("Notification" in window && Notification.permission === "default") {
+          Notification.requestPermission();
+        }
       } else {
         // Legacy direct response (shouldn't happen)
         stopScanAnimation();

@@ -644,9 +644,24 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
     setPrompt(v);
   }, []);
   const [modifications, setModifications] = useState("");
-  const [status, setStatus] = useState<Status>("idle");
-  const [images, setImages] = useState<AiImage[]>([]);
-  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const [status, setStatus] = useState<Status>(() => {
+    if (localStorage.getItem("ai_generate_jobId")) return "idle";
+    if (localStorage.getItem("ai_generate_result")) return "success";
+    return "idle";
+  });
+  const [images, setImages] = useState<AiImage[]>(() => {
+    if (!localStorage.getItem("ai_generate_jobId")) {
+      try {
+        const cached = localStorage.getItem("ai_generate_result");
+        if (cached) return JSON.parse(cached) as AiImage[];
+      } catch (_) { /* ignore */ }
+    }
+    return [];
+  });
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(() => {
+    if (!localStorage.getItem("ai_generate_jobId") && localStorage.getItem("ai_generate_result")) return 0;
+    return null;
+  });
   const [showModify, setShowModify] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [downloadOpen, setDownloadOpen] = useState(false);
@@ -712,13 +727,23 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
           stopProgressSteps();
           const result = data.result as { success: boolean; images: AiImage[] };
           setImages(result.images);
-          setSelectedIdx(null);
+          // Cache result so it survives page reload
+          try { localStorage.setItem("ai_generate_result", JSON.stringify(result.images)); } catch (_) { /* quota */ }
+          setSelectedIdx(0);
           setStatus("success");
           setShowModify(false);
           setModifications("");
           setJobIdPersisted(null);
           refetchTokens();
-          toast.success(t("aiSuccess"));
+          const successMsg = t("aiSuccess");
+          toast.success(successMsg);
+          // Push notification when page is hidden
+          if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+            new Notification(isRtl ? "✅ AI יצירה הושלמה!" : "✅ AI Creation Complete!", {
+              body: successMsg,
+              icon: "/favicon.ico",
+            });
+          }
         } else if (data.status === "error") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           stopProgressSteps();
@@ -835,6 +860,10 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
       if (data.jobId) {
         setJobIdPersisted(data.jobId);
         startPolling(data.jobId);
+        // Request push notification permission so we can notify when done
+        if ("Notification" in window && Notification.permission === "default") {
+          Notification.requestPermission();
+        }
       } else {
         // Legacy direct response
         setImages(data.images as AiImage[]);

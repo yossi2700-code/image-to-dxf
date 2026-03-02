@@ -906,3 +906,9 @@
 
 - [x] תיקון חזרה לדף אחרי יציאה — Tab פעיל נשמר ב-localStorage, בטעינה חוזר ל-tab עם job פעיל אוטומטית
 - [x] תיקון כפתור היסטוריה באייפון — טקסט נראה תמיד, כפתור גדול יותר עם רקע בולט
+
+## Push Notifications + Result Caching - מרץ 2026
+
+- [x] שמירת תוצאה ב-localStorage לכל 3 tabs (AiTrace, AiGenerator, AiDocumentRedraw) — מציג מיד בטעינה הבאה
+- [x] התראת Push לדפדפן כשעיבוד מסתיים ב-background — בקשת הרשאה בעת הגשה + Notification API בסיום
+- [x] תיקון שגיאת "Maximum call stack size exceeded" ב-AI Outline — החלפת spread push ב-for-loop ב-svgToDxf.ts
