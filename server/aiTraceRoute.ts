@@ -333,8 +333,28 @@ async function runTraceJob(
       const variation = STYLE_VARIATIONS[idx % STYLE_VARIATIONS.length];
 
       // Build a focused edit prompt: keep the shape, convert to line art
+      // Detect if this is a portrait/face image from the LLM description
+      const isPortrait = /\b(face|portrait|person|man|woman|boy|girl|human|selfie|head|hair|eyes|nose|mouth|beard|cheek|forehead|chin|neck|ear)\b/i.test(objectDescription);
       const editPrompt = landscapeMode
         ? buildFullImagePrompt(objectDescription, idx)
+        : isPortrait
+        ? (
+            "ABSOLUTE RULE #1: NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS — EVER. " +
+            "ABSOLUTE RULE #2: THIS IS A PORTRAIT. You MUST preserve the EXACT facial likeness of the person in the photo. " +
+            "ABSOLUTE RULE #3: PRESERVE THE EXACT SHAPE, SILHOUETTE, AND STRUCTURE OF THE ORIGINAL IMAGE. " +
+            `Convert this portrait photo into a professional black and white line art illustration. ` +
+            `FACIAL LIKENESS IS CRITICAL: You MUST reproduce the EXACT facial features of this specific person: ` +
+            `face shape, eye shape and spacing, nose shape, mouth shape, jawline, hairline, hair style, beard/stubble if present, ears. ` +
+            `This must look like THIS SPECIFIC PERSON, not a generic face. ` +
+            `You MUST keep the EXACT same: (a) overall shape and silhouette, (b) camera angle and viewpoint, ` +
+            `(c) proportions and dimensions, (d) all visible structural details including clothing, accessories. ` +
+            `Do NOT simplify, generalize, or change ANY facial feature. ` +
+            `Do NOT change the viewpoint, orientation, rotation, or scale. ` +
+            "Pure white background (#FFFFFF). Clean black outlines only, no fill, no shading, no gradients, no grey. " +
+            `${variation.style} ` +
+            "The entire person must be fully visible with 15% white margin on every side. " +
+            "FINAL REMINDER: Zero text, zero letters, zero numbers anywhere in the image."
+          )
         : (
             "ABSOLUTE RULE #1: NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS — EVER. " +
             "ABSOLUTE RULE #2: PRESERVE THE EXACT SHAPE, SILHOUETTE, AND STRUCTURE OF THE ORIGINAL IMAGE. " +
@@ -518,6 +538,10 @@ router.post(
       } else {
         return res.status(400).json({ error: "NO_IMAGE", message: "לא סופקה תמונה" });
       }
+      // Auto-correct EXIF orientation (iPhone photos often arrive with orientation=6 = 90° rotated).
+      // sharp().rotate() with no args reads the EXIF Orientation tag and rotates accordingly,
+      // then strips the EXIF so downstream processing sees a correctly-oriented image.
+      imageBuffer = await sharp(imageBuffer).rotate().toBuffer();
 
       // Resize for LLM analysis
       const resized = await sharp(imageBuffer)

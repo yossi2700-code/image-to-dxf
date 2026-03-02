@@ -912,3 +912,8 @@
 - [x] שמירת תוצאה ב-localStorage לכל 3 tabs (AiTrace, AiGenerator, AiDocumentRedraw) — מציג מיד בטעינה הבאה
 - [x] התראת Push לדפדפן כשעיבוד מסתיים ב-background — בקשת הרשאה בעת הגשה + Notification API בסיום
 - [x] תיקון שגיאת "Maximum call stack size exceeded" ב-AI Outline — החלפת spread push ב-for-loop ב-svgToDxf.ts
+
+## תיקון סיבוב EXIF + שיפור דמיון פנים - מרץ 2026
+
+- [x] תיקון סיבוב תמונה — הוסף sharp().rotate() לתיקון EXIF orientation אוטומטי לפני כל עיבוד
+- [x] שיפור דמיון פנים ב-AI Outline — זיהוי אוטומטי פורטרט + prompt מיוחד לשמירת מאפייני פנים ספציפיים
