@@ -1,7 +1,7 @@
 /**
  * AiDocumentRedrawTab.tsx
  * 
- * Feature: "עריכת AI מצילום/מסמך"
+ * Feature: "AI סקיצה — צילום לקווים"
  * 
  * User uploads a photo of a drawing, document, sign, or memorial stone.
  * → GPT-4o Vision analyzes and faithfully describes every element
@@ -709,7 +709,7 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
       <div className="text-center space-y-1 pb-1">
         <h2 className="text-lg font-bold flex items-center justify-center gap-2 text-gray-800">
           <Wand2 className="w-5 h-5" style={{color: '#fbbf24'}} />
-          {isRtl ? "עריכת AI מצילום/מסמך" : "AI Document Redraw"}
+          {isRtl ? "AI סקיצה — צילום לקווים" : "AI Sketch — Photo to Lines"}
         </h2>
         <p className="text-xs leading-relaxed text-gray-500">
           {isRtl

@@ -53,33 +53,64 @@ async function generatePdfBlob(
   heightMm: number
 ): Promise<ArrayBuffer> {
   const { jsPDF } = await import("jspdf");
-  const { svg2pdf } = await import("svg2pdf.js");
 
-  // Ensure SVG has explicit px dimensions (jsPDF needs px, not mm)
+  // Render SVG to canvas, then embed as image in PDF
   const PX_PER_MM = 96 / 25.4;
-  const widthPx = widthMm * PX_PER_MM;
-  const heightPx = heightMm * PX_PER_MM;
+  const widthPx = Math.round(widthMm * PX_PER_MM * 2); // 2x for quality
+  const heightPx = Math.round(heightMm * PX_PER_MM * 2);
 
-  const svgWithSize = svgContent.replace(/<svg([^>]*)>/, (_m, attrs) => {
-    const cleaned = attrs
-      .replace(/\bwidth="[^"]*"/g, "")
-      .replace(/\bheight="[^"]*"/g, "");
-    return `<svg${cleaned} width="${widthPx}" height="${heightPx}" xmlns="http://www.w3.org/2000/svg">`;
-  });
-
-  // Parse SVG into a DOM element
+  // Ensure SVG has proper dimensions and viewBox
   const parser = new DOMParser();
-  const svgDoc = parser.parseFromString(svgWithSize, "image/svg+xml");
-  const svgElement = svgDoc.documentElement as unknown as SVGSVGElement;
+  const svgDoc = parser.parseFromString(svgContent, "image/svg+xml");
+  const svgEl = svgDoc.documentElement;
 
-  // Create jsPDF document in mm
+  // Get viewBox or fallback to existing width/height
+  let vb = svgEl.getAttribute("viewBox");
+  if (!vb) {
+    const w = svgEl.getAttribute("width") || "1024";
+    const h = svgEl.getAttribute("height") || "1024";
+    vb = `0 0 ${w} ${h}`;
+    svgEl.setAttribute("viewBox", vb);
+  }
+  svgEl.setAttribute("width", String(widthPx));
+  svgEl.setAttribute("height", String(heightPx));
+  // Ensure white background
+  const bgRect = svgDoc.createElementNS("http://www.w3.org/2000/svg", "rect");
+  bgRect.setAttribute("width", "100%");
+  bgRect.setAttribute("height", "100%");
+  bgRect.setAttribute("fill", "white");
+  svgEl.insertBefore(bgRect, svgEl.firstChild);
+
+  const serializer = new XMLSerializer();
+  const svgStr = serializer.serializeToString(svgDoc);
+  const svgBlob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
+  const svgUrl = URL.createObjectURL(svgBlob);
+
+  // Draw SVG onto canvas
+  const canvas = document.createElement("canvas");
+  canvas.width = widthPx;
+  canvas.height = heightPx;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "white";
+  ctx.fillRect(0, 0, widthPx, heightPx);
+
+  await new Promise<void>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => { ctx.drawImage(img, 0, 0, widthPx, heightPx); resolve(); };
+    img.onerror = reject;
+    img.src = svgUrl;
+  });
+  URL.revokeObjectURL(svgUrl);
+
+  const imgData = canvas.toDataURL("image/png");
+
+  // Create PDF
   const pdf = new jsPDF({
     orientation: widthMm >= heightMm ? "landscape" : "portrait",
     unit: "mm",
     format: [widthMm, heightMm],
   });
-
-  await svg2pdf(svgElement, pdf, { x: 0, y: 0, width: widthMm, height: heightMm });
+  pdf.addImage(imgData, "PNG", 0, 0, widthMm, heightMm);
 
   return pdf.output("arraybuffer") as ArrayBuffer;
 }
@@ -389,59 +420,21 @@ export function DxfDownloadDialog({
               {isDxfLoading ? "מוריד..." : "הורד DXF"}
             </Button>
 
-            {/* Share File — Web Share API (iOS/Android native share sheet) */}
-            {canShareFiles && (
+            {/* PDF Download */}
+            {svgContent && (
               <Button
                 size="lg"
-                className="w-full font-bold text-base h-12"
-                style={{ background: '#25D366', color: 'white' }}
-                onClick={handleShareFile}
+                className="w-full bg-blue-600 hover:bg-blue-700 font-bold text-base h-12 text-white"
+                onClick={handlePdfExport}
                 disabled={isLoading}
               >
-                {isShareLoading ? (
+                {isPdfLoading ? (
                   <Loader2 className="w-5 h-5 ml-2 animate-spin" />
                 ) : (
-                  <Share2 className="w-5 h-5 ml-2" />
+                  <FileText className="w-5 h-5 ml-2" />
                 )}
-                {isShareLoading ? "שולח..." : "שתף קובץ (WhatsApp / AirDrop)"}
+                {isPdfLoading ? "מייצא PDF..." : "הורד PDF"}
               </Button>
-            )}
-
-            {/* PDF Download + Share PDF */}
-            {svgContent && (
-              <>
-                <Button
-                  size="lg"
-                  className="w-full bg-blue-600 hover:bg-blue-700 font-bold text-base h-12 text-white"
-                  onClick={handlePdfExport}
-                  disabled={isLoading}
-                >
-                  {isPdfLoading ? (
-                    <Loader2 className="w-5 h-5 ml-2 animate-spin" />
-                  ) : (
-                    <FileText className="w-5 h-5 ml-2" />
-                  )}
-                  {isPdfLoading ? "מייצא PDF..." : "הורד PDF"}
-                </Button>
-
-                {/* Share PDF — Web Share API */}
-                {canShareFiles && (
-                  <Button
-                    size="lg"
-                    className="w-full font-bold text-base h-12"
-                    style={{ background: '#1a73e8', color: 'white' }}
-                    onClick={handleSharePdf}
-                    disabled={isLoading}
-                  >
-                    {isSharePdfLoading ? (
-                      <Loader2 className="w-5 h-5 ml-2 animate-spin" />
-                    ) : (
-                      <Share2 className="w-5 h-5 ml-2" />
-                    )}
-                    {isSharePdfLoading ? "מייצא PDF..." : "שתף PDF (WhatsApp / AirDrop)"}
-                  </Button>
-                )}
-              </>
             )}
 
             {/* Cancel */}

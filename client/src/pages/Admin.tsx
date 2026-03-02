@@ -223,39 +223,87 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     return result;
   })();
 
+  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users">("overview");
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container py-3 flex items-center justify-between gap-3">
+    <div className="min-h-screen bg-slate-50" dir="rtl">
+      {/* Top Header */}
+      <header className="border-b bg-white sticky top-0 z-20 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <img
               src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663365044246/SslVmktvndMoFSwH.png"
               alt="לוגו"
-              className="w-10 h-10 rounded-lg object-contain shrink-0"
+              className="w-9 h-9 rounded-lg object-contain shrink-0"
             />
             <div>
-              <h1 className="text-base font-bold leading-tight">דשבורד ניהול</h1>
-              <p className="text-xs text-muted-foreground">מעקב שימוש ופעילות</p>
+              <h1 className="text-sm font-bold leading-tight text-slate-800">דשבורד ניהול</h1>
+              <p className="text-xs text-slate-400">מעקב שימוש ופעילות</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => { window.location.href = "/"; }}>
-              חזור לאפליקציה
+            <Button variant="outline" size="sm" onClick={() => { window.location.href = "/"; }} className="text-xs">
+              ← חזור לאפליקציה
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => logoutMutation.mutate()}
-              className="text-muted-foreground gap-1.5"
-            >
-              <LogOut className="w-4 h-4" />
-              יציאה
+            <Button variant="ghost" size="sm" onClick={() => logoutMutation.mutate()} className="text-slate-400 gap-1.5 text-xs">
+              <LogOut className="w-3.5 h-3.5" />יציאה
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="container py-6 space-y-6" dir="rtl">
+      <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6">
+        {/* Sidebar Nav */}
+        <aside className="w-48 shrink-0 hidden md:block">
+          <nav className="bg-white rounded-xl border shadow-sm p-2 sticky top-20 space-y-1">
+            {([
+              { id: "overview", label: "סקירה כללית", icon: TrendingUp },
+              { id: "activity", label: "פעילות", icon: Activity },
+              { id: "users", label: "משתמשים", icon: Users },
+            ] as const).map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => setActiveSection(id)}
+                className={`w-full text-right flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeSection === id
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                {label}
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Mobile Tab Bar */}
+        <div className="md:hidden w-full mb-4">
+          <div className="flex bg-white rounded-xl border shadow-sm p-1 gap-1">
+            {([
+              { id: "overview", label: "סקירה", icon: TrendingUp },
+              { id: "activity", label: "פעילות", icon: Activity },
+              { id: "users", label: "משתמשים", icon: Users },
+            ] as const).map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => setActiveSection(id)}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  activeSection === id ? "bg-blue-600 text-white" : "text-slate-500"
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />{label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <main className="flex-1 min-w-0 space-y-5">
+
+        {/* ── OVERVIEW SECTION ── */}
+        {activeSection === "overview" && (
+          <>
         {/* Stats */}
         {statsLoading ? (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -366,8 +414,69 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             )}
           </CardContent>
         </Card>
-        {/* Registered Users + Actions */}
-        <Card>
+          </>
+        )}
+
+        {/* ── ACTIVITY SECTION ── */}
+        {activeSection === "activity" && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Clock className="w-4 h-4 text-primary" />
+                פעולות אחרונות (כל המשתמשים)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {recentLoading ? (
+                <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-muted animate-pulse rounded-lg" />)}</div>
+              ) : recent && recent.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-muted-foreground">
+                        <th className="text-right py-2 pr-2 font-medium">תמונה</th>
+                        <th className="text-right py-2 pr-2 font-medium">סוג</th>
+                        <th className="text-right py-2 font-medium">קווים</th>
+                        <th className="text-right py-2 font-medium">IP</th>
+                        <th className="text-right py-2 font-medium">תאריך ושעה</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recent.map((ev) => (
+                        <tr key={ev.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                          <td className="py-2 pr-2">
+                            {ev.imageUrl ? (
+                              <img src={ev.imageUrl} alt="" className="w-10 h-10 object-cover rounded border" />
+                            ) : (
+                              <div className="w-10 h-10 rounded border bg-muted flex items-center justify-center">
+                                <Upload className="w-4 h-4 text-muted-foreground" />
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-2 pr-2">
+                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
+                              ev.type === "convert" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
+                            }`}>
+                              {ev.type === "convert" ? <><Upload className="w-3 h-3" />המרה</> : <><Sparkles className="w-3 h-3" />AI</>}
+                            </span>
+                          </td>
+                          <td className="py-2 text-muted-foreground">{(ev.segmentCount ?? 0).toLocaleString()}</td>
+                          <td className="py-2 font-mono text-xs text-muted-foreground">{ev.ipAnon ?? "—"}</td>
+                          <td className="py-2 text-muted-foreground text-xs">{new Date(ev.createdAt).toLocaleString("he-IL")}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="py-8 text-center text-muted-foreground text-sm">אין פעולות עדיין.</div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── USERS SECTION ── */}
+        {activeSection === "users" && <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Users className="w-4 h-4 text-primary" />
@@ -588,8 +697,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               </div>
             )}
           </CardContent>
-        </Card>
-      </main>
+        </Card>}
+        </main>
+      </div>
     </div>
   );
 }

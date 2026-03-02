@@ -118,8 +118,8 @@ export const translations = {
     quotaTrialTitle: "תקופת הניסיון הסתיימה",
     quotaContact: "לפרטים נוספים פנה למפתח התוכנה — רובוטיקה וטכנולוגיה",
     // AI Trace
-    aiTraceTab: "AI Trace",
-    aiTraceTitle: "AI Trace — המרת תמונה ל-outline",
+    aiTraceTab: "AI Outline",
+    aiTraceTitle: "AI Outline — המרת תמונה ל-outline",
     aiTraceSubtitle: "העלה תמונה — ה-AI יצייר outline נקי מתאים לחריטה וללייזר",
     aiTraceDrop: "גרור תמונה לכאן או לחץ לבחירה",
     aiTraceFormats: "PNG, JPG, BMP, WebP עד 16 MB",
@@ -277,8 +277,8 @@ export const translations = {
     quotaTrialTitle: "Trial period ended",
     quotaContact: "For more details contact the developer — Robotics & Technology",
     // AI Trace
-    aiTraceTab: "AI Trace",
-    aiTraceTitle: "AI Trace — Photo to Outline",
+    aiTraceTab: "AI Outline",
+    aiTraceTitle: "AI Outline — Photo to Outline",
     aiTraceSubtitle: "Upload a photo — AI will create a clean outline for engraving & laser cutting",
     aiTraceDrop: "Drag image here or click to select",
     aiTraceFormats: "PNG, JPG, BMP, WebP up to 16 MB",

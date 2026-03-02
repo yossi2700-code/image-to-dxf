@@ -1366,7 +1366,7 @@ export default function Home() {
               className="flex-1 gap-1.5 text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-sm relative"
             >
               <Scan className="w-4 h-4" />
-              <span>{isRtl ? "📷 AI מתמונה" : "📷 AI Trace"}</span>
+              <span>{isRtl ? "📷 AI Outline" : "📷 AI Outline"}</span>
               {activeJobs.trace && (
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
@@ -1379,7 +1379,7 @@ export default function Home() {
               className="flex-1 gap-1.5 text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:shadow-sm relative"
             >
               <FileEdit className="w-4 h-4" />
-              <span>{isRtl ? "✏️ AI מסמך" : "✏️ AI Doc"}</span>
+              <span>{isRtl ? "✏️ AI סקיצה" : "✏️ AI Sketch"}</span>
               {activeJobs.doc && (
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
