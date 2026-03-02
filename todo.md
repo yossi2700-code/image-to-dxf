@@ -895,3 +895,9 @@
 
 - [x] תיקון Maximum call stack size exceeded — שימוש ב-previewRef במקום state ב-handleTrace
 - [x] תיקון כפתור "החלף תמונה" ב-Safari iOS — שימוש ב-label htmlFor במקום programmatic click
+
+## תיקון החלף תמונה + מהירות AI Outline - מרץ 2026
+
+- [x] תיקון כפתור "החלף תמונה" - הסרת onClick מ-label, כל איפוס state ב-handleFile בלבד (Safari iOS)
+- [x] דחיסת תמונות גדולות לפני העלאה — canvas compression max 1024px, fallback ל-FileReader
+- [x] תיקון handleFile — איפוס focusText/customImprovement/currentStep + reset file input value

@@ -423,13 +423,48 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
     const allowed = ["image/png", "image/jpeg", "image/bmp", "image/webp", "image/gif"];
     if (!allowed.includes(file.type)) { toast.error(isRtl ? "פורמט לא נתמך." : "Unsupported format."); return; }
     if (file.size > 16 * 1024 * 1024) { toast.error(isRtl ? "הקובץ גדול מדי. מקסימום 16 MB." : "File too large. Max 16 MB."); return; }
+    // Reset all state when a new file is chosen (handles "change image" flow)
     setImageFile(file);
     setResult(null);
     setStatus("idle");
-    const reader = new FileReader();
-    reader.onload = (e) => setImagePreviewPersisted(e.target?.result as string);
-    reader.readAsDataURL(file);
-  }, [isRtl, setImagePreviewPersisted]);
+    setErrorMsg("");
+    setFocusText("");
+    setCustomImprovement("");
+    setCurrentStep("");
+    setJobIdPersisted(null);
+    setTryAgainUrl(null);
+    // Reset file input so the same file can be re-selected
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    // Compress image before storing as preview (improves speed + Safari iOS reliability)
+    const canvas = document.createElement("canvas");
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 1024;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL("image/jpeg", 0.85);
+      setImagePreviewPersisted(compressed);
+    };
+    img.onerror = () => {
+      // Fallback to FileReader if canvas fails
+      const reader = new FileReader();
+      reader.onload = (e) => setImagePreviewPersisted(e.target?.result as string);
+      reader.readAsDataURL(file);
+    };
+    const objectUrl = URL.createObjectURL(file);
+    const origOnload = img.onload;
+    img.onload = (ev) => {
+      URL.revokeObjectURL(objectUrl);
+      if (origOnload) (origOnload as EventListener).call(img, ev);
+    };
+    img.src = objectUrl;
+  }, [isRtl, setImagePreviewPersisted, setJobIdPersisted]);
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setDragOver(false);
     const file = e.dataTransfer.files[0]; if (file) handleFile(file);
@@ -904,23 +939,12 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                     </span>
                   </div>
                   {/* Change image button — uses label for Safari iOS compatibility */}
+                  {/* NOTE: No onClick here — resetting state in onClick breaks Safari iOS file picker */}
+                  {/* All state reset is handled inside handleFile when a new file is chosen */}
                   <label
                     htmlFor="ai-trace-file-input"
                     className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer"
                     style={{ background: '#0d9488', color: 'white', border: 'none' }}
-                    onClick={() => {
-                      // Reset state so new image replaces old one
-                      setImageFile(null);
-                      setImagePreviewPersisted(null);
-                      setResult(null);
-                      setStatus("idle");
-                      setErrorMsg("");
-                      setFocusText("");
-                      setCustomImprovement("");
-                      setJobIdPersisted(null);
-                      setTryAgainUrl(null);
-                      if (fileInputRef.current) fileInputRef.current.value = "";
-                    }}
                   >
                     <ImageIcon className="w-3.5 h-3.5" />
                     {isRtl ? "החלף תמונה" : "Change Image"}
