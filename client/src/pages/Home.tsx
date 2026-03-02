@@ -1289,6 +1289,16 @@ export default function Home() {
     doc: !!localStorage.getItem("doc_redraw_jobId"),
   }));
 
+  // Remember active tab — auto-switch to tab with active job on page return
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    // If there's an active job, go to that tab automatically
+    if (localStorage.getItem("ai_trace_jobId")) return "trace";
+    if (localStorage.getItem("doc_redraw_jobId")) return "redraw";
+    if (localStorage.getItem("ai_generate_jobId")) return "ai";
+    // Otherwise restore last visited tab
+    return localStorage.getItem("active_tab") ?? "ai";
+  });
+
   // Poll localStorage every 2s to detect job changes (even from child components)
   useEffect(() => {
     const interval = setInterval(() => {
@@ -1401,10 +1411,11 @@ export default function Home() {
               </button>
               <button
                 onClick={() => window.location.href = "/history"}
-                className="text-xs px-2 py-0.5 rounded-full transition-colors flex items-center gap-1 text-gray-500 hover:text-gray-700 shrink-0"
+                className="text-xs px-2.5 py-1 rounded-full transition-colors flex items-center gap-1 font-medium shrink-0"
+                style={{ background: '#f1f5f9', color: '#374151', border: '1px solid #e2e8f0' }}
               >
-                <History className="w-3 h-3" />
-                <span className="hidden sm:inline">{t("history")}</span>
+                <History className="w-3.5 h-3.5" />
+                <span>{t("history")}</span>
               </button>
               <button
                 onClick={handleLogout}
@@ -1426,7 +1437,14 @@ export default function Home() {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="ai" dir={isRtl ? "rtl" : "ltr"}>
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => {
+            setActiveTab(v);
+            localStorage.setItem("active_tab", v);
+          }}
+          dir={isRtl ? "rtl" : "ltr"}
+        >
           <TabsList
             className="w-full mb-5 h-13 gap-1 p-1.5"
             style={{

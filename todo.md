@@ -901,3 +901,8 @@
 - [x] תיקון כפתור "החלף תמונה" - הסרת onClick מ-label, כל איפוס state ב-handleFile בלבד (Safari iOS)
 - [x] דחיסת תמונות גדולות לפני העלאה — canvas compression max 1024px, fallback ל-FileReader
 - [x] תיקון handleFile — איפוס focusText/customImprovement/currentStep + reset file input value
+
+## עיבוד ברקע + כפתור היסטוריה - מרץ 2026
+
+- [x] תיקון חזרה לדף אחרי יציאה — Tab פעיל נשמר ב-localStorage, בטעינה חוזר ל-tab עם job פעיל אוטומטית
+- [x] תיקון כפתור היסטוריה באייפון — טקסט נראה תמיד, כפתור גדול יותר עם רקע בולט
