@@ -257,6 +257,49 @@ router.post("/api/app-auth/reset-password", async (req, res) => {
   }
 });
 
+// ─── Change Password ────────────────────────────────────────────────────────────
+
+router.post("/api/app-auth/change-password", async (req, res) => {
+  try {
+    const appUser = getAppUserFromCookie(req.cookies);
+    if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
+    const { currentPassword, newPassword } = req.body as { currentPassword?: string; newPassword?: string };
+    if (!currentPassword || !newPassword) return res.status(400).json({ error: "שדות חסרים" });
+    if (newPassword.length < 6) return res.status(400).json({ error: "הסיסמה החדשה חייבת להכיל לפחות 6 תווים" });
+    const db = await getDb();
+    if (!db) return res.status(503).json({ error: "DB_UNAVAILABLE" });
+    const [user] = await db.select().from(appUsers).where(eq(appUsers.id, appUser.userId));
+    if (!user) return res.status(404).json({ error: "משתמש לא נמצא" });
+    if (!user.passwordHash) return res.status(400).json({ error: "אין סיסמה מוגדרת לחשבון זה" });
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) return res.status(400).json({ error: "הסיסמה הנוכחית שגויה" });
+    const newHash = await bcrypt.hash(newPassword, 12);
+    await db.update(appUsers).set({ passwordHash: newHash }).where(eq(appUsers.id, appUser.userId));
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("[change-password]", err);
+    return res.status(500).json({ error: "שגיאה בשינוי סיסמה" });
+  }
+});
+
+// ─── Update Profile ───────────────────────────────────────────────────────────
+
+router.post("/api/app-auth/update-profile", async (req, res) => {
+  try {
+    const appUser = getAppUserFromCookie(req.cookies);
+    if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
+    const { name } = req.body as { name?: string };
+    if (!name || name.trim().length < 1) return res.status(400).json({ error: "שם לא יכול להיות ריק" });
+    const db = await getDb();
+    if (!db) return res.status(503).json({ error: "DB_UNAVAILABLE" });
+    await db.update(appUsers).set({ name: name.trim() }).where(eq(appUsers.id, appUser.userId));
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("[update-profile]", err);
+    return res.status(500).json({ error: "שגיאה בעדכון פרופיל" });
+  }
+});
+
 // ─── Logout ───────────────────────────────────────────────────────────────────
 
 router.post("/api/app-auth/logout", (_req, res) => {

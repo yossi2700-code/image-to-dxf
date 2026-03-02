@@ -914,15 +914,29 @@ export async function convertImageToDxf(
   realWidth: number;
   realHeight: number;
 }> {
-  const { pixels, width, height } = await imageToGrayscale(buffer);
-  const binary = applyThreshold(pixels, options.threshold);
-  const rawEdges = sobelEdgeDetection(binary, width, height);
-  // Thin the edges to single-pixel width — eliminates double-line artifacts
-  const edges = thinEdges(rawEdges, width, height);
+  // Use the same centerline pipeline as aiTracePipeline:
+  // 1. Blur to merge anti-aliased pixels
+  // 2. Threshold to binary
+  // 3. Zhang-Suen thinning directly on black pixels → single-pixel centerline
+  // This eliminates the double-line artifact caused by Sobel detecting both edges of thick strokes.
+  const { width, height } = await imageToGrayscale(buffer);
 
-  // Use 8-connectivity centerline tracing with Douglas-Peucker smoothing.
-  // This replaces the old edgesToSegments (H/V only) + chainSegmentsToPolylines approach
-  // and produces smooth diagonal lines instead of a staircase effect.
+  const blurred = await sharp(buffer)
+    .grayscale()
+    .resize(width, height)
+    .blur(1.5)
+    .raw()
+    .toBuffer();
+  const blurredPixels = new Uint8Array(blurred);
+
+  const binary = applyThreshold(blurredPixels, options.threshold);
+  const thinned = thinBinary(binary, width, height);
+
+  // Convert thinned binary (0=black centerline, 255=white) to edge format (255=edge, 0=bg)
+  const edges = new Uint8Array(thinned.length);
+  for (let i = 0; i < thinned.length; i++) edges[i] = thinned[i] === 0 ? 255 : 0;
+
+  // 8-connectivity centerline tracing with Douglas-Peucker smoothing
   const epsilon = Math.max(0.5, options.simplifyTolerance ?? 1.5);
   const polylines = traceCenterlines(edges, width, height, epsilon);
 

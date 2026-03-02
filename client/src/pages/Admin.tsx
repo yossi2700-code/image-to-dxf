@@ -34,6 +34,10 @@ import {
   Ban,
   ShieldCheck,
   RefreshCw,
+  Settings,
+  User,
+  KeyRound,
+  CheckCircle2,
 } from "lucide-react";
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
@@ -223,7 +227,17 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     return result;
   })();
 
-  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "settings">("overview");
+
+  // ── Settings state ──
+  const [settingsName, setSettingsName] = useState("");
+  const [nameLoading, setNameLoading] = useState(false);
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [pwLoading, setPwLoading] = useState(false);
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
 
   return (
     <div className="min-h-screen bg-slate-50" dir="rtl">
@@ -260,6 +274,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               { id: "overview", label: "סקירה כללית", icon: TrendingUp },
               { id: "activity", label: "פעילות", icon: Activity },
               { id: "users", label: "משתמשים", icon: Users },
+              { id: "settings", label: "הגדרות", icon: Settings },
             ] as const).map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
@@ -284,6 +299,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               { id: "overview", label: "סקירה", icon: TrendingUp },
               { id: "activity", label: "פעילות", icon: Activity },
               { id: "users", label: "משתמשים", icon: Users },
+              { id: "settings", label: "הגדרות", icon: Settings },
             ] as const).map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
@@ -698,6 +714,134 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             )}
           </CardContent>
         </Card>}
+        {/* ── SETTINGS SECTION ── */}
+        {activeSection === "settings" && (
+          <div className="space-y-5">
+            {/* Update Name */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <User className="w-4 h-4 text-primary" />
+                  עדכון שם תצוגה
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Input
+                  placeholder="שם מלא"
+                  value={settingsName}
+                  onChange={e => setSettingsName(e.target.value)}
+                  dir="rtl"
+                />
+                <Button
+                  className="w-full"
+                  disabled={nameLoading || !settingsName.trim()}
+                  onClick={async () => {
+                    setNameLoading(true);
+                    try {
+                      const r = await fetch("/api/app-auth/update-profile", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ name: settingsName.trim() }),
+                        credentials: "include",
+                      });
+                      const data = await r.json();
+                      if (!r.ok) throw new Error(data.error || "שגיאה");
+                      toast.success("השם עודכן בהצלחה");
+                      setSettingsName("");
+                    } catch (e: unknown) {
+                      toast.error(e instanceof Error ? e.message : "שגיאה בעדכון שם");
+                    } finally {
+                      setNameLoading(false);
+                    }
+                  }}
+                >
+                  {nameLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4" /> שמור שם</>}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Change Password */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <KeyRound className="w-4 h-4 text-primary" />
+                  שינוי סיסמה
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="relative">
+                  <Input
+                    type={showCurrentPw ? "text" : "password"}
+                    placeholder="סיסמה נוכחית"
+                    value={currentPw}
+                    onChange={e => setCurrentPw(e.target.value)}
+                    dir="rtl"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPw(v => !v)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  >
+                    {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <div className="relative">
+                  <Input
+                    type={showNewPw ? "text" : "password"}
+                    placeholder="סיסמה חדשה (לפחות 6 תווים)"
+                    value={newPw}
+                    onChange={e => setNewPw(e.target.value)}
+                    dir="rtl"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPw(v => !v)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  >
+                    {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <Input
+                  type="password"
+                  placeholder="אשר סיסמה חדשה"
+                  value={confirmPw}
+                  onChange={e => setConfirmPw(e.target.value)}
+                  dir="rtl"
+                />
+                <Button
+                  className="w-full"
+                  disabled={pwLoading || !currentPw || !newPw || newPw !== confirmPw}
+                  onClick={async () => {
+                    if (newPw !== confirmPw) { toast.error("הסיסמאות אינן תואמות"); return; }
+                    setPwLoading(true);
+                    try {
+                      const r = await fetch("/api/app-auth/change-password", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }),
+                        credentials: "include",
+                      });
+                      const data = await r.json();
+                      if (!r.ok) throw new Error(data.error || "שגיאה");
+                      toast.success("הסיסמה שונתה בהצלחה");
+                      setCurrentPw(""); setNewPw(""); setConfirmPw("");
+                    } catch (e: unknown) {
+                      toast.error(e instanceof Error ? e.message : "שגיאה בשינוי סיסמה");
+                    } finally {
+                      setPwLoading(false);
+                    }
+                  }}
+                >
+                  {pwLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <><Lock className="w-4 h-4" /> שנה סיסמה</>}
+                </Button>
+                {newPw && confirmPw && newPw !== confirmPw && (
+                  <p className="text-xs text-destructive text-center">הסיסמאות אינן תואמות</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         </main>
       </div>
     </div>
