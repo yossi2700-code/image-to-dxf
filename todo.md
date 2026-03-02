@@ -890,3 +890,8 @@
 
 - [x] תיקון תמונה לא מוצגת בזמן עיבוד — FileReader אסינכרוני, מוודאים preview לפני loading
 - [x] שיפור דיוק פרומפט — detail:high ל-LLM, הוראות שמירה על צורה/לוגו/פרטים
+
+## תיקון קריטי AI Outline - מרץ 2026
+
+- [x] תיקון Maximum call stack size exceeded — שימוש ב-previewRef במקום state ב-handleTrace
+- [x] תיקון כפתור "החלף תמונה" ב-Safari iOS — שימוש ב-label htmlFor במקום programmatic click

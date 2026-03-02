@@ -325,6 +325,8 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const [currentStep, setCurrentStep] = useState<string>("");
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // previewRef holds the latest preview URL without causing re-renders when read inside handleTrace
+  const previewRef = useRef<string | null>(localStorage.getItem("ai_trace_imagePreview"));
 
   const setJobIdPersisted = useCallback((id: string | null) => {
     if (id) localStorage.setItem("ai_trace_jobId", id);
@@ -335,6 +337,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const setImagePreviewPersisted = useCallback((preview: string | null) => {
     if (preview) localStorage.setItem("ai_trace_imagePreview", preview);
     else localStorage.removeItem("ai_trace_imagePreview");
+    previewRef.current = preview;  // keep ref in sync
     setImagePreview(preview);
   }, []);
 
@@ -433,17 +436,19 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   }, [handleFile]);
 
   const handleTrace = async () => {
-    if (!imageFile && !imagePreview) return;
+    if (!imageFile && !previewRef.current) return;
 
-    // Ensure imagePreview is set BEFORE status changes to loading
-    // (FileReader is async — preview may not be ready yet if user clicked fast)
-    let previewUrl = imagePreview;
-    if (imageFile && !imagePreview) {
+    // Use previewRef (not imagePreview state) to read the current preview URL.
+    // Reading from state inside an async function can cause stale closures and
+    // calling setImagePreviewPersisted here would trigger re-renders causing loops.
+    let previewUrl = previewRef.current;
+    if (imageFile && !previewUrl) {
+      // FileReader is async — wait for it before proceeding
       previewUrl = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onload = (e) => {
           const result = e.target?.result as string;
-          setImagePreviewPersisted(result);
+          previewRef.current = result;  // update ref only, NOT state (avoids re-render loop)
           resolve(result);
         };
         reader.readAsDataURL(imageFile);
@@ -592,9 +597,10 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               <h2 className="font-semibold text-sm text-gray-700">{t("aiTraceTitle")}</h2>
             </div>
 
-            {/* Hidden file input — no capture attr so iPhone shows gallery + camera choice */}
+            {/* Hidden file input — use id for label-based trigger (Safari iOS compatible) */}
             <input
               ref={fileInputRef}
+              id="ai-trace-file-input"
               type="file"
               accept="image/*"
               className="hidden"
@@ -610,21 +616,19 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate text-gray-700">{imageFile?.name}</p>
                   <p className="text-xs mb-2 text-gray-400">{isRtl ? "תמונה נבחרה" : "Image selected"}</p>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-xs font-medium text-teal-600 hover:text-teal-800"
+                  <label
+                    htmlFor="ai-trace-file-input"
+                    className="text-xs font-medium text-teal-600 hover:text-teal-800 cursor-pointer"
                   >
                     {isRtl ? "החלף תמונה" : "Change image"}
-                  </button>
+                  </label>
                 </div>
               </div>
             ) : (
               <div className="mb-3 space-y-2">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-3 py-5 rounded-xl transition-colors hover:bg-teal-50"
+                <label
+                  htmlFor="ai-trace-file-input"
+                  className="w-full flex items-center justify-center gap-3 py-5 rounded-xl transition-colors hover:bg-teal-50 cursor-pointer"
                   style={{border: '2px dashed #99f6e4', background: '#f0fdf9'}}
                 >
                   <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-teal-100">
@@ -634,7 +638,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                     <p className="font-semibold text-sm text-teal-700">{isRtl ? "בחר תמונה" : "Choose Photo"}</p>
                     <p className="text-xs text-gray-400">{isRtl ? "מהגלריה או הצלם חדש" : "From gallery or take new photo"}</p>
                   </div>
-                </button>
+                </label>
                 <p className="hidden sm:block text-xs text-center text-gray-400">
                   {isRtl ? "או גרור תמונה לכאן" : "or drag & drop an image here"}
                 </p>
@@ -899,10 +903,13 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                       {isRtl ? "3 עיצובים מוכנים — בחר את המועדף" : "3 designs ready — choose your favorite"}
                     </span>
                   </div>
-                  {/* Change image button — clears preview and returns to idle for new upload */}
-                  <button
-                    type="button"
+                  {/* Change image button — uses label for Safari iOS compatibility */}
+                  <label
+                    htmlFor="ai-trace-file-input"
+                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer"
+                    style={{ background: '#0d9488', color: 'white', border: 'none' }}
                     onClick={() => {
+                      // Reset state so new image replaces old one
                       setImageFile(null);
                       setImagePreviewPersisted(null);
                       setResult(null);
@@ -913,15 +920,11 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                       setJobIdPersisted(null);
                       setTryAgainUrl(null);
                       if (fileInputRef.current) fileInputRef.current.value = "";
-                      // Trigger file picker immediately
-                      setTimeout(() => fileInputRef.current?.click(), 50);
                     }}
-                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all shrink-0"
-                    style={{ background: '#0d9488', color: 'white', border: 'none' }}
                   >
                     <ImageIcon className="w-3.5 h-3.5" />
                     {isRtl ? "החלף תמונה" : "Change Image"}
-                  </button>
+                  </label>
                 </div>
                 {result.objectDescription && (
                   <p className="text-xs mt-1 line-clamp-2 text-gray-500">
