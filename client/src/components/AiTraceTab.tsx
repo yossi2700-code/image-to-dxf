@@ -773,24 +773,43 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               )}
               {/* Step progress indicator */}
               <div className="w-full max-w-xs">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-teal-400" style={{animation: 'pulse 1.5s ease-in-out infinite'}} />
-                  <p className="font-semibold text-sm text-gray-700 text-start">
-                    {currentStep || (isRtl ? "מנתח תמונה עם AI..." : "Analyzing image with AI...")}
-                  </p>
+                {/* Step labels */}
+                <div className="flex justify-between text-xs text-gray-400 mb-1.5">
+                  <span style={{color: '#0d9488', fontWeight: 600}}>
+                    {isRtl ? 'שלב 1: ניתוח' : 'Step 1: Analyze'}
+                  </span>
+                  <span style={{
+                    color: (currentStep.includes('יצר') || currentStep.includes('Generat') || currentStep.includes('ממיר') || currentStep.includes('Convert')) ? '#0d9488' : '#d1d5db',
+                    fontWeight: (currentStep.includes('יצר') || currentStep.includes('Generat') || currentStep.includes('ממיר') || currentStep.includes('Convert')) ? 600 : 400,
+                  }}>
+                    {isRtl ? 'שלב 2: יצירה' : 'Step 2: Generate'}
+                  </span>
+                  <span style={{
+                    color: (currentStep.includes('ממיר') || currentStep.includes('Convert')) ? '#0d9488' : '#d1d5db',
+                    fontWeight: (currentStep.includes('ממיר') || currentStep.includes('Convert')) ? 600 : 400,
+                  }}>
+                    {isRtl ? 'שלב 3: וקטור' : 'Step 3: Vector'}
+                  </span>
                 </div>
-                {/* Step progress bar */}
-                <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                {/* Progress bar */}
+                <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden mb-2">
                   <div
                     className="h-full rounded-full"
                     style={{
                       background: 'linear-gradient(90deg, #0d9488, #5eead4)',
-                      width: currentStep.includes('יצר') || currentStep.includes('Generat') ? '66%'
-                        : currentStep.includes('ממיר') || currentStep.includes('Convert') ? '88%'
-                        : '33%',
-                      transition: 'width 0.8s ease-in-out',
+                      width: (currentStep.includes('ממיר') || currentStep.includes('Convert')) ? '90%'
+                        : (currentStep.includes('יצר') || currentStep.includes('Generat')) ? '60%'
+                        : '25%',
+                      transition: 'width 1s ease-in-out',
                     }}
                   />
+                </div>
+                {/* Current step text */}
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-teal-400 shrink-0" style={{animation: 'pulse 1.5s ease-in-out infinite'}} />
+                  <p className="font-semibold text-sm text-gray-700 text-start">
+                    {currentStep || (isRtl ? "מנתח תמונה עם AI..." : "Analyzing image with AI...")}
+                  </p>
                 </div>
               </div>
               <p className="text-xs text-gray-400">{isRtl ? "זה עשוי לקחת 30-90 שניות" : "This may take 30-90 seconds"}</p>
@@ -857,11 +876,36 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               className="rounded-xl p-4"
               style={{ background: '#f0fdf9', border: '1px solid #99f6e4' }}
             >
-                <div className="flex items-center gap-2 mb-1">
-                  <CheckCircle2 className="w-4 h-4 text-teal-600" />
-                  <span className="font-semibold text-sm text-gray-700">
-                    {isRtl ? "3 עיצובים מוכנים — בחר את המועדף" : "3 designs ready — choose your favorite"}
-                  </span>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-teal-600" />
+                    <span className="font-semibold text-sm text-gray-700">
+                      {isRtl ? "3 עיצובים מוכנים — בחר את המועדף" : "3 designs ready — choose your favorite"}
+                    </span>
+                  </div>
+                  {/* Change image button — clears preview and returns to idle for new upload */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageFile(null);
+                      setImagePreviewPersisted(null);
+                      setResult(null);
+                      setStatus("idle");
+                      setErrorMsg("");
+                      setFocusText("");
+                      setCustomImprovement("");
+                      setJobIdPersisted(null);
+                      setTryAgainUrl(null);
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                      // Trigger file picker immediately
+                      setTimeout(() => fileInputRef.current?.click(), 50);
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all shrink-0"
+                    style={{ background: '#0d9488', color: 'white', border: 'none' }}
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    {isRtl ? "החלף תמונה" : "Change Image"}
+                  </button>
                 </div>
                 {result.objectDescription && (
                   <p className="text-xs mt-1 line-clamp-2 text-gray-500">
