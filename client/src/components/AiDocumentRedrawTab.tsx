@@ -570,6 +570,7 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
   const [zoomImg, setZoomImg] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem(LS_KEY_DOC));
   const [scanLine, setScanLine] = useState(0); // 0-100 percent for scanning animation
+  const [currentStep, setCurrentStep] = useState<string>("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -614,11 +615,13 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
       try {
         const res = await fetch(`/api/ai-document-redraw/job/${id}`, { credentials: "include" });
         const data = await res.json();
+        if (data.step) setCurrentStep(data.step);
         if (data.status === "done") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           stopScanAnimation();
           setResult(data.result as RedrawResult);
           setStatus("success");
+          setCurrentStep("");
           setJobIdPersisted(null);
           refetchTokens();
           toast.success(isRtl ? "הציור מחדש הושלם בהצלחה!" : "Redraw completed successfully!");
@@ -793,8 +796,8 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
         </p>
       </div>
 
-      {/* Upload area */}
-      <div className="relative">
+      {/* Upload area — hidden during loading */}
+      <div className="relative" style={{ display: status === 'loading' ? 'none' : undefined }}>
         <input
           ref={fileInputRef}
           type="file"
@@ -902,8 +905,8 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
         )}
       </div>
 
-      {/* Optional description */}
-      <div>
+      {/* Optional description + submit — hidden during loading */}
+      <div style={{ display: status === 'loading' ? 'none' : undefined }}>
         <label className="block text-xs font-semibold mb-1 text-gray-500">
           {isRtl ? "הערות / הסבר (אופציונלי)" : "Notes / Context (optional)"}
         </label>
@@ -921,29 +924,25 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
           }}
           dir={isRtl ? "rtl" : "ltr"}
         />
-      </div>
 
-      {/* Submit button */}
-      <button
-        className="w-full font-bold text-base h-12 rounded-xl flex items-center justify-center gap-2 transition-all"
-        style={{
-          background: ((!imageFile && !imagePreview) || status === "loading")
-            ? 'rgba(251,191,36,0.15)'
-            : 'linear-gradient(135deg, #d97706, #f59e0b)',
-          color: ((!imageFile && !imagePreview) || status === "loading") ? 'rgba(251,191,36,0.4)' : 'white',
-          border: '1px solid rgba(251,191,36,0.25)',
-          boxShadow: ((!imageFile && !imagePreview) || status === "loading") ? 'none' : '0 4px 15px rgba(245,158,11,0.30)',
-          cursor: ((!imageFile && !imagePreview) || status === "loading") ? 'not-allowed' : 'pointer',
-        }}
-        disabled={(!imageFile && !imagePreview) || status === "loading"}
-        onClick={handleRedraw}
-      >
-        {status === "loading" ? (
-          <><Loader2 className="w-5 h-5 animate-spin" />{isRtl ? "ה-AI מצייר מחדש..." : "AI is redrawing..."}</>
-        ) : (
+        {/* Submit button */}
+        <button
+          className="w-full font-bold text-base h-12 rounded-xl flex items-center justify-center gap-2 transition-all mt-3"
+          style={{
+            background: (!imageFile && !imagePreview)
+              ? 'rgba(251,191,36,0.15)'
+              : 'linear-gradient(135deg, #d97706, #f59e0b)',
+            color: (!imageFile && !imagePreview) ? 'rgba(251,191,36,0.4)' : 'white',
+            border: '1px solid rgba(251,191,36,0.25)',
+            boxShadow: (!imageFile && !imagePreview) ? 'none' : '0 4px 15px rgba(245,158,11,0.30)',
+            cursor: (!imageFile && !imagePreview) ? 'not-allowed' : 'pointer',
+          }}
+          disabled={!imageFile && !imagePreview}
+          onClick={handleRedraw}
+        >
           <><Wand2 className="w-5 h-5" />{isRtl ? "צייר מחדש עם AI" : "Redraw with AI"}</>
-        )}
-      </button>
+        </button>
+      </div>
 
       {/* Cancel button — shown only during processing */}
       {status === "loading" && jobId && (
@@ -961,30 +960,50 @@ export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
         </button>
       )}
 
-      {/* Processing state — shown below the image when no preview available */}
-      {status === "loading" && !imagePreview && (
+      {/* Processing state — full loading card with step messages */}
+      {status === "loading" && (
         <div
-          className="rounded-2xl p-8 text-center space-y-3"
-          style={{
-            background: 'rgba(251,191,36,0.06)',
-            border: '1px solid rgba(251,191,36,0.15)',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-          }}
+          className="rounded-2xl overflow-hidden"
+          style={{ background: '#ffffff', border: '1px solid rgba(251,191,36,0.25)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
         >
-          <div className="relative w-16 h-16 mx-auto">
-            <div className="absolute inset-0 rounded-full" style={{border: '3px solid rgba(251,191,36,0.15)', borderTopColor: '#fbbf24', animation: 'spin 1s linear infinite'}} />
-            <Wand2 className="absolute inset-0 m-auto w-6 h-6" style={{color: '#fbbf24'}} />
-          </div>
-          <div>
-            <p className="font-semibold text-sm text-gray-800">{isRtl ? "ה-AI מנתח ומצייר מחדש..." : "AI analyzing and redrawing..."}</p>
-            <p className="text-xs mt-1 text-gray-500">
-              {isRtl ? "מזהה כל אלמנט ומצייר קווים נקיים לחריטה" : "Identifying every element and drawing clean engraving lines"}
-            </p>
-          </div>
-          <div className="flex justify-center gap-1.5">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="w-2 h-2 rounded-full" style={{background: '#fbbf24', animation: `bounce 1s infinite ${i * 0.15}s`}} />
-            ))}
+          {/* Image with scanning animation (if no preview, show spinner) */}
+          {!imagePreview && (
+            <div className="p-8 flex flex-col items-center gap-3 text-center">
+              <div className="relative w-16 h-16">
+                <div className="absolute inset-0 rounded-full" style={{border: '3px solid rgba(251,191,36,0.15)', borderTopColor: '#fbbf24', animation: 'spin 1s linear infinite'}} />
+                <Wand2 className="absolute inset-0 m-auto w-6 h-6" style={{color: '#fbbf24'}} />
+              </div>
+            </div>
+          )}
+          {/* Step progress */}
+          <div className="p-4 flex flex-col items-center gap-3 text-center">
+            <div className="w-full max-w-xs">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full" style={{background: '#fbbf24', animation: 'pulse 1.5s ease-in-out infinite'}} />
+                <p className="font-semibold text-sm text-gray-700 text-start">
+                  {currentStep || (isRtl ? "מנתח תמונה עם AI..." : "Analyzing image with AI...")}
+                </p>
+              </div>
+              {/* Step progress bar */}
+              <div className="w-full rounded-full h-1.5 overflow-hidden" style={{background: 'rgba(251,191,36,0.15)'}}>
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    background: 'linear-gradient(90deg, #d97706, #fbbf24)',
+                    width: currentStep.includes('יצר') || currentStep.includes('Generat') ? '66%'
+                      : currentStep.includes('ממיר') || currentStep.includes('Convert') ? '88%'
+                      : '33%',
+                    transition: 'width 0.8s ease-in-out',
+                  }}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-gray-400">{isRtl ? "זה עשוי לקחת 30-90 שניות" : "This may take 30-90 seconds"}</p>
+            <div className="flex gap-1.5">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="w-1.5 h-1.5 rounded-full" style={{background: '#fbbf24', animation: `bounce 1s infinite ${i * 0.15}s`}} />
+              ))}
+            </div>
           </div>
         </div>
       )}

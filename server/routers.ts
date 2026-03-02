@@ -119,10 +119,11 @@ export const appRouter = router({
         clearRateLimit(ip);
 
         // Set a simple session cookie (httpOnly, 7 days)
+        // Note: sameSite "lax" works on Safari/iPhone; "none" requires secure but breaks Safari ITP
         ctx.res.cookie(ADMIN_COOKIE, "authenticated", {
           httpOnly: true,
           secure: ENV.isProduction,
-          sameSite: ENV.isProduction ? "none" : "lax",
+          sameSite: "lax",
           maxAge: 7 * 24 * 60 * 60 * 1000,
           path: "/",
         });

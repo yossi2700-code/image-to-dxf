@@ -252,7 +252,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6">
+      <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col md:flex-row gap-6">
         {/* Sidebar Nav */}
         <aside className="w-48 shrink-0 hidden md:block">
           <nav className="bg-white rounded-xl border shadow-sm p-2 sticky top-20 space-y-1">

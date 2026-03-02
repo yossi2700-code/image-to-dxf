@@ -859,3 +859,11 @@
 - [x] שינוי LLM analysis ל-detail: "low" (מהיר יותר)
 - [x] הוספת heartbeat גם ב-runDocumentRedrawJob
 - [x] שיפור הודעת שגיאה timeout - מציג הסבר ידידותי
+
+## תיקון דף ניהול + תצוגה אייפון - מרץ 2026
+
+- [x] תיקון דף ניהול — תוקן cookie ל-Safari/אייפון + פירסום מובייל
+- [x] תיקון בעיות תצוגה באייפון — tabs קטנים יותר, auth bar לא גולש
+- [x] תיקון תצוגת תמונה ב-AI Outline — upload area מוסתר בזמן loading
+- [x] תיקון תצוגת תמונה ב-AI סקיצה — upload area מוסתר בזמן loading
+- [x] הוספת step messages ל-AI סקיצה כמו ב-AI Outline

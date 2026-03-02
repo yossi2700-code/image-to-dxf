@@ -1381,13 +1381,13 @@ export default function Home() {
         <div className="flex justify-end mb-4">
           {appUser ? (
             <div
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+              className="flex flex-wrap items-center gap-1 px-2.5 py-1.5 rounded-full max-w-full overflow-hidden"
               style={{ background: '#f1f5f9', border: '1px solid #e2e8f0' }}
             >
-              <UserCircle className="w-3.5 h-3.5 text-gray-500" />
-              <span className="text-xs text-gray-600">{appUser.name ?? appUser.email}</span>
+              <UserCircle className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+              <span className="text-xs text-gray-600 truncate max-w-[80px] sm:max-w-[140px]">{appUser.name ?? appUser.email}</span>
               <div
-                className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full mx-1"
+                className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full shrink-0"
                 style={{ background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4338ca' }}
               >
                 <Sparkles className="w-3 h-3" />
@@ -1395,20 +1395,20 @@ export default function Home() {
               </div>
               <button
                 onClick={() => window.location.href = "/tokens"}
-                className="text-xs px-2 py-0.5 rounded-full transition-colors text-indigo-600 hover:text-indigo-800"
+                className="text-xs px-2 py-0.5 rounded-full transition-colors text-indigo-600 hover:text-indigo-800 shrink-0"
               >
                 {isRtl ? "אסימונים" : "Tokens"}
               </button>
               <button
                 onClick={() => window.location.href = "/history"}
-                className="text-xs px-2 py-0.5 rounded-full transition-colors flex items-center gap-1 text-gray-500 hover:text-gray-700"
+                className="text-xs px-2 py-0.5 rounded-full transition-colors flex items-center gap-1 text-gray-500 hover:text-gray-700 shrink-0"
               >
                 <History className="w-3 h-3" />
-                {t("history")}
+                <span className="hidden sm:inline">{t("history")}</span>
               </button>
               <button
                 onClick={handleLogout}
-                className="text-xs px-2 py-0.5 rounded-full transition-colors flex items-center gap-1 text-gray-400 hover:text-gray-600"
+                className="text-xs px-2 py-0.5 rounded-full transition-colors flex items-center gap-1 text-gray-400 hover:text-gray-600 shrink-0"
               >
                 <LogOut className="w-3 h-3" />
               </button>
@@ -1438,10 +1438,10 @@ export default function Home() {
           >
             <TabsTrigger
               value="ai"
-              className="flex-1 gap-1.5 text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm relative"
+              className="flex-1 gap-1 text-xs sm:text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm relative px-1"
             >
-              <Sparkles className="w-4 h-4" />
-              <span>{isRtl ? "✨ AI יצירה" : "✨ AI Create"}</span>
+              <Sparkles className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{isRtl ? "✨ AI יצירה" : "✨ AI Create"}</span>
               {activeJobs.generate && (
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
@@ -1451,10 +1451,10 @@ export default function Home() {
             </TabsTrigger>
             <TabsTrigger
               value="trace"
-              className="flex-1 gap-1.5 text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-sm relative"
+              className="flex-1 gap-1 text-xs sm:text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-sm relative px-1"
             >
-              <Scan className="w-4 h-4" />
-              <span>{isRtl ? "📷 AI Outline" : "📷 AI Outline"}</span>
+              <Scan className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{isRtl ? "📷 AI Outline" : "📷 AI Outline"}</span>
               {activeJobs.trace && (
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
@@ -1464,10 +1464,10 @@ export default function Home() {
             </TabsTrigger>
             <TabsTrigger
               value="redraw"
-              className="flex-1 gap-1.5 text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:shadow-sm relative"
+              className="flex-1 gap-1 text-xs sm:text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:shadow-sm relative px-1"
             >
-              <FileEdit className="w-4 h-4" />
-              <span>{isRtl ? "✏️ AI סקיצה" : "✏️ AI Sketch"}</span>
+              <FileEdit className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{isRtl ? "✏️ AI סקיצה" : "✏️ AI Sketch"}</span>
               {activeJobs.doc && (
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />

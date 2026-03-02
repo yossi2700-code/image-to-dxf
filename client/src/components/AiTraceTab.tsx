@@ -564,10 +564,10 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       )}
 
       <div className="flex flex-col gap-5">
-        {/* Upload area */}
+        {/* Upload area — hidden during loading */}
         <div
           className="rounded-xl p-5 relative"
-          style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+          style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', display: status === 'loading' ? 'none' : undefined }}
         >
             <div className="flex items-center gap-2 mb-3">
               <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: '#f0fdf9'}}>
