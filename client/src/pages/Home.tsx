@@ -1511,16 +1511,14 @@ export default function Home() {
             </TabsTrigger>
             <TabsTrigger
               value="redraw"
-              className="flex-1 gap-1 text-xs sm:text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:shadow-sm relative px-1"
+              disabled
+              className="flex-1 gap-1 text-xs sm:text-sm font-semibold transition-all rounded-xl text-gray-400 opacity-60 cursor-not-allowed relative px-1 data-[state=active]:bg-gray-200 data-[state=active]:text-gray-500"
             >
               <FileEdit className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">{isRtl ? "✏️ AI סקיצה" : "✏️ AI Sketch"}</span>
-              {activeJobs.doc && (
-                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
-                </span>
-              )}
+              <span className="absolute -top-1.5 -right-1 text-[9px] font-bold bg-orange-400 text-white px-1 rounded-full leading-4">
+                {isRtl ? "תחזוק" : "maint"}
+              </span>
             </TabsTrigger>
           </TabsList>
 
@@ -1583,6 +1581,20 @@ export default function Home() {
           </TabsContent>
 
           <TabsContent value="redraw">
+            {/* Maintenance notice */}
+            <div className="mb-4 rounded-xl p-4 flex items-start gap-3" style={{ background: '#fff7ed', border: '1.5px solid #fed7aa' }}>
+              <span className="text-2xl mt-0.5">🛠️</span>
+              <div>
+                <p className="font-bold text-orange-700 text-sm mb-1">
+                  {isRtl ? "מצב תחזוקה זמני" : "Temporary Maintenance"}
+                </p>
+                <p className="text-orange-600 text-xs leading-relaxed">
+                  {isRtl
+                    ? "הפיצרות AI סקיצה זמנית אינה זמינה. אנו עובדים על שיפורים ונחזור בקרוב. בינתיים ניתן להשתמש ב-AI Outline ו-AI יצירה."
+                    : "AI Sketch is temporarily unavailable. We are working on improvements and will be back soon. In the meantime, use AI Outline or AI Create."}
+                </p>
+              </div>
+            </div>
             {/* Demo gallery — AI Document */}
             <div
               className="mb-4 rounded-xl overflow-hidden p-3"

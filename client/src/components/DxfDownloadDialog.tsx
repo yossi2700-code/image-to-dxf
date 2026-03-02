@@ -45,7 +45,8 @@ function scaleDxfContent(dxfText: string, scaleFactor: number): string {
 
 // ─── PDF Export via jsPDF + svg2pdf.js ───────────────────────────────────────
 // Generates a real PDF file (Blob) in the browser — no print dialog needed.
-// Returns the PDF as a Uint8Array for download or Web Share API.
+// Uses server-side SVG→PNG conversion (sharp) to avoid Canvg/OffscreenCanvas issues on iOS Safari.
+// Returns the PDF as an ArrayBuffer for download or Web Share API.
 
 async function generatePdfBlob(
   svgContent: string,
@@ -53,48 +54,33 @@ async function generatePdfBlob(
   heightMm: number
 ): Promise<ArrayBuffer> {
   const { jsPDF } = await import("jspdf");
-  const { Canvg } = await import("canvg");
 
-  // Render SVG to canvas using canvg (avoids CORS/security issues with img.src)
   const PX_PER_MM = 96 / 25.4;
-  const widthPx = Math.round(widthMm * PX_PER_MM * 2); // 2x for quality
-  const heightPx = Math.round(heightMm * PX_PER_MM * 2);
+  const widthPx = Math.min(Math.round(widthMm * PX_PER_MM * 2), 3000); // 2x for quality, max 3000px
+  const heightPx = Math.min(Math.round(heightMm * PX_PER_MM * 2), 3000);
 
-  // Ensure SVG has proper viewBox
-  const parser = new DOMParser();
-  const svgDoc = parser.parseFromString(svgContent, "image/svg+xml");
-  const svgEl = svgDoc.documentElement;
-  if (!svgEl.getAttribute("viewBox")) {
-    const w = svgEl.getAttribute("width") || "1024";
-    const h = svgEl.getAttribute("height") || "1024";
-    svgEl.setAttribute("viewBox", `0 0 ${w} ${h}`);
-  }
-  // Add white background rect
-  const bgRect = svgDoc.createElementNS("http://www.w3.org/2000/svg", "rect");
-  bgRect.setAttribute("width", "100%");
-  bgRect.setAttribute("height", "100%");
-  bgRect.setAttribute("fill", "white");
-  svgEl.insertBefore(bgRect, svgEl.firstChild);
-  const svgStr = new XMLSerializer().serializeToString(svgDoc);
-
-  // Draw SVG onto canvas using canvg
-  const canvas = document.createElement("canvas");
-  canvas.width = widthPx;
-  canvas.height = heightPx;
-  const ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = "white";
-  ctx.fillRect(0, 0, widthPx, heightPx);
-
-  const v = await Canvg.fromString(ctx, svgStr, {
-    ignoreDimensions: true,
-    scaleWidth: widthPx,
-    scaleHeight: heightPx,
+  // Step 1: Convert SVG → PNG on the server (works on all browsers including iOS Safari)
+  const pngRes = await fetch("/api/svg-to-png", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ svgContent, widthPx, heightPx }),
   });
-  await v.render();
+  if (!pngRes.ok) {
+    const err = await pngRes.json().catch(() => ({})) as Record<string, unknown>;
+    throw new Error((err.message as string) || `SVG-to-PNG failed: ${pngRes.status}`);
+  }
 
-  const imgData = canvas.toDataURL("image/png");
+  // Step 2: Convert PNG blob → base64 data URL
+  const pngBlob = await pngRes.blob();
+  const imgData = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(pngBlob);
+  });
 
-  // Create PDF
+  // Step 3: Create PDF from PNG image (no Canvg needed)
   const pdf = new jsPDF({
     orientation: widthMm >= heightMm ? "landscape" : "portrait",
     unit: "mm",

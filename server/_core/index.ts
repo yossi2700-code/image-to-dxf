@@ -14,6 +14,7 @@ import appAuthRoute from "../appAuth";
 import aiTraceRoute from "../aiTraceRoute";
 import aiRefineRoute from "../aiRefineRoute";
 import aiDocumentRedrawRoute from "../aiDocumentRedrawRoute";
+import svgToPngRoute from "../svgToPngRoute";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -56,6 +57,8 @@ async function startServer() {
   app.use(aiRefineRoute);
   // AI Document Redraw route (photo/document → faithful line art → DXF)
   app.use(aiDocumentRedrawRoute);
+  // SVG → PNG conversion route (used by PDF export on iOS/Safari)
+  app.use(svgToPngRoute);
   // tRPC API
   app.use(
     "/api/trpc",

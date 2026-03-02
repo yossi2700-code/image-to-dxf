@@ -921,3 +921,8 @@
 ## שיפור מהירות AI Outline - מרץ 2026
 
 - [x] קיצור זמן עיבוד AI Outline: LLM detail=low, editSource 512px, potrace 1024px, streaming partial results
+
+## תיקון PDF באייפון - מרץ 2026
+
+- [x] תיקון שגיאת PDF באייפון — הוחלף Canvg ב-endpoint שרתי /api/svg-to-png (sharp), עובד בכל דפדפן
+- [x] מצב תחזוקה ל-AI סקיצה — כפתור מבוטל + badge “תחזוק” + הראת הערה בצבע כתום
