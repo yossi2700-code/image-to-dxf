@@ -23,9 +23,12 @@ import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { deductTokens, addTokens, TOKEN_COSTS, TokenAction } from "./tokenService";
 import { svgToDxf } from "./svgToDxf";
+import { invokeLLM } from "./_core/llm";
 import potrace from "potrace";
 import { createJob, getJob, updateJob, cancelJob } from "./jobStore";
-import { ENV } from "./_core/env";
+import OpenAI from "openai";
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
@@ -67,37 +70,29 @@ function pngToSvg(pngBuffer: Buffer): Promise<string> {
 }
 
 /**
- * Call Manus Forge image generation API with optional source image.
- * Uses originalImages to make the model see the actual image and redraw faithfully.
+ * Build a line art prompt for document/sketch redraw.
+ * Focuses on engraving-style detail suitable for CNC laser.
  */
-async function forgeGenerateImage(prompt: string, sourceB64: string, sourceMimeType: string): Promise<Buffer> {
-  if (!ENV.forgeApiUrl) throw new Error("BUILT_IN_FORGE_API_URL is not configured");
-  if (!ENV.forgeApiKey) throw new Error("BUILT_IN_FORGE_API_KEY is not configured");
-
-  const baseUrl = ENV.forgeApiUrl.endsWith("/") ? ENV.forgeApiUrl : `${ENV.forgeApiUrl}/`;
-  const fullUrl = new URL("images.v1.ImageService/GenerateImage", baseUrl).toString();
-
-  const response = await fetch(fullUrl, {
-    method: "POST",
-    headers: {
-      accept: "application/json",
-      "content-type": "application/json",
-      "connect-protocol-version": "1",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
-    },
-    body: JSON.stringify({
-      prompt,
-      original_images: [{ b64Json: sourceB64, mimeType: sourceMimeType }],
-    }),
-  });
-
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    throw new Error(`Image generation failed (${response.status})${detail ? `: ${detail}` : ""}`);
-  }
-
-  const result = (await response.json()) as { image: { b64Json: string; mimeType: string } };
-  return Buffer.from(result.image.b64Json, "base64");
+function buildDocumentLineArtPrompt(objectDescription: string): string {
+  return (
+    `Professional black and white engraving-style line art of: ${objectDescription}. ` +
+    "=== CAMERA ANGLE / VIEW — MOST CRITICAL RULE === " +
+    "Draw the object from the EXACT same camera angle and view described above. " +
+    "If the description says 'pure side view' or 'profile view' — draw it as a FLAT 90-DEGREE SIDE VIEW, NOT a 3/4 angle. " +
+    "If the description says 'front view' — draw it facing directly toward the viewer. " +
+    "DO NOT change the camera angle. DO NOT mirror or flip the object. " +
+    "=== END CAMERA ANGLE RULE === " +
+    "STYLE: Fine art engraving — like a master woodcut or steel engraving. Lines vary in weight: thicker for main outlines, thinner for interior details and textures. " +
+    "Decorative elements (flowers, leaves, scrollwork, ornaments) should have intricate, detailed linework with visible internal structure. " +
+    "Pure white background (#FFFFFF). Only pure black (#000000) lines on white. NO fills, NO shading, NO gradients. " +
+    "=== MANDATORY FRAMING RULES (NEVER VIOLATE) === " +
+    "The ENTIRE object MUST be 100% visible — NOTHING cut off, NOTHING touching the edge. " +
+    "Leave AT LEAST 15% white empty space on EVERY side (top, bottom, left, right). " +
+    "=== END FRAMING RULES === " +
+    "Include ALL decorative details visible in the original — do not simplify or omit fine ornamental elements. " +
+    "NO TEXT: Remove ALL text, letters, words, numbers, and inscriptions. Draw ONLY the graphic/decorative elements. " +
+    "Professional engraving-style line art suitable for laser engraving on stone or metal."
+  );
 }
 
 /**
@@ -173,40 +168,78 @@ async function runDocumentRedrawJob(
     const jobCheck = getJob(jobId);
     if (!jobCheck || jobCheck.status === "cancelled") return;
 
-    console.log("[aiDocumentRedraw] Preparing image for Forge API edit...");
+    console.log("[aiDocumentRedraw] Analyzing image with LLM...");
     const baseFilename = buildFilename(userDesc || "document");
 
-    // Prepare image: resize to max 1024px, keep aspect ratio, convert to PNG
-    const editInputBuffer = await sharp(imageBuffer)
+    // Prepare image as base64 for LLM analysis
+    const analysisBuffer = await sharp(imageBuffer)
       .resize(1024, 1024, { fit: "inside", withoutEnlargement: true })
-      .png()
+      .jpeg({ quality: 85 })
       .toBuffer();
+    const imageBase64 = analysisBuffer.toString("base64");
 
-    const sourceB64 = editInputBuffer.toString("base64");
+    // Step A: LLM analyzes the image
+    const llmResponse = await invokeLLM({
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an expert at describing images for line art / engraving generation. " +
+            "Analyze the image and provide a precise description for generating clean engraving-style line art that EXACTLY matches the original. " +
+            "CRITICAL — you MUST describe ALL of the following: " +
+            "(1) CAMERA ANGLE / VIEW TYPE — this is the most important: Is it a PURE SIDE VIEW (90 degrees, profile)? A FRONT VIEW (facing camera)? A REAR VIEW? A 3/4 ANGLE VIEW (diagonal)? A TOP-DOWN VIEW? Be extremely specific. " +
+            "(2) The exact facing direction of any person/animal/figure/vehicle (facing left, facing right, facing forward, etc.). " +
+            "(3) The exact body pose and position (standing, sitting, crouching, arms raised, walking, etc.). " +
+            "(4) Key structural features, proportions, decorative elements, and distinctive details. " +
+            "(5) Any text or inscriptions present (describe their position but note they should be removed from the line art). " +
+            "Start your description with the camera angle/view type. Output ONLY the description (3-6 sentences), no preamble.",
+        },
+        {
+          role: "user",
+          content: [
+            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "high" } },
+            { type: "text", text: userDesc
+              ? `Describe this image for engraving line art generation. User note: ${userDesc}`
+              : "Describe this image for engraving line art generation. Include all decorative elements, figures, and their exact positions/orientations." },
+          ],
+        },
+      ],
+    });
+
+    const objectDescription =
+      (llmResponse as { choices?: Array<{ message?: { content?: string } }> })
+        ?.choices?.[0]?.message?.content?.trim() ||
+      userDesc ||
+      "decorative engraving design";
 
     // Check if cancelled before generation
     const jobBeforeGen = getJob(jobId);
     if (!jobBeforeGen || jobBeforeGen.status === "cancelled") return;
 
-    // ── Direct image edit via Forge API: send original image + clear instruction ──
-    // The model sees the actual image and redraws it faithfully — preserving exact
-    // positions, proportions, poses, and directions.
-    const imagePrompt =
-      `Redraw this entire image as a professional black and white engraving-style line art for CNC laser engraving.\n\n` +
-      `STYLE: Fine art engraving — like a master woodcut or steel engraving. Lines should vary in weight: thicker for main outlines, thinner for interior details and textures. Decorative elements (flowers, leaves, scrollwork, ornaments) should have intricate, detailed linework with visible internal structure — NOT simplified childish outlines.\n\n` +
-      `WHAT TO DRAW: Every visible graphic element, decoration, shape, symbol, and ornamental detail in the image — faithfully reproduced in their EXACT positions, proportions, and orientations. CRITICAL: preserve the exact pose, direction, and facing of every figure or object — do NOT mirror, rotate, or change the orientation of anything.\n\n` +
-      `STRICT RULES:\n` +
-      `1. NO TEXT: Remove ALL text, letters, words, numbers, and inscriptions. Draw ONLY the graphic/decorative elements.\n` +
-      `2. ARTISTIC LINE WEIGHT: Use varied line thickness — bold outlines for shapes, fine lines for internal details and textures. This creates depth and artistic quality.\n` +
-      `3. NO FILLS: No solid black areas, no grey fills, no gradients. Only black lines on white background.\n` +
-      `4. RICH DETAIL: Include all decorative details visible in the original — do not simplify or omit fine ornamental elements.\n` +
-      `5. FAITHFUL COMPOSITION: Preserve the exact layout, proportions, arrangement, and orientation of the original image.\n\n` +
-      (userDesc ? `User note: ${userDesc}\n\n` : "") +
-      `OUTPUT: Professional engraving-style line art. Black lines on pure white background. Artistic quality suitable for laser engraving on stone or metal.`;
+    // Step B: Generate with openai.images.generate (same as AI Outline — reliable, no timeout)
+    const imagePrompt = buildDocumentLineArtPrompt(objectDescription + (userDesc ? `. User note: ${userDesc}` : ""));
 
-    const rawBuffer = await forgeGenerateImage(imagePrompt, sourceB64, "image/png");
+    const genResponse = await openai.images.generate({
+      model: "gpt-image-1",
+      prompt: imagePrompt,
+      n: 1,
+      size: "1024x1024",
+      quality: "medium",
+    });
 
-    const objectDescription = userDesc || "document redraw";
+    const imageData = genResponse.data?.[0];
+    if (!imageData) throw new Error("לא הצלחנו לייצר תמונה");
+
+    let rawBuffer: Buffer;
+    if (imageData.b64_json) {
+      rawBuffer = Buffer.from(imageData.b64_json, "base64");
+    } else if (imageData.url) {
+      const imgResp = await fetch(imageData.url);
+      if (!imgResp.ok) throw new Error("שגיאה בהורדת התמונה שנוצרה");
+      rawBuffer = Buffer.from(await imgResp.arrayBuffer());
+    } else {
+      throw new Error("לא התקבלה תמונה מה-AI");
+    }
 
     // Check if cancelled after image generation
     const jobAfterGen = getJob(jobId);
@@ -464,16 +497,37 @@ router.post(
         .toBuffer();
       const sourceB64 = pngBuffer.toString("base64");
 
-      // ── Refine with Forge API ─────────────────────────────────────────────────
+      // ── Refine with openai.images.generate ───────────────────────────────────
       const refinePrompt =
-        `Apply this correction to the line art: ${instruction.trim()}. ` +
+        `Professional black and white engraving-style line art. ` +
         (origDesc ? `Original design: ${origDesc}. ` : "") +
+        `Apply this correction: ${instruction.trim()}. ` +
         "Keep all other elements exactly as they are — same angles, same positions, same proportions, same orientation. " +
         "Maintain the same clean black-and-white line art style. " +
-        "Pure black lines on white background. No grey tones, no gradients. " +
-        "The complete design must fit inside the frame with 12% margin.";
+        "Pure black lines on white background. No grey tones, no gradients, no fills. " +
+        "The complete design must fit inside the frame with 15% margin on all sides.";
 
-      const rawBuffer = await forgeGenerateImage(refinePrompt, sourceB64, "image/png");
+      const genResp = await openai.images.generate({
+        model: "gpt-image-1",
+        prompt: refinePrompt,
+        n: 1,
+        size: "1024x1024",
+        quality: "medium",
+      });
+
+      const refineImageData = genResp.data?.[0];
+      if (!refineImageData) throw new Error("לא הצלחנו לייצר תמונה");
+
+      let rawBuffer: Buffer;
+      if (refineImageData.b64_json) {
+        rawBuffer = Buffer.from(refineImageData.b64_json, "base64");
+      } else if (refineImageData.url) {
+        const imgR = await fetch(refineImageData.url);
+        if (!imgR.ok) throw new Error("שגיאה בהורדת התמונה שנוצרה");
+        rawBuffer = Buffer.from(await imgR.arrayBuffer());
+      } else {
+        throw new Error("לא התקבלה תמונה מה-AI");
+      }
 
       const baseFilename = buildFilename(origDesc || instruction);
       const result = await processImageToDxf(rawBuffer, baseFilename, "ai-document-refine");

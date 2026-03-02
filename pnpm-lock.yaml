@@ -136,6 +136,9 @@ importers:
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
+      canvg:
+        specifier: ^4.0.3
+        version: 4.0.3
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -3086,6 +3089,10 @@ packages:
   canvg@3.0.11:
     resolution: {integrity: sha512-5ON+q7jCTgMp9cjpu4Jo6XbvfYwSB2Ow3kzHKfIyJfaCAOHLbdKPQqGKgfED/R5B+3TFFfe8pegYA+b423SRyA==}
     engines: {node: '>=10.0.0'}
+
+  canvg@4.0.3:
+    resolution: {integrity: sha512-fKzMoMBwus3CWo1Uy8XJc4tqqn98RoRrGV6CsIkaNiQT5lOeHuMh4fOt+LXLzn2Wqtr4p/c2TOLz4xtu4oBlFA==}
+    engines: {node: '>=12.0.0'}
 
   ccount@2.0.1:
     resolution: {integrity: sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==}
@@ -8314,8 +8321,7 @@ snapshots:
 
   '@types/qs@6.14.0': {}
 
-  '@types/raf@3.4.3':
-    optional: true
+  '@types/raf@3.4.3': {}
 
   '@types/range-parser@1.2.7': {}
 
@@ -8555,6 +8561,14 @@ snapshots:
       stackblur-canvas: 2.7.0
       svg-pathdata: 6.0.3
     optional: true
+
+  canvg@4.0.3:
+    dependencies:
+      '@types/raf': 3.4.3
+      raf: 3.4.1
+      rgbcolor: 1.0.1
+      stackblur-canvas: 2.7.0
+      svg-pathdata: 6.0.3
 
   ccount@2.0.1: {}
 
@@ -10258,8 +10272,7 @@ snapshots:
 
   peek-readable@4.1.0: {}
 
-  performance-now@2.1.0:
-    optional: true
+  performance-now@2.1.0: {}
 
   phin@2.9.3: {}
 
@@ -10355,7 +10368,6 @@ snapshots:
   raf@3.4.1:
     dependencies:
       performance-now: 2.1.0
-    optional: true
 
   range-parser@1.2.1: {}
 
@@ -10574,8 +10586,7 @@ snapshots:
 
   resolve-pkg-maps@1.0.0: {}
 
-  rgbcolor@1.0.1:
-    optional: true
+  rgbcolor@1.0.1: {}
 
   robust-predicates@3.0.2: {}
 
@@ -10753,8 +10764,7 @@ snapshots:
 
   stackback@0.0.2: {}
 
-  stackblur-canvas@2.7.0:
-    optional: true
+  stackblur-canvas@2.7.0: {}
 
   standardwebhooks@1.0.0:
     dependencies:
@@ -10843,8 +10853,7 @@ snapshots:
     dependencies:
       '@thednp/dommatrix': 2.0.12
 
-  svg-pathdata@6.0.3:
-    optional: true
+  svg-pathdata@6.0.3: {}
 
   svg2pdf.js@2.7.0(jspdf@4.2.0):
     dependencies:

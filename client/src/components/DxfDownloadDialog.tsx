@@ -53,40 +53,31 @@ async function generatePdfBlob(
   heightMm: number
 ): Promise<ArrayBuffer> {
   const { jsPDF } = await import("jspdf");
+  const { Canvg } = await import("canvg");
 
-  // Render SVG to canvas, then embed as image in PDF
+  // Render SVG to canvas using canvg (avoids CORS/security issues with img.src)
   const PX_PER_MM = 96 / 25.4;
   const widthPx = Math.round(widthMm * PX_PER_MM * 2); // 2x for quality
   const heightPx = Math.round(heightMm * PX_PER_MM * 2);
 
-  // Ensure SVG has proper dimensions and viewBox
+  // Ensure SVG has proper viewBox
   const parser = new DOMParser();
   const svgDoc = parser.parseFromString(svgContent, "image/svg+xml");
   const svgEl = svgDoc.documentElement;
-
-  // Get viewBox or fallback to existing width/height
-  let vb = svgEl.getAttribute("viewBox");
-  if (!vb) {
+  if (!svgEl.getAttribute("viewBox")) {
     const w = svgEl.getAttribute("width") || "1024";
     const h = svgEl.getAttribute("height") || "1024";
-    vb = `0 0 ${w} ${h}`;
-    svgEl.setAttribute("viewBox", vb);
+    svgEl.setAttribute("viewBox", `0 0 ${w} ${h}`);
   }
-  svgEl.setAttribute("width", String(widthPx));
-  svgEl.setAttribute("height", String(heightPx));
-  // Ensure white background
+  // Add white background rect
   const bgRect = svgDoc.createElementNS("http://www.w3.org/2000/svg", "rect");
   bgRect.setAttribute("width", "100%");
   bgRect.setAttribute("height", "100%");
   bgRect.setAttribute("fill", "white");
   svgEl.insertBefore(bgRect, svgEl.firstChild);
+  const svgStr = new XMLSerializer().serializeToString(svgDoc);
 
-  const serializer = new XMLSerializer();
-  const svgStr = serializer.serializeToString(svgDoc);
-  const svgBlob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
-  const svgUrl = URL.createObjectURL(svgBlob);
-
-  // Draw SVG onto canvas
+  // Draw SVG onto canvas using canvg
   const canvas = document.createElement("canvas");
   canvas.width = widthPx;
   canvas.height = heightPx;
@@ -94,13 +85,12 @@ async function generatePdfBlob(
   ctx.fillStyle = "white";
   ctx.fillRect(0, 0, widthPx, heightPx);
 
-  await new Promise<void>((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => { ctx.drawImage(img, 0, 0, widthPx, heightPx); resolve(); };
-    img.onerror = reject;
-    img.src = svgUrl;
+  const v = await Canvg.fromString(ctx, svgStr, {
+    ignoreDimensions: true,
+    scaleWidth: widthPx,
+    scaleHeight: heightPx,
   });
-  URL.revokeObjectURL(svgUrl);
+  await v.render();
 
   const imgData = canvas.toDataURL("image/png");
 

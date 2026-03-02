@@ -24,6 +24,7 @@ import {
   Wand2,
   CheckCircle2,
   X,
+  FileText,
 } from "lucide-react";
 
 interface GeneratedImage {
@@ -152,11 +153,72 @@ interface ImageCardProps {
   isRtl: boolean;
   onDownload: (image: GeneratedImage) => void;
   onZoom: (src: string, alt: string) => void;
+  onQuickPdf?: (image: GeneratedImage) => void;
 }
 
-function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) {
+function ImageCard({ image, index, isRtl, onDownload, onZoom, onQuickPdf }: ImageCardProps) {
   const [showVector, setShowVector] = useState(false);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
   const label = isRtl ? VARIATION_LABELS[index] : VARIATION_LABELS_EN[index];
+
+  const handleQuickDxf = async () => {
+    try {
+      const resp = await fetch(image.dxfUrl);
+      if (!resp.ok) throw new Error();
+      const text = await resp.text();
+      const blob = new Blob([text], { type: 'application/dxf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = image.dxfFilename || `design-${index + 1}.dxf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch { onDownload(image); }
+  };
+
+  const handleQuickPdf = async () => {
+    if (onQuickPdf) { onQuickPdf(image); return; }
+    setIsPdfLoading(true);
+    try {
+      const { jsPDF } = await import('jspdf');
+      const { Canvg } = await import('canvg');
+      const PX_PER_MM = 96 / 25.4;
+      const wMm = image.realWidth ? image.realWidth / 3.7795 : 100;
+      const hMm = image.realHeight ? image.realHeight / 3.7795 : 100;
+      const wPx = Math.round(wMm * PX_PER_MM * 2);
+      const hPx = Math.round(hMm * PX_PER_MM * 2);
+      const parser = new DOMParser();
+      const svgDoc = parser.parseFromString(image.svgPreview, 'image/svg+xml');
+      const svgEl = svgDoc.documentElement;
+      if (!svgEl.getAttribute('viewBox')) {
+        const w = svgEl.getAttribute('width') || '1024';
+        const h = svgEl.getAttribute('height') || '1024';
+        svgEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      }
+      const bg = svgDoc.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      bg.setAttribute('width', '100%'); bg.setAttribute('height', '100%'); bg.setAttribute('fill', 'white');
+      svgEl.insertBefore(bg, svgEl.firstChild);
+      const svgStr = new XMLSerializer().serializeToString(svgDoc);
+      const canvas = document.createElement('canvas');
+      canvas.width = wPx; canvas.height = hPx;
+      const ctx = canvas.getContext('2d')!;
+      ctx.fillStyle = 'white'; ctx.fillRect(0, 0, wPx, hPx);
+      const v = await Canvg.fromString(ctx, svgStr, { ignoreDimensions: true, scaleWidth: wPx, scaleHeight: hPx });
+      await v.render();
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ orientation: wMm >= hMm ? 'landscape' : 'portrait', unit: 'mm', format: [wMm, hMm] });
+      pdf.addImage(imgData, 'PNG', 0, 0, wMm, hMm);
+      const bytes = pdf.output('arraybuffer') as ArrayBuffer;
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = (image.dxfFilename || `design-${index + 1}`).replace(/\.dxf$/i, '') + '.pdf';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    } catch (err) { console.error('PDF error:', err); onDownload(image); }
+    finally { setIsPdfLoading(false); }
+  };
 
   return (
     <div
@@ -181,23 +243,37 @@ function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) 
           </div>
         </div>
 
-        {/* Toggle vector preview */}
-        <button
-          onClick={() => setShowVector(!showVector)}
-          className="w-full flex items-center justify-center gap-2.5 py-3 px-4 mb-3 rounded-lg transition-all font-bold text-sm"
-          style={showVector ? {
-            background: '#0d9488',
-            color: 'white',
-            border: 'none',
-          } : {
-            background: '#f0fdf9',
-            border: '1px solid #99f6e4',
-            color: '#0d9488',
-          }}
-        >
-          <Eye className="w-4 h-4" />
-          {showVector ? (isRtl ? "הסתיר וקטור ⬆" : "⬆ Hide Vector") : (isRtl ? "הצג וקטור DXF ⬇" : "⬇ Show DXF Vector")}
-        </button>
+        {/* Quick action buttons — directly below image */}
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          {/* DXF */}
+          <button
+            onClick={handleQuickDxf}
+            className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-lg font-semibold text-xs transition-all"
+            style={{ background: '#059669', color: 'white', border: 'none', boxShadow: '0 1px 4px rgba(5,150,105,0.2)' }}
+          >
+            <Download className="w-4 h-4" />
+            DXF
+          </button>
+          {/* PDF */}
+          <button
+            onClick={handleQuickPdf}
+            disabled={isPdfLoading}
+            className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-lg font-semibold text-xs transition-all"
+            style={{ background: '#2563eb', color: 'white', border: 'none', boxShadow: '0 1px 4px rgba(37,99,235,0.2)' }}
+          >
+            {isPdfLoading ? <div className="w-4 h-4 rounded-full" style={{border:'2px solid rgba(255,255,255,0.3)',borderTopColor:'white',animation:'spin 0.8s linear infinite'}} /> : <FileText className="w-4 h-4" />}
+            PDF
+          </button>
+          {/* Vector toggle */}
+          <button
+            onClick={() => setShowVector(!showVector)}
+            className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-lg font-semibold text-xs transition-all"
+            style={showVector ? { background: '#0d9488', color: 'white', border: 'none' } : { background: '#f0fdf9', border: '1px solid #99f6e4', color: '#0d9488' }}
+          >
+            <Eye className="w-4 h-4" />
+            {isRtl ? "וקטור" : "Vector"}
+          </button>
+        </div>
 
         {showVector && (
           <div className="mb-3">
@@ -214,18 +290,14 @@ function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) 
           ))}
         </div>
 
+        {/* Full options dialog */}
         <button
-          className="w-full h-12 font-bold text-base rounded-lg flex items-center justify-center gap-2"
-          style={{
-            background: '#059669',
-            color: 'white',
-            border: 'none',
-            boxShadow: '0 2px 8px rgba(5,150,105,0.25)',
-          }}
+          className="w-full py-2 font-medium text-xs rounded-lg flex items-center justify-center gap-1.5 transition-all"
+          style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#64748b' }}
           onClick={() => onDownload(image)}
         >
-          <Download className="w-5 h-5" />
-          {isRtl ? "הורד DXF / PDF" : "Download DXF / PDF"}
+          <Download className="w-3.5 h-3.5" />
+          {isRtl ? "אפשרויות נוספות (שם קובץ, גודל)" : "More options (filename, size)"}
         </button>
     </div>
   );
