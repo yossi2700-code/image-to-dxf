@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock, User, Sparkles, Zap, Gift } from "lucide-react";
+import { Loader2, Mail, Lock, User, Sparkles, Zap, Gift, AlertCircle } from "lucide-react";
 
 /** Why the dialog was opened — controls the header message shown to the user */
 export type AuthReason = "unregistered" | "limit" | "generic";
@@ -90,6 +90,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [inlineError, setInlineError] = useState<string | null>(null);
 
   // Resolve effective reason (support legacy limitReached prop)
   const reason: AuthReason = authReason ?? (limitReached ? "limit" : "generic");
@@ -99,6 +100,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
     setEmail("");
     setPassword("");
     setLoading(false);
+    setInlineError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -118,7 +120,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error ?? "שגיאה");
+        setInlineError(data.error ?? "שגיאה. נסה שוב.");
         setLoading(false);
         return;
       }
@@ -128,7 +130,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
       onOpenChange(false);
       onSuccess(data.user);
     } catch {
-      toast.error("שגיאת רשת. נסה שוב.");
+      setInlineError("שגיאת רשת. נסה שוב.");
       setLoading(false);
     }
   };
@@ -148,7 +150,14 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
           )}
         </DialogHeader>
 
+        {inlineError && (
+          <div className="flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2.5 text-sm text-red-700 mt-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{inlineError}</span>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+
           {mode === "register" && (
             <div className="space-y-1.5">
               <Label htmlFor="name">שם (אופציונלי)</Label>
