@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Loader2, Mail, Lock, User, Sparkles, Zap, Gift, AlertCircle } from "lucide-react";
 
@@ -89,6 +90,9 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(() => {
+    try { return localStorage.getItem("auth_remember_me") !== "false"; } catch { return true; }
+  });
   const [loading, setLoading] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
   const [forgotSent, setForgotSent] = useState(false);
@@ -137,7 +141,8 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
 
     try {
       const endpoint = mode === "register" ? "/api/app-auth/register" : "/api/app-auth/login";
-      const body = mode === "register" ? { name, email, password } : { email, password };
+      const body = mode === "register" ? { name, email, password } : { email, password, rememberMe };
+      try { localStorage.setItem("auth_remember_me", String(rememberMe)); } catch { /* ignore */ }
 
       const res = await fetch(endpoint, {
         method: "POST",
@@ -255,7 +260,20 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
           )}
 
           {mode === "login" && (
-            <div className="text-left">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="rememberMe"
+                  checked={rememberMe}
+                  onCheckedChange={(v) => setRememberMe(v === true)}
+                />
+                <label
+                  htmlFor="rememberMe"
+                  className="text-sm text-muted-foreground cursor-pointer select-none"
+                >
+                  זכור אותי
+                </label>
+              </div>
               <button type="button" className="text-xs text-muted-foreground underline hover:text-primary" onClick={() => { setMode("forgot"); reset(); }}>שכחתי סיסמא</button>
             </div>
           )}

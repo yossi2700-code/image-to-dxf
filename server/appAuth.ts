@@ -33,13 +33,15 @@ export function getAppUserFromCookie(cookies: Record<string, string> | undefined
   }
 }
 
-/** Set app user session cookie */
-function setSessionCookie(res: import("express").Response, token: string) {
+/** Set app user session cookie.
+ * @param rememberMe - true = persistent 30-day cookie; false = session cookie (clears on browser close)
+ */
+function setSessionCookie(res: import("express").Response, token: string, rememberMe = true) {
   res.cookie(APP_USER_COOKIE, token, {
     httpOnly: true,
     secure: ENV.isProduction,
     sameSite: ENV.isProduction ? "none" : "lax",
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    ...(rememberMe ? { maxAge: 30 * 24 * 60 * 60 * 1000 } : {}), // 30 days or session cookie
     path: "/",
   });
 }
@@ -133,7 +135,7 @@ router.post("/api/app-auth/register", async (req, res) => {
 
 router.post("/api/app-auth/login", async (req, res) => {
   try {
-    const { email, password } = req.body as { email?: string; password?: string };
+    const { email, password, rememberMe } = req.body as { email?: string; password?: string; rememberMe?: boolean };
     if (!email || !password) return res.status(400).json({ error: "אימייל וסיסמה נדרשים" });
 
     const db = await getDb();
@@ -149,7 +151,7 @@ router.post("/api/app-auth/login", async (req, res) => {
     await db.update(appUsers).set({ lastLoginAt: new Date() }).where(eq(appUsers.id, user.id));
 
     const token = signToken(user.id, user.email);
-    setSessionCookie(res, token);
+    setSessionCookie(res, token, rememberMe !== false); // default true for backwards compat
 
     return res.json({ success: true, user: { id: user.id, email: user.email, name: user.name } });
   } catch (err) {
