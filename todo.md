@@ -1018,3 +1018,13 @@
 - [x] Home.tsx — הוספת tab "פנים / Faces" (סגול) עם job tracking
 - [x] tokenService.ts — face_detect: 4 tokens
 - [x] server/_core/index.ts — רישום faceDetectRoute
+
+## אופטימיזציית פנים (מהירות)
+- [ ] faceDetectRoute.ts — הסר GPT-4o Vision step, שלח תמונה ישירות ל-gpt-image-1
+- [ ] faceDetectRoute.ts — הפחת מ-3 וריאציות ל-1 תמונה בלבד
+- [ ] FaceDetectTab.tsx — עדכן UI לתמונה אחת
+
+## אופטימיזציית פנים (מהירות)
+- [ ] faceDetectRoute.ts — הסר GPT-4o Vision step
+- [ ] faceDetectRoute.ts — הפחת מ-3 ל-1 תמונה
+- [ ] FaceDetectTab.tsx — עדכן UI לתמונה אחת

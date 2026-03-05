@@ -520,7 +520,7 @@ export function FaceDetectTab({ onOpenAuth }: FaceDetectTabProps) {
                 <li className="flex gap-1.5"><span className="text-purple-400 shrink-0">•</span>{isRtl ? "תמונה ברורה עם פנים גלויות" : "Clear photo with visible face(s)"}</li>
                 <li className="flex gap-1.5"><span className="text-purple-400 shrink-0">•</span>{isRtl ? "תאורה טובה, ללא חסימות" : "Good lighting, no obstructions"}</li>
                 <li className="flex gap-1.5"><span className="text-purple-400 shrink-0">•</span>{isRtl ? "פנים צד, חצי פנים, או מלפנים" : "Side profile, 3/4 view, or front-facing"}</li>
-                <li className="flex gap-1.5"><span className="text-purple-400 shrink-0">•</span>{isRtl ? "מייצר 3 וריאציות פורטרט לחריטה" : "Generates 3 portrait variations for engraving"}</li>
+                <li className="flex gap-1.5"><span className="text-purple-400 shrink-0">•</span>{isRtl ? "מייצר פורטרט לינארט לחריטת לייזר" : "Generates a portrait line art for laser engraving"}</li>
               </ul>
             </div>
 
@@ -553,7 +553,7 @@ export function FaceDetectTab({ onOpenAuth }: FaceDetectTabProps) {
               onClick={handleDetect}
             >
               <UserCircle className="w-4 h-4" />
-              {isRtl ? "זהה פנים וצור DXF (4 אסימונים)" : "Detect Face & Create DXF (4 tokens)"}
+              {isRtl ? "צור פורטרט DXF (4 אסימונים)" : "Create Portrait DXF (4 tokens)"}
             </button>
           </div>
         </div>
@@ -571,14 +571,11 @@ export function FaceDetectTab({ onOpenAuth }: FaceDetectTabProps) {
           <div className="w-full">
             {/* Steps */}
             <div className="flex justify-center gap-4 mb-2 text-xs font-medium">
-              <span style={{ color: currentStep.includes('מזהה') || currentStep.includes('Detect') ? '#7c3aed' : '#d1d5db', fontWeight: (currentStep.includes('מזהה') || currentStep.includes('Detect')) ? 600 : 400 }}>
-                {isRtl ? 'שלב 1: זיהוי' : 'Step 1: Detect'}
-              </span>
               <span style={{ color: (currentStep.includes('מצייר') || currentStep.includes('Drawing')) ? '#7c3aed' : '#d1d5db', fontWeight: (currentStep.includes('מצייר') || currentStep.includes('Drawing')) ? 600 : 400 }}>
-                {isRtl ? 'שלב 2: ציור' : 'Step 2: Draw'}
+                {isRtl ? 'שלב 1: ציור' : 'Step 1: Draw'}
               </span>
               <span style={{ color: (currentStep.includes('ממיר') || currentStep.includes('Convert')) ? '#7c3aed' : '#d1d5db', fontWeight: (currentStep.includes('ממיר') || currentStep.includes('Convert')) ? 600 : 400 }}>
-                {isRtl ? 'שלב 3: וקטור' : 'Step 3: Vector'}
+                {isRtl ? 'שלב 2: וקטור' : 'Step 2: Vector'}
               </span>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden mb-2">
@@ -587,8 +584,8 @@ export function FaceDetectTab({ onOpenAuth }: FaceDetectTabProps) {
                 style={{
                   background: 'linear-gradient(90deg, #7c3aed, #c084fc)',
                   width: (currentStep.includes('ממיר') || currentStep.includes('Convert')) ? '90%'
-                    : (currentStep.includes('מצייר') || currentStep.includes('Drawing')) ? '60%'
-                    : '25%',
+                    : (currentStep.includes('מצייר') || currentStep.includes('Drawing')) ? '40%'
+                    : '10%',
                   transition: 'width 1s ease-in-out',
                 }}
               />
@@ -596,11 +593,11 @@ export function FaceDetectTab({ onOpenAuth }: FaceDetectTabProps) {
             <div className="flex items-center justify-center gap-2">
               <div className="w-2 h-2 rounded-full bg-purple-400 shrink-0" style={{ animation: 'pulse 1.5s ease-in-out infinite' }} />
               <p className="font-semibold text-sm text-gray-700">
-                {currentStep || (isRtl ? "מזהה פנים בתמונה..." : "Detecting faces in image...")}
+                {currentStep || (isRtl ? "מצייר פורטרט..." : "Drawing portrait...")}
               </p>
             </div>
           </div>
-          <p className="text-xs text-gray-400">{isRtl ? "זה עשוי לקחת 30-90 שניות" : "This may take 30-90 seconds"}</p>
+          <p className="text-xs text-gray-400">{isRtl ? "זה עשוי לקחת 15-25 שניות" : "This may take 15-25 seconds"}</p>
           <div className="flex gap-1.5">
             {[0, 1, 2].map((i) => (
               <div key={i} className="w-1.5 h-1.5 rounded-full bg-purple-400" style={{ animation: `bounce 1s infinite ${i * 0.15}s` }} />
@@ -637,41 +634,17 @@ export function FaceDetectTab({ onOpenAuth }: FaceDetectTabProps) {
       {/* Results */}
       {result && result.images.length > 0 && (
         <>
-          {/* Face description */}
-          {result.faceDescription && (
-            <div className="rounded-xl p-3" style={{ background: '#faf5ff', border: '1px solid #e9d5ff' }}>
-              <div className="flex items-start gap-2">
-                <UserCircle className="w-4 h-4 text-purple-500 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-semibold text-purple-700 mb-0.5">
-                    {isRtl ? "תיאור הפנים שזוהו:" : "Detected face description:"}
-                  </p>
-                  <p className="text-xs text-gray-600 leading-relaxed">{result.faceDescription}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Still loading more */}
-          {status === "loading" && (
-            <div className="flex items-center justify-center gap-2 py-2">
-              <div className="w-4 h-4 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" />
-              <p className="text-sm text-gray-500">{currentStep || (isRtl ? "מייצר וריאציות נוספות..." : "Generating more variations...")}</p>
-            </div>
-          )}
-
-          {/* Image grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {result.images.map((image, idx) => (
+          {/* Single portrait result */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-sm">
               <ImageCard
-                key={idx}
-                image={image}
-                index={idx}
+                image={result.images[0]}
+                index={0}
                 isRtl={isRtl}
                 onDownload={setDownloadTarget}
                 onZoom={(src, alt) => setZoomImg({ src, alt })}
               />
-            ))}
+            </div>
           </div>
 
           {/* New image button */}

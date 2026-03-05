@@ -1,17 +1,15 @@
 /**
- * faceDetectRoute.ts — Face Detection to DXF
+ * faceDetectRoute.ts — Face Detection to DXF (Fast Mode)
  *
- * Pipeline:
+ * Pipeline (optimized — no Vision step):
  *   1. User uploads a photo containing faces
- *   2. GPT-4o Vision detects and describes the face(s) in detail
- *   3. gpt-image-1 draws a clean B&W portrait line art of the face(s)
- *   4. potrace → svgToDxf → DXF ready for laser engraving / CNC
+ *   2. gpt-image-1 draws a clean B&W portrait line art directly from the photo
+ *   3. potrace → svgToDxf → DXF ready for laser engraving / CNC
  *
  * Endpoints:
  *   POST /api/face-detect/start  — start async job, returns { jobId }
  *   GET  /api/face-detect/job/:jobId — poll job status
  *   POST /api/face-detect/cancel/:jobId — cancel job and refund tokens
- *   POST /api/face-detect/convert — convert a preview PNG to DXF (step 2)
  */
 import { Router } from "express";
 import multer from "multer";
@@ -22,7 +20,6 @@ import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { deductTokens, addTokens, TOKEN_COSTS, TokenAction } from "./tokenService";
-import { invokeLLM } from "./_core/llm";
 import { createJob, getJob, updateJob, cancelJob, heartbeatJob } from "./jobStore";
 import { svgToDxf } from "./svgToDxf";
 import OpenAI from "openai";
@@ -48,51 +45,20 @@ function pngToSvg(pngBuffer: Buffer): Promise<string> {
   });
 }
 
-// ─── Style variations for face portrait line art ──────────────────────────────
-const FACE_STYLE_VARIATIONS = [
-  {
-    label: "portrait",
-    style:
-      "PORTRAIT STYLE: Clean professional portrait line art. " +
-      "Bold outer contour of the face shape, hairline, and neck. " +
-      "Clear lines for eyes (with pupils and lashes), eyebrows, nose bridge and nostrils, lips, ears. " +
-      "Subtle lines for cheekbones, jaw definition, and forehead. " +
-      "Like a professional portrait sketch or engraving. " +
-      "NO shading, NO hatching, NO fill. Pure black lines on white only.",
-  },
-  {
-    label: "detailed",
-    style:
-      "DETAILED PORTRAIT: Highly detailed face line art for laser engraving. " +
-      "Every facial feature rendered with precision: eyes with detailed iris lines, " +
-      "nose with full 3D definition, lips with natural curves, hair with flowing strands. " +
-      "Skin texture suggested with minimal contour lines only. " +
-      "Professional engraving quality — rich detail but all clean distinct lines. " +
-      "NO shading, NO hatching, NO fill. Black lines on white only.",
-  },
-  {
-    label: "artistic",
-    style:
-      "ARTISTIC PORTRAIT: Elegant artistic portrait with decorative flair. " +
-      "Bold expressive lines capturing the essence of the face. " +
-      "Hair rendered as flowing decorative lines. " +
-      "Facial features stylized but recognizable — like a fine art portrait etching. " +
-      "Suitable for artistic laser engraving on wood or metal. " +
-      "NO shading, NO hatching, NO fill. Clean artistic lines only.",
-  },
-];
-
-// ─── Build the full image generation prompt ───────────────────────────────────
-function buildFacePrompt(faceDescription: string, variationIndex: number): string {
-  const variation = FACE_STYLE_VARIATIONS[variationIndex % FACE_STYLE_VARIATIONS.length];
+// ─── Direct portrait prompt (no Vision step) ──────────────────────────────────
+function buildDirectPortraitPrompt(): string {
   return (
-    `Professional black and white portrait line art of: ${faceDescription}. ` +
+    "Professional black and white portrait line art. " +
     "Pure white background (#FFFFFF). " +
-    "Bold thick black outlines, no fill, no shading, no gradients, no grey tones. " +
+    "Bold thick black outlines only — no fill, no shading, no gradients, no grey tones. " +
     "High contrast: only pure black (#000000) lines on white. " +
     "CRITICAL: Draw ONLY the face and head — no body, no background elements, no text. " +
-    "The face must be centered, front-facing or at the exact angle described. " +
-    `${variation.style} ` +
+    "The face must be centered. " +
+    "PORTRAIT STYLE: Clean professional portrait line art. " +
+    "Bold outer contour of the face shape, hairline, and neck. " +
+    "Clear lines for eyes (with pupils and lashes), eyebrows, nose bridge and nostrils, lips, ears. " +
+    "Subtle lines for cheekbones, jaw definition, and forehead. " +
+    "Like a professional portrait sketch or engraving. " +
     "=== MANDATORY FRAMING RULES === " +
     "The face must occupy 60-75% of the image. Leave at least 12% white margin on every edge. " +
     "The entire head must be fully visible — nothing cropped. " +
@@ -105,7 +71,6 @@ function buildFacePrompt(faceDescription: string, variationIndex: number): strin
 async function runFaceDetectJob(
   jobId: string,
   imageBuffer: Buffer,
-  imageBase64: string,
   lang: "he" | "en",
   appUserId: number,
   ipAnon: string,
@@ -118,194 +83,115 @@ async function runFaceDetectJob(
   try {
     updateJob(jobId, {
       status: "processing",
-      step: isHe ? "מזהה פנים בתמונה..." : "Detecting faces in image...",
-      stepEn: "Detecting faces in image...",
+      step: isHe ? "מצייר פורטרט..." : "Drawing portrait...",
+      stepEn: "Drawing portrait...",
+      partialImages: [],
     });
 
     const jobCheck = getJob(jobId);
     if (!jobCheck || jobCheck.status === "cancelled") return;
 
-    // ── Step A: GPT-4o Vision analyzes the face(s) ─────────────────────────
-    const llmResponse = await invokeLLM({
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are an expert at analyzing human faces for portrait line art generation. " +
-            "Your description will be used to generate a precise portrait line art. " +
-            "Describe the face with maximum accuracy for portrait drawing:\n" +
-            "(1) FACE SHAPE: oval, round, square, heart, diamond, oblong — be specific.\n" +
-            "(2) CAMERA ANGLE: front view, 3/4 left, 3/4 right, profile left, profile right.\n" +
-            "(3) FACIAL FEATURES: eye shape and size, eyebrow shape, nose shape, lip shape and fullness, ear visibility.\n" +
-            "(4) HAIR: length, style (straight/wavy/curly), parting direction, distinctive features.\n" +
-            "(5) AGE RANGE: approximate age (child/teen/young adult/adult/senior).\n" +
-            "(6) EXPRESSION: neutral, smiling, serious, etc.\n" +
-            "(7) DISTINCTIVE FEATURES: beard, mustache, glasses, freckles, prominent features.\n" +
-            "If NO human face is detected, respond with exactly: 'NO_FACE_DETECTED'\n" +
-            "Output ONLY the description (4-6 sentences), no preamble, no labels.",
-        },
-        {
-          role: "user",
-          content: [
-            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "high" } },
-            { type: "text", text: "Analyze the human face(s) in this image for portrait line art generation. If no human face is visible, respond with 'NO_FACE_DETECTED'." },
-          ],
-        },
-      ],
-    });
-
-    const jobAfterLlm = getJob(jobId);
-    if (!jobAfterLlm || jobAfterLlm.status === "cancelled") return;
-
-    const faceDescription =
-      (llmResponse as { choices?: Array<{ message?: { content?: string } }> })
-        ?.choices?.[0]?.message?.content?.trim() || "";
-
-    // Check if no face was detected
-    if (!faceDescription || faceDescription.includes("NO_FACE_DETECTED")) {
-      updateJob(jobId, {
-        status: "error",
-        error: isHe
-          ? "לא זוהו פנים בתמונה. נסה תמונה עם פנים ברורות יותר."
-          : "No faces detected in the image. Please try a photo with clearer faces.",
-      });
-      return;
-    }
-
-    updateJob(jobId, {
-      step: isHe ? `מצייר פורטרט: "${faceDescription.slice(0, 50)}..."` : `Drawing portrait: "${faceDescription.slice(0, 50)}..."`,
-      stepEn: `Drawing portrait: "${faceDescription.slice(0, 50)}..."`,
-    });
-
-    // ── Step B: gpt-image-1 draws the face as line art ─────────────────────
-    heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
-
-    // Prepare source image for edit API
+    // ── Step A: Prepare source image for gpt-image-1 edit API ──────────────
     const editSourceBuffer = await sharp(imageBuffer)
       .resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
       .png({ compressionLevel: 6 })
       .toBuffer();
 
-    updateJob(jobId, { partialImages: [] });
+    // ── Step B: gpt-image-1 draws the face directly as line art ────────────
+    heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
 
-    // Generate all 3 variations in parallel
-    const generationPromises = [0, 1, 2].map(async (idx) => {
-      const variation = FACE_STYLE_VARIATIONS[idx];
-      const editPrompt = buildFacePrompt(faceDescription, idx);
+    const editPrompt = buildDirectPortraitPrompt();
+    const editFile = await (async () => {
+      const { toFile } = await import("openai");
+      return toFile(editSourceBuffer, "face.png", { type: "image/png" });
+    })();
 
-      const editFile = await (async () => {
-        const { toFile } = await import("openai");
-        return toFile(editSourceBuffer, "face.png", { type: "image/png" });
-      })();
-
-      const response = await openai.images.edit({
-        model: "gpt-image-1",
-        image: editFile,
-        prompt: editPrompt,
-        n: 1,
-        size: "1024x1024",
-        quality: "medium",
-      });
-
-      const imageData = response.data?.[0];
-      if (!imageData) throw new Error("לא הצלחנו לייצר תמונה");
-
-      let rawBuffer: Buffer;
-      if (imageData.b64_json) {
-        rawBuffer = Buffer.from(imageData.b64_json, "base64");
-      } else if (imageData.url) {
-        const imgResponse = await fetch(imageData.url);
-        if (!imgResponse.ok) throw new Error("שגיאה בהורדת התמונה שנוצרה");
-        rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
-      } else {
-        throw new Error("לא התקבלה תמונה מה-AI");
-      }
-
-      // Process: add padding, resize, threshold, potrace
-      const processedBuffer = await sharp(rawBuffer)
-        .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-        .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-        .grayscale()
-        .threshold(200)
-        .png()
-        .toBuffer();
-
-      const rawSvg = await pngToSvg(processedBuffer);
-      const svgContent = rawSvg
-        .replace(/fill="[^"]*"/g, 'fill="none"')
-        .replace(/fill:[^;"']*(;|(?="))/g, 'fill:none$1')
-        .replace(/<path /g, '<path stroke="black" stroke-width="1.5" fill="none" ');
-      const cleanSvg = svgContent.replace(
-        /stroke="black" stroke-width="1.5" fill="none" ([^>]*?)fill="none"/g,
-        'stroke="black" stroke-width="1.5" fill="none" $1'
-      );
-
-      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm);
-
-      const imgKey = `face-detect-generated/${nanoid()}.png`;
-      const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
-
-      const dxfFilename = `face_${variation.label}.dxf`;
-      const dxfKey = `face-detect-dxf/${nanoid()}-${dxfFilename}`;
-      const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
-
-      const imageResult = { imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight };
-
-      // Stream partial result
-      const currentJob = getJob(jobId);
-      if (currentJob && currentJob.status !== "cancelled") {
-        const partialImages = (currentJob.partialImages as typeof imageResult[] | undefined) ?? [];
-        updateJob(jobId, {
-          partialImages: [...partialImages, imageResult],
-          step: isHe ? "ממיר ל-DXF..." : "Converting to DXF...",
-          stepEn: "Converting to DXF...",
-        });
-      }
-
-      return imageResult;
+    const response = await openai.images.edit({
+      model: "gpt-image-1",
+      image: editFile,
+      prompt: editPrompt,
+      n: 1,
+      size: "1024x1024",
+      quality: "medium",
     });
 
-    const jobBeforeGen = getJob(jobId);
-    if (!jobBeforeGen || jobBeforeGen.status === "cancelled") return;
-
-    clearInterval(heartbeatInterval);
-    heartbeatInterval = undefined;
-
-    const images = await Promise.all(generationPromises);
+    if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = undefined; }
 
     const jobAfterGen = getJob(jobId);
     if (!jobAfterGen || jobAfterGen.status === "cancelled") return;
 
-    // Log usage
-    const totalSegments = images.reduce((s, img) => s + img.segmentCount, 0);
+    const imageData = response.data?.[0];
+    if (!imageData) throw new Error(isHe ? "לא הצלחנו לייצר תמונה" : "Failed to generate image");
+
+    let rawBuffer: Buffer;
+    if (imageData.b64_json) {
+      rawBuffer = Buffer.from(imageData.b64_json, "base64");
+    } else if (imageData.url) {
+      const imgResponse = await fetch(imageData.url);
+      if (!imgResponse.ok) throw new Error(isHe ? "שגיאה בהורדת התמונה שנוצרה" : "Failed to download generated image");
+      rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
+    } else {
+      throw new Error(isHe ? "לא התקבלה תמונה מה-AI" : "No image returned from AI");
+    }
+
+    // ── Step C: Process → potrace → DXF ────────────────────────────────────
+    updateJob(jobId, {
+      step: isHe ? "ממיר ל-DXF..." : "Converting to DXF...",
+      stepEn: "Converting to DXF...",
+    });
+
+    const processedBuffer = await sharp(rawBuffer)
+      .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .grayscale()
+      .threshold(200)
+      .png()
+      .toBuffer();
+
+    const rawSvg = await pngToSvg(processedBuffer);
+    const svgContent = rawSvg
+      .replace(/fill="[^"]*"/g, 'fill="none"')
+      .replace(/fill:[^;"']*(;|(?="))/g, 'fill:none$1')
+      .replace(/<path /g, '<path stroke="black" stroke-width="1.5" fill="none" ');
+    const cleanSvg = svgContent.replace(
+      /stroke="black" stroke-width="1.5" fill="none" ([^>]*?)fill="none"/g,
+      'stroke="black" stroke-width="1.5" fill="none" $1'
+    );
+
+    const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm);
+
+    const imgKey = `face-detect-generated/${nanoid()}.png`;
+    const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
+
+    const dxfFilename = "face_portrait.dxf";
+    const dxfKey = `face-detect-dxf/${nanoid()}-${dxfFilename}`;
+    const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
+
+    const imageResult = { imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight };
+
+    // ── Step D: Log & finish ────────────────────────────────────────────────
     void logUsageEvent({
       type: "ai_generate",
-      segmentCount: Math.round(totalSegments / images.length),
+      segmentCount,
       ipAnon: anonymizeIp(ipAnon),
     });
 
-    // Record user actions
-    const groupId = nanoid(12);
-    const variationLabels = ["portrait", "detailed", "artistic"];
-    for (let i = 0; i < images.length; i++) {
-      const img = images[i];
-      void recordUserAction({
-        appUserId,
-        actionType: "ai_generate",
-        description: `face_detect: ${faceDescription.slice(0, 150)}`,
-        segmentCount: img.segmentCount,
-        dxfUrl: img.dxfUrl,
-        imageUrl: img.imageUrl,
-        svgPreview: img.svgPreview,
-        groupId,
-        variationLabel: variationLabels[i] ?? `v${i + 1}`,
-        sourceImageUrl: sourceImageUrl ?? undefined,
-      });
-    }
+    void recordUserAction({
+      appUserId,
+      actionType: "ai_generate",
+      description: "face_detect: portrait line art",
+      segmentCount,
+      dxfUrl,
+      imageUrl,
+      svgPreview: cleanSvg,
+      groupId: nanoid(12),
+      variationLabel: "portrait",
+      sourceImageUrl: sourceImageUrl ?? undefined,
+    });
 
     updateJob(jobId, {
       status: "done",
-      result: { success: true, images, faceDescription },
+      result: { success: true, images: [imageResult] },
     });
   } catch (err: unknown) {
     if (heartbeatInterval) clearInterval(heartbeatInterval);
@@ -368,16 +254,8 @@ router.post(
         return res.status(400).json({ error: "NO_IMAGE", message: "לא סופקה תמונה" });
       }
 
-      // Auto-correct EXIF orientation
+        // Auto-correct EXIF orientation
       imageBuffer = await sharp(imageBuffer).rotate().toBuffer();
-
-      // Resize for LLM analysis (high detail for face recognition)
-      const resized = await sharp(imageBuffer)
-        .resize(768, 768, { fit: "inside", withoutEnlargement: true })
-        .jpeg({ quality: 90 })
-        .toBuffer();
-      const imageBase64 = resized.toString("base64");
-
       const lang = ((req.body?.lang as string) || "he") === "he" ? "he" : "en";
       const hairline = req.body?.hairline === "true" || req.body?.hairline === true;
       const lineweightMmRaw = parseFloat((req.body?.lineweightMm as string) ?? "");
@@ -403,7 +281,7 @@ router.post(
       // Create job and start background processing
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "face_detect");
-      runFaceDetectJob(jobId, imageBuffer, imageBase64, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, hairline, lineweightMm)
+      runFaceDetectJob(jobId, imageBuffer, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, hairline, lineweightMm)
         .catch((err) => console.error("[faceDetectRoute] Unhandled job error:", err));
 
       return res.json({ jobId });
