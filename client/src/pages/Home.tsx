@@ -384,6 +384,28 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
     [handleFile]
   );
 
+  /** Resize image client-side to max 1200px before upload to reduce server load */
+  const resizeImageForUpload = (file: File, maxPx = 1200): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob((blob) => resolve(blob ?? file), "image/png", 0.95);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    });
+  };
+
   const handleConvert = async () => {
     if (!imageFile) return;
     setStatus("loading");
@@ -391,8 +413,10 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
     setErrorMsg("");
     setShowSvgPreview(false);
     try {
+      // Resize client-side to max 1200px — reduces upload from ~20MB to ~300KB
+      const uploadBlob = await resizeImageForUpload(imageFile, 1200);
       const formData = new FormData();
-      formData.append("image", imageFile);
+      formData.append("image", uploadBlob, imageFile.name.replace(/\.[^.]+$/, ".png"));
       formData.append("threshold", String(threshold));
       formData.append("simplifyTolerance", String(simplify));
       formData.append("doubleLineOffset", "0");

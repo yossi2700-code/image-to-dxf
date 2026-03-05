@@ -802,7 +802,7 @@ export function polylinesToSvg(
  * Used to pre-thin thick scanned strokes before Zhang-Suen thinning.
  * Each call reduces stroke width by ~1 pixel on each side.
  */
-function erodeBinary(
+export function erodeBinary(
   binary: Uint8Array,
   width: number,
   height: number,
