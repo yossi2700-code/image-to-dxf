@@ -940,3 +940,7 @@
 
 - [x] תיקון קווים כפולים ב-AI Outline SVG→DXF pipeline — potrace turdSize+optTolerance
 - [x] תיקון prompt AI Outline — ABSOLUTE RULE #3: אל תוסיף אנשים/גוף שלא היו בתמונה המקורית
+
+## חיזוק prompt - אין אנשים - מרץ 2026
+
+- [x] חיזוק ה-prompt של AI Outline — הוסף CRITICAL RULE #0 בתחילת ה-prompt + בסוף, כולל פרח, צעצוע, מוצר

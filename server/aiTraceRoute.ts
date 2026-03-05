@@ -360,11 +360,15 @@ async function runTraceJob(
             "FINAL REMINDER: Zero text, zero letters, zero numbers anywhere in the image."
           )
         : (
+            "⚠️ CRITICAL RULE #0 — THIS IS THE MOST IMPORTANT RULE: " +
+            "DO NOT ADD ANY PEOPLE, HUMANS, HANDS, ARMS, LEGS, BODY PARTS, FACES, OR HUMAN FIGURES. " +
+            "If the original photo contains NO people, the output MUST contain NO people. " +
+            "Draw ONLY the object(s) physically present in the original image — nothing else. " +
             "ABSOLUTE RULE #1: NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS — EVER. " +
             "ABSOLUTE RULE #2: PRESERVE THE EXACT SHAPE, SILHOUETTE, AND STRUCTURE OF THE ORIGINAL IMAGE. " +
             "ABSOLUTE RULE #3: DO NOT ADD ANY PEOPLE, HUMANS, HANDS, ARMS, BODY PARTS, OR FIGURES THAT ARE NOT PRESENT IN THE ORIGINAL PHOTO. " +
-            "If the original image shows only an object (bag, product, item, logo, animal, etc.), draw ONLY that object floating on white background. " +
-            "NEVER add a person holding, wearing, or interacting with the object unless a person was already visible in the original photo. " +
+            "If the original image shows only an object (bag, flower, toy, product, item, logo, animal, etc.), draw ONLY that object floating on white background. " +
+            "NEVER add a person holding, wearing, or interacting with the object unless a person was already clearly visible in the original photo. " +
             `Convert this image into a professional black and white line art illustration. ` +
             `You MUST keep the EXACT same: (a) overall shape and silhouette, (b) camera angle and viewpoint, ` +
             `(c) proportions and dimensions, (d) all visible structural details, patterns, logos, and decorative elements. ` +
@@ -375,7 +379,7 @@ async function runTraceJob(
             "Pure white background (#FFFFFF). Clean black outlines only, no fill, no shading, no gradients, no grey. " +
             `${variation.style} ` +
             "The entire object must be fully visible with 15% white margin on every side. " +
-            "FINAL REMINDER: Zero text, zero letters, zero numbers. ONLY the exact object from the original — nothing added."
+            "⚠️ FINAL REMINDER: Zero text, zero letters, zero numbers. ONLY the exact object/subject from the original — NO people, NO hands, NO body parts added. Nothing extra."
           );
 
       // Use images.edit with the original image as reference for maximum shape fidelity
