@@ -1003,3 +1003,18 @@
 
 ## תיקון תאימות Windows 7 Chrome 109 — מרץ 2026
 - [x] Fix oklch() colors in Tailwind CSS 4 output — added @csstools/postcss-oklab-function to vite.config.ts to convert all oklch() to rgb() at build time
+
+## פיצ'ר זיהוי פנים — מרץ 2026
+- [ ] Server: faceDetectRoute.ts — קבלת תמונה, GPT-4o Vision מזהה פנים, gpt-image-1 מצייר פנים כ-line art, potrace → DXF
+- [ ] Server: הוספת face_detect ל-TOKEN_COSTS (4 אסימונים)
+- [ ] Server: רישום ב-_core/index.ts
+- [ ] UI: FaceDetectTab.tsx — העלאת תמונה עם פנים, תצוגה מקדימה, תוצאה + DXF
+- [ ] UI: הוספת Tab 'זיהוי פנים' ב-Home.tsx
+- [ ] Tests: vitest לlogic
+
+## פיצ'ר זיהוי פנים
+- [x] faceDetectRoute.ts — backend pipeline (GPT-4o Vision + gpt-image-1 + potrace + DXF)
+- [x] FaceDetectTab.tsx — UI component with upload, polling, result grid, DXF download
+- [x] Home.tsx — הוספת tab "פנים / Faces" (סגול) עם job tracking
+- [x] tokenService.ts — face_detect: 4 tokens
+- [x] server/_core/index.ts — רישום faceDetectRoute

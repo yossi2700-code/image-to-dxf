@@ -15,6 +15,7 @@ import aiTraceRoute from "../aiTraceRoute";
 import aiRefineRoute from "../aiRefineRoute";
 import aiDocumentRedrawRoute from "../aiDocumentRedrawRoute";
 import svgToPngRoute from "../svgToPngRoute";
+import faceDetectRoute from "../faceDetectRoute";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -59,6 +60,8 @@ async function startServer() {
   app.use(aiDocumentRedrawRoute);
   // SVG → PNG conversion route (used by PDF export on iOS/Safari)
   app.use(svgToPngRoute);
+  // Face Detection route (photo → GPT-4o Vision → portrait line art → DXF)
+  app.use(faceDetectRoute);
   // tRPC API
   app.use(
     "/api/trpc",

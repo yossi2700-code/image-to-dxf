@@ -19,6 +19,7 @@ export const TOKEN_COSTS = {
   ai_trace: 5,
   ai_generate: 3,
   ai_refine: 2,
+  face_detect: 4,
   convert: 0,
 } as const;
 

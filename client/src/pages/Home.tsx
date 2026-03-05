@@ -11,6 +11,7 @@ import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
 import { AiRefinePanel, type RefineResult } from "@/components/AiRefinePanel";
 import { AiTraceTab } from "@/components/AiTraceTab";
 import { AiDocumentRedrawTab } from "@/components/AiDocumentRedrawTab";
+import { FaceDetectTab } from "@/components/FaceDetectTab";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
@@ -1385,10 +1386,11 @@ export default function Home() {
   const [appUser, setAppUser] = useState<{ id: number; email: string; name: string | null } | null>(null);
 
   // Track active background jobs across all AI tabs
-  const [activeJobs, setActiveJobs] = useState<{ generate: boolean; trace: boolean; doc: boolean }>(() => ({
+  const [activeJobs, setActiveJobs] = useState<{ generate: boolean; trace: boolean; doc: boolean; face: boolean }>(() => ({
     generate: !!localStorage.getItem("ai_generate_jobId"),
     trace: !!localStorage.getItem("ai_trace_jobId"),
     doc: !!localStorage.getItem("doc_redraw_jobId"),
+    face: !!localStorage.getItem("face_detect_jobId"),
   }));
 
   // Remember active tab — auto-switch to tab with active job on page return
@@ -1397,6 +1399,7 @@ export default function Home() {
     if (localStorage.getItem("ai_trace_jobId")) return "trace";
     if (localStorage.getItem("doc_redraw_jobId")) return "redraw";
     if (localStorage.getItem("ai_generate_jobId")) return "ai";
+    if (localStorage.getItem("face_detect_jobId")) return "face";
     // Otherwise restore last visited tab
     return localStorage.getItem("active_tab") ?? "ai";
   });
@@ -1408,6 +1411,7 @@ export default function Home() {
         generate: !!localStorage.getItem("ai_generate_jobId"),
         trace: !!localStorage.getItem("ai_trace_jobId"),
         doc: !!localStorage.getItem("doc_redraw_jobId"),
+        face: !!localStorage.getItem("face_detect_jobId"),
       });
     }, 2000);
     return () => clearInterval(interval);
@@ -1420,7 +1424,8 @@ export default function Home() {
         const hasActiveJob =
           !!localStorage.getItem("ai_generate_jobId") ||
           !!localStorage.getItem("ai_trace_jobId") ||
-          !!localStorage.getItem("doc_redraw_jobId");
+          !!localStorage.getItem("doc_redraw_jobId") ||
+          !!localStorage.getItem("face_detect_jobId");
         if (!hasActiveJob) {
           localStorage.removeItem("active_tab");
           window.location.reload();
@@ -1628,6 +1633,19 @@ export default function Home() {
                 {isRtl ? "תחזוק" : "maint"}
               </span>
             </TabsTrigger>
+            <TabsTrigger
+              value="face"
+              className="flex-1 gap-1 text-xs sm:text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=active]:shadow-sm relative px-1"
+            >
+              <UserCircle className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{isRtl ? "פנים" : "Faces"}</span>
+              {activeJobs.face && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="ai">
@@ -1736,6 +1754,29 @@ export default function Home() {
               </div>
             </div>
             <AiDocumentRedrawTab onOpenAuth={() => openAuthAs("unregistered")} />
+          </TabsContent>
+
+          <TabsContent value="face">
+            {/* Demo banner — Face Detection */}
+            <div
+              className="mb-4 rounded-xl overflow-hidden p-3"
+              style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{background: '#f3e8ff'}}>
+                  <UserCircle className="w-3 h-3 text-purple-600" />
+                </div>
+                <span className="text-xs font-semibold text-purple-700">
+                  {isRtl ? "זיהוי פנים — העלה תמונה עם פנים, ה-AI יצייר 3 פורטרטים לחריטה" : "Face Detection — upload a photo with faces, AI draws 3 portrait variations for engraving"}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">
+                {isRtl
+                  ? "GPT-4o Vision מזהה את הפנים בתמונה ומתאר אותן בדיוק. לאחר מכן gpt-image-1 מצייר 3 וריאציות פורטרט כ-line art נקי לחריטת לייזר."
+                  : "GPT-4o Vision detects and describes the face(s) in the photo. Then gpt-image-1 draws 3 portrait line art variations for laser engraving."}
+              </p>
+            </div>
+            <FaceDetectTab onOpenAuth={() => openAuthAs("unregistered")} />
           </TabsContent>
         </Tabs>
         </div>{/* end centering wrapper */}
