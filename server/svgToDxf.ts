@@ -332,7 +332,7 @@ function svgMmToLwCode(mm: number): number {
   return best;
 }
 
-export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: number): DxfResult {
+export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: number, minGapMm = 0): DxfResult {
   // Extract viewBox dimensions
   const vbMatch = svgContent.match(/viewBox="([^"]*)"/i);
   let width = 500, height = 500;
@@ -383,6 +383,36 @@ export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: nu
   const realWidth  = allSegments.length > 0 ? (maxX - minX) : width;
   const realHeight = allSegments.length > 0 ? (maxY - minY) : height;
 
+  // ── Min-gap scaling ──────────────────────────────────────────────────────────
+  // If minGapMm > 0, scale the entire drawing so the smallest distance between
+  // any two segment midpoints is at least minGapMm (converted from mm to SVG px
+  // at 96 DPI). This ensures CNC engraving tools have enough material between lines.
+  let outputSegments = allSegments;
+  let outputWidth = width;
+  let outputHeight = height;
+  if (minGapMm > 0 && allSegments.length > 1) {
+    const DPI = 96;
+    const minGapPx = (minGapMm / 25.4) * DPI;
+    // Sample midpoints (cap at 1500 for performance)
+    const midpoints = allSegments.map(s => ({ x: (s.x1 + s.x2) / 2, y: (s.y1 + s.y2) / 2 }));
+    const maxSamples = 1500;
+    const step = midpoints.length > maxSamples ? Math.floor(midpoints.length / maxSamples) : 1;
+    let globalMinDist = Infinity;
+    outer: for (let i = 0; i < midpoints.length; i += step) {
+      for (let j = i + step; j < midpoints.length; j += step) {
+        const d = Math.hypot(midpoints[j].x - midpoints[i].x, midpoints[j].y - midpoints[i].y);
+        if (d < globalMinDist) globalMinDist = d;
+        if (globalMinDist < 0.5) break outer;
+      }
+    }
+    if (globalMinDist < minGapPx && globalMinDist > 0) {
+      const scale = minGapPx / globalMinDist;
+      outputSegments = allSegments.map(s => ({ x1: s.x1 * scale, y1: s.y1 * scale, x2: s.x2 * scale, y2: s.y2 * scale }));
+      outputWidth = Math.round(width * scale);
+      outputHeight = Math.round(height * scale);
+    }
+  }
+
   // Determine lineweight code
   const lwCode = lineweightMm != null
     ? svgMmToLwCode(lineweightMm)
@@ -396,7 +426,7 @@ export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: nu
   // AC1009 = R12 (no lineweight), AC1015 = R2000 (supports lineweight)
   lines.push(useLw ? "9\n$ACADVER\n1\nAC1015" : "9\n$ACADVER\n1\nAC1009");
   lines.push(`9\n$EXTMIN\n10\n0.0\n20\n0.0\n30\n0.0`);
-  lines.push(`9\n$EXTMAX\n10\n${width}\n20\n${height}\n30\n0.0`);
+  lines.push(`9\n$EXTMAX\n10\n${outputWidth}\n20\n${outputHeight}\n30\n0.0`);
   lines.push("0\nENDSEC");
 
   lines.push("0\nSECTION\n2\nTABLES");
@@ -408,9 +438,9 @@ export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: nu
 
   lines.push("0\nSECTION\n2\nENTITIES");
 
-  for (const seg of allSegments) {
-    const y1 = height - seg.y1; // flip Y for DXF coordinate system
-    const y2 = height - seg.y2;
+  for (const seg of outputSegments) {
+    const y1 = outputHeight - seg.y1; // flip Y for DXF coordinate system
+    const y2 = outputHeight - seg.y2;
     lines.push(useLw ? `0\nLINE\n8\n0\n370\n${lwCode}` : "0\nLINE\n8\n0");
     lines.push(`10\n${seg.x1.toFixed(3)}\n20\n${y1.toFixed(3)}\n30\n0.0`);
     lines.push(`11\n${seg.x2.toFixed(3)}\n21\n${y2.toFixed(3)}\n31\n0.0`);

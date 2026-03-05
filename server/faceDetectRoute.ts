@@ -1,9 +1,10 @@
 /**
- * faceDetectRoute.ts — Face Detection to DXF (Fast Mode)
+ * faceDetectRoute.ts — Face Detection to DXF (Fast Mode with Style Selector)
  *
  * Pipeline (optimized — no Vision step):
  *   1. User uploads a photo containing faces
  *   2. gpt-image-1 draws a clean B&W portrait line art directly from the photo
+ *      (style: clean / artistic / detailed — user's choice)
  *   3. potrace → svgToDxf → DXF ready for laser engraving / CNC
  *
  * Endpoints:
@@ -29,6 +30,66 @@ const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
+// ─── Portrait styles ──────────────────────────────────────────────────────────
+export type PortraitStyle = "clean" | "artistic" | "detailed";
+
+const PORTRAIT_STYLE_PROMPTS: Record<PortraitStyle, string> = {
+  clean:
+    "Professional black and white portrait line art. " +
+    "Pure white background (#FFFFFF). " +
+    "Bold thick black outlines only — no fill, no shading, no gradients, no grey tones. " +
+    "High contrast: only pure black (#000000) lines on white. " +
+    "CRITICAL: Draw ONLY the face and head — no body, no background elements, no text. " +
+    "The face must be centered. " +
+    "PORTRAIT STYLE: Clean minimal portrait line art. " +
+    "Bold outer contour of the face shape, hairline, and neck. " +
+    "Clear lines for eyes (with pupils and lashes), eyebrows, nose bridge and nostrils, lips, ears. " +
+    "Subtle lines for cheekbones, jaw definition, and forehead. " +
+    "Like a clean professional portrait sketch. " +
+    "=== MANDATORY FRAMING RULES === " +
+    "The face must occupy 60-75% of the image. Leave at least 12% white margin on every edge. " +
+    "The entire head must be fully visible — nothing cropped. " +
+    "=== END FRAMING RULES === " +
+    "DO NOT include any text, labels, watermarks, or background patterns.",
+
+  artistic:
+    "Artistic black and white portrait line art illustration. " +
+    "Pure white background (#FFFFFF). " +
+    "Expressive bold black lines only — no fill, no shading, no gradients, no grey tones. " +
+    "High contrast: only pure black (#000000) lines on white. " +
+    "CRITICAL: Draw ONLY the face and head — no body, no background elements, no text. " +
+    "The face must be centered. " +
+    "PORTRAIT STYLE: Artistic expressive portrait with flowing confident strokes. " +
+    "Bold outer contour of the face shape, hair flowing naturally, neck. " +
+    "Expressive lines for eyes (with detail), eyebrows, nose, lips, ears. " +
+    "Hair drawn with flowing artistic lines showing texture and movement. " +
+    "Like a skilled artist's portrait sketch — expressive and elegant. " +
+    "=== MANDATORY FRAMING RULES === " +
+    "The face must occupy 60-75% of the image. Leave at least 12% white margin on every edge. " +
+    "The entire head must be fully visible — nothing cropped. " +
+    "=== END FRAMING RULES === " +
+    "DO NOT include any text, labels, watermarks, or background patterns.",
+
+  detailed:
+    "Highly detailed black and white portrait line art. " +
+    "Pure white background (#FFFFFF). " +
+    "Precise fine black lines only — no fill, no shading, no gradients, no grey tones. " +
+    "High contrast: only pure black (#000000) lines on white. " +
+    "CRITICAL: Draw ONLY the face and head — no body, no background elements, no text. " +
+    "The face must be centered. " +
+    "PORTRAIT STYLE: Detailed technical portrait with all facial features precisely rendered. " +
+    "Bold outer contour of the face shape, hairline, and neck. " +
+    "Highly detailed eyes (iris, pupils, lashes, lids), eyebrows (individual hairs), " +
+    "nose (bridge, nostrils, tip), lips (upper/lower lip lines, cupid's bow), ears (inner detail). " +
+    "Subtle lines for wrinkles, skin texture, cheekbones, jaw, forehead. " +
+    "Hair with detailed strand lines. Like a professional engraving portrait. " +
+    "=== MANDATORY FRAMING RULES === " +
+    "The face must occupy 60-75% of the image. Leave at least 12% white margin on every edge. " +
+    "The entire head must be fully visible — nothing cropped. " +
+    "=== END FRAMING RULES === " +
+    "DO NOT include any text, labels, watermarks, or background patterns.",
+};
+
 // ─── Potrace helper ───────────────────────────────────────────────────────────
 function pngToSvg(pngBuffer: Buffer): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -45,28 +106,6 @@ function pngToSvg(pngBuffer: Buffer): Promise<string> {
   });
 }
 
-// ─── Direct portrait prompt (no Vision step) ──────────────────────────────────
-function buildDirectPortraitPrompt(): string {
-  return (
-    "Professional black and white portrait line art. " +
-    "Pure white background (#FFFFFF). " +
-    "Bold thick black outlines only — no fill, no shading, no gradients, no grey tones. " +
-    "High contrast: only pure black (#000000) lines on white. " +
-    "CRITICAL: Draw ONLY the face and head — no body, no background elements, no text. " +
-    "The face must be centered. " +
-    "PORTRAIT STYLE: Clean professional portrait line art. " +
-    "Bold outer contour of the face shape, hairline, and neck. " +
-    "Clear lines for eyes (with pupils and lashes), eyebrows, nose bridge and nostrils, lips, ears. " +
-    "Subtle lines for cheekbones, jaw definition, and forehead. " +
-    "Like a professional portrait sketch or engraving. " +
-    "=== MANDATORY FRAMING RULES === " +
-    "The face must occupy 60-75% of the image. Leave at least 12% white margin on every edge. " +
-    "The entire head must be fully visible — nothing cropped. " +
-    "=== END FRAMING RULES === " +
-    "DO NOT include any text, labels, watermarks, or background patterns."
-  );
-}
-
 // ─── Background job runner ────────────────────────────────────────────────────
 async function runFaceDetectJob(
   jobId: string,
@@ -74,9 +113,11 @@ async function runFaceDetectJob(
   lang: "he" | "en",
   appUserId: number,
   ipAnon: string,
+  style: PortraitStyle = "clean",
   sourceImageUrl?: string,
   hairline = false,
-  lineweightMm?: number
+  lineweightMm?: number,
+  minGapMm = 0
 ) {
   const isHe = lang === "he";
   let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
@@ -100,7 +141,7 @@ async function runFaceDetectJob(
     // ── Step B: gpt-image-1 draws the face directly as line art ────────────
     heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
 
-    const editPrompt = buildDirectPortraitPrompt();
+    const editPrompt = PORTRAIT_STYLE_PROMPTS[style] ?? PORTRAIT_STYLE_PROMPTS.clean;
     const editFile = await (async () => {
       const { toFile } = await import("openai");
       return toFile(editSourceBuffer, "face.png", { type: "image/png" });
@@ -136,8 +177,8 @@ async function runFaceDetectJob(
 
     // ── Step C: Process → potrace → DXF ────────────────────────────────────
     updateJob(jobId, {
-      step: isHe ? "ממיר ל-DXF..." : "Converting to DXF...",
-      stepEn: "Converting to DXF...",
+      step: isHe ? "ממיר לוקטור DXF..." : "Converting to vector DXF...",
+      stepEn: "Converting to vector DXF...",
     });
 
     const processedBuffer = await sharp(rawBuffer)
@@ -158,12 +199,13 @@ async function runFaceDetectJob(
       'stroke="black" stroke-width="1.5" fill="none" $1'
     );
 
-    const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm);
+    const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, minGapMm);
 
     const imgKey = `face-detect-generated/${nanoid()}.png`;
     const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
 
-    const dxfFilename = "face_portrait.dxf";
+    const styleLabel = style === "clean" ? "clean" : style === "artistic" ? "artistic" : "detailed";
+    const dxfFilename = `face_portrait_${styleLabel}.dxf`;
     const dxfKey = `face-detect-dxf/${nanoid()}-${dxfFilename}`;
     const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
 
@@ -179,13 +221,13 @@ async function runFaceDetectJob(
     void recordUserAction({
       appUserId,
       actionType: "ai_generate",
-      description: "face_detect: portrait line art",
+      description: `face_detect: ${styleLabel} portrait line art`,
       segmentCount,
       dxfUrl,
       imageUrl,
       svgPreview: cleanSvg,
       groupId: nanoid(12),
-      variationLabel: "portrait",
+      variationLabel: `portrait_${styleLabel}`,
       sourceImageUrl: sourceImageUrl ?? undefined,
     });
 
@@ -254,12 +296,18 @@ router.post(
         return res.status(400).json({ error: "NO_IMAGE", message: "לא סופקה תמונה" });
       }
 
-        // Auto-correct EXIF orientation
+      // Auto-correct EXIF orientation
       imageBuffer = await sharp(imageBuffer).rotate().toBuffer();
       const lang = ((req.body?.lang as string) || "he") === "he" ? "he" : "en";
       const hairline = req.body?.hairline === "true" || req.body?.hairline === true;
       const lineweightMmRaw = parseFloat((req.body?.lineweightMm as string) ?? "");
       const lineweightMm = isNaN(lineweightMmRaw) ? undefined : Math.min(2.0, Math.max(0, lineweightMmRaw));
+      const minGapMmRaw = parseFloat((req.body?.minGapMm as string) ?? "");
+      const minGapMm = isNaN(minGapMmRaw) ? 0 : Math.min(3.0, Math.max(0, minGapMmRaw));
+      const styleRaw = (req.body?.style as string) ?? "clean";
+      const style: PortraitStyle = ["clean", "artistic", "detailed"].includes(styleRaw)
+        ? (styleRaw as PortraitStyle)
+        : "clean";
 
       const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
       const ipAnon = anonymizeIp(rawIp);
@@ -281,7 +329,7 @@ router.post(
       // Create job and start background processing
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "face_detect");
-      runFaceDetectJob(jobId, imageBuffer, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, hairline, lineweightMm)
+      runFaceDetectJob(jobId, imageBuffer, lang, appUser.userId, ipAnon ?? "", style, uploadedSourceImageUrl, hairline, lineweightMm, minGapMm)
         .catch((err) => console.error("[faceDetectRoute] Unhandled job error:", err));
 
       return res.json({ jobId });

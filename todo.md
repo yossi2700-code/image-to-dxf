@@ -1020,11 +1020,21 @@
 - [x] server/_core/index.ts — רישום faceDetectRoute
 
 ## אופטימיזציית פנים (מהירות)
-- [ ] faceDetectRoute.ts — הסר GPT-4o Vision step, שלח תמונה ישירות ל-gpt-image-1
-- [ ] faceDetectRoute.ts — הפחת מ-3 וריאציות ל-1 תמונה בלבד
-- [ ] FaceDetectTab.tsx — עדכן UI לתמונה אחת
+- [x] faceDetectRoute.ts — הסר GPT-4o Vision step, שלח תמונה ישירות ל-gpt-image-1
+- [x] faceDetectRoute.ts — הפחת מ-3 וריאציות ל-1 תמונה בלבד
+- [x] FaceDetectTab.tsx — עדכן UI לתמונה אחת
 
 ## אופטימיזציית פנים (מהירות)
-- [ ] faceDetectRoute.ts — הסר GPT-4o Vision step
-- [ ] faceDetectRoute.ts — הפחת מ-3 ל-1 תמונה
-- [ ] FaceDetectTab.tsx — עדכן UI לתמונה אחת
+- [x] faceDetectRoute.ts — הסר GPT-4o Vision step
+- [x] faceDetectRoute.ts — הפחת מ-3 ל-1 תמונה
+- [x] FaceDetectTab.tsx — עדכן UI לתמונה אחת
+
+## שינויים מבוקשים — מרץ 2026
+- [x] פנים: הוסף בחירת סגנון (נקי, מפורט, אמנותי, סטנסיל)
+- [x] פנים: הצג וקטור SVG בתוצאה (לא רק תמונה)
+- [x] פנים: הסר מצב פירוט התקדמות GPT4 — הצג סריקה כמו AI מתמונה
+- [x] פנים: הוסף תיקון עם AI (כמו modify ב-AI יצירה)
+- [x] תיקון: PDF לא נפתח — תוקן (SVG viewBox ללא width/height)
+- [x] כל הפיצ'רים: דיאלוג שמירה בדפדפן iOS ו-Galaxy — נוסף כפתור שיתוף
+- [x] AI יצירה: הוסף שדה מרווח בין קווים (0.2-3 מ"מ, ברירת מחדל 1.5)
+- [x] תשובה: איפה לשמור? — ראה תשובה למשתמש

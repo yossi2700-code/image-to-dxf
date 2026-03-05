@@ -198,7 +198,8 @@ async function runGenerateJob(
   appUserId: number,
   ipAnon: string,
   hairline = false,
-  lineweightMm?: number
+  lineweightMm?: number,
+  minGapMm = 0
 ) {
   try {
     updateJob(jobId, { status: "processing" });
@@ -257,7 +258,7 @@ async function runGenerateJob(
         .replace(/<path /g, '<path stroke="black" stroke-width="1.5" fill="none" ');
       const cleanSvg = svgContent.replace(/stroke="black" stroke-width="1.5" fill="none" ([^>]*?)fill="none"/g, 'stroke="black" stroke-width="1.5" fill="none" $1');
 
-      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm);
+      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, minGapMm);
 
       const imgKey = `ai-generated/${nanoid()}.png`;
       const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
@@ -321,14 +322,16 @@ async function runGenerateJob(
 // ─── POST /api/generate-images ────────────────────────────────────────────────
 router.post("/api/generate-images", async (req, res) => {
   try {
-    const { prompt, modifications, landscapeMode, hairline, lineweightMm: lwMmGen } = req.body as {
+    const { prompt, modifications, landscapeMode, hairline, lineweightMm: lwMmGen, minGapMm: minGapMmRaw } = req.body as {
       prompt?: string;
       modifications?: string;
       landscapeMode?: boolean;
       hairline?: boolean;
       lineweightMm?: number;
+      minGapMm?: number;
     };
     const lineweightMmGen = typeof lwMmGen === "number" ? Math.min(2.0, Math.max(0, lwMmGen)) : undefined;
+    const minGapMmGen = typeof minGapMmRaw === "number" ? Math.min(3.0, Math.max(0, minGapMmRaw)) : 0;
 
     if (!prompt || prompt.trim().length < 2) {
       return res.status(400).json({ error: "נא להזין תיאור של התמונה הרצויה" });
@@ -370,7 +373,7 @@ router.post("/api/generate-images", async (req, res) => {
     const jobId = nanoid(12);
     createJob(jobId, appUser.userId, "ai_generate");
 
-    runGenerateJob(jobId, prompt.trim(), modifications, !!landscapeMode, appUser.userId, ipAnon ?? "", !!hairline, lineweightMmGen)
+    runGenerateJob(jobId, prompt.trim(), modifications, !!landscapeMode, appUser.userId, ipAnon ?? "", !!hairline, lineweightMmGen, minGapMmGen)
       .catch((err) => console.error("[generateRoute] Unhandled job error:", err));
 
     return res.json({ jobId });

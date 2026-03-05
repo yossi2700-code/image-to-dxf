@@ -344,7 +344,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
   const [threshold, setThreshold] = useState(128);
   const [simplify, setSimplify] = useState(2);
   const [lineweightMm, setLineweightMm] = useState<string>(""); // empty = default (no override)
-  const [minGapMm, setMinGapMm] = useState<string>("0.8"); // default 0.8mm min gap
+  const [minGapMm, setMinGapMm] = useState<string>("1.5"); // default 1.5mm min gap (recommended for CNC V-bit)
   const [outputWidthMm, setOutputWidthMm] = useState<string>("100"); // default 100mm output width
   const [dpi] = useState(300);
   const [status, setStatus] = useState<Status>("idle");
@@ -558,15 +558,15 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                 </label>
                 <input
                   type="number"
-                  min="0"
-                  max="5"
+                  min="0.2"
+                  max="3"
                   step="0.1"
-                  placeholder="0"
+                  placeholder="1.5"
                   value={minGapMm}
                   onChange={e => setMinGapMm(e.target.value)}
                   className="w-24 border border-border rounded px-2 py-1 text-sm text-center"
                 />
-                <span className="text-xs text-muted-foreground">{isRtl ? "(0 = כבוי, מגדיל אוטומטית אם צריך)" : "(0 = off, auto-scales if needed)"}</span>
+                <span className="text-xs text-muted-foreground">{isRtl ? "(מומלץ 1.5 לקרסום V-bit 0.8 זווית 45°)" : "(recommended 1.5 for V-bit 0.8 45° engraving)"}</span>
               </div>
               {/* Output width option */}
               <div className="flex items-center gap-2 pt-1 flex-wrap">
@@ -743,6 +743,7 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   const [showVector, setShowVector] = useState(false);
   const [landscapeMode, setLandscapeMode] = useState(false);
+  const [genMinGapMm, setGenMinGapMm] = useState<string>("1.5"); // default 1.5mm min gap (recommended for CNC V-bit)
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("ai_generate_jobId"));
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [progressStep, setProgressStep] = useState(0);
@@ -909,6 +910,7 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
           prompt: prompt.trim(),
           modifications: isModify ? modifications.trim() : undefined,
           landscapeMode,
+          minGapMm: parseFloat(genMinGapMm) || 1.5,
         }),
       });
       const data = await res.json();
@@ -1040,6 +1042,23 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
                 ? (isRtl ? "מצייר את כל הסצנה: שמיים, רקע, עצים, בניינים, קדמת תמונה" : "Draws the entire scene: sky, background, trees, buildings, foreground")
                 : (isRtl ? "מתמקד באובייקט הראשי בתמונה" : "Focuses on the main object in the image")}
             </p>
+          </div>
+          {/* Min gap between lines — CNC V-bit setting */}
+          <div className="mt-3 flex items-center gap-2 flex-wrap">
+            <label className="text-xs font-medium text-gray-600 shrink-0">
+              {isRtl ? "מרווח בין קווים (מ\"מ):" : "Line gap (mm):"}
+            </label>
+            <input
+              type="number"
+              min="0.2"
+              max="3"
+              step="0.1"
+              value={genMinGapMm}
+              onChange={e => setGenMinGapMm(e.target.value)}
+              className="w-20 border border-gray-200 rounded-lg px-2 py-1 text-sm text-center bg-gray-50"
+              disabled={status === "loading"}
+            />
+            <span className="text-xs text-gray-400">{isRtl ? "(ברירת מחדל 1.5 — מומלץ לקרסום V-bit)" : "(default 1.5 — recommended for V-bit)"}</span>
           </div>
           <p className="text-xs mt-2 text-gray-400">{t("aiTabSubtitle")}</p>
           <button

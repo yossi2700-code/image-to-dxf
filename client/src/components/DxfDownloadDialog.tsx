@@ -382,35 +382,73 @@ export function DxfDownloadDialog({
           {/* Action buttons */}
           <div className="flex flex-col gap-2 pt-1">
             {/* DXF Download */}
-            <Button
-              size="lg"
-              className="w-full bg-green-600 hover:bg-green-700 font-bold text-base h-12"
-              onClick={handleDxfDownload}
-              disabled={isLoading}
-            >
-              {isDxfLoading ? (
-                <Loader2 className="w-5 h-5 ml-2 animate-spin" />
-              ) : (
-                <Download className="w-5 h-5 ml-2" />
+            <div className="flex gap-2">
+              <Button
+                size="lg"
+                className="flex-1 bg-green-600 hover:bg-green-700 font-bold text-base h-12"
+                onClick={handleDxfDownload}
+                disabled={isLoading}
+              >
+                {isDxfLoading ? (
+                  <Loader2 className="w-5 h-5 ml-2 animate-spin" />
+                ) : (
+                  <Download className="w-5 h-5 ml-2" />
+                )}
+                {isDxfLoading ? "מוריד..." : "הורד DXF"}
+              </Button>
+              {/* Share DXF — iOS/Android native share sheet */}
+              {canShareFiles && (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-12 px-3 bg-green-50 border-green-300 hover:bg-green-100"
+                  onClick={handleShareFile}
+                  disabled={isLoading}
+                  title="שתף קובץ DXF"
+                >
+                  {isShareLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-green-700" />
+                  ) : (
+                    <Share2 className="w-5 h-5 text-green-700" />
+                  )}
+                </Button>
               )}
-              {isDxfLoading ? "מוריד..." : "הורד DXF"}
-            </Button>
+            </div>
 
             {/* PDF Download */}
             {svgContent && (
-              <Button
-                size="lg"
-                className="w-full bg-blue-600 hover:bg-blue-700 font-bold text-base h-12 text-white"
-                onClick={handlePdfExport}
-                disabled={isLoading}
-              >
-                {isPdfLoading ? (
-                  <Loader2 className="w-5 h-5 ml-2 animate-spin" />
-                ) : (
-                  <FileText className="w-5 h-5 ml-2" />
+              <div className="flex gap-2">
+                <Button
+                  size="lg"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 font-bold text-base h-12 text-white"
+                  onClick={handlePdfExport}
+                  disabled={isLoading}
+                >
+                  {isPdfLoading ? (
+                    <Loader2 className="w-5 h-5 ml-2 animate-spin" />
+                  ) : (
+                    <FileText className="w-5 h-5 ml-2" />
+                  )}
+                  {isPdfLoading ? "מייצא PDF..." : "הורד PDF"}
+                </Button>
+                {/* Share PDF — iOS/Android native share sheet */}
+                {canShareFiles && (
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="h-12 px-3 bg-blue-50 border-blue-300 hover:bg-blue-100"
+                    onClick={handleSharePdf}
+                    disabled={isLoading}
+                    title="שתף PDF"
+                  >
+                    {isSharePdfLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin text-blue-700" />
+                    ) : (
+                      <Share2 className="w-5 h-5 text-blue-700" />
+                    )}
+                  </Button>
                 )}
-                {isPdfLoading ? "מייצא PDF..." : "הורד PDF"}
-              </Button>
+              </div>
             )}
 
             {/* Cancel */}
