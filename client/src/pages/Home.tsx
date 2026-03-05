@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { AuthDialog, type AuthReason } from "@/components/AuthDialog";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
 import { AiRefinePanel, type RefineResult } from "@/components/AiRefinePanel";
+import { ExportButtons } from "@/components/ExportButtons";
 import { AiTraceTab } from "@/components/AiTraceTab";
 import { AiDocumentRedrawTab } from "@/components/AiDocumentRedrawTab";
 import { FaceDetectTab } from "@/components/FaceDetectTab";
@@ -632,28 +633,16 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
             )}
             {status === "success" && result && (
               <div className="flex flex-col gap-4">
-                {result.svgPreview && (
-                  <div>
-                    <button
-                      onClick={() => setShowSvgPreview((v) => !v)}
-                      className={`w-full flex items-center justify-center gap-2.5 py-3.5 px-4 mb-3 rounded-xl border-2 transition-all font-bold text-base shadow-md active:scale-[0.98]
-                        ${showSvgPreview
-                          ? "border-primary bg-primary text-white hover:bg-primary/90"
-                          : "border-primary bg-gradient-to-r from-primary/20 to-blue-500/20 text-primary hover:from-primary/30 hover:to-blue-500/30"}`}
-                    >
-                      <Eye className="w-5 h-5" />
-                      {showSvgPreview ? (isRtl ? "הסתר וקטור ⬆" : "⬆ Hide Vector") : (isRtl ? "הצג וקטור DXF ⬇" : "⬇ Show DXF Vector")}
-                    </button>
-                    {showSvgPreview && (
-                      <SvgZoomViewer
-                        svgContent={result.svgPreview}
-                        label={isRtl ? "תצוגה מקדימה של הוקטור" : "Vector Preview"}
-                        maxHeight={350}
-                      />
-                    )}
+                {result.svgPreview && showSvgPreview && (
+                  <div className="mb-3">
+                    <SvgZoomViewer
+                      svgContent={result.svgPreview}
+                      label={isRtl ? "תצוגה מקדימה של הוקטור" : "Vector Preview"}
+                      maxHeight={350}
+                    />
                   </div>
                 )}
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-2 mb-3">
                   <div className="bg-muted rounded-lg p-2.5 text-center">
                     <p className="text-lg font-bold text-primary">{result.segmentCount.toLocaleString()}</p>
                     <p className="text-xs text-muted-foreground">{t("lines")}</p>
@@ -667,13 +656,23 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                     <p className="text-xs text-muted-foreground">{t("heightMm")}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-100">
+                <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-100 mb-3">
                   <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
                   <p className="text-sm font-medium text-green-700">{t("conversionSuccess")}</p>
                 </div>
-                <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 font-bold text-base h-12" onClick={() => setDownloadOpen(true)}>
-                  <Download className="w-5 h-5 ml-2" />{isRtl ? "הורד DXF / PDF" : "Download DXF / PDF"}
-                </Button>
+                <div className="mb-2">
+                  <ExportButtons
+                    svgContent={result.svgPreview}
+                    dxfUrl={result.dxfUrl}
+                    dxfFilename={`${imageFile?.name.replace(/\.[^.]+$/, "") ?? "output"}.dxf`}
+                    svgWidthPx={result.realWidth ?? result.width}
+                    svgHeightPx={result.realHeight ?? result.height}
+                    showVector={showSvgPreview}
+                    onToggleVector={() => setShowSvgPreview((v) => !v)}
+                    onMoreOptions={() => setDownloadOpen(true)}
+                    isRtl={isRtl}
+                  />
+                </div>
                 <Button variant="outline" size="sm" className="w-full" onClick={reset}>
                   {isRtl ? "המר תמונה חדשה" : "Convert New Image"}
                 </Button>
@@ -695,16 +694,29 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
   );
 }
 
-// ─── Clear cached results for unauthenticated users (runs once on module load) ─
-// We store a flag "app_user_logged_in" in localStorage when user logs in.
-// On module load, if the flag is missing, clear all cached job/result data.
-if (!localStorage.getItem("app_user_logged_in")) {
-  localStorage.removeItem("ai_generate_result");
-  localStorage.removeItem("ai_generate_prompt");
-  localStorage.removeItem("ai_generate_jobId");
-  localStorage.removeItem("ai_trace_jobId");
-  localStorage.removeItem("doc_redraw_jobId");
-  localStorage.removeItem("active_tab");
+// ─── Clear cached resul// ─── Clear cached results on fresh page load (new browser session) ──────────
+// sessionStorage is cleared when the browser tab/window is closed.
+// On a fresh load (no sessionStorage flag), clear all old results from localStorage
+// UNLESS there is an active background job that should survive.
+if (!sessionStorage.getItem("page_session_active")) {
+  sessionStorage.setItem("page_session_active", "1");
+  const hasActiveJob =
+    !!localStorage.getItem("ai_generate_jobId") ||
+    !!localStorage.getItem("ai_trace_jobId") ||
+    !!localStorage.getItem("doc_redraw_jobId") ||
+    !!localStorage.getItem("face_detect_jobId");
+  if (!hasActiveJob) {
+    // Fresh load with no pending jobs — clear all results so user sees clean state
+    localStorage.removeItem("ai_generate_result");
+    localStorage.removeItem("ai_generate_prompt");
+    localStorage.removeItem("ai_trace_result");
+    localStorage.removeItem("ai_trace_imagePreview");
+    localStorage.removeItem("doc_redraw_result");
+    localStorage.removeItem("doc_redraw_imagePreview");
+    localStorage.removeItem("face_detect_result");
+    localStorage.removeItem("face_detect_imagePreview");
+    localStorage.removeItem("active_tab");
+  }
 }
 
 // ─── AI Generator Tab ────────────────────────────────────────────────────────
@@ -1259,25 +1271,13 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
                     <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
                   </div>
                 </div>
-                {selected.svgPreview && (
+                {selected.svgPreview && showVector && (
                   <div className="mb-3">
-                    <button
-                      onClick={() => setShowVector((v) => !v)}
-                      className={`w-full flex items-center justify-center gap-2.5 py-3.5 px-4 mb-3 rounded-xl border-2 transition-all font-bold text-base shadow-md active:scale-[0.98]
-                        ${showVector
-                          ? "border-primary bg-primary text-white hover:bg-primary/90"
-                          : "border-primary bg-gradient-to-r from-primary/20 to-blue-500/20 text-primary hover:from-primary/30 hover:to-blue-500/30"}`}
-                    >
-                      <Eye className="w-5 h-5" />
-                      {showVector ? (isRtl ? "הסתר וקטור ⬆" : "⬆ Hide Vector") : (isRtl ? "הצג וקטור DXF ⬇" : "⬇ Show DXF Vector")}
-                    </button>
-                    {showVector && (
-                      <SvgZoomViewer
-                        svgContent={selected.svgPreview}
-                        label={isRtl ? "תצוגת קווי וקטור (DXF)" : "Vector Lines Preview (DXF)"}
-                        maxHeight={380}
-                      />
-                    )}
+                    <SvgZoomViewer
+                      svgContent={selected.svgPreview}
+                      label={isRtl ? "תצוגת קווי וקטור (DXF)" : "Vector Lines Preview (DXF)"}
+                      maxHeight={380}
+                    />
                   </div>
                 )}
                 <div className="grid grid-cols-3 gap-2 mb-3">
@@ -1288,18 +1288,19 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
                     </div>
                   ))}
                 </div>
-                <button
-                  className="w-full h-12 font-bold text-base rounded-xl flex items-center justify-center gap-2 mb-2 transition-all"
-                  style={{
-                    background: 'linear-gradient(135deg, #059669, #10b981)',
-                    color: 'white',
-                    border: 'none',
-                    boxShadow: '0 4px 15px rgba(16,185,129,0.30)',
-                  }}
-                  onClick={() => handleDownload(selected)}
-                >
-                  <Download className="w-5 h-5" />{isRtl ? "הורד DXF / PDF" : "Download DXF / PDF"}
-                </button>
+                <div className="mb-2">
+                  <ExportButtons
+                    svgContent={selected.svgPreview}
+                    dxfUrl={selected.dxfUrl}
+                    dxfFilename={selected.dxfFilename || 'ai_design.dxf'}
+                    svgWidthPx={selected.realWidth ?? selected.width}
+                    svgHeightPx={selected.realHeight ?? selected.height}
+                    showVector={showVector}
+                    onToggleVector={() => setShowVector((v) => !v)}
+                    onMoreOptions={() => handleDownload(selected)}
+                    isRtl={isRtl}
+                  />
+                </div>
                 {/* AI Refine Panel */}
                 <AiRefinePanel
                   imageUrl={selected.imageUrl}
