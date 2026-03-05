@@ -633,6 +633,18 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
   );
 }
 
+// ─── Clear cached results for unauthenticated users (runs once on module load) ─
+// We store a flag "app_user_logged_in" in localStorage when user logs in.
+// On module load, if the flag is missing, clear all cached job/result data.
+if (!localStorage.getItem("app_user_logged_in")) {
+  localStorage.removeItem("ai_generate_result");
+  localStorage.removeItem("ai_generate_prompt");
+  localStorage.removeItem("ai_generate_jobId");
+  localStorage.removeItem("ai_trace_jobId");
+  localStorage.removeItem("doc_redraw_jobId");
+  localStorage.removeItem("active_tab");
+}
+
 // ─── AI Generator Tab ────────────────────────────────────────────────────────
 function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
   const { t, isRtl, language } = useLanguage();
@@ -1375,9 +1387,11 @@ export default function Home() {
       .then((r) => r.json())
       .then((d) => {
         if (d.user) {
+          localStorage.setItem("app_user_logged_in", "1");
           setAppUser(d.user);
         } else {
-          // Not logged in — clear cached results so page shows default empty state
+          // Not logged in — clear flag and cached results
+          localStorage.removeItem("app_user_logged_in");
           localStorage.removeItem("ai_generate_result");
           localStorage.removeItem("ai_generate_prompt");
           localStorage.removeItem("ai_generate_jobId");
@@ -1391,6 +1405,7 @@ export default function Home() {
 
   const handleLogout = async () => {
     await fetch("/api/app-auth/logout", { method: "POST" });
+    localStorage.removeItem("app_user_logged_in");
     setAppUser(null);
     toast.success(t("loggedOutSuccess"));
   };
@@ -1438,6 +1453,7 @@ export default function Home() {
         limitReached={limitReached}
         authReason={authReason}
         onSuccess={(user) => {
+          localStorage.setItem("app_user_logged_in", "1");
           setAppUser(user);
           setLimitReached(false);
           setAuthReason("generic");
