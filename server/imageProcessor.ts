@@ -6,6 +6,7 @@ export interface ProcessingOptions {
   doubleLineOffset?: number;  // pixels to offset for double-line CNC mode (0 = disabled)
   minSegmentLength?: number;  // minimum segment length in pixels; shorter segments are filtered as noise
   hairline?: boolean;         // if true, DXF uses R2000 format with lineweight=0 (hairline)
+  lineweightMm?: number;      // explicit lineweight in mm (e.g. 0.2); overrides hairline when set
 }
 
 export interface Segment {
@@ -664,19 +665,42 @@ export function doubleLineSegments(
 /**
  * Generate DXF file content from line segments (DXF R12)
  */
+// DXF R2000 lineweight codes (group 370): standard values in hundredths of mm
+// -3 = BYLAYER, -2 = BYBLOCK, -1 = DEFAULT, 0 = hairline, then 5,9,13,15,18,20,25,30,35,40,50,53,60,70,80,90,100,106,120,140,158,200,211
+const DXF_LW_CODES = [0, 5, 9, 13, 15, 18, 20, 25, 30, 35, 40, 50, 53, 60, 70, 80, 90, 100, 106, 120, 140, 158, 200, 211];
+
+/** Convert mm value to nearest DXF lineweight code (hundredths of mm) */
+function mmToLwCode(mm: number): number {
+  const hundredths = Math.round(mm * 100);
+  let best = DXF_LW_CODES[0];
+  let bestDiff = Math.abs(hundredths - best);
+  for (const code of DXF_LW_CODES) {
+    const diff = Math.abs(hundredths - code);
+    if (diff < bestDiff) { best = code; bestDiff = diff; }
+  }
+  return best;
+}
+
 export function segmentsToDxf(
   segments: Segment[],
   width: number,
   height: number,
-  hairline = false
+  hairline = false,
+  lineweightMm?: number
 ): string {
+  // Determine lineweight code: explicit mm value takes priority over hairline boolean
+  const lwCode = lineweightMm != null
+    ? mmToLwCode(lineweightMm)
+    : hairline ? 0 : null;
+  const useLineweight = lwCode !== null;
+
   const lines: string[] = [];
 
   lines.push("0\nSECTION");
   lines.push("2\nHEADER");
   lines.push("9\n$ACADVER");
   // AC1009 = R12 (no lineweight), AC1015 = R2000 (supports lineweight)
-  lines.push(hairline ? "1\nAC1015" : "1\nAC1009");
+  lines.push(useLineweight ? "1\nAC1015" : "1\nAC1009");
   lines.push("9\n$EXTMIN");
   lines.push("10\n0.0");
   lines.push("20\n0.0");
@@ -697,7 +721,7 @@ export function segmentsToDxf(
   lines.push("70\n0");
   lines.push("62\n7");
   lines.push("6\nCONTINUOUS");
-  if (hairline) lines.push("370\n0"); // lineweight: 0 = hairline (0.00mm)
+  if (useLineweight) lines.push(`370\n${lwCode}`);
   lines.push("0\nENDTAB");
   lines.push("0\nENDSEC");
 
@@ -710,7 +734,7 @@ export function segmentsToDxf(
 
     lines.push("0\nLINE");
     lines.push("8\n0");
-    if (hairline) lines.push("370\n0"); // per-entity hairline lineweight
+    if (useLineweight) lines.push(`370\n${lwCode}`);
     lines.push(`10\n${seg.x1}`);
     lines.push(`20\n${y1}`);
     lines.push("30\n0.0");
@@ -879,7 +903,7 @@ export async function aiTracePipeline(
   const polylines = traceCenterlines(thinned, width, height, epsilon);
 
   const segments = polylinesToSegments(polylines);
-  const dxf = segmentsToDxf(segments, width, height, options.hairline ?? false);
+  const dxf = segmentsToDxf(segments, width, height, options.hairline ?? false, options.lineweightMm);
   const svgPreview = polylinesToSvg(polylines, width, height);
 
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -955,7 +979,7 @@ export async function convertImageToDxf(
 
   const segments = polylinesToSegments(outputPolylines);
 
-  const dxf = segmentsToDxf(segments, width, height, options.hairline ?? false);
+  const dxf = segmentsToDxf(segments, width, height, options.hairline ?? false, options.lineweightMm);
   const svgPreview = polylinesToSvg(outputPolylines, width, height);
 
   // Compute tight bounding box of actual drawn segments

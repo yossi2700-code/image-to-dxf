@@ -241,7 +241,8 @@ async function runTraceJob(
   ipAnon: string,
   sourceImageUrl?: string,
   variationIndex: number = 1,
-  hairline = false
+  hairline = false,
+  lineweightMm?: number
 ) {
   const isHe = lang === "he";
   let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
@@ -466,7 +467,7 @@ async function runTraceJob(
         'stroke="black" stroke-width="1.5" fill="none" $1'
       );
 
-      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline);
+      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm);
       const imgKey = `ai-trace-generated/${nanoid()}.png`;
       const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
       const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
@@ -612,6 +613,8 @@ router.post(
       const lang = ((req.body?.lang as string) || "en") === "he" ? "he" : "en";
       const variationIndex = Math.min(2, Math.max(0, parseInt((req.body?.variationIndex as string) ?? "1", 10) || 1));
       const hairline = req.body?.hairline === "true" || req.body?.hairline === true;
+      const lineweightMmRaw = parseFloat((req.body?.lineweightMm as string) ?? "");
+      const lineweightMm = isNaN(lineweightMmRaw) ? undefined : Math.min(2.0, Math.max(0, lineweightMmRaw));
       const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
       const ipAnon = anonymizeIp(rawIp);
 
@@ -633,7 +636,7 @@ router.post(
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "ai_trace");
 
-      runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline)
+      runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline, lineweightMm)
         .catch((err) => console.error("[aiTraceRoute] Unhandled job error:", err));
 
       return res.json({ jobId });
@@ -721,8 +724,10 @@ router.post(
         return res.status(401).json({ error: "UNAUTHORIZED", message: "יש להתחבר" });
       }
 
-      const { previewPngUrl, previewPngBase64, description, imageUrl, hairline: hairlineParam } = req.body;
+      const { previewPngUrl, previewPngBase64, description, imageUrl, hairline: hairlineParam, lineweightMm: lwMmParam } = req.body;
       const hairline = hairlineParam === true || hairlineParam === "true";
+      const lineweightMmRaw2 = parseFloat((lwMmParam as string) ?? "");
+      const lineweightMm2 = isNaN(lineweightMmRaw2) ? undefined : Math.min(2.0, Math.max(0, lineweightMmRaw2));
 
       let pngBuffer: Buffer;
       if (previewPngBase64) {
@@ -754,7 +759,7 @@ router.post(
         'stroke="black" stroke-width="1.5" fill="none" $1'
       );
 
-      const { dxf, segmentCount, realWidth, realHeight } = svgToDxf(rawSvg, hairline);
+      const { dxf, segmentCount, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm2);
 
       const desc = description || "ai_trace";
       const filename = buildFilename(desc);

@@ -323,7 +323,16 @@ function parseRectElement(el: string): LineSegment[] {
 
 // ─── SVG → DXF main function ──────────────────────────────────────────────────
 
-export function svgToDxf(svgContent: string, hairline = false): DxfResult {
+// DXF R2000 lineweight codes (hundredths of mm)
+const SVG_DXF_LW_CODES = [0, 5, 9, 13, 15, 18, 20, 25, 30, 35, 40, 50, 53, 60, 70, 80, 90, 100, 106, 120, 140, 158, 200, 211];
+function svgMmToLwCode(mm: number): number {
+  const h = Math.round(mm * 100);
+  let best = SVG_DXF_LW_CODES[0], bestDiff = Math.abs(h - best);
+  for (const c of SVG_DXF_LW_CODES) { const d = Math.abs(h - c); if (d < bestDiff) { best = c; bestDiff = d; } }
+  return best;
+}
+
+export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: number): DxfResult {
   // Extract viewBox dimensions
   const vbMatch = svgContent.match(/viewBox="([^"]*)"/i);
   let width = 500, height = 500;
@@ -374,20 +383,26 @@ export function svgToDxf(svgContent: string, hairline = false): DxfResult {
   const realWidth  = allSegments.length > 0 ? (maxX - minX) : width;
   const realHeight = allSegments.length > 0 ? (maxY - minY) : height;
 
-  // Build DXF (R12 or R2000 for hairline)
+  // Determine lineweight code
+  const lwCode = lineweightMm != null
+    ? svgMmToLwCode(lineweightMm)
+    : hairline ? 0 : null;
+  const useLw = lwCode !== null;
+
+  // Build DXF (R12 or R2000)
   const lines: string[] = [];
   lines.push("0\nSECTION");
   lines.push("2\nHEADER");
-  // AC1009 = R12 (no lineweight), AC1015 = R2000 (supports lineweight=0 hairline)
-  lines.push(hairline ? "9\n$ACADVER\n1\nAC1015" : "9\n$ACADVER\n1\nAC1009");
+  // AC1009 = R12 (no lineweight), AC1015 = R2000 (supports lineweight)
+  lines.push(useLw ? "9\n$ACADVER\n1\nAC1015" : "9\n$ACADVER\n1\nAC1009");
   lines.push(`9\n$EXTMIN\n10\n0.0\n20\n0.0\n30\n0.0`);
   lines.push(`9\n$EXTMAX\n10\n${width}\n20\n${height}\n30\n0.0`);
   lines.push("0\nENDSEC");
 
   lines.push("0\nSECTION\n2\nTABLES");
   lines.push("0\nTABLE\n2\nLAYER\n70\n1");
-  lines.push(hairline
-    ? "0\nLAYER\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS\n370\n0"
+  lines.push(useLw
+    ? `0\nLAYER\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS\n370\n${lwCode}`
     : "0\nLAYER\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS");
   lines.push("0\nENDTAB\n0\nENDSEC");
 
@@ -396,7 +411,7 @@ export function svgToDxf(svgContent: string, hairline = false): DxfResult {
   for (const seg of allSegments) {
     const y1 = height - seg.y1; // flip Y for DXF coordinate system
     const y2 = height - seg.y2;
-    lines.push(hairline ? "0\nLINE\n8\n0\n370\n0" : "0\nLINE\n8\n0");
+    lines.push(useLw ? `0\nLINE\n8\n0\n370\n${lwCode}` : "0\nLINE\n8\n0");
     lines.push(`10\n${seg.x1.toFixed(3)}\n20\n${y1.toFixed(3)}\n30\n0.0`);
     lines.push(`11\n${seg.x2.toFixed(3)}\n21\n${y2.toFixed(3)}\n31\n0.0`);
   }

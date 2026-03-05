@@ -342,7 +342,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [threshold, setThreshold] = useState(128);
   const [simplify, setSimplify] = useState(2);
-  const [hairline, setHairline] = useState(false);
+  const [lineweightMm, setLineweightMm] = useState<string>(""); // empty = default (no override)
   const [dpi] = useState(300);
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<ConvertResult | null>(null);
@@ -392,7 +392,8 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
       formData.append("threshold", String(threshold));
       formData.append("simplifyTolerance", String(simplify));
       formData.append("doubleLineOffset", "0");
-      formData.append("hairline", String(hairline));
+      const lwVal = parseFloat(lineweightMm);
+      if (!isNaN(lwVal) && lwVal > 0) formData.append("lineweightMm", String(lwVal));
       const res = await fetch("/api/convert", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -525,19 +526,22 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                   <span>{isRtl ? "קווים פשוטים" : "Simple lines"}</span>
                 </div>
               </div>
-              {/* Hairline option */}
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="checkbox"
-                  id="hairline-check"
-                  checked={hairline}
-                  onChange={e => setHairline(e.target.checked)}
-                  className="w-4 h-4 accent-primary cursor-pointer"
-                />
-                <label htmlFor="hairline-check" className="text-sm font-medium cursor-pointer select-none">
-                  {isRtl ? "קו דק (Hairline)" : "Thin line (Hairline)"}
+              {/* Lineweight option */}
+              <div className="flex items-center gap-2 pt-1 flex-wrap">
+                <label className="text-sm font-medium shrink-0">
+                  {isRtl ? "עובי קו ב-DXF (מ'מ):" : "DXF lineweight (mm):"}
                 </label>
-                <span className="text-xs text-muted-foreground">{isRtl ? "— עובי קו 0 ב-DXF" : "— lineweight 0 in DXF"}</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="2"
+                  step="0.05"
+                  placeholder={isRtl ? "ברירת מחדל" : "default"}
+                  value={lineweightMm}
+                  onChange={e => setLineweightMm(e.target.value)}
+                  className="w-24 border border-border rounded px-2 py-1 text-sm text-center"
+                />
+                <span className="text-xs text-muted-foreground">{isRtl ? "(0 = הדק ביותר, ריק = ברירת מחדל)" : "(0 = hairline, empty = default)"}</span>
               </div>
               {(threshold !== 128 || simplify !== 2) && (
                 <button

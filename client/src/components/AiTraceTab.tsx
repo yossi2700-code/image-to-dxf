@@ -332,7 +332,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const [downloadTarget, setDownloadTarget] = useState<GeneratedImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   const [selectedVariation, setSelectedVariation] = useState<1 | 2 | 3>(2);
-  const [hairline, setHairline] = useState(false);
+  const [lineweightMm, setLineweightMm] = useState<string>(""); // empty = default
   const [dragOver, setDragOver] = useState(false);
   const [fullImageMode, setFullImageMode] = useState(false);
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("ai_trace_jobId"));
@@ -561,7 +561,8 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       formData.append("lang", isRtl ? "he" : "en");
       formData.append("landscapeMode", fullImageMode ? "true" : "false");
       formData.append("variationIndex", String(selectedVariation - 1));
-      formData.append("hairline", String(hairline));
+      const lwVal = parseFloat(lineweightMm);
+      if (!isNaN(lwVal) && lwVal >= 0) formData.append("lineweightMm", String(lwVal));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
       const data = await res.json();
       if (!res.ok) {
@@ -610,7 +611,8 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       formData.append("lang", isRtl ? "he" : "en");
       formData.append("landscapeMode", fullImageMode ? "true" : "false");
       formData.append("variationIndex", String(selectedVariation - 1));
-      formData.append("hairline", String(hairline));
+      const lwVal = parseFloat(lineweightMm);
+      if (!isNaN(lwVal) && lwVal >= 0) formData.append("lineweightMm", String(lwVal));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
       const data = await res.json();
       if (!res.ok) {
@@ -851,19 +853,22 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               </div>
             </div>
 
-            {/* Hairline option */}
-            <div className="flex items-center gap-2 pt-1 pb-1">
-              <input
-                type="checkbox"
-                id="hairline-trace-check"
-                checked={hairline}
-                onChange={e => setHairline(e.target.checked)}
-                className="w-4 h-4 accent-teal-600 cursor-pointer"
-              />
-              <label htmlFor="hairline-trace-check" className="text-sm font-medium cursor-pointer select-none">
-                {isRtl ? "קו דק (Hairline)" : "Thin line (Hairline)"}
+            {/* Lineweight option */}
+            <div className="flex items-center gap-2 pt-1 pb-1 flex-wrap">
+              <label className="text-sm font-medium shrink-0">
+                {isRtl ? "עובי קו ב-DXF (מ'מ):" : "DXF lineweight (mm):"}
               </label>
-              <span className="text-xs text-gray-400">{isRtl ? "— עובי קו 0 ב-DXF" : "— lineweight 0 in DXF"}</span>
+              <input
+                type="number"
+                min="0"
+                max="2"
+                step="0.05"
+                placeholder={isRtl ? "ברירת מחדל" : "default"}
+                value={lineweightMm}
+                onChange={e => setLineweightMm(e.target.value)}
+                className="w-24 border border-border rounded px-2 py-1 text-sm text-center"
+              />
+              <span className="text-xs text-gray-400">{isRtl ? "(0 = הדק ביותר, ריק = ברירת מחדל)" : "(0 = hairline, empty = default)"}</span>
             </div>
             <div className="flex gap-2">
               <button

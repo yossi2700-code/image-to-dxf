@@ -62,6 +62,8 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
     const simplifyTolerance = parseFloat((req.body.simplifyTolerance as string) ?? "2");
     const doubleLineOffset = parseFloat((req.body.doubleLineOffset as string) ?? "0");
     const hairline = (req.body.hairline as string) === "true";
+    const lineweightMmRaw = parseFloat((req.body.lineweightMm as string) ?? "");
+    const lineweightMm = isNaN(lineweightMmRaw) ? undefined : Math.min(2.0, Math.max(0, lineweightMmRaw));
 
     const { dxf, svgPreview, segmentCount, width, height, realWidth, realHeight } = await convertImageToDxf(
       req.file.buffer,
@@ -70,6 +72,7 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
         simplifyTolerance,
         doubleLineOffset: Math.min(20, Math.max(0, doubleLineOffset)),
         hairline,
+        lineweightMm,
       }
     );
 

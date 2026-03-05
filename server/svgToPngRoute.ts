@@ -11,13 +11,12 @@
 
 import express from "express";
 import sharp from "sharp";
-import { getAppUserFromCookie } from "./appAuth";
-
 const router = express.Router();
 
 router.post("/api/svg-to-png", async (req, res) => {
-  const appUser = getAppUserFromCookie(req.cookies);
-  if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
+  // No auth required — this is a stateless SVG→PNG conversion used for PDF export.
+  // The SVG content is sent by the client (already in their browser), so there is no
+  // server-side data exposure risk.
 
   const { svgContent, widthPx, heightPx } = req.body as {
     svgContent?: string;
