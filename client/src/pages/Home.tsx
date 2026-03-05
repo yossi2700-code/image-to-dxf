@@ -1339,6 +1339,25 @@ export default function Home() {
     }, 2000);
     return () => clearInterval(interval);
   }, []);
+
+  // Auto-refresh on page re-entry when no active jobs
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (!document.hidden) {
+        const hasActiveJob =
+          !!localStorage.getItem("ai_generate_jobId") ||
+          !!localStorage.getItem("ai_trace_jobId") ||
+          !!localStorage.getItem("doc_redraw_jobId");
+        if (!hasActiveJob) {
+          localStorage.removeItem("active_tab");
+          window.location.reload();
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
+
   const [authOpen, setAuthOpen] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
   const [authReason, setAuthReason] = useState<AuthReason>("generic");

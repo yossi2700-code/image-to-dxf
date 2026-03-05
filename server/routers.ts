@@ -7,7 +7,9 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers, userActions, tokenTransactions } from "../drizzle/schema";
+import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets } from "../drizzle/schema";
+import { randomBytes } from "crypto";
+import { sendPasswordResetEmail } from "./emailService";
 import { desc, eq, and, sql } from "drizzle-orm";
 import { getAppUserFromCookie } from "./appAuth";
 import { getTokenBalance, addTokens, getTokenTransactions } from "./tokenService";
@@ -282,6 +284,49 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         await db.update(appUsers).set({ isBlocked: 0 }).where(eq(appUsers.id, input.userId));
+        return { success: true };
+      }),
+
+    /** Get maintenance mode status */
+    getMaintenanceMode: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return { enabled: false };
+      const [row] = await db.select().from(systemSettings).where(eq(systemSettings.key, "maintenance_mode")).limit(1);
+      return { enabled: row?.value === "1" };
+    }),
+
+    /** Toggle maintenance mode on/off */
+    setMaintenanceMode: adminProcedure
+      .input(z.object({ enabled: z.boolean() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db
+          .insert(systemSettings)
+          .values({ key: "maintenance_mode", value: input.enabled ? "1" : "0" })
+          .onDuplicateKeyUpdate({ set: { value: input.enabled ? "1" : "0" } });
+        return { success: true, enabled: input.enabled };
+      }),
+
+    /** Send password reset email to a user (admin action) */
+    sendPasswordReset: adminProcedure
+      .input(z.object({ userId: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const [user] = await db
+          .select({ id: appUsers.id, email: appUsers.email, name: appUsers.name })
+          .from(appUsers).where(eq(appUsers.id, input.userId)).limit(1);
+        if (!user?.email) throw new TRPCError({ code: "NOT_FOUND", message: "משתמש לא נמצא" });
+        const resetToken = randomBytes(48).toString("hex");
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+        await db.insert(passwordResets).values({ appUserId: user.id, token: resetToken, expiresAt });
+        const req = ctx.req as { headers: Record<string, string | string[] | undefined> };
+        const proto = Array.isArray(req.headers["x-forwarded-proto"]) ? req.headers["x-forwarded-proto"][0] : (req.headers["x-forwarded-proto"] ?? "https");
+        const host = Array.isArray(req.headers["x-forwarded-host"]) ? req.headers["x-forwarded-host"][0] : (req.headers["x-forwarded-host"] ?? req.headers["host"] ?? "localhost");
+        const origin = `${proto}://${host}`;
+        const resetUrl = `${origin}/reset-password?token=${resetToken}`;
+        await sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl });
         return { success: true };
       }),
   }),

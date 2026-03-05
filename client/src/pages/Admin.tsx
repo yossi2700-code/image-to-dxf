@@ -38,6 +38,8 @@ import {
   User,
   KeyRound,
   CheckCircle2,
+  Wrench,
+  Mail,
 } from "lucide-react";
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
@@ -188,6 +190,17 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const unblockUserMutation = trpc.admin.unblockUser.useMutation({
     onSuccess: () => { toast.success("החסימה הוסרה"); refetchUsers(); },
     onError: (err) => toast.error(err.message ?? "שגיאה בשחרור חסימה"),
+  });
+
+  const { data: maintenanceData, refetch: refetchMaintenance } = trpc.admin.getMaintenanceMode.useQuery();
+  const setMaintenanceMutation = trpc.admin.setMaintenanceMode.useMutation({
+    onSuccess: (data) => { toast.success(data.enabled ? "מצב תחזוקה הופעל" : "מצב תחזוקה כבה"); refetchMaintenance(); },
+    onError: (err) => toast.error(err.message ?? "שגיאה"),
+  });
+
+  const sendPasswordResetMutation = trpc.admin.sendPasswordReset.useMutation({
+    onSuccess: () => toast.success("מייל איפוס סיסמא נשלח"),
+    onError: (err) => toast.error(err.message ?? "שגיאה בשליחת מייל"),
   });
 
   // Auto-refresh token balances every 30 seconds
@@ -599,6 +612,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                           >
                             {u.isBlocked ? <><ShieldCheck className="w-3 h-3" /> חסום</> : <Ban className="w-3 h-3" />}
                           </button>
+                          {/* Password reset button */}
+                          <button
+                            className="text-xs text-muted-foreground hover:text-blue-600 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`לשלוח מייל איפוס סיסמא ל-${u.email}?`)) {
+                                sendPasswordResetMutation.mutate({ userId: u.id });
+                              }
+                            }}
+                            title="שלח איפוס סיסמא"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                          </button>
                           {/* Token history toggle */}
                           <button
                             className="text-xs text-muted-foreground hover:text-primary transition-colors"
@@ -717,6 +743,42 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         {/* ── SETTINGS SECTION ── */}
         {activeSection === "settings" && (
           <div className="space-y-5">
+            {/* Maintenance Mode */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Wrench className="w-4 h-4 text-orange-500" />
+                  מצב תחזוקה
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium">
+                      {maintenanceData?.enabled ? "מצב תחזוקה פעיל" : "מצב תחזוקה כבוי"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {maintenanceData?.enabled
+                        ? "האתר מוצג הודעת תחזוקה לכל המשתמשים"
+                        : "האתר פעיל באופן רגיל"}
+                    </p>
+                  </div>
+                  <Button
+                    variant={maintenanceData?.enabled ? "destructive" : "outline"}
+                    size="sm"
+                    disabled={setMaintenanceMutation.isPending}
+                    onClick={() => setMaintenanceMutation.mutate({ enabled: !maintenanceData?.enabled })}
+                    className="shrink-0"
+                  >
+                    {setMaintenanceMutation.isPending
+                      ? <RefreshCw className="w-4 h-4 animate-spin" />
+                      : maintenanceData?.enabled
+                        ? "כבה תחזוקה"
+                        : "הפעל תחזוקה"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
             {/* Update Name */}
             <Card>
               <CardHeader className="pb-3">
