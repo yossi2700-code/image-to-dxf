@@ -235,7 +235,8 @@ router.post("/api/app-auth/forgot-password", async (req, res) => {
 
 router.post("/api/app-auth/reset-password", async (req, res) => {
   try {
-    const { token, password } = req.body as { token?: string; password?: string };
+    const { token, password: pw1, newPassword: pw2 } = req.body as { token?: string; password?: string; newPassword?: string };
+    const password = pw1 ?? pw2;
     if (!token || !password) return res.status(400).json({ error: "טוקן וסיסמה נדרשים" });
     if (password.length < 6) return res.status(400).json({ error: "הסיסמה חייבת להכיל לפחות 6 תווים" });
 
