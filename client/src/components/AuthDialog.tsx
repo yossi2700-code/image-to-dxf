@@ -19,7 +19,7 @@ interface AuthDialogProps {
   onSuccess: (user: { id: number; email: string; name: string | null }) => void;
 }
 
-type Mode = "login" | "register";
+type Mode = "login" | "register" | "forgot";
 
 function ReasonHeader({ reason }: { reason: AuthReason }) {
   if (reason === "unregistered") {
@@ -91,6 +91,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
+  const [forgotSent, setForgotSent] = useState(false);
 
   // Resolve effective reason (support legacy limitReached prop)
   const reason: AuthReason = authReason ?? (limitReached ? "limit" : "generic");
@@ -101,10 +102,36 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
     setPassword("");
     setLoading(false);
     setInlineError(null);
+    setForgotSent(false);
+  };
+
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    setLoading(true);
+    setInlineError(null);
+    try {
+      const res = await fetch("/api/app-auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, origin: window.location.origin }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setInlineError(data.error ?? "שגיאה. נסה שוב.");
+      } else {
+        setForgotSent(true);
+      }
+    } catch {
+      setInlineError("שגיאת רשת. נסה שוב.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === "forgot") return handleForgot(e);
     if (!email || !password) return;
     setLoading(true);
 
@@ -142,6 +169,11 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
           {/* Show reason-specific header only when NOT in login mode */}
           {mode === "register" ? (
             <ReasonHeader reason={reason} />
+          ) : mode === "forgot" ? (
+            <>
+              <DialogTitle className="text-center text-xl">שכחתי סיסמא</DialogTitle>
+              <DialogDescription className="text-center">הכנס את האימייל שלך ונשלח לך קישור לאיפוס סיסמא</DialogDescription>
+            </>
           ) : (
             <>
               <DialogTitle className="text-center text-xl">כניסה לחשבון</DialogTitle>
@@ -158,6 +190,15 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
         )}
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
 
+          {forgotSent ? (
+            <div className="text-center py-4 space-y-2">
+              <div className="text-4xl">📧</div>
+              <p className="font-semibold text-gray-800">מייל נשלח!</p>
+              <p className="text-sm text-muted-foreground">בדוק את התיבת הדואר שלך ולחץ על הקישור לאיפוס סיסמא.</p>
+              <button type="button" className="text-primary underline text-sm" onClick={() => { setMode("login"); reset(); }}>חזור לכניסה</button>
+            </div>
+          ) : (
+            <>
           {mode === "register" && (
             <div className="space-y-1.5">
               <Label htmlFor="name">שם (אופציונלי)</Label>
@@ -193,6 +234,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
             </div>
           </div>
 
+          {mode !== "forgot" && (
           <div className="space-y-1.5">
             <Label htmlFor="password">סיסמה</Label>
             <div className="relative">
@@ -210,6 +252,13 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
               />
             </div>
           </div>
+          )}
+
+          {mode === "login" && (
+            <div className="text-left">
+              <button type="button" className="text-xs text-muted-foreground underline hover:text-primary" onClick={() => { setMode("forgot"); reset(); }}>שכחתי סיסמא</button>
+            </div>
+          )}
 
           <Button
             type="submit"
@@ -221,10 +270,13 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
               <><Loader2 className="w-4 h-4 ml-2 animate-spin" />מעבד...</>
             ) : mode === "register" ? (
               <><Sparkles className="w-4 h-4 ml-1.5" />הרשם חינם עכשיו</>
+            ) : mode === "forgot" ? (
+              "שלח קישור לאיפוס"
             ) : (
               "כניסה"
             )}
           </Button>
+          </>)}
         </form>
 
         <div className="text-center text-sm text-muted-foreground mt-2">
@@ -237,6 +289,17 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
                 onClick={() => { setMode("login"); reset(); }}
               >
                 כנס כאן
+              </button>
+            </>
+          ) : mode === "forgot" ? (
+            <>
+              זכרת את הסיסמא?{" "}
+              <button
+                type="button"
+                className="text-primary underline hover:no-underline font-medium"
+                onClick={() => { setMode("login"); reset(); }}
+              >
+                חזור לכניסה
               </button>
             </>
           ) : (

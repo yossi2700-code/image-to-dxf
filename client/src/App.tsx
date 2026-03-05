@@ -12,6 +12,7 @@ import Tokens from "./pages/Tokens";
 import Share from "./pages/Share";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import ResetPassword from "./pages/ResetPassword";
 
 function Router() {
   return (
@@ -21,6 +22,7 @@ function Router() {
       <Route path={"/history"} component={History} />
       <Route path={"/tokens"} component={Tokens} />
       <Route path={"/share/:token"} component={Share} />
+      <Route path={"/reset-password"} component={ResetPassword} />
       <Route path={"/terms"} component={Terms} />
       <Route path={"/privacy"} component={Privacy} />
       <Route path={"/404"} component={NotFound} />
