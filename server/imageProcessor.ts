@@ -5,6 +5,7 @@ export interface ProcessingOptions {
   simplifyTolerance: number;  // 0-10, default 1
   doubleLineOffset?: number;  // pixels to offset for double-line CNC mode (0 = disabled)
   minSegmentLength?: number;  // minimum segment length in pixels; shorter segments are filtered as noise
+  hairline?: boolean;         // if true, DXF uses R2000 format with lineweight=0 (hairline)
 }
 
 export interface Segment {
@@ -666,14 +667,16 @@ export function doubleLineSegments(
 export function segmentsToDxf(
   segments: Segment[],
   width: number,
-  height: number
+  height: number,
+  hairline = false
 ): string {
   const lines: string[] = [];
 
   lines.push("0\nSECTION");
   lines.push("2\nHEADER");
   lines.push("9\n$ACADVER");
-  lines.push("1\nAC1009");
+  // AC1009 = R12 (no lineweight), AC1015 = R2000 (supports lineweight)
+  lines.push(hairline ? "1\nAC1015" : "1\nAC1009");
   lines.push("9\n$EXTMIN");
   lines.push("10\n0.0");
   lines.push("20\n0.0");
@@ -694,6 +697,7 @@ export function segmentsToDxf(
   lines.push("70\n0");
   lines.push("62\n7");
   lines.push("6\nCONTINUOUS");
+  if (hairline) lines.push("370\n0"); // lineweight: 0 = hairline (0.00mm)
   lines.push("0\nENDTAB");
   lines.push("0\nENDSEC");
 
@@ -706,6 +710,7 @@ export function segmentsToDxf(
 
     lines.push("0\nLINE");
     lines.push("8\n0");
+    if (hairline) lines.push("370\n0"); // per-entity hairline lineweight
     lines.push(`10\n${seg.x1}`);
     lines.push(`20\n${y1}`);
     lines.push("30\n0.0");
@@ -874,7 +879,7 @@ export async function aiTracePipeline(
   const polylines = traceCenterlines(thinned, width, height, epsilon);
 
   const segments = polylinesToSegments(polylines);
-  const dxf = segmentsToDxf(segments, width, height);
+  const dxf = segmentsToDxf(segments, width, height, options.hairline ?? false);
   const svgPreview = polylinesToSvg(polylines, width, height);
 
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -921,24 +926,24 @@ export async function convertImageToDxf(
   // This eliminates the double-line artifact caused by Sobel detecting both edges of thick strokes.
   const { width, height } = await imageToGrayscale(buffer);
 
+  // Use stronger blur (2.5) for scanned images to merge thick strokes before thinning.
+  // This prevents double-line artifacts from wide pen strokes in scanned artwork.
   const blurred = await sharp(buffer)
     .grayscale()
     .resize(width, height)
-    .blur(1.5)
+    .blur(2.5)
     .raw()
     .toBuffer();
   const blurredPixels = new Uint8Array(blurred);
 
   const binary = applyThreshold(blurredPixels, options.threshold);
+  // thinBinary returns 255 for foreground (line) pixels, 0 for background
   const thinned = thinBinary(binary, width, height);
 
-  // Convert thinned binary (0=black centerline, 255=white) to edge format (255=edge, 0=bg)
-  const edges = new Uint8Array(thinned.length);
-  for (let i = 0; i < thinned.length; i++) edges[i] = thinned[i] === 0 ? 255 : 0;
-
+  // thinned already has 255=line, 0=background — pass directly to traceCenterlines
   // 8-connectivity centerline tracing with Douglas-Peucker smoothing
   const epsilon = Math.max(0.5, options.simplifyTolerance ?? 1.5);
-  const polylines = traceCenterlines(edges, width, height, epsilon);
+  const polylines = traceCenterlines(thinned, width, height, epsilon);
 
   let outputPolylines: Polyline[];
 
@@ -950,7 +955,7 @@ export async function convertImageToDxf(
 
   const segments = polylinesToSegments(outputPolylines);
 
-  const dxf = segmentsToDxf(segments, width, height);
+  const dxf = segmentsToDxf(segments, width, height, options.hairline ?? false);
   const svgPreview = polylinesToSvg(outputPolylines, width, height);
 
   // Compute tight bounding box of actual drawn segments

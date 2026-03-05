@@ -323,7 +323,7 @@ function parseRectElement(el: string): LineSegment[] {
 
 // ─── SVG → DXF main function ──────────────────────────────────────────────────
 
-export function svgToDxf(svgContent: string): DxfResult {
+export function svgToDxf(svgContent: string, hairline = false): DxfResult {
   // Extract viewBox dimensions
   const vbMatch = svgContent.match(/viewBox="([^"]*)"/i);
   let width = 500, height = 500;
@@ -374,18 +374,21 @@ export function svgToDxf(svgContent: string): DxfResult {
   const realWidth  = allSegments.length > 0 ? (maxX - minX) : width;
   const realHeight = allSegments.length > 0 ? (maxY - minY) : height;
 
-  // Build DXF R12
+  // Build DXF (R12 or R2000 for hairline)
   const lines: string[] = [];
   lines.push("0\nSECTION");
   lines.push("2\nHEADER");
-  lines.push("9\n$ACADVER\n1\nAC1009");
+  // AC1009 = R12 (no lineweight), AC1015 = R2000 (supports lineweight=0 hairline)
+  lines.push(hairline ? "9\n$ACADVER\n1\nAC1015" : "9\n$ACADVER\n1\nAC1009");
   lines.push(`9\n$EXTMIN\n10\n0.0\n20\n0.0\n30\n0.0`);
   lines.push(`9\n$EXTMAX\n10\n${width}\n20\n${height}\n30\n0.0`);
   lines.push("0\nENDSEC");
 
   lines.push("0\nSECTION\n2\nTABLES");
   lines.push("0\nTABLE\n2\nLAYER\n70\n1");
-  lines.push("0\nLAYER\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS");
+  lines.push(hairline
+    ? "0\nLAYER\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS\n370\n0"
+    : "0\nLAYER\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS");
   lines.push("0\nENDTAB\n0\nENDSEC");
 
   lines.push("0\nSECTION\n2\nENTITIES");
@@ -393,7 +396,7 @@ export function svgToDxf(svgContent: string): DxfResult {
   for (const seg of allSegments) {
     const y1 = height - seg.y1; // flip Y for DXF coordinate system
     const y2 = height - seg.y2;
-    lines.push("0\nLINE\n8\n0");
+    lines.push(hairline ? "0\nLINE\n8\n0\n370\n0" : "0\nLINE\n8\n0");
     lines.push(`10\n${seg.x1.toFixed(3)}\n20\n${y1.toFixed(3)}\n30\n0.0`);
     lines.push(`11\n${seg.x2.toFixed(3)}\n21\n${y2.toFixed(3)}\n31\n0.0`);
   }

@@ -990,3 +990,8 @@
 ## תיקון עמוד איפוס סיסמא — מרץ 2026
 
 - [ ] עמוד /reset-password מציג דף ריק — לתקן
+
+## שיפורים — מרץ 2026
+- [x] תיקון קווים כפולים בסריקה מתמונה — שיפור thinning/threshold
+- [x] קיצור שם קובץ DXF — buildFilename מסנן מילות AI כמו Camera_angle
+- [x] הוספת אפשרות קו דק (hairline) בהמרה ובAI Outline

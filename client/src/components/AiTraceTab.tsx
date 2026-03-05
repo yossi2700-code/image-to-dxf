@@ -332,6 +332,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const [downloadTarget, setDownloadTarget] = useState<GeneratedImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   const [selectedVariation, setSelectedVariation] = useState<1 | 2 | 3>(2);
+  const [hairline, setHairline] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [fullImageMode, setFullImageMode] = useState(false);
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("ai_trace_jobId"));
@@ -560,6 +561,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       formData.append("lang", isRtl ? "he" : "en");
       formData.append("landscapeMode", fullImageMode ? "true" : "false");
       formData.append("variationIndex", String(selectedVariation - 1));
+      formData.append("hairline", String(hairline));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
       const data = await res.json();
       if (!res.ok) {
@@ -608,6 +610,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       formData.append("lang", isRtl ? "he" : "en");
       formData.append("landscapeMode", fullImageMode ? "true" : "false");
       formData.append("variationIndex", String(selectedVariation - 1));
+      formData.append("hairline", String(hairline));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
       const data = await res.json();
       if (!res.ok) {
@@ -848,6 +851,20 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               </div>
             </div>
 
+            {/* Hairline option */}
+            <div className="flex items-center gap-2 pt-1 pb-1">
+              <input
+                type="checkbox"
+                id="hairline-trace-check"
+                checked={hairline}
+                onChange={e => setHairline(e.target.checked)}
+                className="w-4 h-4 accent-teal-600 cursor-pointer"
+              />
+              <label htmlFor="hairline-trace-check" className="text-sm font-medium cursor-pointer select-none">
+                {isRtl ? "קו דק (Hairline)" : "Thin line (Hairline)"}
+              </label>
+              <span className="text-xs text-gray-400">{isRtl ? "— עובי קו 0 ב-DXF" : "— lineweight 0 in DXF"}</span>
+            </div>
             <div className="flex gap-2">
               <button
                 className="flex-1 font-bold text-base h-12 rounded-lg flex items-center justify-center gap-2 transition-all"

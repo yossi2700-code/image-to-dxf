@@ -33,19 +33,28 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
 /** Convert description to safe filename — capped at 15 chars for clean download names */
+// Words that come from AI analysis descriptions — not useful as filenames
+const AI_NOISE_WORDS = new Set([
+  "camera", "angle", "front", "view", "facing", "direction", "body", "pose",
+  "position", "static", "sym", "the", "central", "flower", "faces", "directly",
+  "forward", "with", "decorative", "swirls", "extending", "symmetrically",
+  "left", "right", "and", "this", "is", "a", "an", "in", "of", "to", "from",
+  "side", "profile", "rear", "top", "down", "low", "high", "style", "notes",
+  "key", "structural", "features", "description",
+]);
 function buildFilename(description: string): string {
   const words = description
     .replace(/[^\u0590-\u05FFa-zA-Z0-9\s]/g, "")
     .trim()
     .split(/\s+/)
-    .filter(Boolean);
+    .filter(w => w.length > 1 && !AI_NOISE_WORDS.has(w.toLowerCase()));
   let name = "";
   for (const w of words) {
     const next = name ? `${name}_${w}` : w;
-    if (next.length > 15) break;
+    if (next.length > 20) break;
     name = next;
   }
-  return (name || "ai_trace").slice(0, 15);
+  return (name || "ai_trace").slice(0, 20);
 }
 
 /**
@@ -231,7 +240,8 @@ async function runTraceJob(
   appUserId: number,
   ipAnon: string,
   sourceImageUrl?: string,
-  variationIndex: number = 1
+  variationIndex: number = 1,
+  hairline = false
 ) {
   const isHe = lang === "he";
   let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
@@ -456,7 +466,7 @@ async function runTraceJob(
         'stroke="black" stroke-width="1.5" fill="none" $1'
       );
 
-      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg);
+      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline);
       const imgKey = `ai-trace-generated/${nanoid()}.png`;
       const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
       const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
@@ -601,6 +611,7 @@ router.post(
       const landscapeMode = req.body?.landscapeMode === "true" || req.body?.landscapeMode === true;
       const lang = ((req.body?.lang as string) || "en") === "he" ? "he" : "en";
       const variationIndex = Math.min(2, Math.max(0, parseInt((req.body?.variationIndex as string) ?? "1", 10) || 1));
+      const hairline = req.body?.hairline === "true" || req.body?.hairline === true;
       const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
       const ipAnon = anonymizeIp(rawIp);
 
@@ -622,7 +633,7 @@ router.post(
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "ai_trace");
 
-      runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex)
+      runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline)
         .catch((err) => console.error("[aiTraceRoute] Unhandled job error:", err));
 
       return res.json({ jobId });
@@ -710,7 +721,8 @@ router.post(
         return res.status(401).json({ error: "UNAUTHORIZED", message: "יש להתחבר" });
       }
 
-      const { previewPngUrl, previewPngBase64, description, imageUrl } = req.body;
+      const { previewPngUrl, previewPngBase64, description, imageUrl, hairline: hairlineParam } = req.body;
+      const hairline = hairlineParam === true || hairlineParam === "true";
 
       let pngBuffer: Buffer;
       if (previewPngBase64) {
@@ -742,7 +754,7 @@ router.post(
         'stroke="black" stroke-width="1.5" fill="none" $1'
       );
 
-      const { dxf, segmentCount, realWidth, realHeight } = svgToDxf(rawSvg);
+      const { dxf, segmentCount, realWidth, realHeight } = svgToDxf(rawSvg, hairline);
 
       const desc = description || "ai_trace";
       const filename = buildFilename(desc);

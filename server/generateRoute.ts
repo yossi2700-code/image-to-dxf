@@ -166,10 +166,10 @@ function promptToFilename(prompt: string): string {
   let name = "";
   for (const w of words) {
     const next = name ? `${name}_${w}` : w;
-    if (next.length > 15) break;
+    if (next.length > 20) break;
     name = next;
   }
-  return (name || "design").slice(0, 15);
+  return (name || "design").slice(0, 20);
 }
 
 function pngToSvg(pngBuffer: Buffer): Promise<string> {
@@ -196,7 +196,8 @@ async function runGenerateJob(
   modifications: string | undefined,
   landscapeMode: boolean,
   appUserId: number,
-  ipAnon: string
+  ipAnon: string,
+  hairline = false
 ) {
   try {
     updateJob(jobId, { status: "processing" });
@@ -255,7 +256,7 @@ async function runGenerateJob(
         .replace(/<path /g, '<path stroke="black" stroke-width="1.5" fill="none" ');
       const cleanSvg = svgContent.replace(/stroke="black" stroke-width="1.5" fill="none" ([^>]*?)fill="none"/g, 'stroke="black" stroke-width="1.5" fill="none" $1');
 
-      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg);
+      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline);
 
       const imgKey = `ai-generated/${nanoid()}.png`;
       const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
@@ -319,10 +320,11 @@ async function runGenerateJob(
 // ─── POST /api/generate-images ────────────────────────────────────────────────
 router.post("/api/generate-images", async (req, res) => {
   try {
-    const { prompt, modifications, landscapeMode } = req.body as {
+    const { prompt, modifications, landscapeMode, hairline } = req.body as {
       prompt?: string;
       modifications?: string;
       landscapeMode?: boolean;
+      hairline?: boolean;
     };
 
     if (!prompt || prompt.trim().length < 2) {
@@ -365,7 +367,7 @@ router.post("/api/generate-images", async (req, res) => {
     const jobId = nanoid(12);
     createJob(jobId, appUser.userId, "ai_generate");
 
-    runGenerateJob(jobId, prompt.trim(), modifications, !!landscapeMode, appUser.userId, ipAnon ?? "")
+    runGenerateJob(jobId, prompt.trim(), modifications, !!landscapeMode, appUser.userId, ipAnon ?? "", !!hairline)
       .catch((err) => console.error("[generateRoute] Unhandled job error:", err));
 
     return res.json({ jobId });
