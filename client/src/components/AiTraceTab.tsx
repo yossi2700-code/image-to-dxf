@@ -331,6 +331,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const [errorMsg, setErrorMsg] = useState("");
   const [downloadTarget, setDownloadTarget] = useState<GeneratedImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
+  const [selectedVariation, setSelectedVariation] = useState<1 | 2 | 3>(2);
   const [dragOver, setDragOver] = useState(false);
   const [fullImageMode, setFullImageMode] = useState(false);
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("ai_trace_jobId"));
@@ -381,7 +382,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
           setCurrentStep("");
           setJobIdPersisted(null);
           refetchTokens();
-          const successMsg = isRtl ? `3 עיצובים מוכנים! בחר את המועדף ולחץ הורד DXF` : `3 designs ready! Choose your favorite and download DXF`;
+          const successMsg = isRtl ? `העיצוב מוכן! לחץ הורד DXF` : `Design ready! Click Download DXF`;
           toast.success(successMsg);
           // Push notification when page is hidden (user left the browser)
           if (document.hidden && "Notification" in window && Notification.permission === "granted") {
@@ -558,6 +559,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       if (focusText.trim()) formData.append("focusText", focusText.trim());
       formData.append("lang", isRtl ? "he" : "en");
       formData.append("landscapeMode", fullImageMode ? "true" : "false");
+      formData.append("variationIndex", String(selectedVariation - 1));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
       const data = await res.json();
       if (!res.ok) {
@@ -581,7 +583,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
         setResult(data as TraceResult);
         setStatus("success");
         refetchTokens();
-        toast.success(isRtl ? `3 עיצובים מוכנים! בחר את המועדף ולחץ הורד DXF` : `3 designs ready! Choose your favorite and download DXF`);
+        toast.success(isRtl ? `העיצוב מוכן! לחץ הורד DXF` : `Design ready! Click Download DXF`);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : (isRtl ? "שגיאה בעיבוד" : "Processing error");
@@ -605,6 +607,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       if (focusText.trim()) formData.append("focusText", focusText.trim());
       formData.append("lang", isRtl ? "he" : "en");
       formData.append("landscapeMode", fullImageMode ? "true" : "false");
+      formData.append("variationIndex", String(selectedVariation - 1));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
       const data = await res.json();
       if (!res.ok) {
@@ -801,6 +804,49 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               />
             </div>
             <input type="hidden" value={description} onChange={(e) => setDescription(e.target.value)} />
+
+            {/* Variation selector */}
+            <div className="mb-3">
+              <label className="block text-xs font-semibold mb-1.5 text-gray-500">
+                {isRtl ? "בחר סגנון" : "Choose Style"}
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {([1, 2, 3] as const).map((v) => {
+                  const labels = isRtl
+                    ? ["פשוט", "מפורט", "דקורטיבי"]
+                    : ["Simple", "Detailed", "Decorative"];
+                  const descs = isRtl
+                    ? ["קווים בסיסיים, נקי", "עשיר בפרטים", "אמנותי, מעוטר"]
+                    : ["Basic lines, clean", "Rich in details", "Artistic, ornate"];
+                  const isSelected = selectedVariation === v;
+                  const isRecommended = v === 2;
+                  return (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setSelectedVariation(v)}
+                      className="relative flex flex-col items-center justify-center gap-0.5 py-2.5 px-1 rounded-xl text-xs font-medium transition-all"
+                      style={isSelected
+                        ? { background: '#0d9488', color: 'white', border: '2px solid #0d9488', boxShadow: '0 2px 8px rgba(13,148,136,0.3)' }
+                        : { background: '#f8fafc', color: '#374151', border: '2px solid #e2e8f0' }
+                      }
+                    >
+                      {isRecommended && (
+                        <span
+                          className="absolute -top-2 left-1/2 -translate-x-1/2 text-xs font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
+                          style={{ background: '#f59e0b', color: 'white', fontSize: '9px', lineHeight: '1.2' }}
+                        >
+                          {isRtl ? "מומלץ" : "Recommended"}
+                        </span>
+                      )}
+                      <span className="font-bold text-sm">{v}</span>
+                      <span className="font-semibold" style={{ fontSize: '11px' }}>{labels[v - 1]}</span>
+                      <span style={{ fontSize: '9px', opacity: 0.75, textAlign: 'center' }}>{descs[v - 1]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             <div className="flex gap-2">
               <button

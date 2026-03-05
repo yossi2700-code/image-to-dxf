@@ -230,7 +230,8 @@ async function runTraceJob(
   lang: "he" | "en",
   appUserId: number,
   ipAnon: string,
-  sourceImageUrl?: string
+  sourceImageUrl?: string,
+  variationIndex: number = 1
 ) {
   const isHe = lang === "he";
   let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
@@ -312,13 +313,13 @@ async function runTraceJob(
 
     const baseFilename = buildFilename(userDesc || objectDescription);
 
-    // Update step: generating images
+    // Update step: generating image
     updateJob(jobId, {
-      step: isHe ? `מייצר 3 עיצובים מהתיאור: "${objectDescription.slice(0, 60)}..."` : `Generating 3 designs from: "${objectDescription.slice(0, 60)}..."`,
-      stepEn: `Generating 3 designs from: "${objectDescription.slice(0, 60)}..."`,
+      step: isHe ? `מייצר עיצוב מהתיאור: "${objectDescription.slice(0, 60)}..."` : `Generating design from: "${objectDescription.slice(0, 60)}..."`,
+      stepEn: `Generating design from: "${objectDescription.slice(0, 60)}..."`,
     });
 
-    // Step B: Generate 3 line art variations using gpt-image-1 image editing
+    // Step B: Generate ONE line art variation using gpt-image-1 image editing
     // We pass the ORIGINAL image as reference so the AI preserves the exact shape/angle.
     // Heartbeat every 30s during image generation to prevent stale-job timeout
     heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
@@ -333,7 +334,8 @@ async function runTraceJob(
     // Initialize partialImages array for streaming results to client as each image completes
     updateJob(jobId, { partialImages: [] });
 
-    const generationPromises = Array.from({ length: 3 }, async (_, idx) => {
+    // Generate only the selected variation (variationIndex: 0=simple, 1=detailed, 2=decorative)
+    const generationPromises = [variationIndex].map(async (idx) => {
       const variation = STYLE_VARIATIONS[idx % STYLE_VARIATIONS.length];
 
       // Build a focused edit prompt: keep the shape, convert to line art
@@ -440,17 +442,14 @@ async function runTraceJob(
 
       const imageResult = { imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight };
 
-      // Stream partial result to client immediately as each image completes
+      // Stream partial result to client immediately
       const currentJob = getJob(jobId);
       if (currentJob && currentJob.status !== "cancelled") {
         const partialImages = (currentJob.partialImages as typeof imageResult[] | undefined) ?? [];
-        const completedCount = partialImages.length + 1;
         updateJob(jobId, {
           partialImages: [...partialImages, imageResult],
-          step: isHe
-            ? `השלם עיצוב ${completedCount}/3 — ממתין לשאר...`
-            : `Completed ${completedCount}/3 designs — waiting for rest...`,
-          stepEn: `Completed ${completedCount}/3 designs — waiting for rest...`,
+          step: isHe ? "ממיר ל-DXF..." : "Converting to DXF...",
+          stepEn: "Converting to DXF...",
         });
       }
 
@@ -460,11 +459,6 @@ async function runTraceJob(
     // Check cancelled before image gen
     const jobBeforeGen = getJob(jobId);
     if (!jobBeforeGen || jobBeforeGen.status === "cancelled") return;
-
-    updateJob(jobId, {
-      step: isHe ? "ממיר לוקטור DXF..." : "Converting to vector DXF...",
-      stepEn: "Converting to vector DXF...",
-    });
 
     clearInterval(heartbeatInterval);
     const [images, suggestions] = await Promise.all([
@@ -485,7 +479,8 @@ async function runTraceJob(
 
     // Record user actions
     const groupId = nanoid(12);
-    const variationLabels = landscapeMode ? ["simple", "detailed", "decorative"] : ["simple", "detailed", "decorative"];
+    const allVariationLabels = ["simple", "detailed", "decorative"];
+    const variationLabels = [allVariationLabels[variationIndex] ?? `v${variationIndex + 1}`];
     for (let i = 0; i < images.length; i++) {
       const img = images[i];
       void recordUserAction({
@@ -582,6 +577,7 @@ router.post(
       const focusText = (req.body?.focusText || "").trim();
       const landscapeMode = req.body?.landscapeMode === "true" || req.body?.landscapeMode === true;
       const lang = ((req.body?.lang as string) || "en") === "he" ? "he" : "en";
+      const variationIndex = Math.min(2, Math.max(0, parseInt((req.body?.variationIndex as string) ?? "1", 10) || 1));
       const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
       const ipAnon = anonymizeIp(rawIp);
 
@@ -603,7 +599,7 @@ router.post(
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "ai_trace");
 
-      runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl)
+      runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex)
         .catch((err) => console.error("[aiTraceRoute] Unhandled job error:", err));
 
       return res.json({ jobId });
