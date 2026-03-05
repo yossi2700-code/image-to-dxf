@@ -8,6 +8,7 @@ import { checkUsageLimit } from "./usageLimits";
 import { deductTokens } from "./tokenService";
 import OpenAI from "openai";
 import { svgToDxf } from "./svgToDxf";
+import { cleanSvgForPreview } from "./svgClean";
 import potrace from "potrace";
 import sharp from "sharp";
 
@@ -160,14 +161,7 @@ router.post("/api/ai-refine", async (req, res) => {
     const rawSvg = await pngToSvg(processedBuffer);
 
     // Convert to stroke-only for preview
-    const svgContent = rawSvg
-      .replace(/fill="[^"]*"/g, 'fill="none"')
-      .replace(/fill:[^;"']*(;|(?="))/g, 'fill:none$1')
-      .replace(/<path /g, '<path stroke="black" stroke-width="1.5" fill="none" ');
-    const cleanSvg = svgContent.replace(
-      /stroke="black" stroke-width="1.5" fill="none" ([^>]*?)fill="none"/g,
-      'stroke="black" stroke-width="1.5" fill="none" $1'
-    );
+    const cleanSvg = cleanSvgForPreview(rawSvg);
 
     // Convert SVG to DXF
     const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg);

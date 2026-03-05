@@ -22,6 +22,7 @@ import { recordUserAction } from "./userActionsDb";
 import { deductTokens, addTokens, TOKEN_COSTS, TokenAction } from "./tokenService";
 import { createJob, getJob, updateJob, cancelJob, heartbeatJob } from "./jobStore";
 import { svgToDxf } from "./svgToDxf";
+import { cleanSvgForPreview } from "./svgClean";
 import { invokeLLM } from "./_core/llm";
 import OpenAI from "openai";
 import potrace from "potrace";
@@ -191,14 +192,7 @@ async function generatePortraitVariation(
     .toBuffer();
 
   const rawSvg = await pngToSvg(processedBuffer);
-  const svgContent = rawSvg
-    .replace(/fill="[^"]*"/g, 'fill="none"')
-    .replace(/fill:[^;"']*(;|(?="))/g, 'fill:none$1')
-    .replace(/<path /g, '<path stroke="black" stroke-width="1.5" fill="none" ');
-  const cleanSvg = svgContent.replace(
-    /stroke="black" stroke-width="1.5" fill="none" ([^>]*?)fill="none"/g,
-    'stroke="black" stroke-width="1.5" fill="none" $1'
-  );
+  const cleanSvg = cleanSvgForPreview(rawSvg);
 
   const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, minGapMm);
 
