@@ -156,7 +156,7 @@ export function DxfDownloadDialog({
   svgWidth = 500,
   svgHeight = 500,
 }: DxfDownloadDialogProps) {
-  const [filename, setFilename] = useState(defaultFilename.replace(/\.dxf$/i, ""));
+  const [filename, setFilename] = useState(defaultFilename.replace(/\.dxf$/i, "").slice(0, 30).trimEnd());
   const [scalePercent, setScalePercent] = useState(100);
   const [isDxfLoading, setIsDxfLoading] = useState(false);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
@@ -170,7 +170,7 @@ export function DxfDownloadDialog({
 
   useEffect(() => {
     if (open) {
-      setFilename(defaultFilename.replace(/\.dxf$/i, ""));
+      setFilename(defaultFilename.replace(/\.dxf$/i, "").slice(0, 30).trimEnd());
       setScalePercent(100);
       setError(null);
     }
@@ -185,7 +185,7 @@ export function DxfDownloadDialog({
   const outputWidthMm = svgWidth * scaleFactor;
   const outputHeightMm = svgHeight * scaleFactor;
 
-  const cleanFilename = filename.trim() || "design";
+  const cleanFilename = (filename.trim() || "design").slice(0, 30).trimEnd();
 
   // ── DXF Download ──────────────────────────────────────────────────────────
 

@@ -34,6 +34,14 @@ export interface ExportButtonsProps {
   layout?: "row" | "inline";
 }
 
+// ─── Filename helper ────────────────────────────────────────────────────────
+/** Truncate a filename base to max 30 chars, stripping any extension first */
+export function truncateFilename(name: string, maxLen = 30): string {
+  const base = name.replace(/\.[^.]+$/, "").trim(); // strip extension
+  if (base.length <= maxLen) return base;
+  return base.slice(0, maxLen).trimEnd();
+}
+
 // ─── PDF generation helper (shared logic) ────────────────────────────────────
 export async function generateAndDownloadPdf(
   svgContent: string,
@@ -96,7 +104,7 @@ export async function generateAndDownloadPdf(
   pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
   const pdfBytes = pdf.output("arraybuffer") as ArrayBuffer;
   const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
-  const baseName = filename.replace(/\.dxf$/i, "");
+  const baseName = truncateFilename(filename.replace(/\.dxf$/i, ""));
   const pdfFile = new File([pdfBlob], `${baseName}.pdf`, { type: "application/pdf" });
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -139,14 +147,14 @@ export function ExportButtons({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = dxfFilename.replace(/\.dxf$/i, "") + ".dxf";
+      a.download = truncateFilename(dxfFilename) + ".dxf";
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch {
       // Fallback: direct link
       const a = document.createElement("a");
       a.href = dxfUrl;
-      a.download = dxfFilename.replace(/\.dxf$/i, "") + ".dxf";
+      a.download = truncateFilename(dxfFilename) + ".dxf";
       a.click();
     } finally {
       setIsDxfLoading(false);

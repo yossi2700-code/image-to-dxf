@@ -47,7 +47,7 @@ function buildFilename(description: string): string {
     if (next.length > 15) break;
     name = next;
   }
-  return (name || "doc_redraw").slice(0, 15);
+  return (name || "doc_redraw").slice(0, 15).replace(/_+$/, "");
 }
 
 /** Convert a PNG buffer to SVG using potrace. */

@@ -55,7 +55,7 @@ function buildFilename(description: string): string {
     if (next.length > 20) break;
     name = next;
   }
-  return (name || "ai_trace").slice(0, 20);
+  return (name || "ai_trace").slice(0, 20).replace(/_+$/, "");
 }
 
 /**

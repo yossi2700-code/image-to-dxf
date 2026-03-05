@@ -170,7 +170,7 @@ function promptToFilename(prompt: string): string {
     if (next.length > 20) break;
     name = next;
   }
-  return (name || "design").slice(0, 20);
+  return (name || "design").slice(0, 20).replace(/_+$/, "");
 }
 
 function pngToSvg(pngBuffer: Buffer): Promise<string> {
