@@ -20,6 +20,9 @@ import {
   X,
   UserCircle,
   Scan,
+  FileText,
+  Loader2,
+  Share2,
 } from "lucide-react";
 
 interface GeneratedImage {
@@ -143,6 +146,8 @@ function PortraitCard({ image, isRtl, style, onDownload, onZoom }: PortraitCardP
     stencil: isRtl ? "סטנסיל" : "Stencil",
   }[style];
 
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+
   const handleQuickDxf = async () => {
     try {
       const resp = await fetch(image.dxfUrl);
@@ -158,6 +163,68 @@ function PortraitCard({ image, isRtl, style, onDownload, onZoom }: PortraitCardP
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch { onDownload(image); }
+  };
+
+  const handlePdf = async () => {
+    if (!image.svgPreview || isPdfLoading) return;
+    setIsPdfLoading(true);
+    try {
+      // Extract viewBox aspect ratio from SVG
+      const vbMatch = image.svgPreview.match(/viewBox=["']([^"']+)["']/);
+      let svgAspect = 1;
+      if (vbMatch) {
+        const parts = vbMatch[1].trim().split(/[\s,]+/);
+        if (parts.length === 4) {
+          const vbW = parseFloat(parts[2]);
+          const vbH = parseFloat(parts[3]);
+          if (vbW > 0 && vbH > 0) svgAspect = vbH / vbW;
+        }
+      }
+      // Fit to A4 portrait
+      const A4_W = 210, A4_H = 297;
+      let pdfW = A4_W;
+      let pdfH = pdfW * svgAspect;
+      if (pdfH > A4_H) { pdfH = A4_H; pdfW = pdfH / svgAspect; }
+      const PX_PER_MM = 96 / 25.4;
+      const widthPx = Math.min(Math.round(pdfW * PX_PER_MM * 2), 3000);
+      const heightPx = Math.min(Math.round(pdfH * PX_PER_MM * 2), 3000);
+
+      const pngRes = await fetch('/api/svg-to-png', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ svgContent: image.svgPreview, widthPx, heightPx }),
+      });
+      if (!pngRes.ok) throw new Error('SVG-to-PNG failed');
+      const pngBlob = await pngRes.blob();
+      const imgData = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(pngBlob);
+      });
+      const { jsPDF } = await import('jspdf');
+      const pdf = new jsPDF({ orientation: pdfW >= pdfH ? 'landscape' : 'portrait', unit: 'mm', format: [pdfW, pdfH] });
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
+      const pdfBytes = pdf.output('arraybuffer') as ArrayBuffer;
+      const pdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const baseName = (image.dxfFilename || 'face_portrait').replace(/\.dxf$/i, '');
+      const pdfFile = new File([pdfBlob], `${baseName}.pdf`, { type: 'application/pdf' });
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const canShare = typeof navigator !== 'undefined' && !!navigator.share && !!navigator.canShare;
+      if (isIOS && canShare && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+        try { await navigator.share({ files: [pdfFile], title: baseName }); return; } catch (e: unknown) { if (e instanceof Error && e.name === 'AbortError') return; }
+      }
+      const url = URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `${baseName}.pdf`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      toast.error(isRtl ? 'שגיאה בייצוא PDF' : 'PDF export error');
+      console.error('PDF error:', err);
+    } finally {
+      setIsPdfLoading(false);
+    }
   };
 
   return (
@@ -186,11 +253,15 @@ function PortraitCard({ image, isRtl, style, onDownload, onZoom }: PortraitCardP
       <div className="flex items-center justify-between px-3 py-1.5" style={{ borderTop: '1px solid #f1f5f9' }}>
         <button
           onClick={() => setShowVector(!showVector)}
-          className="text-xs font-medium flex items-center gap-1 transition-colors"
-          style={{ color: showVector ? '#7c3aed' : '#6b7280' }}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all"
+          style={{
+            background: showVector ? '#f3e8ff' : '#f1f5f9',
+            color: showVector ? '#7c3aed' : '#6b7280',
+            border: showVector ? '1px solid #d8b4fe' : '1px solid #e2e8f0',
+          }}
         >
-          <Eye className="w-3 h-3" />
-          {showVector ? (isRtl ? "תמונה" : "Photo") : (isRtl ? "וקטור" : "Vector")}
+          <Eye className="w-3.5 h-3.5" />
+          {showVector ? (isRtl ? "חזר לתמונה" : "Show Photo") : (isRtl ? "הצג וקטור" : "Show Vector")}
         </button>
         {image.realWidth && image.realHeight && (
           <span className="text-xs text-gray-400">{Math.round(image.realWidth)}×{Math.round(image.realHeight)} px</span>
@@ -206,6 +277,15 @@ function PortraitCard({ image, isRtl, style, onDownload, onZoom }: PortraitCardP
         >
           <Download className="w-3.5 h-3.5" />
           DXF
+        </button>
+        <button
+          onClick={handlePdf}
+          disabled={isPdfLoading}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all"
+          style={{ background: '#2563eb', color: 'white', border: 'none', opacity: isPdfLoading ? 0.7 : 1 }}
+        >
+          {isPdfLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+          PDF
         </button>
         <button
           onClick={() => onDownload(image)}

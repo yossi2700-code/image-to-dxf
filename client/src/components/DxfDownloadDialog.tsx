@@ -55,9 +55,34 @@ async function generatePdfBlob(
 ): Promise<ArrayBuffer> {
   const { jsPDF } = await import("jspdf");
 
+  // Extract actual SVG aspect ratio from viewBox to avoid cropping
+  const vbMatch = svgContent.match(/viewBox=["']([^"']+)["']/);
+  let svgAspect = widthMm > 0 && heightMm > 0 ? heightMm / widthMm : 1;
+  if (vbMatch) {
+    const parts = vbMatch[1].trim().split(/[\s,]+/);
+    if (parts.length === 4) {
+      const vbW = parseFloat(parts[2]);
+      const vbH = parseFloat(parts[3]);
+      if (vbW > 0 && vbH > 0) svgAspect = vbH / vbW;
+    }
+  }
+
+  // Cap to A4 page size (210×297 mm) while preserving aspect ratio
+  const A4_W = 210;
+  const A4_H = 297;
+  let pdfW = Math.min(widthMm, A4_W);
+  let pdfH = pdfW * svgAspect;
+  if (pdfH > A4_H) {
+    pdfH = A4_H;
+    pdfW = pdfH / svgAspect;
+  }
+  // Ensure minimum size
+  if (pdfW < 10) pdfW = 10;
+  if (pdfH < 10) pdfH = 10;
+
   const PX_PER_MM = 96 / 25.4;
-  const widthPx = Math.min(Math.round(widthMm * PX_PER_MM * 2), 3000); // 2x for quality, max 3000px
-  const heightPx = Math.min(Math.round(heightMm * PX_PER_MM * 2), 3000);
+  const widthPx = Math.min(Math.round(pdfW * PX_PER_MM * 2), 3000); // 2x for quality, max 3000px
+  const heightPx = Math.min(Math.round(pdfH * PX_PER_MM * 2), 3000);
 
   // Step 1: Convert SVG → PNG on the server (works on all browsers including iOS Safari)
   const pngRes = await fetch("/api/svg-to-png", {
@@ -82,11 +107,11 @@ async function generatePdfBlob(
 
   // Step 3: Create PDF from PNG image (no Canvg needed)
   const pdf = new jsPDF({
-    orientation: widthMm >= heightMm ? "landscape" : "portrait",
+    orientation: pdfW >= pdfH ? "landscape" : "portrait",
     unit: "mm",
-    format: [widthMm, heightMm],
+    format: [pdfW, pdfH],
   });
-  pdf.addImage(imgData, "PNG", 0, 0, widthMm, heightMm);
+  pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
 
   return pdf.output("arraybuffer") as ArrayBuffer;
 }
