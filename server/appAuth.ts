@@ -200,7 +200,7 @@ router.get("/api/app-auth/verify-email", async (req, res) => {
 
 router.post("/api/app-auth/forgot-password", async (req, res) => {
   try {
-    const { email } = req.body as { email?: string };
+    const { email, origin } = req.body as { email?: string; origin?: string };
     if (!email) return res.status(400).json({ error: "אימייל נדרש" });
 
     const db = await getDb();
@@ -215,8 +215,9 @@ router.post("/api/app-auth/forgot-password", async (req, res) => {
         const resetToken = randomBytes(48).toString("hex");
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
         await db.insert(passwordResets).values({ appUserId: user.id, token: resetToken, expiresAt });
-        const origin = (req.headers["x-forwarded-proto"] ? `${req.headers["x-forwarded-proto"]}://${req.headers["x-forwarded-host"]}` : `${req.protocol}://${req.get("host")}`);
-        const resetUrl = `${origin}/reset-password?token=${resetToken}`;
+        // Use origin from client (window.location.origin) so the link works in production
+        const safeOrigin = origin ?? (req.headers["x-forwarded-proto"] ? `${req.headers["x-forwarded-proto"]}://${req.headers["x-forwarded-host"]}` : `${req.protocol}://${req.get("host")}`);
+        const resetUrl = `${safeOrigin}/reset-password?token=${resetToken}`;
         void sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl });
       } catch (e) {
         console.warn("[forgot-password] Failed to send email:", e);
