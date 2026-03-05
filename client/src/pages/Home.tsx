@@ -1373,7 +1373,19 @@ export default function Home() {
   useEffect(() => {
     fetch("/api/app-auth/me")
       .then((r) => r.json())
-      .then((d) => { if (d.user) setAppUser(d.user); })
+      .then((d) => {
+        if (d.user) {
+          setAppUser(d.user);
+        } else {
+          // Not logged in — clear cached results so page shows default empty state
+          localStorage.removeItem("ai_generate_result");
+          localStorage.removeItem("ai_generate_prompt");
+          localStorage.removeItem("ai_generate_jobId");
+          localStorage.removeItem("ai_trace_jobId");
+          localStorage.removeItem("doc_redraw_jobId");
+          localStorage.removeItem("active_tab");
+        }
+      })
       .catch(() => {});
   }, []);
 
