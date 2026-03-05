@@ -1000,3 +1000,6 @@
 - [x] Scale DXF output to default 100mm width for proper CNC spacing
 - [x] Fix AI Outline generating unrelated faces instead of tracing uploaded image
 - [x] Fix Windows 7 Chrome display issues (icons not rendering)
+
+## תיקון תאימות Windows 7 Chrome 109 — מרץ 2026
+- [x] Fix oklch() colors in Tailwind CSS 4 output — added @csstools/postcss-oklab-function to vite.config.ts to convert all oklch() to rgb() at build time

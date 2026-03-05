@@ -5,6 +5,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+import { createRequire } from "node:module";
+const _require = createRequire(import.meta.url);
+// Load postcss-oklab-function via createRequire (CJS module)
+// The module exports a function directly
+const _postcssOklabFunctionModule = _require("@csstools/postcss-oklab-function");
+const postcssOklabFunction = typeof _postcssOklabFunctionModule === "function"
+  ? _postcssOklabFunctionModule
+  : _postcssOklabFunctionModule.default || _postcssOklabFunctionModule;
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -151,9 +159,16 @@ function vitePluginManusDebugCollector(): Plugin {
 }
 
 const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
-
 export default defineConfig({
   plugins,
+  css: {
+    postcss: {
+      plugins: [
+        // Convert oklch() colors to rgb() fallbacks for Chrome < 111 (Windows 7 max: Chrome 109)
+        postcssOklabFunction({ preserve: false }),
+      ],
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
