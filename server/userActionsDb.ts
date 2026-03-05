@@ -21,6 +21,8 @@ export interface RecordActionParams {
   variationLabel?: string;
   /** URL of the original uploaded image (for AI from Image) */
   sourceImageUrl?: string;
+  /** Feature/category: convert | ai_trace | ai_generate | portrait | document_redraw */
+  feature?: string;
 }
 
 export async function recordUserAction(params: RecordActionParams): Promise<void> {
@@ -38,6 +40,7 @@ export async function recordUserAction(params: RecordActionParams): Promise<void
       groupId: params.groupId ?? null,
       variationLabel: params.variationLabel ?? null,
       sourceImageUrl: params.sourceImageUrl ?? null,
+      feature: params.feature ?? null,
     });
   } catch (err) {
     // Non-critical — don't fail the request if logging fails

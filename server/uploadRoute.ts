@@ -118,6 +118,7 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
         dxfUrl: url,
         imageUrl,
         svgPreview,
+        feature: "convert",
       });
     }
 

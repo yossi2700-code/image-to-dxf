@@ -304,6 +304,7 @@ async function runGenerateJob(
         svgPreview: img.svgPreview,
         groupId,
         variationLabel: variationLabels[i] ?? `v${i + 1}`,
+        feature: "ai_generate",
       });
     }
 

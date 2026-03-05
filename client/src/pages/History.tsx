@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -34,12 +35,16 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  ScanFace,
+  FileText,
+  Layers,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type HistoryItem = {
   id: number;
   actionType: "convert" | "ai_generate" | "download";
+  feature: string | null;
   description: string | null;
   segmentCount: number | null;
   dxfUrl: string | null;
@@ -58,7 +63,69 @@ type HistoryGroup = {
   createdAt: Date;
   description: string | null;
   actionType: "convert" | "ai_generate" | "download";
+  feature: string | null;
 };
+
+// ─── Feature category config ──────────────────────────────────────────────────
+type FeatureTab = {
+  id: string;
+  labelHe: string;
+  labelEn: string;
+  features: string[];
+  icon: React.ReactNode;
+  color: string;
+};
+
+const FEATURE_TABS: FeatureTab[] = [
+  {
+    id: "all",
+    labelHe: "הכל",
+    labelEn: "All",
+    features: [],
+    icon: <Layers className="w-3.5 h-3.5" />,
+    color: "text-slate-600",
+  },
+  {
+    id: "convert",
+    labelHe: "המרה",
+    labelEn: "Convert",
+    features: ["convert"],
+    icon: <FileCode2 className="w-3.5 h-3.5" />,
+    color: "text-blue-600",
+  },
+  {
+    id: "ai_trace",
+    labelHe: "AI קווים",
+    labelEn: "AI Outline",
+    features: ["ai_trace"],
+    icon: <Wand2 className="w-3.5 h-3.5" />,
+    color: "text-purple-600",
+  },
+  {
+    id: "ai_generate",
+    labelHe: "AI יצירה",
+    labelEn: "AI Generate",
+    features: ["ai_generate"],
+    icon: <Sparkles className="w-3.5 h-3.5" />,
+    color: "text-amber-600",
+  },
+  {
+    id: "portrait",
+    labelHe: "פורטרט",
+    labelEn: "Portrait",
+    features: ["portrait"],
+    icon: <ScanFace className="w-3.5 h-3.5" />,
+    color: "text-rose-600",
+  },
+  {
+    id: "document_redraw",
+    labelHe: "מסמך",
+    labelEn: "Document",
+    features: ["document_redraw"],
+    icon: <FileText className="w-3.5 h-3.5" />,
+    color: "text-teal-600",
+  },
+];
 
 // ─── SVG Zoom Viewer ─────────────────────────────────────────────────────────
 function SvgViewer({ svg }: { svg: string }) {
@@ -160,6 +227,20 @@ function cleanDesc(desc: string | null, fallback: string): string {
   return clean.length > 55 ? clean.slice(0, 55) + "…" : clean;
 }
 
+function getFeatureIcon(feature: string | null, actionType: string): React.ReactNode {
+  switch (feature) {
+    case "convert": return <FileCode2 className="w-3.5 h-3.5 text-blue-500" />;
+    case "ai_trace": return <Wand2 className="w-3.5 h-3.5 text-purple-500" />;
+    case "ai_generate": return <Sparkles className="w-3.5 h-3.5 text-amber-500" />;
+    case "portrait": return <ScanFace className="w-3.5 h-3.5 text-rose-500" />;
+    case "document_redraw": return <FileText className="w-3.5 h-3.5 text-teal-500" />;
+    default:
+      return actionType === "ai_generate"
+        ? <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+        : <FileCode2 className="w-3.5 h-3.5 text-blue-500" />;
+  }
+}
+
 // ─── Group Card ───────────────────────────────────────────────────────────────
 function GroupCard({
   group, onViewVariation, onDelete, onEditAgain, onDownload, onTryAgain,
@@ -174,7 +255,7 @@ function GroupCard({
   const { isRtl, language } = useLanguage();
   const [activeIdx, setActiveIdx] = useState(0);
   const [showSource, setShowSource] = useState(false);
-  const isAi = group.actionType === "ai_generate";
+  const isAi = group.actionType === "ai_generate" || group.feature === "ai_trace" || group.feature === "ai_generate" || group.feature === "portrait" || group.feature === "document_redraw";
   const isGroup = group.items.length > 1;
   const activeItem = group.items[activeIdx];
   const hasSource = !!activeItem?.sourceImageUrl;
@@ -230,7 +311,7 @@ function GroupCard({
 
       <CardContent className="p-3 space-y-2">
         <div className="flex items-start gap-1.5">
-          {isAi ? <Sparkles className="w-3.5 h-3.5 text-purple-500 mt-0.5 shrink-0" /> : <FileCode2 className="w-3.5 h-3.5 text-blue-500 mt-0.5 shrink-0" />}
+          {getFeatureIcon(group.feature, group.actionType)}
           <p className="text-xs font-medium leading-snug flex-1 min-w-0 break-words">{shortDesc}</p>
         </div>
 
@@ -292,7 +373,7 @@ function DetailDialog({
 }) {
   const { isRtl, language } = useLanguage();
   if (!item) return null;
-  const isAi = item.actionType === "ai_generate";
+  const isAi = item.actionType === "ai_generate" || item.feature === "ai_trace" || item.feature === "portrait" || item.feature === "document_redraw";
   const date = new Date(item.createdAt).toLocaleString(language === "he" ? "he-IL" : "en-US", { dateStyle: "long", timeStyle: "short" });
   const displayDesc = cleanDesc(item.description, isRtl ? "עיצוב AI" : "AI Design");
 
@@ -304,7 +385,7 @@ function DetailDialog({
         </button>
         <DialogHeader>
           <DialogTitle className={`flex items-center gap-2 ${isRtl ? "text-right" : "text-left"} pr-12`}>
-            {isAi ? <Sparkles className="w-4 h-4 text-purple-600" /> : <FileCode2 className="w-4 h-4 text-blue-600" />}
+            {getFeatureIcon(item.feature, item.actionType)}
             {displayDesc}
           </DialogTitle>
         </DialogHeader>
@@ -354,6 +435,51 @@ function DetailDialog({
   );
 }
 
+// ─── Grid of groups ────────────────────────────────────────────────────────────
+function GroupGrid({
+  groups,
+  onViewVariation,
+  onDelete,
+  onEditAgain,
+  onDownload,
+  onTryAgain,
+  isRtl,
+  emptyLabel,
+}: {
+  groups: HistoryGroup[];
+  onViewVariation: (item: HistoryItem) => void;
+  onDelete: (group: HistoryGroup) => void;
+  onEditAgain: (item: HistoryItem) => void;
+  onDownload: (item: HistoryItem) => void;
+  onTryAgain: (item: HistoryItem) => void;
+  isRtl: boolean;
+  emptyLabel: string;
+}) {
+  if (groups.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+        <Clock className="w-10 h-10 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">{emptyLabel}</p>
+      </div>
+    );
+  }
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      {groups.map((group) => (
+        <GroupCard
+          key={group.groupId ?? group.items[0].id}
+          group={group}
+          onViewVariation={onViewVariation}
+          onDelete={onDelete}
+          onEditAgain={onEditAgain}
+          onDownload={onDownload}
+          onTryAgain={onTryAgain}
+        />
+      ))}
+    </div>
+  );
+}
+
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function History() {
   const { t, isRtl } = useLanguage();
@@ -365,6 +491,7 @@ export default function History() {
   const [downloadTarget, setDownloadTarget] = useState<HistoryItem | null>(null);
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
 
   // Group items by groupId
   const groups = useMemo<HistoryGroup[]>(() => {
@@ -391,23 +518,41 @@ export default function History() {
         const bi = varOrder.indexOf(b.variationLabel ?? "");
         return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
       });
-      result.push({ groupId: gid, items: gItems, createdAt: gItems[0].createdAt, description: gItems[0].description, actionType: gItems[0].actionType });
+      result.push({ groupId: gid, items: gItems, createdAt: gItems[0].createdAt, description: gItems[0].description, actionType: gItems[0].actionType, feature: gItems[0].feature });
     }
 
     for (const item of ungrouped) {
-      result.push({ groupId: null, items: [item], createdAt: item.createdAt, description: item.description, actionType: item.actionType });
+      result.push({ groupId: null, items: [item], createdAt: item.createdAt, description: item.description, actionType: item.actionType, feature: item.feature });
     }
 
     result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return result;
   }, [items]);
 
-  // Search filter
-  const filteredGroups = useMemo(() => {
+  // Filter by search query
+  const searchFiltered = useMemo(() => {
     if (!searchQuery.trim()) return groups;
     const q = searchQuery.toLowerCase();
     return groups.filter((g) => (g.description ?? "").toLowerCase().includes(q));
   }, [groups, searchQuery]);
+
+  // Filter by feature tab
+  const tabFiltered = useMemo(() => {
+    if (activeTab === "all") return searchFiltered;
+    const tab = FEATURE_TABS.find((t) => t.id === activeTab);
+    if (!tab || tab.features.length === 0) return searchFiltered;
+    return searchFiltered.filter((g) => tab.features.includes(g.feature ?? ""));
+  }, [searchFiltered, activeTab]);
+
+  // Count per tab
+  const tabCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: searchFiltered.length };
+    for (const tab of FEATURE_TABS) {
+      if (tab.id === "all") continue;
+      counts[tab.id] = searchFiltered.filter((g) => tab.features.includes(g.feature ?? "")).length;
+    }
+    return counts;
+  }, [searchFiltered]);
 
   // Delete group (all items)
   const deleteMutation = trpc.history.delete.useMutation({
@@ -467,6 +612,7 @@ export default function History() {
       </header>
 
       <main className="container py-6 space-y-4">
+        {/* Search */}
         {!isLoading && groups.length > 0 && (
           <div className="relative max-w-sm">
             <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRtl ? "right-3" : "left-3"}`} />
@@ -506,33 +652,69 @@ export default function History() {
               {isRtl ? "צור עיצוב ראשון" : "Create First Design"}
             </Button>
           </div>
-        ) : filteredGroups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-            <Search className="w-10 h-10 text-muted-foreground" />
-            <p className="text-base font-semibold">{isRtl ? "לא נמצאו תוצאות" : "No results found"}</p>
-            <p className="text-sm text-muted-foreground">{isRtl ? `אין עיצובים עם "${searchQuery}"` : `No designs matching "${searchQuery}"`}</p>
-            <Button variant="outline" size="sm" onClick={() => setSearchQuery("")}>{isRtl ? "נקה חיפוש" : "Clear search"}</Button>
-          </div>
         ) : (
-          <>
-            <p className="text-sm text-muted-foreground">
-              {filteredGroups.length} {isRtl ? "בקשות" : "requests"}
-              {searchQuery && ` (${isRtl ? "מסונן" : "filtered"})`}
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {filteredGroups.map((group) => (
-                <GroupCard
-                  key={group.groupId ?? group.items[0].id}
-                  group={group}
-                  onViewVariation={setSelectedItem}
-                  onDelete={setDeleteTarget}
-                  onEditAgain={handleEditAgain}
-                  onDownload={handleDownload}
-                  onTryAgain={handleTryAgain}
-                />
-              ))}
+          <Tabs value={activeTab} onValueChange={setActiveTab} dir={isRtl ? "rtl" : "ltr"}>
+            {/* Tab list - scrollable on mobile */}
+            <div className="overflow-x-auto pb-1">
+              <TabsList className="h-auto p-1 gap-1 flex-nowrap w-max min-w-full sm:w-auto">
+                {FEATURE_TABS.map((tab) => {
+                  const count = tabCounts[tab.id] ?? 0;
+                  if (tab.id !== "all" && count === 0) return null;
+                  return (
+                    <TabsTrigger
+                      key={tab.id}
+                      value={tab.id}
+                      className="flex items-center gap-1.5 text-xs px-3 py-1.5 whitespace-nowrap"
+                    >
+                      <span className={activeTab === tab.id ? "" : tab.color}>{tab.icon}</span>
+                      <span>{isRtl ? tab.labelHe : tab.labelEn}</span>
+                      <span className={`text-xs rounded-full px-1.5 py-0.5 font-mono ${
+                        activeTab === tab.id
+                          ? "bg-background/50 text-foreground"
+                          : "bg-muted text-muted-foreground"
+                      }`}>
+                        {count}
+                      </span>
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
             </div>
-          </>
+
+            {/* Tab content */}
+            {FEATURE_TABS.map((tab) => (
+              <TabsContent key={tab.id} value={tab.id} className="mt-4">
+                {tabFiltered.length === 0 && searchQuery ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+                    <Search className="w-10 h-10 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      {isRtl ? `אין עיצובים עם "${searchQuery}"` : `No designs matching "${searchQuery}"`}
+                    </p>
+                    <Button variant="outline" size="sm" onClick={() => setSearchQuery("")}>
+                      {isRtl ? "נקה חיפוש" : "Clear search"}
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {tabFiltered.length} {isRtl ? "בקשות" : "requests"}
+                      {searchQuery && ` (${isRtl ? "מסונן" : "filtered"})`}
+                    </p>
+                    <GroupGrid
+                      groups={tabFiltered}
+                      onViewVariation={setSelectedItem}
+                      onDelete={setDeleteTarget}
+                      onEditAgain={handleEditAgain}
+                      onDownload={handleDownload}
+                      onTryAgain={handleTryAgain}
+                      isRtl={isRtl}
+                      emptyLabel={isRtl ? "אין עיצובים בקטגוריה זו" : "No designs in this category"}
+                    />
+                  </>
+                )}
+              </TabsContent>
+            ))}
+          </Tabs>
         )}
       </main>
 

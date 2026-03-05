@@ -374,6 +374,7 @@ export const appRouter = router({
           groupId: userActions.groupId,
           variationLabel: userActions.variationLabel,
           sourceImageUrl: userActions.sourceImageUrl,
+          feature: userActions.feature,
           createdAt: userActions.createdAt,
         })
         .from(userActions)

@@ -99,6 +99,8 @@ export const userActions = mysqlTable("user_actions", {
   variationLabel: varchar("variationLabel", { length: 32 }),
   /** URL of the original uploaded image (for AI from Image feature) */
   sourceImageUrl: text("sourceImageUrl"),
+  /** Feature/category: convert | ai_trace | ai_generate | portrait | document_redraw */
+  feature: varchar("feature", { length: 32 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

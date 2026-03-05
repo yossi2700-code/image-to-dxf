@@ -336,6 +336,7 @@ async function runFaceDetectJob(
         groupId,
         variationLabel: `portrait_${img.style}`,
         sourceImageUrl: sourceImageUrl ?? undefined,
+        feature: "portrait",
       });
     }
 

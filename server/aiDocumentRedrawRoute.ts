@@ -266,6 +266,7 @@ async function runDocumentRedrawJob(
       svgPreview: result.svgPreview,
       groupId,
       variationLabel: "document-redraw",
+      feature: "document_redraw",
     });
 
     updateJob(jobId, {

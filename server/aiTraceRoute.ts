@@ -525,6 +525,7 @@ async function runTraceJob(
         groupId,
         variationLabel: variationLabels[i] ?? `v${i + 1}`,
         sourceImageUrl: sourceImageUrl ?? undefined,
+        feature: "ai_trace",
       });
     }
 
@@ -764,6 +765,7 @@ router.post(
         dxfUrl,
         imageUrl: imageUrl || previewPngUrl,
         svgPreview,
+        feature: "ai_trace",
       });
 
       return res.json({

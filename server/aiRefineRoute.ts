@@ -192,6 +192,7 @@ router.post("/api/ai-refine", async (req, res) => {
       segmentCount,
       imageUrl: refinedImageUrl,
       description: instruction.slice(0, 100),
+      feature: "ai_refine",
     });
 
     await logUsageEvent({

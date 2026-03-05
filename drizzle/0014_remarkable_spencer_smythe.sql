@@ -1,0 +1,1 @@
+ALTER TABLE `user_actions` ADD `feature` varchar(32);
