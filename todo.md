@@ -997,3 +997,4 @@
 - [x] הוספת אפשרות קו דק (hairline) בהמרה ובAI Outline
 - [x] Fix double lines in scanned images (improve thinning algorithm)
 - [x] Add minimum 0.8mm gap enforcement between DXF lines (auto-scale)
+- [x] Scale DXF output to default 100mm width for proper CNC spacing

@@ -344,6 +344,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
   const [simplify, setSimplify] = useState(2);
   const [lineweightMm, setLineweightMm] = useState<string>(""); // empty = default (no override)
   const [minGapMm, setMinGapMm] = useState<string>("0.8"); // default 0.8mm min gap
+  const [outputWidthMm, setOutputWidthMm] = useState<string>("100"); // default 100mm output width
   const [dpi] = useState(300);
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<ConvertResult | null>(null);
@@ -397,6 +398,8 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
       if (!isNaN(lwVal) && lwVal > 0) formData.append("lineweightMm", String(lwVal));
       const gapVal = parseFloat(minGapMm);
       if (!isNaN(gapVal) && gapVal > 0) formData.append("minGapMm", String(gapVal));
+      const owVal = parseFloat(outputWidthMm);
+      if (!isNaN(owVal) && owVal > 0) formData.append("outputWidthMm", String(owVal));
       formData.append("dpi", String(dpi));
       const res = await fetch("/api/convert", { method: "POST", body: formData });
       const data = await res.json();
@@ -563,6 +566,23 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                   className="w-24 border border-border rounded px-2 py-1 text-sm text-center"
                 />
                 <span className="text-xs text-muted-foreground">{isRtl ? "(0 = כבוי, מגדיל אוטומטית אם צריך)" : "(0 = off, auto-scales if needed)"}</span>
+              </div>
+              {/* Output width option */}
+              <div className="flex items-center gap-2 pt-1 flex-wrap">
+                <label className="text-sm font-medium shrink-0">
+                  {isRtl ? "רוחב פלט (מ'מ):" : "Output width (mm):"}
+                </label>
+                <input
+                  type="number"
+                  min="10"
+                  max="2000"
+                  step="10"
+                  placeholder="100"
+                  value={outputWidthMm}
+                  onChange={e => setOutputWidthMm(e.target.value)}
+                  className="w-24 border border-border rounded px-2 py-1 text-sm text-center"
+                />
+                <span className="text-xs text-muted-foreground">{isRtl ? "(סקל אוטומטי לפי הרוחב הנבחר)" : "(auto-scales to fit width)"}</span>
               </div>
               {(threshold !== 128 || simplify !== 2) && (
                 <button

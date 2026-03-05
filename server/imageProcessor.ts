@@ -9,6 +9,7 @@ export interface ProcessingOptions {
   lineweightMm?: number;      // explicit lineweight in mm (e.g. 0.2); overrides hairline when set
   minGapMm?: number;          // minimum gap between lines in mm; auto-scales DXF if lines are too close (default: 0 = disabled)
   dpi?: number;               // image DPI for mm calculations (default: 300)
+  outputWidthMm?: number;     // target output width in mm; scales DXF proportionally (default: 100mm)
 }
 
 export interface Segment {
@@ -1085,12 +1086,27 @@ export async function convertImageToDxf(
   }
   // ────────────────────────────────────────────────────────────────────────────
 
+  // ── Output size scaling ──────────────────────────────────────────────────────
+  // Scale the entire drawing so the output width equals outputWidthMm (default 100mm).
+  // DXF units are in "drawing units" — we treat 1 unit = 1mm after scaling.
+  // Scale factor = targetWidthMm / currentWidthPx
+  const targetWidthMm = options.outputWidthMm ?? 100;
+  const outputScale = dxfWidth > 0 ? targetWidthMm / dxfWidth : 1;
+  if (Math.abs(outputScale - 1) > 0.001) {
+    scaledPolylines = scaledPolylines.map(pl =>
+      pl.map(([x, y]) => [x * outputScale, y * outputScale] as [number, number])
+    );
+    dxfWidth  = Math.round(dxfWidth  * outputScale);
+    dxfHeight = Math.round(dxfHeight * outputScale);
+  }
+  // ────────────────────────────────────────────────────────────────────────────
+
   const segments = polylinesToSegments(scaledPolylines);
 
   const dxf = segmentsToDxf(segments, dxfWidth, dxfHeight, options.hairline ?? false, options.lineweightMm);
   const svgPreview = polylinesToSvg(outputPolylines, width, height); // preview always uses original scale
 
-  // Compute tight bounding box of actual drawn segments
+  // Compute tight bounding box of actual drawn segments (in mm after scaling)
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (const seg of segments) {
     minX = Math.min(minX, seg.x1, seg.x2);
@@ -1098,8 +1114,8 @@ export async function convertImageToDxf(
     maxX = Math.max(maxX, seg.x1, seg.x2);
     maxY = Math.max(maxY, seg.y1, seg.y2);
   }
-  const realWidth  = segments.length > 0 ? (maxX - minX) : dxfWidth;
-  const realHeight = segments.length > 0 ? (maxY - minY) : dxfHeight;
+  const realWidth  = segments.length > 0 ? Math.round(maxX - minX) : dxfWidth;
+  const realHeight = segments.length > 0 ? Math.round(maxY - minY) : dxfHeight;
 
   return { dxf, svgPreview, segmentCount: segments.length, width: dxfWidth, height: dxfHeight, realWidth, realHeight };
 }

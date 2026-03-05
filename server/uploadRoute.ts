@@ -66,6 +66,8 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
     const lineweightMm = isNaN(lineweightMmRaw) ? undefined : Math.min(2.0, Math.max(0, lineweightMmRaw));
     const minGapMmRaw = parseFloat((req.body.minGapMm as string) ?? "0");
     const minGapMm = isNaN(minGapMmRaw) ? 0 : Math.min(5.0, Math.max(0, minGapMmRaw));
+    const outputWidthMmRaw = parseFloat((req.body.outputWidthMm as string) ?? "100");
+    const outputWidthMm = isNaN(outputWidthMmRaw) ? 100 : Math.min(2000, Math.max(10, outputWidthMmRaw));
     const dpiRaw = parseInt((req.body.dpi as string) ?? "300", 10);
     const dpi = isNaN(dpiRaw) ? 300 : Math.min(1200, Math.max(72, dpiRaw));
 
@@ -78,6 +80,7 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
         hairline,
         lineweightMm,
         minGapMm,
+        outputWidthMm,
         dpi,
       }
     );
