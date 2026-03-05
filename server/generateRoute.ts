@@ -106,8 +106,39 @@ function buildLandscapePrompt(userPrompt: string, variationIndex: number): strin
   );
 }
 
+/**
+ * Detect if the user prompt contains a scene/context keyword alongside an object.
+ * e.g. "bluey landscape", "cat in forest", "dog on beach"
+ */
+function detectObjectAndScene(userPrompt: string): { hasScene: boolean; sceneKeywords: string } {
+  const scenePatterns = /\b(landscape|nof|nof teva|nature|forest|beach|mountain|city|jungle|garden|park|ocean|sea|desert|space|sky|field|meadow|river|lake|snow|winter|summer|sunset|sunrise|night|rain|storm|countryside|village|street|urban|indoor|outdoor|background|scene|environment|setting|נוף|יער|חוף|הר|עיר|גן|פארק|ים|מדבר|חלל|שמים|שדה|נהר|אגם|שלג|חורף|קיץ|שקיעה|זריחה|לילה|גשם|כפר|רחוב)\b/i;
+  const match = userPrompt.match(scenePatterns);
+  return { hasScene: !!match, sceneKeywords: match ? match[0] : "" };
+}
+
 function buildLineArtPrompt(userPrompt: string, variationIndex: number): string {
   const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
+  const { hasScene } = detectObjectAndScene(userPrompt);
+
+  // If user prompt contains both an object AND a scene (e.g. "bluey landscape"),
+  // use the landscape-style prompt to render the object within the scene
+  if (hasScene) {
+    return (
+      "ABSOLUTE RULE \u2014 NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS ANYWHERE IN THE IMAGE. " +
+      "The user's description is WHAT TO DRAW, not what to write. Do NOT render any part of the description as text. " +
+      `Professional black and white line art illustration: ${userPrompt}. ` +
+      "IMPORTANT: If the prompt mentions a specific character, creature, or object (e.g. Bluey, a cat, a dog), " +
+      "that character/object MUST be the MAIN FOCUS of the illustration, prominently placed in the scene. " +
+      "Draw the character/object INSIDE the described scene/environment. " +
+      "Pure white background (#FFFFFF). Bold thick black outlines, no fill, no shading, no gradients. " +
+      "High contrast: only pure black (#000000) lines on white. " +
+      `${variation.style} ` +
+      "CRITICAL FRAMING: The entire scene with the character must fit completely inside the frame. " +
+      "Leave at least 10% white margin on every edge. Nothing cropped. " +
+      "FINAL REMINDER: Zero text, zero letters, zero numbers anywhere. Pure illustration only."
+    );
+  }
+
   return (
     // Lead with the absolute no-text rule so the model cannot ignore it
     "ABSOLUTE RULE \u2014 NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS ANYWHERE IN THE IMAGE. " +
