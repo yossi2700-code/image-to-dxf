@@ -341,9 +341,11 @@ async function runTraceJob(
       // Build a focused edit prompt: keep the shape, convert to line art
       // Detect if this is a portrait/face image from the LLM description
       const isPortrait = /\b(face|portrait|person|man|woman|boy|girl|human|selfie|head|hair|eyes|nose|mouth|beard|cheek|forehead|chin|neck|ear)\b/i.test(objectDescription);
+      // Detect if this is a toy, cartoon figure, or character figurine
+      const isToyOrFigurine = /\b(toy|figurine|figure|doll|plush|stuffed|cartoon|character|action figure|miniature|statue|sculpture|puppet|mascot|anime|manga|bluey|lego|funko|pokemon|pikachu|sonic|mario|disney|pixar|robot|alien|monster|creature|animal figure)\b/i.test(objectDescription);
       const editPrompt = landscapeMode
         ? buildFullImagePrompt(objectDescription, idx)
-        : isPortrait
+        : (isPortrait && !isToyOrFigurine)
         ? (
             "ABSOLUTE RULE #1: NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS — EVER. " +
             "ABSOLUTE RULE #2: THIS IS A PORTRAIT. You MUST preserve the EXACT facial likeness of the person in the photo. " +
@@ -360,6 +362,27 @@ async function runTraceJob(
             `${variation.style} ` +
             "The entire person must be fully visible with 15% white margin on every side. " +
             "FINAL REMINDER: Zero text, zero letters, zero numbers anywhere in the image."
+          )
+        : isToyOrFigurine
+        ? (
+            "⚠️ CRITICAL RULE #0 — MOST IMPORTANT: THIS IS A TOY / FIGURINE / CARTOON CHARACTER. " +
+            "DO NOT DRAW REALISTIC HUMAN FACES. DO NOT ADD HUMAN SKIN, HUMAN EYES, HUMAN NOSE, OR HUMAN MOUTH. " +
+            "The face/features MUST look like the ORIGINAL TOY — cartoon eyes, toy proportions, plastic/stylized appearance. " +
+            "PRESERVE THE EXACT TOY APPEARANCE: cartoon eyes, exaggerated proportions, toy-like features exactly as they appear in the photo. " +
+            "DO NOT HUMANIZE the character in any way. Keep it looking like a toy/figurine/cartoon, NOT a real person. " +
+            "ABSOLUTE RULE #1: NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS — EVER. " +
+            "ABSOLUTE RULE #2: PRESERVE THE EXACT SHAPE, SILHOUETTE, AND STRUCTURE OF THE ORIGINAL TOY. " +
+            `Convert this toy/figurine photo into a professional black and white line art illustration. ` +
+            `You MUST keep the EXACT same: (a) overall toy shape and silhouette, (b) camera angle and viewpoint, ` +
+            `(c) proportions and dimensions, (d) all visible details including cartoon eyes, colors boundaries, accessories. ` +
+            `Do NOT simplify, generalize, or change ANY structural element. ` +
+            `Do NOT change the viewpoint, orientation, rotation, or scale. ` +
+            `Do NOT add any context, scene, environment, or additional objects not present in the original. ` +
+            "Draw EVERY visible detail from the original toy: seams, paint lines, accessories, logos, textures. " +
+            "Pure white background (#FFFFFF). Clean black outlines only, no fill, no shading, no gradients, no grey. " +
+            `${variation.style} ` +
+            "The entire toy must be fully visible with 15% white margin on every side. " +
+            "⚠️ FINAL REMINDER: This is a TOY. Keep cartoon/toy face features. NO realistic human faces. Zero text, zero numbers."
           )
         : (
             "⚠️ CRITICAL RULE #0 — THIS IS THE MOST IMPORTANT RULE: " +
