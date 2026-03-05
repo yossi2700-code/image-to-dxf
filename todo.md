@@ -935,3 +935,8 @@
 
 - [x] הוספת tab "הגדרות" לדשבורד ניהול — שינוי סיסמה, עדכון שם + endpoints בשרת
 - [x] תיקון קווים כפולים — החלפת Sobel ב-thinBinary (Zhang-Suen) לקו יחיד במרכז כל קו
+
+## AI Outline - קווים + בנאדם - מרץ 2026
+
+- [x] תיקון קווים כפולים ב-AI Outline SVG→DXF pipeline — potrace turdSize+optTolerance
+- [x] תיקון prompt AI Outline — ABSOLUTE RULE #3: אל תוסיף אנשים/גוף שלא היו בתמונה המקורית
