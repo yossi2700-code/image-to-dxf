@@ -995,3 +995,5 @@
 - [x] תיקון קווים כפולים בסריקה מתמונה — שיפור thinning/threshold
 - [x] קיצור שם קובץ DXF — buildFilename מסנן מילות AI כמו Camera_angle
 - [x] הוספת אפשרות קו דק (hairline) בהמרה ובAI Outline
+- [x] Fix double lines in scanned images (improve thinning algorithm)
+- [x] Add minimum 0.8mm gap enforcement between DXF lines (auto-scale)

@@ -7,6 +7,8 @@ export interface ProcessingOptions {
   minSegmentLength?: number;  // minimum segment length in pixels; shorter segments are filtered as noise
   hairline?: boolean;         // if true, DXF uses R2000 format with lineweight=0 (hairline)
   lineweightMm?: number;      // explicit lineweight in mm (e.g. 0.2); overrides hairline when set
+  minGapMm?: number;          // minimum gap between lines in mm; auto-scales DXF if lines are too close (default: 0 = disabled)
+  dpi?: number;               // image DPI for mm calculations (default: 300)
 }
 
 export interface Segment {
@@ -794,6 +796,43 @@ export function polylinesToSvg(
 }
 
 /**
+ * Morphological erosion on a binary image (0=foreground/black, 255=background/white).
+ * Shrinks foreground pixels by removing those that have any background neighbor.
+ * Used to pre-thin thick scanned strokes before Zhang-Suen thinning.
+ * Each call reduces stroke width by ~1 pixel on each side.
+ */
+function erodeBinary(
+  binary: Uint8Array,
+  width: number,
+  height: number,
+  iterations = 1
+): Uint8Array {
+  let current = binary;
+  for (let iter = 0; iter < iterations; iter++) {
+    const next = new Uint8Array(current.length).fill(255); // start as all background
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const i = y * width + x;
+        if (current[i] !== 0) continue; // not foreground
+        // Keep foreground only if all 8 neighbors are also foreground
+        const allFg =
+          current[(y-1)*width+(x-1)] === 0 &&
+          current[(y-1)*width+x    ] === 0 &&
+          current[(y-1)*width+(x+1)] === 0 &&
+          current[y    *width+(x-1)] === 0 &&
+          current[y    *width+(x+1)] === 0 &&
+          current[(y+1)*width+(x-1)] === 0 &&
+          current[(y+1)*width+x    ] === 0 &&
+          current[(y+1)*width+(x+1)] === 0;
+        if (allFg) next[i] = 0; // keep as foreground
+      }
+    }
+    current = next;
+  }
+  return current;
+}
+
+/**
  * Thin a binary image (0=black/foreground, 255=white/background) using Zhang-Suen.
  * Unlike thinEdges (which works on Sobel output), this works directly on the
  * black pixels of a line drawing — producing the TRUE skeleton/centerline.
@@ -961,8 +1000,15 @@ export async function convertImageToDxf(
   const blurredPixels = new Uint8Array(blurred);
 
   const binary = applyThreshold(blurredPixels, options.threshold);
+
+  // Morphological erosion: shrink thick strokes before thinning.
+  // Each iteration removes ~1px from each side of a stroke.
+  // For scanned images with 3-5px thick lines, 2 erosion passes reduce them to 1-3px
+  // before Zhang-Suen, significantly reducing double-line artifacts.
+  const eroded = erodeBinary(binary, width, height, 2);
+
   // thinBinary returns 255 for foreground (line) pixels, 0 for background
-  const thinned = thinBinary(binary, width, height);
+  const thinned = thinBinary(eroded, width, height);
 
   // thinned already has 255=line, 0=background — pass directly to traceCenterlines
   // 8-connectivity centerline tracing with Douglas-Peucker smoothing
@@ -977,10 +1023,72 @@ export async function convertImageToDxf(
     outputPolylines = polylines;
   }
 
-  const segments = polylinesToSegments(outputPolylines);
+  let scaledPolylines = outputPolylines;
+  let dxfWidth = width;
+  let dxfHeight = height;
 
-  const dxf = segmentsToDxf(segments, width, height, options.hairline ?? false, options.lineweightMm);
-  const svgPreview = polylinesToSvg(outputPolylines, width, height);
+  // ── Min-gap auto-scale ──────────────────────────────────────────────────────
+  // If minGapMm is set, compute the minimum distance between parallel polyline
+  // segments and scale up the entire drawing so the smallest gap >= minGapMm.
+  const minGapMm = options.minGapMm ?? 0;
+  const dpi = options.dpi ?? 300;
+  if (minGapMm > 0 && outputPolylines.length > 1) {
+    // Convert minGapMm to pixels at the given DPI
+    const minGapPx = (minGapMm / 25.4) * dpi;
+
+    // Sample the minimum distance between any two polyline centerlines.
+    // Strategy: for each polyline, sample points every ~5px and find the
+    // nearest point on any OTHER polyline. Take the global minimum.
+    const sampleStep = 5;
+    let globalMinDist = Infinity;
+
+    // Build a flat array of all sample points with their polyline index
+    const samples: Array<{ x: number; y: number; pIdx: number }> = [];
+    for (let pIdx = 0; pIdx < outputPolylines.length; pIdx++) {
+      const pl = outputPolylines[pIdx];
+      for (let i = 0; i < pl.length - 1; i++) {
+        const [x1, y1] = pl[i];
+        const [x2, y2] = pl[i + 1];
+        const segLen = Math.hypot(x2 - x1, y2 - y1);
+        const steps = Math.max(1, Math.floor(segLen / sampleStep));
+        for (let s = 0; s <= steps; s++) {
+          const t = s / steps;
+          samples.push({ x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1), pIdx });
+        }
+      }
+    }
+
+    // For performance, limit to 2000 sample points
+    const maxSamples = 2000;
+    const step = samples.length > maxSamples ? Math.floor(samples.length / maxSamples) : 1;
+    for (let i = 0; i < samples.length; i += step) {
+      const { x: ax, y: ay, pIdx: aIdx } = samples[i];
+      for (let j = i + step; j < samples.length; j += step) {
+        const { x: bx, y: by, pIdx: bIdx } = samples[j];
+        if (aIdx === bIdx) continue; // same polyline
+        const d = Math.hypot(bx - ax, by - ay);
+        if (d < globalMinDist) globalMinDist = d;
+        if (globalMinDist < 0.5) break; // can't get smaller
+      }
+      if (globalMinDist < 0.5) break;
+    }
+
+    if (globalMinDist < minGapPx && globalMinDist > 0) {
+      const scale = minGapPx / globalMinDist;
+      // Scale all polyline coordinates
+      scaledPolylines = outputPolylines.map(pl =>
+        pl.map(([x, y]) => [x * scale, y * scale] as [number, number])
+      );
+      dxfWidth = Math.round(width * scale);
+      dxfHeight = Math.round(height * scale);
+    }
+  }
+  // ────────────────────────────────────────────────────────────────────────────
+
+  const segments = polylinesToSegments(scaledPolylines);
+
+  const dxf = segmentsToDxf(segments, dxfWidth, dxfHeight, options.hairline ?? false, options.lineweightMm);
+  const svgPreview = polylinesToSvg(outputPolylines, width, height); // preview always uses original scale
 
   // Compute tight bounding box of actual drawn segments
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -990,8 +1098,8 @@ export async function convertImageToDxf(
     maxX = Math.max(maxX, seg.x1, seg.x2);
     maxY = Math.max(maxY, seg.y1, seg.y2);
   }
-  const realWidth  = segments.length > 0 ? (maxX - minX) : width;
-  const realHeight = segments.length > 0 ? (maxY - minY) : height;
+  const realWidth  = segments.length > 0 ? (maxX - minX) : dxfWidth;
+  const realHeight = segments.length > 0 ? (maxY - minY) : dxfHeight;
 
-  return { dxf, svgPreview, segmentCount: segments.length, width, height, realWidth, realHeight };
+  return { dxf, svgPreview, segmentCount: segments.length, width: dxfWidth, height: dxfHeight, realWidth, realHeight };
 }

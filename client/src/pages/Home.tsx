@@ -343,6 +343,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
   const [threshold, setThreshold] = useState(128);
   const [simplify, setSimplify] = useState(2);
   const [lineweightMm, setLineweightMm] = useState<string>(""); // empty = default (no override)
+  const [minGapMm, setMinGapMm] = useState<string>("0.8"); // default 0.8mm min gap
   const [dpi] = useState(300);
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<ConvertResult | null>(null);
@@ -394,6 +395,9 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
       formData.append("doubleLineOffset", "0");
       const lwVal = parseFloat(lineweightMm);
       if (!isNaN(lwVal) && lwVal > 0) formData.append("lineweightMm", String(lwVal));
+      const gapVal = parseFloat(minGapMm);
+      if (!isNaN(gapVal) && gapVal > 0) formData.append("minGapMm", String(gapVal));
+      formData.append("dpi", String(dpi));
       const res = await fetch("/api/convert", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -542,6 +546,23 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                   className="w-24 border border-border rounded px-2 py-1 text-sm text-center"
                 />
                 <span className="text-xs text-muted-foreground">{isRtl ? "(0 = הדק ביותר, ריק = ברירת מחדל)" : "(0 = hairline, empty = default)"}</span>
+              </div>
+              {/* Min gap option */}
+              <div className="flex items-center gap-2 pt-1 flex-wrap">
+                <label className="text-sm font-medium shrink-0">
+                  {isRtl ? "מרווח מינימלי בין קווים (מ'מ):" : "Min gap between lines (mm):"}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  placeholder="0"
+                  value={minGapMm}
+                  onChange={e => setMinGapMm(e.target.value)}
+                  className="w-24 border border-border rounded px-2 py-1 text-sm text-center"
+                />
+                <span className="text-xs text-muted-foreground">{isRtl ? "(0 = כבוי, מגדיל אוטומטית אם צריך)" : "(0 = off, auto-scales if needed)"}</span>
               </div>
               {(threshold !== 128 || simplify !== 2) && (
                 <button
