@@ -351,7 +351,10 @@ async function runTraceJob(
 
       // Build a focused edit prompt: keep the shape, convert to line art
       // Detect if this is a portrait/face image from the LLM description
-      const isPortrait = /\b(face|portrait|person|man|woman|boy|girl|human|selfie|head|hair|eyes|nose|mouth|beard|cheek|forehead|chin|neck|ear)\b/i.test(objectDescription);
+      // IMPORTANT: exclude animals, engravings, and non-human subjects from portrait mode
+      const isAnimal = /\b(cat|dog|bird|fish|horse|lion|tiger|bear|rabbit|fox|wolf|deer|elephant|monkey|snake|turtle|frog|pig|cow|sheep|goat|chicken|duck|owl|eagle|parrot|hamster|mouse|rat|squirrel|animal|pet|kitten|puppy|paw|fur|feather|beak|tail|claw|mane|whisker|feline|canine|feline|bovine|equine|wildlife|zoo)\b/i.test(objectDescription);
+      const isEngraving = /\b(engraving|engraved|gravestone|tombstone|memorial|stone|marble|granite|inscription|carved|carving|plaque|monument|headstone|matzeva|grave)\b/i.test(objectDescription);
+      const isPortrait = !isAnimal && !isEngraving && /\b(face|portrait|person|man|woman|boy|girl|human|selfie|head|hair|eyes|nose|mouth|beard|cheek|forehead|chin|neck|ear)\b/i.test(objectDescription);
       // Detect if this is a toy, cartoon figure, or character figurine
       const isToyOrFigurine = /\b(toy|figurine|figure|doll|plush|stuffed|cartoon|character|action figure|miniature|statue|sculpture|puppet|mascot|anime|manga|bluey|lego|funko|pokemon|pikachu|sonic|mario|disney|pixar|robot|alien|monster|creature|animal figure)\b/i.test(objectDescription);
       const editPrompt = landscapeMode

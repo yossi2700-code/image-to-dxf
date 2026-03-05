@@ -1596,7 +1596,7 @@ export default function Home() {
               className="flex-1 gap-1 text-xs sm:text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm relative px-1"
             >
               <Sparkles className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">{isRtl ? "✨ AI יצירה" : "✨ AI Create"}</span>
+              <span className="truncate">{isRtl ? "AI יצירה" : "AI Create"}</span>
               {activeJobs.generate && (
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
@@ -1609,7 +1609,7 @@ export default function Home() {
               className="flex-1 gap-1 text-xs sm:text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-sm relative px-1"
             >
               <Scan className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">{isRtl ? "📷 AI Outline" : "📷 AI Outline"}</span>
+              <span className="truncate">AI Outline</span>
               {activeJobs.trace && (
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
@@ -1623,7 +1623,7 @@ export default function Home() {
               className="flex-1 gap-1 text-xs sm:text-sm font-semibold transition-all rounded-xl text-gray-400 opacity-60 cursor-not-allowed relative px-1 data-[state=active]:bg-gray-200 data-[state=active]:text-gray-500"
             >
               <FileEdit className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">{isRtl ? "✏️ AI סקיצה" : "✏️ AI Sketch"}</span>
+              <span className="truncate">{isRtl ? "AI סקיצה" : "AI Sketch"}</span>
               <span className="absolute -top-1.5 -right-1 text-[9px] font-bold bg-orange-400 text-white px-1 rounded-full leading-4">
                 {isRtl ? "תחזוק" : "maint"}
               </span>
