@@ -844,7 +844,8 @@ function erodeBinary(
 export function thinBinary(
   binary: Uint8Array,
   width: number,
-  height: number
+  height: number,
+  maxIterations = 120
 ): Uint8Array {
   // Convert: 0 (black) → 1 (foreground), 255 (white) → 0 (background)
   const img = new Uint8Array(binary.length);
@@ -853,8 +854,10 @@ export function thinBinary(
   const idx = (x: number, y: number) => y * width + x;
 
   let changed = true;
-  while (changed) {
+  let iterations = 0;
+  while (changed && iterations < maxIterations) {
     changed = false;
+    iterations++;
     for (let pass = 0; pass < 2; pass++) {
       const toDelete: number[] = [];
       for (let y = 1; y < height - 1; y++) {
@@ -988,7 +991,8 @@ export async function convertImageToDxf(
   // 2. Threshold to binary
   // 3. Zhang-Suen thinning directly on black pixels → single-pixel centerline
   // This eliminates the double-line artifact caused by Sobel detecting both edges of thick strokes.
-  const { width, height } = await imageToGrayscale(buffer);
+  // Cap at 1200px for scan tab — Zhang-Suen is O(n²) and 2000px images can take 60-90s.
+  const { width, height } = await imageToGrayscale(buffer, 1200);
 
   // Use stronger blur (2.5) for scanned images to merge thick strokes before thinning.
   // This prevents double-line artifacts from wide pen strokes in scanned artwork.

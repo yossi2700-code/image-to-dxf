@@ -71,7 +71,8 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
     const dpiRaw = parseInt((req.body.dpi as string) ?? "300", 10);
     const dpi = isNaN(dpiRaw) ? 300 : Math.min(1200, Math.max(72, dpiRaw));
 
-    const { dxf, svgPreview, segmentCount, width, height, realWidth, realHeight } = await convertImageToDxf(
+    const CONVERT_TIMEOUT_MS = 45_000; // 45 seconds
+    const convertPromise = convertImageToDxf(
       req.file.buffer,
       {
         threshold: Math.min(255, Math.max(0, threshold)),
@@ -84,6 +85,11 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
         dpi,
       }
     );
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("CONVERT_TIMEOUT")), CONVERT_TIMEOUT_MS)
+    );
+    const { dxf, svgPreview, segmentCount, width, height, realWidth, realHeight } =
+      await Promise.race([convertPromise, timeoutPromise]);
 
     if (segmentCount === 0) {
       return res.status(422).json({
@@ -134,6 +140,11 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
     });
   } catch (err: unknown) {
     console.error("[convert]", err);
+    if (err instanceof Error && err.message === "CONVERT_TIMEOUT") {
+      return res.status(408).json({
+        error: "העיבוד לקח יותר מדי זמן. נסה תמונה פשוטה יותר, או הפחת את רזולוציית התמונה לפני ההעלאה.",
+      });
+    }
     const message = err instanceof Error ? err.message : "שגיאה בעיבוד התמונה";
     return res.status(500).json({ error: message });
   }
