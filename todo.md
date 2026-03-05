@@ -1,5 +1,7 @@
 # Image to DXF Converter - TODO
 
+- [x] פורטרט: שינוי ל-1 תמונה בכל פעם (לא 3 במקביל), עם כפתור "צייר עוד" לסגנון אחר
+
 - [x] Install image processing libraries (sharp) and DXF generation (custom)
 - [x] Build server route: accept image upload, run edge detection, generate DXF
 - [x] Build tRPC procedure: convertImage (upload → process → return DXF URL)

@@ -288,8 +288,8 @@ async function runFaceDetectJob(
   try {
     updateJob(jobId, {
       status: "processing",
-      step: isHe ? "מצייר 3 פורטרטים..." : "Drawing 3 portraits...",
-      stepEn: "Drawing 3 portraits...",
+      step: isHe ? "מצייר פורטרט..." : "Drawing portrait...",
+      stepEn: "Drawing portrait...",
       partialImages: [],
     });
 
@@ -302,32 +302,17 @@ async function runFaceDetectJob(
       .png({ compressionLevel: 6 })
       .toBuffer();
 
-    // ── Step B: 3 variations in parallel (chosen style + 2 adjacent) ─────────
-    const baseIdx = STYLE_ORDER.indexOf(style);
-    const styles: PortraitStyle[] = [
-      STYLE_ORDER[baseIdx],
-      STYLE_ORDER[(baseIdx + 1) % STYLE_ORDER.length],
-      STYLE_ORDER[(baseIdx + 2) % STYLE_ORDER.length],
-    ];
-
+    // ── Step B: Generate 1 portrait for the chosen style ────────────────────
     heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
 
-    const results = await Promise.allSettled(
-      styles.map(s => generatePortraitVariation(editSourceBuffer, s, hairline, lineweightMm, minGapMm))
-    );
+    const portraitResult = await generatePortraitVariation(editSourceBuffer, style, hairline, lineweightMm, minGapMm);
 
     if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = undefined; }
 
     const jobAfterGen = getJob(jobId);
     if (!jobAfterGen || jobAfterGen.status === "cancelled") return;
 
-    const images = results
-      .filter((r): r is PromiseFulfilledResult<PortraitResult> => r.status === "fulfilled")
-      .map(r => r.value);
-
-    if (images.length === 0) {
-      throw new Error(isHe ? "לא הצלחנו לייצר אף פורטרט" : "Failed to generate any portrait");
-    }
+    const images = [portraitResult];
 
     // ── Step C: AI suggestions ────────────────────────────────────────────────
     updateJob(jobId, {

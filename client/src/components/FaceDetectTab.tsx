@@ -615,9 +615,10 @@ export function FaceDetectTab({ onOpenAuth }: FaceDetectTabProps) {
               }}
               disabled={!canSubmit}
               onClick={handleDetect}
+              data-face-submit
             >
               <Scan className="w-4 h-4" />
-              {isRtl ? "צור 3 פורטרטים DXF (4 אסימונים)" : "Create 3 Portraits DXF (4 tokens)"}
+              {isRtl ? "צור פורטרט DXF (4 אסימונים)" : "Create Portrait DXF (4 tokens)"}
             </button>
           </div>
         </div>
@@ -705,7 +706,7 @@ export function FaceDetectTab({ onOpenAuth }: FaceDetectTabProps) {
           {/* Header */}
           <div className="flex items-center justify-between mb-1">
             <p className="text-sm font-bold text-gray-800">
-              {isRtl ? `✅ ${result.images.length} פורטרטים מוכנים — בחר אחד` : `✅ ${result.images.length} portraits ready — choose one`}
+              {isRtl ? "✅ פורטרט מוכן" : "✅ Portrait ready"}
             </p>
           </div>
 
@@ -765,13 +766,36 @@ export function FaceDetectTab({ onOpenAuth }: FaceDetectTabProps) {
             </div>
           )}
 
-          {/* New image button */}
-          <button
-            className="w-full py-2.5 text-sm font-medium rounded-lg transition-all bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-200"
-            onClick={reset}
-          >
-            {isRtl ? "העלה תמונה חדשה" : "Upload New Photo"}
-          </button>
+          {/* More variations + New image buttons */}
+          <div className="flex gap-2">
+            <button
+              className="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5"
+              style={{ background: '#7c3aed', color: 'white', border: 'none' }}
+              onClick={() => {
+                // Advance to next style and re-submit
+                const currentStyle = result.images[0]?.style as PortraitStyle || portraitStyle;
+                const styleValues = STYLE_OPTIONS.map(s => s.value as PortraitStyle);
+                const nextStyle = styleValues[(styleValues.indexOf(currentStyle) + 1) % styleValues.length];
+                setPortraitStyle(nextStyle);
+                setResult(null);
+                setStatus("idle");
+                // Small delay to let state update, then auto-submit
+                setTimeout(() => {
+                  const btn = document.querySelector('[data-face-submit]') as HTMLButtonElement;
+                  if (btn) btn.click();
+                }, 100);
+              }}
+            >
+              <Scan className="w-3.5 h-3.5" />
+              {isRtl ? "צייר עוד" : "Draw More"}
+            </button>
+            <button
+              className="flex-1 py-2.5 text-sm font-medium rounded-lg transition-all bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-200"
+              onClick={reset}
+            >
+              {isRtl ? "תמונה חדשה" : "New Photo"}
+            </button>
+          </div>
         </>
       )}
 
