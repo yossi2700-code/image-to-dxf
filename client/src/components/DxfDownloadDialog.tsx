@@ -140,6 +140,8 @@ export function DxfDownloadDialog({
 
   // Detect if Web Share API supports file sharing (iOS Safari 15+, Android Chrome)
   const canShareFiles = typeof navigator !== "undefined" && !!navigator.share && !!navigator.canShare;
+  // Detect iOS/iPadOS — on these devices a.download doesn't work for blobs, use share sheet instead
+  const isIOS = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   useEffect(() => {
     if (open) {
@@ -203,6 +205,20 @@ export function DxfDownloadDialog({
     try {
       const pdfBytes = await generatePdfBlob(svgContent, outputWidthMm, outputHeightMm);
       const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const file = new File([blob], `${cleanFilename}.pdf`, { type: "application/pdf" });
+
+      // On iOS, a.download doesn't work for blobs — use Web Share API instead
+      if (isIOS && canShareFiles && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: cleanFilename });
+          return;
+        } catch (shareErr: unknown) {
+          if (shareErr instanceof Error && shareErr.name === "AbortError") return; // user cancelled
+          // Fall through to blob URL method
+        }
+      }
+
+      // Desktop / Android: use blob URL download
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -210,10 +226,11 @@ export function DxfDownloadDialog({
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (err) {
       console.error("PDF export error:", err);
-      setError("שגיאה בייצוא PDF. נסה שוב.");
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(`שגיאה בייצוא PDF: ${msg}`);
     } finally {
       setIsPdfLoading(false);
     }

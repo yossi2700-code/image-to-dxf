@@ -1,16 +1,15 @@
 /**
- * faceDetectRoute.ts — Face Detection to DXF (Fast Mode with Style Selector)
+ * faceDetectRoute.ts — Portrait generation pipeline.
  *
- * Pipeline (optimized — no Vision step):
- *   1. User uploads a photo containing faces
- *   2. gpt-image-1 draws a clean B&W portrait line art directly from the photo
- *      (style: clean / artistic / detailed — user's choice)
- *   3. potrace → svgToDxf → DXF ready for laser engraving / CNC
+ * POST /api/face-detect/start  — Start a portrait job (returns { jobId })
+ * GET  /api/face-detect/job/:jobId — Poll job status
+ * POST /api/face-detect/cancel/:jobId — Cancel a running job
  *
- * Endpoints:
- *   POST /api/face-detect/start  — start async job, returns { jobId }
- *   GET  /api/face-detect/job/:jobId — poll job status
- *   POST /api/face-detect/cancel/:jobId — cancel job and refund tokens
+ * Pipeline:
+ *   A. Resize source image for gpt-image-1 edit API
+ *   B. Generate 3 portrait variations in parallel (chosen style + 2 adjacent)
+ *   C. For each: potrace → SVG → DXF
+ *   D. Generate AI suggestions for refinement
  */
 import { Router } from "express";
 import multer from "multer";
@@ -23,6 +22,7 @@ import { recordUserAction } from "./userActionsDb";
 import { deductTokens, addTokens, TOKEN_COSTS, TokenAction } from "./tokenService";
 import { createJob, getJob, updateJob, cancelJob, heartbeatJob } from "./jobStore";
 import { svgToDxf } from "./svgToDxf";
+import { invokeLLM } from "./_core/llm";
 import OpenAI from "openai";
 import potrace from "potrace";
 
@@ -31,7 +31,7 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
 // ─── Portrait styles ──────────────────────────────────────────────────────────
-export type PortraitStyle = "clean" | "artistic" | "detailed";
+export type PortraitStyle = "clean" | "artistic" | "detailed" | "stencil";
 
 const PORTRAIT_STYLE_PROMPTS: Record<PortraitStyle, string> = {
   clean:
@@ -88,6 +88,31 @@ const PORTRAIT_STYLE_PROMPTS: Record<PortraitStyle, string> = {
     "The entire head must be fully visible — nothing cropped. " +
     "=== END FRAMING RULES === " +
     "DO NOT include any text, labels, watermarks, or background patterns.",
+
+  stencil:
+    "High-contrast stencil portrait for laser/CNC engraving. " +
+    "Pure white background (#FFFFFF). " +
+    "Bold thick black outlines ONLY — no fill, no shading, no gradients, no grey tones. " +
+    "High contrast: only pure black (#000000) lines on white. " +
+    "CRITICAL: Draw ONLY the face and head — no body, no background elements, no text. " +
+    "The face must be centered. " +
+    "PORTRAIT STYLE: Bold stencil-style portrait. Very thick outer contours. " +
+    "Minimal interior detail — only the most essential features (eye outlines, nose, lips). " +
+    "Like a street art stencil — bold, graphic, high contrast. Suitable for deep CNC engraving. " +
+    "=== MANDATORY FRAMING RULES === " +
+    "The face must occupy 60-75% of the image. Leave at least 12% white margin on every edge. " +
+    "The entire head must be fully visible — nothing cropped. " +
+    "=== END FRAMING RULES === " +
+    "DO NOT include any text, labels, watermarks, or background patterns.",
+};
+
+const STYLE_ORDER: PortraitStyle[] = ["clean", "artistic", "detailed", "stencil"];
+
+const STYLE_LABELS: Record<PortraitStyle, { he: string; en: string }> = {
+  clean: { he: "נקי", en: "Clean" },
+  artistic: { he: "אמנותי", en: "Artistic" },
+  detailed: { he: "מפורט", en: "Detailed" },
+  stencil: { he: "סטנסיל", en: "Stencil" },
 };
 
 // ─── Potrace helper ───────────────────────────────────────────────────────────
@@ -104,6 +129,145 @@ function pngToSvg(pngBuffer: Buffer): Promise<string> {
       else resolve(svg);
     });
   });
+}
+
+// ─── Generate one portrait variation ─────────────────────────────────────────
+type PortraitResult = {
+  imageUrl: string;
+  svgPreview: string;
+  dxfUrl: string;
+  dxfFilename: string;
+  segmentCount: number;
+  width: number;
+  height: number;
+  realWidth: number;
+  realHeight: number;
+  style: PortraitStyle;
+  styleLabel: string;
+  styleLabelEn: string;
+};
+
+async function generatePortraitVariation(
+  editSourceBuffer: Buffer,
+  style: PortraitStyle,
+  hairline: boolean,
+  lineweightMm: number | undefined,
+  minGapMm: number
+): Promise<PortraitResult> {
+  const { toFile } = await import("openai");
+  const editFile = await toFile(editSourceBuffer, "face.png", { type: "image/png" });
+  const editPrompt = PORTRAIT_STYLE_PROMPTS[style];
+
+  const response = await openai.images.edit({
+    model: "gpt-image-1",
+    image: editFile,
+    prompt: editPrompt,
+    n: 1,
+    size: "1024x1024",
+    quality: "medium",
+  });
+
+  const imageData = response.data?.[0];
+  if (!imageData) throw new Error("Failed to generate image for style: " + style);
+
+  let rawBuffer: Buffer;
+  if (imageData.b64_json) {
+    rawBuffer = Buffer.from(imageData.b64_json, "base64");
+  } else if (imageData.url) {
+    const imgResponse = await fetch(imageData.url);
+    if (!imgResponse.ok) throw new Error("Failed to download generated image");
+    rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
+  } else {
+    throw new Error("No image returned from AI");
+  }
+
+  // Potrace → SVG → DXF
+  const processedBuffer = await sharp(rawBuffer)
+    .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+    .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+    .grayscale()
+    .threshold(200)
+    .png()
+    .toBuffer();
+
+  const rawSvg = await pngToSvg(processedBuffer);
+  const svgContent = rawSvg
+    .replace(/fill="[^"]*"/g, 'fill="none"')
+    .replace(/fill:[^;"']*(;|(?="))/g, 'fill:none$1')
+    .replace(/<path /g, '<path stroke="black" stroke-width="1.5" fill="none" ');
+  const cleanSvg = svgContent.replace(
+    /stroke="black" stroke-width="1.5" fill="none" ([^>]*?)fill="none"/g,
+    'stroke="black" stroke-width="1.5" fill="none" $1'
+  );
+
+  const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, minGapMm);
+
+  const imgKey = `face-detect-generated/${nanoid()}.png`;
+  const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
+  const dxfFilename = `face_portrait_${style}.dxf`;
+  const dxfKey = `face-detect-dxf/${nanoid()}-${dxfFilename}`;
+  const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
+
+  return {
+    imageUrl,
+    svgPreview: cleanSvg,
+    dxfUrl,
+    dxfFilename,
+    segmentCount,
+    width,
+    height,
+    realWidth,
+    realHeight,
+    style,
+    styleLabel: STYLE_LABELS[style].he,
+    styleLabelEn: STYLE_LABELS[style].en,
+  };
+}
+
+// ─── Generate AI suggestions ──────────────────────────────────────────────────
+async function generateAiSuggestions(style: PortraitStyle, lang: "he" | "en"): Promise<string[]> {
+  const isHe = lang === "he";
+  try {
+    const systemPrompt = isHe
+      ? "אתה עוזר לשיפור תמונות קו לחריטת לייזר/CNC. הצע 3 שיפורים קצרים וספציפיים לפורטרט שנוצר. כל הצעה עד 6 מילים. החזר JSON בלבד: {\"suggestions\": [\"...\", \"...\", \"...\"]}"
+      : "You help improve line art portraits for laser/CNC engraving. Suggest 3 short specific improvements for the generated portrait. Each suggestion max 6 words. Return JSON only: {\"suggestions\": [\"...\", \"...\", \"...\"]}";
+    const styleName = STYLE_LABELS[style][isHe ? "he" : "en"];
+    const userMsg = isHe
+      ? `הפורטרט נוצר בסגנון: ${styleName}. הצע 3 שיפורים ספציפיים לחריטת CNC/לייזר.`
+      : `Portrait was generated in style: ${styleName}. Suggest 3 specific improvements for CNC/laser engraving.`;
+
+    const response = await invokeLLM({
+      messages: [
+        { role: "system" as const, content: systemPrompt },
+        { role: "user" as const, content: userMsg },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "suggestions",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              suggestions: { type: "array", items: { type: "string" } },
+            },
+            required: ["suggestions"],
+            additionalProperties: false,
+          },
+        },
+      },
+    });
+
+    const rawContent = response.choices?.[0]?.message?.content;
+    const content = typeof rawContent === "string" ? rawContent : null;
+    if (!content) return [];
+    const parsed = JSON.parse(content) as { suggestions: string[] };
+    return parsed.suggestions?.slice(0, 3) ?? [];
+  } catch {
+    return isHe
+      ? ["עבה קווים", "הוסף פרטים לעיניים", "חדד קווי מתאר"]
+      : ["Thicken lines", "Add eye detail", "Sharpen outlines"];
+  }
 }
 
 // ─── Background job runner ────────────────────────────────────────────────────
@@ -124,116 +288,81 @@ async function runFaceDetectJob(
   try {
     updateJob(jobId, {
       status: "processing",
-      step: isHe ? "מצייר פורטרט..." : "Drawing portrait...",
-      stepEn: "Drawing portrait...",
+      step: isHe ? "מצייר 3 פורטרטים..." : "Drawing 3 portraits...",
+      stepEn: "Drawing 3 portraits...",
       partialImages: [],
     });
 
     const jobCheck = getJob(jobId);
     if (!jobCheck || jobCheck.status === "cancelled") return;
 
-    // ── Step A: Prepare source image for gpt-image-1 edit API ──────────────
+    // ── Step A: Prepare source image ──────────────────────────────────────────
     const editSourceBuffer = await sharp(imageBuffer)
       .resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
       .png({ compressionLevel: 6 })
       .toBuffer();
 
-    // ── Step B: gpt-image-1 draws the face directly as line art ────────────
+    // ── Step B: 3 variations in parallel (chosen style + 2 adjacent) ─────────
+    const baseIdx = STYLE_ORDER.indexOf(style);
+    const styles: PortraitStyle[] = [
+      STYLE_ORDER[baseIdx],
+      STYLE_ORDER[(baseIdx + 1) % STYLE_ORDER.length],
+      STYLE_ORDER[(baseIdx + 2) % STYLE_ORDER.length],
+    ];
+
     heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
 
-    const editPrompt = PORTRAIT_STYLE_PROMPTS[style] ?? PORTRAIT_STYLE_PROMPTS.clean;
-    const editFile = await (async () => {
-      const { toFile } = await import("openai");
-      return toFile(editSourceBuffer, "face.png", { type: "image/png" });
-    })();
-
-    const response = await openai.images.edit({
-      model: "gpt-image-1",
-      image: editFile,
-      prompt: editPrompt,
-      n: 1,
-      size: "1024x1024",
-      quality: "medium",
-    });
+    const results = await Promise.allSettled(
+      styles.map(s => generatePortraitVariation(editSourceBuffer, s, hairline, lineweightMm, minGapMm))
+    );
 
     if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = undefined; }
 
     const jobAfterGen = getJob(jobId);
     if (!jobAfterGen || jobAfterGen.status === "cancelled") return;
 
-    const imageData = response.data?.[0];
-    if (!imageData) throw new Error(isHe ? "לא הצלחנו לייצר תמונה" : "Failed to generate image");
+    const images = results
+      .filter((r): r is PromiseFulfilledResult<PortraitResult> => r.status === "fulfilled")
+      .map(r => r.value);
 
-    let rawBuffer: Buffer;
-    if (imageData.b64_json) {
-      rawBuffer = Buffer.from(imageData.b64_json, "base64");
-    } else if (imageData.url) {
-      const imgResponse = await fetch(imageData.url);
-      if (!imgResponse.ok) throw new Error(isHe ? "שגיאה בהורדת התמונה שנוצרה" : "Failed to download generated image");
-      rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
-    } else {
-      throw new Error(isHe ? "לא התקבלה תמונה מה-AI" : "No image returned from AI");
+    if (images.length === 0) {
+      throw new Error(isHe ? "לא הצלחנו לייצר אף פורטרט" : "Failed to generate any portrait");
     }
 
-    // ── Step C: Process → potrace → DXF ────────────────────────────────────
+    // ── Step C: AI suggestions ────────────────────────────────────────────────
     updateJob(jobId, {
-      step: isHe ? "ממיר לוקטור DXF..." : "Converting to vector DXF...",
-      stepEn: "Converting to vector DXF...",
+      step: isHe ? "מייצר הצעות שיפור..." : "Generating suggestions...",
+      stepEn: "Generating suggestions...",
     });
 
-    const processedBuffer = await sharp(rawBuffer)
-      .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-      .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-      .grayscale()
-      .threshold(200)
-      .png()
-      .toBuffer();
+    const suggestions = await generateAiSuggestions(style, lang);
 
-    const rawSvg = await pngToSvg(processedBuffer);
-    const svgContent = rawSvg
-      .replace(/fill="[^"]*"/g, 'fill="none"')
-      .replace(/fill:[^;"']*(;|(?="))/g, 'fill:none$1')
-      .replace(/<path /g, '<path stroke="black" stroke-width="1.5" fill="none" ');
-    const cleanSvg = svgContent.replace(
-      /stroke="black" stroke-width="1.5" fill="none" ([^>]*?)fill="none"/g,
-      'stroke="black" stroke-width="1.5" fill="none" $1'
-    );
-
-    const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, minGapMm);
-
-    const imgKey = `face-detect-generated/${nanoid()}.png`;
-    const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
-
-    const styleLabel = style === "clean" ? "clean" : style === "artistic" ? "artistic" : "detailed";
-    const dxfFilename = `face_portrait_${styleLabel}.dxf`;
-    const dxfKey = `face-detect-dxf/${nanoid()}-${dxfFilename}`;
-    const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
-
-    const imageResult = { imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight };
-
-    // ── Step D: Log & finish ────────────────────────────────────────────────
+    // ── Step D: Log & finish ──────────────────────────────────────────────────
     void logUsageEvent({
       type: "ai_generate",
-      segmentCount,
+      segmentCount: images[0]?.segmentCount ?? 0,
       ipAnon: anonymizeIp(ipAnon),
     });
 
-    void recordUserAction({
-      appUserId,
-      actionType: "ai_generate",
-      description: `face_detect: ${styleLabel} portrait line art`,
-      segmentCount,
-      dxfUrl,
-      imageUrl,
-      svgPreview: cleanSvg,
-      groupId: nanoid(12),
-      variationLabel: `portrait_${styleLabel}`,
-      sourceImageUrl: sourceImageUrl ?? undefined,
-    });
+    const groupId = nanoid(12);
+    for (const img of images) {
+      void recordUserAction({
+        appUserId,
+        actionType: "ai_generate",
+        description: `face_detect: ${img.style} portrait line art`,
+        segmentCount: img.segmentCount,
+        dxfUrl: img.dxfUrl,
+        imageUrl: img.imageUrl,
+        svgPreview: img.svgPreview,
+        groupId,
+        variationLabel: `portrait_${img.style}`,
+        sourceImageUrl: sourceImageUrl ?? undefined,
+      });
+    }
 
     updateJob(jobId, {
       status: "done",
-      result: { success: true, images: [imageResult] },
+      result: { success: true, images, suggestions },
     });
   } catch (err: unknown) {
     if (heartbeatInterval) clearInterval(heartbeatInterval);
@@ -298,6 +427,7 @@ router.post(
 
       // Auto-correct EXIF orientation
       imageBuffer = await sharp(imageBuffer).rotate().toBuffer();
+
       const lang = ((req.body?.lang as string) || "he") === "he" ? "he" : "en";
       const hairline = req.body?.hairline === "true" || req.body?.hairline === true;
       const lineweightMmRaw = parseFloat((req.body?.lineweightMm as string) ?? "");
@@ -305,7 +435,7 @@ router.post(
       const minGapMmRaw = parseFloat((req.body?.minGapMm as string) ?? "");
       const minGapMm = isNaN(minGapMmRaw) ? 0 : Math.min(3.0, Math.max(0, minGapMmRaw));
       const styleRaw = (req.body?.style as string) ?? "clean";
-      const style: PortraitStyle = ["clean", "artistic", "detailed"].includes(styleRaw)
+      const style: PortraitStyle = (["clean", "artistic", "detailed", "stencil"] as const).includes(styleRaw as PortraitStyle)
         ? (styleRaw as PortraitStyle)
         : "clean";
 

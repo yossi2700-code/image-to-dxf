@@ -32,15 +32,19 @@ interface GeneratedImage {
   height: number;
   realWidth: number;
   realHeight: number;
+  style?: PortraitStyle;
+  styleLabel?: string;
+  styleLabelEn?: string;
 }
 
 interface FaceResult {
   images: GeneratedImage[];
   faceDescription?: string;
+  suggestions?: string[];
 }
 
 type Status = "idle" | "loading" | "success" | "error";
-type PortraitStyle = "clean" | "artistic" | "detailed";
+type PortraitStyle = "clean" | "artistic" | "detailed" | "stencil";
 
 // ─── SVG Viewer ───────────────────────────────────────────────────────────────
 function SvgViewer({ svgContent }: { svgContent: string }) {
@@ -136,6 +140,7 @@ function PortraitCard({ image, isRtl, style, onDownload, onZoom }: PortraitCardP
     clean: isRtl ? "נקי" : "Clean",
     artistic: isRtl ? "אמנותי" : "Artistic",
     detailed: isRtl ? "מפורט" : "Detailed",
+    stencil: isRtl ? "סטנסיל" : "Stencil",
   }[style];
 
   const handleQuickDxf = async () => {
@@ -225,6 +230,7 @@ const STYLE_OPTIONS: { value: PortraitStyle; labelHe: string; labelEn: string; d
   { value: "clean",    labelHe: "נקי",    labelEn: "Clean",    descHe: "קווים מינימליים, מקצועי", descEn: "Minimal lines, professional" },
   { value: "artistic", labelHe: "אמנותי", labelEn: "Artistic", descHe: "קווים זורמים, אמנותי",     descEn: "Flowing lines, expressive" },
   { value: "detailed", labelHe: "מפורט",  labelEn: "Detailed", descHe: "פרטים רבים, כמו חריטה",   descEn: "Rich detail, engraving-like" },
+  { value: "stencil",  labelHe: "סטנסיל", labelEn: "Stencil",  descHe: "קווים עבים, CNC עמוק",    descEn: "Bold lines, deep CNC" },
 ];
 
 export function FaceDetectTab({ onOpenAuth }: FaceDetectTabProps) {
@@ -466,10 +472,10 @@ export function FaceDetectTab({ onOpenAuth }: FaceDetectTabProps) {
               </div>
               <div>
                 <h3 className="text-sm font-bold text-gray-800">
-                  {isRtl ? "זיהוי פנים ל-DXF" : "Face Detection to DXF"}
+                  {isRtl ? "פורטרט ל-DXF" : "Portrait to DXF"}
                 </h3>
                 <p className="text-xs text-gray-500">
-                  {isRtl ? "העלה תמונה עם פנים — ה-AI יצייר פורטרט לינארט" : "Upload a photo with faces — AI draws a portrait line art"}
+                  {isRtl ? "העלה תמונה עם פנים — ה-AI יצייר 3 פורטרטים לינארט" : "Upload a photo with faces — AI draws 3 portrait variations"}
                 </p>
               </div>
             </div>
@@ -526,7 +532,7 @@ export function FaceDetectTab({ onOpenAuth }: FaceDetectTabProps) {
               <p className="text-xs font-semibold text-gray-600 mb-2">
                 {isRtl ? "בחר סגנון פורטרט:" : "Choose portrait style:"}
               </p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {STYLE_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
@@ -611,7 +617,7 @@ export function FaceDetectTab({ onOpenAuth }: FaceDetectTabProps) {
               onClick={handleDetect}
             >
               <Scan className="w-4 h-4" />
-              {isRtl ? "צור פורטרט DXF (4 אסימונים)" : "Create Portrait DXF (4 tokens)"}
+              {isRtl ? "צור 3 פורטרטים DXF (4 אסימונים)" : "Create 3 Portraits DXF (4 tokens)"}
             </button>
           </div>
         </div>
@@ -654,7 +660,7 @@ export function FaceDetectTab({ onOpenAuth }: FaceDetectTabProps) {
             <p className="text-sm font-semibold text-gray-700">
               {isRtl ? "מעבד תמונה..." : "Processing image..."}
             </p>
-            <p className="text-xs text-gray-400 mt-1">{isRtl ? "זה עשוי לקחת 15-25 שניות" : "This may take 15-25 seconds"}</p>
+            <p className="text-xs text-gray-400 mt-1">{isRtl ? "זה עשוי לקחת 30-60 שניות" : "This may take 30-60 seconds"}</p>
           </div>
 
           {/* Dots */}
@@ -696,17 +702,68 @@ export function FaceDetectTab({ onOpenAuth }: FaceDetectTabProps) {
       {/* Results */}
       {result && result.images.length > 0 && (
         <>
-          <div className="flex justify-center">
-            <div className="w-full max-w-sm">
-              <PortraitCard
-                image={result.images[0]}
-                isRtl={isRtl}
-                style={portraitStyle}
-                onDownload={setDownloadTarget}
-                onZoom={(src, alt) => setZoomImg({ src, alt })}
-              />
-            </div>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-sm font-bold text-gray-800">
+              {isRtl ? `✅ ${result.images.length} פורטרטים מוכנים — בחר אחד` : `✅ ${result.images.length} portraits ready — choose one`}
+            </p>
           </div>
+
+          {/* Variation cards */}
+          <div className="space-y-3">
+            {result.images.map((img, idx) => {
+              const styleOpt = STYLE_OPTIONS.find(s => s.value === img.style);
+              return (
+                <PortraitCard
+                  key={idx}
+                  image={img}
+                  isRtl={isRtl}
+                  style={(img.style as PortraitStyle) || portraitStyle}
+                  onDownload={setDownloadTarget}
+                  onZoom={(src, alt) => setZoomImg({ src, alt })}
+                />
+              );
+            })}
+          </div>
+
+          {/* AI Suggestions */}
+          {result.suggestions && result.suggestions.length > 0 && (
+            <div className="rounded-xl p-4" style={{ background: '#fffbeb', border: '1px solid #fde68a' }}>
+              <p className="text-xs font-bold text-amber-700 mb-2 flex items-center gap-1.5">
+                <span>✨</span>
+                {isRtl ? "הצעות שיפור AI — לחץ להחיל" : "AI Improvement Suggestions — click to apply"}
+              </p>
+              <div className="space-y-1.5">
+                {result.suggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      // Map suggestion to style change
+                      const lower = s.toLowerCase();
+                      if (lower.includes("עבה") || lower.includes("thick") || lower.includes("bold") || lower.includes("סטנסיל")) {
+                        setPortraitStyle("stencil");
+                      } else if (lower.includes("פרט") || lower.includes("detail")) {
+                        setPortraitStyle("detailed");
+                      } else if (lower.includes("אמנות") || lower.includes("artistic") || lower.includes("expressive")) {
+                        setPortraitStyle("artistic");
+                      } else if (lower.includes("נקי") || lower.includes("clean") || lower.includes("simple")) {
+                        setPortraitStyle("clean");
+                      }
+                      setResult(null);
+                      setStatus("idle");
+                    }}
+                    className="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all"
+                    style={{ background: 'white', border: '1px solid #fde68a', color: '#92400e' }}
+                  >
+                    <span className="text-amber-500">→</span>
+                    <span className="flex-1">{s}</span>
+                    <span className="text-amber-400 text-xs shrink-0">{isRtl ? "לחץ" : "Apply"}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-amber-500 mt-2">{isRtl ? "לחיצה תחזיר לטופס עם הסגנון המוצע" : "Click to return to form with suggested style"}</p>
+            </div>
+          )}
 
           {/* New image button */}
           <button
