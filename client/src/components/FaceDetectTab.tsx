@@ -572,12 +572,12 @@ export function FaceDetectTab({ onOpenAuth }: FaceDetectTabProps) {
 
             {/* Submit button */}
             <button
-              className="w-full font-bold text-base h-12 rounded-lg flex items-center justify-center gap-2 transition-all"
+              className="w-full font-bold text-base h-13 rounded-xl flex items-center justify-center gap-2 transition-all"
               style={{
-                background: canSubmit ? '#7c3aed' : '#ddd6fe',
+                background: canSubmit ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : 'linear-gradient(135deg, #ddd6fe, #e9d5ff)',
                 color: 'white',
                 border: 'none',
-                boxShadow: canSubmit ? '0 2px 8px rgba(124,58,237,0.3)' : 'none',
+                boxShadow: canSubmit ? '0 4px 14px rgba(124,58,237,0.35)' : 'none',
                 cursor: canSubmit ? 'pointer' : 'not-allowed',
               }}
               disabled={!canSubmit}

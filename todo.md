@@ -11,7 +11,7 @@
 - [x] Build Hebrew UI: processing status indicators (loading, ready, error)
 - [x] Build Hebrew UI: download DXF button
 - [x] Write vitest tests for conversion logic (11 tests passing)
-- [ ] Final checkpoint and publish
+- [x] Final checkpoint and publish
 
 ## פיצ'רים חדשים
 
@@ -1086,3 +1086,12 @@
 
 ## קיצור שמות קבצים (מרץ 2026 v8)
 - [x] הגבל שמות קבצים ל-30 תווים מקסימום בכל הפיצ'רים (ExportButtons + DxfDownloadDialog + כל שרתי השר)
+
+## עיצוב חדש - מרץ 2026
+
+- [x] לוגו AiDXF חדש עם gradient סגול ואייקון bezier
+- [x] טאבים עם gradient צבעוני (AI Create סגול, AI Outline טורקיז, Portrait סגול כהה)
+- [x] כפתורים ראשיים עם gradient ו-shadow בכל הטאבים
+- [x] תמונות דמו חדשות: AI Create (מכונת כתיבה, אופנוע, משקפיים), AI Outline (אופניים, נעל, כלי עבודה), Portrait (אישה, גבר, ילד)
+- [x] פוטר מעודכן עם לוגו AiDXF ומידע קצר
+- [x] כפתור התחברות עם gradient

@@ -785,12 +785,12 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             </div>
             <div className="flex gap-2">
               <button
-                className="flex-1 font-bold text-base h-12 rounded-lg flex items-center justify-center gap-2 transition-all"
+                className="flex-1 font-bold text-base h-13 rounded-xl flex items-center justify-center gap-2 transition-all"
                 style={{
-                  background: ((!imageFile && !imagePreview) || status === "loading") ? '#99f6e4' : '#0d9488',
+                  background: ((!imageFile && !imagePreview) || status === "loading") ? 'linear-gradient(135deg, #99f6e4, #6ee7b7)' : 'linear-gradient(135deg, #0d9488, #06b6d4)',
                   color: 'white',
                   border: 'none',
-                  boxShadow: ((!imageFile && !imagePreview) || status === "loading") ? 'none' : '0 2px 8px rgba(13,148,136,0.30)',
+                  boxShadow: ((!imageFile && !imagePreview) || status === "loading") ? 'none' : '0 4px 14px rgba(13,148,136,0.35)',
                   cursor: ((!imageFile && !imagePreview) || status === "loading") ? 'not-allowed' : 'pointer',
                 }}
                 disabled={(!imageFile && !imagePreview) || status === "loading"}
@@ -799,13 +799,13 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                 {status === "loading" ? (
                   <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />{isRtl ? "ה-AI מנתח ומצייר..." : "AI is analyzing and drawing..."}</>
                 ) : (
-                  <><Wand2 className="w-4 h-4" />{isRtl ? "צור outline בAI" : "Create AI Outline"}</>
+                  <><Wand2 className="w-4 h-4" />{isRtl ? "צור AI Outline" : "Create AI Outline"}</>
                 )}
               </button>
               {tryAgainUrl && status !== "loading" && (
                 <button
-                  className="h-12 px-4 rounded-lg font-bold text-sm flex items-center justify-center gap-1.5 transition-all"
-                  style={{ background: '#0f766e', color: 'white', border: 'none', boxShadow: '0 2px 8px rgba(13,148,136,0.25)' }}
+                  className="h-13 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 transition-all hover:opacity-90"
+                  style={{ background: 'linear-gradient(135deg, #0f766e, #0d9488)', color: 'white', border: 'none', boxShadow: '0 4px 12px rgba(13,148,136,0.3)' }}
                   onClick={() => handleTraceFromUrl(tryAgainUrl)}
                   title={isRtl ? "נסה שוב עם אותה תמונה" : "Try again with same image"}
                 >

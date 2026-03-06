@@ -1098,12 +1098,12 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
           </div>
           <p className="text-xs mt-2 text-gray-400">{t("aiTabSubtitle")}</p>
           <button
-            className="w-full mt-3 h-11 font-semibold rounded-lg flex items-center justify-center gap-2 transition-all"
+            className="w-full mt-3 h-13 font-bold text-base rounded-xl flex items-center justify-center gap-2 transition-all"
             style={{
-              background: status === "loading" || !prompt.trim() ? '#c7d2fe' : '#4f46e5',
+              background: status === "loading" || !prompt.trim() ? 'linear-gradient(135deg, #c7d2fe, #ddd6fe)' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
               color: 'white',
               border: 'none',
-              boxShadow: status === "loading" || !prompt.trim() ? 'none' : '0 2px 8px rgba(79,70,229,0.30)',
+              boxShadow: status === "loading" || !prompt.trim() ? 'none' : '0 4px 14px rgba(99,102,241,0.35)',
               cursor: status === "loading" || !prompt.trim() ? 'not-allowed' : 'pointer',
             }}
             onClick={() => generate(false)}
@@ -1531,27 +1531,32 @@ export default function Home() {
         className="sticky top-0 z-20"
         style={{
           background: '#ffffff',
-          borderBottom: '1px solid #e2e8f0',
-          boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+          borderBottom: '1px solid #e8eaf0',
+          boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
         }}
       >
         <div className="container py-3 flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center"
-            style={{
-              background: 'linear-gradient(135deg, #eef2ff, #e0e7ff)',
-              border: '1px solid #c7d2fe',
-            }}
-          >
-            <img
-              src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663365044246/SslVmktvndMoFSwH.png"
-              alt={t("logoAlt")}
-              className="w-7 h-7 object-contain"
-            />
+          {/* AiDXF Logo */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div
+              className="w-9 h-9 rounded-xl shrink-0 flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M4 16 Q7 7 10 10 Q13 13 16 4" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
+                <circle cx="4" cy="16" r="1.8" fill="#06b6d4"/>
+                <circle cx="10" cy="10" r="1.8" fill="white"/>
+                <circle cx="16" cy="4" r="1.8" fill="#06b6d4"/>
+              </svg>
+            </div>
+            <div className="leading-none">
+              <span className="text-xl font-black tracking-tight" style={{ color: '#6366f1', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>Ai</span><span className="text-xl font-black tracking-tight" style={{ color: '#111827', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>DXF</span>
+            </div>
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-base font-bold leading-tight text-gray-800">{t("appTitle")}</h1>
-            <p className="text-xs truncate text-gray-500">{t("appSubtitle")}</p>
+            <p className="text-xs truncate text-gray-400 hidden sm:block">
+              {isRtl ? "ממיר תמונות לוקטור DXF בעזרת AI" : "AI-Powered Image to DXF Vector Converter"}
+            </p>
           </div>
           <LanguageSwitcher />
         </div>
@@ -1572,18 +1577,18 @@ export default function Home() {
 
       <main className="container py-5">
         {/* Center content on desktop */}
-        <div className="mx-auto" style={{ maxWidth: '780px' }}>
+        <div className="mx-auto" style={{ maxWidth: '820px' }}>
         {/* Auth bar */}
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-end mb-5">
           {appUser ? (
             <div
-              className="flex flex-wrap items-center gap-1 px-2.5 py-1.5 rounded-full max-w-full overflow-hidden"
-              style={{ background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              className="flex flex-wrap items-center gap-1.5 px-3 py-2 rounded-2xl max-w-full overflow-hidden"
+              style={{ background: '#ffffff', border: '1px solid #e8eaf0', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
             >
-              <UserCircle className="w-3.5 h-3.5 text-gray-500 shrink-0" />
-              <span className="text-xs text-gray-600 truncate max-w-[80px] sm:max-w-[140px]">{appUser.name ?? appUser.email}</span>
+              <UserCircle className="w-4 h-4 text-indigo-400 shrink-0" />
+              <span className="text-sm font-medium text-gray-700 truncate max-w-[90px] sm:max-w-[160px]">{appUser.name ?? appUser.email}</span>
               <div
-                className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full shrink-0"
+                className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full shrink-0"
                 style={{ background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4338ca' }}
               >
                 <Sparkles className="w-3 h-3" />
@@ -1591,32 +1596,32 @@ export default function Home() {
               </div>
               <button
                 onClick={() => window.location.href = "/tokens"}
-                className="text-xs px-2 py-0.5 rounded-full transition-colors text-indigo-600 hover:text-indigo-800 shrink-0"
+                className="text-xs px-2.5 py-1 rounded-full font-medium transition-colors text-indigo-600 hover:bg-indigo-50 shrink-0"
               >
                 {isRtl ? "אסימונים" : "Tokens"}
               </button>
               <button
                 onClick={() => window.location.href = "/history"}
                 className="text-xs px-2.5 py-1 rounded-full transition-colors flex items-center gap-1 font-medium shrink-0"
-                style={{ background: '#f1f5f9', color: '#374151', border: '1px solid #e2e8f0' }}
+                style={{ background: '#f8fafc', color: '#374151', border: '1px solid #e8eaf0' }}
               >
                 <History className="w-3.5 h-3.5" />
                 <span>{t("history")}</span>
               </button>
               <button
                 onClick={handleLogout}
-                className="text-xs px-2 py-0.5 rounded-full transition-colors flex items-center gap-1 text-gray-400 hover:text-gray-600 shrink-0"
+                className="text-xs px-2 py-1 rounded-full transition-colors flex items-center gap-1 text-gray-400 hover:text-red-500 shrink-0"
               >
-                <LogOut className="w-3 h-3" />
+                <LogOut className="w-3.5 h-3.5" />
               </button>
             </div>
           ) : (
             <button
               onClick={() => { setLimitReached(false); setAuthOpen(true); }}
-              className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-full font-semibold transition-all"
-              style={{ background: '#4f46e5', color: 'white', border: 'none', boxShadow: '0 2px 8px rgba(79,70,229,0.25)' }}
+              className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl font-semibold transition-all hover:opacity-90"
+              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: 'none', boxShadow: '0 4px 12px rgba(99,102,241,0.35)' }}
             >
-              <LogIn className="w-3.5 h-3.5" />
+              <LogIn className="w-4 h-4" />
               {t("loginRegister")}
             </button>
           )}
@@ -1632,20 +1637,24 @@ export default function Home() {
           dir={isRtl ? "rtl" : "ltr"}
         >
           <TabsList
-            className="w-full mb-5 h-13 gap-1 p-1.5"
+            className="w-full mb-6 gap-1 p-1.5"
             style={{
               background: '#ffffff',
-              border: '1px solid #e2e8f0',
-              borderRadius: '0.875rem',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+              border: '1px solid #e8eaf0',
+              borderRadius: '1rem',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              height: 'auto',
             }}
           >
             <TabsTrigger
               value="ai"
-              className="flex-1 gap-1 text-xs sm:text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm relative px-1"
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
+              style={{
+                background: activeTab === 'ai' ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'transparent',
+              }}
             >
-              <Sparkles className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">{isRtl ? "AI יצירה" : "AI Create"}</span>
+              <Sparkles className="w-4 h-4 shrink-0" />
+              <span className="truncate text-[11px]">{isRtl ? "AI יצירה" : "AI Create"}</span>
               {activeJobs.generate && (
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
@@ -1655,10 +1664,13 @@ export default function Home() {
             </TabsTrigger>
             <TabsTrigger
               value="trace"
-              className="flex-1 gap-1 text-xs sm:text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-sm relative px-1"
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
+              style={{
+                background: activeTab === 'trace' ? 'linear-gradient(135deg, #0d9488, #06b6d4)' : 'transparent',
+              }}
             >
-              <Scan className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">AI Outline</span>
+              <Scan className="w-4 h-4 shrink-0" />
+              <span className="truncate text-[11px]">AI Outline</span>
               {activeJobs.trace && (
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
@@ -1669,20 +1681,23 @@ export default function Home() {
             <TabsTrigger
               value="redraw"
               disabled
-              className="flex-1 gap-1 text-xs sm:text-sm font-semibold transition-all rounded-xl text-gray-400 opacity-60 cursor-not-allowed relative px-1 data-[state=active]:bg-gray-200 data-[state=active]:text-gray-500"
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-300 opacity-50 cursor-not-allowed relative px-1"
             >
-              <FileEdit className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">{isRtl ? "AI סקיצה" : "AI Sketch"}</span>
+              <FileEdit className="w-4 h-4 shrink-0" />
+              <span className="truncate text-[11px]">{isRtl ? "AI סקיצה" : "AI Sketch"}</span>
               <span className="absolute -top-1.5 -right-1 text-[9px] font-bold bg-orange-400 text-white px-1 rounded-full leading-4">
                 {isRtl ? "תחזוק" : "maint"}
               </span>
             </TabsTrigger>
             <TabsTrigger
               value="face"
-              className="flex-1 gap-1 text-xs sm:text-sm font-semibold transition-all rounded-xl text-gray-500 data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=active]:shadow-sm relative px-1"
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
+              style={{
+                background: activeTab === 'face' ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : 'transparent',
+              }}
             >
-              <UserCircle className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">{isRtl ? "פורטרט" : "Portrait"}</span>
+              <UserCircle className="w-4 h-4 shrink-0" />
+              <span className="truncate text-[11px]">{isRtl ? "פורטרט" : "Portrait"}</span>
               {activeJobs.face && (
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
@@ -1695,32 +1710,32 @@ export default function Home() {
           <TabsContent value="ai">
             {/* Demo gallery — AI Create */}
             <div
-              className="mb-4 rounded-xl overflow-hidden p-3"
-              style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+              className="mb-5 rounded-2xl overflow-hidden p-4"
+              style={{ background: '#ffffff', border: '1px solid #e8eaf0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
             >
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{background: '#eef2ff'}}>
-                  <Sparkles className="w-3 h-3 text-indigo-500" />
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #6366f1, #8b5cf6)'}}>
+                  <Sparkles className="w-3.5 h-3.5 text-white" />
                 </div>
-                <span className="text-xs font-semibold text-indigo-600">
+                <span className="text-sm font-bold text-gray-800">
                   {isRtl ? "דוגמאות — תאר עיצוב בטקסט, ה-AI יצייר קווים לחריטה" : "Examples — describe a design in text, AI draws engraving lines"}
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/tab-ai-generate-example-ET9bJiJNTYLq53nXmxgioT.webp"
-                  alt="AI Generate Example - Lion"
-                  className="w-full aspect-square object-contain rounded-lg bg-gray-50 border border-gray-100"
+                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-sunglasses_e7cbfe74.png"
+                  alt="AI Generate - Sunglasses"
+                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
                 />
                 <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-demo-menorah-WZDfWuRCGmoZS2mgqWHnUG.webp"
-                  alt="AI Generate Example - Menorah"
-                  className="w-full aspect-square object-contain rounded-lg bg-gray-50 border border-gray-100"
+                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-motorcycle_9b48b7de.png"
+                  alt="AI Generate - Motorcycle"
+                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
                 />
                 <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-demo-star-4dTVhBTtptWohs8XBhQsBE.webp"
-                  alt="AI Generate Example - Star of David"
-                  className="w-full aspect-square object-contain rounded-lg bg-gray-50 border border-gray-100"
+                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-typewriter_a3336bbc.png"
+                  alt="AI Generate - Typewriter"
+                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
                 />
               </div>
             </div>
@@ -1730,22 +1745,34 @@ export default function Home() {
           <TabsContent value="trace">
             {/* Demo banner — AI Trace */}
             <div
-              className="mb-4 rounded-xl overflow-hidden p-3"
-              style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+              className="mb-5 rounded-2xl overflow-hidden p-4"
+              style={{ background: '#ffffff', border: '1px solid #e8eaf0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
             >
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{background: '#f0fdf9'}}>
-                  <Scan className="w-3 h-3 text-teal-600" />
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #0d9488, #06b6d4)'}}>
+                  <Scan className="w-3.5 h-3.5 text-white" />
                 </div>
-                <span className="text-xs font-semibold text-teal-700">
-                  {isRtl ? "דוגמה — העלה תמונה, ה-AI יהפוך אותה לקווים נקיים לחריטה" : "Example — upload a photo, AI converts it to clean engraving lines"}
+                <span className="text-sm font-bold text-gray-800">
+                  {isRtl ? "דוגמאות — העלה תמונה, ה-AI יהפוך אותה לקווים נקיים" : "Examples — upload a photo, AI converts it to clean vector lines"}
                 </span>
               </div>
-              <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/tab-ai-trace-lv-example-v2-hM6RghsZyzvy3mooS3ymTh.webp"
-                alt="AI Trace Example"
-                className="w-full max-h-44 object-contain rounded-lg bg-gray-50"
-              />
+              <div className="grid grid-cols-3 gap-2">
+                <img
+                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png"
+                  alt="AI Outline - Bicycle"
+                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
+                />
+                <img
+                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-sneaker_9fe887cf.png"
+                  alt="AI Outline - Sneaker"
+                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
+                />
+                <img
+                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-tools_9ff33dc7.png"
+                  alt="AI Outline - Tools"
+                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
+                />
+              </div>
             </div>
             <AiTraceTab onOpenAuth={() => openAuthAs("unregistered")} />
           </TabsContent>
@@ -1803,22 +1830,34 @@ export default function Home() {
           <TabsContent value="face">
             {/* Demo banner — Face Detection */}
             <div
-              className="mb-4 rounded-xl overflow-hidden p-3"
-              style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+              className="mb-5 rounded-2xl overflow-hidden p-4"
+              style={{ background: '#ffffff', border: '1px solid #e8eaf0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
             >
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{background: '#f3e8ff'}}>
-                  <UserCircle className="w-3 h-3 text-purple-600" />
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #7c3aed, #a855f7)'}}>
+                  <UserCircle className="w-3.5 h-3.5 text-white" />
                 </div>
-                <span className="text-xs font-semibold text-purple-700">
-                  {isRtl ? "פורטרט — העלה תמונה עם פנים, ה-AI יצייר 3 פורטרטים בסגנונות שונים" : "Portrait — upload a photo with faces, AI draws 3 portrait variations in different styles"}
+                <span className="text-sm font-bold text-gray-800">
+                  {isRtl ? "פורטרט — העלה תמונה עם פנים, ה-AI יצייר 3 פורטרטים בסגנונות שונים" : "Portrait — upload a photo with faces, AI draws 3 portrait variations"}
                 </span>
               </div>
-              <p className="text-xs text-gray-500">
-                {isRtl
-                  ? "gpt-image-1 מצייר 3 פורטרטים בסגנונות שונים (נקי, אמנותי, מפורט, סטנסיל) כ-line art לחריטת לייזר/CNC. ה-AI גם מציע הצעות שיפור אוטומטיות."
-                  : "gpt-image-1 draws 3 portraits in different styles (clean, artistic, detailed, stencil) as line art for laser/CNC engraving. AI also provides automatic improvement suggestions."}
-              </p>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                <img
+                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_e956deb2.png"
+                  alt="Portrait - Woman"
+                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
+                />
+                <img
+                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-man_1c4399d3.png"
+                  alt="Portrait - Man"
+                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
+                />
+                <img
+                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-child_d468e82c.png"
+                  alt="Portrait - Child"
+                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
+                />
+              </div>
             </div>
             <FaceDetectTab onOpenAuth={() => openAuthAs("unregistered")} />
           </TabsContent>
@@ -1827,21 +1866,24 @@ export default function Home() {
       </main>
 
       <footer
-        className="mt-8"
-        style={{ borderTop: '1px solid #e2e8f0', background: '#ffffff' }}
+        className="mt-10"
+        style={{ borderTop: '1px solid #e8eaf0', background: '#ffffff' }}
       >
-        <div className="container py-4 text-center space-y-1.5">
-          <div className="text-xs text-gray-400">{t("appFooter")}</div>
-          <div className="flex items-center justify-center gap-3 text-xs text-gray-400">
-            <a href="/terms" className="hover:text-gray-600 hover:underline transition-colors">
-              {isRtl ? "תנאי שימוש" : "Terms of Service"}
-            </a>
-            <span>·</span>
-            <a href="/privacy" className="hover:text-gray-600 hover:underline transition-colors">
-              {isRtl ? "מדיניות פרטיות" : "Privacy Policy"}
-            </a>
-            <span>·</span>
-            <span>© 2026 Image to DXF</span>
+        <div className="container py-5">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-base font-black tracking-tight" style={{ color: '#6366f1' }}>Ai</span><span className="text-base font-black tracking-tight text-gray-800">DXF</span>
+              <span className="text-xs text-gray-400 hidden sm:block">— {isRtl ? "ממיר תמונות לוקטור בעזרת AI" : "AI-Powered Vector Converter"}</span>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-gray-400">
+              <a href="/terms" className="hover:text-gray-600 transition-colors">
+                {isRtl ? "תנאי שימוש" : "Terms"}
+              </a>
+              <a href="/privacy" className="hover:text-gray-600 transition-colors">
+                {isRtl ? "פרטיות" : "Privacy"}
+              </a>
+              <span>© 2026 AiDXF</span>
+            </div>
           </div>
         </div>
       </footer>
