@@ -1754,9 +1754,14 @@ export default function Home() {
         <div className="mb-6 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #f0f0ff 0%, #faf5ff 50%, #f0f9ff 100%)', border: '1px solid #e8eaf0' }}>
           <div className="px-5 pt-5 pb-4">
             {/* Desktop: side by side. Mobile: stacked */}
-            <div className={`flex flex-col gap-6 items-center ${isRtl ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
+            <div className={`flex flex-col gap-4 items-center ${isRtl ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
+              {/* Mobile: carousel first (order-first on mobile, order-last on desktop) */}
+              <div className="flex-1 w-full lg:max-w-[480px]" style={{ order: 1 }}>
+                <HeroBeforeAfterCarousel />
+              </div>
+
               {/* Left (LTR) / Right (RTL): text + feature buttons */}
-              <div className="flex-1 w-full">
+              <div className="flex-1 w-full" style={{ order: 2 }}>
             {/* Badge pill */}
             <div className={`flex justify-center ${isRtl ? 'lg:justify-end' : 'lg:justify-start'} mb-3`}>
               <span
@@ -1782,7 +1787,7 @@ export default function Home() {
             </div>
 
             {/* Feature shortcut buttons — click to switch tab */}
-            <div className="grid grid-cols-4 gap-2 lg:grid-cols-2 lg:gap-3">
+            <div className="grid grid-cols-2 gap-2">
               {[
                 { tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create', color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-sunglasses_e7cbfe74.png' },
                 { tab: 'trace', label: isRtl ? 'AI Outline' : 'AI Outline', color: '#0d9488', bg: 'linear-gradient(135deg, #0d9488, #06b6d4)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png' },
@@ -1796,32 +1801,26 @@ export default function Home() {
                     localStorage.setItem('active_tab', f.tab);
                     document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }}
-                  className="flex flex-col items-center gap-0 rounded-2xl overflow-hidden transition-all hover:scale-105 active:scale-95"
+                  className="flex flex-col items-center gap-0 rounded-2xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
                   style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 4px 16px rgba(0,0,0,0.10)' }}
                 >
                   {/* Image area: white bg, object-contain so nothing is cropped */}
-                  <div className="w-full aspect-square flex items-center justify-center p-1" style={{ background: '#f8f9ff' }}>
+                  <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '75%' }}>
                     <img
                       src={f.img}
                       alt={f.label}
-                      className="w-full h-full"
-                      style={{ objectFit: 'contain', objectPosition: 'center' }}
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', padding: '6px' }}
                     />
                   </div>
                   {/* Label bar */}
                   <span
-                    className="w-full text-[10px] font-bold text-center py-1.5"
+                    className="w-full text-xs font-bold text-center py-2"
                     style={{ background: f.bg, color: 'white', letterSpacing: '0.02em' }}
                   >{f.label}</span>
                 </button>
               ))}
             </div>
               </div>{/* end left column */}
-
-              {/* Right: animated before/after carousel */}
-              <div className="flex-1 w-full lg:max-w-[480px]">
-                <HeroBeforeAfterCarousel />
-              </div>{/* end right column */}
             </div>{/* end flex row */}
           </div>
         </div>
