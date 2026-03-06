@@ -1647,14 +1647,14 @@ export default function Home() {
 
             {/* Sneaker before/after card — full demo card image */}
             <div
-              className="rounded-xl overflow-hidden mb-4"
-              style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}
+              className="rounded-2xl overflow-hidden mb-4 flex items-center justify-center"
+              style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.10)', background: 'white', minHeight: 180, maxHeight: 240 }}
             >
               <img
                 src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-sneaker_9fe887cf.png"
                 alt="Sneaker AI vector demo"
-                className="w-full object-cover rounded-xl"
-                style={{ maxHeight: 220 }}
+                className="w-full"
+                style={{ objectFit: 'contain', maxHeight: 240, display: 'block' }}
               />
             </div>
 
@@ -1673,16 +1673,22 @@ export default function Home() {
                     localStorage.setItem('active_tab', f.tab);
                     document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }}
-                  className="flex flex-col items-center gap-0 rounded-xl overflow-hidden transition-all hover:scale-105 hover:shadow-lg active:scale-95"
-                  style={{ border: 'none', padding: 0, background: 'transparent' }}
+                  className="flex flex-col items-center gap-0 rounded-2xl overflow-hidden transition-all hover:scale-105 active:scale-95"
+                  style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 4px 16px rgba(0,0,0,0.10)' }}
                 >
-                  <div className="w-full aspect-square rounded-xl overflow-hidden relative">
-                    <img src={f.img} alt={f.label} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 rounded-xl" style={{ background: `${f.color}22` }} />
+                  {/* Image area: white bg, object-contain so nothing is cropped */}
+                  <div className="w-full aspect-square flex items-center justify-center p-1" style={{ background: '#f8f9ff' }}>
+                    <img
+                      src={f.img}
+                      alt={f.label}
+                      className="w-full h-full"
+                      style={{ objectFit: 'contain', objectPosition: 'center' }}
+                    />
                   </div>
+                  {/* Label bar */}
                   <span
-                    className="w-full text-[10px] font-bold text-center py-1.5 rounded-b-xl"
-                    style={{ background: f.bg, color: 'white' }}
+                    className="w-full text-[10px] font-bold text-center py-1.5"
+                    style={{ background: f.bg, color: 'white', letterSpacing: '0.02em' }}
                   >{f.label}</span>
                 </button>
               ))}
