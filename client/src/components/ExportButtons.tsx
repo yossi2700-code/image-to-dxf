@@ -233,42 +233,42 @@ export function ExportButtons({
         <button
           onClick={handleDxf}
           disabled={isDxfLoading}
-          className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl font-bold text-sm transition-all hover:opacity-90"
-          style={{ background: isDxfLoading ? 'linear-gradient(135deg, #6ee7b7, #34d399)' : 'linear-gradient(135deg, #059669, #10b981)', color: "white", border: "none", boxShadow: "0 3px 10px rgba(5,150,105,0.3)", opacity: isDxfLoading ? 0.7 : 1 }}
+          className="flex flex-col items-center justify-center gap-1.5 py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]"
+          style={{ background: isDxfLoading ? 'linear-gradient(135deg, #6ee7b7, #34d399)' : 'linear-gradient(135deg, #059669, #10b981)', color: "white", border: "none", boxShadow: "0 4px 14px rgba(5,150,105,0.35)", opacity: isDxfLoading ? 0.7 : 1 }}
         >
           {isDxfLoading
-            ? <Loader2 className="w-4 h-4 animate-spin" />
-            : <Download className="w-4 h-4" />}
-          DXF
+            ? <Loader2 className="w-5 h-5 animate-spin" />
+            : <Download className="w-5 h-5" />}
+          <span className="text-xs font-black tracking-wide">DXF</span>
         </button>
         {/* PDF */}
         <button
           onClick={handlePdf}
           disabled={isPdfLoading}
-          className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl font-bold text-sm transition-all hover:opacity-90"
-          style={{ background: isPdfLoading ? '#93c5fd' : 'linear-gradient(135deg, #2563eb, #3b82f6)', color: "white", border: "none", boxShadow: "0 3px 10px rgba(37,99,235,0.3)", opacity: isPdfLoading ? 0.7 : 1 }}
+          className="flex flex-col items-center justify-center gap-1.5 py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]"
+          style={{ background: isPdfLoading ? '#93c5fd' : 'linear-gradient(135deg, #2563eb, #3b82f6)', color: "white", border: "none", boxShadow: "0 4px 14px rgba(37,99,235,0.35)", opacity: isPdfLoading ? 0.7 : 1 }}
         >
           {isPdfLoading
-            ? <Loader2 className="w-4 h-4 animate-spin" />
-            : <FileText className="w-4 h-4" />}
-          PDF
+            ? <Loader2 className="w-5 h-5 animate-spin" />
+            : <FileText className="w-5 h-5" />}
+          <span className="text-xs font-black tracking-wide">PDF</span>
         </button>
         {/* Vector toggle */}
         <button
           onClick={onToggleVector}
-          className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl font-bold text-sm transition-all hover:opacity-90"
+          className="flex flex-col items-center justify-center gap-1.5 py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]"
           style={showVector
-            ? { background: 'linear-gradient(135deg, #7c3aed, #8b5cf6)', color: "white", border: "none", boxShadow: "0 3px 10px rgba(124,58,237,0.3)" }
-            : { background: "#f5f3ff", border: "1px solid #ddd6fe", color: "#7c3aed" }}
+            ? { background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: "white", border: "none", boxShadow: "0 4px 14px rgba(99,102,241,0.35)" }
+            : { background: "#f5f3ff", border: "1.5px solid #c4b5fd", color: "#6366f1" }}
         >
-          <Eye className="w-4 h-4" />
-          {showVector ? (isRtl ? "הסתר" : "Hide") : (isRtl ? "וקטור" : "Vector")}
+          <Eye className="w-5 h-5" />
+          <span className="text-xs font-black tracking-wide">{showVector ? (isRtl ? "תמונה" : "Photo") : (isRtl ? "וקטור" : "Vector")}</span>
         </button>
       </div>
       {/* More options */}
       <button
         className="w-full py-2.5 font-semibold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all hover:bg-indigo-50"
-        style={{ background: "#f8fafc", border: "1px solid #e0e7ff", color: "#6366f1" }}
+        style={{ background: "#f8fafc", border: "1.5px solid #e0e7ff", color: "#6366f1" }}
         onClick={onMoreOptions}
       >
         <Settings2 className="w-3.5 h-3.5" />

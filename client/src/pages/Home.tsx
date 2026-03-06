@@ -1535,29 +1535,68 @@ export default function Home() {
           boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
         }}
       >
-        <div className="container py-3 flex items-center gap-3">
+        <div className="container py-2.5 flex items-center gap-3">
           {/* AiDXF Logo */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <div
-              className="w-9 h-9 rounded-xl shrink-0 flex items-center justify-center"
+              className="w-8 h-8 rounded-xl shrink-0 flex items-center justify-center"
               style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}
             >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
                 <path d="M4 16 Q7 7 10 10 Q13 13 16 4" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
                 <circle cx="4" cy="16" r="1.8" fill="#06b6d4"/>
                 <circle cx="10" cy="10" r="1.8" fill="white"/>
                 <circle cx="16" cy="4" r="1.8" fill="#06b6d4"/>
               </svg>
             </div>
-            <div className="leading-none">
-              <span className="text-xl font-black tracking-tight" style={{ color: '#6366f1', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>Ai</span><span className="text-xl font-black tracking-tight" style={{ color: '#111827', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>DXF</span>
+            <span className="text-lg font-black tracking-tight" style={{ color: '#6366f1', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>Ai</span><span className="text-lg font-black tracking-tight" style={{ color: '#111827', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>DXF</span>
+          </div>
+          <div className="flex-1 min-w-0" />
+          {/* Auth in header */}
+          {appUser ? (
+            <div className="flex items-center gap-1.5">
+              <div
+                className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full shrink-0"
+                style={{ background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4338ca' }}
+              >
+                <Sparkles className="w-3 h-3" />
+                <span>{tokenBalance}</span>
+              </div>
+              <button
+                onClick={() => window.location.href = "/tokens"}
+                className="text-xs px-2 py-1 rounded-full font-medium transition-colors text-indigo-600 hover:bg-indigo-50 hidden sm:block shrink-0"
+              >
+                {isRtl ? "אסימונים" : "Tokens"}
+              </button>
+              <button
+                onClick={() => window.location.href = "/history"}
+                className="text-xs px-2 py-1 rounded-full transition-colors flex items-center gap-1 font-medium shrink-0"
+                style={{ background: '#f8fafc', color: '#374151', border: '1px solid #e8eaf0' }}
+              >
+                <History className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{t("history")}</span>
+              </button>
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: '#f8fafc', border: '1px solid #e8eaf0' }}>
+                <UserCircle className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                <span className="text-xs font-medium text-gray-700 truncate max-w-[70px] sm:max-w-[120px]">{appUser.name ?? appUser.email}</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="text-xs p-1.5 rounded-full transition-colors flex items-center gap-1 text-gray-400 hover:text-red-500 shrink-0"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
             </div>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs truncate text-gray-400 hidden sm:block">
-              {isRtl ? "ממיר תמונות לוקטור DXF בעזרת AI" : "AI-Powered Image to DXF Vector Converter"}
-            </p>
-          </div>
+          ) : (
+            <button
+              onClick={() => { setLimitReached(false); setAuthOpen(true); }}
+              className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl font-semibold transition-all hover:opacity-90 shrink-0"
+              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: 'none', boxShadow: '0 3px 10px rgba(99,102,241,0.35)' }}
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              {t("loginRegister")}
+            </button>
+          )}
           <LanguageSwitcher />
         </div>
       </header>
@@ -1619,79 +1658,40 @@ export default function Home() {
               />
             </div>
 
-            {/* Feature cards row */}
+            {/* Feature shortcut buttons — click to switch tab */}
             <div className="grid grid-cols-4 gap-2">
               {[
-                { icon: <Sparkles className="w-4 h-4" />, label: isRtl ? 'AI יצירה' : 'AI Create', color: '#6366f1', bg: '#eef2ff' },
-                { icon: <Scan className="w-4 h-4" />, label: isRtl ? 'AI Outline' : 'AI Outline', color: '#0d9488', bg: '#f0fdf9' },
-                { icon: <FileEdit className="w-4 h-4" />, label: isRtl ? 'AI סקיצה' : 'AI Sketch', color: '#d97706', bg: '#fffbeb' },
-                { icon: <UserCircle className="w-4 h-4" />, label: isRtl ? 'פורטרט' : 'Portrait', color: '#7c3aed', bg: '#f5f3ff' },
+                { tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create', color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-sunglasses_e7cbfe74.png' },
+                { tab: 'trace', label: isRtl ? 'AI Outline' : 'AI Outline', color: '#0d9488', bg: 'linear-gradient(135deg, #0d9488, #06b6d4)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png' },
+                { tab: 'sketch', label: isRtl ? 'AI סקיצה' : 'AI Sketch', color: '#d97706', bg: 'linear-gradient(135deg, #d97706, #f59e0b)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v4-helmet_44398853.png' },
+                { tab: 'face', label: isRtl ? 'פורטרט' : 'Portrait', color: '#7c3aed', bg: 'linear-gradient(135deg, #7c3aed, #a855f7)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_e956deb2.png' },
               ].map((f, i) => (
-                <div
+                <button
                   key={i}
-                  className="flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-xl"
-                  style={{ background: f.bg, border: `1px solid ${f.color}22` }}
+                  onClick={() => {
+                    setActiveTab(f.tab);
+                    localStorage.setItem('active_tab', f.tab);
+                    document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                  className="flex flex-col items-center gap-0 rounded-xl overflow-hidden transition-all hover:scale-105 hover:shadow-lg active:scale-95"
+                  style={{ border: 'none', padding: 0, background: 'transparent' }}
                 >
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: f.color, color: 'white' }}>
-                    {f.icon}
+                  <div className="w-full aspect-square rounded-xl overflow-hidden relative">
+                    <img src={f.img} alt={f.label} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 rounded-xl" style={{ background: `${f.color}22` }} />
                   </div>
-                  <span className="text-[10px] font-bold text-center leading-tight" style={{ color: f.color }}>{f.label}</span>
-                </div>
+                  <span
+                    className="w-full text-[10px] font-bold text-center py-1.5 rounded-b-xl"
+                    style={{ background: f.bg, color: 'white' }}
+                  >{f.label}</span>
+                </button>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Auth bar */}
-        <div className="flex justify-end mb-5">
-          {appUser ? (
-            <div
-              className="flex flex-wrap items-center gap-1.5 px-3 py-2 rounded-2xl max-w-full overflow-hidden"
-              style={{ background: '#ffffff', border: '1px solid #e8eaf0', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
-            >
-              <UserCircle className="w-4 h-4 text-indigo-400 shrink-0" />
-              <span className="text-sm font-medium text-gray-700 truncate max-w-[90px] sm:max-w-[160px]">{appUser.name ?? appUser.email}</span>
-              <div
-                className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full shrink-0"
-                style={{ background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4338ca' }}
-              >
-                <Sparkles className="w-3 h-3" />
-                <span>{tokenBalance}</span>
-              </div>
-              <button
-                onClick={() => window.location.href = "/tokens"}
-                className="text-xs px-2.5 py-1 rounded-full font-medium transition-colors text-indigo-600 hover:bg-indigo-50 shrink-0"
-              >
-                {isRtl ? "אסימונים" : "Tokens"}
-              </button>
-              <button
-                onClick={() => window.location.href = "/history"}
-                className="text-xs px-2.5 py-1 rounded-full transition-colors flex items-center gap-1 font-medium shrink-0"
-                style={{ background: '#f8fafc', color: '#374151', border: '1px solid #e8eaf0' }}
-              >
-                <History className="w-3.5 h-3.5" />
-                <span>{t("history")}</span>
-              </button>
-              <button
-                onClick={handleLogout}
-                className="text-xs px-2 py-1 rounded-full transition-colors flex items-center gap-1 text-gray-400 hover:text-red-500 shrink-0"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => { setLimitReached(false); setAuthOpen(true); }}
-              className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl font-semibold transition-all hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: 'none', boxShadow: '0 4px 12px rgba(99,102,241,0.35)' }}
-            >
-              <LogIn className="w-4 h-4" />
-              {t("loginRegister")}
-            </button>
-          )}
-        </div>
-
         {/* Tabs */}
+        <div id="main-tabs" />
         <Tabs
           value={activeTab}
           onValueChange={(v) => {
