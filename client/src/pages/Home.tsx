@@ -1792,11 +1792,11 @@ export default function Home() {
               </button>
               <button
                 onClick={() => window.location.href = "/history"}
-                className="text-xs px-2 py-1 rounded-full transition-colors flex items-center gap-1 font-medium shrink-0"
-                style={{ background: '#f8fafc', color: '#374151', border: '1px solid #e8eaf0' }}
+                className="text-xs px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 font-semibold shrink-0 hover:opacity-90 active:scale-95"
+                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}
               >
                 <History className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{t("history")}</span>
+                <span>{isRtl ? 'היסטוריה' : 'History'}</span>
               </button>
               <div className="flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: '#f8fafc', border: '1px solid #e8eaf0' }}>
                 <UserCircle className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
@@ -2013,18 +2013,14 @@ export default function Home() {
                   {isRtl ? "דוגמאות — תאר עיצוב בטקסט, ה-AI יצייר קווים לחריטה" : "Examples — describe a design in text, AI draws engraving lines"}
                 </span>
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollSnapType: 'x mandatory' }}>
-                {[
-                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-sunglasses_e7cbfe74.png', alt: 'AI Generate - Sunglasses' },
-                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-motorcycle_9b48b7de.png', alt: 'AI Generate - Motorcycle' },
+              <DemoSlider
+                accentColor="#6366f1"
+                images={[
                   { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-typewriter_a3336bbc.png', alt: 'AI Generate - Typewriter' },
-                ].map((item, i) => (
-                  <img key={i} src={item.src} alt={item.alt}
-                    className="rounded-xl border border-gray-100 object-cover flex-shrink-0"
-                    style={{ width: 'calc(33.33% - 6px)', minWidth: '120px', maxWidth: '200px', aspectRatio: '1', scrollSnapAlign: 'start' }}
-                  />
-                ))}
-              </div>
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-motorcycle_9b48b7de.png', alt: 'AI Generate - Motorcycle' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-sunglasses_e7cbfe74.png', alt: 'AI Generate - Sunglasses' },
+                ]}
+              />
             </div>
             <AiGeneratorTab onOpenAuth={() => openAuthAs("unregistered")} />
           </TabsContent>
@@ -2043,18 +2039,14 @@ export default function Home() {
                   {isRtl ? "דוגמאות — העלה תמונה, ה-AI יהפוך אותה לקווים נקיים" : "Examples — upload a photo, AI converts it to clean vector lines"}
                 </span>
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollSnapType: 'x mandatory' }}>
-                {[
+              <DemoSlider
+                accentColor="#0d9488"
+                images={[
                   { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png', alt: 'AI Outline - Bicycle' },
                   { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-sneaker_9fe887cf.png', alt: 'AI Outline - Sneaker' },
                   { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-tools_9ff33dc7.png', alt: 'AI Outline - Tools' },
-                ].map((item, i) => (
-                  <img key={i} src={item.src} alt={item.alt}
-                    className="rounded-xl border border-gray-100 object-cover flex-shrink-0"
-                    style={{ width: 'calc(33.33% - 6px)', minWidth: '120px', maxWidth: '200px', aspectRatio: '1', scrollSnapAlign: 'start' }}
-                  />
-                ))}
-              </div>
+                ]}
+              />
             </div>
             <AiTraceTab onOpenAuth={() => openAuthAs("unregistered")} />
           </TabsContent>
@@ -2123,18 +2115,14 @@ export default function Home() {
                   {isRtl ? "פורטרט — העלה תמונה עם פנים, ה-AI יצייר 3 פורטרטים בסגנונות שונים" : "Portrait — upload a photo with faces, AI draws 3 portrait variations"}
                 </span>
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 mt-2" style={{ scrollSnapType: 'x mandatory' }}>
-                {[
+              <DemoSlider
+                accentColor="#7c3aed"
+                images={[
                   { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_e956deb2.png', alt: 'Portrait - Woman' },
                   { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-man_1c4399d3.png', alt: 'Portrait - Man' },
                   { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-child_d468e82c.png', alt: 'Portrait - Child' },
-                ].map((item, i) => (
-                  <img key={i} src={item.src} alt={item.alt}
-                    className="rounded-xl border border-gray-100 object-cover flex-shrink-0"
-                    style={{ width: 'calc(33.33% - 6px)', minWidth: '120px', maxWidth: '200px', aspectRatio: '1', scrollSnapAlign: 'start' }}
-                  />
-                ))}
-              </div>
+                ]}
+              />
             </div>
             <FaceDetectTab onOpenAuth={() => openAuthAs("unregistered")} />
           </TabsContent>

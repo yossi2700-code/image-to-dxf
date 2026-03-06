@@ -1154,3 +1154,14 @@
 - [x] AnnouncementBanner component above hero carousel in Home.tsx
 - [x] Route /admin/announcement registered in App.tsx
 - [x] Tests: 10 vitest tests for announcement logic (121 total passing)
+
+## תיקון איכות תמונות גלריה - מרץ 2026
+- [x] AI יצירה: החלף 3 כרטיסים קטנים ב-slider גדול (תמונה אחת בכל פעם)
+- [x] AI Outline: החלף 3 כרטיסים קטנים ב-slider גדול (before/after זה לצד זה)
+- [x] פורטרט: החלף 3 כרטיסים קטנים ב-slider גדול (before/after זה לצד זה)
+- [x] וודא שאין חיתוך — object-contain בכל התמונות
+- [x] תמונות גדולות מספיק לקריאה ממחשב
+
+## כפתור היסטוריה ופורטרט - מרץ 2026
+- [x] פורטרט: החלף 3 כרטיסים קטנים ב-DemoSlider גדול
+- [x] כפתור היסטוריה: עיצוב בולט יותר בheader (צבע, גודל, אייקון ברור)
