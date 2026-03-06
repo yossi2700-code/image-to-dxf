@@ -452,7 +452,46 @@ export const appRouter = router({
           .limit(1);
         return action ?? null;
       }),
+   }),
+
+  // ── Announcement banner (What's New) ─────────────────────────────────────
+  announcement: router({
+    /** Get the current announcement banner (public) */
+    get: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return { text: "", enabled: false };
+      const [row] = await db
+        .select()
+        .from(systemSettings)
+        .where(eq(systemSettings.key, "announcement_banner"))
+        .limit(1);
+      if (!row) return { text: "", enabled: false };
+      try {
+        return JSON.parse(row.value) as { text: string; enabled: boolean };
+      } catch {
+        return { text: row.value, enabled: true };
+      }
+    }),
+    /** Update the announcement banner (admin only) */
+    set: publicProcedure
+      .input(z.object({
+        text: z.string().max(500),
+        enabled: z.boolean(),
+        adminPin: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        if (input.adminPin !== process.env.ADMIN_PIN) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "PIN שגוי" });
+        }
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const value = JSON.stringify({ text: input.text, enabled: input.enabled });
+        await db
+          .insert(systemSettings)
+          .values({ key: "announcement_banner", value })
+          .onDuplicateKeyUpdate({ set: { value } });
+        return { success: true };
+      }),
   }),
 });
-
 export type AppRouter = typeof appRouter;

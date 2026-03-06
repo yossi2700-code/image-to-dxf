@@ -13,12 +13,14 @@ import Share from "./pages/Share";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import ResetPassword from "./pages/ResetPassword";
+import AdminAnnouncement from "./pages/AdminAnnouncement";
 
 function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/admin"} component={Admin} />
+      <Route path={"/admin/announcement"} component={AdminAnnouncement} />
       <Route path={"/history"} component={History} />
       <Route path={"/tokens"} component={Tokens} />
       <Route path={"/share/:token"} component={Share} />

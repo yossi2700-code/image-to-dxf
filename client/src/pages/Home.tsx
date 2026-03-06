@@ -29,6 +29,7 @@ import {
   RefreshCw,
   Eye,
   ChevronLeft,
+  ChevronRight,
   Wand2,
   LogIn,
   LogOut,
@@ -334,6 +335,58 @@ function SvgZoomViewer({ svgContent, label = "Preview", maxHeight = 450 }: SvgZo
 
 // ─── Upload Tab ─────────────────────────────────────────────────────────────
 // ─── Hero Before/After Animated Carousel ─────────────────────────────────────
+// ─── Demo Image Slider ──────────────────────────────────────────────────────
+function DemoSlider({ images, accentColor }: { images: { src: string; alt: string }[]; accentColor: string }) {
+  const [idx, setIdx] = useState(0);
+  const prev = () => setIdx(i => (i - 1 + images.length) % images.length);
+  const next = () => setIdx(i => (i + 1) % images.length);
+  const item = images[idx];
+  return (
+    <div className="relative w-full rounded-xl overflow-hidden" style={{ background: '#f8f9ff' }}>
+      {/* Main image */}
+      <div className="w-full" style={{ aspectRatio: '16/7' }}>
+        <img
+          key={idx}
+          src={item.src}
+          alt={item.alt}
+          className="w-full h-full object-contain"
+          style={{ display: 'block' }}
+        />
+      </div>
+      {/* Nav arrows */}
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={prev}
+            className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
+            style={{ background: accentColor, color: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            onClick={next}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
+            style={{ background: accentColor, color: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+          {/* Dots */}
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+            {images.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setIdx(i)}
+                className="w-2 h-2 rounded-full transition-all"
+                style={{ background: i === idx ? accentColor : 'rgba(255,255,255,0.7)', transform: i === idx ? 'scale(1.3)' : 'scale(1)' }}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 const HERO_SLIDES = [
   {
     src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v4-helmet-sm_294f43aa.png',
@@ -438,6 +491,43 @@ function HeroBeforeAfterCarousel() {
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Announcement Banner ─────────────────────────────────────────────────────
+function AnnouncementBanner() {
+  const { isRtl } = useLanguage();
+  const [dismissed, setDismissed] = useState(false);
+  const { data } = trpc.announcement.get.useQuery(undefined, {
+    staleTime: 5 * 60 * 1000, // cache for 5 minutes
+  });
+
+  if (dismissed || !data?.enabled || !data?.text) return null;
+
+  return (
+    <div
+      className="mb-4 rounded-xl px-4 py-2.5 flex items-center gap-3"
+      style={{
+        background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%)',
+        boxShadow: '0 2px 12px rgba(99,102,241,0.25)',
+      }}
+      dir={isRtl ? 'rtl' : 'ltr'}
+    >
+      {/* Icon */}
+      <span className="shrink-0 text-lg">🎉</span>
+      {/* Text */}
+      <p className="flex-1 text-sm font-medium text-white leading-snug">
+        {data.text}
+      </p>
+      {/* Dismiss button */}
+      <button
+        onClick={() => setDismissed(true)}
+        className="shrink-0 text-white/70 hover:text-white transition-colors p-0.5 rounded"
+        aria-label="Dismiss"
+      >
+        <X className="w-4 h-4" />
+      </button>
     </div>
   );
 }
@@ -1749,6 +1839,9 @@ export default function Home() {
       <main className="py-5" style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px 24px' }}>
         {/* Responsive layout */}
         <div className="mx-auto" style={{ maxWidth: '100%' }}>
+
+        {/* ── Announcement Banner ── */}
+        <AnnouncementBanner />
 
         {/* ── Hero Section ── */}
         <div className="mb-6 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #f0f0ff 0%, #faf5ff 50%, #f0f9ff 100%)', border: '1px solid #e8eaf0' }}>

@@ -1146,3 +1146,11 @@
 - [ ] הגדל טקסט בטאבים — קשה לקרוא
 - [ ] אייקונים יפים לאובייקט/נוף
 - [ ] הדגש textarea "תאר את העיצוב" — בולט יותר
+
+## בנר "What's New" - מרץ 2026
+- [x] tRPC procedures: announcement.get (public) + announcement.set (admin PIN)
+- [x] DB: systemSettings table used for storing banner JSON (text + enabled)
+- [x] Admin page /admin/announcement — editor with PIN auth, toggle, preview
+- [x] AnnouncementBanner component above hero carousel in Home.tsx
+- [x] Route /admin/announcement registered in App.tsx
+- [x] Tests: 10 vitest tests for announcement logic (121 total passing)
