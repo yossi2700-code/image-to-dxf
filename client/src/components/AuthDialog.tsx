@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,6 +99,18 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
 
   // Resolve effective reason (support legacy limitReached prop)
   const reason: AuthReason = authReason ?? (limitReached ? "limit" : "generic");
+
+  // Always reset to register mode when dialog opens
+  useEffect(() => {
+    if (open) {
+      setMode("register");
+      setName("");
+      setEmail("");
+      setPassword("");
+      setInlineError(null);
+      setForgotSent(false);
+    }
+  }, [open]);
 
   const reset = () => {
     setName("");

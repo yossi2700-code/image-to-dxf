@@ -1757,57 +1757,57 @@ export default function Home() {
           boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
         }}
       >
-        <div className="container py-2.5 flex items-center gap-3">
-          {/* AiDXF Logo */}
-          <div className="flex items-center gap-2 shrink-0">
+        <div className="container py-2 flex items-center gap-1.5">
+          {/* AiDXF Logo — icon only on mobile */}
+          <div className="flex items-center gap-1.5 shrink-0">
             <div
-              className="w-8 h-8 rounded-xl shrink-0 flex items-center justify-center"
+              className="w-7 h-7 rounded-lg shrink-0 flex items-center justify-center"
               style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}
             >
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
                 <path d="M4 16 Q7 7 10 10 Q13 13 16 4" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
                 <circle cx="4" cy="16" r="1.8" fill="#06b6d4"/>
                 <circle cx="10" cy="10" r="1.8" fill="white"/>
                 <circle cx="16" cy="4" r="1.8" fill="#06b6d4"/>
               </svg>
             </div>
-            <span className="text-lg font-black tracking-tight" style={{ color: '#6366f1', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>Ai</span><span className="text-lg font-black tracking-tight" style={{ color: '#111827', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>DXF</span>
+            <span className="hidden sm:inline text-base font-black tracking-tight" style={{ color: '#6366f1', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>Ai</span><span className="hidden sm:inline text-base font-black tracking-tight" style={{ color: '#111827', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>DXF</span>
           </div>
           <div className="flex-1 min-w-0" />
           {/* Auth in header */}
           {appUser ? (
             <div className="flex items-center gap-1">
-              {/* Token balance — always visible */}
+              {/* Token balance */}
               <button
                 onClick={() => window.location.href = "/tokens"}
-                className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full shrink-0 hover:opacity-80 transition-opacity"
-                style={{ background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4338ca' }}
+                className="flex items-center gap-1 font-bold px-2 py-1 rounded-full shrink-0 hover:opacity-80 transition-opacity"
+                style={{ background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4338ca', fontSize: '11px' }}
               >
                 <Sparkles className="w-3 h-3" />
                 <span>{tokenBalance}</span>
               </button>
-              {/* History button — icon only on mobile, text on sm+ */}
+              {/* History button — always show text */}
               <button
                 onClick={() => window.location.href = "/history"}
-                className="text-xs px-2 sm:px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 sm:gap-1.5 font-semibold shrink-0 hover:opacity-90 active:scale-95"
-                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}
+                className="flex items-center gap-1 font-semibold shrink-0 hover:opacity-90 active:scale-95 transition-all rounded-xl px-2.5 py-1.5"
+                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', fontSize: '11px', boxShadow: '0 2px 6px rgba(99,102,241,0.3)' }}
               >
-                <History className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{isRtl ? 'היסטוריה' : 'History'}</span>
+                <History className="w-3 h-3" />
+                <span>{isRtl ? 'היסטוריה' : 'History'}</span>
               </button>
-              {/* Account button — icon only on mobile, text on sm+ */}
+              {/* Account button — always show text */}
               <button
                 onClick={() => window.location.href = '/account'}
-                className="flex items-center gap-1 sm:gap-1.5 text-xs px-2 sm:px-3 py-1.5 rounded-xl font-bold shrink-0 transition-all hover:opacity-90 active:scale-95"
-                style={{ background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: 'white', boxShadow: '0 2px 8px rgba(99,102,241,0.35)' }}
+                className="flex items-center gap-1 font-bold shrink-0 transition-all hover:opacity-90 active:scale-95 rounded-xl px-2.5 py-1.5"
+                style={{ background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: 'white', fontSize: '11px', boxShadow: '0 2px 6px rgba(99,102,241,0.35)' }}
               >
-                <UserCircle className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{isRtl ? 'האזור האישי' : 'My Account'}</span>
+                <UserCircle className="w-3 h-3" />
+                <span>{isRtl ? 'אזור אישי' : 'Account'}</span>
               </button>
               {/* Logout */}
               <button
                 onClick={handleLogout}
-                className="text-xs p-1.5 rounded-full transition-colors flex items-center gap-1 text-gray-400 hover:text-red-500 shrink-0"
+                className="p-1.5 rounded-full transition-colors text-gray-400 hover:text-red-500 shrink-0"
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
