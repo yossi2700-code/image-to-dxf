@@ -1800,11 +1800,11 @@ export default function Home() {
               </button>
               <button
                 onClick={() => window.location.href = '/account'}
-                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl font-semibold shrink-0 transition-all hover:opacity-90 active:scale-95"
-                style={{ background: '#f0f0ff', color: '#6366f1', border: '1.5px solid #c7d2fe', boxShadow: '0 1px 4px rgba(99,102,241,0.12)' }}
+                className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl font-bold shrink-0 transition-all hover:opacity-90 active:scale-95"
+                style={{ background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: 'white', boxShadow: '0 2px 8px rgba(99,102,241,0.35)' }}
               >
                 <UserCircle className="w-3.5 h-3.5" />
-                <span className="truncate max-w-[70px] sm:max-w-[100px]">{appUser.name ?? appUser.email}</span>
+                <span>{isRtl ? 'האזור האישי' : 'My Account'}</span>
               </button>
               <button
                 onClick={handleLogout}
