@@ -14,6 +14,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import ResetPassword from "./pages/ResetPassword";
 import AdminAnnouncement from "./pages/AdminAnnouncement";
+import Account from "./pages/Account";
 
 function Router() {
   return (
@@ -21,6 +22,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/admin"} component={Admin} />
       <Route path={"/admin/announcement"} component={AdminAnnouncement} />
+      <Route path={"/account"} component={Account} />
       <Route path={"/history"} component={History} />
       <Route path={"/tokens"} component={Tokens} />
       <Route path={"/share/:token"} component={Share} />

@@ -1798,10 +1798,14 @@ export default function Home() {
                 <History className="w-3.5 h-3.5" />
                 <span>{isRtl ? 'היסטוריה' : 'History'}</span>
               </button>
-              <div className="flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: '#f8fafc', border: '1px solid #e8eaf0' }}>
-                <UserCircle className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                <span className="text-xs font-medium text-gray-700 truncate max-w-[70px] sm:max-w-[120px]">{appUser.name ?? appUser.email}</span>
-              </div>
+              <button
+                onClick={() => window.location.href = '/account'}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl font-semibold shrink-0 transition-all hover:opacity-90 active:scale-95"
+                style={{ background: '#f0f0ff', color: '#6366f1', border: '1.5px solid #c7d2fe', boxShadow: '0 1px 4px rgba(99,102,241,0.12)' }}
+              >
+                <UserCircle className="w-3.5 h-3.5" />
+                <span className="truncate max-w-[70px] sm:max-w-[100px]">{appUser.name ?? appUser.email}</span>
+              </button>
               <button
                 onClick={handleLogout}
                 className="text-xs p-1.5 rounded-full transition-colors flex items-center gap-1 text-gray-400 hover:text-red-500 shrink-0"
