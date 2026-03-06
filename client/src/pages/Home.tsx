@@ -1098,12 +1098,12 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
           </div>
           <p className="text-xs mt-2 text-gray-400">{t("aiTabSubtitle")}</p>
           <button
-            className="w-full mt-3 h-13 font-bold text-base rounded-xl flex items-center justify-center gap-2 transition-all"
+            className="w-full mt-3 h-13 font-bold text-base rounded-xl flex items-center justify-center gap-2 transition-all hover:opacity-90"
             style={{
-              background: status === "loading" || !prompt.trim() ? 'linear-gradient(135deg, #c7d2fe, #ddd6fe)' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+              background: status === "loading" || !prompt.trim() ? 'linear-gradient(135deg, #c4b5fd, #a5b4fc)' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
               color: 'white',
               border: 'none',
-              boxShadow: status === "loading" || !prompt.trim() ? 'none' : '0 4px 14px rgba(99,102,241,0.35)',
+              boxShadow: status === "loading" || !prompt.trim() ? 'none' : '0 4px 14px rgba(99,102,241,0.4)',
               cursor: status === "loading" || !prompt.trim() ? 'not-allowed' : 'pointer',
             }}
             onClick={() => generate(false)}
@@ -1578,6 +1578,70 @@ export default function Home() {
       <main className="container py-5">
         {/* Center content on desktop */}
         <div className="mx-auto" style={{ maxWidth: '820px' }}>
+
+        {/* ── Hero Section ── */}
+        <div className="mb-6 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #f0f0ff 0%, #faf5ff 50%, #f0f9ff 100%)', border: '1px solid #e8eaf0' }}>
+          <div className="px-5 pt-5 pb-4">
+            {/* Badge pill */}
+            <div className="flex justify-center mb-3">
+              <span
+                className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full"
+                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', letterSpacing: '0.04em' }}
+              >
+                <Sparkles className="w-3 h-3" />
+                {isRtl ? 'המרת וקטור מבוססת AI' : 'AI-POWERED VECTOR CONVERSION'}
+              </span>
+            </div>
+
+            {/* Headline */}
+            <div className="text-center mb-4">
+              <h1 className="font-black leading-tight mb-1" style={{ fontSize: 'clamp(1.5rem, 5vw, 2.2rem)', color: '#111827', letterSpacing: '-0.02em' }}>
+                {isRtl ? 'הפוך כל תמונה לוקטור.' : 'From photo to vector.'}
+              </h1>
+              <h1 className="font-black leading-tight" style={{ fontSize: 'clamp(1.5rem, 5vw, 2.2rem)', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>
+                {isRtl ? 'מיידית.' : 'Instantly.'}
+              </h1>
+              <p className="text-sm text-gray-500 mt-2 max-w-xs mx-auto">
+                {isRtl ? 'בינה מלאכותית ממירה תמונות לקבצי DXF לחיתוך לייזר ו-CNC' : 'AI converts images to DXF files for laser cutting & CNC'}
+              </p>
+            </div>
+
+            {/* Sneaker before/after card — full demo card image */}
+            <div
+              className="rounded-xl overflow-hidden mb-4"
+              style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}
+            >
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-sneaker_9fe887cf.png"
+                alt="Sneaker AI vector demo"
+                className="w-full object-cover rounded-xl"
+                style={{ maxHeight: 220 }}
+              />
+            </div>
+
+            {/* Feature cards row */}
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { icon: <Sparkles className="w-4 h-4" />, label: isRtl ? 'AI יצירה' : 'AI Create', color: '#6366f1', bg: '#eef2ff' },
+                { icon: <Scan className="w-4 h-4" />, label: isRtl ? 'AI Outline' : 'AI Outline', color: '#0d9488', bg: '#f0fdf9' },
+                { icon: <FileEdit className="w-4 h-4" />, label: isRtl ? 'AI סקיצה' : 'AI Sketch', color: '#d97706', bg: '#fffbeb' },
+                { icon: <UserCircle className="w-4 h-4" />, label: isRtl ? 'פורטרט' : 'Portrait', color: '#7c3aed', bg: '#f5f3ff' },
+              ].map((f, i) => (
+                <div
+                  key={i}
+                  className="flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-xl"
+                  style={{ background: f.bg, border: `1px solid ${f.color}22` }}
+                >
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: f.color, color: 'white' }}>
+                    {f.icon}
+                  </div>
+                  <span className="text-[10px] font-bold text-center leading-tight" style={{ color: f.color }}>{f.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Auth bar */}
         <div className="flex justify-end mb-5">
           {appUser ? (
@@ -1865,8 +1929,50 @@ export default function Home() {
         </div>{/* end centering wrapper */}
       </main>
 
+      {/* ── Dark CTA Section ── */}
+      <section
+        className="mt-10 py-10 px-5 text-center"
+        style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%)' }}
+      >
+        <div className="mx-auto" style={{ maxWidth: '560px' }}>
+          <div
+            className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full mb-4"
+            style={{ background: 'rgba(255,255,255,0.12)', color: '#a5b4fc', border: '1px solid rgba(165,180,252,0.3)' }}
+          >
+            <Sparkles className="w-3 h-3" />
+            {isRtl ? 'AI חינמי להתחלה' : 'Free AI to start'}
+          </div>
+          <h2 className="font-black text-white mb-2" style={{ fontSize: 'clamp(1.3rem, 4vw, 1.9rem)', letterSpacing: '-0.02em' }}>
+            {isRtl ? 'התחל להמיר בחינם היום.' : 'Start converting for free today.'}
+          </h2>
+          <p className="text-sm mb-6" style={{ color: '#a5b4fc' }}>
+            {isRtl ? 'לייזר, CNC ועיצוב וקטורי באיכות מקצועית בעזרת AI' : 'Professional vector files for laser, CNC, and design — powered by AI'}
+          </p>
+          <button
+            onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className="inline-flex items-center gap-2 font-bold px-7 py-3 rounded-xl transition-all hover:opacity-90"
+            style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', boxShadow: '0 4px 16px rgba(99,102,241,0.4)', fontSize: '0.95rem' }}
+          >
+            <Sparkles className="w-4 h-4" />
+            {isRtl ? 'התחל עכשיו' : 'Get started now'}
+          </button>
+          <div className="flex items-center justify-center gap-5 mt-5">
+            {[
+              { label: isRtl ? 'בינה מלאכותית' : 'AI Powered', icon: '✨' },
+              { label: isRtl ? 'לייזר ו-CNC' : 'Laser & CNC', icon: '⚡' },
+              { label: isRtl ? 'קבצי DXF' : 'DXF Files', icon: '📄' },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-1.5 text-xs" style={{ color: '#c7d2fe' }}>
+                <span>{item.icon}</span>
+                <span className="font-medium">{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <footer
-        className="mt-10"
+        className=""
         style={{ borderTop: '1px solid #e8eaf0', background: '#ffffff' }}
       >
         <div className="container py-5">

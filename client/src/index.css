@@ -196,16 +196,16 @@
 
   /* ── Brand button ── */
   .btn-brand {
-    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
     color: white;
     border: none;
     transition: opacity 0.15s, transform 0.15s, box-shadow 0.15s;
-    box-shadow: 0 1px 3px rgba(79, 70, 229, 0.25), 0 4px 12px rgba(79, 70, 229, 0.15);
+    box-shadow: 0 3px 10px rgba(99, 102, 241, 0.35), 0 1px 3px rgba(99, 102, 241, 0.2);
   }
   .btn-brand:hover:not(:disabled) {
-    opacity: 0.92;
+    opacity: 0.90;
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.30), 0 8px 20px rgba(79, 70, 229, 0.20);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.45), 0 2px 6px rgba(99, 102, 241, 0.25);
   }
   .btn-brand:active:not(:disabled) {
     transform: translateY(0);

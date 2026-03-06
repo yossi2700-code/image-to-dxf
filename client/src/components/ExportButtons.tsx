@@ -188,8 +188,8 @@ export function ExportButtons({
         <button
           onClick={handleDxf}
           disabled={isDxfLoading}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all"
-          style={{ background: "#059669", color: "white", border: "none", opacity: isDxfLoading ? 0.7 : 1 }}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-90"
+          style={{ background: isDxfLoading ? 'linear-gradient(135deg, #6ee7b7, #34d399)' : 'linear-gradient(135deg, #059669, #10b981)', color: "white", border: "none", boxShadow: '0 2px 8px rgba(5,150,105,0.3)', opacity: isDxfLoading ? 0.7 : 1 }}
         >
           {isDxfLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
           DXF
@@ -197,26 +197,26 @@ export function ExportButtons({
         <button
           onClick={handlePdf}
           disabled={isPdfLoading}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all"
-          style={{ background: "#2563eb", color: "white", border: "none", opacity: isPdfLoading ? 0.7 : 1 }}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-90"
+          style={{ background: isPdfLoading ? '#93c5fd' : 'linear-gradient(135deg, #2563eb, #3b82f6)', color: "white", border: "none", boxShadow: '0 2px 8px rgba(37,99,235,0.3)', opacity: isPdfLoading ? 0.7 : 1 }}
         >
           {isPdfLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
           PDF
         </button>
         <button
           onClick={onToggleVector}
-          className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-semibold transition-all"
+          className="flex items-center justify-center gap-1.5 px-2.5 py-2.5 rounded-xl text-xs font-semibold transition-all hover:opacity-90"
           style={showVector
-            ? { background: "#f3e8ff", color: "#7c3aed", border: "1px solid #d8b4fe" }
-            : { background: "#f1f5f9", color: "#6b7280", border: "1px solid #e2e8f0" }}
+            ? { background: 'linear-gradient(135deg, #7c3aed, #8b5cf6)', color: 'white', border: 'none', boxShadow: '0 2px 8px rgba(124,58,237,0.3)' }
+            : { background: '#f5f3ff', color: '#7c3aed', border: '1px solid #ddd6fe' }}
         >
           <Eye className="w-3.5 h-3.5" />
           {showVector ? (isRtl ? "תמונה" : "Photo") : (isRtl ? "וקטור" : "Vector")}
         </button>
         <button
           onClick={onMoreOptions}
-          className="flex items-center justify-center gap-1 py-2 px-2.5 rounded-lg text-xs font-medium transition-all"
-          style={{ background: "#f3f4f6", color: "#374151", border: "1px solid #e5e7eb" }}
+          className="flex items-center justify-center gap-1 py-2.5 px-2.5 rounded-xl text-xs font-medium transition-all hover:bg-gray-100"
+          style={{ background: "#f8fafc", color: "#6366f1", border: "1px solid #e0e7ff" }}
           title={isRtl ? "אפשרויות נוספות" : "More options"}
         >
           <Settings2 className="w-3.5 h-3.5" />
@@ -233,8 +233,8 @@ export function ExportButtons({
         <button
           onClick={handleDxf}
           disabled={isDxfLoading}
-          className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-lg font-semibold text-xs transition-all"
-          style={{ background: "#059669", color: "white", border: "none", boxShadow: "0 1px 4px rgba(5,150,105,0.2)", opacity: isDxfLoading ? 0.7 : 1 }}
+          className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl font-bold text-sm transition-all hover:opacity-90"
+          style={{ background: isDxfLoading ? 'linear-gradient(135deg, #6ee7b7, #34d399)' : 'linear-gradient(135deg, #059669, #10b981)', color: "white", border: "none", boxShadow: "0 3px 10px rgba(5,150,105,0.3)", opacity: isDxfLoading ? 0.7 : 1 }}
         >
           {isDxfLoading
             ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -245,8 +245,8 @@ export function ExportButtons({
         <button
           onClick={handlePdf}
           disabled={isPdfLoading}
-          className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-lg font-semibold text-xs transition-all"
-          style={{ background: "#2563eb", color: "white", border: "none", boxShadow: "0 1px 4px rgba(37,99,235,0.2)", opacity: isPdfLoading ? 0.7 : 1 }}
+          className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl font-bold text-sm transition-all hover:opacity-90"
+          style={{ background: isPdfLoading ? '#93c5fd' : 'linear-gradient(135deg, #2563eb, #3b82f6)', color: "white", border: "none", boxShadow: "0 3px 10px rgba(37,99,235,0.3)", opacity: isPdfLoading ? 0.7 : 1 }}
         >
           {isPdfLoading
             ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -256,9 +256,9 @@ export function ExportButtons({
         {/* Vector toggle */}
         <button
           onClick={onToggleVector}
-          className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-lg font-semibold text-xs transition-all"
+          className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl font-bold text-sm transition-all hover:opacity-90"
           style={showVector
-            ? { background: "#7c3aed", color: "white", border: "none", boxShadow: "0 1px 4px rgba(124,58,237,0.2)" }
+            ? { background: 'linear-gradient(135deg, #7c3aed, #8b5cf6)', color: "white", border: "none", boxShadow: "0 3px 10px rgba(124,58,237,0.3)" }
             : { background: "#f5f3ff", border: "1px solid #ddd6fe", color: "#7c3aed" }}
         >
           <Eye className="w-4 h-4" />
@@ -267,8 +267,8 @@ export function ExportButtons({
       </div>
       {/* More options */}
       <button
-        className="w-full py-2 font-medium text-xs rounded-lg flex items-center justify-center gap-1.5 transition-all"
-        style={{ background: "#f8fafc", border: "1px solid #e2e8f0", color: "#64748b" }}
+        className="w-full py-2.5 font-semibold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all hover:bg-indigo-50"
+        style={{ background: "#f8fafc", border: "1px solid #e0e7ff", color: "#6366f1" }}
         onClick={onMoreOptions}
       >
         <Settings2 className="w-3.5 h-3.5" />

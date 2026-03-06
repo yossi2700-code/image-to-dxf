@@ -1095,3 +1095,18 @@
 - [x] תמונות דמו חדשות: AI Create (מכונת כתיבה, אופנוע, משקפיים), AI Outline (אופניים, נעל, כלי עבודה), Portrait (אישה, גבר, ילד)
 - [x] פוטר מעודכן עם לוגו AiDXF ומידע קצר
 - [x] כפתור התחברות עם gradient
+
+## Hero Section - מרץ 2026
+
+- [ ] Hero section עם badge pill "AI-POWERED VECTOR CONVERSION"
+- [ ] כותרת ענקית "From photo to vector. Instantly." + עברית
+- [ ] תמונת נעל before/after עם AI badge
+- [ ] 4 feature highlights (Scan, AI Outline, AI Generate, Portrait)
+- [ ] Dark CTA section בתחתית עם "Start converting for free today"
+
+## עיצוב כפתורים - מרץ 2026
+
+- [x] כפתורי תוצאה (וקטור, PDF, DXF) — עיצוב gradient אחיד בכל הטאבים
+- [x] כפתור "תיקון עם AI" — עיצוב gradient סגול
+- [x] כפתור "אפשרויות נוספות" — עיצוב נקי ומודרני
+- [x] כל הכפתורים בכל הקומפוננטות — AiTraceTab, FaceDetectTab, AiGeneratorTab

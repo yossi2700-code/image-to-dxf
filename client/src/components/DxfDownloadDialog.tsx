@@ -427,7 +427,8 @@ export function DxfDownloadDialog({
             <div className="flex gap-2">
               <Button
                 size="lg"
-                className="flex-1 bg-green-600 hover:bg-green-700 font-bold text-base h-12"
+                className="flex-1 font-bold text-base h-12 text-white hover:opacity-90 transition-all"
+                style={{ background: 'linear-gradient(135deg, #059669, #10b981)', border: 'none', boxShadow: '0 3px 10px rgba(5,150,105,0.3)' } as React.CSSProperties}
                 onClick={handleDxfDownload}
                 disabled={isLoading}
               >
@@ -462,7 +463,8 @@ export function DxfDownloadDialog({
               <div className="flex gap-2">
                 <Button
                   size="lg"
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 font-bold text-base h-12 text-white"
+                  className="flex-1 font-bold text-base h-12 text-white hover:opacity-90 transition-all"
+                  style={{ background: 'linear-gradient(135deg, #2563eb, #3b82f6)', border: 'none', boxShadow: '0 3px 10px rgba(37,99,235,0.3)' } as React.CSSProperties}
                   onClick={handlePdfExport}
                   disabled={isLoading}
                 >

@@ -785,12 +785,12 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             </div>
             <div className="flex gap-2">
               <button
-                className="flex-1 font-bold text-base h-13 rounded-xl flex items-center justify-center gap-2 transition-all"
+                className="flex-1 font-bold text-base h-13 rounded-xl flex items-center justify-center gap-2 transition-all hover:opacity-90"
                 style={{
-                  background: ((!imageFile && !imagePreview) || status === "loading") ? 'linear-gradient(135deg, #99f6e4, #6ee7b7)' : 'linear-gradient(135deg, #0d9488, #06b6d4)',
+                  background: ((!imageFile && !imagePreview) || status === "loading") ? 'linear-gradient(135deg, #c4b5fd, #a5b4fc)' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                   color: 'white',
                   border: 'none',
-                  boxShadow: ((!imageFile && !imagePreview) || status === "loading") ? 'none' : '0 4px 14px rgba(13,148,136,0.35)',
+                  boxShadow: ((!imageFile && !imagePreview) || status === "loading") ? 'none' : '0 4px 14px rgba(99,102,241,0.4)',
                   cursor: ((!imageFile && !imagePreview) || status === "loading") ? 'not-allowed' : 'pointer',
                 }}
                 disabled={(!imageFile && !imagePreview) || status === "loading"}
