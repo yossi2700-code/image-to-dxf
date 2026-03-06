@@ -1789,7 +1789,7 @@ export default function Home() {
             {/* Feature shortcut buttons — click to switch tab */}
             <div className="grid grid-cols-2 gap-2">
               {[
-                { tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create', color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-sunglasses_e7cbfe74.png' },
+                { tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create', color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-sneaker_9fe887cf.png' },
                 { tab: 'trace', label: isRtl ? 'AI Outline' : 'AI Outline', color: '#0d9488', bg: 'linear-gradient(135deg, #0d9488, #06b6d4)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png' },
                 { tab: 'sketch', label: isRtl ? 'AI סקיצה' : 'AI Sketch', color: '#d97706', bg: 'linear-gradient(135deg, #d97706, #f59e0b)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v4-helmet_44398853.png' },
                 { tab: 'face', label: isRtl ? 'פורטרט' : 'Portrait', color: '#7c3aed', bg: 'linear-gradient(135deg, #7c3aed, #a855f7)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_e956deb2.png' },
@@ -1805,7 +1805,7 @@ export default function Home() {
                   style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 4px 16px rgba(0,0,0,0.10)' }}
                 >
                   {/* Image area: white bg, object-contain so nothing is cropped */}
-                  <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '75%' }}>
+                  <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '62%' }}>
                     <img
                       src={f.img}
                       alt={f.label}
@@ -1920,22 +1920,17 @@ export default function Home() {
                   {isRtl ? "דוגמאות — תאר עיצוב בטקסט, ה-AI יצייר קווים לחריטה" : "Examples — describe a design in text, AI draws engraving lines"}
                 </span>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-sunglasses_e7cbfe74.png"
-                  alt="AI Generate - Sunglasses"
-                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
-                />
-                <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-motorcycle_9b48b7de.png"
-                  alt="AI Generate - Motorcycle"
-                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
-                />
-                <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-typewriter_a3336bbc.png"
-                  alt="AI Generate - Typewriter"
-                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
-                />
+              <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollSnapType: 'x mandatory' }}>
+                {[
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-sunglasses_e7cbfe74.png', alt: 'AI Generate - Sunglasses' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-motorcycle_9b48b7de.png', alt: 'AI Generate - Motorcycle' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-typewriter_a3336bbc.png', alt: 'AI Generate - Typewriter' },
+                ].map((item, i) => (
+                  <img key={i} src={item.src} alt={item.alt}
+                    className="rounded-xl border border-gray-100 object-cover flex-shrink-0"
+                    style={{ width: 'calc(33.33% - 6px)', minWidth: '120px', maxWidth: '200px', aspectRatio: '1', scrollSnapAlign: 'start' }}
+                  />
+                ))}
               </div>
             </div>
             <AiGeneratorTab onOpenAuth={() => openAuthAs("unregistered")} />
@@ -1955,22 +1950,17 @@ export default function Home() {
                   {isRtl ? "דוגמאות — העלה תמונה, ה-AI יהפוך אותה לקווים נקיים" : "Examples — upload a photo, AI converts it to clean vector lines"}
                 </span>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png"
-                  alt="AI Outline - Bicycle"
-                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
-                />
-                <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-sneaker_9fe887cf.png"
-                  alt="AI Outline - Sneaker"
-                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
-                />
-                <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-tools_9ff33dc7.png"
-                  alt="AI Outline - Tools"
-                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
-                />
+              <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollSnapType: 'x mandatory' }}>
+                {[
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png', alt: 'AI Outline - Bicycle' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-sneaker_9fe887cf.png', alt: 'AI Outline - Sneaker' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-tools_9ff33dc7.png', alt: 'AI Outline - Tools' },
+                ].map((item, i) => (
+                  <img key={i} src={item.src} alt={item.alt}
+                    className="rounded-xl border border-gray-100 object-cover flex-shrink-0"
+                    style={{ width: 'calc(33.33% - 6px)', minWidth: '120px', maxWidth: '200px', aspectRatio: '1', scrollSnapAlign: 'start' }}
+                  />
+                ))}
               </div>
             </div>
             <AiTraceTab onOpenAuth={() => openAuthAs("unregistered")} />
@@ -2040,22 +2030,17 @@ export default function Home() {
                   {isRtl ? "פורטרט — העלה תמונה עם פנים, ה-AI יצייר 3 פורטרטים בסגנונות שונים" : "Portrait — upload a photo with faces, AI draws 3 portrait variations"}
                 </span>
               </div>
-              <div className="grid grid-cols-3 gap-2 mt-2">
-                <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_e956deb2.png"
-                  alt="Portrait - Woman"
-                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
-                />
-                <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-man_1c4399d3.png"
-                  alt="Portrait - Man"
-                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
-                />
-                <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-child_d468e82c.png"
-                  alt="Portrait - Child"
-                  className="w-full aspect-square object-cover rounded-xl border border-gray-100"
-                />
+              <div className="flex gap-2 overflow-x-auto pb-1 mt-2" style={{ scrollSnapType: 'x mandatory' }}>
+                {[
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_e956deb2.png', alt: 'Portrait - Woman' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-man_1c4399d3.png', alt: 'Portrait - Man' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-child_d468e82c.png', alt: 'Portrait - Child' },
+                ].map((item, i) => (
+                  <img key={i} src={item.src} alt={item.alt}
+                    className="rounded-xl border border-gray-100 object-cover flex-shrink-0"
+                    style={{ width: 'calc(33.33% - 6px)', minWidth: '120px', maxWidth: '200px', aspectRatio: '1', scrollSnapAlign: 'start' }}
+                  />
+                ))}
               </div>
             </div>
             <FaceDetectTab onOpenAuth={() => openAuthAs("unregistered")} />

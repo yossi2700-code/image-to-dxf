@@ -177,7 +177,7 @@ function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) 
           className="rounded-lg overflow-hidden mb-3 relative group cursor-zoom-in bg-gray-50 border border-gray-100"
           onClick={() => onZoom(image.imageUrl, label)}
         >
-          <img src={image.imageUrl} alt={`Variation ${index + 1}`} className="w-full block" style={{ maxHeight: 320, objectFit: "contain" }} />
+          <img src={image.imageUrl} alt={`Variation ${index + 1}`} className="w-full block" style={{ aspectRatio: '1', objectFit: 'contain', background: '#f8fafc' }} />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
             <ZoomIn className="w-7 h-7 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
           </div>
@@ -1095,7 +1095,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {result.images.map((image, idx) => (
                 <ImageCard
                   key={idx}
