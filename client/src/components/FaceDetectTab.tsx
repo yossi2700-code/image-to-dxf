@@ -500,24 +500,46 @@ export function FaceDetectTab({ onOpenAuth }: FaceDetectTabProps) {
                 {isRtl ? "בחר סגנון פורטרט:" : "Choose portrait style:"}
               </p>
               <div className="grid grid-cols-2 gap-2">
-                {STYLE_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setPortraitStyle(opt.value)}
-                    className="rounded-lg p-2 text-center transition-all"
-                    style={{
-                      border: portraitStyle === opt.value ? '2px solid #7c3aed' : '1px solid #e5e7eb',
-                      background: portraitStyle === opt.value ? '#faf5ff' : '#f9fafb',
-                    }}
-                  >
-                    <p className="text-xs font-bold" style={{ color: portraitStyle === opt.value ? '#7c3aed' : '#374151' }}>
-                      {isRtl ? opt.labelHe : opt.labelEn}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5 leading-tight">
-                      {isRtl ? opt.descHe : opt.descEn}
-                    </p>
-                  </button>
-                ))}
+                {STYLE_OPTIONS.map((opt, idx) => {
+                  const isSelected = portraitStyle === opt.value;
+                  const gradients = [
+                    'linear-gradient(135deg, #7c3aed, #a855f7)',
+                    'linear-gradient(135deg, #0d9488, #06b6d4)',
+                    'linear-gradient(135deg, #6366f1, #818cf8)',
+                    'linear-gradient(135deg, #d97706, #f59e0b)',
+                  ];
+                  const shadows = [
+                    '0 3px 10px rgba(124,58,237,0.35)',
+                    '0 3px 10px rgba(13,148,136,0.35)',
+                    '0 3px 10px rgba(99,102,241,0.35)',
+                    '0 3px 10px rgba(217,119,6,0.35)',
+                  ];
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => setPortraitStyle(opt.value)}
+                      className="rounded-xl p-2.5 text-center transition-all hover:scale-105 active:scale-95"
+                      style={isSelected ? {
+                        background: gradients[idx % gradients.length],
+                        color: 'white',
+                        border: '2px solid transparent',
+                        boxShadow: shadows[idx % shadows.length],
+                        transform: 'scale(1.03)',
+                      } : {
+                        background: '#f8fafc',
+                        color: '#374151',
+                        border: '2px solid #e2e8f0',
+                      }}
+                    >
+                      <p className="text-xs font-bold">
+                        {isRtl ? opt.labelHe : opt.labelEn}
+                      </p>
+                      <p className="text-xs mt-0.5 leading-tight" style={{ opacity: isSelected ? 0.9 : 0.55 }}>
+                        {isRtl ? opt.descHe : opt.descEn}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

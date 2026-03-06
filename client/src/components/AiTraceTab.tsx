@@ -673,16 +673,18 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             {/* Mode toggle: Object vs Full Image */}
             <div className="mb-3">
               <div
-                className="flex rounded-lg overflow-hidden"
+                className="flex rounded-xl overflow-hidden p-1 gap-1"
                 style={{background: '#f1f5f9', border: '1px solid #e2e8f0'}}
               >
                 <button
                   type="button"
                   onClick={() => setFullImageMode(false)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all"
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-lg transition-all"
                   style={!fullImageMode ? {
-                    background: '#0d9488', color: 'white', borderRadius: '0.375rem', margin: '2px',
-                  } : {color: '#6b7280'}}
+                    background: 'linear-gradient(135deg, #0d9488, #06b6d4)',
+                    color: 'white',
+                    boxShadow: '0 2px 8px rgba(13,148,136,0.35)',
+                  } : {color: '#6b7280', background: 'transparent'}}
                 >
                   <span className="text-base">📷</span>
                   <span>{isRtl ? "אובייקט" : "Object"}</span>
@@ -690,10 +692,12 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                 <button
                   type="button"
                   onClick={() => setFullImageMode(true)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all"
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-lg transition-all"
                   style={fullImageMode ? {
-                    background: '#059669', color: 'white', borderRadius: '0.375rem', margin: '2px',
-                  } : {color: '#6b7280'}}
+                    background: 'linear-gradient(135deg, #059669, #10b981)',
+                    color: 'white',
+                    boxShadow: '0 2px 8px rgba(5,150,105,0.35)',
+                  } : {color: '#6b7280', background: 'transparent'}}
                 >
                   <span className="text-base">🖼️</span>
                   <span>{isRtl ? "כל הפריטים" : "Full Image"}</span>
@@ -736,6 +740,16 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   const descs = isRtl
                     ? ["קווים בסיסיים, נקי", "עשיר בפרטים", "אמנותי, מעוטר"]
                     : ["Basic lines, clean", "Rich in details", "Artistic, ornate"];
+                  const gradients = [
+                    'linear-gradient(135deg, #6366f1, #818cf8)',
+                    'linear-gradient(135deg, #0d9488, #06b6d4)',
+                    'linear-gradient(135deg, #7c3aed, #a855f7)',
+                  ];
+                  const shadows = [
+                    '0 3px 10px rgba(99,102,241,0.4)',
+                    '0 3px 10px rgba(13,148,136,0.4)',
+                    '0 3px 10px rgba(124,58,237,0.4)',
+                  ];
                   const isSelected = selectedVariation === v;
                   const isRecommended = v === 2;
                   return (
@@ -743,23 +757,23 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                       key={v}
                       type="button"
                       onClick={() => setSelectedVariation(v)}
-                      className="relative flex flex-col items-center justify-center gap-0.5 py-2.5 px-1 rounded-xl text-xs font-medium transition-all"
+                      className="relative flex flex-col items-center justify-center gap-0.5 py-3 px-1 rounded-xl text-xs font-medium transition-all hover:scale-105 active:scale-95"
                       style={isSelected
-                        ? { background: '#0d9488', color: 'white', border: '2px solid #0d9488', boxShadow: '0 2px 8px rgba(13,148,136,0.3)' }
+                        ? { background: gradients[v-1], color: 'white', border: '2px solid transparent', boxShadow: shadows[v-1], transform: 'scale(1.04)' }
                         : { background: '#f8fafc', color: '#374151', border: '2px solid #e2e8f0' }
                       }
                     >
                       {isRecommended && (
                         <span
                           className="absolute -top-2 left-1/2 -translate-x-1/2 text-xs font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
-                          style={{ background: '#f59e0b', color: 'white', fontSize: '9px', lineHeight: '1.2' }}
+                          style={{ background: 'linear-gradient(135deg, #f59e0b, #f97316)', color: 'white', fontSize: '9px', lineHeight: '1.2', boxShadow: '0 1px 4px rgba(245,158,11,0.4)' }}
                         >
-                          {isRtl ? "מומלץ" : "Recommended"}
+                          {isRtl ? "מומלץ" : "Best"}
                         </span>
                       )}
-                      <span className="font-bold text-sm">{v}</span>
-                      <span className="font-semibold" style={{ fontSize: '11px' }}>{labels[v - 1]}</span>
-                      <span style={{ fontSize: '9px', opacity: 0.75, textAlign: 'center' }}>{descs[v - 1]}</span>
+                      <span className="font-bold text-base">{v}</span>
+                      <span className="font-bold" style={{ fontSize: '11px' }}>{labels[v - 1]}</span>
+                      <span style={{ fontSize: '9px', opacity: isSelected ? 0.9 : 0.6, textAlign: 'center' }}>{descs[v - 1]}</span>
                     </button>
                   );
                 })}

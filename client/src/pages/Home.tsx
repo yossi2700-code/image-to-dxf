@@ -1041,19 +1041,18 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
           {/* Landscape mode toggle */}
           <div className="mt-3 mb-1">
             <div
-              className="flex rounded-lg overflow-hidden"
+              className="flex rounded-xl overflow-hidden p-1 gap-1"
               style={{background: '#f1f5f9', border: '1px solid #e2e8f0'}}
             >
               <button
                 type="button"
                 onClick={() => setLandscapeMode(false)}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-lg transition-all"
                 style={!landscapeMode ? {
-                  background: '#4f46e5',
+                  background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                   color: 'white',
-                  borderRadius: '0.375rem',
-                  margin: '2px',
-                } : {color: '#6b7280'}}
+                  boxShadow: '0 2px 8px rgba(99,102,241,0.35)',
+                } : {color: '#6b7280', background: 'transparent'}}
               >
                 <span className="text-base">📷</span>
                 <span>{isRtl ? "אובייקט" : "Object"}</span>
@@ -1061,13 +1060,12 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
               <button
                 type="button"
                 onClick={() => setLandscapeMode(true)}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-lg transition-all"
                 style={landscapeMode ? {
-                  background: '#059669',
+                  background: 'linear-gradient(135deg, #059669, #10b981)',
                   color: 'white',
-                  borderRadius: '0.375rem',
-                  margin: '2px',
-                } : {color: '#6b7280'}}
+                  boxShadow: '0 2px 8px rgba(5,150,105,0.35)',
+                } : {color: '#6b7280', background: 'transparent'}}
               >
                 <span className="text-base">🌄</span>
                 <span>{isRtl ? "נוף" : "Landscape"}</span>
