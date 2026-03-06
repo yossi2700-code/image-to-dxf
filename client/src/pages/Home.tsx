@@ -340,16 +340,16 @@ const HERO_SLIDES = [
     alt: 'Helmet photo to DXF vector',
   },
   {
-    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-before-after-bicycle-sm_3020965e.png',
-    alt: 'Bicycle photo to DXF vector',
+    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-ba-guitar-MpriRjCxu5oPxg7QHX7wKa.webp',
+    alt: 'Guitar photo to DXF vector',
   },
   {
-    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-before-after-sneaker-sm_d8aba4ae.png',
-    alt: 'Sneaker photo to DXF vector',
+    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-ba-car-nFQArnrk3NUVMjA3PkA24F.webp',
+    alt: 'Classic car photo to DXF vector',
   },
   {
-    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-before-after-teddy-sm_72f253b1.png',
-    alt: 'Teddy bear photo to DXF vector',
+    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-ba-flower-ZLjxVZyJdERmSc2JgRNbGV.webp',
+    alt: 'Rose flower photo to DXF vector',
   },
 ];
 
@@ -1126,7 +1126,9 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
         svgHeight={downloadImg.realHeight ?? downloadImg.height}
       />
     )}
-    <div className="flex flex-col gap-5">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+      {/* LEFT COLUMN: Prompt Input + Controls */}
+      <div className="flex flex-col gap-4">
       {/* Prompt Input */}
       <div
         className="rounded-xl p-5"
@@ -1222,6 +1224,10 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
           </button>
       </div>
 
+      </div>{/* end left column */}
+
+      {/* RIGHT COLUMN: Result image / loading / gallery */}
+      <div className="flex flex-col gap-4">
       {/* Loading */}
       {status === "loading" && (
         <div
@@ -1510,22 +1516,41 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
         </>
       )}
 
-      {/* Tips */}
-      <div
-        className="rounded-xl p-4"
-        style={{
-          background: '#f8f9ff',
-          border: '1px solid #e0e7ff',
-        }}
-      >
-          <h3 className="font-semibold text-sm mb-2 text-indigo-700">{t("tipsTitle")}</h3>
-          <ul className="space-y-1.5 text-sm text-gray-600">
-            <li className="flex gap-2"><span className="shrink-0 text-indigo-400">•</span><span>{t("tip1")}</span></li>
-            <li className="flex gap-2"><span className="shrink-0 text-indigo-400">•</span><span>{t("tip2")}</span></li>
-            <li className="flex gap-2"><span className="shrink-0 text-indigo-400">•</span><span>{t("tip3")}</span></li>
-            <li className="flex gap-2"><span className="shrink-0">💡</span><span>{t("tip4")}</span></li>
-          </ul>
-      </div>
+      {/* Empty state placeholder for right column when idle */}
+      {status === "idle" && images.length === 0 && (
+        <div
+          className="rounded-xl flex flex-col items-center justify-center gap-4 text-center"
+          style={{
+            background: 'linear-gradient(135deg, #f8f9ff 0%, #eef2ff 100%)',
+            border: '2px dashed #c7d2fe',
+            minHeight: 320,
+            padding: '2rem',
+          }}
+        >
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{background: 'linear-gradient(135deg, #6366f1, #8b5cf6)'}}>
+            <Wand2 className="w-8 h-8 text-white" />
+          </div>
+          <div>
+            <p className="font-bold text-gray-700 text-base mb-1">
+              {isRtl ? 'תיאור → עיצוב DXF' : 'Description → DXF Design'}
+            </p>
+            <p className="text-sm text-gray-400">
+              {isRtl ? 'תאר עיצוב בצד שמאל וה-AI יצייר אותו כאן' : 'Describe a design on the left and AI will draw it here'}
+            </p>
+          </div>
+          {/* Tips */}
+          <div className="w-full text-start rounded-xl p-4" style={{background: '#ffffff', border: '1px solid #e0e7ff'}}>
+            <h3 className="font-semibold text-xs mb-2 text-indigo-700">{t("tipsTitle")}</h3>
+            <ul className="space-y-1.5 text-xs text-gray-600">
+              <li className="flex gap-2"><span className="shrink-0 text-indigo-400">•</span><span>{t("tip1")}</span></li>
+              <li className="flex gap-2"><span className="shrink-0 text-indigo-400">•</span><span>{t("tip2")}</span></li>
+              <li className="flex gap-2"><span className="shrink-0 text-indigo-400">•</span><span>{t("tip3")}</span></li>
+              <li className="flex gap-2"><span className="shrink-0">💡</span><span>{t("tip4")}</span></li>
+            </ul>
+          </div>
+        </div>
+      )}
+      </div>{/* end right column */}
     </div>
     </>
   );
