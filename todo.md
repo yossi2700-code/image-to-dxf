@@ -1132,3 +1132,9 @@
 - [ ] AiTraceTab: כפתור ראשי "צור AI Outline" — gradient חזק
 - [ ] FaceDetectTab: כפתורים פנימיים — עיצוב אחיד
 - [ ] AiGeneratorTab: כפתורים פנימיים — עיצוב אחיד
+
+## Desktop Layout Fix - מרץ 2026
+
+- [ ] הרחב container לכל רוחב המסך במחשב
+- [ ] שפר גודל כרטיסי דמו ב-desktop — 3 עמודות, תמונות גדולות
+- [ ] תיקון max-width constraints

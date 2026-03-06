@@ -1612,15 +1612,19 @@ export default function Home() {
         }}
       />
 
-      <main className="container py-5">
-        {/* Center content on desktop */}
-        <div className="mx-auto" style={{ maxWidth: '820px' }}>
+      <main className="py-5" style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px 24px' }}>
+        {/* Responsive layout */}
+        <div className="mx-auto" style={{ maxWidth: '100%' }}>
 
         {/* ── Hero Section ── */}
         <div className="mb-6 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #f0f0ff 0%, #faf5ff 50%, #f0f9ff 100%)', border: '1px solid #e8eaf0' }}>
           <div className="px-5 pt-5 pb-4">
+            {/* Desktop: side by side. Mobile: stacked */}
+            <div className="flex flex-col lg:flex-row gap-6 items-center">
+              {/* Left: text + feature buttons */}
+              <div className="flex-1 w-full">
             {/* Badge pill */}
-            <div className="flex justify-center mb-3">
+            <div className="flex justify-center lg:justify-start mb-3">
               <span
                 className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full"
                 style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', letterSpacing: '0.04em' }}
@@ -1631,33 +1635,20 @@ export default function Home() {
             </div>
 
             {/* Headline */}
-            <div className="text-center mb-4">
-              <h1 className="font-black leading-tight mb-1" style={{ fontSize: 'clamp(1.5rem, 5vw, 2.2rem)', color: '#111827', letterSpacing: '-0.02em' }}>
+            <div className="text-center lg:text-start mb-4">
+              <h1 className="font-black leading-tight mb-1" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', color: '#111827', letterSpacing: '-0.02em' }}>
                 {isRtl ? 'הפוך כל תמונה לוקטור.' : 'From photo to vector.'}
               </h1>
-              <h1 className="font-black leading-tight" style={{ fontSize: 'clamp(1.5rem, 5vw, 2.2rem)', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>
+              <h1 className="font-black leading-tight" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>
                 {isRtl ? 'מיידית.' : 'Instantly.'}
               </h1>
-              <p className="text-sm text-gray-500 mt-2 max-w-xs mx-auto">
+              <p className="text-sm text-gray-500 mt-2 max-w-sm">
                 {isRtl ? 'בינה מלאכותית ממירה תמונות לקבצי DXF לחיתוך לייזר ו-CNC' : 'AI converts images to DXF files for laser cutting & CNC'}
               </p>
             </div>
 
-            {/* Sneaker before/after card — full demo card image */}
-            <div
-              className="rounded-2xl overflow-hidden mb-4 flex items-center justify-center"
-              style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.10)', background: 'white', minHeight: 180, maxHeight: 240 }}
-            >
-              <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-sneaker_9fe887cf.png"
-                alt="Sneaker AI vector demo"
-                className="w-full"
-                style={{ objectFit: 'contain', maxHeight: 240, display: 'block' }}
-              />
-            </div>
-
             {/* Feature shortcut buttons — click to switch tab */}
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-2 lg:grid-cols-2 lg:gap-3">
               {[
                 { tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create', color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-sunglasses_e7cbfe74.png' },
                 { tab: 'trace', label: isRtl ? 'AI Outline' : 'AI Outline', color: '#0d9488', bg: 'linear-gradient(135deg, #0d9488, #06b6d4)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png' },
@@ -1691,6 +1682,23 @@ export default function Home() {
                 </button>
               ))}
             </div>
+              </div>{/* end left column */}
+
+              {/* Right: sneaker before/after card */}
+              <div className="flex-1 w-full lg:max-w-[480px]">
+                <div
+                  className="rounded-2xl overflow-hidden flex items-center justify-center"
+                  style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.12)', background: 'white', minHeight: 200 }}
+                >
+                  <img
+                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-sneaker_9fe887cf.png"
+                    alt="Sneaker AI vector demo"
+                    className="w-full"
+                    style={{ objectFit: 'contain', display: 'block' }}
+                  />
+                </div>
+              </div>{/* end right column */}
+            </div>{/* end flex row */}
           </div>
         </div>
 
