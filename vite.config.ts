@@ -182,6 +182,10 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      // use-sidecar is a peer dependency of react-remove-scroll loaded lazily at runtime
+      external: ['use-sidecar'],
+    },
   },
   server: {
     host: true,

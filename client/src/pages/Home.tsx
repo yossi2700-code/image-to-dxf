@@ -333,6 +333,115 @@ function SvgZoomViewer({ svgContent, label = "Preview", maxHeight = 450 }: SvgZo
 }
 
 // ─── Upload Tab ─────────────────────────────────────────────────────────────
+// ─── Hero Before/After Animated Carousel ─────────────────────────────────────
+const HERO_SLIDES = [
+  {
+    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v4-helmet-sm_294f43aa.png',
+    alt: 'Helmet photo to DXF vector',
+  },
+  {
+    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-before-after-bicycle-sm_3020965e.png',
+    alt: 'Bicycle photo to DXF vector',
+  },
+  {
+    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-before-after-sneaker-sm_d8aba4ae.png',
+    alt: 'Sneaker photo to DXF vector',
+  },
+  {
+    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-before-after-teddy-sm_72f253b1.png',
+    alt: 'Teddy bear photo to DXF vector',
+  },
+];
+
+function HeroBeforeAfterCarousel() {
+  const [current, setCurrent] = useState(0);
+  const [visible, setVisible] = useState(0);
+  const [fading, setFading] = useState(false);
+  const { isRtl } = useLanguage();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFading(true);
+      setTimeout(() => {
+        setCurrent((c) => {
+          const next = (c + 1) % HERO_SLIDES.length;
+          setVisible(next);
+          return next;
+        });
+        setFading(false);
+      }, 500);
+    }, 3200);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="w-full">
+      {/* Label above */}
+      <div className="flex items-center justify-center gap-2 mb-2">
+        <span className="text-xs font-semibold text-gray-400">
+          {isRtl ? 'תמונה מקורית' : 'Original photo'}
+        </span>
+        <span style={{ color: '#6366f1', fontSize: 16 }}>→</span>
+        <span
+          className="text-xs font-bold"
+          style={{ background: 'linear-gradient(135deg, #6366f1, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+        >
+          {isRtl ? 'וקטור DXF' : 'DXF Vector'}
+        </span>
+      </div>
+      {/* Carousel container */}
+      <div
+        className="relative rounded-2xl overflow-hidden w-full"
+        style={{
+          boxShadow: '0 8px 40px rgba(99,102,241,0.18)',
+          background: '#f8f9ff',
+          aspectRatio: '4/3',
+        }}
+      >
+        {HERO_SLIDES.map((slide, i) => (
+          <img
+            key={slide.src}
+            src={slide.src}
+            alt={slide.alt}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              opacity: i === visible ? (fading ? 0 : 1) : 0,
+              transition: 'opacity 0.5s ease-in-out',
+              display: 'block',
+            }}
+          />
+        ))}
+        {/* Dot indicators */}
+        <div
+          className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5"
+          style={{ zIndex: 2 }}
+        >
+          {HERO_SLIDES.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => { setFading(true); setTimeout(() => { setVisible(i); setCurrent(i); setFading(false); }, 400); }}
+              style={{
+                width: i === current ? 18 : 6,
+                height: 6,
+                borderRadius: 3,
+                background: i === current ? '#6366f1' : 'rgba(99,102,241,0.3)',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                padding: 0,
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface UploadTabProps {
   onOpenAuth: () => void;
 }
@@ -1620,11 +1729,11 @@ export default function Home() {
         <div className="mb-6 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #f0f0ff 0%, #faf5ff 50%, #f0f9ff 100%)', border: '1px solid #e8eaf0' }}>
           <div className="px-5 pt-5 pb-4">
             {/* Desktop: side by side. Mobile: stacked */}
-            <div className="flex flex-col lg:flex-row gap-6 items-center">
-              {/* Left: text + feature buttons */}
+            <div className={`flex flex-col gap-6 items-center ${isRtl ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
+              {/* Left (LTR) / Right (RTL): text + feature buttons */}
               <div className="flex-1 w-full">
             {/* Badge pill */}
-            <div className="flex justify-center lg:justify-start mb-3">
+            <div className={`flex justify-center ${isRtl ? 'lg:justify-end' : 'lg:justify-start'} mb-3`}>
               <span
                 className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full"
                 style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', letterSpacing: '0.04em' }}
@@ -1684,19 +1793,9 @@ export default function Home() {
             </div>
               </div>{/* end left column */}
 
-              {/* Right: sneaker before/after card */}
+              {/* Right: animated before/after carousel */}
               <div className="flex-1 w-full lg:max-w-[480px]">
-                <div
-                  className="rounded-2xl overflow-hidden flex items-center justify-center"
-                  style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.12)', background: 'white', minHeight: 200 }}
-                >
-                  <img
-                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-sneaker_9fe887cf.png"
-                    alt="Sneaker AI vector demo"
-                    className="w-full"
-                    style={{ objectFit: 'contain', display: 'block' }}
-                  />
-                </div>
+                <HeroBeforeAfterCarousel />
               </div>{/* end right column */}
             </div>{/* end flex row */}
           </div>
