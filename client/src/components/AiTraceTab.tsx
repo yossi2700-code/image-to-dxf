@@ -244,7 +244,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const [errorMsg, setErrorMsg] = useState("");
   const [downloadTarget, setDownloadTarget] = useState<GeneratedImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
-  const [selectedVariation, setSelectedVariation] = useState<1 | 2 | 3>(2);
+  const [selectedVariation, setSelectedVariation] = useState<1 | 2>(1);
   const [lineweightMm, setLineweightMm] = useState<string>(""); // empty = default
   const [dragOver, setDragOver] = useState(false);
   const [fullImageMode, setFullImageMode] = useState(false);
@@ -727,37 +727,35 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             </div>
             <input type="hidden" value={description} onChange={(e) => setDescription(e.target.value)} />
 
-            {/* Variation selector */}
+            {/* Variation selector — 2 modes only */}
             <div className="mb-3">
               <label className="block text-xs font-semibold mb-1.5 text-gray-500">
-                {isRtl ? "בחר סגנון" : "Choose Style"}
+                {isRtl ? "רמת פירוט" : "Detail Level"}
               </label>
-              <div className="grid grid-cols-3 gap-2">
-                {([1, 2, 3] as const).map((v) => {
+              <div className="grid grid-cols-2 gap-2">
+                {([1, 2] as const).map((v) => {
                   const labels = isRtl
-                    ? ["פשוט", "מפורט", "דקורטיבי"]
-                    : ["Simple", "Detailed", "Decorative"];
+                    ? ["נקי ופשוט", "מפורט"]
+                    : ["Clean & Simple", "Detailed"];
                   const descs = isRtl
-                    ? ["קווים בסיסיים, נקי", "עשיר בפרטים", "אמנותי, מעוטר"]
-                    : ["Basic lines, clean", "Rich in details", "Artistic, ornate"];
+                    ? ["קווי מתאר בסיסיים, נקיים", "עשיר בפרטים, מדויק"]
+                    : ["Basic clean outlines", "Rich detail, precise"];
                   const gradients = [
                     'linear-gradient(135deg, #6366f1, #818cf8)',
                     'linear-gradient(135deg, #0d9488, #06b6d4)',
-                    'linear-gradient(135deg, #7c3aed, #a855f7)',
                   ];
                   const shadows = [
                     '0 3px 10px rgba(99,102,241,0.4)',
                     '0 3px 10px rgba(13,148,136,0.4)',
-                    '0 3px 10px rgba(124,58,237,0.4)',
                   ];
                   const isSelected = selectedVariation === v;
-                  const isRecommended = v === 2;
+                  const isRecommended = v === 1;
                   return (
                     <button
                       key={v}
                       type="button"
                       onClick={() => setSelectedVariation(v)}
-                      className="relative flex flex-col items-center justify-center gap-0.5 py-3 px-1 rounded-xl text-xs font-medium transition-all hover:scale-105 active:scale-95"
+                      className="relative flex flex-col items-center justify-center gap-0.5 py-3 px-2 rounded-xl text-xs font-medium transition-all hover:scale-105 active:scale-95"
                       style={isSelected
                         ? { background: gradients[v-1], color: 'white', border: '2px solid transparent', boxShadow: shadows[v-1], transform: 'scale(1.04)' }
                         : { background: '#f8fafc', color: '#374151', border: '2px solid #e2e8f0' }
@@ -768,11 +766,10 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                           className="absolute -top-2 left-1/2 -translate-x-1/2 text-xs font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
                           style={{ background: 'linear-gradient(135deg, #f59e0b, #f97316)', color: 'white', fontSize: '9px', lineHeight: '1.2', boxShadow: '0 1px 4px rgba(245,158,11,0.4)' }}
                         >
-                          {isRtl ? "מומלץ" : "Best"}
+                          {isRtl ? "מומלץ" : "Recommended"}
                         </span>
                       )}
-                      <span className="font-bold text-base">{v}</span>
-                      <span className="font-bold" style={{ fontSize: '11px' }}>{labels[v - 1]}</span>
+                      <span className="font-bold text-sm mt-1">{labels[v - 1]}</span>
                       <span style={{ fontSize: '9px', opacity: isSelected ? 0.9 : 0.6, textAlign: 'center' }}>{descs[v - 1]}</span>
                     </button>
                   );

@@ -1177,3 +1177,8 @@
 - [x] Route /account ב-App.tsx
 - [x] tRPC: changePassword procedure (קיים ב-appAuth.ts)
 - [x] tRPC: updateProfile procedure (קיים ב-appAuth.ts)
+
+## AI Outline - רמת פירוט - מרץ 2026
+- [x] הוסף toggle "רמת פירוט" ל-AI Outline: מצב 1 (מומלץ, נקי) / מצב 2 (מפורט)
+- [x] עדכן prompt בשרת בהתאם למצב שנבחר
+- [x] ברירת מחדל: מצב 1
