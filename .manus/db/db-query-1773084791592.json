@@ -1,0 +1,101 @@
+{
+  "query": "\nSELECT au.id as userId, au.email, au.name, au.tokenBalance,\n       ua.id as actionId, ua.actionType, ua.feature, ua.description, ua.segmentCount, ua.createdAt\nFROM app_users au\nLEFT JOIN user_actions ua ON ua.appUserId = au.id\nWHERE au.email = 'yossi2700@gmail.com'\nORDER BY ua.createdAt DESC\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT au.id as userId, au.email, au.name, au.tokenBalance,\n       ua.id as actionId, ua.actionType, ua.feature, ua.description, ua.segmentCount, ua.createdAt\nFROM app_users au\nLEFT JOIN user_actions ua ON ua.appUserId = au.id\nWHERE au.email = 'yossi2700@gmail.com'\nORDER BY ua.createdAt DESC\nLIMIT 10;\n",
+  "rows": [
+    {
+      "userId": "30001",
+      "email": "yossi2700@gmail.com",
+      "name": "יוסף",
+      "tokenBalance": "849",
+      "actionId": "2790002",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "description": "Camera angle: FRONT VIEW. The object is a dark, matte surface with a deeply carved, glossy black Hebrew letter 'Shin' (ש) embossed or debossed into it, viewed directly from the front. The letter 'Shin",
+      "segmentCount": "4218",
+      "createdAt": "2026-03-09 17:53:21"
+    },
+    {
+      "userId": "30001",
+      "email": "yossi2700@gmail.com",
+      "name": "יוסף",
+      "tokenBalance": "849",
+      "actionId": "2760001",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "פרחים אומנותיים",
+      "segmentCount": "4222",
+      "createdAt": "2026-03-09 14:02:55"
+    },
+    {
+      "userId": "30001",
+      "email": "yossi2700@gmail.com",
+      "name": "יוסף",
+      "tokenBalance": "849",
+      "actionId": "2700007",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "ש׳ין של תפילין נוסח ספרדי",
+      "segmentCount": "1912",
+      "createdAt": "2026-03-09 11:21:57"
+    },
+    {
+      "userId": "30001",
+      "email": "yossi2700@gmail.com",
+      "name": "יוסף",
+      "tokenBalance": "849",
+      "actionId": "2700008",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "ש׳ין של תפילין נוסח ספרדי",
+      "segmentCount": "2898",
+      "createdAt": "2026-03-09 11:21:57"
+    },
+    {
+      "userId": "30001",
+      "email": "yossi2700@gmail.com",
+      "name": "יוסף",
+      "tokenBalance": "849",
+      "actionId": "2700006",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "ש׳ין של תפילין נוסח ספרדי",
+      "segmentCount": "2158",
+      "createdAt": "2026-03-09 11:21:57"
+    },
+    {
+      "userId": "30001",
+      "email": "yossi2700@gmail.com",
+      "name": "יוסף",
+      "tokenBalance": "849",
+      "actionId": "2700005",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "ש׳ין של תפילין ספרדי",
+      "segmentCount": "4970",
+      "createdAt": "2026-03-09 11:21:12"
+    },
+    {
+      "userId": "30001",
+      "email": "yossi2700@gmail.com",
+      "name": "יוסף",
+      "tokenBalance": "849",
+      "actionId": "2700003",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "ש׳ין של תפילין ספרדי",
+      "segmentCount": "1396",
+      "createdAt": "2026-03-09 11:21:10"
+    }
+  ],
+  "messages": [
+    "30001\tyossi2700@gmail.com\tיוסף\t849\t2790001\tai_generate\tai_trace\tCamera angle: FRONT VIEW.",
+    "The subject is a stylized Hebrew letter Shin (ש) embossed or debossed into a dark, matte surface, facing directly towards the viewer. The letter is composed of three main ver\t3440\t2026-03-09 17:51:53",
+    "30001\tyossi2700@gmail.com\tיוסף\t849\t2700010\tai_generate\tai_trace\tCamera angle: Top-down, slightly angled towards the front.",
+    "The object is a stylized, embossed or debossed Hebrew letter Shin (ש) on a flat, dark surface. The letter is facing directly towards the view\t9130\t2026-03-09 11:24:52",
+    "30001\tyossi2700@gmail.com\tיוסף\t849\t2700009\tai_generate\tai_trace\tCamera angle: FRONT VIEW.",
+    "The object is a stylized, embossed or debossed representation of the Hebrew letter Shin (ש), presented directly to the viewer on a dark, matte surface. The Shin is formed by \t3838\t2026-03-09 11:24:05"
+  ],
+  "stdout": "userId\temail\tname\ttokenBalance\tactionId\tactionType\tfeature\tdescription\tsegmentCount\tcreatedAt\n30001\tyossi2700@gmail.com\tיוסף\t849\t2790002\tai_generate\tai_trace\tCamera angle: FRONT VIEW. The object is a dark, matte surface with a deeply carved, glossy black Hebrew letter 'Shin' (ש) embossed or debossed into it, viewed directly from the front. The letter 'Shin\t4218\t2026-03-09 17:53:21\n30001\tyossi2700@gmail.com\tיוסף\t849\t2790001\tai_generate\tai_trace\tCamera angle: FRONT VIEW.\nThe subject is a stylized Hebrew letter Shin (ש) embossed or debossed into a dark, matte surface, facing directly towards the viewer. The letter is composed of three main ver\t3440\t2026-03-09 17:51:53\n30001\tyossi2700@gmail.com\tיוסף\t849\t2760001\tai_generate\tai_generate\tפרחים אומנותיים\t4222\t2026-03-09 14:02:55\n30001\tyossi2700@gmail.com\tיוסף\t849\t2700010\tai_generate\tai_trace\tCamera angle: Top-down, slightly angled towards the front.\nThe object is a stylized, embossed or debossed Hebrew letter Shin (ש) on a flat, dark surface. The letter is facing directly towards the view\t9130\t2026-03-09 11:24:52\n30001\tyossi2700@gmail.com\tיוסף\t849\t2700009\tai_generate\tai_trace\tCamera angle: FRONT VIEW.\nThe object is a stylized, embossed or debossed representation of the Hebrew letter Shin (ש), presented directly to the viewer on a dark, matte surface. The Shin is formed by \t3838\t2026-03-09 11:24:05\n30001\tyossi2700@gmail.com\tיוסף\t849\t2700007\tai_generate\tai_generate\tש׳ין של תפילין נוסח ספרדי\t1912\t2026-03-09 11:21:57\n30001\tyossi2700@gmail.com\tיוסף\t849\t2700008\tai_generate\tai_generate\tש׳ין של תפילין נוסח ספרדי\t2898\t2026-03-09 11:21:57\n30001\tyossi2700@gmail.com\tיוסף\t849\t2700006\tai_generate\tai_generate\tש׳ין של תפילין נוסח ספרדי\t2158\t2026-03-09 11:21:57\n30001\tyossi2700@gmail.com\tיוסף\t849\t2700005\tai_generate\tai_generate\tש׳ין של תפילין ספרדי\t4970\t2026-03-09 11:21:12\n30001\tyossi2700@gmail.com\tיוסף\t849\t2700003\tai_generate\tai_generate\tש׳ין של תפילין ספרדי\t1396\t2026-03-09 11:21:10\n",
+  "stderr": "",
+  "execution_time_ms": 1583
+}

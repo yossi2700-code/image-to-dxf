@@ -244,7 +244,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
   const [errorMsg, setErrorMsg] = useState("");
   const [downloadTarget, setDownloadTarget] = useState<GeneratedImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
-  const [selectedVariation, setSelectedVariation] = useState<1 | 2>(1);
+  // Always use mode 0 (simple/clean) — single mode, no selector needed
   const [lineweightMm, setLineweightMm] = useState<string>(""); // empty = default
   const [dragOver, setDragOver] = useState(false);
   const [fullImageMode, setFullImageMode] = useState(false);
@@ -473,7 +473,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       if (focusText.trim()) formData.append("focusText", focusText.trim());
       formData.append("lang", isRtl ? "he" : "en");
       formData.append("landscapeMode", fullImageMode ? "true" : "false");
-      formData.append("variationIndex", String(selectedVariation - 1));
+      formData.append("variationIndex", "0"); // Always use simple/clean mode
       const lwVal = parseFloat(lineweightMm);
       if (!isNaN(lwVal) && lwVal >= 0) formData.append("lineweightMm", String(lwVal));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
@@ -523,7 +523,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       if (focusText.trim()) formData.append("focusText", focusText.trim());
       formData.append("lang", isRtl ? "he" : "en");
       formData.append("landscapeMode", fullImageMode ? "true" : "false");
-      formData.append("variationIndex", String(selectedVariation - 1));
+      formData.append("variationIndex", "0"); // Always use simple/clean mode
       const lwVal = parseFloat(lineweightMm);
       if (!isNaN(lwVal) && lwVal >= 0) formData.append("lineweightMm", String(lwVal));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
@@ -727,13 +727,8 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             </div>
             <input type="hidden" value={description} onChange={(e) => setDescription(e.target.value)} />
 
-            {/* Variation selector — 2 modes with before/after previews */}
-            <div className="mb-3">
-              <label className="block text-xs font-semibold mb-1.5 text-gray-500">
-                {isRtl ? "רמת פירוט" : "Detail Level"}
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {([1, 2] as const).map((v) => {
+            {/* Variation selector removed — always uses simple/clean mode (variationIndex=0) */}
+            {(false as boolean) && ([1, 2] as const).map((v) => {
                   const labels = isRtl
                     ? ["נקי ופשוט", "מפורט"]
                     : ["Clean & Simple", "Detailed"];
@@ -760,14 +755,14 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                     '0 3px 12px rgba(99,102,241,0.35)',
                     '0 3px 12px rgba(13,148,136,0.35)',
                   ];
-                  const isSelected = selectedVariation === v;
+                  const isSelected = v === 1; // always first
                   const isRecommended = v === 1;
                   const preview = previewImages[v - 1];
                   return (
                     <button
                       key={v}
                       type="button"
-                      onClick={() => setSelectedVariation(v)}
+                      onClick={() => { /* no-op */ }}
                       className="relative flex flex-col items-start rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-95 overflow-hidden"
                       style={isSelected
                         ? { border: `2px solid ${borderColors[v-1]}`, boxShadow: shadows[v-1], background: '#fff' }
@@ -814,9 +809,6 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                     </button>
                   );
                 })}
-              </div>
-            </div>
-
             {/* Lineweight option */}
             <div className="flex items-center gap-2 pt-1 pb-1 flex-wrap">
               <label className="text-sm font-medium shrink-0">

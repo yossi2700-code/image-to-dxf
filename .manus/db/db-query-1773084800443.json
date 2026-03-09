@@ -1,0 +1,33 @@
+{
+  "query": "\nSELECT ua.id, ua.actionType, ua.feature, ua.description, ua.segmentCount, ua.imageUrl, ua.sourceImageUrl, ua.createdAt\nFROM app_users au\nJOIN user_actions ua ON ua.appUserId = au.id\nWHERE au.email = 'yossi2700@gmail.com'\nORDER BY ua.createdAt DESC\nLIMIT 3;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT ua.id, ua.actionType, ua.feature, ua.description, ua.segmentCount, ua.imageUrl, ua.sourceImageUrl, ua.createdAt\nFROM app_users au\nJOIN user_actions ua ON ua.appUserId = au.id\nWHERE au.email = 'yossi2700@gmail.com'\nORDER BY ua.createdAt DESC\nLIMIT 3;\n",
+  "rows": [
+    {
+      "id": "2790002",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "description": "Camera angle: FRONT VIEW. The object is a dark, matte surface with a deeply carved, glossy black Hebrew letter 'Shin' (ש) embossed or debossed into it, viewed directly from the front. The letter 'Shin",
+      "segmentCount": "4218",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/hS726_LbHxEmKtjh3dWgW.png",
+      "sourceImageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/source-images/30001-HwH2jcJp.jpg",
+      "createdAt": "2026-03-09 17:53:21"
+    },
+    {
+      "id": "2760001",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "פרחים אומנותיים",
+      "segmentCount": "4222",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-generated/O2RPVr3fHkfZo0_jhSOu0.png",
+      "sourceImageUrl": "NULL",
+      "createdAt": "2026-03-09 14:02:55"
+    }
+  ],
+  "messages": [
+    "2790001\tai_generate\tai_trace\tCamera angle: FRONT VIEW.",
+    "The subject is a stylized Hebrew letter Shin (ש) embossed or debossed into a dark, matte surface, facing directly towards the viewer. The letter is composed of three main ver\t3440\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/cGO2USfzrmPPIo5FqgS5I.png\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/source-images/30001-FazKqQwc.jpg\t2026-03-09 17:51:53"
+  ],
+  "stdout": "id\tactionType\tfeature\tdescription\tsegmentCount\timageUrl\tsourceImageUrl\tcreatedAt\n2790002\tai_generate\tai_trace\tCamera angle: FRONT VIEW. The object is a dark, matte surface with a deeply carved, glossy black Hebrew letter 'Shin' (ש) embossed or debossed into it, viewed directly from the front. The letter 'Shin\t4218\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/hS726_LbHxEmKtjh3dWgW.png\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/source-images/30001-HwH2jcJp.jpg\t2026-03-09 17:53:21\n2790001\tai_generate\tai_trace\tCamera angle: FRONT VIEW.\nThe subject is a stylized Hebrew letter Shin (ש) embossed or debossed into a dark, matte surface, facing directly towards the viewer. The letter is composed of three main ver\t3440\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/cGO2USfzrmPPIo5FqgS5I.png\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/source-images/30001-FazKqQwc.jpg\t2026-03-09 17:51:53\n2760001\tai_generate\tai_generate\tפרחים אומנותיים\t4222\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-generated/O2RPVr3fHkfZo0_jhSOu0.png\tNULL\t2026-03-09 14:02:55\n",
+  "stderr": "",
+  "execution_time_ms": 1597
+}

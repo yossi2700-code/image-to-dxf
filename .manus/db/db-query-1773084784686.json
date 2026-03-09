@@ -1,0 +1,17 @@
+{
+  "query": "\nSELECT au.id, au.email, au.name, au.tokenBalance, au.createdAt\nFROM app_users au\nWHERE au.email = 'yossi2700@gmail.com'\nLIMIT 1;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT au.id, au.email, au.name, au.tokenBalance, au.createdAt\nFROM app_users au\nWHERE au.email = 'yossi2700@gmail.com'\nLIMIT 1;\n",
+  "rows": [
+    {
+      "id": "30001",
+      "email": "yossi2700@gmail.com",
+      "name": "יוסף",
+      "tokenBalance": "849",
+      "createdAt": "2026-02-26 17:30:52"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\ttokenBalance\tcreatedAt\n30001\tyossi2700@gmail.com\tיוסף\t849\t2026-02-26 17:30:52\n",
+  "stderr": "",
+  "execution_time_ms": 1586
+}
