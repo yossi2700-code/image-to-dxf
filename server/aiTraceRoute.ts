@@ -65,34 +65,27 @@ const STYLE_VARIATIONS = [
   {
     label: "simple",
     style:
-      "ARTISTIC LINE ART STYLE — clean, elegant outlines like a premium illustration or technical drawing. " +
-      "Draw the main silhouette with smooth confident strokes, plus the key interior structural lines that define the object's form (10-15 key lines). " +
-      "Include slightly more detail than a coloring book: show main structural divisions, key surface features, and important contours. " +
-      "=== STRICTLY FORBIDDEN — DO NOT DRAW ANY OF THESE === " +
-      "NO dots, NO stippling, NO cross-hatching, NO hatching lines, NO shading of any kind. " +
-      "NO texture fills (mesh, grid, pattern, weave, fabric texture). " +
-      "NO very small detail lines (individual stitches, tiny perforations, bolt heads, screws). " +
-      "NO dark filled areas or black regions — ALL areas must remain WHITE inside the outlines. " +
-      "=== WHAT TO DRAW === " +
-      "Outer silhouette + major shape divisions + key surface features (panels, edges, main structural lines). " +
-      "Lines must be clean, smooth, and uniform weight — like a skilled illustrator's ink pen. " +
-      "Elegant simplicity with just enough detail to clearly recognize the object.",
+      "Convert to clean black and white line art on pure white background. " +
+      "Draw the outer silhouette and 10-15 key interior structural lines. " +
+      "Style: coloring book / technical illustration — smooth confident ink strokes. " +
+      "FORBIDDEN: no dots, no hatching, no shading, no texture fills, no grey tones, no dark filled areas. " +
+      "All interior areas must be pure white. Lines only.",
   },
   {
     label: "detailed",
     style:
-      "Highly detailed professional line art. Bold outer contour with rich internal line work " +
-      "showing all structural features, surfaces, depth cues, and fine details. " +
-      "Like a professional technical illustration or detailed product drawing. " +
-      "NO texture, NO hatching, NO shading, NO fill. Clean distinct lines only.",
+      "Convert to detailed black and white line art on pure white background. " +
+      "Draw all structural features, surface details, and fine contours. " +
+      "Style: professional technical illustration with rich line work. " +
+      "FORBIDDEN: no hatching, no shading, no texture fills, no grey tones. Clean lines only.",
   },
   {
     label: "decorative",
     style:
-      "Elegant decorative line art with artistic flair. Bold outer contour with flowing " +
-      "decorative inner lines. Ornamental, architectural, or art nouveau style. " +
-      "Rich detail suitable for laser engraving on wood or metal. " +
-      "NO texture, NO hatching, NO shading, NO fill. All lines clean and precise.",
+      "Convert to decorative black and white line art on pure white background. " +
+      "Draw bold outer contour with flowing decorative inner lines. " +
+      "Style: ornamental / art nouveau suitable for laser engraving. " +
+      "FORBIDDEN: no hatching, no shading, no texture fills, no grey tones. Clean lines only.",
   },
 ];
 
@@ -386,99 +379,92 @@ async function runTraceJob(
         ? buildFullImagePrompt(objectDescription, idx)
         : (isPortrait && !isToyOrFigurine)
         ? (
-            "ABSOLUTE RULE #1: NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS — EVER. " +
-            "ABSOLUTE RULE #2: THIS IS A PORTRAIT. You MUST preserve the EXACT facial likeness of the person in the photo. " +
-            "ABSOLUTE RULE #3: PRESERVE THE EXACT SHAPE, SILHOUETTE, AND STRUCTURE OF THE ORIGINAL IMAGE. " +
-            `Convert this portrait photo into a professional black and white line art illustration. ` +
-            `FACIAL LIKENESS IS CRITICAL: You MUST reproduce the EXACT facial features of this specific person: ` +
-            `face shape, eye shape and spacing, nose shape, mouth shape, jawline, hairline, hair style, beard/stubble if present, ears. ` +
-            `This must look like THIS SPECIFIC PERSON, not a generic face. ` +
-            `You MUST keep the EXACT same: (a) overall shape and silhouette, (b) camera angle and viewpoint, ` +
-            `(c) proportions and dimensions, (d) all visible structural details including clothing, accessories. ` +
-            `Do NOT simplify, generalize, or change ANY facial feature. ` +
-            `Do NOT change the viewpoint, orientation, rotation, or scale. ` +
-            "Pure white background (#FFFFFF). Clean black outlines only, no fill, no shading, no gradients, no grey. " +
+            // Flux Kontext Pro portrait prompt — concise and direct for image editing
+            `Convert this portrait photo to black and white line art. ` +
+            `Preserve the EXACT facial likeness: face shape, eye shape, nose, mouth, jawline, hair style. ` +
+            `Keep the same pose, angle, and proportions. ` +
             `${variation.style} ` +
-            "The entire person must be fully visible with 15% white margin on every side. " +
-            "FINAL REMINDER: Zero text, zero letters, zero numbers anywhere in the image."
+            `Pure white (#FFFFFF) background. Black outlines only, no fill, no shading, no grey. ` +
+            `No text, no letters, no numbers anywhere.`
           )
         : isToyOrFigurine
         ? (
-            "⚠️ CRITICAL RULE #0 — MOST IMPORTANT: THIS IS A TOY / FIGURINE / CARTOON CHARACTER. " +
-            "DO NOT DRAW REALISTIC HUMAN FACES. DO NOT ADD HUMAN SKIN, HUMAN EYES, HUMAN NOSE, OR HUMAN MOUTH. " +
-            "The face/features MUST look like the ORIGINAL TOY — cartoon eyes, toy proportions, plastic/stylized appearance. " +
-            "PRESERVE THE EXACT TOY APPEARANCE: cartoon eyes, exaggerated proportions, toy-like features exactly as they appear in the photo. " +
-            "DO NOT HUMANIZE the character in any way. Keep it looking like a toy/figurine/cartoon, NOT a real person. " +
-            "ABSOLUTE RULE #1: NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS — EVER. " +
-            "ABSOLUTE RULE #2: PRESERVE THE EXACT SHAPE, SILHOUETTE, AND STRUCTURE OF THE ORIGINAL TOY. " +
-            `Convert this toy/figurine photo into a professional black and white line art illustration. ` +
-            `You MUST keep the EXACT same: (a) overall toy shape and silhouette, (b) camera angle and viewpoint, ` +
-            `(c) proportions and dimensions, (d) all visible details including cartoon eyes, colors boundaries, accessories. ` +
-            `Do NOT simplify, generalize, or change ANY structural element. ` +
-            `Do NOT change the viewpoint, orientation, rotation, or scale. ` +
-            `Do NOT add any context, scene, environment, or additional objects not present in the original. ` +
-            "Draw EVERY visible detail from the original toy: seams, paint lines, accessories, logos, textures. " +
-            "Pure white background (#FFFFFF). Clean black outlines only, no fill, no shading, no gradients, no grey. " +
+            // Flux Kontext Pro toy/figurine prompt
+            `Convert this toy/figurine/cartoon character to black and white line art. ` +
+            `Preserve the EXACT toy appearance: cartoon eyes, toy proportions, stylized features. ` +
+            `Do NOT humanize — keep it looking like a toy/cartoon, not a real person. ` +
+            `Keep the same shape, angle, and proportions. ` +
             `${variation.style} ` +
-            "The entire toy must be fully visible with 15% white margin on every side. " +
-            "⚠️ FINAL REMINDER: This is a TOY. Keep cartoon/toy face features. NO realistic human faces. Zero text, zero numbers."
+            `Pure white (#FFFFFF) background. Black outlines only, no fill, no shading, no grey. ` +
+            `No text, no letters, no numbers anywhere.`
           )
         : (
-            "⚠️ CRITICAL RULE #0 — THIS IS THE MOST IMPORTANT RULE: " +
-            "DO NOT ADD ANY PEOPLE, HUMANS, HANDS, ARMS, LEGS, BODY PARTS, FACES, OR HUMAN FIGURES. " +
-            "DO NOT ADD MUSICAL NOTES, STAFF LINES, OR ANY MUSICAL NOTATION. " +
-            "DO NOT ADD BACKGROUNDS, SCENES, ENVIRONMENTS, OR CONTEXTUAL ELEMENTS. " +
-            "If the original photo contains NO people, the output MUST contain NO people. " +
-            "If the original photo contains NO musical notes, the output MUST contain NO musical notes. " +
-            "Draw ONLY the primary foreground object physically present in the original image — nothing else. " +
-            "ABSOLUTE RULE #1: NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS — EVER. " +
-            "ABSOLUTE RULE #2: PRESERVE THE EXACT SHAPE, SILHOUETTE, AND STRUCTURE OF THE ORIGINAL IMAGE. " +
-            "ABSOLUTE RULE #3: DO NOT ADD ANY PEOPLE, HUMANS, HANDS, ARMS, BODY PARTS, OR FIGURES THAT ARE NOT PRESENT IN THE ORIGINAL PHOTO. " +
-            "ABSOLUTE RULE #4: DRAW THE MOST VISUALLY PROMINENT SUBJECT. If the image shows a baby/character face printed on a product label as the dominant visual, draw THAT character as the line art subject (not the package). If the dominant subject is a physical object, draw that object. " +
-            "ABSOLUTE RULE #5: DO NOT DRAW BACKGROUND OBJECTS. If there are secondary objects in the background (pots, bags, furniture), IGNORE them — draw ONLY the main foreground subject. " +
-            "If the original image shows only an object (bag, flower, toy, product, item, logo, animal, etc.), draw ONLY that object floating on white background. " +
-            "NEVER add a person holding, wearing, or interacting with the object unless a person was already clearly visible in the original photo. " +
-            `Convert this image into a professional black and white line art illustration. ` +
-            `You MUST keep the EXACT same: (a) overall shape and silhouette, (b) camera angle and viewpoint, ` +
-            `(c) proportions and dimensions, (d) all visible structural details, patterns, logos, and decorative elements. ` +
-            `Do NOT simplify, generalize, or change ANY structural element. ` +
-            `Do NOT change the viewpoint, orientation, rotation, or scale. ` +
-            `Do NOT add any context, scene, environment, or additional objects not present in the original. ` +
-            "Draw EVERY visible detail from the original: seams, handles, straps, patterns, hardware, logos, textures. " +
-            "Pure white background (#FFFFFF). Clean black outlines only, no fill, no shading, no gradients, no grey. " +
+            // Flux Kontext Pro general object prompt — concise and direct
+            `Convert this image to black and white line art. ` +
+            `Draw ONLY what is visible in the original image — nothing more, nothing less. ` +
+            `If there is NO person in the photo, do NOT add any person. ` +
+            `If there are NO musical notes in the photo, do NOT add any musical notes. ` +
+            `If the photo shows a musical instrument alone (no player), draw ONLY the instrument. ` +
+            `Focus on the main foreground subject; ignore background objects. ` +
+            `Preserve the exact shape, silhouette, camera angle, and proportions of the original. ` +
             `${variation.style} ` +
-            "The entire object must be fully visible with 15% white margin on every side. " +
-            "⚠️ FINAL REMINDER: Zero text, zero letters, zero numbers. ONLY the exact object/subject from the original — NO people, NO hands, NO body parts added. Nothing extra."
+            `Pure white (#FFFFFF) background. Black outlines only, no fill, no shading, no grey. ` +
+            `No text, no letters, no numbers anywhere.`
           );
 
-      // Use images.edit with the original image as reference for maximum shape fidelity
-      const editFile = await (async () => {
-        const { toFile } = await import("openai");
-        return toFile(editSourceBuffer, "source.png", { type: "image/png" });
-      })();
+      // Use Flux Kontext Pro via Replicate for image editing with high shape fidelity
+      const replicateToken = process.env.REPLICATE_API_TOKEN;
+      if (!replicateToken) throw new Error("REPLICATE_API_TOKEN not configured");
 
-      const response = await openai.images.edit({
-        model: "gpt-image-1",
-        image: editFile,
-        prompt: editPrompt,
-        n: 1,
-        size: "1024x1024",
-        quality: "medium",
+      // Upload source image as base64 data URL for Replicate
+      const sourceBase64 = editSourceBuffer.toString("base64");
+      const sourceDataUrl = `data:image/png;base64,${sourceBase64}`;
+
+      // Start prediction
+      const startResponse = await fetch("https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-pro/predictions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${replicateToken}`,
+          "Content-Type": "application/json",
+          "Prefer": "wait=60",
+        },
+        body: JSON.stringify({
+          input: {
+            prompt: editPrompt,
+            input_image: sourceDataUrl,
+            aspect_ratio: "1:1",
+            output_format: "png",
+            safety_tolerance: 2,
+          }
+        })
       });
 
-      const imageData = response.data?.[0];
-      if (!imageData) throw new Error("לא הצלחנו לייצר תמונה");
-
-      let rawBuffer: Buffer;
-      if (imageData.b64_json) {
-        rawBuffer = Buffer.from(imageData.b64_json, "base64");
-      } else if (imageData.url) {
-        const imgResponse = await fetch(imageData.url);
-        if (!imgResponse.ok) throw new Error("שגיאה בהורדת התמונה שנוצרה");
-        rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
-      } else {
-        throw new Error("לא התקבלה תמונה מה-AI");
+      if (!startResponse.ok) {
+        const errText = await startResponse.text();
+        throw new Error(`Flux API error: ${startResponse.status} ${errText}`);
       }
+
+      let prediction = await startResponse.json() as { id: string; status: string; output?: string | string[]; urls?: { get: string } };
+
+      // Poll until done (if not completed in initial wait)
+      let pollAttempts = 0;
+      while (prediction.status !== "succeeded" && prediction.status !== "failed" && prediction.status !== "canceled" && pollAttempts < 30) {
+        await new Promise(r => setTimeout(r, 3000));
+        const pollRes = await fetch(prediction.urls?.get ?? `https://api.replicate.com/v1/predictions/${prediction.id}`, {
+          headers: { "Authorization": `Bearer ${replicateToken}` }
+        });
+        prediction = await pollRes.json() as typeof prediction;
+        pollAttempts++;
+      }
+
+      if (prediction.status !== "succeeded" || !prediction.output) {
+        throw new Error("Flux generation failed or timed out");
+      }
+
+      const outputUrl = Array.isArray(prediction.output) ? prediction.output[0] : prediction.output;
+      const imgResponse = await fetch(outputUrl);
+      if (!imgResponse.ok) throw new Error("שגיאה בהורדת התמונה שנוצרה");
+      let rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
 
       // Add white padding around the AI-generated image, then resize to max 1024px
       // (reduced from 1400 — potrace is O(n²) so smaller = much faster tracing)

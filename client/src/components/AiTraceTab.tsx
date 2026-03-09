@@ -948,7 +948,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   </p>
                 </div>
               </div>
-              <p className="text-xs text-gray-400">{isRtl ? "זה עשוי לקחת 30-90 שניות" : "This may take 30-90 seconds"}</p>
+              <p className="text-xs text-gray-400">{isRtl ? "זה עשוי לקחת 15-30 שניות" : "This may take 15-30 seconds"}</p>
               <div className="flex gap-1.5">
                 {[0, 1, 2].map((i) => (
                   <div key={i} className="w-1.5 h-1.5 rounded-full bg-teal-400" style={{animation: `bounce 1s infinite ${i * 0.15}s`}} />
