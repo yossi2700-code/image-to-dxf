@@ -65,19 +65,18 @@ const STYLE_VARIATIONS = [
   {
     label: "simple",
     style:
-      "ARTISTIC ADULT COLORING BOOK STYLE — elegant clean outlines, like a premium adult coloring book illustration. " +
-      "Draw the main silhouette with smooth confident strokes, plus only the MOST ESSENTIAL interior structural lines (maximum 5-8 key lines total). " +
+      "ARTISTIC LINE ART STYLE — clean, elegant outlines like a premium illustration or technical drawing. " +
+      "Draw the main silhouette with smooth confident strokes, plus the key interior structural lines that define the object's form (10-15 key lines). " +
+      "Include slightly more detail than a coloring book: show main structural divisions, key surface features, and important contours. " +
       "=== STRICTLY FORBIDDEN — DO NOT DRAW ANY OF THESE === " +
       "NO dots, NO stippling, NO cross-hatching, NO hatching lines, NO shading of any kind. " +
       "NO texture fills (mesh, grid, pattern, weave, fabric texture). " +
-      "NO small detail lines (stitching, perforations, ventilation holes, bolt heads, screws). " +
+      "NO very small detail lines (individual stitches, tiny perforations, bolt heads, screws). " +
       "NO dark filled areas or black regions — ALL areas must remain WHITE inside the outlines. " +
-      "NO decorative flourishes or ornamental details unless they ARE the main subject. " +
       "=== WHAT TO DRAW === " +
-      "ONLY: outer silhouette contour + major shape divisions (sole/upper of shoe, body/wing of car, etc). " +
-      "Think: if you printed this and gave it to an adult to color in with markers, every region would be a large open white area. " +
-      "Lines must be clean, confident, and uniform weight — like a skilled illustrator's ink pen. " +
-      "Artistic but minimal: beautiful simplicity over complex detail.",
+      "Outer silhouette + major shape divisions + key surface features (panels, edges, main structural lines). " +
+      "Lines must be clean, smooth, and uniform weight — like a skilled illustrator's ink pen. " +
+      "Elegant simplicity with just enough detail to clearly recognize the object.",
   },
   {
     label: "detailed",
@@ -288,13 +287,14 @@ async function runTraceJob(
           "CRITICAL: Describe ONLY the physical object itself — its shape, structure, camera angle, proportions. " +
           "DO NOT mention people holding it, playing it, or interacting with it unless the user specifically asked to include a person. " +
           "DO NOT mention musical notes, decorative backgrounds, or contextual elements unless they are physically part of the object."
-        : "Describe ONLY the main/dominant physical object in this image for line art generation. " +
+        : "Describe ONLY the single most prominent physical object in the FOREGROUND of this image for line art generation. " +
           "CRITICAL RULES: " +
-          "(1) Describe ONLY the object itself — its shape, structure, camera angle, proportions, and physical features. " +
+          "(1) Describe ONLY the primary object itself — its shape, structure, camera angle, proportions, and physical features. " +
           "(2) DO NOT mention any person holding, wearing, or interacting with the object. " +
-          "(3) DO NOT mention musical notes, staff lines, decorative backgrounds, or contextual scene elements. " +
-          "(4) If the image shows a musical instrument, describe ONLY the instrument — not any musician or notes. " +
-          "(5) If the image shows a product or object, describe ONLY that object — not the environment or context. " +
+          "(3) DO NOT mention images or illustrations PRINTED ON the object's packaging/label (e.g. if there is a baby face printed on a wipes package, IGNORE the baby — describe only the package shape). " +
+          "(4) DO NOT mention musical notes, staff lines, or any musical notation. " +
+          "(5) DO NOT mention background objects, secondary items, or anything behind the main object. " +
+          "(6) Focus on the SINGLE foreground object only — ignore everything else. " +
           "Focus on: exact camera angle/view, facing direction, shape, structure, key features, proportions.";
     }
 
@@ -305,10 +305,14 @@ async function runTraceJob(
           content:
             "You are a world-class expert at analyzing images for precise line art / engraving generation. " +
             "Your analysis will be used to generate line art that EXACTLY reproduces the OBJECT in the image. " +
-            "CRITICAL CONSTRAINT: Describe ONLY the physical object(s) — NEVER describe people holding/using the object, " +
-            "musical notes, staff lines, decorative backgrounds, or any contextual elements that are NOT part of the object itself. " +
+            "CRITICAL CONSTRAINT: Describe ONLY the primary physical object/product — NEVER describe: " +
+            "(a) people holding/using the object, " +
+            "(b) images or illustrations PRINTED ON the packaging/label (e.g. a baby face on a wipes package — ignore that baby, describe only the package shape), " +
+            "(c) musical notes, staff lines, or any musical notation, " +
+            "(d) background objects, secondary items, or anything not in the foreground. " +
+            "If the image shows a product package with a printed character/person on it, describe ONLY the package shape — NOT the printed character. " +
             "If the image shows a musical instrument, describe ONLY the instrument. " +
-            "If the image shows a product, describe ONLY the product. " +
+            "Focus on the SINGLE most prominent object in the foreground. " +
             "Accuracy is critical — any mistake in your description will cause the generated art to look wrong. " +
             "\n\nYou MUST describe ALL of the following with maximum precision:\n" +
             "(1) CAMERA ANGLE / VIEW TYPE — THE MOST CRITICAL DETAIL. State it first and be extremely specific:\n" +
@@ -427,10 +431,12 @@ async function runTraceJob(
             "DO NOT ADD BACKGROUNDS, SCENES, ENVIRONMENTS, OR CONTEXTUAL ELEMENTS. " +
             "If the original photo contains NO people, the output MUST contain NO people. " +
             "If the original photo contains NO musical notes, the output MUST contain NO musical notes. " +
-            "Draw ONLY the object(s) physically present in the original image — nothing else. " +
+            "Draw ONLY the primary foreground object physically present in the original image — nothing else. " +
             "ABSOLUTE RULE #1: NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS — EVER. " +
             "ABSOLUTE RULE #2: PRESERVE THE EXACT SHAPE, SILHOUETTE, AND STRUCTURE OF THE ORIGINAL IMAGE. " +
             "ABSOLUTE RULE #3: DO NOT ADD ANY PEOPLE, HUMANS, HANDS, ARMS, BODY PARTS, OR FIGURES THAT ARE NOT PRESENT IN THE ORIGINAL PHOTO. " +
+            "ABSOLUTE RULE #4: DO NOT DRAW IMAGES PRINTED ON PACKAGING. If the product has a baby, character, person, or illustration printed on its label/packaging, IGNORE that printed image completely — draw ONLY the package shape itself. " +
+            "ABSOLUTE RULE #5: DO NOT DRAW BACKGROUND OBJECTS. If there are secondary objects in the background (pots, bags, furniture), IGNORE them — draw ONLY the main foreground object. " +
             "If the original image shows only an object (bag, flower, toy, product, item, logo, animal, etc.), draw ONLY that object floating on white background. " +
             "NEVER add a person holding, wearing, or interacting with the object unless a person was already clearly visible in the original photo. " +
             `Convert this image into a professional black and white line art illustration. ` +
