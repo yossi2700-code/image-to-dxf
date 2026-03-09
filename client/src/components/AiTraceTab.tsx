@@ -727,7 +727,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             </div>
             <input type="hidden" value={description} onChange={(e) => setDescription(e.target.value)} />
 
-            {/* Variation selector — 2 modes only */}
+            {/* Variation selector — 2 modes with before/after previews */}
             <div className="mb-3">
               <label className="block text-xs font-semibold mb-1.5 text-gray-500">
                 {isRtl ? "רמת פירוט" : "Detail Level"}
@@ -740,37 +740,77 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   const descs = isRtl
                     ? ["קווי מתאר בסיסיים, נקיים", "עשיר בפרטים, מדויק"]
                     : ["Basic clean outlines", "Rich detail, precise"];
+                  // before = original photo, after = DXF result
+                  const previewImages = [
+                    {
+                      before: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png',
+                      after: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-sunglasses_e7cbfe74.png',
+                    },
+                    {
+                      before: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-sneaker_9fe887cf.png',
+                      after: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-motorcycle_9b48b7de.png',
+                    },
+                  ];
                   const gradients = [
                     'linear-gradient(135deg, #6366f1, #818cf8)',
                     'linear-gradient(135deg, #0d9488, #06b6d4)',
                   ];
+                  const borderColors = ['#6366f1', '#0d9488'];
                   const shadows = [
-                    '0 3px 10px rgba(99,102,241,0.4)',
-                    '0 3px 10px rgba(13,148,136,0.4)',
+                    '0 3px 12px rgba(99,102,241,0.35)',
+                    '0 3px 12px rgba(13,148,136,0.35)',
                   ];
                   const isSelected = selectedVariation === v;
                   const isRecommended = v === 1;
+                  const preview = previewImages[v - 1];
                   return (
                     <button
                       key={v}
                       type="button"
                       onClick={() => setSelectedVariation(v)}
-                      className="relative flex flex-col items-center justify-center gap-0.5 py-3 px-2 rounded-xl text-xs font-medium transition-all hover:scale-105 active:scale-95"
+                      className="relative flex flex-col items-start rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-95 overflow-hidden"
                       style={isSelected
-                        ? { background: gradients[v-1], color: 'white', border: '2px solid transparent', boxShadow: shadows[v-1], transform: 'scale(1.04)' }
-                        : { background: '#f8fafc', color: '#374151', border: '2px solid #e2e8f0' }
+                        ? { border: `2px solid ${borderColors[v-1]}`, boxShadow: shadows[v-1], background: '#fff' }
+                        : { border: '2px solid #e2e8f0', background: '#f8fafc' }
                       }
                     >
-                      {isRecommended && (
-                        <span
-                          className="absolute -top-2 left-1/2 -translate-x-1/2 text-xs font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
-                          style={{ background: 'linear-gradient(135deg, #f59e0b, #f97316)', color: 'white', fontSize: '9px', lineHeight: '1.2', boxShadow: '0 1px 4px rgba(245,158,11,0.4)' }}
-                        >
-                          {isRtl ? "מומלץ" : "Recommended"}
-                        </span>
+                      {/* Preview image strip: before → after */}
+                      <div className="relative w-full flex" style={{ height: '72px' }}>
+                        <img
+                          src={preview.before}
+                          alt="before"
+                          className="w-1/2 h-full object-cover"
+                          style={{ borderRadius: 0 }}
+                        />
+                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center rounded-full w-5 h-5 text-white text-xs font-bold"
+                          style={{ background: isSelected ? gradients[v-1] : '#9ca3af', boxShadow: '0 1px 4px rgba(0,0,0,0.3)' }}
+                        >→</div>
+                        <img
+                          src={preview.after}
+                          alt="after"
+                          className="w-1/2 h-full object-cover"
+                          style={{ borderRadius: 0, filter: 'grayscale(1) contrast(1.4)' }}
+                        />
+                        {isRecommended && (
+                          <span
+                            className="absolute top-1 right-1 text-xs font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
+                            style={{ background: 'linear-gradient(135deg, #f59e0b, #f97316)', color: 'white', fontSize: '8px', lineHeight: '1.4', boxShadow: '0 1px 4px rgba(245,158,11,0.4)' }}
+                          >
+                            {isRtl ? "מומלץ" : "Recommended"}
+                          </span>
+                        )}
+                      </div>
+                      {/* Label row */}
+                      <div className="w-full px-2 py-1.5 flex flex-col gap-0.5"
+                        style={{ color: isSelected ? borderColors[v-1] : '#374151' }}
+                      >
+                        <span className="font-bold text-xs">{labels[v - 1]}</span>
+                        <span style={{ fontSize: '9px', opacity: 0.7 }}>{descs[v - 1]}</span>
+                      </div>
+                      {/* Selected indicator */}
+                      {isSelected && (
+                        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-1 rounded-full" style={{ background: gradients[v-1] }} />
                       )}
-                      <span className="font-bold text-sm mt-1">{labels[v - 1]}</span>
-                      <span style={{ fontSize: '9px', opacity: isSelected ? 0.9 : 0.6, textAlign: 'center' }}>{descs[v - 1]}</span>
                     </button>
                   );
                 })}
