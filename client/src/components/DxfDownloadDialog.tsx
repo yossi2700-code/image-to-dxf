@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Download, X, FileCode2, FileText, Loader2, Share2 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -194,7 +195,7 @@ export function DxfDownloadDialog({
     setError(null);
     try {
       const resp = await fetch(dxfUrl);
-      if (!resp.ok) throw new Error("שגיאה בהורדת הקובץ");
+      if (!resp.ok) throw new Error("Download error");
       const originalDxf = await resp.text();
       const scaledDxf = scaleDxfContent(originalDxf, scaleFactor);
       const blob = new Blob([scaledDxf], { type: "application/octet-stream" });
@@ -263,21 +264,22 @@ export function DxfDownloadDialog({
       if (err instanceof Error && err.name === "AbortError") return; // user cancelled share
       console.error("PDF action error:", err);
       const msg = err instanceof Error ? err.message : String(err);
-      setError(`שגיאה בייצוא PDF: ${msg}`);
+      setError(`PDF export error: ${msg}`);
     } finally {
       setIsPdfLoading(false);
     }
   };
 
   const isLoading = isDxfLoading || isPdfLoading;
+  const { t, isRtl } = useLanguage();
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && !isLoading && onClose()}>
-      <DialogContent className="max-w-sm w-full" dir="rtl">
+      <DialogContent className="max-w-sm w-full" dir={isRtl ? "rtl" : "ltr"}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-right">
             <FileCode2 className="w-5 h-5 text-primary" />
-            הורדת קובץ
+            {t("downloadDxfTitle")}
           </DialogTitle>
         </DialogHeader>
 
@@ -287,7 +289,7 @@ export function DxfDownloadDialog({
 
           {/* Stats row */}
           <div className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-2 text-sm">
-            <span className="text-muted-foreground">{segmentCount.toLocaleString()} קווים</span>
+            <span className="text-muted-foreground">{segmentCount.toLocaleString()} {t("linesCount")}</span>
             <span className="font-semibold text-primary">
               {formatMm(outputWidthMm)} × {formatMm(outputHeightMm)}
             </span>
@@ -295,12 +297,12 @@ export function DxfDownloadDialog({
 
           {/* Filename */}
           <div>
-            <label className="text-sm font-semibold block mb-1.5">שם הקובץ</label>
+            <label className="text-sm font-semibold block mb-1.5">{t("fileNameLabel")}</label>
             <div className="flex items-center gap-1.5">
               <Input
                 value={filename}
                 onChange={(e) => setFilename(e.target.value)}
-                placeholder="שם הקובץ..."
+                placeholder={t("fileNamePlaceholder")}
                 className="text-right flex-1 text-sm"
                 dir="rtl"
               />
@@ -311,7 +313,7 @@ export function DxfDownloadDialog({
           {/* Scale slider */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-semibold">גודל הפלט</label>
+              <label className="text-sm font-semibold">{t("outputSizeLabel")}</label>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-primary tabular-nums">{scalePercent}%</span>
                 <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
@@ -333,7 +335,7 @@ export function DxfDownloadDialog({
                 className="text-primary font-semibold underline underline-offset-2 cursor-pointer"
                 onClick={() => setScalePercent(100)}
               >
-                גודל אמיתי (100%)
+                {t("realSize100")}
               </button>
               <span>100% ({formatMm(realWidthMm)})</span>
             </div>
@@ -343,7 +345,7 @@ export function DxfDownloadDialog({
           {useShareSheet && (
             <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700">
               <Share2 className="w-4 h-4 shrink-0" />
-              <span>הקובץ יישלח דרך תפריט השיתוף — שמור לקבצים, WhatsApp, AirDrop ועוד</span>
+              <span>{t("shareHint")}</span>
             </div>
           )}
 
@@ -369,7 +371,7 @@ export function DxfDownloadDialog({
               ) : (
                 <Download className="w-5 h-5 ml-2" />
               )}
-              {isDxfLoading ? "מכין..." : useShareSheet ? "שתף / שמור DXF" : "הורד DXF"}
+              {isDxfLoading ? t("preparingDxf") : useShareSheet ? t("shareOrSaveDxf") : t("downloadDxfBtn")}
             </Button>
 
             {/* PDF button */}
@@ -388,7 +390,7 @@ export function DxfDownloadDialog({
                 ) : (
                   <FileText className="w-5 h-5 ml-2" />
                 )}
-                {isPdfLoading ? "מייצא PDF..." : useShareSheet ? "שתף / שמור PDF" : "הורד PDF"}
+                {isPdfLoading ? t("exportingPdf") : useShareSheet ? t("shareOrSavePdf") : t("downloadPdfBtn")}
               </Button>
             )}
 
@@ -401,7 +403,7 @@ export function DxfDownloadDialog({
               className="w-full text-muted-foreground"
             >
               <X className="w-4 h-4 ml-1" />
-              ביטול
+              {t("cancel")}
             </Button>
           </div>
         </div>

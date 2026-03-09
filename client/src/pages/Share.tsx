@@ -12,6 +12,7 @@ import {
   Share2,
   FileCode2,
 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // ─── SVG Zoom Viewer ──────────────────────────────────────────────────────────
 
@@ -60,6 +61,7 @@ function SvgViewer({ svg }: { svg: string }) {
 export default function SharePage() {
   const [, params] = useRoute("/share/:token");
   const [, navigate] = useLocation();
+  const { t, isRtl } = useLanguage();
   const token = params?.token ?? "";
 
   const { data: design, isLoading } = trpc.history.getByShareToken.useQuery(
@@ -70,7 +72,7 @@ export default function SharePage() {
   // Update page meta for WhatsApp Open Graph preview
   useEffect(() => {
     if (!design) return;
-    const title = design.shareTitle ?? design.description ?? "עיצוב DXF";
+    const title = design.shareTitle ?? design.description ?? t("shareDxfDesign");
     document.title = `${title} — ImageToDXF`;
 
     const setMeta = (property: string, content: string) => {
@@ -84,7 +86,7 @@ export default function SharePage() {
     };
 
     setMeta("og:title", title);
-    setMeta("og:description", `${design.segmentCount?.toLocaleString() ?? "?"} קווי וקטור • מוכן לחיתוך לייזר ו-CNC`);
+    setMeta("og:description", `${design.segmentCount?.toLocaleString() ?? "?"} ${t("shareVectorLines")}`);
     setMeta("og:type", "website");
     setMeta("og:url", window.location.href);
     if (design.imageUrl) setMeta("og:image", design.imageUrl);
@@ -99,7 +101,7 @@ export default function SharePage() {
   };
 
   const handleWhatsApp = () => {
-    const text = encodeURIComponent(`🎨 ${design?.shareTitle ?? design?.description ?? "עיצוב DXF"}\nצפה בעיצוב וקטורי מוכן לחיתוך לייזר:\n${window.location.href}`);
+    const text = encodeURIComponent(`🎨 ${design?.shareTitle ?? design?.description ?? t("shareDxfDesign")}\n${window.location.href}`);
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
@@ -108,7 +110,7 @@ export default function SharePage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="text-center space-y-3">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">טוען עיצוב...</p>
+          <p className="text-muted-foreground">{t("shareLoadingDesign")}</p>
         </div>
       </div>
     );
@@ -116,15 +118,15 @@ export default function SharePage() {
 
   if (!design) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50" dir="rtl">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50" dir={isRtl ? "rtl" : "ltr"}>
         <Card className="max-w-sm w-full mx-4">
           <CardContent className="p-8 text-center space-y-4">
             <div className="text-5xl">🔗</div>
-            <h2 className="text-xl font-bold">קישור לא נמצא</h2>
-            <p className="text-muted-foreground text-sm">הקישור אינו תקין או שפג תוקפו.</p>
+            <h2 className="text-xl font-bold">{t("shareLinkNotFound")}</h2>
+            <p className="text-muted-foreground text-sm">{t("shareLinkInvalid")}</p>
             <Button className="w-full" onClick={() => navigate("/")}>
               <ArrowRight className="w-4 h-4 ml-2" />
-              חזור לדף הראשי
+              {t("shareBackToHome")}
             </Button>
           </CardContent>
         </Card>
@@ -133,10 +135,10 @@ export default function SharePage() {
   }
 
   const isAi = design.actionType === "ai_generate";
-  const title = design.shareTitle ?? design.description ?? (isAi ? "עיצוב AI" : "המרת תמונה");
+  const title = design.shareTitle ?? design.description ?? (isAi ? t("shareAiDesign") : t("shareImageConversion"));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50" dir={isRtl ? "rtl" : "ltr"}>
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -147,7 +149,7 @@ export default function SharePage() {
           <div className="flex items-center gap-2">
             <Badge variant={isAi ? "default" : "secondary"} className="gap-1">
               {isAi ? <Sparkles className="w-3 h-3" /> : <Upload className="w-3 h-3" />}
-              {isAi ? "עיצוב AI" : "המרת תמונה"}
+              {isAi ? t("shareAiDesign") : t("shareImageConversion")}
             </Badge>
           </div>
         </div>
@@ -160,7 +162,7 @@ export default function SharePage() {
           <h1 className="text-2xl font-bold text-foreground">{title}</h1>
           {design.segmentCount != null && design.segmentCount > 0 && (
             <p className="text-muted-foreground text-sm">
-              {design.segmentCount.toLocaleString()} קווי וקטור • מוכן לחיתוך לייזר ו-CNC
+              {design.segmentCount.toLocaleString()} {t("shareVectorLines")}
             </p>
           )}
         </div>
@@ -181,22 +183,22 @@ export default function SharePage() {
           {design.dxfUrl && (
             <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 font-semibold h-12" onClick={handleDownload}>
               <Download className="w-4 h-4 ml-2" />
-              הורד קובץ DXF
+              {t("shareDownloadDxf")}
             </Button>
           )}
           <Button size="lg" variant="outline" className="w-full h-12 border-green-500 text-green-700 hover:bg-green-50 font-semibold" onClick={handleWhatsApp}>
             <Share2 className="w-4 h-4 ml-2" />
-            שתף בוואטסאפ
+            {t("shareWhatsApp")}
           </Button>
           <Button size="lg" variant="outline" className="w-full h-12" onClick={() => navigate("/")}>
             <FileCode2 className="w-4 h-4 ml-2" />
-            צור עיצוב חדש
+            {t("shareCreateNew")}
           </Button>
         </div>
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground pt-4">
-          נוצר עם <span className="font-semibold text-primary">ImageToDXF</span> — ממיר תמונות לקבצי וקטור לחיתוך לייזר
+          <span className="font-semibold text-primary">ImageToDXF</span> — {t("shareFooter")}
         </p>
       </main>
     </div>

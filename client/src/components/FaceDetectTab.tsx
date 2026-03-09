@@ -86,7 +86,7 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
   const styledSvg = svgContent
     .replace(/fill="[^"]*"/g, 'fill="none"')
     .replace(/fill:[^;"']*(;|(?="))/g, 'fill:none$1')
-    .replace(/<path /g, '<path stroke="black" stroke-width="1.5" fill="none" ');
+    .replace(/<path /g, '<path stroke="black" stroke-width="0.5" fill="none" ');
 
   const Toolbar = ({ onClose }: { onClose?: (e: React.MouseEvent) => void }) => (
     <div className="flex items-center gap-1 px-3 border-b bg-muted/30" style={{ minHeight: 44 }}>
