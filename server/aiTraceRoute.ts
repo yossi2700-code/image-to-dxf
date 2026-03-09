@@ -65,13 +65,13 @@ const STYLE_VARIATIONS = [
   {
     label: "simple",
     style:
-      "Minimalist coloring-book style line art. Draw ONLY the outer silhouette and the most essential major shapes. " +
-      "ALL lines MUST be smooth, continuous, and uniformly thick throughout the entire drawing. " +
-      "STRICTLY FORBIDDEN: stray lines, broken segments, isolated short strokes, disconnected marks, or lines that do not connect to the main outline. " +
-      "Ignore fine details, textures, interior decorations, grilles, small features, and complex inner structures. " +
-      "Every line must start and end connected to another line — no floating or orphan strokes. " +
-      "Result must look like a clean, simple coloring page for children. " +
-      "NO texture, NO hatching, NO shading, NO fill. Pure uniform black lines on white.",
+      "COLORING BOOK STYLE — minimal clean outlines only. " +
+      "Draw ONLY the main outer silhouette and 2-3 essential interior lines that define the basic shape. " +
+      "OMIT all fine details, textures, grilles, vents, bolts, screws, patterns, and decorative elements. " +
+      "Think: a simple children's coloring book page — just the basic recognizable shape with a few key interior lines. " +
+      "ALL lines must be ultra-thin and uniform — like a 0.1mm technical pen. " +
+      "NO thick strokes, NO varying line weights, NO hatching, NO shading, NO fill. " +
+      "Maximum simplicity: if in doubt, leave it out. Only draw what is absolutely necessary to recognize the object.",
   },
   {
     label: "detailed",

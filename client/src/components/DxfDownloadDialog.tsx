@@ -2,13 +2,17 @@
  * DxfDownloadDialog — unified download dialog for ALL features:
  * - Custom filename input
  * - Scale 10%–100% (mm only)
- * - DXF download with scaling
- * - PDF export via jspdf + svg2pdf (actual file, not browser print)
+ * - DXF download / share
+ * - PDF export / share
  * - SVG mini preview
+ *
+ * On iOS/Android: all download buttons trigger the native Share Sheet
+ * (allows saving to Files, WhatsApp, AirDrop, Mail, etc.)
+ * On desktop: standard file download behavior.
  *
  * Used by: Upload tab, AI Generate tab, AI Trace tab, History page
  */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,10 +47,7 @@ function scaleDxfContent(dxfText: string, scaleFactor: number): string {
   );
 }
 
-// ─── PDF Export via jsPDF + svg2pdf.js ───────────────────────────────────────
-// Generates a real PDF file (Blob) in the browser — no print dialog needed.
-// Uses server-side SVG→PNG conversion (sharp) to avoid Canvg/OffscreenCanvas issues on iOS Safari.
-// Returns the PDF as an ArrayBuffer for download or Web Share API.
+// ─── PDF Export via jsPDF ─────────────────────────────────────────────────────
 
 async function generatePdfBlob(
   svgContent: string,
@@ -55,7 +56,6 @@ async function generatePdfBlob(
 ): Promise<ArrayBuffer> {
   const { jsPDF } = await import("jspdf");
 
-  // Extract actual SVG aspect ratio from viewBox to avoid cropping
   const vbMatch = svgContent.match(/viewBox=["']([^"']+)["']/);
   let svgAspect = widthMm > 0 && heightMm > 0 ? heightMm / widthMm : 1;
   if (vbMatch) {
@@ -67,7 +67,6 @@ async function generatePdfBlob(
     }
   }
 
-  // Cap to A4 page size (210×297 mm) while preserving aspect ratio
   const A4_W = 210;
   const A4_H = 297;
   let pdfW = Math.min(widthMm, A4_W);
@@ -76,15 +75,13 @@ async function generatePdfBlob(
     pdfH = A4_H;
     pdfW = pdfH / svgAspect;
   }
-  // Ensure minimum size
   if (pdfW < 10) pdfW = 10;
   if (pdfH < 10) pdfH = 10;
 
   const PX_PER_MM = 96 / 25.4;
-  const widthPx = Math.min(Math.round(pdfW * PX_PER_MM * 2), 3000); // 2x for quality, max 3000px
+  const widthPx = Math.min(Math.round(pdfW * PX_PER_MM * 2), 3000);
   const heightPx = Math.min(Math.round(pdfH * PX_PER_MM * 2), 3000);
 
-  // Step 1: Convert SVG → PNG on the server (works on all browsers including iOS Safari)
   const pngRes = await fetch("/api/svg-to-png", {
     method: "POST",
     credentials: "include",
@@ -96,7 +93,6 @@ async function generatePdfBlob(
     throw new Error((err.message as string) || `SVG-to-PNG failed: ${pngRes.status}`);
   }
 
-  // Step 2: Convert PNG blob → base64 data URL
   const pngBlob = await pngRes.blob();
   const imgData = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -105,15 +101,24 @@ async function generatePdfBlob(
     reader.readAsDataURL(pngBlob);
   });
 
-  // Step 3: Create PDF from PNG image (no Canvg needed)
   const pdf = new jsPDF({
     orientation: pdfW >= pdfH ? "landscape" : "portrait",
     unit: "mm",
     format: [pdfW, pdfH],
   });
   pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
-
   return pdf.output("arraybuffer") as ArrayBuffer;
+}
+
+// ─── Device detection ─────────────────────────────────────────────────────────
+
+function isMobileDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
+
+function canShareFiles(): boolean {
+  return typeof navigator !== "undefined" && !!navigator.share && !!navigator.canShare;
 }
 
 // ─── SVG Mini Preview ─────────────────────────────────────────────────────────
@@ -160,13 +165,12 @@ export function DxfDownloadDialog({
   const [scalePercent, setScalePercent] = useState(100);
   const [isDxfLoading, setIsDxfLoading] = useState(false);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
-  const [isShareLoading, setIsShareLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Detect if Web Share API supports file sharing (iOS Safari 15+, Android Chrome)
-  const canShareFiles = typeof navigator !== "undefined" && !!navigator.share && !!navigator.canShare;
-  // Detect iOS/iPadOS — on these devices a.download doesn't work for blobs, use share sheet instead
-  const isIOS = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isMobile = isMobileDevice();
+  const supportsShare = canShareFiles();
+  // On mobile with share support → use share sheet. On desktop → direct download.
+  const useShareSheet = isMobile && supportsShare;
 
   useEffect(() => {
     if (open) {
@@ -176,20 +180,16 @@ export function DxfDownloadDialog({
     }
   }, [open, defaultFilename]);
 
-  // Physical size at 100%
   const realWidthMm = svgWidth * PX_TO_MM;
   const realHeightMm = svgHeight * PX_TO_MM;
-
-  // Scale factor: px→mm AND user percentage
   const scaleFactor = PX_TO_MM * (scalePercent / 100);
   const outputWidthMm = svgWidth * scaleFactor;
   const outputHeightMm = svgHeight * scaleFactor;
-
   const cleanFilename = (filename.trim() || "design").slice(0, 30).trimEnd();
 
-  // ── DXF Download ──────────────────────────────────────────────────────────
+  // ── DXF: Share Sheet on mobile, direct download on desktop ───────────────
 
-  const handleDxfDownload = async () => {
+  const handleDxfAction = async () => {
     setIsDxfLoading(true);
     setError(null);
     try {
@@ -197,7 +197,17 @@ export function DxfDownloadDialog({
       if (!resp.ok) throw new Error("שגיאה בהורדת הקובץ");
       const originalDxf = await resp.text();
       const scaledDxf = scaleDxfContent(originalDxf, scaleFactor);
-      const blob = new Blob([scaledDxf], { type: "application/dxf" });
+      const blob = new Blob([scaledDxf], { type: "application/octet-stream" });
+      const file = new File([blob], `${cleanFilename}.dxf`, { type: "application/octet-stream" });
+
+      if (useShareSheet && navigator.canShare && navigator.canShare({ files: [file] })) {
+        // Mobile: open native Share Sheet
+        await navigator.share({ files: [file], title: cleanFilename });
+        onClose();
+        return;
+      }
+
+      // Desktop: direct download
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -207,8 +217,9 @@ export function DxfDownloadDialog({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       onClose();
-    } catch (err) {
-      console.error("DXF download error:", err);
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === "AbortError") return; // user cancelled share
+      console.error("DXF action error:", err);
       // Fallback: direct link
       const a = document.createElement("a");
       a.href = dxfUrl;
@@ -220,10 +231,9 @@ export function DxfDownloadDialog({
     }
   };
 
-  // ── PDF Download ────────────────────────────────────────────
-  // Generates a real PDF file and triggers download (no print dialog)
+  // ── PDF: Share Sheet on mobile, direct download on desktop ───────────────
 
-  const handlePdfExport = async () => {
+  const handlePdfAction = async () => {
     if (!svgContent) return;
     setIsPdfLoading(true);
     setError(null);
@@ -232,18 +242,14 @@ export function DxfDownloadDialog({
       const blob = new Blob([pdfBytes], { type: "application/pdf" });
       const file = new File([blob], `${cleanFilename}.pdf`, { type: "application/pdf" });
 
-      // On iOS, a.download doesn't work for blobs — use Web Share API instead
-      if (isIOS && canShareFiles && navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], title: cleanFilename });
-          return;
-        } catch (shareErr: unknown) {
-          if (shareErr instanceof Error && shareErr.name === "AbortError") return; // user cancelled
-          // Fall through to blob URL method
-        }
+      if (useShareSheet && navigator.canShare && navigator.canShare({ files: [file] })) {
+        // Mobile: open native Share Sheet
+        await navigator.share({ files: [file], title: cleanFilename });
+        onClose();
+        return;
       }
 
-      // Desktop / Android: use blob URL download
+      // Desktop: direct download
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -252,8 +258,10 @@ export function DxfDownloadDialog({
       a.click();
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch (err) {
-      console.error("PDF export error:", err);
+      onClose();
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === "AbortError") return; // user cancelled share
+      console.error("PDF action error:", err);
       const msg = err instanceof Error ? err.message : String(err);
       setError(`שגיאה בייצוא PDF: ${msg}`);
     } finally {
@@ -261,92 +269,7 @@ export function DxfDownloadDialog({
     }
   };
 
-  // ── Share PDF (Web Share API) ──────────────────────────────────────
-  // Generates a real PDF and shares it via native share sheet on iOS/Android
-
-  const [isSharePdfLoading, setIsSharePdfLoading] = useState(false);
-
-  const handleSharePdf = async () => {
-    if (!svgContent) return;
-    setIsSharePdfLoading(true);
-    setError(null);
-    try {
-      const pdfBytes = await generatePdfBlob(svgContent, outputWidthMm, outputHeightMm);
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
-      const file = new File([blob], `${cleanFilename}.pdf`, { type: "application/pdf" });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: cleanFilename });
-      } else {
-        // Fallback: download the PDF
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${cleanFilename}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }
-    } catch (err: unknown) {
-      if (err instanceof Error && err.name !== "AbortError") {
-        console.error("Share PDF error:", err);
-        setError("שגיאה בשיתוף PDF. נסה להוריד ולשתף ידנית.");
-      }
-    } finally {
-      setIsSharePdfLoading(false);
-    }
-  };
-  // ── Share File (Web Share API) ────────────────────────────────────────────
-  // Shares the actual DXF file directly — on iOS this opens the native share sheet
-  // allowing the user to send the file via WhatsApp, AirDrop, Mail, etc.
-
-  const handleShareFile = async () => {
-    setIsShareLoading(true);
-    setError(null);
-    try {
-      const resp = await fetch(dxfUrl);
-      if (!resp.ok) throw new Error("שגיאה בהורדת הקובץ");
-      const originalDxf = await resp.text();
-      const scaledDxf = scaleDxfContent(originalDxf, scaleFactor);
-      const blob = new Blob([scaledDxf], { type: "application/octet-stream" });
-      const file = new File([blob], `${cleanFilename}.dxf`, { type: "application/octet-stream" });
-
-      // Check if this browser/device can share files
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: cleanFilename,
-        });
-      } else {
-        // Fallback: share as SVG file if DXF not supported
-        const svgBlob = new Blob([svgContent], { type: "image/svg+xml" });
-        const svgFile = new File([svgBlob], `${cleanFilename}.svg`, { type: "image/svg+xml" });
-        if (navigator.canShare && navigator.canShare({ files: [svgFile] })) {
-          await navigator.share({
-            files: [svgFile],
-            title: cleanFilename,
-          });
-        } else {
-          // Last fallback: share URL only
-          await navigator.share({
-            title: cleanFilename,
-            text: `עיצוב וקטורי: ${cleanFilename}`,
-            url: window.location.href,
-          });
-        }
-      }
-    } catch (err: unknown) {
-      // User cancelled share — not an error
-      if (err instanceof Error && err.name !== "AbortError") {
-        console.error("Share error:", err);
-        setError("שגיאה בשיתוף הקובץ. נסה להוריד ולשתף ידנית.");
-      }
-    } finally {
-      setIsShareLoading(false);
-    }
-  };
-
-  const isLoading = isDxfLoading || isPdfLoading || isShareLoading || isSharePdfLoading;
+  const isLoading = isDxfLoading || isPdfLoading;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && !isLoading && onClose()}>
@@ -416,6 +339,14 @@ export function DxfDownloadDialog({
             </div>
           </div>
 
+          {/* Mobile share hint */}
+          {useShareSheet && (
+            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700">
+              <Share2 className="w-4 h-4 shrink-0" />
+              <span>הקובץ יישלח דרך תפריט השיתוף — שמור לקבצים, WhatsApp, AirDrop ועוד</span>
+            </div>
+          )}
+
           {/* Error */}
           {error && (
             <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
@@ -423,76 +354,42 @@ export function DxfDownloadDialog({
 
           {/* Action buttons */}
           <div className="flex flex-col gap-2 pt-1">
-            {/* DXF Download */}
-            <div className="flex gap-2">
+            {/* DXF button */}
+            <Button
+              size="lg"
+              className="w-full font-bold text-base h-12 text-white hover:opacity-90 transition-all"
+              style={{ background: 'linear-gradient(135deg, #059669, #10b981)', border: 'none', boxShadow: '0 3px 10px rgba(5,150,105,0.3)' } as React.CSSProperties}
+              onClick={handleDxfAction}
+              disabled={isLoading}
+            >
+              {isDxfLoading ? (
+                <Loader2 className="w-5 h-5 ml-2 animate-spin" />
+              ) : useShareSheet ? (
+                <Share2 className="w-5 h-5 ml-2" />
+              ) : (
+                <Download className="w-5 h-5 ml-2" />
+              )}
+              {isDxfLoading ? "מכין..." : useShareSheet ? "שתף / שמור DXF" : "הורד DXF"}
+            </Button>
+
+            {/* PDF button */}
+            {svgContent && (
               <Button
                 size="lg"
-                className="flex-1 font-bold text-base h-12 text-white hover:opacity-90 transition-all"
-                style={{ background: 'linear-gradient(135deg, #059669, #10b981)', border: 'none', boxShadow: '0 3px 10px rgba(5,150,105,0.3)' } as React.CSSProperties}
-                onClick={handleDxfDownload}
+                className="w-full font-bold text-base h-12 text-white hover:opacity-90 transition-all"
+                style={{ background: 'linear-gradient(135deg, #2563eb, #3b82f6)', border: 'none', boxShadow: '0 3px 10px rgba(37,99,235,0.3)' } as React.CSSProperties}
+                onClick={handlePdfAction}
                 disabled={isLoading}
               >
-                {isDxfLoading ? (
+                {isPdfLoading ? (
                   <Loader2 className="w-5 h-5 ml-2 animate-spin" />
+                ) : useShareSheet ? (
+                  <Share2 className="w-5 h-5 ml-2" />
                 ) : (
-                  <Download className="w-5 h-5 ml-2" />
+                  <FileText className="w-5 h-5 ml-2" />
                 )}
-                {isDxfLoading ? "מוריד..." : "הורד DXF"}
+                {isPdfLoading ? "מייצא PDF..." : useShareSheet ? "שתף / שמור PDF" : "הורד PDF"}
               </Button>
-              {/* Share DXF — iOS/Android native share sheet */}
-              {canShareFiles && (
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="h-12 px-3 bg-green-50 border-green-300 hover:bg-green-100"
-                  onClick={handleShareFile}
-                  disabled={isLoading}
-                  title="שתף קובץ DXF"
-                >
-                  {isShareLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-green-700" />
-                  ) : (
-                    <Share2 className="w-5 h-5 text-green-700" />
-                  )}
-                </Button>
-              )}
-            </div>
-
-            {/* PDF Download */}
-            {svgContent && (
-              <div className="flex gap-2">
-                <Button
-                  size="lg"
-                  className="flex-1 font-bold text-base h-12 text-white hover:opacity-90 transition-all"
-                  style={{ background: 'linear-gradient(135deg, #2563eb, #3b82f6)', border: 'none', boxShadow: '0 3px 10px rgba(37,99,235,0.3)' } as React.CSSProperties}
-                  onClick={handlePdfExport}
-                  disabled={isLoading}
-                >
-                  {isPdfLoading ? (
-                    <Loader2 className="w-5 h-5 ml-2 animate-spin" />
-                  ) : (
-                    <FileText className="w-5 h-5 ml-2" />
-                  )}
-                  {isPdfLoading ? "מייצא PDF..." : "הורד PDF"}
-                </Button>
-                {/* Share PDF — iOS/Android native share sheet */}
-                {canShareFiles && (
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="h-12 px-3 bg-blue-50 border-blue-300 hover:bg-blue-100"
-                    onClick={handleSharePdf}
-                    disabled={isLoading}
-                    title="שתף PDF"
-                  >
-                    {isSharePdfLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin text-blue-700" />
-                    ) : (
-                      <Share2 className="w-5 h-5 text-blue-700" />
-                    )}
-                  </Button>
-                )}
-              </div>
             )}
 
             {/* Cancel */}

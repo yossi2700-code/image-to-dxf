@@ -227,6 +227,28 @@ function cleanDesc(desc: string | null, fallback: string): string {
   return clean.length > 55 ? clean.slice(0, 55) + "…" : clean;
 }
 
+function getFeatureLabel(feature: string | null, actionType: string, isRtl: boolean): string {
+  switch (feature) {
+    case "convert": return isRtl ? "המרה" : "Convert";
+    case "ai_trace": return "AI Outline";
+    case "ai_generate": return isRtl ? "AI יצירה" : "AI Create";
+    case "portrait": return isRtl ? "פורטרט" : "Portrait";
+    case "document_redraw": return isRtl ? "מסמך" : "Document";
+    default: return actionType === "ai_generate" ? (isRtl ? "AI יצירה" : "AI Create") : (isRtl ? "המרה" : "Convert");
+  }
+}
+
+function getFeatureBadgeClass(feature: string | null, actionType: string): string {
+  switch (feature) {
+    case "convert": return "bg-blue-100 text-blue-700 border-blue-200";
+    case "ai_trace": return "bg-purple-100 text-purple-700 border-purple-200";
+    case "ai_generate": return "bg-amber-100 text-amber-700 border-amber-200";
+    case "portrait": return "bg-rose-100 text-rose-700 border-rose-200";
+    case "document_redraw": return "bg-teal-100 text-teal-700 border-teal-200";
+    default: return actionType === "ai_generate" ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-blue-100 text-blue-700 border-blue-200";
+  }
+}
+
 function getFeatureIcon(feature: string | null, actionType: string): React.ReactNode {
   switch (feature) {
     case "convert": return <FileCode2 className="w-3.5 h-3.5 text-blue-500" />;
@@ -310,10 +332,13 @@ function GroupCard({
       </div>
 
       <CardContent className="p-3 space-y-2">
-        <div className="flex items-start gap-1.5">
-          {getFeatureIcon(group.feature, group.actionType)}
-          <p className="text-xs font-medium leading-snug flex-1 min-w-0 break-words">{shortDesc}</p>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className={`inline-flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded border ${getFeatureBadgeClass(group.feature, group.actionType)}`}>
+            {getFeatureIcon(group.feature, group.actionType)}
+            {getFeatureLabel(group.feature, group.actionType, isRtl)}
+          </span>
         </div>
+        <p className="text-xs font-medium leading-snug break-words">{shortDesc}</p>
 
         {isGroup && (
           <div className="flex gap-1 flex-wrap">
