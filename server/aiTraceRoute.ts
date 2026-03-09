@@ -285,9 +285,17 @@ async function runTraceJob(
     } else {
       analysisInstruction = userDesc
         ? `Describe the main object for line art generation. Additional context from user: ${userDesc}. ` +
-          "Focus on: exact camera angle/view, facing direction, body pose, shape, structure, key features, proportions."
-        : "Describe the main/dominant object in this image for line art generation. " +
-          "Focus on: exact camera angle/view, facing direction, body pose, shape, structure, key features, proportions.";
+          "CRITICAL: Describe ONLY the physical object itself — its shape, structure, camera angle, proportions. " +
+          "DO NOT mention people holding it, playing it, or interacting with it unless the user specifically asked to include a person. " +
+          "DO NOT mention musical notes, decorative backgrounds, or contextual elements unless they are physically part of the object."
+        : "Describe ONLY the main/dominant physical object in this image for line art generation. " +
+          "CRITICAL RULES: " +
+          "(1) Describe ONLY the object itself — its shape, structure, camera angle, proportions, and physical features. " +
+          "(2) DO NOT mention any person holding, wearing, or interacting with the object. " +
+          "(3) DO NOT mention musical notes, staff lines, decorative backgrounds, or contextual scene elements. " +
+          "(4) If the image shows a musical instrument, describe ONLY the instrument — not any musician or notes. " +
+          "(5) If the image shows a product or object, describe ONLY that object — not the environment or context. " +
+          "Focus on: exact camera angle/view, facing direction, shape, structure, key features, proportions.";
     }
 
     const llmResponse = await invokeLLM({
@@ -296,7 +304,11 @@ async function runTraceJob(
           role: "system",
           content:
             "You are a world-class expert at analyzing images for precise line art / engraving generation. " +
-            "Your analysis will be used to generate line art that EXACTLY reproduces what is in the image. " +
+            "Your analysis will be used to generate line art that EXACTLY reproduces the OBJECT in the image. " +
+            "CRITICAL CONSTRAINT: Describe ONLY the physical object(s) — NEVER describe people holding/using the object, " +
+            "musical notes, staff lines, decorative backgrounds, or any contextual elements that are NOT part of the object itself. " +
+            "If the image shows a musical instrument, describe ONLY the instrument. " +
+            "If the image shows a product, describe ONLY the product. " +
             "Accuracy is critical — any mistake in your description will cause the generated art to look wrong. " +
             "\n\nYou MUST describe ALL of the following with maximum precision:\n" +
             "(1) CAMERA ANGLE / VIEW TYPE — THE MOST CRITICAL DETAIL. State it first and be extremely specific:\n" +
@@ -346,9 +358,9 @@ async function runTraceJob(
     heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
 
     // Prepare a clean PNG version of the source image for the edit API.
-    // 384px is sufficient for gpt-image-1 edit — smaller = faster upload & processing (~20% faster than 512px).
+    // 512px gives better quality output from gpt-image-1 edit.
     const editSourceBuffer = await sharp(imageBuffer)
-      .resize(384, 384, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
       .png({ compressionLevel: 6 })
       .toBuffer();
 
@@ -411,7 +423,10 @@ async function runTraceJob(
         : (
             "⚠️ CRITICAL RULE #0 — THIS IS THE MOST IMPORTANT RULE: " +
             "DO NOT ADD ANY PEOPLE, HUMANS, HANDS, ARMS, LEGS, BODY PARTS, FACES, OR HUMAN FIGURES. " +
+            "DO NOT ADD MUSICAL NOTES, STAFF LINES, OR ANY MUSICAL NOTATION. " +
+            "DO NOT ADD BACKGROUNDS, SCENES, ENVIRONMENTS, OR CONTEXTUAL ELEMENTS. " +
             "If the original photo contains NO people, the output MUST contain NO people. " +
+            "If the original photo contains NO musical notes, the output MUST contain NO musical notes. " +
             "Draw ONLY the object(s) physically present in the original image — nothing else. " +
             "ABSOLUTE RULE #1: NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS — EVER. " +
             "ABSOLUTE RULE #2: PRESERVE THE EXACT SHAPE, SILHOUETTE, AND STRUCTURE OF THE ORIGINAL IMAGE. " +
