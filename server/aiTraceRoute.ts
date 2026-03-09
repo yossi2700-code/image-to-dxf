@@ -287,14 +287,14 @@ async function runTraceJob(
           "CRITICAL: Describe ONLY the physical object itself — its shape, structure, camera angle, proportions. " +
           "DO NOT mention people holding it, playing it, or interacting with it unless the user specifically asked to include a person. " +
           "DO NOT mention musical notes, decorative backgrounds, or contextual elements unless they are physically part of the object."
-        : "Describe ONLY the single most prominent physical object in the FOREGROUND of this image for line art generation. " +
+        : "Identify and describe the MOST VISUALLY PROMINENT SUBJECT in this image for line art generation. " +
           "CRITICAL RULES: " +
-          "(1) Describe ONLY the primary object itself — its shape, structure, camera angle, proportions, and physical features. " +
-          "(2) DO NOT mention any person holding, wearing, or interacting with the object. " +
-          "(3) DO NOT mention images or illustrations PRINTED ON the object's packaging/label (e.g. if there is a baby face printed on a wipes package, IGNORE the baby — describe only the package shape). " +
-          "(4) DO NOT mention musical notes, staff lines, or any musical notation. " +
-          "(5) DO NOT mention background objects, secondary items, or anything behind the main object. " +
-          "(6) Focus on the SINGLE foreground object only — ignore everything else. " +
+          "(1) The subject can be: a physical object, a person, an animal, OR an illustration/character printed on a product label/packaging. " +
+          "(2) If the most eye-catching element is a baby face or character printed on a product label, describe THAT CHARACTER as the subject — not the package. " +
+          "(3) If the most prominent element is a physical object (shoe, instrument, bag), describe THAT OBJECT. " +
+          "(4) DO NOT mention background objects, secondary items, or anything behind the main subject. " +
+          "(5) DO NOT mention musical notes, staff lines, or any musical notation. " +
+          "(6) Focus on the SINGLE most visually dominant subject only. " +
           "Focus on: exact camera angle/view, facing direction, shape, structure, key features, proportions.";
     }
 
@@ -305,14 +305,13 @@ async function runTraceJob(
           content:
             "You are a world-class expert at analyzing images for precise line art / engraving generation. " +
             "Your analysis will be used to generate line art that EXACTLY reproduces the OBJECT in the image. " +
-            "CRITICAL CONSTRAINT: Describe ONLY the primary physical object/product — NEVER describe: " +
-            "(a) people holding/using the object, " +
-            "(b) images or illustrations PRINTED ON the packaging/label (e.g. a baby face on a wipes package — ignore that baby, describe only the package shape), " +
-            "(c) musical notes, staff lines, or any musical notation, " +
-            "(d) background objects, secondary items, or anything not in the foreground. " +
-            "If the image shows a product package with a printed character/person on it, describe ONLY the package shape — NOT the printed character. " +
-            "If the image shows a musical instrument, describe ONLY the instrument. " +
-            "Focus on the SINGLE most prominent object in the foreground. " +
+            "CRITICAL CONSTRAINT: Identify and describe the MOST VISUALLY PROMINENT SUBJECT in the image. " +
+            "The subject can be a physical object, a person, an animal, OR a character/illustration printed on a product label. " +
+            "If the most eye-catching element is a baby face, character, or illustration printed on packaging, describe THAT as the subject — not the package shape. " +
+            "NEVER describe: (a) people holding/using the object unless they ARE the main subject, " +
+            "(b) musical notes, staff lines, or musical notation, " +
+            "(c) background objects or secondary items. " +
+            "Focus on the SINGLE most visually dominant subject. " +
             "Accuracy is critical — any mistake in your description will cause the generated art to look wrong. " +
             "\n\nYou MUST describe ALL of the following with maximum precision:\n" +
             "(1) CAMERA ANGLE / VIEW TYPE — THE MOST CRITICAL DETAIL. State it first and be extremely specific:\n" +
@@ -435,8 +434,8 @@ async function runTraceJob(
             "ABSOLUTE RULE #1: NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS — EVER. " +
             "ABSOLUTE RULE #2: PRESERVE THE EXACT SHAPE, SILHOUETTE, AND STRUCTURE OF THE ORIGINAL IMAGE. " +
             "ABSOLUTE RULE #3: DO NOT ADD ANY PEOPLE, HUMANS, HANDS, ARMS, BODY PARTS, OR FIGURES THAT ARE NOT PRESENT IN THE ORIGINAL PHOTO. " +
-            "ABSOLUTE RULE #4: DO NOT DRAW IMAGES PRINTED ON PACKAGING. If the product has a baby, character, person, or illustration printed on its label/packaging, IGNORE that printed image completely — draw ONLY the package shape itself. " +
-            "ABSOLUTE RULE #5: DO NOT DRAW BACKGROUND OBJECTS. If there are secondary objects in the background (pots, bags, furniture), IGNORE them — draw ONLY the main foreground object. " +
+            "ABSOLUTE RULE #4: DRAW THE MOST VISUALLY PROMINENT SUBJECT. If the image shows a baby/character face printed on a product label as the dominant visual, draw THAT character as the line art subject (not the package). If the dominant subject is a physical object, draw that object. " +
+            "ABSOLUTE RULE #5: DO NOT DRAW BACKGROUND OBJECTS. If there are secondary objects in the background (pots, bags, furniture), IGNORE them — draw ONLY the main foreground subject. " +
             "If the original image shows only an object (bag, flower, toy, product, item, logo, animal, etc.), draw ONLY that object floating on white background. " +
             "NEVER add a person holding, wearing, or interacting with the object unless a person was already clearly visible in the original photo. " +
             `Convert this image into a professional black and white line art illustration. ` +
