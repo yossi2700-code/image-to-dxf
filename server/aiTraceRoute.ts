@@ -65,13 +65,19 @@ const STYLE_VARIATIONS = [
   {
     label: "simple",
     style:
-      "COLORING BOOK STYLE — minimal clean outlines only. " +
-      "Draw ONLY the main outer silhouette and 2-3 essential interior lines that define the basic shape. " +
-      "OMIT all fine details, textures, grilles, vents, bolts, screws, patterns, and decorative elements. " +
-      "Think: a simple children's coloring book page — just the basic recognizable shape with a few key interior lines. " +
-      "ALL lines must be ultra-thin and uniform — like a 0.1mm technical pen. " +
-      "NO thick strokes, NO varying line weights, NO hatching, NO shading, NO fill. " +
-      "Maximum simplicity: if in doubt, leave it out. Only draw what is absolutely necessary to recognize the object.",
+      "ARTISTIC ADULT COLORING BOOK STYLE — elegant clean outlines, like a premium adult coloring book illustration. " +
+      "Draw the main silhouette with smooth confident strokes, plus only the MOST ESSENTIAL interior structural lines (maximum 5-8 key lines total). " +
+      "=== STRICTLY FORBIDDEN — DO NOT DRAW ANY OF THESE === " +
+      "NO dots, NO stippling, NO cross-hatching, NO hatching lines, NO shading of any kind. " +
+      "NO texture fills (mesh, grid, pattern, weave, fabric texture). " +
+      "NO small detail lines (stitching, perforations, ventilation holes, bolt heads, screws). " +
+      "NO dark filled areas or black regions — ALL areas must remain WHITE inside the outlines. " +
+      "NO decorative flourishes or ornamental details unless they ARE the main subject. " +
+      "=== WHAT TO DRAW === " +
+      "ONLY: outer silhouette contour + major shape divisions (sole/upper of shoe, body/wing of car, etc). " +
+      "Think: if you printed this and gave it to an adult to color in with markers, every region would be a large open white area. " +
+      "Lines must be clean, confident, and uniform weight — like a skilled illustrator's ink pen. " +
+      "Artistic but minimal: beautiful simplicity over complex detail.",
   },
   {
     label: "detailed",
