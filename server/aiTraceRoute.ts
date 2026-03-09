@@ -65,10 +65,13 @@ const STYLE_VARIATIONS = [
   {
     label: "simple",
     style:
-      "Clean professional line art with bold outer contour and key structural lines. " +
-      "Show depth and form with 3-5 internal lines indicating main surfaces and edges. " +
-      "Technical illustration style — like a product blueprint or engineering drawing. " +
-      "NO texture, NO hatching, NO shading, NO fill. Pure black lines on white.",
+      "Minimalist coloring-book style line art. Draw ONLY the outer silhouette and the most essential major shapes. " +
+      "ALL lines MUST be smooth, continuous, and uniformly thick throughout the entire drawing. " +
+      "STRICTLY FORBIDDEN: stray lines, broken segments, isolated short strokes, disconnected marks, or lines that do not connect to the main outline. " +
+      "Ignore fine details, textures, interior decorations, grilles, small features, and complex inner structures. " +
+      "Every line must start and end connected to another line — no floating or orphan strokes. " +
+      "Result must look like a clean, simple coloring page for children. " +
+      "NO texture, NO hatching, NO shading, NO fill. Pure uniform black lines on white.",
   },
   {
     label: "detailed",
