@@ -240,7 +240,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     return result;
   })();
 
-  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "settings">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "settings">("overview");
+
+  const { data: consentData, isLoading: consentLoading } = trpc.admin.consentRecords.useQuery(
+    undefined,
+    { enabled: activeSection === "consents" }
+  );
 
   // ── Settings state ──
   const [settingsName, setSettingsName] = useState("");
@@ -287,6 +292,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               { id: "overview", label: "סקירה כללית", icon: TrendingUp },
               { id: "activity", label: "פעילות", icon: Activity },
               { id: "users", label: "משתמשים", icon: Users },
+              { id: "consents", label: "הסכמות", icon: CheckCircle2 },
               { id: "settings", label: "הגדרות", icon: Settings },
             ] as const).map(({ id, label, icon: Icon }) => (
               <button
@@ -312,6 +318,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               { id: "overview", label: "סקירה", icon: TrendingUp },
               { id: "activity", label: "פעילות", icon: Activity },
               { id: "users", label: "משתמשים", icon: Users },
+              { id: "consents", label: "הסכמות", icon: CheckCircle2 },
               { id: "settings", label: "הגדרות", icon: Settings },
             ] as const).map(({ id, label, icon: Icon }) => (
               <button
@@ -740,6 +747,71 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             )}
           </CardContent>
         </Card>}
+        {/* ── CONSENTS SECTION ── */}
+        {activeSection === "consents" && (
+          <div className="space-y-5">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-600" />
+                  רשומות הסכמה לתנאי שימוש ופרטיות
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {consentLoading ? (
+                  <div className="py-8 flex justify-center">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : !consentData || consentData.length === 0 ? (
+                  <div className="py-8 text-center text-muted-foreground text-sm">
+                    אין רשומות הסכמה עדיין.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b text-muted-foreground text-xs">
+                          <th className="pb-2 text-right font-medium">אימייל</th>
+                          <th className="pb-2 text-right font-medium">גרסת תנאים</th>
+                          <th className="pb-2 text-right font-medium">גרסת פרטיות</th>
+                          <th className="pb-2 text-right font-medium">IP</th>
+                          <th className="pb-2 text-right font-medium">תאריך</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {consentData.map((row) => (
+                          <tr key={row.id} className="hover:bg-slate-50">
+                            <td className="py-2 font-mono text-xs">{row.email ?? "-"}</td>
+                            <td className="py-2">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 text-green-700 text-xs font-medium">
+                                <CheckCircle2 className="w-3 h-3" />
+                                {row.termsVersion}
+                              </span>
+                            </td>
+                            <td className="py-2">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">
+                                <CheckCircle2 className="w-3 h-3" />
+                                {row.privacyVersion}
+                              </span>
+                            </td>
+                            <td className="py-2 font-mono text-xs text-muted-foreground">{row.ipAnon ?? "-"}</td>
+                            <td className="py-2 text-xs text-muted-foreground">
+                              {new Date(row.consentAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <p className="text-xs text-muted-foreground mt-3 text-center">
+                      סה"כ {consentData.length} רשומות הסכמה
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* ── SETTINGS SECTION ── */}
         {activeSection === "settings" && (
           <div className="space-y-5">

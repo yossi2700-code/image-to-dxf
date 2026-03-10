@@ -7,7 +7,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets } from "../drizzle/schema";
+import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords } from "../drizzle/schema";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "./emailService";
 import { desc, eq, and, sql } from "drizzle-orm";
@@ -306,6 +306,20 @@ export const appRouter = router({
           .values({ key: "maintenance_mode", value: input.enabled ? "1" : "0" })
           .onDuplicateKeyUpdate({ set: { value: input.enabled ? "1" : "0" } });
         return { success: true, enabled: input.enabled };
+      }),
+
+    /** List consent records (admin view) */
+    consentRecords: adminProcedure
+      .input(z.object({ limit: z.number().min(1).max(200).default(100) }).optional())
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const rows = await db
+          .select()
+          .from(consentRecords)
+          .orderBy(desc(consentRecords.consentAt))
+          .limit(input?.limit ?? 100);
+        return rows;
       }),
 
     /** Send password reset email to a user (admin action) */

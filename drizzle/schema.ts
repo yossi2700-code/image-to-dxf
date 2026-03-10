@@ -158,3 +158,25 @@ export const systemSettings = mysqlTable("system_settings", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type SystemSetting = typeof systemSettings.$inferSelect;
+
+// Consent records — tracks user agreement to Terms of Service and Privacy Policy
+export const consentRecords = mysqlTable("consent_records", {
+  id: int("id").autoincrement().primaryKey(),
+  /** App user ID (null for anonymous users who accepted before registering) */
+  appUserId: int("appUserId"),
+  /** Email at time of consent (for pre-registration consent) */
+  email: varchar("email", { length: 320 }),
+  /** Version of Terms of Service accepted */
+  termsVersion: varchar("termsVersion", { length: 32 }).notNull().default("2026-03-10"),
+  /** Version of Privacy Policy accepted */
+  privacyVersion: varchar("privacyVersion", { length: 32 }).notNull().default("2026-03-10"),
+  /** Anonymized IP address at time of consent */
+  ipAnon: varchar("ipAnon", { length: 20 }),
+  /** User agent string */
+  userAgent: text("userAgent"),
+  /** Timestamp of consent */
+  consentAt: timestamp("consentAt").defaultNow().notNull(),
+});
+
+export type ConsentRecord = typeof consentRecords.$inferSelect;
+export type InsertConsentRecord = typeof consentRecords.$inferInsert;

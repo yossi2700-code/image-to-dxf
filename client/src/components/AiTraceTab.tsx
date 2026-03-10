@@ -158,6 +158,7 @@ interface ImageCardProps {
 
 function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) {
   const [showVector, setShowVector] = useState(false);
+  const { t } = useLanguage();
   const label = isRtl ? VARIATION_LABELS[index] : VARIATION_LABELS_EN[index];
 
   return (

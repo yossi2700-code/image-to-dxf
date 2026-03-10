@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { eq, and, gte, count, sql } from "drizzle-orm";
 import { getDb } from "./db";
-import { appUsers, usageEvents, emailVerifications, passwordResets } from "../drizzle/schema";
+import { appUsers, usageEvents, emailVerifications, passwordResets, consentRecords } from "../drizzle/schema";
 import { sendVerificationEmail, sendPasswordResetEmail } from "./emailService";
 import { randomBytes } from "crypto";
 import { ENV } from "./_core/env";
@@ -89,7 +89,15 @@ export async function getUserDailyCount(appUserId: number): Promise<number> {
 
 router.post("/api/app-auth/register", async (req, res) => {
   try {
-    const { name, email, password } = req.body as { name?: string; email?: string; password?: string };
+    const { name, email, password, termsAccepted, termsVersion, privacyVersion } = req.body as {
+      name?: string;
+      email?: string;
+      password?: string;
+      termsAccepted?: boolean;
+      termsVersion?: string;
+      privacyVersion?: string;
+    };
+    if (!termsAccepted) return res.status(400).json({ error: "יש לאשר את תנאי השימוש ומדיניות הפרטיות" });
     if (!email || !password) return res.status(400).json({ error: "אימייל וסיסמה נדרשים" });
     if (password.length < 6) return res.status(400).json({ error: "הסיסמה חייבת להכיל לפחות 6 תווים" });
 
@@ -119,6 +127,23 @@ router.post("/api/app-auth/register", async (req, res) => {
       void sendVerificationEmail({ to: email.toLowerCase(), name: name?.trim() || null, verifyUrl });
     } catch (e) {
       console.warn("[register] Failed to send verification email:", e);
+    }
+
+    // Save consent record
+    try {
+      const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "";
+      const parts = rawIp.split(".");
+      const ipAnon = parts.length === 4 ? `${parts[0]}.${parts[1]}.${parts[2]}.0` : rawIp.substring(0, 16);
+      await db.insert(consentRecords).values({
+        appUserId: userId,
+        email: email.toLowerCase(),
+        termsVersion: termsVersion ?? "2026-03-10",
+        privacyVersion: privacyVersion ?? "2026-03-10",
+        ipAnon,
+        userAgent: (req.headers["user-agent"] ?? "").substring(0, 500),
+      });
+    } catch (e) {
+      console.warn("[register] Failed to save consent record:", e);
     }
 
     const token = signToken(userId, email.toLowerCase());

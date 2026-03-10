@@ -1294,3 +1294,25 @@
 - [ ] זיהוי שפה אוטומטי לפי browser locale (navigator.language)
 - [ ] שמירת העדפת שפה ב-localStorage (עוקפת זיהוי אוטומטי)
 - [ ] הגדרות שפה אישיות (dropdown בניווט)
+
+## תיקוני באגים - מרץ 2026
+
+- [x] תיקון React crash ב-ImageCard component (useLanguage hook חסר)
+- [x] תיקון מפתחות כפולים ב-translations.ts (processingError בכל 7 שפות)
+
+## PayPal Integration
+
+- [ ] הוספת PayPal SDK לפרונטאנד
+- [ ] יצירת paypal order endpoint בשרת
+- [ ] יצירת paypal capture endpoint בשרת
+- [ ] UI: עמוד/מודל רכישת קרדיטים עם 2 חבילות (50 קרדיטים ₪29/$8, 100 קרדיטים ₪49/$13)
+- [ ] גילוי מטבע לפי מדינה (ישראל=₪, אחרים=$)
+- [ ] הוספת תרגומים לרכישת קרדיטים ב-7 שפות
+
+## Terms of Service & Privacy Policy
+
+- [x] יצירת עמוד /terms עם תנאי שימוש (כולל copyright, liability, indemnification, GDPR)
+- [x] יצירת עמוד /privacy עם מדיניות פרטיות (GDPR compliant)
+- [x] הוספת checkbox הסכמה בהרשמה עם timestamp ו-IP
+- [x] שמירת consent records בDB
+- [x] הצגת consent records בפאנל הניהול

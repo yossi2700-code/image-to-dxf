@@ -93,6 +93,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
   const [rememberMe, setRememberMe] = useState(() => {
     try { return localStorage.getItem("auth_remember_me") !== "false"; } catch { return true; }
   });
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
   const [forgotSent, setForgotSent] = useState(false);
@@ -107,6 +108,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
       setName("");
       setEmail("");
       setPassword("");
+      setTermsAccepted(false);
       setInlineError(null);
       setForgotSent(false);
     }
@@ -116,6 +118,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
     setName("");
     setEmail("");
     setPassword("");
+    setTermsAccepted(false);
     setLoading(false);
     setInlineError(null);
     setForgotSent(false);
@@ -149,11 +152,20 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
     e.preventDefault();
     if (mode === "forgot") return handleForgot(e);
     if (!email || !password) return;
+
+    // Require terms acceptance for registration
+    if (mode === "register" && !termsAccepted) {
+      setInlineError("יש לאשר את תנאי השימוש ומדיניות הפרטיות כדי להירשם.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const endpoint = mode === "register" ? "/api/app-auth/register" : "/api/app-auth/login";
-      const body = mode === "register" ? { name, email, password } : { email, password, rememberMe };
+      const body = mode === "register"
+        ? { name, email, password, termsAccepted: true, termsVersion: "2026-03-10", privacyVersion: "2026-03-10" }
+        : { email, password, rememberMe };
       try { localStorage.setItem("auth_remember_me", String(rememberMe)); } catch { /* ignore */ }
 
       const res = await fetch(endpoint, {
@@ -290,11 +302,52 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
             </div>
           )}
 
+          {/* Terms acceptance checkbox — shown only in register mode */}
+          {mode === "register" && (
+            <div className="flex items-start gap-2.5 rounded-lg bg-gray-50 border border-gray-200 p-3">
+              <Checkbox
+                id="termsAccepted"
+                checked={termsAccepted}
+                onCheckedChange={(v) => {
+                  setTermsAccepted(v === true);
+                  if (v === true) setInlineError(null);
+                }}
+                className="mt-0.5 shrink-0"
+              />
+              <label
+                htmlFor="termsAccepted"
+                className="text-sm text-gray-600 cursor-pointer leading-relaxed select-none"
+              >
+                קראתי ואני מסכים/ה ל
+                <a
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-600 underline hover:text-indigo-800 mx-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  תנאי השימוש
+                </a>
+                ול
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-600 underline hover:text-indigo-800 mx-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  מדיניות הפרטיות
+                </a>
+                של השירות.
+              </label>
+            </div>
+          )}
+
           <Button
             type="submit"
             className="w-full h-11 text-base font-bold"
             style={mode === "register" ? { background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', border: 'none' } : {}}
-            disabled={loading}
+            disabled={loading || (mode === "register" && !termsAccepted)}
           >
             {loading ? (
               <><Loader2 className="w-4 h-4 ml-2 animate-spin" />מעבד...</>
