@@ -18,13 +18,17 @@ describe("PayPal Integration", () => {
     expect(["sandbox", "production"]).toContain(mode);
   });
 
-  it("should build correct base URL for sandbox mode", () => {
+  it("should build correct base URL based on PAYPAL_MODE", () => {
     const mode = process.env.PAYPAL_MODE ?? "sandbox";
     const base =
       mode === "production"
         ? "https://api-m.paypal.com"
         : "https://api-m.sandbox.paypal.com";
-    expect(base).toBe("https://api-m.sandbox.paypal.com");
+    if (mode === "production") {
+      expect(base).toBe("https://api-m.paypal.com");
+    } else {
+      expect(base).toBe("https://api-m.sandbox.paypal.com");
+    }
   });
 
   it("should build valid Basic auth header from credentials", () => {
