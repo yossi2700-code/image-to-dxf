@@ -1811,21 +1811,21 @@ export default function Home() {
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setUserMenuOpen(v => !v)}
-                    className="flex items-center gap-1.5 rounded-full px-2 py-1 font-semibold transition-all hover:opacity-90 active:scale-95"
-                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', boxShadow: '0 2px 8px rgba(99,102,241,0.35)' }}
+                    className="flex items-center gap-2 rounded-2xl px-3 py-1.5 font-semibold transition-all hover:opacity-90 active:scale-95"
+                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', boxShadow: '0 2px 10px rgba(99,102,241,0.4)' }}
                     aria-label={isRtl ? 'תפריט משתמש' : 'User menu'}
                   >
                     {/* Avatar circle with initials */}
                     <div
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black"
-                      style={{ background: 'rgba(255,255,255,0.25)' }}
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-black shrink-0"
+                      style={{ background: 'rgba(255,255,255,0.28)' }}
                     >
                       {(appUser.name || appUser.email || '?').charAt(0).toUpperCase()}
                     </div>
-                    <span className="hidden sm:inline text-xs font-semibold max-w-[80px] truncate">
+                    <span className="text-sm font-bold max-w-[90px] truncate">
                       {appUser.name || appUser.email.split('@')[0]}
                     </span>
-                    <ChevronDown className={`w-3 h-3 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {/* Dropdown menu */}
