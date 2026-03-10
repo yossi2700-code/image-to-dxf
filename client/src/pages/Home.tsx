@@ -1909,8 +1909,8 @@ export default function Home() {
                     />
                     {(f as { comingSoon?: boolean }).comingSoon && (
                       <span
-                        className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[9px] font-semibold px-2 py-0.5 rounded-full"
-                        style={{ background: 'rgba(0,0,0,0.55)', color: 'white', whiteSpace: 'nowrap', backdropFilter: 'blur(4px)' }}
+                        className="absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-full z-10"
+                        style={{ background: '#f59e0b', color: 'white', whiteSpace: 'nowrap', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}
                       >
                         {isRtl ? 'בקרוב' : 'Coming soon'}
                       </span>
