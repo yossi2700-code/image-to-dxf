@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE paypal_orders \n  ADD COLUMN IF NOT EXISTS priceAmount VARCHAR(20) NULL,\n  ADD COLUMN IF NOT EXISTS tokensCredited TINYINT(1) NOT NULL DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS ipAnon VARCHAR(50) NULL,\n  ADD COLUMN IF NOT EXISTS termsAccepted TINYINT(1) NOT NULL DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS completedAt DATETIME NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute ALTER TABLE paypal_orders \n  ADD COLUMN IF NOT EXISTS priceAmount VARCHAR(20) NULL,\n  ADD COLUMN IF NOT EXISTS tokensCredited TINYINT(1) NOT NULL DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS ipAnon VARCHAR(50) NULL,\n  ADD COLUMN IF NOT EXISTS termsAccepted TINYINT(1) NOT NULL DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS completedAt DATETIME NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2966
+}

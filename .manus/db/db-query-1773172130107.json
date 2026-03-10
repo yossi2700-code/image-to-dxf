@@ -1,0 +1,26 @@
+{
+  "query": "SELECT packageId, priceILS, priceUSD, priceEUR, tokenAmount, label FROM package_prices;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT packageId, priceILS, priceUSD, priceEUR, tokenAmount, label FROM package_prices;",
+  "rows": [
+    {
+      "packageId": "tokens_50",
+      "priceILS": "49",
+      "priceUSD": "13.23",
+      "priceEUR": "12.25",
+      "tokenAmount": "50",
+      "label": "Starter"
+    },
+    {
+      "packageId": "tokens_100",
+      "priceILS": "89",
+      "priceUSD": "24.03",
+      "priceEUR": "22.25",
+      "tokenAmount": "100",
+      "label": "Pro"
+    }
+  ],
+  "messages": [],
+  "stdout": "packageId\tpriceILS\tpriceUSD\tpriceEUR\ttokenAmount\tlabel\ntokens_50\t49\t13.23\t12.25\t50\tStarter\ntokens_100\t89\t24.03\t22.25\t100\tPro\n",
+  "stderr": "",
+  "execution_time_ms": 1528
+}

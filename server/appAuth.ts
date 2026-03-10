@@ -211,7 +211,7 @@ router.get("/api/app-auth/me", async (req, res) => {
   const db = await getDb();
   if (!db) return res.json({ user: null });
 
-  const [user] = await db.select({ id: appUsers.id, email: appUsers.email, name: appUsers.name }).from(appUsers).where(eq(appUsers.id, appUser.userId));
+  const [user] = await db.select({ id: appUsers.id, email: appUsers.email, name: appUsers.name, tokenBalance: appUsers.tokenBalance }).from(appUsers).where(eq(appUsers.id, appUser.userId));
   return res.json({ user: user ?? null });
 });
 

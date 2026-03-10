@@ -1,0 +1,62 @@
+{
+  "query": "SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'paypal_orders' ORDER BY ORDINAL_POSITION;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'paypal_orders' ORDER BY ORDINAL_POSITION;",
+  "rows": [
+    {
+      "COLUMN_NAME": "id",
+      "DATA_TYPE": "int"
+    },
+    {
+      "COLUMN_NAME": "paypalOrderId",
+      "DATA_TYPE": "varchar"
+    },
+    {
+      "COLUMN_NAME": "appUserId",
+      "DATA_TYPE": "int"
+    },
+    {
+      "COLUMN_NAME": "packageKey",
+      "DATA_TYPE": "varchar"
+    },
+    {
+      "COLUMN_NAME": "tokenAmount",
+      "DATA_TYPE": "int"
+    },
+    {
+      "COLUMN_NAME": "amountCents",
+      "DATA_TYPE": "int"
+    },
+    {
+      "COLUMN_NAME": "currency",
+      "DATA_TYPE": "varchar"
+    },
+    {
+      "COLUMN_NAME": "status",
+      "DATA_TYPE": "enum"
+    },
+    {
+      "COLUMN_NAME": "captureId",
+      "DATA_TYPE": "varchar"
+    },
+    {
+      "COLUMN_NAME": "ipAnon",
+      "DATA_TYPE": "varchar"
+    },
+    {
+      "COLUMN_NAME": "purchaseTermsAccepted",
+      "DATA_TYPE": "tinyint"
+    },
+    {
+      "COLUMN_NAME": "createdAt",
+      "DATA_TYPE": "timestamp"
+    },
+    {
+      "COLUMN_NAME": "completedAt",
+      "DATA_TYPE": "timestamp"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\tDATA_TYPE\nid\tint\npaypalOrderId\tvarchar\nappUserId\tint\npackageKey\tvarchar\ntokenAmount\tint\namountCents\tint\ncurrency\tvarchar\nstatus\tenum\ncaptureId\tvarchar\nipAnon\tvarchar\npurchaseTermsAccepted\ttinyint\ncreatedAt\ttimestamp\ncompletedAt\ttimestamp\n",
+  "stderr": "",
+  "execution_time_ms": 1601
+}
