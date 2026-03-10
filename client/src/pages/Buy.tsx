@@ -62,6 +62,8 @@ function detectCurrency(): string {
 
 // ─── Purchase Terms Modal ─────────────────────────────────────────────────────
 function PurchaseTermsModal({ onClose }: { onClose: () => void }) {
+  const { t, isRtl } = useLanguage();
+  const isHe = isRtl;
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
@@ -71,8 +73,8 @@ function PurchaseTermsModal({ onClose }: { onClose: () => void }) {
         className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-white dark:bg-gray-900 flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Purchase Terms &amp; Conditions</h2>
+        <div className="sticky top-0 bg-white dark:bg-gray-900 flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700" dir={isHe ? "rtl" : "ltr"}>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">{isHe ? "תנאי רכישה" : "Purchase Terms & Conditions"}</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-3xl leading-none font-light"
@@ -81,58 +83,96 @@ function PurchaseTermsModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        <div className="p-6 space-y-5 text-sm text-gray-700 dark:text-gray-300">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Last updated: March 2026 | dxfai.net</p>
+        <div className="p-6 space-y-5 text-sm text-gray-700 dark:text-gray-300" dir={isHe ? "rtl" : "ltr"}>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{isHe ? "עדכון אחרון: מרץ 2026 | dxfai.net" : "Last updated: March 2026 | dxfai.net"}</p>
 
-          <section>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">1. Token Packages &amp; Pricing</h3>
-            <p>By completing a purchase you acquire a non-refundable, non-transferable licence to use the stated number of design tokens ("Tokens") on the dxfai.net platform. Tokens have no monetary value, cannot be exchanged for cash, and are not transferable to other accounts. Prices are displayed in your selected currency and are inclusive of any applicable taxes unless stated otherwise.</p>
-          </section>
-
-          <section>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">2. No Expiry</h3>
-            <p>Purchased Tokens do not expire and remain available in your account indefinitely, provided your account remains active and in good standing. We reserve the right to deactivate accounts that violate our Terms of Service, in which case remaining Tokens are forfeited without compensation.</p>
-          </section>
-
-          <section>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">3. No Refunds Policy</h3>
-            <p>All purchases are final and non-refundable. We do not offer refunds, credits, or exchanges for purchased Tokens except where required by applicable mandatory law. If you believe a charge was made in error, please contact support at support@dxfai.net within 14 days of the transaction date.</p>
-          </section>
-
-          <section>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">4. Payment Processing</h3>
-            <p>Payments are processed securely by PayPal Inc. We do not store your payment card details. By completing payment you also agree to PayPal's User Agreement and Privacy Policy. In case of a dispute, PayPal's resolution process may apply.</p>
-          </section>
-
-          <section>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">5. Token Deduction &amp; Refunds for Failures</h3>
-            <p>Tokens are deducted upon initiating a processing job (image conversion, AI generation, or AI refinement). If a job fails due to a verified server-side error on our part, the Token is automatically refunded to your account within 24 hours. Tokens are <strong>not</strong> refunded for: (a) user-initiated cancellations after processing has begun; (b) results that do not meet subjective expectations; (c) incorrect image uploads.</p>
-          </section>
-
-          <section>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">6. Intellectual Property</h3>
-            <p>You retain ownership of images you upload. Output files (DXF, PDF) generated from your images are licensed to you for personal and commercial use. We retain no rights to your output files.</p>
-          </section>
-
-          <section>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">7. Price Changes</h3>
-            <p>We reserve the right to change Token prices at any time without prior notice. Price changes do not affect Tokens already purchased.</p>
-          </section>
-
-          <section>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">8. Limitation of Liability</h3>
-            <p>To the maximum extent permitted by law, our total liability for any claim related to a Token purchase shall not exceed the amount paid for that purchase. We are not liable for indirect, incidental, or consequential damages.</p>
-          </section>
-
-          <section>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">9. Governing Law</h3>
-            <p>These Purchase Terms are governed by the laws of the State of Israel. Any disputes shall be submitted to the exclusive jurisdiction of the courts of Tel Aviv, Israel.</p>
-          </section>
-
-          <section>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">10. Contact</h3>
-            <p>For purchase-related queries: <a href="mailto:support@dxfai.net" className="text-blue-500 hover:underline">support@dxfai.net</a></p>
-          </section>
+          {isHe ? (
+            <>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">1. חבילות אסימונים ותמחור</h3>
+                <p>בהשלמת הרכישה אתה רוכש רישיון שאינו ניתן להחזר ואינו ניתן להעברה לשימוש במספר האסימונים המצוין בפלטפורמת dxfai.net. לאסימונים אין ערך כספי, לא ניתן להמירם למזומן, ואינם ניתנים להעברה לחשבונות אחרים. המחירים מוצגים במטבע שנבחר וכוללים מסים רלוונטיים אלא אם צוין אחרת.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">2. ללא תפוגה</h3>
+                <p>אסימונים שנרכשו אינם פגים ונשארים זמינים בחשבונך ללא הגבלת זמן, בתנאי שחשבונך פעיל ותקין. אנו שומרים את הזכות לבטל חשבונות המפרים את תנאי השירות, ובמקרה כזה האסימונים הנותרים יאבדו ללא פיצוי.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">3. מדיניות אי-החזר</h3>
+                <p>כל הרכישות סופיות ואינן ניתנות להחזר. איננו מציעים החזרים, זיכויים, או החלפות עבור אסימונים שנרכשו, אלא כנדרש על פי חוק מחייב. אם אתה סבור שחיוב בוצע בטעות, פנה לתמיכה בכתובת support@dxfai.net תוך 14 יום מתאריך העסקה.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">4. עיבוד תשלומים</h3>
+                <p>התשלומים מעובדים בצורה מאובטחת על ידי PayPal Inc. איננו שומרים את פרטי כרטיס האשראי שלך. בהשלמת התשלום אתה מסכים גם להסכם המשתמש ומדיניות הפרטיות של PayPal. במקרה של מחלוקת, תהליך הגישור של PayPal עשוי לחול.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">5. ניכוי אסימונים והחזר בכשלים</h3>
+                <p>אסימונים מנוכים עם תחילת עיבוד (המרת תמונה, יצירת AI, או שיפור עיצוב). אם עבודה נכשלת עקב שגיאת שרת מאומתת מצדנו, האסימון יוחזר אוטומטית לחשבונך תוך 24 שעות. אסימונים <strong>אינם</strong> מוחזרים עבור: (א) ביטולים שיזם המשתמש לאחר תחילת העיבוד; (ב) תוצאות שאינן עומדות בציפיות סובייקטיביות; (ג) העלאות תמונה שגויות.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">6. קניין רוחני</h3>
+                <p>אתה שומר על בעלות התמונות שאתה מעלה. קבצי פלט (DXF, PDF) שנוצרו מתמונותיך מורשים לך לשימוש אישי ומסחרי. איננו שומרים על זכויות כלשהן בקבצי הפלט שלך.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">7. שינויי מחירים</h3>
+                <p>אנו שומרים את הזכות לשנות מחירי אסימונים בכל עת ללא הודעה מוקדמת. שינויי מחירים אינם משפיעים על אסימונים שנרכשו כבר.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">8. הגבלת אחריות</h3>
+                <p>במידה המרבית המותרת בחוק, האחריות הכוללת שלנו לכל תביעה הקשורה לרכישת אסימון לא תעלה על הסכום ששולם עבור אותה רכישה. איננו אחראים לנזקים עקיפים, מקריים, או תוצאתיים.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">9. ברירת דין</h3>
+                <p>תנאי רכישה אלה כפופים לחוקי מדינת ישראל. כל סכסוך יוגש לסמכות השיפוט הבלעדית של בתי המשפט בתל אביב, ישראל.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">10. יצירת קשר</h3>
+                <p>לשאלות הקשורות לרכישה: <a href="mailto:support@dxfai.net" className="text-blue-500 hover:underline">support@dxfai.net</a></p>
+              </section>
+            </>
+          ) : (
+            <>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">1. Token Packages &amp; Pricing</h3>
+                <p>By completing a purchase you acquire a non-refundable, non-transferable licence to use the stated number of design tokens ("Tokens") on the dxfai.net platform. Tokens have no monetary value, cannot be exchanged for cash, and are not transferable to other accounts. Prices are displayed in your selected currency and are inclusive of any applicable taxes unless stated otherwise.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">2. No Expiry</h3>
+                <p>Purchased Tokens do not expire and remain available in your account indefinitely, provided your account remains active and in good standing. We reserve the right to deactivate accounts that violate our Terms of Service, in which case remaining Tokens are forfeited without compensation.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">3. No Refunds Policy</h3>
+                <p>All purchases are final and non-refundable. We do not offer refunds, credits, or exchanges for purchased Tokens except where required by applicable mandatory law. If you believe a charge was made in error, please contact support at support@dxfai.net within 14 days of the transaction date.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">4. Payment Processing</h3>
+                <p>Payments are processed securely by PayPal Inc. We do not store your payment card details. By completing payment you also agree to PayPal's User Agreement and Privacy Policy. In case of a dispute, PayPal's resolution process may apply.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">5. Token Deduction &amp; Refunds for Failures</h3>
+                <p>Tokens are deducted upon initiating a processing job (image conversion, AI generation, or AI refinement). If a job fails due to a verified server-side error on our part, the Token is automatically refunded to your account within 24 hours. Tokens are <strong>not</strong> refunded for: (a) user-initiated cancellations after processing has begun; (b) results that do not meet subjective expectations; (c) incorrect image uploads.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">6. Intellectual Property</h3>
+                <p>You retain ownership of images you upload. Output files (DXF, PDF) generated from your images are licensed to you for personal and commercial use. We retain no rights to your output files.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">7. Price Changes</h3>
+                <p>We reserve the right to change Token prices at any time without prior notice. Price changes do not affect Tokens already purchased.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">8. Limitation of Liability</h3>
+                <p>To the maximum extent permitted by law, our total liability for any claim related to a Token purchase shall not exceed the amount paid for that purchase. We are not liable for indirect, incidental, or consequential damages.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">9. Governing Law</h3>
+                <p>These Purchase Terms are governed by the laws of the State of Israel. Any disputes shall be submitted to the exclusive jurisdiction of the courts of Tel Aviv, Israel.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">10. Contact</h3>
+                <p>For purchase-related queries: <a href="mailto:support@dxfai.net" className="text-blue-500 hover:underline">support@dxfai.net</a></p>
+              </section>
+            </>
+          )}
         </div>
 
         <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 flex justify-end">
@@ -140,7 +180,7 @@ function PurchaseTermsModal({ onClose }: { onClose: () => void }) {
             onClick={onClose}
             className="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
           >
-            Close
+            {isHe ? "סגור" : "Close"}
           </button>
         </div>
       </div>

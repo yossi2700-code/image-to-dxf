@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Loader2, Mail, Lock, User, Sparkles, Zap, Gift, AlertCircle } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /** Why the dialog was opened — controls the header message shown to the user */
 export type AuthReason = "unregistered" | "limit" | "generic";
@@ -86,6 +87,7 @@ function ReasonHeader({ reason }: { reason: AuthReason }) {
 }
 
 export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuccess }: AuthDialogProps) {
+  const { t, isRtl } = useLanguage();
   const [mode, setMode] = useState<Mode>("register");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -155,7 +157,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
 
     // Require terms acceptance for registration
     if (mode === "register" && !termsAccepted) {
-      setInlineError("יש לאשר את תנאי השימוש ומדיניות הפרטיות כדי להירשם.");
+      setInlineError(t("authTermsRequired"));
       return;
     }
 
@@ -298,13 +300,13 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
                   זכור אותי
                 </label>
               </div>
-              <button type="button" className="text-xs text-muted-foreground underline hover:text-primary" onClick={() => { setMode("forgot"); reset(); }}>שכחתי סיסמא</button>
+              <button type="button" className="text-xs text-muted-foreground underline hover:text-primary" onClick={() => { setMode("forgot"); reset(); }}>{t("authForgotPassword")}</button>
             </div>
           )}
 
           {/* Terms acceptance checkbox — shown only in register mode */}
           {mode === "register" && (
-            <div className="flex items-start gap-2.5 rounded-lg bg-gray-50 border border-gray-200 p-3">
+            <div className="flex items-start gap-2.5 rounded-lg bg-gray-50 border border-gray-200 p-3" dir={isRtl ? "rtl" : "ltr"}>
               <Checkbox
                 id="termsAccepted"
                 checked={termsAccepted}
@@ -318,7 +320,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
                 htmlFor="termsAccepted"
                 className="text-sm text-gray-600 cursor-pointer leading-relaxed select-none"
               >
-                קראתי ואני מסכים/ה ל
+                {t("authTermsCheckbox")}{" "}
                 <a
                   href="/terms"
                   target="_blank"
@@ -326,9 +328,9 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
                   className="text-indigo-600 underline hover:text-indigo-800 mx-1"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  תנאי השימוש
+                  {t("authTermsLink")}
                 </a>
-                ול
+                {" "}{t("authTermsAnd")}{" "}
                 <a
                   href="/privacy"
                   target="_blank"
@@ -336,9 +338,9 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
                   className="text-indigo-600 underline hover:text-indigo-800 mx-1"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  מדיניות הפרטיות
+                  {t("authPrivacyLink")}
                 </a>
-                של השירות.
+                {" "}{t("authTermsSuffix")}
               </label>
             </div>
           )}
@@ -350,13 +352,13 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
             disabled={loading || (mode === "register" && !termsAccepted)}
           >
             {loading ? (
-              <><Loader2 className="w-4 h-4 ml-2 animate-spin" />מעבד...</>
+              <><Loader2 className="w-4 h-4 ml-2 animate-spin" />{t("authProcessing")}</>
             ) : mode === "register" ? (
-              <><Sparkles className="w-4 h-4 ml-1.5" />הרשם חינם עכשיו</>
+              <><Sparkles className="w-4 h-4 ml-1.5" />{t("authRegisterFree")}</>
             ) : mode === "forgot" ? (
-              "שלח קישור לאיפוס"
+              t("authSendReset")
             ) : (
-              "כניסה"
+              t("authLogin")
             )}
           </Button>
           </>)}

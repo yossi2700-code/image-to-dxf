@@ -5,15 +5,9 @@
  * Set PAYPAL_MODE=sandbox for testing, leave unset for production.
  */
 
-// Auto-detect mode: sandbox client IDs start with 'sb-' or contain 'sandbox'
-// Live client IDs typically start with 'A' (e.g. AVd...)
-function detectPayPalMode(): string {
-  if (process.env.PAYPAL_MODE) return process.env.PAYPAL_MODE;
-  const clientId = process.env.PAYPAL_CLIENT_ID ?? "";
-  if (clientId.toLowerCase().includes("sandbox") || clientId.startsWith("sb-")) return "sandbox";
-  return "production";
-}
-const PAYPAL_MODE = detectPayPalMode();
+// Use PAYPAL_MODE env var if set; otherwise default to production
+// Note: sandbox client IDs work ONLY with sandbox API, live IDs work ONLY with live API
+const PAYPAL_MODE = process.env.PAYPAL_MODE ?? "production";
 const BASE_URL =
   PAYPAL_MODE === "production"
     ? "https://api-m.paypal.com"
