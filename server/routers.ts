@@ -376,6 +376,7 @@ export const appRouter = router({
           priceJPY: z.string(),
           label: z.string().optional(),
           isActive: z.number().optional(),
+          enabledCurrencies: z.string().nullable().optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -393,6 +394,7 @@ export const appRouter = router({
             priceJPY: input.priceJPY,
             ...(input.label !== undefined ? { label: input.label } : {}),
             ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
+            ...(input.enabledCurrencies !== undefined ? { enabledCurrencies: input.enabledCurrencies } : {}),
           })
           .where(eq(packagePrices.packageId, input.packageId));
         return { success: true };

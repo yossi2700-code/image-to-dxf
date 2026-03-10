@@ -166,6 +166,18 @@ export default function Buy() {
   // קריאת מחירים דינמיים מה-DB
   const { data: dbPrices, isLoading: pricesLoading } = trpc.packages.prices.useQuery();
 
+  // מטבעות פעילים — מבוסס על enabledCurrencies של החבילה הראשונה (או כולם אם לא הוגדר)
+  const activeCurrencies = dbPrices && dbPrices.length > 0 && dbPrices[0].enabledCurrencies
+    ? dbPrices[0].enabledCurrencies.split(",").filter(Boolean)
+    : CURRENCIES;
+
+  // וודא שה-currency הנוכחי פעיל
+  useEffect(() => {
+    if (activeCurrencies.length > 0 && !activeCurrencies.includes(currency)) {
+      setCurrency(activeCurrencies[0]);
+    }
+  }, [activeCurrencies.join(",")]);
+
   useEffect(() => {
     // Check PayPal configuration
     fetch("/api/paypal/status")
@@ -271,9 +283,9 @@ export default function Buy() {
             onChange={(e) => setCurrency(e.target.value)}
             className="bg-transparent text-white text-sm font-semibold focus:outline-none cursor-pointer"
           >
-            {CURRENCIES.map((c) => (
+            {activeCurrencies.map((c) => (
               <option key={c} value={c} className="bg-slate-800 text-white">
-                {c} {CURRENCY_SYMBOLS[c]}
+                {c} {CURRENCY_SYMBOLS[c as keyof typeof CURRENCY_SYMBOLS] ?? c}
               </option>
             ))}
           </select>
@@ -282,7 +294,7 @@ export default function Buy() {
 
       {/* Package cards */}
       <div className="max-w-3xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        {PACKAGES.map((p) => {
+        {packages.map((p) => {
           const pPrice = p.prices[currency] ?? p.prices["USD"];
           const pPerToken = (parseFloat(pPrice) / p.tokens).toFixed(2);
           const isSelected = selectedPackage === p.id;

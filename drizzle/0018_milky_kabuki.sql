@@ -1,0 +1,1 @@
+ALTER TABLE `package_prices` ADD `enabledCurrencies` varchar(128);

@@ -1795,6 +1795,14 @@ export default function Home() {
                 <History className="w-3 h-3" />
                 <span>{isRtl ? 'היסטוריה' : 'History'}</span>
               </button>
+              {/* Buy tokens button */}
+              <button
+                onClick={() => window.location.href = '/buy'}
+                className="flex items-center gap-1 font-bold shrink-0 transition-all hover:opacity-90 active:scale-95 rounded-xl px-2.5 py-1.5"
+                style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', fontSize: '11px', boxShadow: '0 2px 6px rgba(16,185,129,0.35)' }}
+              >
+                <span>{isRtl ? 'קנה קרדיטים' : 'Buy Tokens'}</span>
+              </button>
               {/* Account button — always show text */}
               <button
                 onClick={() => window.location.href = '/account'}

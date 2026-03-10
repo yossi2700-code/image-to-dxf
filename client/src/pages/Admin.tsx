@@ -261,7 +261,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     onError: (e) => toast.error("שגיאה: " + e.message),
   });
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
-  const [priceEdits, setPriceEdits] = useState<Record<string, Record<string, string>>>({});
+  const [priceEdits, setPriceEdits] = useState<Record<string, Record<string, string | boolean>>>({});
+  const ALL_CURRENCIES = ["USD", "EUR", "ILS", "GBP", "AUD", "CAD", "JPY"] as const;
   // ── Settings state ───
   const [settingsName, setSettingsName] = useState("");
   const [nameLoading, setNameLoading] = useState(false);
@@ -861,16 +862,20 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                 size="sm"
                                 onClick={() => {
                                   const edits = priceEdits[pkg.packageId] || {};
+                                  const enabledList = ALL_CURRENCIES
+                                    .filter(c => (edits[`enabled_${c}`] ?? (pkg.enabledCurrencies ? pkg.enabledCurrencies.split(",").includes(c) : true)) === true)
+                                    .join(",");
                                   updatePriceMutation.mutate({
                                     packageId: pkg.packageId,
-                                    priceUSD: edits.priceUSD ?? pkg.priceUSD,
-                                    priceEUR: edits.priceEUR ?? pkg.priceEUR,
-                                    priceILS: edits.priceILS ?? pkg.priceILS,
-                                    priceGBP: edits.priceGBP ?? pkg.priceGBP,
-                                    priceAUD: edits.priceAUD ?? pkg.priceAUD,
-                                    priceCAD: edits.priceCAD ?? pkg.priceCAD,
-                                    priceJPY: edits.priceJPY ?? pkg.priceJPY,
-                                    label: edits.label ?? pkg.label ?? undefined,
+                                    priceUSD: String(edits.priceUSD ?? pkg.priceUSD),
+                                    priceEUR: String(edits.priceEUR ?? pkg.priceEUR),
+                                    priceILS: String(edits.priceILS ?? pkg.priceILS),
+                                    priceGBP: String(edits.priceGBP ?? pkg.priceGBP),
+                                    priceAUD: String(edits.priceAUD ?? pkg.priceAUD),
+                                    priceCAD: String(edits.priceCAD ?? pkg.priceCAD),
+                                    priceJPY: String(edits.priceJPY ?? pkg.priceJPY),
+                                    label: edits.label ? String(edits.label) : pkg.label ?? undefined,
+                                    enabledCurrencies: enabledList || null,
                                   });
                                 }}
                                 disabled={updatePriceMutation.isPending}
@@ -884,32 +889,93 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             </Button>
                           )}
                         </div>
+
+                        {/* Currency toggles */}
+                        {editingPriceId === pkg.packageId && (
+                          <div className="mb-3 p-3 bg-muted/40 rounded-lg">
+                            <p className="text-xs font-semibold text-muted-foreground mb-2">מטבעות פעילים (כבה להסתרת מטבע מהלקוחות)</p>
+                            <div className="flex flex-wrap gap-2">
+                              {ALL_CURRENCIES.map((c) => {
+                                const defaultEnabled = pkg.enabledCurrencies ? pkg.enabledCurrencies.split(",").includes(c) : true;
+                                const isEnabled = priceEdits[pkg.packageId]?.[`enabled_${c}`] ?? defaultEnabled;
+                                return (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => setPriceEdits(prev => ({
+                                      ...prev,
+                                      [pkg.packageId]: { ...(prev[pkg.packageId] || {}), [`enabled_${c}`]: !isEnabled }
+                                    }))}
+                                    className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                                      isEnabled
+                                        ? "bg-green-100 border-green-400 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                                        : "bg-gray-100 border-gray-300 text-gray-400 dark:bg-gray-800 dark:text-gray-500 line-through"
+                                    }`}
+                                  >
+                                    {c}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                           {([
-                            { key: "priceUSD", label: "USD ($)", val: pkg.priceUSD },
-                            { key: "priceEUR", label: "EUR (€)", val: pkg.priceEUR },
-                            { key: "priceILS", label: "ILS (₪)", val: pkg.priceILS },
-                            { key: "priceGBP", label: "GBP (£)", val: pkg.priceGBP },
-                            { key: "priceAUD", label: "AUD (A$)", val: pkg.priceAUD },
-                            { key: "priceCAD", label: "CAD (C$)", val: pkg.priceCAD },
-                            { key: "priceJPY", label: "JPY (¥)", val: pkg.priceJPY },
-                          ] as const).map(({ key, label, val }) => (
-                            <div key={key}>
-                              <label className="text-xs text-muted-foreground block mb-1">{label}</label>
+                            { key: "priceUSD", label: "USD ($)", val: pkg.priceUSD, cur: "USD" },
+                            { key: "priceEUR", label: "EUR (€)", val: pkg.priceEUR, cur: "EUR" },
+                            { key: "priceILS", label: "ILS (₪)", val: pkg.priceILS, cur: "ILS" },
+                            { key: "priceGBP", label: "GBP (£)", val: pkg.priceGBP, cur: "GBP" },
+                            { key: "priceAUD", label: "AUD (A$)", val: pkg.priceAUD, cur: "AUD" },
+                            { key: "priceCAD", label: "CAD (C$)", val: pkg.priceCAD, cur: "CAD" },
+                            { key: "priceJPY", label: "JPY (¥)", val: pkg.priceJPY, cur: "JPY" },
+                          ] as const).map(({ key, label, val, cur }) => {
+                            const defaultEnabled = pkg.enabledCurrencies ? pkg.enabledCurrencies.split(",").includes(cur) : true;
+                            const isEnabled = editingPriceId === pkg.packageId
+                              ? (priceEdits[pkg.packageId]?.[`enabled_${cur}`] ?? defaultEnabled)
+                              : defaultEnabled;
+                            return (
+                            <div key={key} className={isEnabled ? "" : "opacity-40"}>
+                              <label className="text-xs text-muted-foreground block mb-1">
+                                {label}
+                                {!isEnabled && <span className="ml-1 text-red-400">(כבוי)</span>}
+                              </label>
                               {editingPriceId === pkg.packageId ? (
                                 <Input
                                   className="h-7 text-sm"
                                   defaultValue={val}
-                                  onChange={(e) => setPriceEdits(prev => ({
-                                    ...prev,
-                                    [pkg.packageId]: { ...(prev[pkg.packageId] || {}), [key]: e.target.value }
-                                  }))}
+                                  onChange={(e) => {
+                                    const newVal = e.target.value;
+                                    setPriceEdits(prev => ({
+                                      ...prev,
+                                      [pkg.packageId]: { ...(prev[pkg.packageId] || {}), [key]: newVal }
+                                    }));
+                                    // Auto-convert from ILS
+                                    if (key === "priceILS" && newVal && !isNaN(parseFloat(newVal))) {
+                                      const ils = parseFloat(newVal);
+                                      const rates: Record<string, number> = { USD: 0.27, EUR: 0.25, GBP: 0.21, AUD: 0.42, CAD: 0.37, JPY: 41 };
+                                      setPriceEdits(prev => ({
+                                        ...prev,
+                                        [pkg.packageId]: {
+                                          ...(prev[pkg.packageId] || {}),
+                                          priceILS: newVal,
+                                          priceUSD: (ils * rates.USD).toFixed(2),
+                                          priceEUR: (ils * rates.EUR).toFixed(2),
+                                          priceGBP: (ils * rates.GBP).toFixed(2),
+                                          priceAUD: (ils * rates.AUD).toFixed(2),
+                                          priceCAD: (ils * rates.CAD).toFixed(2),
+                                          priceJPY: Math.round(ils * rates.JPY).toString(),
+                                        }
+                                      }));
+                                    }
+                                  }}
                                 />
                               ) : (
                                 <span className="font-medium">{val}</span>
                               )}
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     ))}

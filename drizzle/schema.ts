@@ -232,6 +232,8 @@ export const packagePrices = mysqlTable("package_prices", {
   priceJPY: varchar("priceJPY", { length: 16 }).notNull(),
   /** Whether this package is active/visible */
   isActive: int("isActive").notNull().default(1),
+  /** Comma-separated list of enabled currencies, e.g. "USD,EUR,ILS,GBP" — null means all enabled */
+  enabledCurrencies: varchar("enabledCurrencies", { length: 128 }),
   /** Display label (e.g. "Starter", "Pro") */
   label: varchar("label", { length: 64 }),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
