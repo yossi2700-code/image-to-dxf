@@ -71,3 +71,121 @@ export async function sendPasswordResetEmail(opts: {
     `,
   });
 }
+
+export async function sendWelcomeEmail(opts: {
+  to: string;
+  name: string | null;
+  tokens: number;
+  siteUrl: string;
+  language?: "he" | "en";
+}): Promise<void> {
+  if (!resend) { console.warn("[emailService] RESEND_API_KEY not set, skipping welcome email"); return; }
+  const isHe = (opts.language ?? "he") === "he";
+  const displayName = opts.name ?? (isHe ? "משתמש יקר" : "there");
+  const subject = isHe
+    ? `ברוכים הבאים ל-DXF AI ✨ — ${opts.tokens} אסימונים מחכים לך!`
+    : `Welcome to DXF AI ✨ — Your ${opts.tokens} free tokens are ready!`;
+
+  const heHtml = `
+    <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+      <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 36px 32px; text-align: center;">
+        <div style="display: inline-block; background: rgba(255,255,255,0.15); border-radius: 12px; padding: 8px 16px; margin-bottom: 16px;">
+          <span style="color: white; font-size: 20px; font-weight: 900; letter-spacing: -0.5px;">Ai<span style="color: #c4b5fd;">DXF</span></span>
+        </div>
+        <h1 style="color: white; font-size: 26px; font-weight: 900; margin: 0 0 8px; line-height: 1.2;">ברוכים הבאים! 🎉</h1>
+        <p style="color: rgba(255,255,255,0.85); font-size: 15px; margin: 0;">הפלטפורמה המובילה להמרת תמונות ל-DXF</p>
+      </div>
+
+      <div style="background: #f0fdf4; border-bottom: 1px solid #bbf7d0; padding: 20px 32px; text-align: center;">
+        <div style="display: inline-block; background: linear-gradient(135deg, #059669, #10b981); color: white; border-radius: 50px; padding: 10px 28px; font-size: 18px; font-weight: 900;">
+          🎁 ${opts.tokens} אסימונים חינם מחכים לך!
+        </div>
+        <p style="color: #065f46; font-size: 13px; margin: 10px 0 0;">האסימונים כבר זמינים בחשבונך — אין צורך בפעולה נוספת</p>
+      </div>
+
+      <div style="padding: 32px;">
+        <p style="color: #374151; font-size: 16px; margin: 0 0 16px;">שלום ${displayName},</p>
+        <p style="color: #374151; font-size: 15px; line-height: 1.7; margin: 0 0 24px;">
+          אנחנו שמחים שהצטרפת! עם <strong>${opts.tokens} אסימונים חינמיים</strong> תוכל להתחיל להמיר תמונות לקבצי DXF מוכנים לחיתוך לייזר ו-CNC — מיידית.
+        </p>
+
+        <div style="background: #f8fafc; border-radius: 12px; padding: 20px 24px; margin-bottom: 28px; border: 1px solid #e2e8f0;">
+          <p style="color: #1e293b; font-weight: 700; font-size: 14px; margin: 0 0 14px;">מה אפשר לעשות עם האסימונים:</p>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 8px 0; color: #374151; font-size: 14px;">🖼️ AI Outline — תמונה לוקטור</td>
+              <td style="padding: 8px 0; color: #6366f1; font-weight: 700; font-size: 14px; text-align: left;">5 אסימונים</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 8px 0; color: #374151; font-size: 14px;">✨ AI Create — יצירה מטקסט</td>
+              <td style="padding: 8px 0; color: #6366f1; font-weight: 700; font-size: 14px; text-align: left;">3 אסימונים</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 8px 0; color: #374151; font-size: 14px;">👤 Portrait — פורטרט DXF</td>
+              <td style="padding: 8px 0; color: #6366f1; font-weight: 700; font-size: 14px; text-align: left;">4 אסימונים</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #374151; font-size: 14px;">🔄 AI Refine — עריכה חכמה</td>
+              <td style="padding: 8px 0; color: #6366f1; font-weight: 700; font-size: 14px; text-align: left;">2 אסימונים</td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 28px;">
+          <a href="${opts.siteUrl}"
+             style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 14px 36px; border-radius: 50px; text-decoration: none; font-weight: 900; font-size: 16px; box-shadow: 0 4px 16px rgba(99,102,241,0.4);">
+            🚀 התחל להמיר עכשיו
+          </a>
+        </div>
+
+        <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
+          צריך עזרה? פנה אלינו בכל עת • <a href="${opts.siteUrl}" style="color: #6366f1; text-decoration: none;">dxfai.net</a>
+        </p>
+      </div>
+    </div>
+  `;
+
+  const enHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+      <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 36px 32px; text-align: center;">
+        <div style="display: inline-block; background: rgba(255,255,255,0.15); border-radius: 12px; padding: 8px 16px; margin-bottom: 16px;">
+          <span style="color: white; font-size: 20px; font-weight: 900;">Ai<span style="color: #c4b5fd;">DXF</span></span>
+        </div>
+        <h1 style="color: white; font-size: 26px; font-weight: 900; margin: 0 0 8px;">Welcome aboard! 🎉</h1>
+        <p style="color: rgba(255,255,255,0.85); font-size: 15px; margin: 0;">The leading platform for image-to-DXF conversion</p>
+      </div>
+      <div style="background: #f0fdf4; border-bottom: 1px solid #bbf7d0; padding: 20px 32px; text-align: center;">
+        <div style="display: inline-block; background: linear-gradient(135deg, #059669, #10b981); color: white; border-radius: 50px; padding: 10px 28px; font-size: 18px; font-weight: 900;">
+          🎁 ${opts.tokens} free tokens are ready!
+        </div>
+        <p style="color: #065f46; font-size: 13px; margin: 10px 0 0;">Already in your account — no action needed</p>
+      </div>
+      <div style="padding: 32px;">
+        <p style="color: #374151; font-size: 16px; margin: 0 0 16px;">Hi ${displayName},</p>
+        <p style="color: #374151; font-size: 15px; line-height: 1.7; margin: 0 0 24px;">
+          We're thrilled to have you! Use your <strong>${opts.tokens} free tokens</strong> to start converting images to DXF files — ready for laser cutting &amp; CNC.
+        </p>
+        <div style="background: #f8fafc; border-radius: 12px; padding: 20px 24px; margin-bottom: 28px; border: 1px solid #e2e8f0;">
+          <p style="color: #1e293b; font-weight: 700; font-size: 14px; margin: 0 0 14px;">What you can do with tokens:</p>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; color: #374151; font-size: 14px;">🖼️ AI Outline — image to vector</td><td style="padding: 8px 0; color: #6366f1; font-weight: 700; font-size: 14px;">5 tokens</td></tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; color: #374151; font-size: 14px;">✨ AI Create — text to DXF</td><td style="padding: 8px 0; color: #6366f1; font-weight: 700; font-size: 14px;">3 tokens</td></tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; color: #374151; font-size: 14px;">👤 Portrait — portrait DXF</td><td style="padding: 8px 0; color: #6366f1; font-weight: 700; font-size: 14px;">4 tokens</td></tr>
+            <tr><td style="padding: 8px 0; color: #374151; font-size: 14px;">🔄 AI Refine — smart editing</td><td style="padding: 8px 0; color: #6366f1; font-weight: 700; font-size: 14px;">2 tokens</td></tr>
+          </table>
+        </div>
+        <div style="text-align: center; margin-bottom: 28px;">
+          <a href="${opts.siteUrl}" style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 14px 36px; border-radius: 50px; text-decoration: none; font-weight: 900; font-size: 16px; box-shadow: 0 4px 16px rgba(99,102,241,0.4);">🚀 Start converting now</a>
+        </div>
+        <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">Need help? Contact us anytime • <a href="${opts.siteUrl}" style="color: #6366f1; text-decoration: none;">dxfai.net</a></p>
+      </div>
+    </div>
+  `;
+
+  await resend.emails.send({
+    from: FROM_ADDRESS,
+    to: opts.to,
+    subject,
+    html: isHe ? heHtml : enHtml,
+  });
+}

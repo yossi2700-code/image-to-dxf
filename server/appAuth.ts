@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { eq, and, gte, count, sql } from "drizzle-orm";
 import { getDb } from "./db";
 import { appUsers, usageEvents, emailVerifications, passwordResets, consentRecords } from "../drizzle/schema";
-import { sendVerificationEmail, sendPasswordResetEmail } from "./emailService";
+import { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } from "./emailService";
 import { randomBytes } from "crypto";
 import { ENV } from "./_core/env";
 
@@ -144,6 +144,23 @@ router.post("/api/app-auth/register", async (req, res) => {
       });
     } catch (e) {
       console.warn("[register] Failed to save consent record:", e);
+    }
+
+    // Send welcome email (fire-and-forget)
+    try {
+      const origin = (req.headers["x-forwarded-proto"]
+        ? `${req.headers["x-forwarded-proto"]}://${req.headers["x-forwarded-host"]}`
+        : `${req.protocol}://${req.get("host")}`);
+      const lang = (req.headers["accept-language"] ?? "").startsWith("he") ? "he" : "en";
+      void sendWelcomeEmail({
+        to: email.toLowerCase(),
+        name: name?.trim() || null,
+        tokens: 20,
+        siteUrl: origin,
+        language: lang,
+      });
+    } catch (e) {
+      console.warn("[register] Failed to send welcome email:", e);
     }
 
     const token = signToken(userId, email.toLowerCase());
