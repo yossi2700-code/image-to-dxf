@@ -41,6 +41,10 @@ import {
   Scan,
   FileEdit,
   X,
+  ShoppingCart,
+  ChevronDown,
+  User,
+  CreditCard,
 } from "lucide-react";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -1650,6 +1654,8 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
 export default function Home() {
   const { t, isRtl, language } = useLanguage();
   const [appUser, setAppUser] = useState<{ id: number; email: string; name: string | null } | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Track active background jobs across all AI tabs
   const [activeJobs, setActiveJobs] = useState<{ generate: boolean; trace: boolean; doc: boolean; face: boolean }>(() => ({
@@ -1735,6 +1741,18 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
+  // Close user menu on outside click
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [userMenuOpen]);
+
   const handleLogout = async () => {
     await fetch("/api/app-auth/logout", { method: "POST" });
     localStorage.removeItem("app_user_logged_in");
@@ -1774,65 +1792,107 @@ export default function Home() {
             <span className="hidden sm:inline text-base font-black tracking-tight" style={{ color: '#6366f1', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>Ai</span><span className="hidden sm:inline text-base font-black tracking-tight" style={{ color: '#111827', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>DXF</span>
           </div>
 
-          {/* Scrollable nav area */}
-          <div className="flex-1 min-w-0 overflow-x-auto scrollbar-none">
-            {/* Auth in header */}
+          {/* Right side nav */}
+          <div className="flex items-center gap-2 ms-auto">
             {appUser ? (
-              <div className="flex items-center gap-1.5 justify-end" style={{ minWidth: 'max-content' }}>
-                {/* Token balance */}
+              <>
+                {/* Token balance badge */}
                 <button
-                  onClick={() => window.location.href = "/tokens"}
-                  className="flex items-center gap-1 font-bold px-2 py-1 rounded-full shrink-0 hover:opacity-80 transition-opacity"
-                  style={{ background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4338ca', fontSize: '11px', whiteSpace: 'nowrap' }}
+                  onClick={() => window.location.href = "/buy"}
+                  className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full shrink-0 hover:opacity-80 transition-opacity"
+                  style={{ background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4338ca', fontSize: '12px', whiteSpace: 'nowrap' }}
+                  title={isRtl ? 'רכוש אסימונים' : 'Buy tokens'}
                 >
-                  <Sparkles className="w-3 h-3" />
+                  <Sparkles className="w-3.5 h-3.5" />
                   <span>{tokenBalance}</span>
                 </button>
-                {/* History button */}
-                <button
-                  onClick={() => window.location.href = "/history"}
-                  className="flex items-center gap-1 font-semibold shrink-0 hover:opacity-90 active:scale-95 transition-all rounded-lg px-2.5 py-1.5"
-                  style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', fontSize: '11px', boxShadow: '0 2px 6px rgba(99,102,241,0.3)', whiteSpace: 'nowrap' }}
-                >
-                  <History className="w-3 h-3" />
-                  <span>{isRtl ? 'היסטוריה' : 'History'}</span>
-                </button>
-                {/* Buy tokens button */}
-                <button
-                  onClick={() => window.location.href = '/buy'}
-                  className="flex items-center gap-1 font-bold shrink-0 transition-all hover:opacity-90 active:scale-95 rounded-lg px-2.5 py-1.5"
-                  style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', fontSize: '11px', boxShadow: '0 2px 6px rgba(16,185,129,0.35)', whiteSpace: 'nowrap' }}
-                >
-                  <span>{isRtl ? 'קנה קרדיטים' : 'Buy Tokens'}</span>
-                </button>
-                {/* Account button */}
-                <button
-                  onClick={() => window.location.href = '/account'}
-                  className="flex items-center gap-1 font-bold shrink-0 transition-all hover:opacity-90 active:scale-95 rounded-lg px-2.5 py-1.5"
-                  style={{ background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: 'white', fontSize: '11px', boxShadow: '0 2px 6px rgba(99,102,241,0.35)', whiteSpace: 'nowrap' }}
-                >
-                  <UserCircle className="w-3 h-3" />
-                  <span>{isRtl ? 'אזור אישי' : 'Account'}</span>
-                </button>
-                {/* Logout */}
-                <button
-                  onClick={handleLogout}
-                  className="p-1.5 rounded-full transition-colors text-gray-400 hover:text-red-500 shrink-0"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                </button>
-              </div>
+
+                {/* User avatar dropdown */}
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    onClick={() => setUserMenuOpen(v => !v)}
+                    className="flex items-center gap-1.5 rounded-full px-2 py-1 font-semibold transition-all hover:opacity-90 active:scale-95"
+                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', boxShadow: '0 2px 8px rgba(99,102,241,0.35)' }}
+                    aria-label={isRtl ? 'תפריט משתמש' : 'User menu'}
+                  >
+                    {/* Avatar circle with initials */}
+                    <div
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black"
+                      style={{ background: 'rgba(255,255,255,0.25)' }}
+                    >
+                      {(appUser.name || appUser.email || '?').charAt(0).toUpperCase()}
+                    </div>
+                    <span className="hidden sm:inline text-xs font-semibold max-w-[80px] truncate">
+                      {appUser.name || appUser.email.split('@')[0]}
+                    </span>
+                    <ChevronDown className={`w-3 h-3 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Dropdown menu */}
+                  {userMenuOpen && (
+                    <div
+                      className="absolute top-full mt-2 rounded-xl shadow-xl border z-50 min-w-[180px] overflow-hidden"
+                      style={{
+                        background: '#fff',
+                        border: '1px solid #e8eaf0',
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                        [isRtl ? 'left' : 'right']: 0,
+                      }}
+                    >
+                      {/* User info header */}
+                      <div className="px-4 py-3 border-b" style={{ borderColor: '#f0f0f5', background: '#fafafa' }}>
+                        <p className="text-xs font-bold text-gray-800 truncate">{appUser.name || appUser.email.split('@')[0]}</p>
+                        <p className="text-xs text-gray-400 truncate">{appUser.email}</p>
+                      </div>
+
+                      {/* Menu items */}
+                      <div className="py-1">
+                        <button
+                          onClick={() => { setUserMenuOpen(false); window.location.href = '/account'; }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                        >
+                          <User className="w-4 h-4" />
+                          <span>{isRtl ? 'אזור אישי' : 'My Account'}</span>
+                        </button>
+                        <button
+                          onClick={() => { setUserMenuOpen(false); window.location.href = '/history'; }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                        >
+                          <History className="w-4 h-4" />
+                          <span>{isRtl ? 'היסטוריה' : 'History'}</span>
+                        </button>
+                        <button
+                          onClick={() => { setUserMenuOpen(false); window.location.href = '/buy'; }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
+                        >
+                          <CreditCard className="w-4 h-4" />
+                          <span>{isRtl ? 'קנה קרדיטים' : 'Buy Tokens'}</span>
+                        </button>
+                      </div>
+
+                      {/* Logout */}
+                      <div className="border-t py-1" style={{ borderColor: '#f0f0f5' }}>
+                        <button
+                          onClick={() => { setUserMenuOpen(false); handleLogout(); }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>{isRtl ? 'התנתק' : 'Sign out'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
             ) : (
-              <div className="flex justify-end">
-                <button
-                  onClick={() => { setLimitReached(false); setAuthOpen(true); }}
-                  className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl font-semibold transition-all hover:opacity-90 shrink-0"
-                  style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: 'none', boxShadow: '0 3px 10px rgba(99,102,241,0.35)', whiteSpace: 'nowrap' }}
-                >
-                  <LogIn className="w-3.5 h-3.5" />
-                  {t("loginRegister")}
-                </button>
-              </div>
+              <button
+                onClick={() => { setLimitReached(false); setAuthOpen(true); }}
+                className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl font-semibold transition-all hover:opacity-90 shrink-0"
+                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: 'none', boxShadow: '0 3px 10px rgba(99,102,241,0.35)', whiteSpace: 'nowrap' }}
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                {t("loginRegister")}
+              </button>
             )}
           </div>
 
