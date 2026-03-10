@@ -415,13 +415,13 @@ async function runTraceJob(
       // Use gpt-image-1 edit API for high-quality line art generation
       const imageEditResponse = await openai.images.edit({
         model: "gpt-image-1",
-        image: new File([editSourceBuffer], "source.png", { type: "image/png" }),
+        image: new File([editSourceBuffer as unknown as BlobPart], "source.png", { type: "image/png" }),
         prompt: editPrompt,
         n: 1,
         size: "1024x1024",
       } as Parameters<typeof openai.images.edit>[0]);
 
-      const b64 = imageEditResponse.data?.[0]?.b64_json;
+      const b64 = (imageEditResponse as { data?: Array<{ b64_json?: string }> }).data?.[0]?.b64_json;
       if (!b64) throw new Error("gpt-image-1 did not return image data");
       let rawBuffer = Buffer.from(b64, "base64");
 

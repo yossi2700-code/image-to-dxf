@@ -438,7 +438,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
     const file = e.dataTransfer.files[0]; if (file) handleFile(file);
   }, [handleFile]);
 
-  const handleTrace = async () => {
+  const handleTrace = async (overrideFocusText?: string) => {
     if (!imageFile && !previewRef.current) return;
 
     // Use previewRef (not imagePreview state) to read the current preview URL.
@@ -470,7 +470,8 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
         formData.append("image", blob, "image.jpg");
       }
       if (description.trim()) formData.append("description", description.trim());
-      if (focusText.trim()) formData.append("focusText", focusText.trim());
+      const effectiveFocusText = overrideFocusText !== undefined ? overrideFocusText : focusText;
+      if (effectiveFocusText.trim()) formData.append("focusText", effectiveFocusText.trim());
       formData.append("lang", isRtl ? "he" : "en");
       formData.append("landscapeMode", fullImageMode ? "true" : "false");
       formData.append("variationIndex", "0"); // Always use simple/clean mode
@@ -837,7 +838,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   cursor: ((!imageFile && !imagePreview) || status === "loading") ? 'not-allowed' : 'pointer',
                 }}
                 disabled={(!imageFile && !imagePreview) || status === "loading"}
-                onClick={handleTrace}
+                onClick={() => handleTrace()}
               >
                 {status === "loading" ? (
                   <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />{isRtl ? "ה-AI מנתח ומצייר..." : "AI is analyzing and drawing..."}</>
@@ -1016,7 +1017,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-teal-600" />
                     <span className="font-semibold text-sm text-gray-700">
-                      {isRtl ? "3 עיצובים מוכנים — בחר את המועדף" : "3 designs ready — choose your favorite"}
+                      {isRtl ? "העיצוב מוכן — בחר סגנון שיפור" : "Design ready — choose an improvement style"}
                     </span>
                   </div>
                   {/* Change image button — uses label for Safari iOS compatibility */}
@@ -1059,7 +1060,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                     {(isRtl ? VARIATION_LABELS : VARIATION_LABELS_EN).map((label, idx) => (
                       <button
                         key={idx}
-                        onClick={() => { setFocusText(label); handleTrace(); }}
+                        onClick={() => { setFocusText(label); handleTrace(label); }}
                         className="text-xs px-3 py-1.5 rounded-full font-medium transition-all bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100"
                       >
                         🎨 {label}
@@ -1074,7 +1075,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                     {result.suggestions.map((suggestion, idx) => (
                       <button
                         key={idx}
-                        onClick={() => { setFocusText(suggestion); handleTrace(); }}
+                        onClick={() => { setFocusText(suggestion); handleTrace(suggestion); }}
                         className="text-xs px-3 py-1.5 rounded-full font-medium transition-all bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100"
                       >
                         ✨ {suggestion}
@@ -1083,7 +1084,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   </div>
 
                   <p className="text-xs font-medium mb-1.5 text-teal-700">
-                    {isRtl ? "או הקלד בקשה משלהך:" : "Or type your own request:"}
+                    {isRtl ? "או הקלד בקשה שלך:" : "Or type your own request:"}
                   </p>
                   <div className="flex gap-2">
                     <input
@@ -1092,9 +1093,10 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                       onChange={(e) => setCustomImprovement(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && customImprovement.trim()) {
-                          setFocusText(customImprovement.trim());
+                          const txt = customImprovement.trim();
+                          setFocusText(txt);
                           setCustomImprovement("");
-                          handleTrace();
+                          handleTrace(txt);
                         }
                       }}
                       placeholder={isRtl ? "לדוגמה: הוסף פרטים, שנה סגנון..." : "e.g. add more detail, cartoon style..."}
@@ -1104,9 +1106,10 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                     <button
                       onClick={() => {
                         if (customImprovement.trim()) {
-                          setFocusText(customImprovement.trim());
+                          const txt = customImprovement.trim();
+                          setFocusText(txt);
                           setCustomImprovement("");
-                          handleTrace();
+                          handleTrace(txt);
                         }
                       }}
                       disabled={!customImprovement.trim()}
@@ -1155,7 +1158,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             <ul className="space-y-1.5 text-sm text-gray-600">
               <li className="flex gap-2"><span className="shrink-0 text-teal-500">•</span><span>{t("aiTraceTip1")}</span></li>
               <li className="flex gap-2"><span className="shrink-0 text-teal-500">•</span><span>{t("aiTraceTip2")}</span></li>
-              <li className="flex gap-2"><span className="shrink-0 text-teal-500">•</span><span>{isRtl ? "ה-AI מנתח את התמונה ומצייר מחדש — 3 סגנונות שונים לבחירה" : "AI analyzes your image and redraws it — 3 different styles to choose from"}</span></li>
+              <li className="flex gap-2"><span className="shrink-0 text-teal-500">•</span><span>{isRtl ? "ה-AI מנתח את התמונה ומצייר מחדש — בחר סגנון שיפור" : "AI analyzes your image and redraws it — choose an improvement style"}</span></li>
             </ul>
         </div>
       </div>

@@ -7,6 +7,7 @@ import { recordUserAction } from "./userActionsDb";
 import { checkUsageLimit } from "./usageLimits";
 import { deductTokens } from "./tokenService";
 import OpenAI from "openai";
+import { invokeLLM } from "./_core/llm";
 import { svgToDxf } from "./svgToDxf";
 import { cleanSvgForPreview } from "./svgClean";
 import potrace from "potrace";
@@ -217,6 +218,73 @@ router.post("/api/ai-refine", async (req, res) => {
     const message = err instanceof Error ? err.message : "שגיאה לא ידועה";
     return res.status(500).json({ error: "שגיאה בתיקון AI", details: message });
   }
+});
+
+/**
+ * POST /api/ai-suggestions
+ * Generate dynamic, context-aware improvement suggestions based on the original prompt.
+ * Body: { originalPrompt: string, lang: 'he' | 'en' }
+ * Returns: { suggestions: string[] }
+ * No auth required — lightweight, no token cost.
+ */
+router.post("/api/ai-suggestions", async (req, res) => {
+  const { originalPrompt, lang } = req.body as { originalPrompt?: string; lang?: string };
+  const isHe = lang === "he";
+
+  if (!originalPrompt || originalPrompt.trim().length < 2) {
+    return res.json({ suggestions: [] });
+  }
+
+  try {
+    const systemPrompt = isHe
+      ? "אתה עוזר יצירתי שמסייע למשתמשים לשפר עיצובי קו לחריטת CNC/לייזר. " +
+        "בהינתן תיאור של העיצוב, צור 3 הצעות שיפור קצרות וספציפיות לאותו עיצוב בדיוק. " +
+        "כל הצעה: 2-5 מילים בעברית, ספציפית לנושא שהוזן. " +
+        "פלט JSON בלבד: {\"suggestions\": [\"...\", \"...\", \"...\"]}"
+      : "You are a creative assistant helping users refine line art designs for CNC/laser engraving. " +
+        "Given the design description, generate 3 short specific improvement suggestions for that exact design. " +
+        "Each suggestion: 2-5 words in English, specific to the subject entered. " +
+        "Output JSON only: {\"suggestions\": [\"...\", \"...\", \"...\"]}"
+
+    const userPrompt = isHe
+      ? `צור 3 הצעות שיפור לעיצוב: "${originalPrompt.trim()}"`
+      : `Generate 3 improvement suggestions for this design: "${originalPrompt.trim()}"`;
+
+    const response = await invokeLLM({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "suggestions",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              suggestions: { type: "array", items: { type: "string" } },
+            },
+            required: ["suggestions"],
+            additionalProperties: false,
+          },
+        },
+      },
+    });
+
+    const content = (response as { choices?: Array<{ message?: { content?: string } }> })
+      ?.choices?.[0]?.message?.content;
+    if (content) {
+      const parsed = JSON.parse(content) as { suggestions: string[] };
+      if (Array.isArray(parsed.suggestions)) {
+        return res.json({ suggestions: parsed.suggestions.slice(0, 3) });
+      }
+    }
+  } catch (e) {
+    console.warn("[ai-suggestions] Failed:", e);
+  }
+
+  return res.json({ suggestions: [] });
 });
 
 export default router;
