@@ -144,10 +144,17 @@ export function ExportButtons({
       if (!resp.ok) throw new Error("שגיאה בהורדת DXF");
       const text = await resp.text();
       const blob = new Blob([text], { type: "application/dxf" });
+      const baseName = truncateFilename(dxfFilename);
+      const dxfFile = new File([blob], `${baseName}.dxf`, { type: "application/dxf" });
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS && navigator.share && navigator.canShare && navigator.canShare({ files: [dxfFile] })) {
+        try { await navigator.share({ files: [dxfFile], title: baseName }); return; }
+        catch (e: unknown) { if (e instanceof Error && e.name === "AbortError") return; }
+      }
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = truncateFilename(dxfFilename) + ".dxf";
+      a.download = `${baseName}.dxf`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch {
