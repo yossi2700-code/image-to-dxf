@@ -1319,3 +1319,10 @@
 - [x] הוספת checkbox הסכמה בהרשמה עם timestamp ו-IP
 - [x] שמירת consent records בDB
 - [x] הצגת consent records בפאנל הניהול
+
+## ניהול מחירי חבילות PayPal
+
+- [x] הוספת טבלת package_prices ל-DB (packageId, basePrice, currency, isActive)
+- [x] tRPC admin procedures: getPackagePrices, updatePackagePrice
+- [x] UI ניהול מחירים ב-Admin panel (עריכה ישירה מהממשק)
+- [x] עמוד /buy קורא מחירים דינמיים מה-DB

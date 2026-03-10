@@ -252,8 +252,17 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     undefined,
     { enabled: activeSection === "payments" }
   );
-
-  // ── Settings state ──
+  const { data: packagePricesData, isLoading: packagePricesLoading, refetch: refetchPrices } = trpc.admin.getPackagePrices.useQuery(
+    undefined,
+    { enabled: activeSection === "payments" }
+  );
+  const updatePriceMutation = trpc.admin.updatePackagePrice.useMutation({
+    onSuccess: () => { toast.success("מחיר עודכן בהצלחה!"); refetchPrices(); setEditingPriceId(null); },
+    onError: (e) => toast.error("שגיאה: " + e.message),
+  });
+  const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
+  const [priceEdits, setPriceEdits] = useState<Record<string, Record<string, string>>>({});
+  // ── Settings state ───
   const [settingsName, setSettingsName] = useState("");
   const [nameLoading, setNameLoading] = useState(false);
   const [currentPw, setCurrentPw] = useState("");
@@ -823,6 +832,92 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         {/* ── PAYPAL ORDERS SECTION ── */}
         {activeSection === "payments" && (
           <div className="space-y-5">
+            {/* Package Prices Management */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-purple-500" />
+                  ניהול מחירי חבילות
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {packagePricesLoading ? (
+                  <div className="text-center py-4 text-muted-foreground text-sm">טוען...</div>
+                ) : !packagePricesData || packagePricesData.length === 0 ? (
+                  <div className="text-center py-4 text-muted-foreground text-sm">אין חבילות</div>
+                ) : (
+                  <div className="space-y-4">
+                    {packagePricesData.map((pkg) => (
+                      <div key={pkg.packageId} className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <span className="font-semibold text-sm">{pkg.label || pkg.packageId}</span>
+                            <span className="text-xs text-muted-foreground mr-2">({pkg.tokenAmount} אסימונים)</span>
+                          </div>
+                          {editingPriceId === pkg.packageId ? (
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" onClick={() => setEditingPriceId(null)}>בטל</Button>
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  const edits = priceEdits[pkg.packageId] || {};
+                                  updatePriceMutation.mutate({
+                                    packageId: pkg.packageId,
+                                    priceUSD: edits.priceUSD ?? pkg.priceUSD,
+                                    priceEUR: edits.priceEUR ?? pkg.priceEUR,
+                                    priceILS: edits.priceILS ?? pkg.priceILS,
+                                    priceGBP: edits.priceGBP ?? pkg.priceGBP,
+                                    priceAUD: edits.priceAUD ?? pkg.priceAUD,
+                                    priceCAD: edits.priceCAD ?? pkg.priceCAD,
+                                    priceJPY: edits.priceJPY ?? pkg.priceJPY,
+                                    label: edits.label ?? pkg.label ?? undefined,
+                                  });
+                                }}
+                                disabled={updatePriceMutation.isPending}
+                              >
+                                {updatePriceMutation.isPending ? "שומר..." : "שמור"}
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button size="sm" variant="outline" onClick={() => { setEditingPriceId(pkg.packageId); setPriceEdits(prev => ({ ...prev, [pkg.packageId]: {} })); }}>
+                              ערוך מחירים
+                            </Button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                          {([
+                            { key: "priceUSD", label: "USD ($)", val: pkg.priceUSD },
+                            { key: "priceEUR", label: "EUR (€)", val: pkg.priceEUR },
+                            { key: "priceILS", label: "ILS (₪)", val: pkg.priceILS },
+                            { key: "priceGBP", label: "GBP (£)", val: pkg.priceGBP },
+                            { key: "priceAUD", label: "AUD (A$)", val: pkg.priceAUD },
+                            { key: "priceCAD", label: "CAD (C$)", val: pkg.priceCAD },
+                            { key: "priceJPY", label: "JPY (¥)", val: pkg.priceJPY },
+                          ] as const).map(({ key, label, val }) => (
+                            <div key={key}>
+                              <label className="text-xs text-muted-foreground block mb-1">{label}</label>
+                              {editingPriceId === pkg.packageId ? (
+                                <Input
+                                  className="h-7 text-sm"
+                                  defaultValue={val}
+                                  onChange={(e) => setPriceEdits(prev => ({
+                                    ...prev,
+                                    [pkg.packageId]: { ...(prev[pkg.packageId] || {}), [key]: e.target.value }
+                                  }))}
+                                />
+                              ) : (
+                                <span className="font-medium">{val}</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">

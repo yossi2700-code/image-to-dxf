@@ -208,3 +208,33 @@ export const paypalOrders = mysqlTable("paypal_orders", {
 });
 export type PaypalOrder = typeof paypalOrders.$inferSelect;
 export type InsertPaypalOrder = typeof paypalOrders.$inferInsert;
+
+// Package prices — admin-configurable pricing per package
+export const packagePrices = mysqlTable("package_prices", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Package identifier: "tokens_50" or "tokens_100" */
+  packageId: varchar("packageId", { length: 16 }).notNull().unique(),
+  /** Number of tokens in this package */
+  tokenAmount: int("tokenAmount").notNull(),
+  /** Base price in USD */
+  priceUSD: varchar("priceUSD", { length: 16 }).notNull(),
+  /** Price in EUR */
+  priceEUR: varchar("priceEUR", { length: 16 }).notNull(),
+  /** Price in ILS (Israeli Shekel) */
+  priceILS: varchar("priceILS", { length: 16 }).notNull(),
+  /** Price in GBP */
+  priceGBP: varchar("priceGBP", { length: 16 }).notNull(),
+  /** Price in AUD */
+  priceAUD: varchar("priceAUD", { length: 16 }).notNull(),
+  /** Price in CAD */
+  priceCAD: varchar("priceCAD", { length: 16 }).notNull(),
+  /** Price in JPY */
+  priceJPY: varchar("priceJPY", { length: 16 }).notNull(),
+  /** Whether this package is active/visible */
+  isActive: int("isActive").notNull().default(1),
+  /** Display label (e.g. "Starter", "Pro") */
+  label: varchar("label", { length: 64 }),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PackagePrice = typeof packagePrices.$inferSelect;
+export type InsertPackagePrice = typeof packagePrices.$inferInsert;

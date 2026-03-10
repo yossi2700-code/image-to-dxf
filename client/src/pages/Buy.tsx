@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { trpc } from "@/lib/trpc";
 
 // ─── Currency / pricing data (duplicated from server/products.ts for client) ──
 const CURRENCY_SYMBOLS: Record<string, string> = {
@@ -162,6 +163,9 @@ export default function Buy() {
   const [balance, setBalance] = useState<number | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
+  // קריאת מחירים דינמיים מה-DB
+  const { data: dbPrices, isLoading: pricesLoading } = trpc.packages.prices.useQuery();
+
   useEffect(() => {
     // Check PayPal configuration
     fetch("/api/paypal/status")
@@ -179,7 +183,26 @@ export default function Buy() {
       .catch(() => setIsLoggedIn(false));
   }, []);
 
-  const pkg = PACKAGES.find((p) => p.id === selectedPackage)!;
+  // בניית חבילות מה-DB או מה-fallback
+  const packages = dbPrices && dbPrices.length > 0
+    ? dbPrices.map((p) => ({
+        id: p.packageId,
+        tokens: p.tokenAmount,
+        popular: p.packageId === "tokens_100",
+        label: p.label,
+        prices: {
+          USD: p.priceUSD,
+          EUR: p.priceEUR,
+          ILS: p.priceILS,
+          GBP: p.priceGBP,
+          AUD: p.priceAUD,
+          CAD: p.priceCAD,
+          JPY: p.priceJPY,
+        } as Record<string, string>,
+      }))
+    : PACKAGES;
+
+  const pkg = packages.find((p) => p.id === selectedPackage) ?? packages[packages.length - 1];
   const price = pkg.prices[currency] ?? pkg.prices["USD"];
   const symbol = CURRENCY_SYMBOLS[currency] ?? "$";
   const perToken = (parseFloat(price) / pkg.tokens).toFixed(2);

@@ -7,7 +7,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders } from "../drizzle/schema";
+import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices } from "../drizzle/schema";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "./emailService";
 import { desc, eq, and, sql } from "drizzle-orm";
@@ -353,6 +353,62 @@ export const appRouter = router({
         .from(paypalOrders)
         .orderBy(desc(paypalOrders.createdAt))
         .limit(200);
+    }),
+
+    /** Get all package prices */
+    getPackagePrices: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.select().from(packagePrices).orderBy(packagePrices.tokenAmount);
+    }),
+
+    /** Update a package price */
+    updatePackagePrice: adminProcedure
+      .input(
+        z.object({
+          packageId: z.string(),
+          priceUSD: z.string(),
+          priceEUR: z.string(),
+          priceILS: z.string(),
+          priceGBP: z.string(),
+          priceAUD: z.string(),
+          priceCAD: z.string(),
+          priceJPY: z.string(),
+          label: z.string().optional(),
+          isActive: z.number().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db
+          .update(packagePrices)
+          .set({
+            priceUSD: input.priceUSD,
+            priceEUR: input.priceEUR,
+            priceILS: input.priceILS,
+            priceGBP: input.priceGBP,
+            priceAUD: input.priceAUD,
+            priceCAD: input.priceCAD,
+            priceJPY: input.priceJPY,
+            ...(input.label !== undefined ? { label: input.label } : {}),
+            ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
+          })
+          .where(eq(packagePrices.packageId, input.packageId));
+        return { success: true };
+      }),
+  }),
+
+  /** Public package prices — available to all users */
+  packages: router({
+    prices: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db
+        .select()
+        .from(packagePrices)
+        .where(eq(packagePrices.isActive, 1))
+        .orderBy(packagePrices.tokenAmount);
     }),
   }),
 
