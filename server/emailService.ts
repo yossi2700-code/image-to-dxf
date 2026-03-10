@@ -189,3 +189,136 @@ export async function sendWelcomeEmail(opts: {
     html: isHe ? heHtml : enHtml,
   });
 }
+
+export async function sendPurchaseConfirmationEmail(opts: {
+  to: string;
+  name: string | null;
+  tokens: number;
+  amount: string;
+  currency: string;
+  orderId: string;
+  siteUrl: string;
+  language?: "he" | "en";
+}): Promise<void> {
+  if (!resend) { console.warn("[emailService] RESEND_API_KEY not set, skipping purchase email"); return; }
+  const isHe = (opts.language ?? "he") === "he";
+  const displayName = opts.name ?? (isHe ? "משתמש יקר" : "there");
+
+  // Format amount with currency symbol
+  const currencySymbol = opts.currency === "ILS" ? "₪" : opts.currency === "EUR" ? "€" : "$";
+  const amountDisplay = `${currencySymbol}${opts.amount}`;
+
+  const subject = isHe
+    ? `✅ אישור רכישה — ${opts.tokens} אסימונים נוספו לחשבונך`
+    : `✅ Purchase confirmed — ${opts.tokens} tokens added to your account`;
+
+  const heHtml = `
+    <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+      <!-- Header -->
+      <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 36px 32px; text-align: center;">
+        <div style="display: inline-block; background: rgba(255,255,255,0.15); border-radius: 12px; padding: 8px 16px; margin-bottom: 16px;">
+          <span style="color: white; font-size: 20px; font-weight: 900; letter-spacing: -0.5px;">Ai<span style="color: #a7f3d0;">DXF</span></span>
+        </div>
+        <div style="width: 56px; height: 56px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 28px;">✅</div>
+        <h1 style="color: white; font-size: 24px; font-weight: 900; margin: 0 0 8px;">הרכישה הושלמה בהצלחה!</h1>
+        <p style="color: rgba(255,255,255,0.85); font-size: 15px; margin: 0;">האסימונים נוספו לחשבונך מיידית</p>
+      </div>
+
+      <!-- Token badge -->
+      <div style="background: #f0fdf4; border-bottom: 1px solid #bbf7d0; padding: 24px 32px; text-align: center;">
+        <div style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border-radius: 50px; padding: 12px 32px; font-size: 22px; font-weight: 900; box-shadow: 0 4px 16px rgba(99,102,241,0.35);">
+          ✨ +${opts.tokens} אסימונים
+        </div>
+        <p style="color: #065f46; font-size: 13px; margin: 10px 0 0;">זמינים עכשיו בחשבונך</p>
+      </div>
+
+      <!-- Order details -->
+      <div style="padding: 32px;">
+        <p style="color: #374151; font-size: 16px; margin: 0 0 20px;">שלום ${displayName},</p>
+        <p style="color: #374151; font-size: 15px; line-height: 1.7; margin: 0 0 24px;">
+          תודה על רכישתך! <strong>${opts.tokens} אסימונים</strong> נוספו לחשבונך ומוכנים לשימוש.
+        </p>
+
+        <!-- Receipt box -->
+        <div style="background: #f8fafc; border-radius: 12px; padding: 20px 24px; margin-bottom: 28px; border: 1px solid #e2e8f0;">
+          <p style="color: #1e293b; font-weight: 700; font-size: 14px; margin: 0 0 14px;">פרטי הרכישה:</p>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">אסימונים שנרכשו</td>
+              <td style="padding: 8px 0; color: #1e293b; font-weight: 700; font-size: 14px; text-align: left;">${opts.tokens} אסימונים</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">סכום ששולם</td>
+              <td style="padding: 8px 0; color: #059669; font-weight: 700; font-size: 14px; text-align: left;">${amountDisplay}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">שיטת תשלום</td>
+              <td style="padding: 8px 0; color: #1e293b; font-size: 14px; text-align: left;">PayPal</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">מספר הזמנה</td>
+              <td style="padding: 8px 0; color: #9ca3af; font-size: 12px; text-align: left; font-family: monospace;">${opts.orderId.substring(0, 16)}...</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- CTA -->
+        <div style="text-align: center; margin-bottom: 28px;">
+          <a href="${opts.siteUrl}"
+             style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 14px 36px; border-radius: 50px; text-decoration: none; font-weight: 900; font-size: 16px; box-shadow: 0 4px 16px rgba(99,102,241,0.4);">
+            🚀 התחל להמיר עכשיו
+          </a>
+        </div>
+
+        <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
+          צריך עזרה? פנה אלינו בכל עת • <a href="${opts.siteUrl}" style="color: #6366f1; text-decoration: none;">dxfai.net</a>
+        </p>
+      </div>
+    </div>
+  `;
+
+  const enHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+      <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 36px 32px; text-align: center;">
+        <div style="display: inline-block; background: rgba(255,255,255,0.15); border-radius: 12px; padding: 8px 16px; margin-bottom: 16px;">
+          <span style="color: white; font-size: 20px; font-weight: 900;">Ai<span style="color: #a7f3d0;">DXF</span></span>
+        </div>
+        <div style="font-size: 40px; margin-bottom: 12px;">✅</div>
+        <h1 style="color: white; font-size: 24px; font-weight: 900; margin: 0 0 8px;">Purchase confirmed!</h1>
+        <p style="color: rgba(255,255,255,0.85); font-size: 15px; margin: 0;">Tokens added to your account instantly</p>
+      </div>
+      <div style="background: #f0fdf4; border-bottom: 1px solid #bbf7d0; padding: 24px 32px; text-align: center;">
+        <div style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border-radius: 50px; padding: 12px 32px; font-size: 22px; font-weight: 900; box-shadow: 0 4px 16px rgba(99,102,241,0.35);">
+          ✨ +${opts.tokens} tokens
+        </div>
+        <p style="color: #065f46; font-size: 13px; margin: 10px 0 0;">Available now in your account</p>
+      </div>
+      <div style="padding: 32px;">
+        <p style="color: #374151; font-size: 16px; margin: 0 0 20px;">Hi ${displayName},</p>
+        <p style="color: #374151; font-size: 15px; line-height: 1.7; margin: 0 0 24px;">
+          Thank you for your purchase! <strong>${opts.tokens} tokens</strong> have been added to your account and are ready to use.
+        </p>
+        <div style="background: #f8fafc; border-radius: 12px; padding: 20px 24px; margin-bottom: 28px; border: 1px solid #e2e8f0;">
+          <p style="color: #1e293b; font-weight: 700; font-size: 14px; margin: 0 0 14px;">Order details:</p>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Tokens purchased</td><td style="padding: 8px 0; color: #1e293b; font-weight: 700; font-size: 14px;">${opts.tokens} tokens</td></tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Amount paid</td><td style="padding: 8px 0; color: #059669; font-weight: 700; font-size: 14px;">${amountDisplay}</td></tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Payment method</td><td style="padding: 8px 0; color: #1e293b; font-size: 14px;">PayPal</td></tr>
+            <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Order ID</td><td style="padding: 8px 0; color: #9ca3af; font-size: 12px; font-family: monospace;">${opts.orderId.substring(0, 16)}...</td></tr>
+          </table>
+        </div>
+        <div style="text-align: center; margin-bottom: 28px;">
+          <a href="${opts.siteUrl}" style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 14px 36px; border-radius: 50px; text-decoration: none; font-weight: 900; font-size: 16px; box-shadow: 0 4px 16px rgba(99,102,241,0.4);">🚀 Start converting now</a>
+        </div>
+        <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">Need help? Contact us anytime • <a href="${opts.siteUrl}" style="color: #6366f1; text-decoration: none;">dxfai.net</a></p>
+      </div>
+    </div>
+  `;
+
+  await resend.emails.send({
+    from: FROM_ADDRESS,
+    to: opts.to,
+    subject,
+    html: isHe ? heHtml : enHtml,
+  });
+}

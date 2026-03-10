@@ -13,6 +13,9 @@ import { getAppUserFromCookie } from "./appAuth";
 import { addTokens } from "./tokenService";
 import { createPayPalOrder, capturePayPalOrder, isPayPalConfigured, getPayPalMode, getPayPalClientId } from "./paypal";
 import { getPackageById, getPriceForCurrency } from "./products";
+import { sendPurchaseConfirmationEmail } from "./emailService";
+import { appUsers } from "../drizzle/schema";
+import { eq as eqDrizzle } from "drizzle-orm";
 
 const router = express.Router();
 
@@ -136,6 +139,32 @@ router.post("/api/paypal/capture-order", async (req, res) => {
       .update(paypalOrders)
       .set({ status: "completed", tokensCredited: 1, completedAt: new Date() })
       .where(eq(paypalOrders.paypalOrderId, orderId));
+
+    // Send purchase confirmation email (fire-and-forget)
+    try {
+      const [userRow] = await db
+        .select({ name: appUsers.name, email: appUsers.email })
+        .from(appUsers)
+        .where(eqDrizzle(appUsers.id, user.id));
+      if (userRow?.email) {
+        const origin = (req.headers["x-forwarded-proto"]
+          ? `${req.headers["x-forwarded-proto"]}://${req.headers["x-forwarded-host"]}`
+          : `${req.protocol}://${req.get("host")}`);
+        const lang = (req.headers["accept-language"] ?? "").startsWith("he") ? "he" : "en";
+        void sendPurchaseConfirmationEmail({
+          to: userRow.email,
+          name: userRow.name ?? null,
+          tokens: dbOrder.tokenAmount,
+          amount: dbOrder.priceAmount,
+          currency: dbOrder.currency,
+          orderId,
+          siteUrl: origin,
+          language: lang,
+        });
+      }
+    } catch (e) {
+      console.warn("[paypal/capture-order] Failed to send confirmation email:", e);
+    }
 
     return res.json({
       success: true,
