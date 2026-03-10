@@ -3,10 +3,11 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { eq, and, gte, count, sql } from "drizzle-orm";
 import { getDb } from "./db";
-import { appUsers, usageEvents, emailVerifications, passwordResets, consentRecords } from "../drizzle/schema";
+import { appUsers, usageEvents, emailVerifications, passwordResets, consentRecords, users } from "../drizzle/schema";
 import { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } from "./emailService";
 import { randomBytes } from "crypto";
 import { ENV } from "./_core/env";
+import { sdk } from "./_core/sdk";
 
 const router = Router();
 
@@ -204,15 +205,55 @@ router.post("/api/app-auth/login", async (req, res) => {
 
 // ─── Get current user ─────────────────────────────────────────────────────────
 
-router.get("/api/app-auth/me", async (req, res) => {
+router.get("/api/app-auth/me", async (req: import("express").Request, res: import("express").Response) => {
+  // First try app_user_session cookie (email/password users)
   const appUser = getAppUserFromCookie(req.cookies);
-  if (!appUser) return res.json({ user: null });
+  if (appUser) {
+    const db = await getDb();
+    if (!db) return res.json({ user: null });
+    const [user] = await db.select({ id: appUsers.id, email: appUsers.email, name: appUsers.name, tokenBalance: appUsers.tokenBalance }).from(appUsers).where(eq(appUsers.id, appUser.userId));
+    return res.json({ user: user ?? null });
+  }
 
-  const db = await getDb();
-  if (!db) return res.json({ user: null });
+  // Fallback: try Manus OAuth session
+  try {
+    const manusUser = await sdk.authenticateRequest(req as any);
+    if (!manusUser || !manusUser.email) return res.json({ user: null });
 
-  const [user] = await db.select({ id: appUsers.id, email: appUsers.email, name: appUsers.name, tokenBalance: appUsers.tokenBalance }).from(appUsers).where(eq(appUsers.id, appUser.userId));
-  return res.json({ user: user ?? null });
+    const db = await getDb();
+    if (!db) return res.json({ user: null });
+
+    // Find or create app_users record linked to this Manus OAuth user
+    let [existingAppUser] = await db
+      .select({ id: appUsers.id, email: appUsers.email, name: appUsers.name, tokenBalance: appUsers.tokenBalance })
+      .from(appUsers)
+      .where(eq(appUsers.email, manusUser.email));
+
+    if (!existingAppUser) {
+      // Create a new app_users record for this Manus OAuth user
+      await db.insert(appUsers).values({
+        email: manusUser.email,
+        name: manusUser.name ?? null,
+        tokenBalance: 20,
+        emailVerified: 1,
+      });
+      const [newUser] = await db
+        .select({ id: appUsers.id, email: appUsers.email, name: appUsers.name, tokenBalance: appUsers.tokenBalance })
+        .from(appUsers)
+        .where(eq(appUsers.email, manusUser.email));
+      existingAppUser = newUser;
+    }
+
+    if (!existingAppUser) return res.json({ user: null });
+
+    // Auto-set app_user_session cookie so subsequent requests work
+    const token = signToken(existingAppUser.id, existingAppUser.email);
+    setSessionCookie(res, token);
+
+    return res.json({ user: existingAppUser });
+  } catch {
+    return res.json({ user: null });
+  }
 });
 
 // ─── Verify email ────────────────────────────────────────────────────────────
