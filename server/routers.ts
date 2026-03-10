@@ -227,7 +227,7 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    /** Registered users with token balance and action count */
+    /** Registered users with token balance, last action and last purchase */
     usersWithTokens: adminProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
@@ -244,7 +244,51 @@ export const appRouter = router({
         .from(appUsers)
         .orderBy(desc(appUsers.createdAt))
         .limit(200);
-      return rows;
+      if (rows.length === 0) return [];
+      const userIds = rows.map(r => r.id);
+      const idList = userIds.join(",");
+      // Last action per user
+      const allActions = await db
+        .select({
+          appUserId: userActions.appUserId,
+          actionType: userActions.actionType,
+          description: userActions.description,
+          dxfUrl: userActions.dxfUrl,
+          imageUrl: userActions.imageUrl,
+          feature: userActions.feature,
+          createdAt: userActions.createdAt,
+        })
+        .from(userActions)
+        .where(sql`${userActions.appUserId} IN (${sql.raw(idList)})`)
+        .orderBy(desc(userActions.createdAt))
+        .limit(500);
+      // Last purchase per user
+      const allPurchases = await db
+        .select({
+          appUserId: paypalOrders.appUserId,
+          packageId: paypalOrders.packageId,
+          tokenAmount: paypalOrders.tokenAmount,
+          priceAmount: paypalOrders.priceAmount,
+          currency: paypalOrders.currency,
+          completedAt: paypalOrders.completedAt,
+        })
+        .from(paypalOrders)
+        .where(and(sql`${paypalOrders.appUserId} IN (${sql.raw(idList)})`, eq(paypalOrders.status, "completed")))
+        .orderBy(desc(paypalOrders.completedAt))
+        .limit(500);
+      const lastActionMap = new Map<number, typeof allActions[0]>();
+      for (const a of allActions) {
+        if (!lastActionMap.has(a.appUserId)) lastActionMap.set(a.appUserId, a);
+      }
+      const lastPurchaseMap = new Map<number, typeof allPurchases[0]>();
+      for (const p of allPurchases) {
+        if (!lastPurchaseMap.has(p.appUserId)) lastPurchaseMap.set(p.appUserId, p);
+      }
+      return rows.map(r => ({
+        ...r,
+        lastAction: lastActionMap.get(r.id) ?? null,
+        lastPurchase: lastPurchaseMap.get(r.id) ?? null,
+      }));
     }),
 
     /** Token transactions for a specific user */
@@ -394,6 +438,74 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    /** Add a new package */
+    addPackage: adminProcedure
+      .input(z.object({
+        packageId: z.string().min(1).max(16),
+        label: z.string().min(1).max(64),
+        tokenAmount: z.number().int().min(1),
+        priceUSD: z.string(),
+        priceEUR: z.string(),
+        priceILS: z.string(),
+        priceGBP: z.string(),
+        priceAUD: z.string(),
+        priceCAD: z.string(),
+        priceJPY: z.string(),
+        enabledCurrencies: z.string().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db.insert(packagePrices).values({
+          packageId: input.packageId,
+          label: input.label,
+          tokenAmount: input.tokenAmount,
+          priceUSD: input.priceUSD,
+          priceEUR: input.priceEUR,
+          priceILS: input.priceILS,
+          priceGBP: input.priceGBP,
+          priceAUD: input.priceAUD,
+          priceCAD: input.priceCAD,
+          priceJPY: input.priceJPY,
+          isActive: 1,
+          enabledCurrencies: input.enabledCurrencies ?? null,
+        });
+        return { success: true };
+      }),
+
+    /** Delete a package */
+    deletePackage: adminProcedure
+      .input(z.object({ packageId: z.string() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db.delete(packagePrices).where(eq(packagePrices.packageId, input.packageId));
+        return { success: true };
+      }),
+
+    /** Get contact settings (support email + WhatsApp) */
+    getContactSettings: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return { supportEmail: "", whatsappNumber: "" };
+      const rows = await db.select().from(systemSettings)
+        .where(sql`${systemSettings.key} IN ('support_email', 'whatsapp_number')`);
+      const map = Object.fromEntries(rows.map(r => [r.key, r.value]));
+      return { supportEmail: map["support_email"] ?? "", whatsappNumber: map["whatsapp_number"] ?? "" };
+    }),
+
+    /** Update contact settings */
+    updateContactSettings: adminProcedure
+      .input(z.object({ supportEmail: z.string(), whatsappNumber: z.string() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db.insert(systemSettings).values({ key: "support_email", value: input.supportEmail })
+          .onDuplicateKeyUpdate({ set: { value: input.supportEmail } });
+        await db.insert(systemSettings).values({ key: "whatsapp_number", value: input.whatsappNumber })
+          .onDuplicateKeyUpdate({ set: { value: input.whatsappNumber } });
+        return { success: true };
+      }),
+
     /** Update a package price */
     updatePackagePrice: adminProcedure
       .input(
@@ -439,6 +551,18 @@ export const appRouter = router({
       const db = await getDb();
       if (!db) return [];
       return db.select().from(tokenCosts).orderBy(tokenCosts.action);
+    }),
+  }),
+
+  /** Public contact info — support email and WhatsApp */
+  contact: router({
+    info: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return { supportEmail: "", whatsappNumber: "" };
+      const rows = await db.select().from(systemSettings)
+        .where(sql`${systemSettings.key} IN ('support_email', 'whatsapp_number')`);
+      const map = Object.fromEntries(rows.map(r => [r.key, r.value]));
+      return { supportEmail: map["support_email"] ?? "", whatsappNumber: map["whatsapp_number"] ?? "" };
     }),
   }),
 
@@ -617,5 +741,6 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+
 });
 export type AppRouter = typeof appRouter;

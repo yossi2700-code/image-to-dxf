@@ -282,7 +282,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [editingCostAction, setEditingCostAction] = useState<string | null>(null);
   const [costEdits, setCostEdits] = useState<Record<string, number>>({});
 
-  // ── Settings state ───
+  // הה Settings state ההה
   const [settingsName, setSettingsName] = useState("");
   const [nameLoading, setNameLoading] = useState(false);
   const [currentPw, setCurrentPw] = useState("");
@@ -291,6 +291,35 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [pwLoading, setPwLoading] = useState(false);
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
+
+  // הה Add Package state ההה
+  const [showAddPackage, setShowAddPackage] = useState(false);
+  const [newPkg, setNewPkg] = useState({ packageId: "", label: "", tokenAmount: "", priceILS: "", priceUSD: "", priceEUR: "", priceGBP: "", priceAUD: "", priceCAD: "", priceJPY: "" });
+  const addPackageMutation = trpc.admin.addPackage.useMutation({
+    onSuccess: () => { toast.success("חבילה נוספה!"); refetchPrices(); setShowAddPackage(false); setNewPkg({ packageId: "", label: "", tokenAmount: "", priceILS: "", priceUSD: "", priceEUR: "", priceGBP: "", priceAUD: "", priceCAD: "", priceJPY: "" }); },
+    onError: (e) => toast.error("שגיאה: " + e.message),
+  });
+  const deletePackageMutation = trpc.admin.deletePackage.useMutation({
+    onSuccess: () => { toast.success("חבילה נמחקה"); refetchPrices(); },
+    onError: (e) => toast.error("שגיאה: " + e.message),
+  });
+
+  // הה Contact Settings state ההה
+  const { data: contactSettings, refetch: refetchContact } = trpc.admin.getContactSettings.useQuery(
+    undefined, { enabled: activeSection === "settings" }
+  );
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactWhatsapp, setContactWhatsapp] = useState("");
+  const updateContactMutation = trpc.admin.updateContactSettings.useMutation({
+    onSuccess: () => { toast.success("פרטי קשר עודכנו!"); refetchContact(); },
+    onError: (e) => toast.error("שגיאה: " + e.message),
+  });
+  useEffect(() => {
+    if (contactSettings) {
+      setContactEmail(contactSettings.supportEmail ?? "");
+      setContactWhatsapp(contactSettings.whatsappNumber ?? "");
+    }
+  }, [contactSettings]);
 
   return (
     <div className="min-h-screen bg-slate-50" dir="rtl">
@@ -392,10 +421,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               <StatCard icon={Upload} label="המרות תמונה" value={stats.totalConvert} sub="סה״כ" />
               <StatCard icon={Sparkles} label="יצירות AI" value={stats.totalAi} sub="סה״כ" color="text-purple-600" />
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <StatCard icon={TrendingUp} label="השבוע" value={stats.thisWeek} sub="7 ימים אחרונים" />
               <StatCard icon={Calendar} label="החודש" value={stats.thisMonth} sub="30 ימים אחרונים" />
-              <StatCard icon={Clock} label="סה״כ קווים שנוצרו" value={stats.totalSegments.toLocaleString()} sub="קטעי וקטור" />
             </div>
           </>
         ) : null}
@@ -574,8 +602,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             ) : registeredUsers && registeredUsers.length > 0 ? (
               <div className="space-y-2">
                 {registeredUsers.map((u) => {
-                  const actions = userActionsData?.filter((a) => a.appUserId === u.id) ?? [];
                   const isExpanded = expandedUser === u.id;
+                  const lastAction = u.lastAction;
+                  const lastPurchase = u.lastPurchase;
+                  const actionLabel = lastAction?.actionType === "ai_generate" ? "יצירת AI" : lastAction?.actionType === "convert" ? "המרה" : lastAction?.actionType === "download" ? "הורדה" : null;
                   return (
                     <div key={u.id} className="border rounded-lg overflow-hidden">
                       {/* User row */}
@@ -584,19 +614,25 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                         onClick={() => setExpandedUser(isExpanded ? null : u.id)}
                       >
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-medium text-sm">{u.name ?? <span className="text-muted-foreground">ללא שם</span>}</span>
                             <span className="text-xs text-muted-foreground font-mono">{u.email}</span>
+                            {u.isBlocked ? <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">חסום</span> : null}
                           </div>
-                          <div className="flex gap-3 text-xs text-muted-foreground mt-0.5">
+                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground mt-0.5">
                             <span>נרשם: {new Date(u.createdAt).toLocaleDateString("he-IL")}</span>
-                            <span>כניסה אחרונה: {new Date(u.lastLoginAt).toLocaleDateString("he-IL")}</span>
+                            {u.lastLoginAt && <span>כניסה: {new Date(u.lastLoginAt).toLocaleDateString("he-IL")}</span>}
+                            {lastAction && (
+                              <span className="text-slate-500">
+                                פעולה אחרונה: <span className="font-medium text-slate-700">{actionLabel}</span> לפני {Math.round((Date.now() - new Date(lastAction.createdAt).getTime()) / 60000)} דקות
+                              </span>
+                            )}
+                            {lastPurchase && (
+                              <span className="text-green-600 font-medium">רכישה: {lastPurchase.packageId} ({lastPurchase.priceAmount} {lastPurchase.currency})</span>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
-                            {actions.length} פעולות
-                          </span>
                           {/* Token balance badge + add */}
                           {addingTokensUser === u.id ? (
                             <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -681,11 +717,13 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                         </div>
                       </button>
                       {/* Expanded actions */}
-                      {isExpanded && (
+                      {isExpanded && (() => {
+                        const userActs = userActionsData?.filter((a) => a.appUserId === u.id) ?? [];
+                        return (
                         <div className="border-t bg-muted/20 px-3 py-2">
                           {actionsLoading ? (
                             <div className="h-8 bg-muted animate-pulse rounded" />
-                          ) : actions.length === 0 ? (
+                          ) : userActs.length === 0 ? (
                             <p className="text-xs text-muted-foreground py-2">אין פעולות עדיין.</p>
                           ) : (
                             <table className="w-full text-xs">
@@ -693,13 +731,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                 <tr className="text-muted-foreground border-b">
                                   <th className="text-right py-1.5 pr-2 font-medium">סוג</th>
                                   <th className="text-right py-1.5 pr-2 font-medium">תיאור</th>
-                                  <th className="text-right py-1.5 pr-2 font-medium">קווים</th>
                                   <th className="text-right py-1.5 font-medium">תאריך</th>
-                                  <th className="text-right py-1.5 font-medium">DXF</th>
+                                  <th className="text-right py-1.5 font-medium">תצוגה / הורדה</th>
                                 </tr>
                               </thead>
                               <tbody>
-                                {actions.map((a) => (
+                                {userActs.map((a) => (
                                   <tr key={a.id} className="border-b last:border-0">
                                     <td className="py-1.5 pr-2">
                                       <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
@@ -712,15 +749,21 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                         {a.actionType === "ai_generate" ? "יצירת AI" : a.actionType === "convert" ? "המרה" : "הורדה"}
                                       </span>
                                     </td>
-                                    <td className="py-1.5 pr-2 text-muted-foreground max-w-[160px] truncate">{a.description ?? "—"}</td>
-                                    <td className="py-1.5 pr-2">{(a.segmentCount ?? 0).toLocaleString()}</td>
+                                    <td className="py-1.5 pr-2 text-muted-foreground max-w-[140px] truncate">{a.description ?? "—"}</td>
                                     <td className="py-1.5 text-muted-foreground">{new Date(a.createdAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}</td>
                                     <td className="py-1.5">
-                                      {a.dxfUrl ? (
-                                        <a href={a.dxfUrl} download className="text-primary hover:underline flex items-center gap-1">
-                                          <FileCode2 className="w-3 h-3" />הורד
-                                        </a>
-                                      ) : "—"}
+                                      <div className="flex items-center gap-2">
+                                        {a.imageUrl && (
+                                          <a href={a.imageUrl} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-slate-700" title="תצוגה">
+                                            <span className="text-xs underline">תמונה</span>
+                                          </a>
+                                        )}
+                                        {a.dxfUrl ? (
+                                          <a href={a.dxfUrl} download className="text-primary hover:underline flex items-center gap-1 text-xs">
+                                            <FileCode2 className="w-3 h-3" />DXF
+                                          </a>
+                                        ) : "—"}
+                                      </div>
                                     </td>
                                   </tr>
                                 ))}
@@ -728,7 +771,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             </table>
                           )}
                         </div>
-                      )}
+                        );
+                      })()}
                       {/* Token history panel */}
                       {tokenHistoryUser === u.id && (
                         <div className="border-t bg-blue-50/50 px-3 py-2">
@@ -927,10 +971,64 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             {/* Package Prices Management */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-purple-500" />
-                  ניהול מחירי חבילות
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-purple-500" />
+                    ניהול מחירי חבילות
+                  </CardTitle>
+                  <Button size="sm" variant="outline" onClick={() => setShowAddPackage(v => !v)} className="gap-1.5 text-xs">
+                    <Plus className="w-3.5 h-3.5" /> הוסף חבילה
+                  </Button>
+                </div>
+                {showAddPackage && (
+                  <div className="mt-3 p-3 border rounded-lg bg-slate-50 space-y-2">
+                    <p className="text-xs font-semibold text-slate-600">חבילה חדשה</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs text-muted-foreground">מזהה (לא רווחים, למשל tokens_200)</label>
+                        <Input className="h-7 text-xs mt-0.5" placeholder="tokens_200" value={newPkg.packageId} onChange={e => setNewPkg(p => ({ ...p, packageId: e.target.value }))} dir="ltr" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">שם תצוגה</label>
+                        <Input className="h-7 text-xs mt-0.5" placeholder="200 אסימונים" value={newPkg.label} onChange={e => setNewPkg(p => ({ ...p, label: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">כמות אסימונים</label>
+                        <Input className="h-7 text-xs mt-0.5" type="number" placeholder="200" value={newPkg.tokenAmount} onChange={e => setNewPkg(p => ({ ...p, tokenAmount: e.target.value }))} dir="ltr" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">מחיר ב-שקל (יישום אוטומטי לשאר)</label>
+                        <Input className="h-7 text-xs mt-0.5" type="number" placeholder="49" value={newPkg.priceILS}
+                          onChange={e => {
+                            const ils = parseFloat(e.target.value) || 0;
+                            const rates: Record<string, number> = { USD: 0.27, EUR: 0.25, GBP: 0.21, AUD: 0.42, CAD: 0.37, JPY: 41 };
+                            setNewPkg(p => ({ ...p, priceILS: e.target.value, priceUSD: (ils * rates.USD).toFixed(2), priceEUR: (ils * rates.EUR).toFixed(2), priceGBP: (ils * rates.GBP).toFixed(2), priceAUD: (ils * rates.AUD).toFixed(2), priceCAD: (ils * rates.CAD).toFixed(2), priceJPY: Math.round(ils * rates.JPY).toString() }));
+                          }}
+                          dir="ltr" />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <Button size="sm" variant="outline" onClick={() => setShowAddPackage(false)} className="text-xs">בטל</Button>
+                      <Button size="sm" className="text-xs"
+                        disabled={!newPkg.packageId || !newPkg.label || !newPkg.tokenAmount || !newPkg.priceILS || addPackageMutation.isPending}
+                        onClick={() => addPackageMutation.mutate({
+                          packageId: newPkg.packageId,
+                          label: newPkg.label,
+                          tokenAmount: parseInt(newPkg.tokenAmount),
+                          priceILS: newPkg.priceILS,
+                          priceUSD: newPkg.priceUSD || "0",
+                          priceEUR: newPkg.priceEUR || "0",
+                          priceGBP: newPkg.priceGBP || "0",
+                          priceAUD: newPkg.priceAUD || "0",
+                          priceCAD: newPkg.priceCAD || "0",
+                          priceJPY: newPkg.priceJPY || "0",
+                        })}
+                      >
+                        {addPackageMutation.isPending ? "שומר..." : "הוסף חבילה"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
                 {packagePricesLoading ? (
@@ -975,9 +1073,24 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                               </Button>
                             </div>
                           ) : (
-                            <Button size="sm" variant="outline" onClick={() => { setEditingPriceId(pkg.packageId); setPriceEdits(prev => ({ ...prev, [pkg.packageId]: {} })); }}>
-                              ערוך מחירים
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" onClick={() => { setEditingPriceId(pkg.packageId); setPriceEdits(prev => ({ ...prev, [pkg.packageId]: {} })); }}>
+                                ערוך מחירים
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-red-600 hover:bg-red-50 border-red-200"
+                                disabled={deletePackageMutation.isPending}
+                                onClick={() => {
+                                  if (confirm(`למחוק את החבילה "${pkg.label || pkg.packageId}"?`)) {
+                                    deletePackageMutation.mutate({ packageId: pkg.packageId });
+                                  }
+                                }}
+                              >
+                                מחק
+                              </Button>
+                            </div>
                           )}
                         </div>
 
@@ -1118,53 +1231,70 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
+                    {/* Revenue summary cards */}
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                        <p className="text-xs text-green-600 font-medium">השלמות</p>
+                        <p className="text-lg font-bold text-green-700">{(paypalOrdersData ?? []).filter(o => o.status === "completed").length}</p>
+                      </div>
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+                        <p className="text-xs text-blue-600 font-medium">הכנסה ב-ILS</p>
+                        <p className="text-lg font-bold text-blue-700">
+                          ₪{(paypalOrdersData ?? []).filter(o => o.status === "completed" && o.currency === "ILS").reduce((sum, o) => sum + parseFloat(String(o.priceAmount || 0)), 0).toFixed(0)}
+                        </p>
+                      </div>
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-center">
+                        <p className="text-xs text-purple-600 font-medium">אסימונים נמכרו</p>
+                        <p className="text-lg font-bold text-purple-700">{(paypalOrdersData ?? []).filter(o => o.status === "completed").reduce((sum, o) => sum + (o.tokenAmount || 0), 0)}</p>
+                      </div>
+                    </div>
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b text-right">
-                          <th className="pb-2 pr-2 font-medium text-muted-foreground">תאריך</th>
-                          <th className="pb-2 pr-2 font-medium text-muted-foreground">משתמש</th>
-                          <th className="pb-2 pr-2 font-medium text-muted-foreground">חבילה</th>
-                          <th className="pb-2 pr-2 font-medium text-muted-foreground">סכום</th>
-                          <th className="pb-2 pr-2 font-medium text-muted-foreground">מטבע</th>
-                          <th className="pb-2 pr-2 font-medium text-muted-foreground">אסימונים</th>
-                          <th className="pb-2 pr-2 font-medium text-muted-foreground">סטטוס</th>
-                          <th className="pb-2 pr-2 font-medium text-muted-foreground">PayPal ID</th>
+                        <tr className="bg-slate-50 rounded-lg text-right">
+                          <th className="py-2 pr-3 font-semibold text-muted-foreground text-xs rounded-r-lg">תאריך</th>
+                          <th className="py-2 pr-2 font-semibold text-muted-foreground text-xs">משתמש</th>
+                          <th className="py-2 pr-2 font-semibold text-muted-foreground text-xs">חבילה</th>
+                          <th className="py-2 pr-2 font-semibold text-muted-foreground text-xs">סכום</th>
+                          <th className="py-2 pr-2 font-semibold text-muted-foreground text-xs">אסימונים</th>
+                          <th className="py-2 pr-2 font-semibold text-muted-foreground text-xs rounded-l-lg">סטטוס</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredPaypalOrders.map((order) => (
-                          <tr key={order.id} className="border-b hover:bg-slate-50 transition-colors">
-                            <td className="py-2 pr-2 text-xs text-muted-foreground">
+                          <tr key={order.id} className="border-b hover:bg-slate-50/80 transition-colors group">
+                            <td className="py-2.5 pr-3 text-xs text-muted-foreground whitespace-nowrap">
                               {new Date(order.createdAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}
                             </td>
-                            <td className="py-2 pr-2">{order.appUserId}</td>
-                            <td className="py-2 pr-2 font-medium">{order.packageId}</td>
-                            <td className="py-2 pr-2 font-bold text-green-600">{order.priceAmount}</td>
-                            <td className="py-2 pr-2 text-xs">{order.currency}</td>
-                            <td className="py-2 pr-2">
-                              <span className="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 text-xs font-medium">
+                            <td className="py-2.5 pr-2">
+                              <span className="text-sm font-medium">{order.appUserId}</span>
+                            </td>
+                            <td className="py-2.5 pr-2">
+                              <span className="bg-slate-100 text-slate-700 rounded-md px-2 py-0.5 text-xs font-medium">{order.packageId}</span>
+                            </td>
+                            <td className="py-2.5 pr-2">
+                              <span className="font-bold text-green-600">{order.priceAmount}</span>
+                              <span className="text-xs text-muted-foreground mr-1">{order.currency}</span>
+                            </td>
+                            <td className="py-2.5 pr-2">
+                              <span className="bg-indigo-100 text-indigo-700 rounded-full px-2.5 py-0.5 text-xs font-bold">
                                 +{order.tokenAmount}
                               </span>
                             </td>
-                            <td className="py-2 pr-2">
-                              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                            <td className="py-2.5 pr-2">
+                              <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                                 order.status === "completed" ? "bg-green-100 text-green-700" :
-                                order.status === "pending" ? "bg-yellow-100 text-yellow-700" :
+                                order.status === "pending" ? "bg-amber-100 text-amber-700" :
                                 "bg-red-100 text-red-700"
                               }`}>
-                                {order.status === "completed" ? "הושלם" : order.status === "pending" ? "ממתין" : order.status}
+                                {order.status === "completed" ? "✓ הושלם" : order.status === "pending" ? "⏳ ממתין" : order.status}
                               </span>
-                            </td>
-                            <td className="py-2 pr-2 text-xs text-muted-foreground font-mono">
-                              {order.paypalOrderId ? order.paypalOrderId.slice(0, 12) + "..." : "-"}
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                     <p className="text-xs text-muted-foreground mt-3 text-left">
-                      מציג {filteredPaypalOrders.length} הזמנות |
-                      הכנסה מהושלמות: {(paypalOrdersData ?? []).filter(o => o.status === "completed").reduce((sum, o) => sum + parseFloat(String(o.priceAmount || 0)), 0).toFixed(2)} USD
+                      מציג {filteredPaypalOrders.length} הזמנות
                     </p>
                   </div>
                 )}
@@ -1250,6 +1380,46 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   }}
                 >
                   {nameLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4" /> שמור שם</>}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Contact Settings */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-green-500" />
+                  פרטי קשר לשירות לקוחות
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">כפתור הוואצאפ ומייל באתר יפנו לכתובת אלו בלחיצה</p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">מייל תמיכה</label>
+                  <Input
+                    type="email"
+                    placeholder="support@dxfai.net"
+                    value={contactEmail}
+                    onChange={e => setContactEmail(e.target.value)}
+                    dir="ltr"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">מספר וואצאפ (כולל קידומת מדינה, למשל 972501234567)</label>
+                  <Input
+                    type="tel"
+                    placeholder="972501234567"
+                    value={contactWhatsapp}
+                    onChange={e => setContactWhatsapp(e.target.value)}
+                    dir="ltr"
+                  />
+                </div>
+                <Button
+                  className="w-full"
+                  disabled={updateContactMutation.isPending}
+                  onClick={() => updateContactMutation.mutate({ supportEmail: contactEmail, whatsappNumber: contactWhatsapp })}
+                >
+                  {updateContactMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4" /> שמור פרטי קשר</>}
                 </Button>
               </CardContent>
             </Card>

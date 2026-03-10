@@ -1,0 +1,112 @@
+{
+  "query": "SELECT COUNT(*) as total FROM app_users; SELECT id, email, name, createdAt FROM app_users ORDER BY createdAt DESC LIMIT 70;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT COUNT(*) as total FROM app_users; SELECT id, email, name, createdAt FROM app_users ORDER BY createdAt DESC LIMIT 70;",
+  "rows": [
+    {
+      "total": "32"
+    },
+    {
+      "total": "id\temail\tname\tcreatedAt"
+    },
+    {
+      "total": "630001\tyossi2700@icloud.com\tיוסי אייזנבך\t2026-03-10 20:14:03"
+    },
+    {
+      "total": "600002\tran.tid@outlook.com\tRan T\t2026-03-10 17:31:36"
+    },
+    {
+      "total": "600001\tgenishmati@gmail.com\tמטי גניש\t2026-03-10 09:59:25"
+    },
+    {
+      "total": "570001\tedenturgeman200@gmail.com\tעדן תורגמן\t2026-03-09 10:26:43"
+    },
+    {
+      "total": "540001\tasafamar037979@gmail.com\tאסף\t2026-03-09 07:44:28"
+    },
+    {
+      "total": "510005\ttatoici@gmail.com\tאיציק\t2026-03-08 13:16:57"
+    },
+    {
+      "total": "510004\ty0505357632@gmail.com\tיהודה ביאזי\t2026-03-08 12:59:08"
+    },
+    {
+      "total": "510003\tbayazi@walla.com\tגלעד ביאזי\t2026-03-08 11:51:10"
+    },
+    {
+      "total": "510002\tamos2656@gmail.com\tעמוס עטיה\t2026-03-08 11:13:30"
+    },
+    {
+      "total": "510001\tnoamafia@gmail.com\tafia noam\t2026-03-08 11:01:57"
+    },
+    {
+      "total": "480002\tkoralg28@gmail.com\tKoralg\t2026-03-08 08:55:32"
+    },
+    {
+      "total": "480001\todelia650@gmail.com\tאודליה\t2026-03-08 08:32:06"
+    },
+    {
+      "total": "450001\tkogan.vova@mail.ru\tKogan vova\t2026-03-06 13:23:54"
+    },
+    {
+      "total": "420001\tmatzevotkadima@gmail.com\tמצבות קדימה\t2026-03-05 13:52:34"
+    },
+    {
+      "total": "390002\tborkins@bezeqint.net\tמצבות בורקין\t2026-03-05 10:58:22"
+    },
+    {
+      "total": "390001\tmizrhi88@gmail.com\tyan\t2026-03-05 09:31:29"
+    },
+    {
+      "total": "360001\tliel5558@gmail.com\tליאל\t2026-03-05 08:52:08"
+    },
+    {
+      "total": "330002\tcnc6474955@gmail.com\teven veshaish\t2026-03-04 09:02:32"
+    },
+    {
+      "total": "330001\tsh74eren@gmail.com\tארנה תורגמן\t2026-03-04 08:36:44"
+    },
+    {
+      "total": "300001\tcncgal001@gamil.com\tגל\t2026-03-03 11:33:37"
+    },
+    {
+      "total": "270003\t7142429@gmail.com\tיוסי\t2026-03-03 00:28:06"
+    },
+    {
+      "total": "270002\tmizrhi8@walla.com\tYan\t2026-03-02 17:14:08"
+    },
+    {
+      "total": "270001\terenanegev@gmail.com\tארנה תורג'מן\t2026-03-02 12:55:37"
+    },
+    {
+      "total": "240001\talony81@gmail.com\tאלון אילוז\t2026-03-02 12:09:44"
+    },
+    {
+      "total": "210001\tzvizvi011@gmail.com\tצבי\t2026-03-02 08:17:06"
+    },
+    {
+      "total": "180001\taryee07@gmail.com\tד\"ר אריה\t2026-03-01 14:23:59"
+    },
+    {
+      "total": "150001\tcncgal001@gmail.com\tגל זברו\t2026-03-01 12:10:25"
+    },
+    {
+      "total": "120001\tuzielmoshe@gmail.com\tמשה\t2026-03-01 09:17:13"
+    },
+    {
+      "total": "90001\tdahan2525@gmail.com\tMatan\t2026-02-28 21:07:53"
+    },
+    {
+      "total": "60001\trbnlr1282@gmail.com\tליאורה\t2026-02-27 15:18:56"
+    },
+    {
+      "total": "30001\tyossi2700@gmail.com\tיוסף\t2026-02-26 17:30:52"
+    },
+    {
+      "total": "1\ttest@example.com\tTest User\t2026-02-26 03:58:14"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\n32\nid\temail\tname\tcreatedAt\n630001\tyossi2700@icloud.com\tיוסי אייזנבך\t2026-03-10 20:14:03\n600002\tran.tid@outlook.com\tRan T\t2026-03-10 17:31:36\n600001\tgenishmati@gmail.com\tמטי גניש\t2026-03-10 09:59:25\n570001\tedenturgeman200@gmail.com\tעדן תורגמן\t2026-03-09 10:26:43\n540001\tasafamar037979@gmail.com\tאסף\t2026-03-09 07:44:28\n510005\ttatoici@gmail.com\tאיציק\t2026-03-08 13:16:57\n510004\ty0505357632@gmail.com\tיהודה ביאזי\t2026-03-08 12:59:08\n510003\tbayazi@walla.com\tגלעד ביאזי\t2026-03-08 11:51:10\n510002\tamos2656@gmail.com\tעמוס עטיה\t2026-03-08 11:13:30\n510001\tnoamafia@gmail.com\tafia noam\t2026-03-08 11:01:57\n480002\tkoralg28@gmail.com\tKoralg\t2026-03-08 08:55:32\n480001\todelia650@gmail.com\tאודליה\t2026-03-08 08:32:06\n450001\tkogan.vova@mail.ru\tKogan vova\t2026-03-06 13:23:54\n420001\tmatzevotkadima@gmail.com\tמצבות קדימה\t2026-03-05 13:52:34\n390002\tborkins@bezeqint.net\tמצבות בורקין\t2026-03-05 10:58:22\n390001\tmizrhi88@gmail.com\tyan\t2026-03-05 09:31:29\n360001\tliel5558@gmail.com\tליאל\t2026-03-05 08:52:08\n330002\tcnc6474955@gmail.com\teven veshaish\t2026-03-04 09:02:32\n330001\tsh74eren@gmail.com\tארנה תורגמן\t2026-03-04 08:36:44\n300001\tcncgal001@gamil.com\tגל\t2026-03-03 11:33:37\n270003\t7142429@gmail.com\tיוסי\t2026-03-03 00:28:06\n270002\tmizrhi8@walla.com\tYan\t2026-03-02 17:14:08\n270001\terenanegev@gmail.com\tארנה תורג'מן\t2026-03-02 12:55:37\n240001\talony81@gmail.com\tאלון אילוז\t2026-03-02 12:09:44\n210001\tzvizvi011@gmail.com\tצבי\t2026-03-02 08:17:06\n180001\taryee07@gmail.com\tד\"ר אריה\t2026-03-01 14:23:59\n150001\tcncgal001@gmail.com\tגל זברו\t2026-03-01 12:10:25\n120001\tuzielmoshe@gmail.com\tמשה\t2026-03-01 09:17:13\n90001\tdahan2525@gmail.com\tMatan\t2026-02-28 21:07:53\n60001\trbnlr1282@gmail.com\tליאורה\t2026-02-27 15:18:56\n30001\tyossi2700@gmail.com\tיוסף\t2026-02-26 17:30:52\n1\ttest@example.com\tTest User\t2026-02-26 03:58:14\n",
+  "stderr": "",
+  "execution_time_ms": 1757
+}

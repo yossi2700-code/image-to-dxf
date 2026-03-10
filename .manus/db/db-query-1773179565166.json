@@ -1,0 +1,335 @@
+{
+  "query": "SELECT id, email, tokenBalance FROM app_users ORDER BY id; UPDATE app_users SET tokenBalance = 15; SELECT id, email, tokenBalance FROM app_users ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, email, tokenBalance FROM app_users ORDER BY id; UPDATE app_users SET tokenBalance = 15; SELECT id, email, tokenBalance FROM app_users ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "email": "test@example.com",
+      "tokenBalance": "20"
+    },
+    {
+      "id": "30001",
+      "email": "yossi2700@gmail.com",
+      "tokenBalance": "584"
+    },
+    {
+      "id": "60001",
+      "email": "rbnlr1282@gmail.com",
+      "tokenBalance": "200"
+    },
+    {
+      "id": "90001",
+      "email": "dahan2525@gmail.com",
+      "tokenBalance": "77"
+    },
+    {
+      "id": "120001",
+      "email": "uzielmoshe@gmail.com",
+      "tokenBalance": "339"
+    },
+    {
+      "id": "150001",
+      "email": "cncgal001@gmail.com",
+      "tokenBalance": "300"
+    },
+    {
+      "id": "180001",
+      "email": "aryee07@gmail.com",
+      "tokenBalance": "307"
+    },
+    {
+      "id": "210001",
+      "email": "zvizvi011@gmail.com",
+      "tokenBalance": "189"
+    },
+    {
+      "id": "240001",
+      "email": "alony81@gmail.com",
+      "tokenBalance": "212"
+    },
+    {
+      "id": "270001",
+      "email": "erenanegev@gmail.com",
+      "tokenBalance": "114"
+    },
+    {
+      "id": "270002",
+      "email": "mizrhi8@walla.com",
+      "tokenBalance": "31"
+    },
+    {
+      "id": "270003",
+      "email": "7142429@gmail.com",
+      "tokenBalance": "82"
+    },
+    {
+      "id": "300001",
+      "email": "cncgal001@gamil.com",
+      "tokenBalance": "202"
+    },
+    {
+      "id": "330001",
+      "email": "sh74eren@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "330002",
+      "email": "cnc6474955@gmail.com",
+      "tokenBalance": "40"
+    },
+    {
+      "id": "360001",
+      "email": "liel5558@gmail.com",
+      "tokenBalance": "30"
+    },
+    {
+      "id": "390001",
+      "email": "mizrhi88@gmail.com",
+      "tokenBalance": "5"
+    },
+    {
+      "id": "390002",
+      "email": "borkins@bezeqint.net",
+      "tokenBalance": "85"
+    },
+    {
+      "id": "420001",
+      "email": "matzevotkadima@gmail.com",
+      "tokenBalance": "21"
+    },
+    {
+      "id": "450001",
+      "email": "kogan.vova@mail.ru",
+      "tokenBalance": "61"
+    },
+    {
+      "id": "480001",
+      "email": "odelia650@gmail.com",
+      "tokenBalance": "42"
+    },
+    {
+      "id": "480002",
+      "email": "koralg28@gmail.com",
+      "tokenBalance": "13"
+    },
+    {
+      "id": "510001",
+      "email": "noamafia@gmail.com",
+      "tokenBalance": "50"
+    },
+    {
+      "id": "510002",
+      "email": "amos2656@gmail.com",
+      "tokenBalance": "46"
+    },
+    {
+      "id": "510003",
+      "email": "bayazi@walla.com",
+      "tokenBalance": "51"
+    },
+    {
+      "id": "510004",
+      "email": "y0505357632@gmail.com",
+      "tokenBalance": "62"
+    },
+    {
+      "id": "510005",
+      "email": "tatoici@gmail.com",
+      "tokenBalance": "26"
+    },
+    {
+      "id": "540001",
+      "email": "asafamar037979@gmail.com",
+      "tokenBalance": "17"
+    },
+    {
+      "id": "570001",
+      "email": "edenturgeman200@gmail.com",
+      "tokenBalance": "21"
+    },
+    {
+      "id": "600001",
+      "email": "genishmati@gmail.com",
+      "tokenBalance": "17"
+    },
+    {
+      "id": "600002",
+      "email": "ran.tid@outlook.com",
+      "tokenBalance": "39"
+    },
+    {
+      "id": "630001",
+      "email": "yossi2700@icloud.com",
+      "tokenBalance": "20"
+    },
+    {
+      "id": "id",
+      "email": "email",
+      "tokenBalance": "tokenBalance"
+    },
+    {
+      "id": "1",
+      "email": "test@example.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "30001",
+      "email": "yossi2700@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "60001",
+      "email": "rbnlr1282@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "90001",
+      "email": "dahan2525@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "120001",
+      "email": "uzielmoshe@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "150001",
+      "email": "cncgal001@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "180001",
+      "email": "aryee07@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "210001",
+      "email": "zvizvi011@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "240001",
+      "email": "alony81@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "270001",
+      "email": "erenanegev@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "270002",
+      "email": "mizrhi8@walla.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "270003",
+      "email": "7142429@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "300001",
+      "email": "cncgal001@gamil.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "330001",
+      "email": "sh74eren@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "330002",
+      "email": "cnc6474955@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "360001",
+      "email": "liel5558@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "390001",
+      "email": "mizrhi88@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "390002",
+      "email": "borkins@bezeqint.net",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "420001",
+      "email": "matzevotkadima@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "450001",
+      "email": "kogan.vova@mail.ru",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "480001",
+      "email": "odelia650@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "480002",
+      "email": "koralg28@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "510001",
+      "email": "noamafia@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "510002",
+      "email": "amos2656@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "510003",
+      "email": "bayazi@walla.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "510004",
+      "email": "y0505357632@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "510005",
+      "email": "tatoici@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "540001",
+      "email": "asafamar037979@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "570001",
+      "email": "edenturgeman200@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "600001",
+      "email": "genishmati@gmail.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "600002",
+      "email": "ran.tid@outlook.com",
+      "tokenBalance": "15"
+    },
+    {
+      "id": "630001",
+      "email": "yossi2700@icloud.com",
+      "tokenBalance": "15"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\ttokenBalance\n1\ttest@example.com\t20\n30001\tyossi2700@gmail.com\t584\n60001\trbnlr1282@gmail.com\t200\n90001\tdahan2525@gmail.com\t77\n120001\tuzielmoshe@gmail.com\t339\n150001\tcncgal001@gmail.com\t300\n180001\taryee07@gmail.com\t307\n210001\tzvizvi011@gmail.com\t189\n240001\talony81@gmail.com\t212\n270001\terenanegev@gmail.com\t114\n270002\tmizrhi8@walla.com\t31\n270003\t7142429@gmail.com\t82\n300001\tcncgal001@gamil.com\t202\n330001\tsh74eren@gmail.com\t15\n330002\tcnc6474955@gmail.com\t40\n360001\tliel5558@gmail.com\t30\n390001\tmizrhi88@gmail.com\t5\n390002\tborkins@bezeqint.net\t85\n420001\tmatzevotkadima@gmail.com\t21\n450001\tkogan.vova@mail.ru\t61\n480001\todelia650@gmail.com\t42\n480002\tkoralg28@gmail.com\t13\n510001\tnoamafia@gmail.com\t50\n510002\tamos2656@gmail.com\t46\n510003\tbayazi@walla.com\t51\n510004\ty0505357632@gmail.com\t62\n510005\ttatoici@gmail.com\t26\n540001\tasafamar037979@gmail.com\t17\n570001\tedenturgeman200@gmail.com\t21\n600001\tgenishmati@gmail.com\t17\n600002\tran.tid@outlook.com\t39\n630001\tyossi2700@icloud.com\t20\nid\temail\ttokenBalance\n1\ttest@example.com\t15\n30001\tyossi2700@gmail.com\t15\n60001\trbnlr1282@gmail.com\t15\n90001\tdahan2525@gmail.com\t15\n120001\tuzielmoshe@gmail.com\t15\n150001\tcncgal001@gmail.com\t15\n180001\taryee07@gmail.com\t15\n210001\tzvizvi011@gmail.com\t15\n240001\talony81@gmail.com\t15\n270001\terenanegev@gmail.com\t15\n270002\tmizrhi8@walla.com\t15\n270003\t7142429@gmail.com\t15\n300001\tcncgal001@gamil.com\t15\n330001\tsh74eren@gmail.com\t15\n330002\tcnc6474955@gmail.com\t15\n360001\tliel5558@gmail.com\t15\n390001\tmizrhi88@gmail.com\t15\n390002\tborkins@bezeqint.net\t15\n420001\tmatzevotkadima@gmail.com\t15\n450001\tkogan.vova@mail.ru\t15\n480001\todelia650@gmail.com\t15\n480002\tkoralg28@gmail.com\t15\n510001\tnoamafia@gmail.com\t15\n510002\tamos2656@gmail.com\t15\n510003\tbayazi@walla.com\t15\n510004\ty0505357632@gmail.com\t15\n510005\ttatoici@gmail.com\t15\n540001\tasafamar037979@gmail.com\t15\n570001\tedenturgeman200@gmail.com\t15\n600001\tgenishmati@gmail.com\t15\n600002\tran.tid@outlook.com\t15\n630001\tyossi2700@icloud.com\t15\n",
+  "stderr": "",
+  "execution_time_ms": 1962
+}
