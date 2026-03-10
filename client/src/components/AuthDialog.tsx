@@ -96,6 +96,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
     try { return localStorage.getItem("auth_remember_me") !== "false"; } catch { return true; }
   });
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsError, setTermsError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
   const [forgotSent, setForgotSent] = useState(false);
@@ -111,6 +112,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
       setEmail("");
       setPassword("");
       setTermsAccepted(false);
+      setTermsError(false);
       setInlineError(null);
       setForgotSent(false);
     }
@@ -121,6 +123,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
     setEmail("");
     setPassword("");
     setTermsAccepted(false);
+    setTermsError(false);
     setLoading(false);
     setInlineError(null);
     setForgotSent(false);
@@ -157,7 +160,10 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
 
     // Require terms acceptance for registration
     if (mode === "register" && !termsAccepted) {
+      setTermsError(true);
       setInlineError(t("authTermsRequired"));
+      // Scroll/shake the terms checkbox
+      document.getElementById("termsAccepted")?.closest(".terms-box")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
 
@@ -306,19 +312,28 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
 
           {/* Terms acceptance checkbox — shown only in register mode */}
           {mode === "register" && (
-            <div className="flex items-start gap-2.5 rounded-lg bg-gray-50 border border-gray-200 p-3" dir={isRtl ? "rtl" : "ltr"}>
+            <div
+              className={`terms-box flex items-start gap-2.5 rounded-lg p-3 transition-all duration-200 ${
+                termsError
+                  ? "bg-red-50 border-2 border-red-400 animate-pulse"
+                  : "bg-gray-50 border border-gray-200"
+              }`}
+              dir={isRtl ? "rtl" : "ltr"}
+            >
               <Checkbox
                 id="termsAccepted"
                 checked={termsAccepted}
                 onCheckedChange={(v) => {
                   setTermsAccepted(v === true);
-                  if (v === true) setInlineError(null);
+                  if (v === true) { setTermsError(false); setInlineError(null); }
                 }}
-                className="mt-0.5 shrink-0"
+                className={`mt-0.5 shrink-0 ${termsError ? "border-red-500 data-[state=unchecked]:border-red-500" : ""}`}
               />
               <label
                 htmlFor="termsAccepted"
-                className="text-sm text-gray-600 cursor-pointer leading-relaxed select-none"
+                className={`text-sm cursor-pointer leading-relaxed select-none ${
+                  termsError ? "text-red-700 font-medium" : "text-gray-600"
+                }`}
               >
                 {t("authTermsCheckbox")}{" "}
                 <a
@@ -349,7 +364,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
             type="submit"
             className="w-full h-11 text-base font-bold"
             style={mode === "register" ? { background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', border: 'none' } : {}}
-            disabled={loading || (mode === "register" && !termsAccepted)}
+            disabled={loading}
           >
             {loading ? (
               <><Loader2 className="w-4 h-4 ml-2 animate-spin" />{t("authProcessing")}</>
