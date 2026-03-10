@@ -1,0 +1,19 @@
+{
+  "query": "SHOW TABLES LIKE 'system_settings'; SELECT * FROM system_settings WHERE `key` = 'maintenance_mode';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SHOW TABLES LIKE 'system_settings'; SELECT * FROM system_settings WHERE `key` = 'maintenance_mode';",
+  "rows": [
+    {
+      "Tables_in_hnDFdLkzVGYJYdws9hbnLw (system_settings)": "system_settings"
+    },
+    {
+      "Tables_in_hnDFdLkzVGYJYdws9hbnLw (system_settings)": "id\tkey\tvalue\tupdatedAt"
+    },
+    {
+      "Tables_in_hnDFdLkzVGYJYdws9hbnLw (system_settings)": "1\tmaintenance_mode\t0\t2026-03-10 17:24:01"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_hnDFdLkzVGYJYdws9hbnLw (system_settings)\nsystem_settings\nid\tkey\tvalue\tupdatedAt\n1\tmaintenance_mode\t0\t2026-03-10 17:24:01\n",
+  "stderr": "",
+  "execution_time_ms": 1723
+}
