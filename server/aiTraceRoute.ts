@@ -65,27 +65,29 @@ const STYLE_VARIATIONS = [
   {
     label: "simple",
     style:
-      "Convert to clean black and white line art on pure white background. " +
-      "Draw the outer silhouette and 10-15 key interior structural lines. " +
-      "Style: coloring book / technical illustration — smooth confident ink strokes. " +
-      "FORBIDDEN: no dots, no hatching, no shading, no texture fills, no grey tones, no dark filled areas. " +
-      "All interior areas must be pure white. Lines only.",
+      "STRICT LINE ART ONLY: pure black (#000000) lines on pure white (#FFFFFF) background. " +
+      "Draw outer silhouette and 10-15 key structural interior lines. " +
+      "ABSOLUTELY NO: shading, shadows, gradients, grey tones, hatching, cross-hatching, stippling, texture fills, dark areas, filled regions. " +
+      "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
+      "Style: clean coloring-book outline drawing.",
   },
   {
     label: "detailed",
     style:
-      "Convert to detailed black and white line art on pure white background. " +
-      "Draw all structural features, surface details, and fine contours. " +
-      "Style: professional technical illustration with rich line work. " +
-      "FORBIDDEN: no hatching, no shading, no texture fills, no grey tones. Clean lines only.",
+      "STRICT LINE ART ONLY: pure black (#000000) lines on pure white (#FFFFFF) background. " +
+      "Draw all structural features, surface details, and fine contours as clean lines. " +
+      "ABSOLUTELY NO: shading, shadows, gradients, grey tones, hatching, cross-hatching, stippling, texture fills, dark areas, filled regions. " +
+      "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
+      "Style: detailed technical illustration with clean ink lines only.",
   },
   {
     label: "decorative",
     style:
-      "Convert to decorative black and white line art on pure white background. " +
+      "STRICT LINE ART ONLY: pure black (#000000) lines on pure white (#FFFFFF) background. " +
       "Draw bold outer contour with flowing decorative inner lines. " +
-      "Style: ornamental / art nouveau suitable for laser engraving. " +
-      "FORBIDDEN: no hatching, no shading, no texture fills, no grey tones. Clean lines only.",
+      "ABSOLUTELY NO: shading, shadows, gradients, grey tones, hatching, cross-hatching, stippling, texture fills, dark areas, filled regions. " +
+      "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
+      "Style: ornamental line art suitable for laser engraving.",
   },
 ];
 
@@ -379,36 +381,39 @@ async function runTraceJob(
         ? buildFullImagePrompt(objectDescription, idx)
         : (isPortrait && !isToyOrFigurine)
         ? (
-            // Flux Kontext Pro portrait prompt — concise and direct for image editing
-            `Convert this portrait photo to black and white line art. ` +
+            // Flux Kontext Pro portrait prompt — strict no-shading version
+            `Convert this portrait photo to STRICT BLACK AND WHITE LINE ART. ` +
+            `CRITICAL RULE: ZERO shading, ZERO shadows, ZERO grey tones, ZERO gradients. ` +
+            `Only pure black (#000000) lines on pure white (#FFFFFF). All areas must be white. ` +
             `Preserve the EXACT facial likeness: face shape, eye shape, nose, mouth, jawline, hair style. ` +
             `Keep the same pose, angle, and proportions. ` +
             `${variation.style} ` +
-            `Pure white (#FFFFFF) background. Black outlines only, no fill, no shading, no grey. ` +
             `No text, no letters, no numbers anywhere.`
           )
         : isToyOrFigurine
         ? (
-            // Flux Kontext Pro toy/figurine prompt
-            `Convert this toy/figurine/cartoon character to black and white line art. ` +
+            // Flux Kontext Pro toy/figurine prompt — strict no-shading version
+            `Convert this toy/figurine/cartoon character to STRICT BLACK AND WHITE LINE ART. ` +
+            `CRITICAL RULE: ZERO shading, ZERO shadows, ZERO grey tones, ZERO gradients. ` +
+            `Only pure black (#000000) lines on pure white (#FFFFFF). All areas must be white. ` +
             `Preserve the EXACT toy appearance: cartoon eyes, toy proportions, stylized features. ` +
             `Do NOT humanize — keep it looking like a toy/cartoon, not a real person. ` +
             `Keep the same shape, angle, and proportions. ` +
             `${variation.style} ` +
-            `Pure white (#FFFFFF) background. Black outlines only, no fill, no shading, no grey. ` +
             `No text, no letters, no numbers anywhere.`
           )
         : (
-            // Flux Kontext Pro general object prompt — concise and direct
-            `Convert this image to black and white line art. ` +
+            // Flux Kontext Pro general object prompt — strict no-shading version
+            `Convert this image to STRICT BLACK AND WHITE LINE ART. ` +
+            `CRITICAL RULE: ZERO shading, ZERO shadows, ZERO grey tones, ZERO gradients, ZERO hatching. ` +
+            `Only pure black (#000000) lines on pure white (#FFFFFF). All areas between lines must be white. ` +
             `Draw ONLY what is visible in the original image — nothing more, nothing less. ` +
             `If there is NO person in the photo, do NOT add any person. ` +
             `If there are NO musical notes in the photo, do NOT add any musical notes. ` +
             `If the photo shows a musical instrument alone (no player), draw ONLY the instrument. ` +
+            `PRESERVE EXACT PROPORTIONS AND SIZES from the original: if an element is large in the photo, draw it large; if small, draw it small. Do NOT rescale individual elements. ` +
             `Focus on the main foreground subject; ignore background objects. ` +
-            `Preserve the exact shape, silhouette, camera angle, and proportions of the original. ` +
             `${variation.style} ` +
-            `Pure white (#FFFFFF) background. Black outlines only, no fill, no shading, no grey. ` +
             `No text, no letters, no numbers anywhere.`
           );
 
