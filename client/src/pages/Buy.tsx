@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
@@ -160,8 +160,17 @@ export default function Buy() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paypalConfigured, setPaypalConfigured] = useState<boolean | null>(null);
+  const [paypalClientId, setPaypalClientId] = useState<string>("");
+  const [paypalMode, setPaypalMode] = useState<string>("production");
   const [balance, setBalance] = useState<number | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "card">("paypal");
+  const [cardLoading, setCardLoading] = useState(false);
+  const [cardError, setCardError] = useState<string | null>(null);
+  const [cardSuccess, setCardSuccess] = useState(false);
+  const cardFormRef = useRef<HTMLDivElement>(null);
+  const paypalButtonsRef = useRef<HTMLDivElement>(null);
+  const hostedFieldsRef = useRef<{ submit: () => Promise<void> } | null>(null);
 
   // קריאת מחירים דינמיים מה-DB
   const { data: dbPrices, isLoading: pricesLoading } = trpc.packages.prices.useQuery();
@@ -182,7 +191,11 @@ export default function Buy() {
     // Check PayPal configuration
     fetch("/api/paypal/status")
       .then((r) => r.json())
-      .then((d) => setPaypalConfigured(!!d?.configured))
+      .then((d) => {
+        setPaypalConfigured(!!d?.configured);
+        if (d?.clientId) setPaypalClientId(d.clientId);
+        if (d?.mode) setPaypalMode(d.mode);
+      })
       .catch(() => setPaypalConfigured(false));
 
     // Check auth & balance
@@ -194,6 +207,93 @@ export default function Buy() {
       })
       .catch(() => setIsLoggedIn(false));
   }, []);
+
+  // PayPal Hosted Fields — load SDK and mount card fields
+  useEffect(() => {
+    if (!paypalClientId || paymentMethod !== "card" || !termsAccepted) return;
+    if (!cardFormRef.current) return;
+
+    // Remove old script if any
+    const oldScript = document.getElementById("paypal-sdk");
+    if (oldScript) oldScript.remove();
+
+    const script = document.createElement("script");
+    script.id = "paypal-sdk";
+    script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&components=hosted-fields&currency=${currency}&intent=capture`;
+    script.setAttribute("data-namespace", "paypalSDK");
+    script.onload = async () => {
+      const paypal = (window as unknown as Record<string, unknown>).paypalSDK as {
+        HostedFields: {
+          isEligible: () => boolean;
+          render: (config: Record<string, unknown>) => Promise<{ submit: (opts: Record<string, unknown>) => Promise<{ orderId: string }> }>;
+        };
+      } | undefined;
+      if (!paypal?.HostedFields?.isEligible()) {
+        setCardError("כרטיס אשראי אינו זמין בדפדפן זה");
+        return;
+      }
+      try {
+        const hf = await paypal.HostedFields.render({
+          createOrder: async () => {
+            const res = await fetch("/api/paypal/create-order", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({ packageId: selectedPackage, currency, termsAccepted: true, origin: window.location.origin }),
+            });
+            const data = await res.json() as { orderId?: string; error?: string };
+            if (!data.orderId) throw new Error(data.error ?? "שגיאה ביצירת הזמנה");
+            return data.orderId;
+          },
+          fields: {
+            number: { selector: "#card-number", placeholder: "מספר כרטיס" },
+            cvv: { selector: "#card-cvv", placeholder: "CVV" },
+            expirationDate: { selector: "#card-expiry", placeholder: "MM/YY" },
+          },
+          styles: {
+            input: { color: "#fff", "font-size": "15px", "font-family": "Inter, sans-serif" },
+            ":focus": { color: "#93c5fd" },
+            ".invalid": { color: "#f87171" },
+          },
+        });
+        hostedFieldsRef.current = {
+          submit: async () => {
+            setCardLoading(true);
+            setCardError(null);
+            try {
+              const result = await hf.submit({ contingencies: ["3D_SECURE"] });
+              // Capture the order
+              const captureRes = await fetch("/api/paypal/capture-order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ orderId: result.orderId }),
+              });
+              const captureData = await captureRes.json() as { success?: boolean; tokens?: number; error?: string };
+              if (captureData.success) {
+                setCardSuccess(true);
+                setTimeout(() => window.location.href = "/buy/success?orderId=" + result.orderId, 1000);
+              } else {
+                setCardError(captureData.error ?? "שגיאה בתשלום");
+              }
+            } catch (e) {
+              setCardError(e instanceof Error ? e.message : "שגיאה בתשלום");
+            } finally {
+              setCardLoading(false);
+            }
+          }
+        };
+      } catch (e) {
+        setCardError(e instanceof Error ? e.message : "שגיאה בטעינת שדות כרטיס");
+      }
+    };
+    script.onerror = () => setCardError("שגיאה בטעינת PayPal");
+    document.head.appendChild(script);
+
+    return () => {
+      hostedFieldsRef.current = null;
+    };
+  }, [paypalClientId, paymentMethod, termsAccepted, selectedPackage, currency]);
 
   // בניית חבילות מה-DB או מה-fallback
   const packages = dbPrices && dbPrices.length > 0
@@ -377,37 +477,161 @@ export default function Buy() {
           </div>
         )}
 
-        {/* CTA */}
-        <button
-          onClick={handlePurchase}
-          disabled={loading || !termsAccepted || isLoggedIn === false || paypalConfigured === false}
-          className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-200 flex items-center justify-center gap-3 ${
-            loading || !termsAccepted || isLoggedIn === false || paypalConfigured === false
-              ? "bg-gray-600/60 text-gray-400 cursor-not-allowed"
-              : "bg-[#0070BA] hover:bg-[#005ea6] active:bg-[#004a87] text-white shadow-xl shadow-blue-900/40 hover:shadow-blue-700/50 hover:scale-[1.02]"
-          }`}
-        >
-          {loading ? (
-            <>
-              <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              {t("buyRedirectingPayPal")}
-            </>
-          ) : (
-            <>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="white" aria-hidden="true">
-                <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z" />
-              </svg>
-              {t("buyProceedPayPal")} — {symbol}{price}
-            </>
-          )}
-        </button>
+        {/* Payment method selector */}
+        <div className="flex gap-2 mb-5">
+          <button
+            type="button"
+            onClick={() => setPaymentMethod("paypal")}
+            className={`flex-1 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all border-2 ${
+              paymentMethod === "paypal"
+                ? "border-[#0070BA] bg-[#0070BA]/20 text-white"
+                : "border-white/10 bg-white/5 text-blue-200 hover:border-white/30"
+            }`}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z" />
+            </svg>
+            PayPal
+          </button>
+          <button
+            type="button"
+            onClick={() => setPaymentMethod("card")}
+            className={`flex-1 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all border-2 ${
+              paymentMethod === "card"
+                ? "border-emerald-400 bg-emerald-500/20 text-white"
+                : "border-white/10 bg-white/5 text-blue-200 hover:border-white/30"
+            }`}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+            כרטיס אשראי
+          </button>
+        </div>
 
-        <p className="text-center text-xs text-blue-400/70 mt-3">
-          🔒 Secured by PayPal — your card details are never stored
-        </p>
+        {/* PayPal button */}
+        {paymentMethod === "paypal" && (
+          <>
+            <button
+              onClick={handlePurchase}
+              disabled={loading || !termsAccepted || isLoggedIn === false || paypalConfigured === false}
+              className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-200 flex items-center justify-center gap-3 ${
+                loading || !termsAccepted || isLoggedIn === false || paypalConfigured === false
+                  ? "bg-gray-600/60 text-gray-400 cursor-not-allowed"
+                  : "bg-[#0070BA] hover:bg-[#005ea6] active:bg-[#004a87] text-white shadow-xl shadow-blue-900/40 hover:shadow-blue-700/50 hover:scale-[1.02]"
+              }`}
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  {t("buyRedirectingPayPal")}
+                </>
+              ) : (
+                <>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+                    <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z" />
+                  </svg>
+                  {t("buyProceedPayPal")} — {symbol}{price}
+                </>
+              )}
+            </button>
+            <p className="text-center text-xs text-blue-400/70 mt-3">
+              🔒 Secured by PayPal — your card details are never stored
+            </p>
+          </>
+        )}
+
+        {/* Credit Card form (PayPal Hosted Fields) */}
+        {paymentMethod === "card" && (
+          <div ref={cardFormRef}>
+            {!termsAccepted ? (
+              <div className="text-center py-4 text-amber-300 text-sm">
+                יש לאשר את תנאי הרכישה כדי להמשיך
+              </div>
+            ) : cardSuccess ? (
+              <div className="text-center py-6">
+                <div className="text-4xl mb-3">✅</div>
+                <p className="text-green-300 font-bold text-lg">התשלום בוצע בהצלחה!</p>
+                <p className="text-blue-200 text-sm mt-1">מעביר לדף אישור...</p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-3 mb-4">
+                  <div>
+                    <label className="text-xs text-blue-300 block mb-1.5">מספר כרטיס</label>
+                    <div
+                      id="card-number"
+                      className="w-full h-11 px-3 rounded-xl border border-white/20 bg-white/10 text-white placeholder-blue-300"
+                      style={{ lineHeight: "44px" }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-blue-300 block mb-1.5">תוקף (MM/YY)</label>
+                      <div
+                        id="card-expiry"
+                        className="w-full h-11 px-3 rounded-xl border border-white/20 bg-white/10 text-white"
+                        style={{ lineHeight: "44px" }}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-blue-300 block mb-1.5">CVV</label>
+                      <div
+                        id="card-cvv"
+                        className="w-full h-11 px-3 rounded-xl border border-white/20 bg-white/10 text-white"
+                        style={{ lineHeight: "44px" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {cardError && (
+                  <div className="mb-3 p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-300 text-sm text-center">
+                    {cardError}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => hostedFieldsRef.current?.submit()}
+                  disabled={cardLoading || isLoggedIn === false || !hostedFieldsRef.current}
+                  className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-200 flex items-center justify-center gap-3 ${
+                    cardLoading || isLoggedIn === false || !hostedFieldsRef.current
+                      ? "bg-gray-600/60 text-gray-400 cursor-not-allowed"
+                      : "bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-xl shadow-emerald-900/40 hover:scale-[1.02]"
+                  }`}
+                >
+                  {cardLoading ? (
+                    <>
+                      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      מעבד תשלום...
+                    </>
+                  ) : !hostedFieldsRef.current ? (
+                    <>
+                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      טוען שדות כרטיס...
+                    </>
+                  ) : (
+                    <>שלם {symbol}{price} בכרטיס אשראי</>
+                  )}
+                </button>
+                <p className="text-center text-xs text-blue-400/70 mt-3">
+                  🔒 מאובטח על ידי PayPal — פרטי הכרטיס לא נשמרים
+                </p>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* FAQ */}

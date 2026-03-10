@@ -11,7 +11,7 @@ import { paypalOrders } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { getAppUserFromCookie } from "./appAuth";
 import { addTokens } from "./tokenService";
-import { createPayPalOrder, capturePayPalOrder, isPayPalConfigured } from "./paypal";
+import { createPayPalOrder, capturePayPalOrder, isPayPalConfigured, getPayPalMode, getPayPalClientId } from "./paypal";
 import { getPackageById, getPriceForCurrency } from "./products";
 
 const router = express.Router();
@@ -31,7 +31,7 @@ function getClientIp(req: express.Request): string {
 }
 
 router.get("/api/paypal/status", (_req, res) => {
-  res.json({ configured: isPayPalConfigured(), mode: process.env.PAYPAL_MODE ?? "sandbox" });
+  res.json({ configured: isPayPalConfigured(), mode: getPayPalMode(), clientId: getPayPalClientId() });
 });
 
 router.post("/api/paypal/create-order", async (req, res) => {

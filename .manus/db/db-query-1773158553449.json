@@ -1,0 +1,42 @@
+{
+  "query": "SELECT * FROM package_prices;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT * FROM package_prices;",
+  "rows": [
+    {
+      "id": "1",
+      "packageId": "tokens_50",
+      "tokenAmount": "50",
+      "priceUSD": "29.00",
+      "priceEUR": "27.00",
+      "priceILS": "109.00",
+      "priceGBP": "23.00",
+      "priceAUD": "45.00",
+      "priceCAD": "40.00",
+      "priceJPY": "4400",
+      "isActive": "1",
+      "enabledCurrencies": "NULL",
+      "label": "Starter",
+      "updatedAt": "2026-03-10 14:02:52"
+    },
+    {
+      "id": "2",
+      "packageId": "tokens_100",
+      "tokenAmount": "100",
+      "priceUSD": "49.00",
+      "priceEUR": "45.00",
+      "priceILS": "185.00",
+      "priceGBP": "39.00",
+      "priceAUD": "75.00",
+      "priceCAD": "67.00",
+      "priceJPY": "7400",
+      "isActive": "1",
+      "enabledCurrencies": "NULL",
+      "label": "Pro",
+      "updatedAt": "2026-03-10 14:02:52"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tpackageId\ttokenAmount\tpriceUSD\tpriceEUR\tpriceILS\tpriceGBP\tpriceAUD\tpriceCAD\tpriceJPY\tisActive\tenabledCurrencies\tlabel\tupdatedAt\n1\ttokens_50\t50\t29.00\t27.00\t109.00\t23.00\t45.00\t40.00\t4400\t1\tNULL\tStarter\t2026-03-10 14:02:52\n2\ttokens_100\t100\t49.00\t45.00\t185.00\t39.00\t75.00\t67.00\t7400\t1\tNULL\tPro\t2026-03-10 14:02:52\n",
+  "stderr": "",
+  "execution_time_ms": 1537
+}
