@@ -384,102 +384,53 @@ async function runTraceJob(
         ? buildFullImagePrompt(objectDescription, idx)
         : (isPortrait && !isToyOrFigurine)
         ? (
-            // Flux Kontext Pro portrait prompt — strict no-shading version
-            `Convert this portrait photo to STRICT BLACK AND WHITE LINE ART. ` +
-            `CRITICAL RULE: ZERO shading, ZERO shadows, ZERO grey tones, ZERO gradients. ` +
-            `Only pure black (#000000) lines on pure white (#FFFFFF). All areas must be white. ` +
+            // Portrait prompt — preserve facial likeness
+            `Convert this portrait photo to clean black and white line art suitable for laser engraving. ` +
             `Preserve the EXACT facial likeness: face shape, eye shape, nose, mouth, jawline, hair style. ` +
             `Keep the same pose, angle, and proportions. ` +
+            `Use only pure black lines on pure white background. No shading, no grey tones, no gradients. ` +
             `${variation.style} ` +
             `No text, no letters, no numbers anywhere.`
           )
         : isToyOrFigurine
         ? (
-            // Flux Kontext Pro toy/figurine prompt — strict no-shading version
-            `Convert this toy/figurine/cartoon character to STRICT BLACK AND WHITE LINE ART. ` +
-            `CRITICAL RULE: ZERO shading, ZERO shadows, ZERO grey tones, ZERO gradients. ` +
-            `Only pure black (#000000) lines on pure white (#FFFFFF). All areas must be white. ` +
+            // Toy/figurine prompt
+            `Convert this toy/figurine/cartoon character to clean black and white line art suitable for laser engraving. ` +
             `Preserve the EXACT toy appearance: cartoon eyes, toy proportions, stylized features. ` +
             `Do NOT humanize — keep it looking like a toy/cartoon, not a real person. ` +
-            `Keep the same shape, angle, and proportions. ` +
+            `Use only pure black lines on pure white background. No shading, no grey tones. ` +
             `${variation.style} ` +
             `No text, no letters, no numbers anywhere.`
           )
         : (
-            // Flux Kontext Pro general object prompt — strict no-shading, no background version
-            `Convert this image to STRICT BLACK AND WHITE LINE ART. ` +
-            `CRITICAL RULE 1: ZERO shading, ZERO shadows, ZERO grey tones, ZERO gradients, ZERO hatching. Only pure black (#000000) lines on pure white (#FFFFFF). ` +
-            `CRITICAL RULE 2: REMOVE ALL BACKGROUND COMPLETELY. Draw ONLY the main subject (the car, object, or person in the foreground). The background (walls, floor, sky, ground, grass, pavement, buildings) must be pure white (#FFFFFF) — do NOT draw it. ` +
-            `CRITICAL RULE 3: PRESERVE EXACT PROPORTIONS AND SIZES from the original. Do NOT rescale individual elements. ` +
-            `Draw ONLY what is the main foreground subject — nothing more, nothing less. ` +
-            `If there is NO person in the photo, do NOT add any person. ` +
+            // General object prompt — gpt-image-1 edit
+            `Convert this image to clean black and white line art suitable for CNC engraving or laser cutting. ` +
+            `Draw ONLY the main subject on a pure white background — remove the background completely. ` +
+            `Use only pure black (#000000) lines on pure white (#FFFFFF). No shading, no grey tones, no gradients, no hatching. ` +
+            `Preserve the exact proportions and shape of the original object. ` +
             `${variation.style} ` +
             `No text, no letters, no numbers, no logos, no watermarks anywhere.`
           );
 
-      // Use Flux Kontext Pro via Replicate for image editing with high shape fidelity
-      const replicateToken = process.env.REPLICATE_API_TOKEN;
-      if (!replicateToken) throw new Error("REPLICATE_API_TOKEN not configured");
+      // Use gpt-image-1 edit API for high-quality line art generation
+      const imageEditResponse = await openai.images.edit({
+        model: "gpt-image-1",
+        image: new File([editSourceBuffer], "source.png", { type: "image/png" }),
+        prompt: editPrompt,
+        n: 1,
+        size: "1024x1024",
+      } as Parameters<typeof openai.images.edit>[0]);
 
-      // Upload source image as base64 data URL for Replicate
-      const sourceBase64 = editSourceBuffer.toString("base64");
-      const sourceDataUrl = `data:image/png;base64,${sourceBase64}`;
-
-      // Start prediction
-      const startResponse = await fetch("https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-pro/predictions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${replicateToken}`,
-          "Content-Type": "application/json",
-          "Prefer": "wait=60",
-        },
-        body: JSON.stringify({
-          input: {
-            prompt: editPrompt,
-            input_image: sourceDataUrl,
-            aspect_ratio: "1:1",
-            output_format: "png",
-            safety_tolerance: 2,
-          }
-        })
-      });
-
-      if (!startResponse.ok) {
-        const errText = await startResponse.text();
-        throw new Error(`Flux API error: ${startResponse.status} ${errText}`);
-      }
-
-      let prediction = await startResponse.json() as { id: string; status: string; output?: string | string[]; urls?: { get: string } };
-
-      // Poll until done (if not completed in initial wait)
-      let pollAttempts = 0;
-      while (prediction.status !== "succeeded" && prediction.status !== "failed" && prediction.status !== "canceled" && pollAttempts < 30) {
-        await new Promise(r => setTimeout(r, 3000));
-        const pollRes = await fetch(prediction.urls?.get ?? `https://api.replicate.com/v1/predictions/${prediction.id}`, {
-          headers: { "Authorization": `Bearer ${replicateToken}` }
-        });
-        prediction = await pollRes.json() as typeof prediction;
-        pollAttempts++;
-      }
-
-      if (prediction.status !== "succeeded" || !prediction.output) {
-        throw new Error("Flux generation failed or timed out");
-      }
-
-      const outputUrl = Array.isArray(prediction.output) ? prediction.output[0] : prediction.output;
-      const imgResponse = await fetch(outputUrl);
-      if (!imgResponse.ok) throw new Error("שגיאה בהורדת התמונה שנוצרה");
-      let rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
+      const b64 = imageEditResponse.data?.[0]?.b64_json;
+      if (!b64) throw new Error("gpt-image-1 did not return image data");
+      let rawBuffer = Buffer.from(b64, "base64");
 
       // Add white padding around the AI-generated image, then resize to max 1024px
-      // (reduced from 1400 — potrace is O(n²) so smaller = much faster tracing)
       const processedBuffer = await sharp(rawBuffer)
         .extend({ top: 80, bottom: 80, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .grayscale()
-        // Blur slightly before threshold to smooth jagged edges from Flux output
-        .blur(0.6)
-        .threshold(210)  // higher threshold = keep only strong black lines, drop grey
+        .threshold(200)
         .png()
         .toBuffer();
 
