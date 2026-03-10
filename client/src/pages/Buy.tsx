@@ -585,48 +585,20 @@ export default function Buy() {
           </>
         )}
 
-        {/* Credit Card form (PayPal Hosted Fields) */}
+        {/* Credit Card via PayPal Checkout */}
         {paymentMethod === "card" && (
-          <div ref={cardFormRef}>
+          <div>
             {!termsAccepted ? (
               <div className="text-center py-4 text-amber-300 text-sm">
                 יש לאשר את תנאי הרכישה כדי להמשיך
               </div>
-            ) : cardSuccess ? (
-              <div className="text-center py-6">
-                <div className="text-4xl mb-3">✅</div>
-                <p className="text-green-300 font-bold text-lg">התשלום בוצע בהצלחה!</p>
-                <p className="text-blue-200 text-sm mt-1">מעביר לדף אישור...</p>
-              </div>
             ) : (
               <>
-                <div className="space-y-3 mb-4">
-                  <div>
-                    <label className="text-xs text-blue-300 block mb-1.5">מספר כרטיס</label>
-                    <div
-                      id="card-number"
-                      className="w-full h-11 px-3 rounded-xl border border-white/20 bg-white/10 text-white placeholder-blue-300"
-                      style={{ lineHeight: "44px" }}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs text-blue-300 block mb-1.5">תוקף (MM/YY)</label>
-                      <div
-                        id="card-expiry"
-                        className="w-full h-11 px-3 rounded-xl border border-white/20 bg-white/10 text-white"
-                        style={{ lineHeight: "44px" }}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-blue-300 block mb-1.5">CVV</label>
-                      <div
-                        id="card-cvv"
-                        className="w-full h-11 px-3 rounded-xl border border-white/20 bg-white/10 text-white"
-                        style={{ lineHeight: "44px" }}
-                      />
-                    </div>
-                  </div>
+                {/* Info box - card via PayPal */}
+                <div className="mb-4 p-4 bg-blue-900/30 border border-blue-500/30 rounded-xl text-blue-200 text-sm text-center">
+                  <div className="text-2xl mb-2">💳</div>
+                  <p className="font-semibold text-white mb-1">תשלום בכרטיס אשראי</p>
+                  <p className="text-xs text-blue-300">לחץ על הכפתור — בחלון PayPal תוכל לשלם בכרטיס אשראי ללא צורך בחשבון PayPal</p>
                 </div>
 
                 {cardError && (
@@ -637,32 +609,30 @@ export default function Buy() {
 
                 <button
                   type="button"
-                  onClick={() => hostedFieldsRef.current?.submit()}
-                  disabled={cardLoading || isLoggedIn === false || !hostedFieldsRef.current}
+                  onClick={handlePurchase}
+                  disabled={loading || isLoggedIn === false || paypalConfigured === false}
                   className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-200 flex items-center justify-center gap-3 ${
-                    cardLoading || isLoggedIn === false || !hostedFieldsRef.current
+                    loading || isLoggedIn === false || paypalConfigured === false
                       ? "bg-gray-600/60 text-gray-400 cursor-not-allowed"
                       : "bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-xl shadow-emerald-900/40 hover:scale-[1.02]"
                   }`}
                 >
-                  {cardLoading ? (
+                  {loading ? (
                     <>
                       <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
-                      מעבד תשלום...
-                    </>
-                  ) : !hostedFieldsRef.current ? (
-                    <>
-                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      טוען שדות כרטיס...
+                      מעבד...
                     </>
                   ) : (
-                    <>שלם {symbol}{price} בכרטיס אשראי</>
+                    <>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                        <line x1="1" y1="10" x2="23" y2="10"/>
+                      </svg>
+                      שלם {symbol}{price} בכרטיס אשראי
+                    </>
                   )}
                 </button>
                 <p className="text-center text-xs text-blue-400/70 mt-3">
