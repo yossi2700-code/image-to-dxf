@@ -224,10 +224,10 @@ function pngToSvg(pngBuffer: Buffer): Promise<string> {
   return new Promise((resolve, reject) => {
     potrace.trace(pngBuffer, {
       threshold: 180,
-      turdSize: 8,
-      alphaMax: 1,
+      turdSize: 12,       // remove more noise/specks
+      alphaMax: 1.3,      // smoother corners (higher = rounder curves)
       optCurve: true,
-      optTolerance: 0.2,
+      optTolerance: 0.6,  // higher = smoother curves, less jagged
     }, (err: Error | null, svg: string) => {
       if (err) reject(err);
       else resolve(svg);
@@ -406,18 +406,15 @@ async function runTraceJob(
             `No text, no letters, no numbers anywhere.`
           )
         : (
-            // Flux Kontext Pro general object prompt — strict no-shading version
+            // Flux Kontext Pro general object prompt — strict no-shading, no background version
             `Convert this image to STRICT BLACK AND WHITE LINE ART. ` +
-            `CRITICAL RULE: ZERO shading, ZERO shadows, ZERO grey tones, ZERO gradients, ZERO hatching. ` +
-            `Only pure black (#000000) lines on pure white (#FFFFFF). All areas between lines must be white. ` +
-            `Draw ONLY what is visible in the original image — nothing more, nothing less. ` +
+            `CRITICAL RULE 1: ZERO shading, ZERO shadows, ZERO grey tones, ZERO gradients, ZERO hatching. Only pure black (#000000) lines on pure white (#FFFFFF). ` +
+            `CRITICAL RULE 2: REMOVE ALL BACKGROUND COMPLETELY. Draw ONLY the main subject (the car, object, or person in the foreground). The background (walls, floor, sky, ground, grass, pavement, buildings) must be pure white (#FFFFFF) — do NOT draw it. ` +
+            `CRITICAL RULE 3: PRESERVE EXACT PROPORTIONS AND SIZES from the original. Do NOT rescale individual elements. ` +
+            `Draw ONLY what is the main foreground subject — nothing more, nothing less. ` +
             `If there is NO person in the photo, do NOT add any person. ` +
-            `If there are NO musical notes in the photo, do NOT add any musical notes. ` +
-            `If the photo shows a musical instrument alone (no player), draw ONLY the instrument. ` +
-            `PRESERVE EXACT PROPORTIONS AND SIZES from the original: if an element is large in the photo, draw it large; if small, draw it small. Do NOT rescale individual elements. ` +
-            `Focus on the main foreground subject; ignore background objects. ` +
             `${variation.style} ` +
-            `No text, no letters, no numbers anywhere.`
+            `No text, no letters, no numbers, no logos, no watermarks anywhere.`
           );
 
       // Use Flux Kontext Pro via Replicate for image editing with high shape fidelity
@@ -480,7 +477,9 @@ async function runTraceJob(
         .extend({ top: 80, bottom: 80, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .grayscale()
-        .threshold(200)
+        // Blur slightly before threshold to smooth jagged edges from Flux output
+        .blur(0.6)
+        .threshold(210)  // higher threshold = keep only strong black lines, drop grey
         .png()
         .toBuffer();
 

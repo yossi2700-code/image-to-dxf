@@ -1885,7 +1885,7 @@ export default function Home() {
             {/* Feature shortcut buttons — click to switch tab */}
             <div className="grid grid-cols-2 gap-2">
               {[
-                { tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create', color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-sneaker_9fe887cf.png' },
+                { tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create', color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-v3-Xq8E28tKQT67AA2juXG9Ze.webp' },
                 { tab: 'trace', label: isRtl ? 'AI Outline' : 'AI Outline', color: '#0d9488', bg: 'linear-gradient(135deg, #0d9488, #06b6d4)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png' },
                 { tab: 'sketch', label: isRtl ? 'AI סקיצה' : 'AI Sketch', color: '#d97706', bg: 'linear-gradient(135deg, #d97706, #f59e0b)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v4-helmet_44398853.png' },
                 { tab: 'face', label: isRtl ? 'פורטרט' : 'Portrait', color: '#7c3aed', bg: 'linear-gradient(135deg, #7c3aed, #a855f7)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_e956deb2.png' },
