@@ -2153,9 +2153,9 @@ export default function Home() {
               <DemoSlider
                 accentColor="#6366f1"
                 images={[
-                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-motorcycle-AiXmfUzTwhGzwkBEnCywTK.webp', alt: 'AI Create - Motorcycle' },
-                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-dragon-jSwfvEdrcZZqdrsy5sv7tb.webp', alt: 'AI Create - Dragon' },
-                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-sneaker-abV5Buk7fa24bjqNW4yJVC.webp', alt: 'AI Create - Sneaker' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-motorcycle-v2-kVk2NjU3C7JJaYLTy45BEJ.webp', alt: 'AI Create - Motorcycle' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-dragon-v2-6NFwgC4XgrvF23uFyw6QtY.webp', alt: 'AI Create - Dragon' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-sneaker-v2-Ww8poumNGGE5fv9v9WKGJ5.webp', alt: 'AI Create - Sneaker' },
                   { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-typewriter_a3336bbc.png', alt: 'AI Generate - Typewriter' },
                   { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-sunglasses_e7cbfe74.png', alt: 'AI Generate - Sunglasses' },
                 ]}
