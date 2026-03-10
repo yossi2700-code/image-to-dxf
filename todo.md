@@ -1,5 +1,12 @@
 # Image to DXF Converter - TODO
 
+## עדכונים - מרץ 2026
+
+- [x] עיצוב מחדש של תפריט המשתמש — עיצוב כהה ומודרני עם gradient סגול/כחול, אייקונים עם רקע, hover effects
+- [x] יצירת 3 תמונות דמו חדשות לקטגוריית AI Create: אופנוע, דרקון, נעל ספורט
+- [x] הוספת 3 תמונות דמו חדשות ל-DemoSlider בטאב AI Create (5 תמונות סה"כ)
+
+
 - [x] פורטרט: שינוי ל-1 תמונה בכל פעם (לא 3 במקביל), עם כפתור "צייר עוד" לסגנון אחר
 
 - [x] Install image processing libraries (sharp) and DXF generation (custom)

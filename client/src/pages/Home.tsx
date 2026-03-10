@@ -1854,52 +1854,75 @@ export default function Home() {
                   {/* Dropdown menu */}
                   {userMenuOpen && (
                     <div
-                      className="absolute top-full mt-2 rounded-xl shadow-xl border z-50 min-w-[180px] overflow-hidden"
+                      className="absolute top-full mt-2 z-50 overflow-hidden"
                       style={{
-                        background: '#fff',
-                        border: '1px solid #e8eaf0',
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
                         [isRtl ? 'left' : 'right']: 0,
+                        minWidth: 230,
+                        background: 'linear-gradient(160deg, #1a1a2e 0%, #16213e 100%)',
+                        border: '1px solid rgba(139,92,246,0.3)',
+                        borderRadius: 16,
+                        boxShadow: '0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,92,246,0.1), inset 0 1px 0 rgba(255,255,255,0.05)',
                       }}
                     >
                       {/* User info header */}
-                      <div className="px-4 py-3 border-b" style={{ borderColor: '#f0f0f5', background: '#fafafa' }}>
-                        <p className="text-xs font-bold text-gray-800 truncate">{appUser.name || appUser.email.split('@')[0]}</p>
-                        <p className="text-xs text-gray-400 truncate">{appUser.email}</p>
+                      <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid rgba(139,92,246,0.15)', background: 'rgba(139,92,246,0.06)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: '#fff', flexShrink: 0, boxShadow: '0 2px 8px rgba(124,58,237,0.4)' }}>
+                            {(appUser.name || appUser.email)[0].toUpperCase()}
+                          </div>
+                          <div style={{ overflow: 'hidden', flex: 1 }}>
+                            <p style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{appUser.name || appUser.email.split('@')[0]}</p>
+                            <p style={{ fontSize: 11, color: 'rgba(148,163,184,0.75)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{appUser.email}</p>
+                          </div>
+                        </div>
                       </div>
-
                       {/* Menu items */}
-                      <div className="py-1">
+                      <div style={{ padding: '8px 8px 4px', display: 'flex', flexDirection: 'column', gap: 2 }}>
                         <button
                           onClick={() => { setUserMenuOpen(false); window.location.href = '/account'; }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: 'none', background: 'transparent', cursor: 'pointer', width: '100%', color: '#cbd5e1', fontSize: 13, fontWeight: 500, textAlign: isRtl ? 'right' : 'left' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(139,92,246,0.15)'; (e.currentTarget as HTMLButtonElement).style.color = '#a78bfa'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#cbd5e1'; }}
                         >
-                          <User className="w-4 h-4" />
+                          <span style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(139,92,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <User style={{ width: 14, height: 14 }} />
+                          </span>
                           <span>{isRtl ? 'אזור אישי' : 'My Account'}</span>
                         </button>
                         <button
                           onClick={() => { setUserMenuOpen(false); window.location.href = '/history'; }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: 'none', background: 'transparent', cursor: 'pointer', width: '100%', color: '#cbd5e1', fontSize: 13, fontWeight: 500, textAlign: isRtl ? 'right' : 'left' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(99,102,241,0.15)'; (e.currentTarget as HTMLButtonElement).style.color = '#818cf8'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#cbd5e1'; }}
                         >
-                          <History className="w-4 h-4" />
+                          <span style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <History style={{ width: 14, height: 14 }} />
+                          </span>
                           <span>{isRtl ? 'היסטוריה' : 'History'}</span>
                         </button>
                         <button
                           onClick={() => { setUserMenuOpen(false); window.location.href = '/buy'; }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
+                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: 'none', background: 'rgba(16,185,129,0.08)', cursor: 'pointer', width: '100%', color: '#6ee7b7', fontSize: 13, fontWeight: 600, textAlign: isRtl ? 'right' : 'left' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.2)'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.08)'; }}
                         >
-                          <CreditCard className="w-4 h-4" />
-                          <span>{isRtl ? 'קנה קרדיטים' : 'Buy Tokens'}</span>
+                          <span style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <CreditCard style={{ width: 14, height: 14 }} />
+                          </span>
+                          <span>{isRtl ? '✨ קנה קרדיטים' : '✨ Buy Tokens'}</span>
                         </button>
                       </div>
-
                       {/* Logout */}
-                      <div className="border-t py-1" style={{ borderColor: '#f0f0f5' }}>
+                      <div style={{ padding: '4px 8px 8px', borderTop: '1px solid rgba(239,68,68,0.12)', marginTop: 2 }}>
                         <button
                           onClick={() => { setUserMenuOpen(false); handleLogout(); }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
+                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: 'none', background: 'transparent', cursor: 'pointer', width: '100%', color: '#f87171', fontSize: 13, fontWeight: 500, textAlign: isRtl ? 'right' : 'left' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.12)'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
                         >
-                          <LogOut className="w-4 h-4" />
+                          <span style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <LogOut style={{ width: 14, height: 14 }} />
+                          </span>
                           <span>{isRtl ? 'התנתק' : 'Sign out'}</span>
                         </button>
                       </div>
@@ -2130,8 +2153,10 @@ export default function Home() {
               <DemoSlider
                 accentColor="#6366f1"
                 images={[
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-motorcycle-AiXmfUzTwhGzwkBEnCywTK.webp', alt: 'AI Create - Motorcycle' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-dragon-jSwfvEdrcZZqdrsy5sv7tb.webp', alt: 'AI Create - Dragon' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-sneaker-abV5Buk7fa24bjqNW4yJVC.webp', alt: 'AI Create - Sneaker' },
                   { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-typewriter_a3336bbc.png', alt: 'AI Generate - Typewriter' },
-                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-motorcycle_9b48b7de.png', alt: 'AI Generate - Motorcycle' },
                   { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-sunglasses_e7cbfe74.png', alt: 'AI Generate - Sunglasses' },
                 ]}
               />
