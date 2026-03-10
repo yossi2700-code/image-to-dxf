@@ -7,12 +7,12 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices } from "../drizzle/schema";
+import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts } from "../drizzle/schema";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "./emailService";
 import { desc, eq, and, sql } from "drizzle-orm";
 import { getAppUserFromCookie } from "./appAuth";
-import { getTokenBalance, addTokens, getTokenTransactions } from "./tokenService";
+import { getTokenBalance, addTokens, getTokenTransactions, invalidateTokenCostsCache } from "./tokenService";
 
 const ADMIN_COOKIE = "admin_session";
 
@@ -362,6 +362,38 @@ export const appRouter = router({
       return db.select().from(packagePrices).orderBy(packagePrices.tokenAmount);
     }),
 
+    /** Get all token costs (action costs) */
+    getTokenCosts: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.select().from(tokenCosts).orderBy(tokenCosts.action);
+    }),
+
+    /** Update a token cost */
+    updateTokenCost: adminProcedure
+      .input(
+        z.object({
+          action: z.string(),
+          cost: z.number().int().min(0).max(100),
+          label: z.string().optional(),
+          isEnabled: z.number().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db
+          .update(tokenCosts)
+          .set({
+            cost: input.cost,
+            ...(input.label !== undefined ? { label: input.label } : {}),
+            ...(input.isEnabled !== undefined ? { isEnabled: input.isEnabled } : {}),
+          })
+          .where(eq(tokenCosts.action, input.action));
+        invalidateTokenCostsCache();
+        return { success: true };
+      }),
+
     /** Update a package price */
     updatePackagePrice: adminProcedure
       .input(
@@ -399,6 +431,15 @@ export const appRouter = router({
           .where(eq(packagePrices.packageId, input.packageId));
         return { success: true };
       }),
+  }),
+
+  /** Public token costs — available to all users (for display purposes) */
+  tokenCosts: router({
+    list: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.select().from(tokenCosts).orderBy(tokenCosts.action);
+    }),
   }),
 
   /** Public package prices — available to all users */

@@ -240,3 +240,19 @@ export const packagePrices = mysqlTable("package_prices", {
 });
 export type PackagePrice = typeof packagePrices.$inferSelect;
 export type InsertPackagePrice = typeof packagePrices.$inferInsert;
+
+// Token costs per action — admin-configurable
+export const tokenCosts = mysqlTable("token_costs", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Action identifier: ai_trace | ai_generate | ai_refine | face_detect | convert */
+  action: varchar("action", { length: 32 }).notNull().unique(),
+  /** Number of tokens this action costs */
+  cost: int("cost").notNull().default(0),
+  /** Human-readable label */
+  label: varchar("label", { length: 64 }),
+  /** Whether this action is currently enabled */
+  isEnabled: int("isEnabled").notNull().default(1),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type TokenCost = typeof tokenCosts.$inferSelect;
+export type InsertTokenCost = typeof tokenCosts.$inferInsert;

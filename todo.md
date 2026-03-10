@@ -1340,3 +1340,6 @@
 - [x] עדכון paypal.ts ל-Live mode (api.paypal.com במקום api.sandbox.paypal.com)
 - [x] בדיקת /api/paypal/status
 - [x] vitest לאימות החיבור
+
+- [x] ניהול מחירון (TOKEN_COSTS) בפאנל הניהול — עלות טוקנים לכל פעולה
+- [x] תיקון כפתורי ניווט עליון במובייל (overflow, גודל, ריווח)

@@ -12,10 +12,11 @@
  */
 
 import { getDb } from "./db";
-import { appUsers, tokenTransactions } from "../drizzle/schema";
+import { appUsers, tokenTransactions, tokenCosts } from "../drizzle/schema";
 import { eq, sql } from "drizzle-orm";
 
-export const TOKEN_COSTS = {
+/** Default fallback costs (used if DB is unavailable) */
+export const TOKEN_COSTS_DEFAULT = {
   ai_trace: 5,
   ai_generate: 3,
   ai_refine: 2,
@@ -23,7 +24,41 @@ export const TOKEN_COSTS = {
   convert: 0,
 } as const;
 
-export type TokenAction = keyof typeof TOKEN_COSTS;
+/** Static export for backward compatibility (used in type checks) */
+export const TOKEN_COSTS = TOKEN_COSTS_DEFAULT;
+
+export type TokenAction = keyof typeof TOKEN_COSTS_DEFAULT;
+
+/** Cache for DB-loaded token costs (refreshed every 60 seconds) */
+let _costsCache: Record<string, number> | null = null;
+let _costsCacheTime = 0;
+const CACHE_TTL_MS = 60_000;
+
+/** Load token costs from DB (with in-memory cache) */
+async function getTokenCostsFromDb(): Promise<Record<string, number>> {
+  const now = Date.now();
+  if (_costsCache && now - _costsCacheTime < CACHE_TTL_MS) return _costsCache;
+  const db = await getDb();
+  if (!db) return { ...TOKEN_COSTS_DEFAULT };
+  try {
+    const rows = await db.select().from(tokenCosts);
+    const map: Record<string, number> = { ...TOKEN_COSTS_DEFAULT };
+    for (const row of rows) {
+      map[row.action] = row.cost;
+    }
+    _costsCache = map;
+    _costsCacheTime = now;
+    return map;
+  } catch {
+    return { ...TOKEN_COSTS_DEFAULT };
+  }
+}
+
+/** Invalidate the costs cache (call after admin updates) */
+export function invalidateTokenCostsCache() {
+  _costsCache = null;
+  _costsCacheTime = 0;
+}
 
 /**
  * Get current token balance for a user.
@@ -50,7 +85,8 @@ export async function deductTokens(
   action: TokenAction,
   description?: string
 ): Promise<{ success: true; balanceAfter: number } | { success: false; balance: number }> {
-  const cost = TOKEN_COSTS[action];
+  const costs = await getTokenCostsFromDb();
+  const cost = costs[action] ?? TOKEN_COSTS_DEFAULT[action] ?? 0;
   if (cost === 0) return { success: true, balanceAfter: await getTokenBalance(appUserId) };
 
   const db = await getDb();

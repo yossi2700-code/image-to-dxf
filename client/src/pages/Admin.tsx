@@ -263,6 +263,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [priceEdits, setPriceEdits] = useState<Record<string, Record<string, string | boolean>>>({});
   const ALL_CURRENCIES = ["USD", "EUR", "ILS", "GBP", "AUD", "CAD", "JPY"] as const;
+
+  // ── Token Costs state ───
+  const { data: tokenCostsData, isLoading: tokenCostsLoading, refetch: refetchTokenCosts } = trpc.admin.getTokenCosts.useQuery(
+    undefined,
+    { enabled: activeSection === "payments" }
+  );
+  const updateTokenCostMutation = trpc.admin.updateTokenCost.useMutation({
+    onSuccess: () => { toast.success("עלות עודכנה בהצלחה!"); refetchTokenCosts(); setEditingCostAction(null); },
+    onError: (e) => toast.error("שגיאה: " + e.message),
+  });
+  const [editingCostAction, setEditingCostAction] = useState<string | null>(null);
+  const [costEdits, setCostEdits] = useState<Record<string, number>>({});
+
   // ── Settings state ───
   const [settingsName, setSettingsName] = useState("");
   const [nameLoading, setNameLoading] = useState(false);
@@ -833,6 +846,78 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         {/* ── PAYPAL ORDERS SECTION ── */}
         {activeSection === "payments" && (
           <div className="space-y-5">
+            {/* Token Costs Management */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Coins className="w-4 h-4 text-amber-500" />
+                  עלות טוקנים לפעולה (מחירון המרות)
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">קבע כמה טוקנים עולה כל פעולה. שינוי ייכנס לתוקף מידי.</p>
+              </CardHeader>
+              <CardContent>
+                {tokenCostsLoading ? (
+                  <div className="text-center py-4 text-muted-foreground text-sm">טוען...</div>
+                ) : !tokenCostsData || tokenCostsData.length === 0 ? (
+                  <div className="text-center py-4 text-muted-foreground text-sm">אין נתוני עלויות</div>
+                ) : (
+                  <div className="space-y-2">
+                    {tokenCostsData.map((item) => (
+                      <div key={item.action} className="flex items-center justify-between p-3 border rounded-lg bg-muted/20">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{item.label || item.action}</p>
+                          <p className="text-xs text-muted-foreground font-mono">{item.action}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {editingCostAction === item.action ? (
+                            <>
+                              <div className="flex items-center gap-1.5">
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  max={100}
+                                  className="h-7 w-20 text-sm text-center"
+                                  defaultValue={item.cost}
+                                  onChange={(e) => setCostEdits(prev => ({ ...prev, [item.action]: parseInt(e.target.value) || 0 }))}
+                                />
+                                <span className="text-xs text-muted-foreground">טוקנים</span>
+                              </div>
+                              <Button size="sm" variant="outline" onClick={() => setEditingCostAction(null)}>בטל</Button>
+                              <Button
+                                size="sm"
+                                onClick={() => updateTokenCostMutation.mutate({
+                                  action: item.action,
+                                  cost: costEdits[item.action] ?? item.cost,
+                                })}
+                                disabled={updateTokenCostMutation.isPending}
+                              >
+                                {updateTokenCostMutation.isPending ? "שומר..." : "שמור"}
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                                item.cost === 0 ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                              }`}>
+                                {item.cost === 0 ? "חינם" : `${item.cost} טוקנים`}
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => { setEditingCostAction(item.action); setCostEdits(prev => ({ ...prev, [item.action]: item.cost })); }}
+                              >
+                                ערוך
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Package Prices Management */}
             <Card>
               <CardHeader className="pb-3">

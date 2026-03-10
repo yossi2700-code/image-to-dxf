@@ -1,0 +1,9 @@
+{
+  "query": "\nCREATE TABLE IF NOT EXISTS `token_costs` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `action` varchar(32) NOT NULL,\n  `cost` int NOT NULL DEFAULT 0,\n  `label` varchar(64),\n  `isEnabled` int NOT NULL DEFAULT 1,\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `token_costs_id` PRIMARY KEY(`id`),\n  CONSTRAINT `token_costs_action_unique` UNIQUE(`action`)\n);\n\nINSERT IGNORE INTO `token_costs` (`action`, `cost`, `label`, `isEnabled`) VALUES\n  ('ai_trace', 5, 'AI Trace (Image to DXF)', 1),\n  ('ai_generate', 3, 'AI Generate (Text to DXF)', 1),\n  ('ai_refine', 2, 'AI Refine (Edit DXF)', 1),\n  ('face_detect', 4, 'Face/Portrait Detection', 1),\n  ('convert', 0, 'Basic Convert (Free)', 1);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nCREATE TABLE IF NOT EXISTS `token_costs` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `action` varchar(32) NOT NULL,\n  `cost` int NOT NULL DEFAULT 0,\n  `label` varchar(64),\n  `isEnabled` int NOT NULL DEFAULT 1,\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `token_costs_id` PRIMARY KEY(`id`),\n  CONSTRAINT `token_costs_action_unique` UNIQUE(`action`)\n);\n\nINSERT IGNORE INTO `token_costs` (`action`, `cost`, `label`, `isEnabled`) VALUES\n  ('ai_trace', 5, 'AI Trace (Image to DXF)', 1),\n  ('ai_generate', 3, 'AI Generate (Text to DXF)', 1),\n  ('ai_refine', 2, 'AI Refine (Edit DXF)', 1),\n  ('face_detect', 4, 'Face/Portrait Detection', 1),\n  ('convert', 0, 'Basic Convert (Free)', 1);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1971
+}

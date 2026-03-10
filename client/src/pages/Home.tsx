@@ -1757,8 +1757,8 @@ export default function Home() {
           boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
         }}
       >
-        <div className="container py-2 flex items-center gap-1.5">
-          {/* AiDXF Logo — icon only on mobile */}
+        <div className="px-3 py-2 flex items-center gap-2 max-w-7xl mx-auto">
+          {/* AiDXF Logo */}
           <div className="flex items-center gap-1.5 shrink-0">
             <div
               className="w-7 h-7 rounded-lg shrink-0 flex items-center justify-center"
@@ -1773,64 +1773,73 @@ export default function Home() {
             </div>
             <span className="hidden sm:inline text-base font-black tracking-tight" style={{ color: '#6366f1', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>Ai</span><span className="hidden sm:inline text-base font-black tracking-tight" style={{ color: '#111827', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>DXF</span>
           </div>
-          <div className="flex-1 min-w-0" />
-          {/* Auth in header */}
-          {appUser ? (
-            <div className="flex items-center gap-1">
-              {/* Token balance */}
-              <button
-                onClick={() => window.location.href = "/tokens"}
-                className="flex items-center gap-1 font-bold px-2 py-1 rounded-full shrink-0 hover:opacity-80 transition-opacity"
-                style={{ background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4338ca', fontSize: '11px' }}
-              >
-                <Sparkles className="w-3 h-3" />
-                <span>{tokenBalance}</span>
-              </button>
-              {/* History button — always show text */}
-              <button
-                onClick={() => window.location.href = "/history"}
-                className="flex items-center gap-1 font-semibold shrink-0 hover:opacity-90 active:scale-95 transition-all rounded-xl px-2.5 py-1.5"
-                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', fontSize: '11px', boxShadow: '0 2px 6px rgba(99,102,241,0.3)' }}
-              >
-                <History className="w-3 h-3" />
-                <span>{isRtl ? 'היסטוריה' : 'History'}</span>
-              </button>
-              {/* Buy tokens button */}
-              <button
-                onClick={() => window.location.href = '/buy'}
-                className="flex items-center gap-1 font-bold shrink-0 transition-all hover:opacity-90 active:scale-95 rounded-xl px-2.5 py-1.5"
-                style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', fontSize: '11px', boxShadow: '0 2px 6px rgba(16,185,129,0.35)' }}
-              >
-                <span>{isRtl ? 'קנה קרדיטים' : 'Buy Tokens'}</span>
-              </button>
-              {/* Account button — always show text */}
-              <button
-                onClick={() => window.location.href = '/account'}
-                className="flex items-center gap-1 font-bold shrink-0 transition-all hover:opacity-90 active:scale-95 rounded-xl px-2.5 py-1.5"
-                style={{ background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: 'white', fontSize: '11px', boxShadow: '0 2px 6px rgba(99,102,241,0.35)' }}
-              >
-                <UserCircle className="w-3 h-3" />
-                <span>{isRtl ? 'אזור אישי' : 'Account'}</span>
-              </button>
-              {/* Logout */}
-              <button
-                onClick={handleLogout}
-                className="p-1.5 rounded-full transition-colors text-gray-400 hover:text-red-500 shrink-0"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => { setLimitReached(false); setAuthOpen(true); }}
-              className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl font-semibold transition-all hover:opacity-90 shrink-0"
-              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: 'none', boxShadow: '0 3px 10px rgba(99,102,241,0.35)' }}
-            >
-              <LogIn className="w-3.5 h-3.5" />
-              {t("loginRegister")}
-            </button>
-          )}
-          <LanguageSwitcher />
+
+          {/* Scrollable nav area */}
+          <div className="flex-1 min-w-0 overflow-x-auto scrollbar-none">
+            {/* Auth in header */}
+            {appUser ? (
+              <div className="flex items-center gap-1.5 justify-end" style={{ minWidth: 'max-content' }}>
+                {/* Token balance */}
+                <button
+                  onClick={() => window.location.href = "/tokens"}
+                  className="flex items-center gap-1 font-bold px-2 py-1 rounded-full shrink-0 hover:opacity-80 transition-opacity"
+                  style={{ background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4338ca', fontSize: '11px', whiteSpace: 'nowrap' }}
+                >
+                  <Sparkles className="w-3 h-3" />
+                  <span>{tokenBalance}</span>
+                </button>
+                {/* History button */}
+                <button
+                  onClick={() => window.location.href = "/history"}
+                  className="flex items-center gap-1 font-semibold shrink-0 hover:opacity-90 active:scale-95 transition-all rounded-lg px-2.5 py-1.5"
+                  style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', fontSize: '11px', boxShadow: '0 2px 6px rgba(99,102,241,0.3)', whiteSpace: 'nowrap' }}
+                >
+                  <History className="w-3 h-3" />
+                  <span>{isRtl ? 'היסטוריה' : 'History'}</span>
+                </button>
+                {/* Buy tokens button */}
+                <button
+                  onClick={() => window.location.href = '/buy'}
+                  className="flex items-center gap-1 font-bold shrink-0 transition-all hover:opacity-90 active:scale-95 rounded-lg px-2.5 py-1.5"
+                  style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', fontSize: '11px', boxShadow: '0 2px 6px rgba(16,185,129,0.35)', whiteSpace: 'nowrap' }}
+                >
+                  <span>{isRtl ? 'קנה קרדיטים' : 'Buy Tokens'}</span>
+                </button>
+                {/* Account button */}
+                <button
+                  onClick={() => window.location.href = '/account'}
+                  className="flex items-center gap-1 font-bold shrink-0 transition-all hover:opacity-90 active:scale-95 rounded-lg px-2.5 py-1.5"
+                  style={{ background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: 'white', fontSize: '11px', boxShadow: '0 2px 6px rgba(99,102,241,0.35)', whiteSpace: 'nowrap' }}
+                >
+                  <UserCircle className="w-3 h-3" />
+                  <span>{isRtl ? 'אזור אישי' : 'Account'}</span>
+                </button>
+                {/* Logout */}
+                <button
+                  onClick={handleLogout}
+                  className="p-1.5 rounded-full transition-colors text-gray-400 hover:text-red-500 shrink-0"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex justify-end">
+                <button
+                  onClick={() => { setLimitReached(false); setAuthOpen(true); }}
+                  className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl font-semibold transition-all hover:opacity-90 shrink-0"
+                  style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: 'none', boxShadow: '0 3px 10px rgba(99,102,241,0.35)', whiteSpace: 'nowrap' }}
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  {t("loginRegister")}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Language switcher - always visible */}
+          <div className="shrink-0">
+            <LanguageSwitcher />
+          </div>
         </div>
       </header>
 
