@@ -16,6 +16,7 @@ import aiRefineRoute from "../aiRefineRoute";
 import aiDocumentRedrawRoute from "../aiDocumentRedrawRoute";
 import svgToPngRoute from "../svgToPngRoute";
 import faceDetectRoute from "../faceDetectRoute";
+import paypalRoute from "../paypalRoute";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -62,6 +63,8 @@ async function startServer() {
   app.use(svgToPngRoute);
   // Face Detection route (photo → GPT-4o Vision → portrait line art → DXF)
   app.use(faceDetectRoute);
+  // PayPal payment routes
+  app.use(paypalRoute);
   // tRPC API
   app.use(
     "/api/trpc",

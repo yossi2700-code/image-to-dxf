@@ -15,6 +15,9 @@ import Privacy from "./pages/Privacy";
 import ResetPassword from "./pages/ResetPassword";
 import AdminAnnouncement from "./pages/AdminAnnouncement";
 import Account from "./pages/Account";
+import Buy from "./pages/Buy";
+import BuySuccess from "./pages/BuySuccess";
+import PurchaseTerms from "./pages/PurchaseTerms";
 
 function Router() {
   return (
@@ -29,6 +32,9 @@ function Router() {
       <Route path={"/reset-password"} component={ResetPassword} />
       <Route path={"/terms"} component={Terms} />
       <Route path={"/privacy"} component={Privacy} />
+      <Route path={"/buy"} component={Buy} />
+      <Route path={"/buy/success"} component={BuySuccess} />
+      <Route path={"/purchase-terms"} component={PurchaseTerms} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

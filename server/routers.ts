@@ -7,7 +7,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords } from "../drizzle/schema";
+import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders } from "../drizzle/schema";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "./emailService";
 import { desc, eq, and, sql } from "drizzle-orm";
@@ -343,6 +343,17 @@ export const appRouter = router({
         await sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl });
         return { success: true };
       }),
+
+    /** All PayPal orders (for admin view) */
+    paypalOrders: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db
+        .select()
+        .from(paypalOrders)
+        .orderBy(desc(paypalOrders.createdAt))
+        .limit(200);
+    }),
   }),
 
   /** Token balance for the logged-in user */

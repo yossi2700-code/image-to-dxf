@@ -40,6 +40,7 @@ import {
   CheckCircle2,
   Wrench,
   Mail,
+  CreditCard,
 } from "lucide-react";
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
@@ -240,11 +241,16 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     return result;
   })();
 
-  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "settings">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings">("overview");
 
   const { data: consentData, isLoading: consentLoading } = trpc.admin.consentRecords.useQuery(
     undefined,
     { enabled: activeSection === "consents" }
+  );
+
+  const { data: paypalOrdersData, isLoading: paypalOrdersLoading } = trpc.admin.paypalOrders.useQuery(
+    undefined,
+    { enabled: activeSection === "payments" }
   );
 
   // ── Settings state ──
@@ -293,6 +299,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               { id: "activity", label: "פעילות", icon: Activity },
               { id: "users", label: "משתמשים", icon: Users },
               { id: "consents", label: "הסכמות", icon: CheckCircle2 },
+              { id: "payments", label: "תשלומי PayPal", icon: CreditCard },
               { id: "settings", label: "הגדרות", icon: Settings },
             ] as const).map(({ id, label, icon: Icon }) => (
               <button
@@ -319,6 +326,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               { id: "activity", label: "פעילות", icon: Activity },
               { id: "users", label: "משתמשים", icon: Users },
               { id: "consents", label: "הסכמות", icon: CheckCircle2 },
+              { id: "payments", label: "PayPal", icon: CreditCard },
               { id: "settings", label: "הגדרות", icon: Settings },
             ] as const).map(({ id, label, icon: Icon }) => (
               <button
@@ -812,6 +820,80 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           </div>
         )}
 
+        {/* ── PAYPAL ORDERS SECTION ── */}
+        {activeSection === "payments" && (
+          <div className="space-y-5">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-blue-500" />
+                  תשלומי PayPal
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {paypalOrdersLoading ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm">טוען...</div>
+                ) : !paypalOrdersData || paypalOrdersData.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    <CreditCard className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                    אין הזמנות PayPal עדיין
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b text-right">
+                          <th className="pb-2 pr-2 font-medium text-muted-foreground">תאריך</th>
+                          <th className="pb-2 pr-2 font-medium text-muted-foreground">משתמש</th>
+                          <th className="pb-2 pr-2 font-medium text-muted-foreground">חבילה</th>
+                          <th className="pb-2 pr-2 font-medium text-muted-foreground">סכום</th>
+                          <th className="pb-2 pr-2 font-medium text-muted-foreground">מטבע</th>
+                          <th className="pb-2 pr-2 font-medium text-muted-foreground">אסימונים</th>
+                          <th className="pb-2 pr-2 font-medium text-muted-foreground">סטטוס</th>
+                          <th className="pb-2 pr-2 font-medium text-muted-foreground">PayPal ID</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paypalOrdersData.map((order) => (
+                          <tr key={order.id} className="border-b hover:bg-slate-50 transition-colors">
+                            <td className="py-2 pr-2 text-xs text-muted-foreground">
+                              {new Date(order.createdAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}
+                            </td>
+                            <td className="py-2 pr-2">{order.appUserId}</td>
+                            <td className="py-2 pr-2 font-medium">{order.packageId}</td>
+                            <td className="py-2 pr-2 font-bold text-green-600">{order.priceAmount}</td>
+                            <td className="py-2 pr-2 text-xs">{order.currency}</td>
+                            <td className="py-2 pr-2">
+                              <span className="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 text-xs font-medium">
+                                +{order.tokensCredited}
+                              </span>
+                            </td>
+                            <td className="py-2 pr-2">
+                              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                                order.status === "completed" ? "bg-green-100 text-green-700" :
+                                order.status === "pending" ? "bg-yellow-100 text-yellow-700" :
+                                "bg-red-100 text-red-700"
+                              }`}>
+                                {order.status}
+                              </span>
+                            </td>
+                            <td className="py-2 pr-2 text-xs text-muted-foreground font-mono">
+                              {order.paypalOrderId ? order.paypalOrderId.slice(0, 12) + "..." : "-"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <p className="text-xs text-muted-foreground mt-3 text-left">
+                      סה"כ {paypalOrdersData.length} הזמנות |
+                      הכנסה: {paypalOrdersData.filter(o => o.status === "completed").reduce((sum, o) => sum + parseFloat(String(o.priceAmount || 0)), 0).toFixed(2)} USD
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
         {/* ── SETTINGS SECTION ── */}
         {activeSection === "settings" && (
           <div className="space-y-5">

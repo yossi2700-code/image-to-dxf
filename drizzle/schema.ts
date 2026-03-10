@@ -180,3 +180,31 @@ export const consentRecords = mysqlTable("consent_records", {
 
 export type ConsentRecord = typeof consentRecords.$inferSelect;
 export type InsertConsentRecord = typeof consentRecords.$inferInsert;
+// PayPal orders — tracks token purchases
+export const paypalOrders = mysqlTable("paypal_orders", {
+  id: int("id").autoincrement().primaryKey(),
+  /** App user who made the purchase */
+  appUserId: int("appUserId").notNull(),
+  /** PayPal order ID returned from createOrder */
+  paypalOrderId: varchar("paypalOrderId", { length: 64 }).notNull().unique(),
+  /** Package: "tokens_50" or "tokens_100" */
+  packageId: varchar("packageId", { length: 16 }).notNull(),
+  /** Number of tokens purchased */
+  tokenAmount: int("tokenAmount").notNull(),
+  /** Amount charged */
+  priceAmount: varchar("priceAmount", { length: 16 }).notNull(),
+  /** Currency code (USD, EUR, ILS, etc.) */
+  currency: varchar("currency", { length: 8 }).notNull(),
+  /** Status: pending | completed | cancelled | failed */
+  status: varchar("status", { length: 16 }).notNull().default("pending"),
+  /** Whether tokens have been credited (0/1) */
+  tokensCredited: int("tokensCredited").notNull().default(0),
+  /** User IP (anonymized) */
+  ipAnon: varchar("ipAnon", { length: 20 }),
+  /** User accepted purchase terms (0/1) */
+  termsAccepted: int("termsAccepted").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+});
+export type PaypalOrder = typeof paypalOrders.$inferSelect;
+export type InsertPaypalOrder = typeof paypalOrders.$inferInsert;

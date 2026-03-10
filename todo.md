@@ -1302,12 +1302,15 @@
 
 ## PayPal Integration
 
-- [ ] הוספת PayPal SDK לפרונטאנד
-- [ ] יצירת paypal order endpoint בשרת
-- [ ] יצירת paypal capture endpoint בשרת
-- [ ] UI: עמוד/מודל רכישת קרדיטים עם 2 חבילות (50 קרדיטים ₪29/$8, 100 קרדיטים ₪49/$13)
-- [ ] גילוי מטבע לפי מדינה (ישראל=₪, אחרים=$)
-- [ ] הוספת תרגומים לרכישת קרדיטים ב-7 שפות
+- [x] הכנת server-side: products.ts, paypal.ts, paypalRoute.ts
+- [x] יצירת paypal order endpoint בשרת
+- [x] יצירת paypal capture endpoint בשרת
+- [x] UI: עמוד /buy עם 2 חבילות + modal תנאים חובה
+- [x] גילוי מטבע לפי מדינה (USD/EUR/ILS/GBP/AUD/CAD/JPY)
+- [x] הוספת תרגומים לרכישת קרדיטים ב-7 שפות
+- [x] עמוד /buy/success עם אנימציה וסיכום הזמנה
+- [x] הוספת admin panel לצפייה בהזמנות PayPal
+- [x] עמוד /purchase-terms עם תנאי רכישה משפטיים
 
 ## Terms of Service & Privacy Policy
 
