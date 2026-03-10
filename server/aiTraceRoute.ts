@@ -69,7 +69,8 @@ const STYLE_VARIATIONS = [
       "Draw outer silhouette and 10-15 key structural interior lines. " +
       "ABSOLUTELY NO: shading, shadows, gradients, grey tones, hatching, cross-hatching, stippling, texture fills, dark areas, filled regions. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
-      "Style: clean coloring-book outline drawing.",
+      "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
+      "Style: clean coloring-book outline drawing with smooth ink strokes.",
   },
   {
     label: "detailed",
@@ -78,7 +79,8 @@ const STYLE_VARIATIONS = [
       "Draw all structural features, surface details, and fine contours as clean lines. " +
       "ABSOLUTELY NO: shading, shadows, gradients, grey tones, hatching, cross-hatching, stippling, texture fills, dark areas, filled regions. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
-      "Style: detailed technical illustration with clean ink lines only.",
+      "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
+      "Style: detailed technical illustration with smooth clean ink lines only.",
   },
   {
     label: "decorative",
@@ -87,7 +89,8 @@ const STYLE_VARIATIONS = [
       "Draw bold outer contour with flowing decorative inner lines. " +
       "ABSOLUTELY NO: shading, shadows, gradients, grey tones, hatching, cross-hatching, stippling, texture fills, dark areas, filled regions. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
-      "Style: ornamental line art suitable for laser engraving.",
+      "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
+      "Style: ornamental line art with smooth flowing lines, suitable for laser engraving.",
   },
 ];
 
