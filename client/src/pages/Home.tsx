@@ -14,6 +14,7 @@ import { AiTraceTab } from "@/components/AiTraceTab";
 import { AiDocumentRedrawTab } from "@/components/AiDocumentRedrawTab";
 import { FaceDetectTab } from "@/components/FaceDetectTab";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { InsufficientTokensBanner } from "@/components/InsufficientTokensBanner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Upload,
@@ -392,6 +393,26 @@ function DemoSlider({ images, accentColor }: { images: { src: string; alt: strin
 }
 
 const HERO_SLIDES = [
+  {
+    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-skate-side-v1-JKzVTwehtry9JhWtWppJbG.webp',
+    alt: 'Skateboard photo to DXF vector',
+  },
+  {
+    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-camera-ba-KY36uNzEcwCAdisAjJbNMY.webp',
+    alt: 'Camera photo to DXF vector',
+  },
+  {
+    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-controller-ba-RXh6qxSYB6EaJEg7So2avn.webp',
+    alt: 'Gaming controller photo to DXF vector',
+  },
+  {
+    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-parrot-ba-GpEFunJvP6NHZeiZJUeYvQ.webp',
+    alt: 'Parrot photo to DXF vector',
+  },
+  {
+    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-new-sneaker-ba-jkfo2SxXdmrtAwzDSoyPTB.webp',
+    alt: 'Sneaker photo to DXF vector',
+  },
   {
     src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v4-helmet-sm_294f43aa.png',
     alt: 'Helmet photo to DXF vector',
@@ -947,7 +968,7 @@ if (!sessionStorage.getItem("page_session_active")) {
 }
 
 // ─── AI Generator Tab ────────────────────────────────────────────────────────
-function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
+function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () => void; onInsufficientTokens?: () => void }) {
   const { t, isRtl, language } = useLanguage();
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
   const [prompt, setPrompt] = useState(() => localStorage.getItem("ai_generate_prompt") ?? "");
@@ -1164,8 +1185,9 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
         setErrorMsg(msg);
         setStatus("error");
         refetchTokens();
+        if (onInsufficientTokens) onInsufficientTokens();
         toast.error(msg, {
-          action: { label: language === "he" ? "רכוש אסימונים" : "Buy Tokens", onClick: () => { window.location.href = "/tokens"; } },
+          action: { label: language === "he" ? "רכוש אסימונים" : "Buy Tokens", onClick: () => { window.location.href = "/buy"; } },
           duration: 6000,
         });
         return;
@@ -1711,6 +1733,7 @@ export default function Home() {
   const [authOpen, setAuthOpen] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
   const [authReason, setAuthReason] = useState<AuthReason>("generic");
+  const [showTokensBanner, setShowTokensBanner] = useState(false);
 
   const openAuthAs = (reason: AuthReason) => {
     setAuthReason(reason);
@@ -1920,9 +1943,12 @@ export default function Home() {
         {/* Responsive layout */}
         <div className="mx-auto" style={{ maxWidth: '100%' }}>
 
-        {/* ── Announcement Banner ── */}
+         {/* ── Announcement Banner ── */}
         <AnnouncementBanner />
-
+        {/* ── Insufficient Tokens Banner ── */}
+        {showTokensBanner && (
+          <InsufficientTokensBanner onDismiss={() => setShowTokensBanner(false)} />
+        )}
         {/* ── Hero Section ── */}
         <div className="mb-6 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #f0f0ff 0%, #faf5ff 50%, #f0f9ff 100%)', border: '1px solid #e8eaf0' }}>
           <div className="px-5 pt-5 pb-4">
@@ -2110,7 +2136,7 @@ export default function Home() {
                 ]}
               />
             </div>
-            <AiGeneratorTab onOpenAuth={() => openAuthAs("unregistered")} />
+            <AiGeneratorTab onOpenAuth={() => openAuthAs("unregistered")} onInsufficientTokens={() => setShowTokensBanner(true)} />
           </TabsContent>
 
           <TabsContent value="trace">
@@ -2136,7 +2162,7 @@ export default function Home() {
                 ]}
               />
             </div>
-            <AiTraceTab onOpenAuth={() => openAuthAs("unregistered")} />
+            <AiTraceTab onOpenAuth={() => openAuthAs("unregistered")} onInsufficientTokens={() => setShowTokensBanner(true)} />
           </TabsContent>
 
           <TabsContent value="redraw">
@@ -2186,7 +2212,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <AiDocumentRedrawTab onOpenAuth={() => openAuthAs("unregistered")} />
+            <AiDocumentRedrawTab onOpenAuth={() => openAuthAs("unregistered")} onInsufficientTokens={() => setShowTokensBanner(true)} />
           </TabsContent>
 
           <TabsContent value="face">
@@ -2212,7 +2238,7 @@ export default function Home() {
                 ]}
               />
             </div>
-            <FaceDetectTab onOpenAuth={() => openAuthAs("unregistered")} />
+            <FaceDetectTab onOpenAuth={() => openAuthAs("unregistered")} onInsufficientTokens={() => setShowTokensBanner(true)} />
           </TabsContent>
         </Tabs>
         </div>{/* end centering wrapper */}

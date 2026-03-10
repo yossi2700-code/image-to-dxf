@@ -191,6 +191,7 @@ function PortraitCard({ image, isRtl, style, onDownload, onZoom }: PortraitCardP
 // ─── Main Component ───────────────────────────────────────────────────────────
 interface FaceDetectTabProps {
   onOpenAuth?: () => void;
+  onInsufficientTokens?: () => void;
 }
 
 const STYLE_OPTIONS: { value: PortraitStyle; labelHe: string; labelEn: string; descHe: string; descEn: string }[] = [
@@ -200,7 +201,7 @@ const STYLE_OPTIONS: { value: PortraitStyle; labelHe: string; labelEn: string; d
   { value: "stencil",  labelHe: "סטנסיל", labelEn: "Stencil",  descHe: "קווים עבים, CNC עמוק",    descEn: "Bold lines, deep CNC" },
 ];
 
-export function FaceDetectTab({ onOpenAuth }: FaceDetectTabProps) {
+export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTabProps) {
   const { language } = useLanguage();
   const isRtl = language === "he";
 

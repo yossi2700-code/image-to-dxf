@@ -410,6 +410,10 @@ export const translations = {
     buySuccessVerifying: "מאמת תשלום...",
     buySuccessFailed: "התשלום נכשל. צור קשר לתמיכה.",
     buySuccessNewBalance: "יתרה חדשה:",
+    insufficientTokensTitle: "נגמרו האסימונים",
+    insufficientTokensMsg: "אין לך מספיק אסימונים להמשיך. רכוש אסימונים כדי להמשיך ליצור.",
+    insufficientTokensBuy: "רכוש אסימונים",
+    insufficientTokensDismiss: "סגור",
   },
   en: {
     appTitle: "Image to DXF Converter",
@@ -710,6 +714,10 @@ export const translations = {
     buySuccessVerifying: "Verifying payment...",
     buySuccessFailed: "Payment failed. Please contact support.",
     buySuccessNewBalance: "New balance:",
+    insufficientTokensTitle: "Out of Tokens",
+    insufficientTokensMsg: "You don't have enough tokens to continue. Purchase tokens to keep creating.",
+    insufficientTokensBuy: "Buy Tokens",
+    insufficientTokensDismiss: "Dismiss",
   },
   zh: {
     appTitle: "图片转DXF转换器",
@@ -997,6 +1005,10 @@ export const translations = {
     buySuccessVerifying: "正在验证支付...",
     buySuccessFailed: "支付失败。请联系客服。",
     buySuccessNewBalance: "新余额:",
+    insufficientTokensTitle: "代币不足",
+    insufficientTokensMsg: "您没有足够的代币继续。购买代币以继续创作。",
+    insufficientTokensBuy: "购买代币",
+    insufficientTokensDismiss: "关闭",
   },
   es: {
     appTitle: "Convertidor de Imagen a DXF",
@@ -1284,6 +1296,10 @@ export const translations = {
     buySuccessVerifying: "Verificando pago...",
     buySuccessFailed: "Pago fallido. Por favor contacta soporte.",
     buySuccessNewBalance: "Nuevo saldo:",
+    insufficientTokensTitle: "Sin tokens",
+    insufficientTokensMsg: "No tienes suficientes tokens para continuar. Compra tokens para seguir creando.",
+    insufficientTokensBuy: "Comprar tokens",
+    insufficientTokensDismiss: "Cerrar",
   },
   fr: {
     appTitle: "Convertisseur Image vers DXF",
@@ -1571,6 +1587,10 @@ export const translations = {
     buySuccessVerifying: "Vérification du paiement...",
     buySuccessFailed: "Paiement échoué. Veuillez contacter le support.",
     buySuccessNewBalance: "Nouveau solde:",
+    insufficientTokensTitle: "Tokens épuisés",
+    insufficientTokensMsg: "Vous n'avez pas assez de tokens pour continuer. Achetez des tokens pour continuer à créer.",
+    insufficientTokensBuy: "Acheter des tokens",
+    insufficientTokensDismiss: "Fermer",
   },
   ar: {
     appTitle: "محوّل الصور إلى DXF",
@@ -1858,6 +1878,10 @@ export const translations = {
     buySuccessVerifying: "جاري التحقق من الدفع...",
     buySuccessFailed: "فشل الدفع. يرجى التواصل مع الدعم.",
     buySuccessNewBalance: "الرصيد الجديد:",
+    insufficientTokensTitle: "نفدت الرموز",
+    insufficientTokensMsg: "ليس لديك رموز كافية للمتابعة. اشترِ رموزاً للاستمرار في الإنشاء.",
+    insufficientTokensBuy: "شراء رموز",
+    insufficientTokensDismiss: "إغلاق",
   },
   ru: {
     appTitle: "Конвертер изображений в DXF",
@@ -2123,6 +2147,10 @@ export const translations = {
     buySuccessVerifying: "Проверка платежа...",
     buySuccessFailed: "Оплата не удалась. Пожалуйста, свяжитесь с поддержкой.",
     buySuccessNewBalance: "Новый баланс:",
+    insufficientTokensTitle: "Токены закончились",
+    insufficientTokensMsg: "У вас недостаточно токенов для продолжения. Купите токены, чтобы продолжить создание.",
+    insufficientTokensBuy: "Купить токены",
+    insufficientTokensDismiss: "Закрыть",
   },
 } as const;
 

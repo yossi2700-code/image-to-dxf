@@ -217,9 +217,9 @@ function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) 
   );
 }
 
-interface AiTraceTabProps { onOpenAuth: () => void; }
+interface AiTraceTabProps { onOpenAuth: () => void; onInsufficientTokens?: () => void; }
 
-export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
+export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps) {
   const { t, isRtl, language } = useLanguage();
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
   const [imageFile, setImageFile] = useState<File | null>(null);

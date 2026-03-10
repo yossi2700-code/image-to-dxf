@@ -12,7 +12,8 @@ import { eq } from "drizzle-orm";
 import { getAppUserFromCookie } from "./appAuth";
 import { addTokens } from "./tokenService";
 import { createPayPalOrder, capturePayPalOrder, isPayPalConfigured, getPayPalMode, getPayPalClientId } from "./paypal";
-import { getPackageById, getPriceForCurrency } from "./products";
+import { getPackageById } from "./products";
+import { packagePrices as packagePricesTable } from "../drizzle/schema";
 import { sendPurchaseConfirmationEmail } from "./emailService";
 import { appUsers } from "../drizzle/schema";
 import { eq as eqDrizzle } from "drizzle-orm";
@@ -53,32 +54,56 @@ router.post("/api/paypal/create-order", async (req, res) => {
     if (!packageId) return res.status(400).json({ error: "packageId נדרש" });
     if (!termsAccepted) return res.status(400).json({ error: "יש לאשר את תנאי הרכישה" });
 
-    const pkg = getPackageById(packageId);
-    if (!pkg) return res.status(400).json({ error: "חבילה לא קיימת" });
+    // Load price from DB (admin-editable) first, fall back to products.ts
+    const db = await getDb();
+    if (!db) return res.status(500).json({ error: "שגיאת מסד נתונים" });
 
-    const price = getPriceForCurrency(pkg, currency);
+    const [dbPkg] = await db
+      .select()
+      .from(packagePricesTable)
+      .where(eq(packagePricesTable.packageId, packageId));
+
+    // Resolve price: prefer DB, fall back to products.ts
+    let resolvedAmount: string;
+    let resolvedCurrency: string;
+    let resolvedTokens: number;
+
+    if (dbPkg) {
+      resolvedTokens = dbPkg.tokenAmount;
+      const currencyMap: Record<string, string> = {
+        USD: dbPkg.priceUSD, EUR: dbPkg.priceEUR, ILS: dbPkg.priceILS,
+        GBP: dbPkg.priceGBP, AUD: dbPkg.priceAUD, CAD: dbPkg.priceCAD, JPY: dbPkg.priceJPY,
+      };
+      resolvedAmount = currencyMap[currency] ?? dbPkg.priceUSD;
+      resolvedCurrency = currencyMap[currency] ? currency : "USD";
+    } else {
+      const pkg = getPackageById(packageId);
+      if (!pkg) return res.status(400).json({ error: "חבילה לא קיימת" });
+      const price = pkg.prices[currency] ?? pkg.prices["DEFAULT"];
+      resolvedAmount = price.amount;
+      resolvedCurrency = price.currency;
+      resolvedTokens = pkg.tokens;
+    }
+
     const safeOrigin = origin ?? `${req.protocol}://${req.get("host")}`;
 
     const paypalOrder = await createPayPalOrder({
       packageId,
-      tokens: pkg.tokens,
-      amount: price.amount,
-      currency: price.currency,
+      tokens: resolvedTokens,
+      amount: resolvedAmount,
+      currency: resolvedCurrency,
       userId: user.id,
       returnUrl: `${safeOrigin}/buy/success`,
       cancelUrl: `${safeOrigin}/buy?cancelled=1`,
     });
 
-    const db = await getDb();
-    if (!db) return res.status(500).json({ error: "שגיאת מסד נתונים" });
-
     await db.insert(paypalOrders).values({
       appUserId: user.id,
       paypalOrderId: paypalOrder.id,
       packageId,
-      tokenAmount: pkg.tokens,
-      priceAmount: price.amount,
-      currency: price.currency,
+      tokenAmount: resolvedTokens,
+      priceAmount: resolvedAmount,
+      currency: resolvedCurrency,
       status: "pending",
       tokensCredited: 0,
       termsAccepted: 1,

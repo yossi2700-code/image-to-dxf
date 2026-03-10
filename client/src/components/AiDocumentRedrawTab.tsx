@@ -465,12 +465,13 @@ function ResultCard({ image, objectDescription, isRtl, onDownload, onZoom, onRef
 // ─── Main Component ───────────────────────────────────────────────────────────
 interface AiDocumentRedrawTabProps {
   onOpenAuth: () => void;
+  onInsufficientTokens?: () => void;
 }
 
 const LS_KEY_DOC = "doc_redraw_jobId";
 const LS_KEY_DOC_IMG = "doc_redraw_imagePreview";
 
-export function AiDocumentRedrawTab({ onOpenAuth }: AiDocumentRedrawTabProps) {
+export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocumentRedrawTabProps) {
   const { isRtl } = useLanguage();
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
 
