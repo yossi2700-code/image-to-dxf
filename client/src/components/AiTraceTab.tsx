@@ -169,7 +169,7 @@ function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) 
           <span
             className="text-xs font-semibold px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200"
           >{label}</span>
-          <span className="text-xs text-gray-400">{image.segmentCount.toLocaleString()} {isRtl ? "קווים" : "lines"}</span>
+          <span className="text-xs text-gray-400">{image.segmentCount.toLocaleString()} {t("linesUnit")}</span>
         </div>
 
         {/* AI Drawing preview */}
@@ -300,7 +300,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
           toast.success(successMsg);
           // Push notification when page is hidden (user left the browser)
           if (document.hidden && "Notification" in window && Notification.permission === "granted") {
-            new Notification(isRtl ? "✅ AI Outline הושלם!" : "✅ AI Outline Complete!", {
+            new Notification(t("aiOutlineComplete"), {
               body: successMsg,
               icon: "/favicon.ico",
             });
@@ -326,7 +326,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
           if (stepMsg) setCurrentStep(stepMsg);
         } else if (data.status === "error") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-          const msg = data.message || (isRtl ? "שגיאה בעיבוד" : "Processing error");
+          const msg = data.message || (t("processingError"));
           setErrorMsg(msg);
           setStatus("error");
           setCurrentStep("");
@@ -379,7 +379,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       const res = await fetch(`/api/ai-trace/cancel/${jobId}`, { method: "POST", credentials: "include" });
       const data = await res.json();
       if (data.cancelled) {
-        toast.success(isRtl ? "העיבוד בוטל והאסימונים הוחזרו" : "Processing cancelled — tokens refunded");
+        toast.success(t("processingCancelled"));
         refetchTokens();
       }
     } catch (_) { /* ignore */ }
@@ -389,8 +389,8 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
 
   const handleFile = useCallback((file: File) => {
     const allowed = ["image/png", "image/jpeg", "image/bmp", "image/webp", "image/gif"];
-    if (!allowed.includes(file.type)) { toast.error(isRtl ? "פורמט לא נתמך." : "Unsupported format."); return; }
-    if (file.size > 16 * 1024 * 1024) { toast.error(isRtl ? "הקובץ גדול מדי. מקסימום 16 MB." : "File too large. Max 16 MB."); return; }
+    if (!allowed.includes(file.type)) { toast.error(t("unsupportedFormat")); return; }
+    if (file.size > 16 * 1024 * 1024) { toast.error(t("fileTooLarge16")); return; }
     // Reset all state when a new file is chosen (handles "change image" flow)
     setImageFile(file);
     setResult(null);
@@ -472,7 +472,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       if (description.trim()) formData.append("description", description.trim());
       const effectiveFocusText = overrideFocusText !== undefined ? overrideFocusText : focusText;
       if (effectiveFocusText.trim()) formData.append("focusText", effectiveFocusText.trim());
-      formData.append("lang", isRtl ? "he" : "en");
+      formData.append("lang", language);
       formData.append("landscapeMode", fullImageMode ? "true" : "false");
       formData.append("variationIndex", "0"); // Always use simple/clean mode
       const lwVal = parseFloat(lineweightMm);
@@ -503,7 +503,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
         toast.success(isRtl ? `העיצוב מוכן! לחץ הורד DXF` : `Design ready! Click Download DXF`);
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : (isRtl ? "שגיאה בעיבוד" : "Processing error");
+      const msg = err instanceof Error ? err.message : (t("processingError"));
       setErrorMsg(msg); setStatus("error"); toast.error(msg);
     }
   };
@@ -522,7 +522,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
       formData.append("image", file);
       if (description.trim()) formData.append("description", description.trim());
       if (focusText.trim()) formData.append("focusText", focusText.trim());
-      formData.append("lang", isRtl ? "he" : "en");
+      formData.append("lang", language);
       formData.append("landscapeMode", fullImageMode ? "true" : "false");
       formData.append("variationIndex", "0"); // Always use simple/clean mode
       const lwVal = parseFloat(lineweightMm);
@@ -546,7 +546,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
         refetchTokens();
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : (isRtl ? "שגיאה בעיבוד" : "Processing error");
+      const msg = err instanceof Error ? err.message : (t("processingError"));
       setErrorMsg(msg); setStatus("error"); toast.error(msg);
     }
   };
@@ -583,7 +583,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             />
           </div>
           <p className="text-center text-sm text-white/50 pb-4 shrink-0">
-            {isRtl ? "לחץ בכל מקום לסגירה" : "Tap anywhere to close"}
+            {t("tapToClose")}
           </p>
         </div>
       )}
@@ -629,12 +629,12 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                 <img src={imagePreview} alt="Preview" className="w-16 h-16 object-contain rounded-lg shrink-0 border border-gray-200 bg-white" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate text-gray-700">{imageFile?.name}</p>
-                  <p className="text-xs mb-2 text-gray-400">{isRtl ? "תמונה נבחרה" : "Image selected"}</p>
+                  <p className="text-xs mb-2 text-gray-400">{t("imageSelectedLabel")}</p>
                   <label
                     htmlFor="ai-trace-file-input"
                     className="text-xs font-medium text-teal-600 hover:text-teal-800 cursor-pointer"
                   >
-                    {isRtl ? "החלף תמונה" : "Change image"}
+                    {t("imageSelected")}
                   </label>
                 </div>
               </div>
@@ -649,12 +649,12 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                     <ImageIcon className="w-5 h-5 text-teal-600" />
                   </div>
                   <div className="text-start">
-                    <p className="font-semibold text-sm text-teal-700">{isRtl ? "בחר תמונה" : "Choose Photo"}</p>
-                    <p className="text-xs text-gray-400">{isRtl ? "מהגלריה או הצלם חדש" : "From gallery or take new photo"}</p>
+                    <p className="font-semibold text-sm text-teal-700">{t("choosePhoto")}</p>
+                    <p className="text-xs text-gray-400">{t("fromGalleryOrNew")}</p>
                   </div>
                 </label>
                 <p className="hidden sm:block text-xs text-center text-gray-400">
-                  {isRtl ? "או גרור תמונה לכאן" : "or drag & drop an image here"}
+                  {t("orDragDrop")}
                 </p>
               </div>
             )}
@@ -688,7 +688,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   } : {color: '#6b7280', background: 'transparent'}}
                 >
                   <span className="text-base">📷</span>
-                  <span>{isRtl ? "אובייקט" : "Object"}</span>
+                  <span>{t("objectMode")}</span>
                 </button>
                 <button
                   type="button"
@@ -701,26 +701,26 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   } : {color: '#6b7280', background: 'transparent'}}
                 >
                   <span className="text-base">🖼️</span>
-                  <span>{isRtl ? "כל הפריטים" : "Full Image"}</span>
+                  <span>{t("fullImageMode")}</span>
                 </button>
               </div>
               <p className="text-xs mt-1 px-1 text-gray-400">
                 {fullImageMode
-                  ? (isRtl ? "מצייר את כל הפריטים שרואים בתמונה בדיוק כפי שהם" : "Draws all elements visible in the image exactly as they appear")
-                  : (isRtl ? "מתמקד באובייקט הראשי בתמונה" : "Focuses on the main object in the image")}
+                  ? (t("fullImageDesc"))
+                  : (t("objectDesc"))}
               </p>
             </div>
 
             {/* Focus text — what to draw */}
             <div className="mb-3">
               <label className="block text-xs font-semibold mb-1 text-gray-500">
-                {isRtl ? "מה לצייר? (ברירת מחדל: האובייקט הדומיננטי)" : "What to draw? (default: dominant object)"}
+                {t("whatToDraw")}
               </label>
               <input
                 type="text"
                 value={focusText}
                 onChange={(e) => setFocusText(e.target.value)}
-                placeholder={isRtl ? "לדוגמה: רק הכיסאות, רק העציץ, הכלב בלבד..." : "e.g. only the chairs, only the plant, just the dog..."}
+                placeholder={t("whatToDrawPlaceholder")}
                 className="w-full text-sm rounded-lg px-3 py-2 bg-gray-50 border border-gray-200 text-gray-800"
                 style={{ textAlign: isRtl ? "right" : "left" }}
                 dir={isRtl ? "rtl" : "ltr"}
@@ -792,7 +792,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                             className="absolute top-1 right-1 text-xs font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
                             style={{ background: 'linear-gradient(135deg, #f59e0b, #f97316)', color: 'white', fontSize: '8px', lineHeight: '1.4', boxShadow: '0 1px 4px rgba(245,158,11,0.4)' }}
                           >
-                            {isRtl ? "מומלץ" : "Recommended"}
+                            {t("recommended")}
                           </span>
                         )}
                       </div>
@@ -813,19 +813,19 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             {/* Lineweight option */}
             <div className="flex items-center gap-2 pt-1 pb-1 flex-wrap">
               <label className="text-sm font-medium shrink-0">
-                {isRtl ? "עובי קו ב-DXF (מ'מ):" : "DXF lineweight (mm):"}
+                {t("dxfLineweight")}
               </label>
               <input
                 type="number"
                 min="0"
                 max="2"
                 step="0.05"
-                placeholder={isRtl ? "ברירת מחדל" : "default"}
+                placeholder={t("defaultPlaceholder")}
                 value={lineweightMm}
                 onChange={e => setLineweightMm(e.target.value)}
                 className="w-24 border border-border rounded px-2 py-1 text-sm text-center"
               />
-              <span className="text-xs text-gray-400">{isRtl ? "(0 = הדק ביותר, ריק = ברירת מחדל)" : "(0 = hairline, empty = default)"}</span>
+              <span className="text-xs text-gray-400">{t("lineweightHint")}</span>
             </div>
             <div className="flex gap-2">
               <button
@@ -841,9 +841,9 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                 onClick={() => handleTrace()}
               >
                 {status === "loading" ? (
-                  <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />{isRtl ? "ה-AI מנתח ומצייר..." : "AI is analyzing and drawing..."}</>
+                  <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />{t("aiAnalyzing")}</>
                 ) : (
-                  <><Wand2 className="w-4 h-4" />{isRtl ? "צור AI Outline" : "Create AI Outline"}</>
+                  <><Wand2 className="w-4 h-4" />{t("createAiOutline")}</>
                 )}
               </button>
               {tryAgainUrl && status !== "loading" && (
@@ -851,10 +851,10 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   className="h-13 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 transition-all hover:opacity-90"
                   style={{ background: 'linear-gradient(135deg, #0f766e, #0d9488)', color: 'white', border: 'none', boxShadow: '0 4px 12px rgba(13,148,136,0.3)' }}
                   onClick={() => handleTraceFromUrl(tryAgainUrl)}
-                  title={isRtl ? "נסה שוב עם אותה תמונה" : "Try again with same image"}
+                  title={t("tryAgainSameImage")}
                 >
                   <Scan className="w-4 h-4" />
-                  {isRtl ? "נסה שוב" : "Try Again"}
+                  {t("tryAgain")}
                 </button>
               )}
             </div>
@@ -945,11 +945,11 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-teal-400 shrink-0" style={{animation: 'pulse 1.5s ease-in-out infinite'}} />
                   <p className="font-semibold text-sm text-gray-700 text-start">
-                    {currentStep || (isRtl ? "מנתח תמונה עם AI..." : "Analyzing image with AI...")}
+                    {currentStep || (t("analyzingWithAi"))}
                   </p>
                 </div>
               </div>
-              <p className="text-xs text-gray-400">{isRtl ? "זה עשוי לקחת 30-90 שניות" : "This may take 30-90 seconds"}</p>
+              <p className="text-xs text-gray-400">{t("processingTime")}</p>
               <div className="flex gap-1.5">
                 {[0, 1, 2].map((i) => (
                   <div key={i} className="w-1.5 h-1.5 rounded-full bg-teal-400" style={{animation: `bounce 1s infinite ${i * 0.15}s`}} />
@@ -957,7 +957,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
               </div>
               {jobId && (
                 <p className="text-xs text-gray-400">
-                  {isRtl ? "תוכל לעבור לטאב אחר — ה-AI ימשיך לעבד ברקע" : "You can switch tabs — AI keeps processing in background"}
+                  {t("backgroundProcessing")}
                 </p>
               )}
               {jobId && (
@@ -967,7 +967,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}
                 >
                   <X className="w-4 h-4" />
-                  {isRtl ? "בטל והחזר אסימונים" : "Cancel & Refund Tokens"}
+                  {t("cancelRefund")}
                 </button>
               )}
             </div>
@@ -981,10 +981,10 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             style={{ background: '#fff5f5', border: '1px solid #fecaca' }}
           >
               <AlertCircle className="w-10 h-10 text-red-400" />
-              <p className="font-semibold text-red-600">{isRtl ? "שגיאה בעיבוד" : "Processing Error"}</p>
+              <p className="font-semibold text-red-600">{t("processingError")}</p>
               <p className="text-sm text-gray-500">
                 {errorMsg && (errorMsg.toLowerCase().includes("timeout") || errorMsg.includes("זמן"))
-                  ? (isRtl ? "העיבוד לקח יותר מדי זמן. נסה שוב — בדרך כלל לוקח 2-4 דקות." : "Processing took too long. Please try again — usually takes 2-4 minutes.")
+                  ? (t("processingTimeout"))
                   : errorMsg
                 }
               </p>
@@ -992,14 +992,14 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                 <button
                   className="text-sm px-4 py-2 rounded-lg font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200"
                   onClick={reset}
-                >{isRtl ? "נסה שוב" : "Try Again"}</button>
+                >{t("tryAgain")}</button>
                 {errorMsg && (errorMsg.includes("אסימונים") || errorMsg.toLowerCase().includes("token")) && (
                   <button
                     className="text-sm px-4 py-2 rounded-lg font-semibold"
                     style={{background: '#0d9488', color: 'white', border: 'none'}}
                     onClick={() => window.location.href = "/tokens"}
                   >
-                    {isRtl ? "רכוש אסימונים" : "Buy Tokens"}
+                    {t("buyTokens")}
                   </button>
                 )}
               </div>
@@ -1017,7 +1017,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-teal-600" />
                     <span className="font-semibold text-sm text-gray-700">
-                      {isRtl ? "העיצוב מוכן — בחר סגנון שיפור" : "Design ready — choose an improvement style"}
+                      {t("designReadyChooseStyle")}
                     </span>
                   </div>
                   {/* Change image button — uses label for Safari iOS compatibility */}
@@ -1029,12 +1029,12 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                     style={{ background: '#0d9488', color: 'white', border: 'none' }}
                   >
                     <ImageIcon className="w-3.5 h-3.5" />
-                    {isRtl ? "החלף תמונה" : "Change Image"}
+                    {t("imageSelected")}
                   </label>
                 </div>
                 {result.objectDescription && (
                   <p className="text-xs mt-1 line-clamp-2 text-gray-500">
-                    <span className="font-medium text-teal-700">{isRtl ? "תיאור AI: " : "AI description: "}</span>
+                    <span className="font-medium text-teal-700">{t("aiDescriptionLabel")}</span>
                     {result.objectDescription}
                   </p>
                 )}
@@ -1049,12 +1049,12 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   <div className="flex items-center gap-2 mb-3">
                     <Wand2 className="w-4 h-4 text-teal-600" />
                     <span className="text-sm font-semibold text-gray-700">
-                      {isRtl ? "שפר את העיצוב" : "Improve the design"}
+                      {t("improveDesign")}
                     </span>
                   </div>
 
                   <p className="text-xs font-medium mb-1.5 text-teal-700">
-                    {isRtl ? "שנה סגנון:" : "Change style:"}
+                    {t("changeStyle")}
                   </p>
                   <div className="flex flex-wrap gap-2 mb-3">
                     {(isRtl ? VARIATION_LABELS : VARIATION_LABELS_EN).map((label, idx) => (
@@ -1069,7 +1069,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   </div>
 
                   <p className="text-xs font-medium mb-1.5 text-teal-700">
-                    {isRtl ? "הצעות ה-AI:" : "AI suggestions:"}
+                    {t("aiSuggestions")}
                   </p>
                   <div className="flex flex-wrap gap-2 mb-4">
                     {result.suggestions.map((suggestion, idx) => (
@@ -1084,7 +1084,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                   </div>
 
                   <p className="text-xs font-medium mb-1.5 text-teal-700">
-                    {isRtl ? "או הקלד בקשה שלך:" : "Or type your own request:"}
+                    {t("orTypeRequest")}
                   </p>
                   <div className="flex gap-2">
                     <input
@@ -1099,7 +1099,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                           handleTrace(txt);
                         }
                       }}
-                      placeholder={isRtl ? "לדוגמה: הוסף פרטים, שנה סגנון..." : "e.g. add more detail, cartoon style..."}
+                      placeholder={t("addDetailPlaceholder")}
                       className="flex-1 text-sm rounded-lg px-3 py-2 bg-gray-50 border border-gray-200 text-gray-800"
                       dir={isRtl ? "rtl" : "ltr"}
                     />
@@ -1121,7 +1121,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
                         cursor: customImprovement.trim() ? 'pointer' : 'not-allowed',
                       }}
                     >
-                      {isRtl ? "החל" : "Go"}
+                      {t("apply")}
                     </button>
                   </div>
               </div>
@@ -1158,7 +1158,7 @@ export function AiTraceTab({ onOpenAuth }: AiTraceTabProps) {
             <ul className="space-y-1.5 text-sm text-gray-600">
               <li className="flex gap-2"><span className="shrink-0 text-teal-500">•</span><span>{t("aiTraceTip1")}</span></li>
               <li className="flex gap-2"><span className="shrink-0 text-teal-500">•</span><span>{t("aiTraceTip2")}</span></li>
-              <li className="flex gap-2"><span className="shrink-0 text-teal-500">•</span><span>{isRtl ? "ה-AI מנתח את התמונה ומצייר מחדש — בחר סגנון שיפור" : "AI analyzes your image and redraws it — choose an improvement style"}</span></li>
+              <li className="flex gap-2"><span className="shrink-0 text-teal-500">•</span><span>{t("aiAnalyzesAndRedraws")}</span></li>
             </ul>
         </div>
       </div>

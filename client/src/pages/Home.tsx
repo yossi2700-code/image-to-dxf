@@ -561,7 +561,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
       return;
     }
     if (file.size > 20 * 1024 * 1024) {
-      toast.error(isRtl ? "הקובץ גדול מדי. מקסימום 20 MB." : "File too large. Maximum 20 MB.");
+      toast.error(t("fileTooLarge"));
       return;
     }
     setImageFile(file);
@@ -697,7 +697,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                 <div className="w-full flex flex-col items-center gap-2">
                   <img src={imagePreview} alt="preview" className="max-h-44 max-w-full object-contain rounded-lg shadow" />
                   <p className="text-sm text-muted-foreground">{imageFile?.name}</p>
-                  <p className="text-xs text-primary font-medium">{isRtl ? "לחץ להחלפת התמונה" : "Tap to change image"}</p>
+                  <p className="text-xs text-primary font-medium">{t("tapToChangeImage")}</p>
                 </div>
               </div>
             ) : (
@@ -719,8 +719,8 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                     <ImageIcon className="w-7 h-7 text-primary" />
                   </div>
                   <div className="text-center">
-                    <p className="font-semibold text-base">{isRtl ? "בחר תמונה" : "Choose Image"}</p>
-                    <p className="text-sm text-muted-foreground mt-1">{isRtl ? "מהגלריה, המצלמה או גרור לכאן" : "From gallery, camera, or drag & drop"}</p>
+                    <p className="font-semibold text-base">{t("chooseImage")}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{t("chooseImageSub")}</p>
                     <p className="text-xs text-muted-foreground/70 mt-1">{t("supportedFormats")}</p>
                   </div>
                 </button>
@@ -738,13 +738,13 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between items-center mb-1.5">
-                  <label className="text-sm font-medium">{isRtl ? "סף זיהוי" : "Detection Threshold"}</label>
+                  <label className="text-sm font-medium">{t("detectionThreshold")}</label>
                   <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded text-primary font-semibold">{threshold}</span>
                 </div>
                 <Slider min={10} max={245} step={5} value={[threshold]} onValueChange={([v]) => setThreshold(v)} />
                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>{isRtl ? "כהה יותר" : "Darker"}</span>
-                  <span>{isRtl ? "בהיר יותר" : "Lighter"}</span>
+                  <span>{t("darker")}</span>
+                  <span>{t("lighter")}</span>
                 </div>
               </div>
               <div>
@@ -754,31 +754,31 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                 </div>
                 <Slider min={1} max={10} step={1} value={[simplify]} onValueChange={([v]) => setSimplify(v)} />
                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>{isRtl ? "פרטים מרביים" : "Max detail"}</span>
-                  <span>{isRtl ? "קווים פשוטים" : "Simple lines"}</span>
+                  <span>{t("maxDetail")}</span>
+                  <span>{t("simpleLines")}</span>
                 </div>
               </div>
               {/* Lineweight option */}
               <div className="flex items-center gap-2 pt-1 flex-wrap">
                 <label className="text-sm font-medium shrink-0">
-                  {isRtl ? "עובי קו ב-DXF (מ'מ):" : "DXF lineweight (mm):"}
+                  {t("dxfLineweight")}
                 </label>
                 <input
                   type="number"
                   min="0"
                   max="2"
                   step="0.05"
-                  placeholder={isRtl ? "ברירת מחדל" : "default"}
+                  placeholder={t("defaultPlaceholder")}
                   value={lineweightMm}
                   onChange={e => setLineweightMm(e.target.value)}
                   className="w-24 border border-border rounded px-2 py-1 text-sm text-center"
                 />
-                <span className="text-xs text-muted-foreground">{isRtl ? "(0 = הדק ביותר, ריק = ברירת מחדל)" : "(0 = hairline, empty = default)"}</span>
+                <span className="text-xs text-muted-foreground">{t("lineweightHint")}</span>
               </div>
               {/* Min gap option */}
               <div className="flex items-center gap-2 pt-1 flex-wrap">
                 <label className="text-sm font-medium shrink-0">
-                  {isRtl ? "מרווח מינימלי בין קווים (מ'מ):" : "Min gap between lines (mm):"}
+                  {t("minLineGap")}
                 </label>
                 <input
                   type="number"
@@ -790,12 +790,12 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                   onChange={e => setMinGapMm(e.target.value)}
                   className="w-24 border border-border rounded px-2 py-1 text-sm text-center"
                 />
-                <span className="text-xs text-muted-foreground">{isRtl ? "(מומלץ 1.5 לקרסום V-bit 0.8 זווית 45°)" : "(recommended 1.5 for V-bit 0.8 45° engraving)"}</span>
+                <span className="text-xs text-muted-foreground">{t("minLineGapHint")}</span>
               </div>
               {/* Output width option */}
               <div className="flex items-center gap-2 pt-1 flex-wrap">
                 <label className="text-sm font-medium shrink-0">
-                  {isRtl ? "רוחב פלט (מ'מ):" : "Output width (mm):"}
+                  {t("outputWidth")}
                 </label>
                 <input
                   type="number"
@@ -807,7 +807,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                   onChange={e => setOutputWidthMm(e.target.value)}
                   className="w-24 border border-border rounded px-2 py-1 text-sm text-center"
                 />
-                <span className="text-xs text-muted-foreground">{isRtl ? "(סקל אוטומטי לפי הרוחב הנבחר)" : "(auto-scales to fit width)"}</span>
+                <span className="text-xs text-muted-foreground">{t("outputWidthHint")}</span>
               </div>
               {(threshold !== 128 || simplify !== 2) && (
                 <button
@@ -815,7 +815,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                   onClick={() => { setThreshold(128); setSimplify(2); }}
                   className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
                 >
-                  ↺ {isRtl ? "אפס לברירת מחדל" : "Reset to default"}
+                  ↺ {t("resetToDefault")}
                 </button>
               )}
             </div>
@@ -835,7 +835,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
           <CardContent className="p-5">
             <div className="flex items-center gap-2 mb-4">
               <Layers className="w-4 h-4 text-primary" />
-              <h2 className="font-semibold text-sm">{isRtl ? "תוצאה" : "Result"}</h2>
+              <h2 className="font-semibold text-sm">{t("result")}</h2>
             </div>
             {status === "idle" && (
               <div className="flex flex-col items-center gap-3 py-10 text-center">
@@ -860,7 +860,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                   <div className="mb-3">
                     <SvgZoomViewer
                       svgContent={result.svgPreview}
-                      label={isRtl ? "תצוגה מקדימה של הוקטור" : "Vector Preview"}
+                      label={t("vectorLinesPreview")}
                       maxHeight={350}
                     />
                   </div>
@@ -897,7 +897,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                   />
                 </div>
                 <Button variant="outline" size="sm" className="w-full" onClick={reset}>
-                  {isRtl ? "המר תמונה חדשה" : "Convert New Image"}
+                  {t("convertNewImage")}
                 </Button>
               </div>
             )}
@@ -906,7 +906,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                 <AlertCircle className="w-10 h-10 text-red-400" />
                 <p className="font-semibold text-red-600">{t("processingError")}</p>
                 <p className="text-sm text-muted-foreground">{errorMsg}</p>
-                <Button variant="outline" size="sm" onClick={reset}>{isRtl ? "נסה שוב" : "Try Again"}</Button>
+                <Button variant="outline" size="sm" onClick={reset}>{t("tryAgain")}</Button>
               </div>
             )}
           </CardContent>
@@ -1049,7 +1049,7 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
           toast.success(successMsg);
           // Push notification when page is hidden
           if (document.hidden && "Notification" in window && Notification.permission === "granted") {
-            new Notification(isRtl ? "✅ AI יצירה הושלמה!" : "✅ AI Creation Complete!", {
+            new Notification(t("aiCreationComplete"), {
               body: successMsg,
               icon: "/favicon.ico",
             });
@@ -1090,7 +1090,7 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
       const res = await fetch(`/api/generate-images/cancel/${jobId}`, { method: "POST", credentials: "include" });
       const data = await res.json();
       if (data.cancelled) {
-        toast.success(isRtl ? "העיבוד בוטל והאסימונים הוחזרו" : "Processing cancelled — tokens refunded");
+        toast.success(t("processingCancelled"));
         refetchTokens();
       }
     } catch (_) { /* ignore */ }
@@ -1120,7 +1120,7 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
           setSelectedIdx(0);
           setStatus("success");
           if (item.description) setPrompt(item.description);
-          toast.success(isRtl ? "עיצוב נטען מחדש לעריכה" : "Design loaded for editing");
+          toast.success(t("designLoadedForEdit"));
         }
       } catch { /* ignore */ }
     }
@@ -1256,7 +1256,7 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
                 } : {color: '#6b7280', background: 'transparent'}}
               >
                 <span className="text-base">📷</span>
-                <span>{isRtl ? "אובייקט" : "Object"}</span>
+                <span>{t("objectMode")}</span>
               </button>
               <button
                 type="button"
@@ -1269,13 +1269,13 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
                 } : {color: '#6b7280', background: 'transparent'}}
               >
                 <span className="text-base">🌄</span>
-                <span>{isRtl ? "נוף" : "Landscape"}</span>
+                <span>{t("landscapeModeLabel")}</span>
               </button>
             </div>
             <p className="text-xs mt-1 px-1 text-gray-400">
               {landscapeMode
-                ? (isRtl ? "מצייר את כל הסצנה: שמיים, רקע, עצים, בניינים, קדמת תמונה" : "Draws the entire scene: sky, background, trees, buildings, foreground")
-                : (isRtl ? "מתמקד באובייקט הראשי בתמונה" : "Focuses on the main object in the image")}
+                ? (t("landscapeDesc"))
+                : (t("objectDesc"))}
             </p>
           </div>
           {/* Min gap between lines — CNC V-bit setting */}
@@ -1293,7 +1293,7 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
               className="w-20 border border-gray-200 rounded-lg px-2 py-1 text-sm text-center bg-gray-50"
               disabled={status === "loading"}
             />
-            <span className="text-xs text-gray-400">{isRtl ? "(ברירת מחדל 1.5 — מומלץ לקרסום V-bit)" : "(default 1.5 — recommended for V-bit)"}</span>
+            <span className="text-xs text-gray-400">{t("lineGapHint")}</span>
           </div>
           <p className="text-xs mt-2 text-gray-400">{t("aiTabSubtitle")}</p>
           <button
@@ -1334,10 +1334,10 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
             {/* Current step label */}
             <div>
               <p className="font-semibold text-base text-gray-700">
-                {progressSteps[progressStep]?.label || (isRtl ? "מעבד..." : "Processing...")}
+                {progressSteps[progressStep]?.label || (t("processingLabel"))}
               </p>
               <p className="text-xs mt-1 text-gray-400">
-                {isRtl ? "זה עשוי לקחת 30-90 שניות" : "This may take 30-90 seconds"}
+                {t("processingTime")}
               </p>
             </div>
 
@@ -1378,7 +1378,7 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
             {/* Background hint + cancel */}
             {jobId && (
               <p className="text-xs text-gray-400">
-                {isRtl ? "תוכל לעבור לטאב אחר — ה-AI ימשיך לעבד ברקע" : "You can switch tabs — AI keeps processing in background"}
+                {t("backgroundProcessing")}
               </p>
             )}
             {jobId && (
@@ -1388,7 +1388,7 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
                 style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}
               >
                 <X className="w-4 h-4" />
-                {isRtl ? "בטל והחזר אסימונים" : "Cancel & Refund Tokens"}
+                {t("cancelRefund")}
               </button>
             )}
           </div>
@@ -1408,14 +1408,14 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
               <button
                 className="text-sm px-4 py-2 rounded-lg font-medium transition-all bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200"
                 onClick={() => setStatus("idle")}
-              >{isRtl ? "נסה שוב" : "Try Again"}</button>
+              >{t("tryAgain")}</button>
               {errorMsg && (errorMsg.includes("אסימונים") || errorMsg.toLowerCase().includes("token")) && (
                 <button
                   className="text-sm px-4 py-2 rounded-lg font-semibold transition-all"
                   style={{background: '#4f46e5', color: 'white', border: 'none'}}
                   onClick={() => window.location.href = "/tokens"}
                 >
-                  {isRtl ? "רכוש אסימונים" : "Buy Tokens"}
+                  {t("buyTokens")}
                 </button>
               )}
             </div>
@@ -1502,7 +1502,7 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
                   <div className="mb-3">
                     <SvgZoomViewer
                       svgContent={selected.svgPreview}
-                      label={isRtl ? "תצוגת קווי וקטור (DXF)" : "Vector Lines Preview (DXF)"}
+                      label={t("vectorLinesPreview")}
                       maxHeight={380}
                     />
                   </div>
@@ -1566,7 +1566,7 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
                     onClick={() => { setImages([]); setSelectedIdx(null); setStatus("idle"); }}
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
-                    {isRtl ? "עיצוב חדש" : "New Design"}
+                    {t("newDesign")}
                   </button>
                 </div>
                 {showModify && (
@@ -1575,7 +1575,7 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
                     style={{background: '#f8f9ff', border: '1px solid #e0e7ff'}}
                   >
                     <p className="text-xs font-medium mb-2 text-gray-600">
-                      {isRtl ? "תאר את השינויים הרצויים:" : "Describe the desired changes:"}
+                      {t("describeChanges")}
                     </p>
                     <Textarea
                       placeholder={t("changesPlaceholder")}
@@ -1597,7 +1597,7 @@ function AiGeneratorTab({ onOpenAuth }: { onOpenAuth?: () => void }) {
                       disabled={!modifications.trim()}
                     >
                       <Wand2 className="w-3.5 h-3.5" />
-                      {isRtl ? "צור 3 עיצובים מעודכנים" : "Create 3 Updated Designs"}
+                      {t("create3Updated")}
                     </button>
                   </div>
                 )}
@@ -1957,7 +1957,7 @@ export default function Home() {
               }}
             >
               <Sparkles className="w-4 h-4 shrink-0" />
-              <span className="truncate text-[11px]">{isRtl ? "AI יצירה" : "AI Create"}</span>
+              <span className="truncate text-[11px]">{t("aiCreate")}</span>
               {activeJobs.generate && (
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
@@ -1987,9 +1987,9 @@ export default function Home() {
               className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-300 opacity-50 cursor-not-allowed relative px-1"
             >
               <FileEdit className="w-4 h-4 shrink-0" />
-              <span className="truncate text-[11px]">{isRtl ? "AI סקיצה" : "AI Sketch"}</span>
+              <span className="truncate text-[11px]">{t("aiSketch")}</span>
               <span className="absolute -top-1.5 -right-1 text-[9px] font-bold bg-orange-400 text-white px-1 rounded-full leading-4">
-                {isRtl ? "תחזוק" : "maint"}
+                {t("maintenance")}
               </span>
             </TabsTrigger>
             <TabsTrigger
@@ -2000,7 +2000,7 @@ export default function Home() {
               }}
             >
               <UserCircle className="w-4 h-4 shrink-0" />
-              <span className="truncate text-[11px]">{isRtl ? "פורטרט" : "Portrait"}</span>
+              <span className="truncate text-[11px]">{t("portrait")}</span>
               {activeJobs.face && (
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
@@ -2021,7 +2021,7 @@ export default function Home() {
                   <Sparkles className="w-3.5 h-3.5 text-white" />
                 </div>
                 <span className="text-sm font-bold text-gray-800">
-                  {isRtl ? "דוגמאות — תאר עיצוב בטקסט, ה-AI יצייר קווים לחריטה" : "Examples — describe a design in text, AI draws engraving lines"}
+                  {t("aiCreateExamples")}
                 </span>
               </div>
               <DemoSlider
@@ -2047,7 +2047,7 @@ export default function Home() {
                   <Scan className="w-3.5 h-3.5 text-white" />
                 </div>
                 <span className="text-sm font-bold text-gray-800">
-                  {isRtl ? "דוגמאות — העלה תמונה, ה-AI יהפוך אותה לקווים נקיים" : "Examples — upload a photo, AI converts it to clean vector lines"}
+                  {t("aiOutlineExamples")}
                 </span>
               </div>
               <DemoSlider
@@ -2068,7 +2068,7 @@ export default function Home() {
               <span className="text-2xl mt-0.5">🛠️</span>
               <div>
                 <p className="font-bold text-orange-700 text-sm mb-1">
-                  {isRtl ? "מצב תחזוקה זמני" : "Temporary Maintenance"}
+                  {t("temporaryMaintenance")}
                 </p>
                 <p className="text-orange-600 text-xs leading-relaxed">
                   {isRtl
@@ -2087,12 +2087,12 @@ export default function Home() {
                   <FileEdit className="w-3 h-3 text-amber-600" />
                 </div>
                 <span className="text-xs font-semibold text-amber-700">
-                  {isRtl ? "דוגמאות — צלם מסמך/ציור, ה-AI יחלץ רק את האיורים" : "Examples — photo a document/drawing, AI extracts only the illustrations"}
+                  {t("aiExtractExamples")}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <p className="text-xs text-gray-400 mb-1 text-center">{isRtl ? "מסמך כללי" : "General document"}</p>
+                  <p className="text-xs text-gray-400 mb-1 text-center">{t("generalDocument")}</p>
                   <img
                     src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/tab-ai-doc-demo-v2-ERRyD4Xbd5DBFP9YDBozrf.webp"
                     alt="AI Document Redraw Example"
@@ -2100,7 +2100,7 @@ export default function Home() {
                   />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 mb-1 text-center">{isRtl ? "פרח ממסמך" : "Flower from document"}</p>
+                  <p className="text-xs text-gray-400 mb-1 text-center">{t("flowerFromDoc")}</p>
                   <img
                     src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/doc-flower-demo-EiYtgsExnwrmQ7LDpoGJ8F.webp"
                     alt="Flower extracted from document"
@@ -2123,7 +2123,7 @@ export default function Home() {
                   <UserCircle className="w-3.5 h-3.5 text-white" />
                 </div>
                 <span className="text-sm font-bold text-gray-800">
-                  {isRtl ? "פורטרט — העלה תמונה עם פנים, ה-AI יצייר 3 פורטרטים בסגנונות שונים" : "Portrait — upload a photo with faces, AI draws 3 portrait variations"}
+                  {t("portraitExamples")}
                 </span>
               </div>
               <DemoSlider
@@ -2191,14 +2191,14 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className="text-base font-black tracking-tight" style={{ color: '#6366f1' }}>Ai</span><span className="text-base font-black tracking-tight text-gray-800">DXF</span>
-              <span className="text-xs text-gray-400 hidden sm:block">— {isRtl ? "ממיר תמונות לוקטור בעזרת AI" : "AI-Powered Vector Converter"}</span>
+              <span className="text-xs text-gray-400 hidden sm:block">— {t("aiPoweredConverter")}</span>
             </div>
             <div className="flex items-center gap-4 text-xs text-gray-400">
               <a href="/terms" className="hover:text-gray-600 transition-colors">
-                {isRtl ? "תנאי שימוש" : "Terms"}
+                {t("terms")}
               </a>
               <a href="/privacy" className="hover:text-gray-600 transition-colors">
-                {isRtl ? "פרטיות" : "Privacy"}
+                {t("privacy")}
               </a>
               <span>© 2026 AiDXF</span>
             </div>
