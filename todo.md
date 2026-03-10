@@ -1333,3 +1333,10 @@
 - [ ] המרת מטבע אוטומטית ב-Admin panel (שינוי ILS → מחשב שאר המטבעות)
 - [ ] toggle להפעלה/כיבוי מטבעות בפאנל הניהול
 - [ ] עמוד /buy מציג רק מטבעות פעילים
+
+## חיבור PayPal Live - מרץ 2026
+
+- [x] הגדרת PAYPAL_CLIENT_ID ו-PAYPAL_CLIENT_SECRET כ-secrets
+- [x] עדכון paypal.ts ל-Live mode (api.paypal.com במקום api.sandbox.paypal.com)
+- [x] בדיקת /api/paypal/status
+- [x] vitest לאימות החיבור
