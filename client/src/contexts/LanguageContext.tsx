@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { Language, translations, TranslationKey } from "@/lib/translations";
+import { Language, LANGUAGES, translations, TranslationKey, detectLanguage } from "@/lib/translations";
 
 interface LanguageContextType {
   language: Language;
@@ -12,10 +12,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem("app-language");
-    return (saved === "en" || saved === "he") ? saved : "he";
-  });
+  const [language, setLanguageState] = useState<Language>(() => detectLanguage());
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
@@ -23,11 +20,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   const t = (key: TranslationKey): string => {
-    return translations[language][key] as string;
+    const langTranslations = translations[language] as Record<string, string>;
+    const fallback = translations["en"] as Record<string, string>;
+    return langTranslations[key] ?? fallback[key] ?? key;
   };
 
-  const dir = language === "he" ? "rtl" : "ltr";
-  const isRtl = language === "he";
+  const langConfig = LANGUAGES.find((l) => l.code === language);
+  const dir = langConfig?.dir ?? "ltr";
+  const isRtl = dir === "rtl";
 
   useEffect(() => {
     document.documentElement.dir = dir;

@@ -124,6 +124,7 @@ export function AiRefinePanel({ imageUrl, originalPrompt, onRefined }: AiRefineP
     >
       {/* Toggle header */}
       <button
+        type="button"
         onClick={() => setIsOpen((v) => !v)}
         className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-primary hover:bg-accent/50 transition-colors"
       >
@@ -151,6 +152,7 @@ export function AiRefinePanel({ imageUrl, originalPrompt, onRefined }: AiRefineP
             ) : (
               displaySuggestions.map((example) => (
                 <button
+                  type="button"
                   key={example}
                   onClick={() => setInstruction(example)}
                   className="text-xs px-2.5 py-1 rounded-full bg-background border border-border hover:border-primary/40 hover:bg-accent/50 transition-colors text-muted-foreground hover:text-foreground"
