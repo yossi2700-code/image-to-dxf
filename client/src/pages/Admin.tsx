@@ -248,10 +248,16 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     { enabled: activeSection === "consents" }
   );
 
+  const [paypalStatusFilter, setPaypalStatusFilter] = useState<"all" | "completed" | "pending" | "cancelled">("completed");
   const { data: paypalOrdersData, isLoading: paypalOrdersLoading } = trpc.admin.paypalOrders.useQuery(
     undefined,
     { enabled: activeSection === "payments" }
   );
+  const filteredPaypalOrders = paypalOrdersData
+    ? paypalStatusFilter === "all"
+      ? paypalOrdersData
+      : paypalOrdersData.filter(o => o.status === paypalStatusFilter)
+    : [];
   const { data: packagePricesData, isLoading: packagePricesLoading, refetch: refetchPrices } = trpc.admin.getPackagePrices.useQuery(
     undefined,
     { enabled: activeSection === "payments" }
@@ -1071,18 +1077,44 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-blue-500" />
-                  תשלומי PayPal
-                </CardTitle>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-blue-500" />
+                    תשלומי PayPal
+                  </CardTitle>
+                  <div className="flex gap-1 text-xs">
+                    {(["completed", "pending", "all"] as const).map(f => (
+                      <button
+                        key={f}
+                        onClick={() => setPaypalStatusFilter(f)}
+                        className={`px-2 py-1 rounded-full border transition-colors ${
+                          paypalStatusFilter === f
+                            ? f === "completed" ? "bg-green-100 text-green-700 border-green-300"
+                              : f === "pending" ? "bg-yellow-100 text-yellow-700 border-yellow-300"
+                              : "bg-slate-200 text-slate-700 border-slate-300"
+                            : "bg-white text-muted-foreground border-border hover:bg-slate-50"
+                        }`}
+                      >
+                        {f === "completed" ? "✓ הושלמו" : f === "pending" ? "⏳ ממתינות" : "הכל"}
+                        {paypalOrdersData && (
+                          <span className="mr-1 opacity-60">
+                            ({f === "all" ? paypalOrdersData.length : paypalOrdersData.filter(o => o.status === f).length})
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 {paypalOrdersLoading ? (
                   <div className="text-center py-8 text-muted-foreground text-sm">טוען...</div>
-                ) : !paypalOrdersData || paypalOrdersData.length === 0 ? (
+                ) : filteredPaypalOrders.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground text-sm">
                     <CreditCard className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                    אין הזמנות PayPal עדיין
+                    {paypalStatusFilter === "completed" ? "אין תשלומים שהושלמו עדיין" :
+                     paypalStatusFilter === "pending" ? "אין הזמנות ממתינות" :
+                     "אין הזמנות PayPal עדיין"}
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -1100,7 +1132,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                         </tr>
                       </thead>
                       <tbody>
-                        {paypalOrdersData.map((order) => (
+                        {filteredPaypalOrders.map((order) => (
                           <tr key={order.id} className="border-b hover:bg-slate-50 transition-colors">
                             <td className="py-2 pr-2 text-xs text-muted-foreground">
                               {new Date(order.createdAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}
@@ -1111,7 +1143,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             <td className="py-2 pr-2 text-xs">{order.currency}</td>
                             <td className="py-2 pr-2">
                               <span className="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 text-xs font-medium">
-                                +{order.tokensCredited}
+                                +{order.tokenAmount}
                               </span>
                             </td>
                             <td className="py-2 pr-2">
@@ -1120,7 +1152,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                 order.status === "pending" ? "bg-yellow-100 text-yellow-700" :
                                 "bg-red-100 text-red-700"
                               }`}>
-                                {order.status}
+                                {order.status === "completed" ? "הושלם" : order.status === "pending" ? "ממתין" : order.status}
                               </span>
                             </td>
                             <td className="py-2 pr-2 text-xs text-muted-foreground font-mono">
@@ -1131,8 +1163,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       </tbody>
                     </table>
                     <p className="text-xs text-muted-foreground mt-3 text-left">
-                      סה"כ {paypalOrdersData.length} הזמנות |
-                      הכנסה: {paypalOrdersData.filter(o => o.status === "completed").reduce((sum, o) => sum + parseFloat(String(o.priceAmount || 0)), 0).toFixed(2)} USD
+                      מציג {filteredPaypalOrders.length} הזמנות |
+                      הכנסה מהושלמות: {(paypalOrdersData ?? []).filter(o => o.status === "completed").reduce((sum, o) => sum + parseFloat(String(o.priceAmount || 0)), 0).toFixed(2)} USD
                     </p>
                   </div>
                 )}
