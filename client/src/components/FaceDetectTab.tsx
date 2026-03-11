@@ -48,7 +48,7 @@ interface FaceResult {
 }
 
 type Status = "idle" | "loading" | "success" | "error";
-type PortraitStyle = "clean" | "artistic" | "detailed" | "stencil";
+type PortraitStyle = "simple" | "detailed";
 
 // ─── SVG Viewer ───────────────────────────────────────────────────────────────
 function SvgViewer({ svgContent }: { svgContent: string }) {
@@ -141,11 +141,9 @@ function PortraitCard({ image, isRtl, style, onDownload, onZoom }: PortraitCardP
   const [showVector, setShowVector] = useState(false);
 
   const styleLabel = {
-    clean: isRtl ? "נקי" : "Clean",
-    artistic: isRtl ? "אמנותי" : "Artistic",
+    simple: isRtl ? "פשוט" : "Simple",
     detailed: isRtl ? "מפורט" : "Detailed",
-    stencil: isRtl ? "סטנסיל" : "Stencil",
-  }[style];
+  }[style] ?? (isRtl ? "פשוט" : "Simple");
 
   return (
     <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #e2e8f0', background: '#ffffff' }}>
@@ -195,10 +193,8 @@ interface FaceDetectTabProps {
 }
 
 const STYLE_OPTIONS: { value: PortraitStyle; labelHe: string; labelEn: string; descHe: string; descEn: string }[] = [
-  { value: "clean",    labelHe: "נקי",    labelEn: "Clean",    descHe: "קווים מינימליים, מקצועי", descEn: "Minimal lines, professional" },
-  { value: "artistic", labelHe: "אמנותי", labelEn: "Artistic", descHe: "קווים זורמים, אמנותי",     descEn: "Flowing lines, expressive" },
-  { value: "detailed", labelHe: "מפורט",  labelEn: "Detailed", descHe: "פרטים רבים, כמו חריטה",   descEn: "Rich detail, engraving-like" },
-  { value: "stencil",  labelHe: "סטנסיל", labelEn: "Stencil",  descHe: "קווים עבים, CNC עמוק",    descEn: "Bold lines, deep CNC" },
+  { value: "simple",   labelHe: "פשוט",   labelEn: "Simple",   descHe: "קו נקי, דומה מקסימלית לפנים", descEn: "Clean line, maximally faithful to face" },
+  { value: "detailed", labelHe: "מפורט",  labelEn: "Detailed", descHe: "פרטים עשירים, דומה לפנים",   descEn: "Rich detail, faithful to face" },
 ];
 
 export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTabProps) {
@@ -221,7 +217,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   const [lineweightMm, setLineweightMm] = useState<string>("");
   const [minGapMm, setMinGapMm] = useState<string>("1.5");
-  const [portraitStyle, setPortraitStyle] = useState<PortraitStyle>("clean");
+  const [portraitStyle, setPortraitStyle] = useState<PortraitStyle>("simple");
   const [dragOver, setDragOver] = useState(false);
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("face_detect_jobId"));
   const [currentStep, setCurrentStep] = useState<string>("");
@@ -731,14 +727,10 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
                     onClick={() => {
                       // Map suggestion to style change
                       const lower = s.toLowerCase();
-                      if (lower.includes("עבה") || lower.includes("thick") || lower.includes("bold") || lower.includes("סטנסיל")) {
-                        setPortraitStyle("stencil");
-                      } else if (lower.includes("פרט") || lower.includes("detail")) {
+                      if (lower.includes("פרט") || lower.includes("detail") || lower.includes("rich") || lower.includes("עשיר")) {
                         setPortraitStyle("detailed");
-                      } else if (lower.includes("אמנות") || lower.includes("artistic") || lower.includes("expressive")) {
-                        setPortraitStyle("artistic");
-                      } else if (lower.includes("נקי") || lower.includes("clean") || lower.includes("simple")) {
-                        setPortraitStyle("clean");
+                      } else {
+                        setPortraitStyle("simple");
                       }
                       setResult(null);
                       setStatus("idle");

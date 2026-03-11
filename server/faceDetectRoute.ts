@@ -32,88 +32,51 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
 // ─── Portrait styles ──────────────────────────────────────────────────────────
-export type PortraitStyle = "clean" | "artistic" | "detailed" | "stencil";
+export type PortraitStyle = "simple" | "detailed";
 
 const PORTRAIT_STYLE_PROMPTS: Record<PortraitStyle, string> = {
-  clean:
-    "Professional black and white portrait line art. " +
+  simple:
+    "Convert this photo into a clean black and white portrait line art drawing. " +
+    "CRITICAL REQUIREMENT: The line art face must be MAXIMALLY FAITHFUL to the person in the photo — " +
+    "preserve the exact face shape, eye shape and spacing, nose shape, lip shape, jawline, and hair silhouette. " +
     "Pure white background (#FFFFFF). " +
-    "Bold thick black outlines only — no fill, no shading, no gradients, no grey tones. " +
-    "High contrast: only pure black (#000000) lines on white. " +
-    "CRITICAL: Draw ONLY the face and head — no body, no background elements, no text. " +
-    "The face must be centered. " +
-    "PORTRAIT STYLE: Clean minimal portrait line art. " +
-    "Bold outer contour of the face shape, hairline, and neck. " +
-    "Clear lines for eyes (with pupils and lashes), eyebrows, nose bridge and nostrils, lips, ears. " +
-    "Subtle lines for cheekbones, jaw definition, and forehead. " +
-    "Like a clean professional portrait sketch. " +
-    "=== MANDATORY FRAMING RULES === " +
-    "The face must occupy 60-75% of the image. Leave at least 12% white margin on every edge. " +
+    "Clean bold black outlines only — no fill, no shading, no grey tones, no gradients. " +
+    "Only pure black (#000000) lines on white. " +
+    "Draw ONLY the face and head — no body, no clothing, no background. " +
+    "STYLE: Clean portrait line art like a professional coloring book illustration. " +
+    "Include: clear outer face contour, hairline and hair outline, eyes with pupils and lashes, " +
+    "eyebrows, nose outline, lips, ears, neck outline. " +
+    "Lines should be smooth, confident, and clean — not sketchy. " +
+    "Hair drawn as clean outline with minimal interior lines. " +
+    "The face must occupy 65-75% of the image. Leave 10-15% white margin on all edges. " +
     "The entire head must be fully visible — nothing cropped. " +
-    "=== END FRAMING RULES === " +
-    "DO NOT include any text, labels, watermarks, or background patterns.",
-
-  artistic:
-    "Artistic black and white portrait line art illustration. " +
-    "Pure white background (#FFFFFF). " +
-    "Expressive bold black lines only — no fill, no shading, no gradients, no grey tones. " +
-    "High contrast: only pure black (#000000) lines on white. " +
-    "CRITICAL: Draw ONLY the face and head — no body, no background elements, no text. " +
-    "The face must be centered. " +
-    "PORTRAIT STYLE: Artistic expressive portrait with flowing confident strokes. " +
-    "Bold outer contour of the face shape, hair flowing naturally, neck. " +
-    "Expressive lines for eyes (with detail), eyebrows, nose, lips, ears. " +
-    "Hair drawn with flowing artistic lines showing texture and movement. " +
-    "Like a skilled artist's portrait sketch — expressive and elegant. " +
-    "=== MANDATORY FRAMING RULES === " +
-    "The face must occupy 60-75% of the image. Leave at least 12% white margin on every edge. " +
-    "The entire head must be fully visible — nothing cropped. " +
-    "=== END FRAMING RULES === " +
-    "DO NOT include any text, labels, watermarks, or background patterns.",
+    "DO NOT include any text, labels, watermarks, signatures, or decorative elements.",
 
   detailed:
-    "Highly detailed black and white portrait line art. " +
+    "Convert this photo into a detailed black and white portrait line art drawing. " +
+    "CRITICAL REQUIREMENT: The line art face must be MAXIMALLY FAITHFUL to the person in the photo — " +
+    "preserve the exact face shape, eye shape and spacing, nose shape, lip shape, jawline, and hair silhouette. " +
     "Pure white background (#FFFFFF). " +
-    "Precise fine black lines only — no fill, no shading, no gradients, no grey tones. " +
-    "High contrast: only pure black (#000000) lines on white. " +
-    "CRITICAL: Draw ONLY the face and head — no body, no background elements, no text. " +
-    "The face must be centered. " +
-    "PORTRAIT STYLE: Detailed technical portrait with all facial features precisely rendered. " +
-    "Bold outer contour of the face shape, hairline, and neck. " +
-    "Highly detailed eyes (iris, pupils, lashes, lids), eyebrows (individual hairs), " +
-    "nose (bridge, nostrils, tip), lips (upper/lower lip lines, cupid's bow), ears (inner detail). " +
-    "Subtle lines for wrinkles, skin texture, cheekbones, jaw, forehead. " +
-    "Hair with detailed strand lines. Like a professional engraving portrait. " +
-    "=== MANDATORY FRAMING RULES === " +
-    "The face must occupy 60-75% of the image. Leave at least 12% white margin on every edge. " +
+    "Precise black lines only — no fill, no shading, no grey tones, no gradients. " +
+    "Only pure black (#000000) lines on white. " +
+    "Draw ONLY the face and head — no body, no clothing, no background. " +
+    "STYLE: Detailed portrait line art like a professional illustration with rich facial detail. " +
+    "Include: precise outer face contour, detailed hair with flowing strand lines, " +
+    "eyes with iris detail, pupils, lashes, and eyelid folds, " +
+    "eyebrows with individual hair lines, detailed nose with bridge and nostrils, " +
+    "lips with cupid's bow and lip line detail, ears with inner structure, neck. " +
+    "Add subtle lines for cheekbone definition, jaw structure, and forehead. " +
+    "Hair drawn with flowing lines showing texture and movement. " +
+    "The face must occupy 65-75% of the image. Leave 10-15% white margin on all edges. " +
     "The entire head must be fully visible — nothing cropped. " +
-    "=== END FRAMING RULES === " +
-    "DO NOT include any text, labels, watermarks, or background patterns.",
-
-  stencil:
-    "High-contrast stencil portrait for laser/CNC engraving. " +
-    "Pure white background (#FFFFFF). " +
-    "Bold thick black outlines ONLY — no fill, no shading, no gradients, no grey tones. " +
-    "High contrast: only pure black (#000000) lines on white. " +
-    "CRITICAL: Draw ONLY the face and head — no body, no background elements, no text. " +
-    "The face must be centered. " +
-    "PORTRAIT STYLE: Bold stencil-style portrait. Very thick outer contours. " +
-    "Minimal interior detail — only the most essential features (eye outlines, nose, lips). " +
-    "Like a street art stencil — bold, graphic, high contrast. Suitable for deep CNC engraving. " +
-    "=== MANDATORY FRAMING RULES === " +
-    "The face must occupy 60-75% of the image. Leave at least 12% white margin on every edge. " +
-    "The entire head must be fully visible — nothing cropped. " +
-    "=== END FRAMING RULES === " +
-    "DO NOT include any text, labels, watermarks, or background patterns.",
+    "DO NOT include any text, labels, watermarks, signatures, or decorative elements.",
 };
 
-const STYLE_ORDER: PortraitStyle[] = ["clean", "artistic", "detailed", "stencil"];
+const STYLE_ORDER: PortraitStyle[] = ["simple", "detailed"];
 
 const STYLE_LABELS: Record<PortraitStyle, { he: string; en: string }> = {
-  clean: { he: "נקי", en: "Clean" },
-  artistic: { he: "אמנותי", en: "Artistic" },
+  simple: { he: "פשוט", en: "Simple" },
   detailed: { he: "מפורט", en: "Detailed" },
-  stencil: { he: "סטנסיל", en: "Stencil" },
 };
 
 // ─── Potrace helper ───────────────────────────────────────────────────────────
@@ -271,7 +234,7 @@ async function runFaceDetectJob(
   lang: "he" | "en",
   appUserId: number,
   ipAnon: string,
-  style: PortraitStyle = "clean",
+  style: PortraitStyle = "simple",
   sourceImageUrl?: string,
   hairline = false,
   lineweightMm?: number,
@@ -414,10 +377,10 @@ router.post(
       const lineweightMm = isNaN(lineweightMmRaw) ? undefined : Math.min(2.0, Math.max(0, lineweightMmRaw));
       const minGapMmRaw = parseFloat((req.body?.minGapMm as string) ?? "");
       const minGapMm = isNaN(minGapMmRaw) ? 0 : Math.min(3.0, Math.max(0, minGapMmRaw));
-      const styleRaw = (req.body?.style as string) ?? "clean";
-      const style: PortraitStyle = (["clean", "artistic", "detailed", "stencil"] as const).includes(styleRaw as PortraitStyle)
+      const styleRaw = (req.body?.style as string) ?? "simple";
+      const style: PortraitStyle = (["simple", "detailed"] as const).includes(styleRaw as PortraitStyle)
         ? (styleRaw as PortraitStyle)
-        : "clean";
+        : "simple";
 
       const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
       const ipAnon = anonymizeIp(rawIp);
