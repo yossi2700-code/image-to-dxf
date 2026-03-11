@@ -99,16 +99,34 @@ async function generatePortraitVariation(
   minGapMm: number
 ): Promise<PortraitResult> {
   const { toFile } = await import("openai");
-  const editFile = await toFile(editSourceBuffer, "face.png", { type: "image/png" });
+
+  // dall-e-2 edit requires RGBA PNG with alpha channel.
+  // We resize to 512x512 (supported by dall-e-2) and ensure RGBA.
+  const rgbaBuffer = await sharp(editSourceBuffer)
+    .resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+    .ensureAlpha()
+    .png()
+    .toBuffer();
+
+  // Fully transparent mask = edit entire image
+  const maskBuffer = await sharp({
+    create: { width: 512, height: 512, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+  })
+    .png()
+    .toBuffer();
+
+  const editFile = await toFile(rgbaBuffer, "face.png", { type: "image/png" });
+  const maskFile = await toFile(maskBuffer, "mask.png", { type: "image/png" });
   const editPrompt = PORTRAIT_STYLE_PROMPTS[style];
 
+  // dall-e-2 with 512x512 is 4-6x faster than gpt-image-1
   const response = await openai.images.edit({
-    model: "gpt-image-1",
+    model: "dall-e-2",
     image: editFile,
+    mask: maskFile,
     prompt: editPrompt,
     n: 1,
-    size: "1024x1024",
-    quality: "low",  // "low" is fastest — sufficient for line art / DXF
+    size: "512x512",
   });
 
   const imageData = response.data?.[0];

@@ -982,20 +982,32 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   </Button>
                 </div>
                 {showAddPackage && (
-                  <div className="mt-3 p-3 border rounded-lg bg-slate-50 space-y-2">
+                    <div className="mt-3 p-3 border rounded-lg bg-slate-50 space-y-2">
                     <p className="text-xs font-semibold text-slate-600">חבילה חדשה</p>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs text-muted-foreground">מזהה (לא רווחים, למשל tokens_200)</label>
-                        <Input className="h-7 text-xs mt-0.5" placeholder="tokens_200" value={newPkg.packageId} onChange={e => setNewPkg(p => ({ ...p, packageId: e.target.value }))} dir="ltr" maxLength={32} />
+                        <label className="text-xs text-muted-foreground">כמות אסימונים</label>
+                        <Input className="h-7 text-xs mt-0.5" type="number" placeholder="200" value={newPkg.tokenAmount}
+                          onChange={e => {
+                            const amt = e.target.value;
+                            const autoId = amt ? `tokens_${amt}` : "";
+                            const autoLabel = amt ? `${amt} אסימונים` : "";
+                            setNewPkg(p => ({
+                              ...p,
+                              tokenAmount: amt,
+                              packageId: p.packageId || autoId,
+                              label: p.label || autoLabel,
+                            }));
+                          }}
+                          dir="ltr" />
                       </div>
                       <div>
                         <label className="text-xs text-muted-foreground">שם תצוגה</label>
                         <Input className="h-7 text-xs mt-0.5" placeholder="200 אסימונים" value={newPkg.label} onChange={e => setNewPkg(p => ({ ...p, label: e.target.value }))} />
                       </div>
-                      <div>
-                        <label className="text-xs text-muted-foreground">כמות אסימונים</label>
-                        <Input className="h-7 text-xs mt-0.5" type="number" placeholder="200" value={newPkg.tokenAmount} onChange={e => setNewPkg(p => ({ ...p, tokenAmount: e.target.value }))} dir="ltr" />
+                      <div className="col-span-2">
+                        <label className="text-xs text-muted-foreground">מזהה טכני (יוצר אוטומטית, למשל tokens_200)</label>
+                        <Input className="h-7 text-xs mt-0.5" placeholder="tokens_200" value={newPkg.packageId} onChange={e => setNewPkg(p => ({ ...p, packageId: e.target.value }))} dir="ltr" maxLength={32} />
                       </div>
                       <div>
                         <label className="text-xs text-muted-foreground">מחיר ב-שקל (יישום אוטומטי לשאר)</label>
