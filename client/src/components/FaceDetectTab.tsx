@@ -134,11 +134,14 @@ interface PortraitCardProps {
   image: GeneratedImage;
   isRtl: boolean;
   style: PortraitStyle;
+  originalImageUrl?: string | null;
   onDownload: (image: GeneratedImage) => void;
   onZoom: (src: string, alt: string) => void;
 }
-function PortraitCard({ image, isRtl, style, onDownload, onZoom }: PortraitCardProps) {
+function PortraitCard({ image, isRtl, style, originalImageUrl, onDownload, onZoom }: PortraitCardProps) {
   const [showVector, setShowVector] = useState(false);
+  const [sliderPct, setSliderPct] = useState(50);
+  const [showBefore, setShowBefore] = useState(false);
 
   const styleLabel = {
     simple: isRtl ? "פשוט" : "Simple",
@@ -152,12 +155,60 @@ function PortraitCard({ image, isRtl, style, onDownload, onZoom }: PortraitCardP
         <span className="text-xs font-bold text-purple-700">
           {isRtl ? `פורטרט — סגנון ${styleLabel}` : `Portrait — ${styleLabel} style`}
         </span>
-        <span className="text-xs text-gray-400">{image.segmentCount} {isRtl ? "קטעים" : "segs"}</span>
+        <div className="flex items-center gap-2">
+          {originalImageUrl && (
+            <button
+              onClick={() => setShowBefore(b => !b)}
+              className="text-xs px-2 py-0.5 rounded-full font-medium transition-all"
+              style={{ background: showBefore ? '#7c3aed' : '#f3e8ff', color: showBefore ? 'white' : '#7c3aed', border: 'none' }}
+            >
+              {showBefore ? (isRtl ? 'אחרי' : 'After') : (isRtl ? 'לפני' : 'Before')}
+            </button>
+          )}
+          <span className="text-xs text-gray-400">{image.segmentCount} {isRtl ? "קטעים" : "segs"}</span>
+        </div>
       </div>
 
-      {/* Image / Vector toggle */}
+      {/* Before/After slider or Image/Vector toggle */}
       {showVector ? (
         <SvgViewer svgContent={image.svgPreview} />
+      ) : originalImageUrl && showBefore ? (
+        // Before/After comparison slider
+        <div
+          className="relative bg-gray-50 select-none"
+          style={{ aspectRatio: '1/1', cursor: 'col-resize' }}
+          onMouseMove={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setSliderPct(Math.round(((e.clientX - rect.left) / rect.width) * 100));
+          }}
+          onTouchMove={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const touch = e.touches[0];
+            setSliderPct(Math.round(((touch.clientX - rect.left) / rect.width) * 100));
+          }}
+        >
+          {/* After (DXF result) — full width base */}
+          <img src={image.imageUrl} alt="after" className="absolute inset-0 w-full h-full object-contain" />
+          {/* Before (original) — clipped to left portion */}
+          <div
+            className="absolute inset-0 overflow-hidden"
+            style={{ width: `${sliderPct}%` }}
+          >
+            <img src={originalImageUrl} alt="before" className="absolute inset-0 w-full h-full object-contain" style={{ width: '100%', maxWidth: 'none' }} />
+          </div>
+          {/* Divider line */}
+          <div
+            className="absolute top-0 bottom-0 w-0.5 bg-white shadow-lg"
+            style={{ left: `${sliderPct}%`, transform: 'translateX(-50%)' }}
+          >
+            <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-white shadow-lg flex items-center justify-center" style={{ border: '2px solid #7c3aed' }}>
+              <span className="text-purple-600 text-xs font-bold">↔</span>
+            </div>
+          </div>
+          {/* Labels */}
+          <span className="absolute bottom-2 left-2 text-xs font-bold text-white px-1.5 py-0.5 rounded" style={{ background: 'rgba(0,0,0,0.55)' }}>{isRtl ? 'מקור' : 'Original'}</span>
+          <span className="absolute bottom-2 right-2 text-xs font-bold text-white px-1.5 py-0.5 rounded" style={{ background: 'rgba(124,58,237,0.75)' }}>DXF</span>
+        </div>
       ) : (
         <div className="relative bg-gray-50 cursor-pointer" style={{ aspectRatio: '1/1' }} onClick={() => onZoom(image.imageUrl, styleLabel)}>
           <img src={image.imageUrl} alt="portrait" className="w-full h-full object-contain" />
@@ -613,14 +664,18 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
       {/* Loading state — simple scanning animation */}
       {status === "loading" && !result && (
         <div
-          className="rounded-xl p-6 flex flex-col items-center gap-4 text-center"
+          className="rounded-xl p-5 flex flex-col items-center gap-4 text-center"
           style={{ background: '#faf5ff', border: '1px solid #e9d5ff' }}
         >
-          {/* Scanning animation */}
+          {/* Scanning animation with preview */}
           <div className="relative w-20 h-20">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: '#f3e8ff' }}>
-              <UserCircle className="w-10 h-10 text-purple-400" />
-            </div>
+            {imagePreview ? (
+              <img src={imagePreview} alt="face" className="w-20 h-20 rounded-full object-cover" style={{ border: '3px solid #c084fc' }} />
+            ) : (
+              <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: '#f3e8ff' }}>
+                <UserCircle className="w-10 h-10 text-purple-400" />
+              </div>
+            )}
             {/* Scan line */}
             <div
               className="absolute left-0 right-0 h-0.5 rounded-full"
@@ -632,9 +687,43 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
             />
           </div>
 
+          {/* Step indicators */}
+          <div className="w-full max-w-xs space-y-2">
+            {[
+              { stepKey: 'detect', labelHe: 'זיהוי פנים', labelEn: 'Detecting face', pct: 20 },
+              { stepKey: 'draw',   labelHe: 'מצייר פורטרט', labelEn: 'Drawing portrait', pct: 60 },
+              { stepKey: 'convert',labelHe: 'ממיר ל-DXF',     labelEn: 'Converting to DXF', pct: 85 },
+              { stepKey: 'finish', labelHe: 'מסיים',          labelEn: 'Finishing up', pct: 100 },
+            ].map(({ stepKey, labelHe, labelEn, pct }) => {
+              const isDone = progressPct >= pct;
+              const isActive = !isDone && progressPct >= pct - 40;
+              return (
+                <div key={stepKey} className="flex items-center gap-2.5">
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold transition-all"
+                    style={{
+                      background: isDone ? '#7c3aed' : isActive ? '#e9d5ff' : '#f3f4f6',
+                      color: isDone ? 'white' : isActive ? '#7c3aed' : '#9ca3af',
+                      border: isActive ? '2px solid #7c3aed' : 'none',
+                    }}
+                  >
+                    {isDone ? '✓' : ''}
+                  </div>
+                  <span
+                    className="text-xs font-medium transition-all"
+                    style={{ color: isDone ? '#7c3aed' : isActive ? '#374151' : '#9ca3af' }}
+                  >
+                    {isRtl ? labelHe : labelEn}
+                    {isActive && <span style={{ animation: 'pulse 1s infinite' }}>…</span>}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
           {/* Progress bar */}
           <div className="w-full max-w-xs">
-            <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden mb-2">
+            <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden mb-1.5">
               <div
                 className="h-full rounded-full"
                 style={{
@@ -644,17 +733,10 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
                 }}
               />
             </div>
-            <p className="text-sm font-semibold text-gray-700">
-              {isRtl ? "מעבד תמונה..." : "Processing image..."}
+            <p className="text-xs text-gray-500">
+              {currentStep || (isRtl ? 'מעבד תמונה...' : 'Processing image...')}
             </p>
-            <p className="text-xs text-gray-400 mt-1">{isRtl ? "זה עשוי לקחת 30-60 שניות" : "This may take 30-60 seconds"}</p>
-          </div>
-
-          {/* Dots */}
-          <div className="flex gap-1.5">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="w-1.5 h-1.5 rounded-full bg-purple-400" style={{ animation: `bounce 1s infinite ${i * 0.15}s` }} />
-            ))}
+            <p className="text-xs text-gray-400 mt-0.5">{isRtl ? 'זה עשוי לקחת 30-60 שניות' : 'This may take 30-60 seconds'}</p>
           </div>
 
           {/* Cancel */}
@@ -665,7 +747,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
               style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}
             >
               <X className="w-4 h-4" />
-              {isRtl ? "בטל והחזר אסימונים" : "Cancel & Refund Tokens"}
+              {isRtl ? 'בטל והחזר אסימונים' : 'Cancel & Refund Tokens'}
             </button>
           )}
         </div>
@@ -698,55 +780,82 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
 
           {/* Variation cards */}
           <div className="space-y-3">
-            {result.images.map((img, idx) => {
-              const styleOpt = STYLE_OPTIONS.find(s => s.value === img.style);
-              return (
-                <PortraitCard
-                  key={idx}
-                  image={img}
-                  isRtl={isRtl}
-                  style={(img.style as PortraitStyle) || portraitStyle}
-                  onDownload={setDownloadTarget}
-                  onZoom={(src, alt) => setZoomImg({ src, alt })}
-                />
-              );
-            })}
+            {result.images.map((img, idx) => (
+              <PortraitCard
+                key={idx}
+                image={img}
+                isRtl={isRtl}
+                style={(img.style as PortraitStyle) || portraitStyle}
+                originalImageUrl={imagePreview}
+                onDownload={setDownloadTarget}
+                onZoom={(src, alt) => setZoomImg({ src, alt })}
+              />
+            ))}
           </div>
 
-          {/* AI Suggestions */}
-          {result.suggestions && result.suggestions.length > 0 && (
-            <div className="rounded-xl p-4" style={{ background: '#fffbeb', border: '1px solid #fde68a' }}>
-              <p className="text-xs font-bold text-amber-700 mb-2 flex items-center gap-1.5">
-                <span>✨</span>
-                {isRtl ? "הצעות שיפור AI — לחץ להחיל" : "AI Improvement Suggestions — click to apply"}
-              </p>
-              <div className="space-y-1.5">
-                {result.suggestions.map((s, i) => (
-                  <button
-                    key={i}
-                    onClick={() => {
-                      // Map suggestion to style change
-                      const lower = s.toLowerCase();
-                      if (lower.includes("פרט") || lower.includes("detail") || lower.includes("rich") || lower.includes("עשיר")) {
-                        setPortraitStyle("detailed");
-                      } else {
-                        setPortraitStyle("simple");
-                      }
-                      setResult(null);
-                      setStatus("idle");
-                    }}
-                    className="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all"
-                    style={{ background: 'white', border: '1px solid #fde68a', color: '#92400e' }}
-                  >
-                    <span className="text-amber-500">→</span>
-                    <span className="flex-1">{s}</span>
-                    <span className="text-amber-400 text-xs shrink-0">{isRtl ? "לחץ" : "Apply"}</span>
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-amber-500 mt-2">{isRtl ? "לחיצה תחזיר לטופס עם הסגנון המוצע" : "Click to return to form with suggested style"}</p>
+          {/* AI Refinement Panel */}
+          <div className="rounded-xl p-4" style={{ background: '#faf5ff', border: '1px solid #e9d5ff' }}>
+            <p className="text-xs font-bold text-purple-700 mb-3 flex items-center gap-1.5">
+              <span>✨</span>
+              {isRtl ? 'צייר מחדש עם AI' : 'Redraw with AI'}
+            </p>
+            {/* Quick style buttons */}
+            <div className="flex gap-2 mb-3">
+              {STYLE_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => {
+                    setPortraitStyle(opt.value);
+                    setResult(null);
+                    setStatus('idle');
+                    setTimeout(() => {
+                      const btn = document.querySelector('[data-face-submit]') as HTMLButtonElement;
+                      if (btn) btn.click();
+                    }, 100);
+                  }}
+                  className="flex-1 py-2 text-xs font-bold rounded-lg transition-all"
+                  style={{
+                    background: portraitStyle === opt.value ? '#7c3aed' : '#f3e8ff',
+                    color: portraitStyle === opt.value ? 'white' : '#7c3aed',
+                    border: 'none',
+                  }}
+                >
+                  {isRtl ? opt.labelHe : opt.labelEn}
+                  <span className="block text-xs font-normal opacity-75">{isRtl ? opt.descHe : opt.descEn}</span>
+                </button>
+              ))}
             </div>
-          )}
+            {/* Free text refinement */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder={isRtl ? 'בקשה חופשית, למשל: יותר פרטים בשיער...' : 'Custom request, e.g.: more hair detail...'}
+                className="flex-1 text-xs px-3 py-2 rounded-lg outline-none"
+                style={{ background: 'white', border: '1px solid #e9d5ff', color: '#374151' }}
+                id="portrait-custom-request"
+                dir={isRtl ? 'rtl' : 'ltr'}
+              />
+              <button
+                onClick={() => {
+                  const input = document.getElementById('portrait-custom-request') as HTMLInputElement;
+                  const customText = input?.value?.trim();
+                  if (!customText) return;
+                  // Store custom request and re-submit
+                  sessionStorage.setItem('portrait_custom_request', customText);
+                  setResult(null);
+                  setStatus('idle');
+                  setTimeout(() => {
+                    const btn = document.querySelector('[data-face-submit]') as HTMLButtonElement;
+                    if (btn) btn.click();
+                  }, 100);
+                }}
+                className="px-3 py-2 text-xs font-bold rounded-lg transition-all"
+                style={{ background: '#7c3aed', color: 'white', border: 'none', whiteSpace: 'nowrap' }}
+              >
+                {isRtl ? 'צייר' : 'Draw'}
+              </button>
+            </div>
+          </div>
 
           {/* More variations + New image buttons */}
           <div className="flex gap-2">
