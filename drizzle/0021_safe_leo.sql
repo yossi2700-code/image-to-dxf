@@ -1,0 +1,1 @@
+ALTER TABLE `package_prices` ADD `badge` enum('recommended','best_value','sale','trial');

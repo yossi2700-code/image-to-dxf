@@ -267,7 +267,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     onError: (e) => toast.error("שגיאה: " + e.message),
   });
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
-  const [priceEdits, setPriceEdits] = useState<Record<string, Record<string, string | boolean | number>>>({});
+  const [priceEdits, setPriceEdits] = useState<Record<string, Record<string, string | boolean | number | null>>>({});
   const ALL_CURRENCIES = ["USD", "EUR", "ILS", "GBP", "AUD", "CAD", "JPY"] as const;
 
   // ── Token Costs state ───
@@ -294,7 +294,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
   // הה Add Package state ההה
   const [showAddPackage, setShowAddPackage] = useState(false);
-  const emptyPkg = { packageId: "", label: "", tokenAmount: "", priceILS: "", priceUSD: "", priceEUR: "", priceGBP: "", priceAUD: "", priceCAD: "", priceJPY: "", discountPercent: "" };
+  const emptyPkg = { packageId: "", label: "", tokenAmount: "", priceILS: "", priceUSD: "", priceEUR: "", priceGBP: "", priceAUD: "", priceCAD: "", priceJPY: "", discountPercent: "", badge: "" as "" | "recommended" | "best_value" | "sale" | "trial" };
   const [newPkg, setNewPkg] = useState(emptyPkg);
   const addPackageMutation = trpc.admin.addPackage.useMutation({
     onSuccess: () => { toast.success("חבילה נוספה!"); refetchPrices(); setShowAddPackage(false); setNewPkg(emptyPkg); },
@@ -1031,6 +1031,25 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                           ) : null}
                         </div>
                       </div>
+                      <div className="col-span-2">
+                        <label className="text-xs text-muted-foreground">תגית מיוחדת (אופציונלי)</label>
+                        <div className="flex gap-2 mt-0.5 flex-wrap">                          {(["", "recommended", "best_value", "sale", "trial"] as const).map(opt => (
+                            <button key={opt} type="button"
+                              onClick={() => setNewPkg(p => ({ ...p, badge: opt as typeof p.badge }))}
+                              className={`px-2 py-1 rounded text-xs border transition-all ${
+                                newPkg.badge === opt
+                                  ? opt === "recommended" ? "bg-blue-500 text-white border-blue-500"
+                                  : opt === "best_value" ? "bg-green-500 text-white border-green-500"
+                                  : opt === "sale" ? "bg-red-500 text-white border-red-500"
+                                  : opt === "trial" ? "bg-purple-500 text-white border-purple-500"
+                                  : "bg-slate-200 text-slate-600 border-slate-300"
+                                  : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
+                              }`}>
+                              {opt === "" ? "אין תגית" : opt === "recommended" ? "★ מומלץ" : opt === "best_value" ? "💰 הכי משתלם" : opt === "sale" ? "🔥 במבצע" : "🌟 התנסות"}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                     <div className="flex gap-2 pt-1">
                       <Button size="sm" variant="outline" onClick={() => setShowAddPackage(false)} className="text-xs">בטל</Button>
@@ -1048,6 +1067,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                           priceCAD: newPkg.priceCAD || "0",
                           priceJPY: newPkg.priceJPY || "0",
                           discountPercent: newPkg.discountPercent ? parseInt(newPkg.discountPercent) : 0,
+                          badge: (newPkg.badge || null) as "recommended" | "best_value" | "sale" | null | undefined,
                         })}
                       >
                         {addPackageMutation.isPending ? "שומר..." : "הוסף חבילה"}
@@ -1207,42 +1227,85 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             );
                           })}
                         </div>
-                        {/* Discount field */}
+                        {/* Discount + Badge fields */}
                         {editingPriceId === pkg.packageId ? (
-                          <div className="mt-3 pt-3 border-t">
-                            <label className="text-xs text-muted-foreground block mb-1">הנחה באחוזים (0 = אין הנחה)</label>
-                            <div className="flex items-center gap-2">
-                              <Input
-                                className="h-7 text-sm w-24"
-                                type="number"
-                                min={0}
-                                max={100}
-                                defaultValue={pkg.discountPercent ?? 0}
-                                onChange={(e) => setPriceEdits(prev => ({
-                                  ...prev,
-                                  [pkg.packageId]: { ...(prev[pkg.packageId] || {}), discountPercent: parseInt(e.target.value) || 0 }
-                                }))}
-                                dir="ltr"
-                              />
-                              <span className="text-xs text-muted-foreground">%</span>
-                              {(() => {
-                                const discRaw = priceEdits[pkg.packageId]?.discountPercent;
-                                const disc = typeof discRaw === 'number' ? discRaw : (pkg.discountPercent ?? 0);
-                                const price = parseFloat(String(priceEdits[pkg.packageId]?.priceILS ?? pkg.priceILS));
-                                return disc > 0 && price > 0 ? (
-                                  <span className="text-xs text-green-600 font-medium">מחיר לאחר הנחה: ₪{(price * (1 - disc / 100)).toFixed(2)}</span>
-                                ) : null;
-                              })()}
+                          <div className="mt-3 pt-3 border-t space-y-3">
+                            <div>
+                              <label className="text-xs text-muted-foreground block mb-1">הנחה באחוזים (0 = אין הנחה)</label>
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  className="h-7 text-sm w-24"
+                                  type="number"
+                                  min={0}
+                                  max={100}
+                                  defaultValue={pkg.discountPercent ?? 0}
+                                  onChange={(e) => setPriceEdits(prev => ({
+                                    ...prev,
+                                    [pkg.packageId]: { ...(prev[pkg.packageId] || {}), discountPercent: parseInt(e.target.value) || 0 }
+                                  }))}
+                                  dir="ltr"
+                                />
+                                <span className="text-xs text-muted-foreground">%</span>
+                                {(() => {
+                                  const discRaw = priceEdits[pkg.packageId]?.discountPercent;
+                                  const disc = typeof discRaw === 'number' ? discRaw : (pkg.discountPercent ?? 0);
+                                  const price = parseFloat(String(priceEdits[pkg.packageId]?.priceILS ?? pkg.priceILS));
+                                  return disc > 0 && price > 0 ? (
+                                    <span className="text-xs text-green-600 font-medium">מחיר לאחר הנחה: ₪{(price * (1 - disc / 100)).toFixed(2)}</span>
+                                  ) : null;
+                                })()}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-xs text-muted-foreground block mb-1">תגית מיוחדת</label>
+                              <div className="flex gap-2 flex-wrap">
+                                {(["none", "recommended", "best_value", "sale", "trial"] as const).map(opt => {
+                                  const currentBadge = String(priceEdits[pkg.packageId]?.badge ?? pkg.badge ?? "none");
+                                  const isSelected = currentBadge === opt || (opt === "none" && !currentBadge);
+                                  return (
+                                    <button key={opt} type="button"
+                                      onClick={() => setPriceEdits(prev => ({
+                                        ...prev,
+                                        [pkg.packageId]: { ...(prev[pkg.packageId] || {}), badge: opt === "none" ? null : opt }
+                                      }))}
+                                      className={`px-2 py-1 rounded text-xs border transition-all ${
+                                        isSelected
+                                          ? opt === "recommended" ? "bg-blue-500 text-white border-blue-500"
+                                          : opt === "best_value" ? "bg-green-500 text-white border-green-500"
+                                          : opt === "sale" ? "bg-red-500 text-white border-red-500"
+                                          : opt === "trial" ? "bg-purple-500 text-white border-purple-500"
+                                          : "bg-slate-200 text-slate-600 border-slate-300"
+                                          : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
+                                      }`}>
+                                      {opt === "none" ? "אין" : opt === "recommended" ? "★ מומלץ" : opt === "best_value" ? "💰 הכי משתלם" : opt === "sale" ? "🔥 במבצע" : "🌟 התנסות"}
+                                    </button>
+                                  );
+                                })}
+                              </div>
                             </div>
                           </div>
-                        ) : pkg.discountPercent && pkg.discountPercent > 0 ? (
-                          <div className="mt-2 flex items-center gap-2">
-                            <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full border border-red-200">
-                              הנחה {pkg.discountPercent}%
-                            </span>
-                            <span className="text-xs text-muted-foreground">מחיר לאחר הנחה: ₪{(parseFloat(pkg.priceILS) * (1 - pkg.discountPercent / 100)).toFixed(2)}</span>
+                        ) : (
+                          <div className="mt-2 flex items-center gap-2 flex-wrap">
+                            {pkg.discountPercent && pkg.discountPercent > 0 ? (
+                              <>
+                                <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full border border-red-200">
+                                  הנחה {pkg.discountPercent}%
+                                </span>
+                                <span className="text-xs text-muted-foreground">מחיר לאחר הנחה: ₪{(parseFloat(pkg.priceILS) * (1 - pkg.discountPercent / 100)).toFixed(2)}</span>
+                              </>
+                            ) : null}
+                            {pkg.badge ? (
+                              <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full border ${
+                                pkg.badge === "recommended" ? "bg-blue-100 text-blue-700 border-blue-200"
+                                : pkg.badge === "best_value" ? "bg-green-100 text-green-700 border-green-200"
+                                : pkg.badge === "sale" ? "bg-orange-100 text-orange-700 border-orange-200"
+                                : "bg-purple-100 text-purple-700 border-purple-200"
+                              }`}>
+                                {pkg.badge === "recommended" ? "★ מומלץ" : pkg.badge === "best_value" ? "💰 הכי משתלם" : pkg.badge === "sale" ? "🔥 במבצע" : "🌟 התנסות"}
+                              </span>
+                            ) : null}
                           </div>
-                        ) : null}
+                        )}
                       </div>
                     ))}
                   </div>

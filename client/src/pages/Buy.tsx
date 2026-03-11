@@ -190,7 +190,7 @@ function PurchaseTermsModal({ onClose }: { onClose: () => void }) {
 
 // ─── Main Buy Page ────────────────────────────────────────────────────────────
 export default function Buy() {
-  const { t } = useLanguage();
+  const { t, isRtl } = useLanguage();
   const [, navigate] = useLocation();
 
   const [currency, setCurrency] = useState(() => detectCurrency());
@@ -214,6 +214,8 @@ export default function Buy() {
 
   // קריאת מחירים דינמיים מה-DB
   const { data: dbPrices, isLoading: pricesLoading } = trpc.packages.prices.useQuery();
+  // קריאת הגדרות יצירת קשר
+  const { data: contactSettings } = trpc.admin.getContactSettings.useQuery();
 
   // מטבעות פעילים — מבוסס על enabledCurrencies של החבילה הראשונה (או כולם אם לא הוגדר)
   const activeCurrencies = dbPrices && dbPrices.length > 0 && dbPrices[0].enabledCurrencies
@@ -343,6 +345,7 @@ export default function Buy() {
         popular: p.packageId === "tokens_100",
         label: p.label,
         discountPercent: p.discountPercent ?? 0,
+        badge: p.badge ?? null,
         prices: {
           USD: p.priceUSD,
           EUR: p.priceEUR,
@@ -441,7 +444,15 @@ export default function Buy() {
           const isSelected = selectedPackage === p.id;
 
           const discount = (p as { discountPercent?: number }).discountPercent ?? 0;
+          const badge = (p as { badge?: string | null }).badge ?? null;
           const discountedPrice = discount > 0 ? (parseFloat(pPrice) * (1 - discount / 100)).toFixed(2) : null;
+
+          const badgeConfig: Record<string, { text: string; className: string }> = {
+            recommended: { text: "★ מומלץ", className: "bg-gradient-to-r from-blue-500 to-blue-600 text-white" },
+            best_value: { text: "💰 הכי משתלם", className: "bg-gradient-to-r from-green-500 to-emerald-600 text-white" },
+            sale: { text: "🔥 במבצע", className: "bg-gradient-to-r from-red-500 to-pink-500 text-white" },
+            trial: { text: "🌟 התנסות", className: "bg-gradient-to-r from-purple-500 to-violet-600 text-white" },
+          };
 
           return (
             <div
@@ -453,12 +464,17 @@ export default function Buy() {
                   : "border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10"
               }`}
             >
-              {discount > 0 && (
+              {discount > 0 && !badge && (
                 <div className="absolute -top-3.5 right-4 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-black px-3 py-1 rounded-full shadow-lg">
                   -{discount}% הנחה!
                 </div>
               )}
-              {p.popular && !discount && (
+              {badge && badgeConfig[badge] && (
+                <div className={`absolute -top-3.5 left-1/2 -translate-x-1/2 text-xs font-black px-5 py-1 rounded-full shadow-lg ${badgeConfig[badge].className}`}>
+                  {badgeConfig[badge].text}
+                </div>
+              )}
+              {!badge && p.popular && !discount && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 to-orange-400 text-black text-xs font-black px-5 py-1 rounded-full shadow-lg">
                   ⭐ {t("buyBestValue")}
                 </div>
@@ -658,7 +674,7 @@ export default function Buy() {
       </div>
 
       {/* FAQ */}
-      <div className="max-w-2xl mx-auto px-4 pb-20">
+      <div className="max-w-2xl mx-auto px-4 pb-10">
         <h2 className="text-2xl font-bold text-center mb-8 text-blue-100">{t("buyFaqTitle")}</h2>
         <div className="space-y-4">
           {[
@@ -671,6 +687,57 @@ export default function Buy() {
               <p className="text-blue-200 text-sm leading-relaxed">{item.a}</p>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Support Contact */}
+      <div className="max-w-2xl mx-auto px-4 pb-20">
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center">
+          <div className="text-3xl mb-3">🛠️</div>
+          <h3 className="text-xl font-bold text-white mb-2">
+            {isRtl ? "תמיכה טכנית" : "Technical Support"}
+          </h3>
+          <p className="text-blue-200 text-sm mb-6">
+            {isRtl ? "שאלות לגבי רכישה או בעיות טכניות? אנחנו כאן לעזור" : "Questions about your purchase or technical issues? We're here to help."}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            {contactSettings?.supportEmail && (
+              <a
+                href={`mailto:${contactSettings.supportEmail}`}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold transition-colors text-sm"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                {isRtl ? "שלח אימייל" : "Send Email"}
+              </a>
+            )}
+            {contactSettings?.whatsappNumber && (
+              <a
+                href={`https://wa.me/${contactSettings.whatsappNumber.replace(/[^0-9]/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-xl font-semibold transition-colors text-sm"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                  <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.117 1.528 5.845L.057 23.5l5.797-1.522A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.848 0-3.576-.5-5.065-1.375l-.363-.215-3.44.902.918-3.354-.236-.38A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+                </svg>
+                WhatsApp
+              </a>
+            )}
+            {!contactSettings?.supportEmail && !contactSettings?.whatsappNumber && (
+              <a
+                href="mailto:support@dxfai.net"
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold transition-colors text-sm"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                support@dxfai.net
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </div>

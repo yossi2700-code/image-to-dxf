@@ -238,6 +238,8 @@ export const packagePrices = mysqlTable("package_prices", {
   label: varchar("label", { length: 64 }),
   /** Discount percentage (0-100). When set, shows original price crossed out + discounted price */
   discountPercent: int("discountPercent").default(0),
+  /** Badge label: null | 'recommended' | 'best_value' | 'sale' | 'trial' */
+  badge: mysqlEnum("badge", ["recommended", "best_value", "sale", "trial"]),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type PackagePrice = typeof packagePrices.$inferSelect;

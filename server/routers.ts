@@ -453,6 +453,7 @@ export const appRouter = router({
         priceJPY: z.string(),
         enabledCurrencies: z.string().nullable().optional(),
         discountPercent: z.number().int().min(0).max(100).optional(),
+        badge: z.enum(["recommended", "best_value", "sale", "trial"]).nullable().optional(),
       }))
       .mutation(async ({ input }) => {
         const db = await getDb();
@@ -471,6 +472,7 @@ export const appRouter = router({
           isActive: 1,
           enabledCurrencies: input.enabledCurrencies ?? null,
           discountPercent: input.discountPercent ?? 0,
+          badge: input.badge ?? null,
         });
         return { success: true };
       }),
@@ -524,6 +526,7 @@ export const appRouter = router({
           isActive: z.number().optional(),
           enabledCurrencies: z.string().nullable().optional(),
           discountPercent: z.number().int().min(0).max(100).optional(),
+          badge: z.enum(["recommended", "best_value", "sale", "trial"]).nullable().optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -543,6 +546,7 @@ export const appRouter = router({
             ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
             ...(input.enabledCurrencies !== undefined ? { enabledCurrencies: input.enabledCurrencies } : {}),
             ...(input.discountPercent !== undefined ? { discountPercent: input.discountPercent } : {}),
+            ...(input.badge !== undefined ? { badge: input.badge } : {}),
           })
           .where(eq(packagePrices.packageId, input.packageId));
         return { success: true };
