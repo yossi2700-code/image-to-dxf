@@ -1011,6 +1011,11 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                 <AlertCircle className="w-10 h-10 text-red-400" />
                 <p className="font-semibold text-red-600">{t("processingError")}</p>
                 <p className="text-sm text-muted-foreground">{errorMsg}</p>
+                {!errorMsg?.includes("אסימונים") && !errorMsg?.toLowerCase().includes("token") && !errorMsg?.toLowerCase().includes("quota") && (
+                  <p className="text-xs font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                    ✓ {t("tokensRefunded")}
+                  </p>
+                )}
                 <Button variant="outline" size="sm" onClick={reset}>{t("tryAgain")}</Button>
               </div>
             )}
@@ -1510,6 +1515,11 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
             <AlertCircle className="w-10 h-10 text-red-400" />
             <p className="font-semibold text-red-600">{t("aiError")}</p>
             <p className="text-sm text-gray-500">{errorMsg}</p>
+            {!errorMsg?.includes("אסימונים") && !errorMsg?.toLowerCase().includes("token") && !errorMsg?.toLowerCase().includes("quota") && (
+              <p className="text-xs font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                ✓ {t("tokensRefunded")}
+              </p>
+            )}
             <div className="flex gap-2 flex-wrap justify-center">
               <button
                 className="text-sm px-4 py-2 rounded-lg font-medium transition-all bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200"

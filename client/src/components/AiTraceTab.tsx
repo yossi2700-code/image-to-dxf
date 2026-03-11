@@ -327,11 +327,15 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
           if (stepMsg) setCurrentStep(stepMsg);
         } else if (data.status === "error") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-          const msg = data.message || (t("processingError"));
+          const isTokenError = data.error === "INSUFFICIENT_TOKENS" || data.error === "QUOTA_EXCEEDED";
+          const msg = isTokenError
+            ? (data.message || t("processingError"))
+            : t("jobErrorRetry");
           setErrorMsg(msg);
           setStatus("error");
           setCurrentStep("");
           setJobIdPersisted(null);
+          if (!isTokenError) refetchTokens(); // Refresh balance to show refunded tokens
           toast.error(msg);
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
@@ -983,12 +987,12 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
           >
               <AlertCircle className="w-10 h-10 text-red-400" />
               <p className="font-semibold text-red-600">{t("processingError")}</p>
-              <p className="text-sm text-gray-500">
-                {errorMsg && (errorMsg.toLowerCase().includes("timeout") || errorMsg.includes("זמן"))
-                  ? (t("processingTimeout"))
-                  : errorMsg
-                }
-              </p>
+              <p className="text-sm text-gray-500">{errorMsg}</p>
+              {!errorMsg?.includes("אסימונים") && !errorMsg?.toLowerCase().includes("token") && !errorMsg?.toLowerCase().includes("quota") && (
+                <p className="text-xs font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                  ✓ {t("tokensRefunded")}
+                </p>
+              )}
               <div className="flex gap-2 flex-wrap justify-center">
                 <button
                   className="text-sm px-4 py-2 rounded-lg font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200"
