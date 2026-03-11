@@ -240,7 +240,7 @@ export default function Buy() {
 
   useEffect(() => {
     // Check PayPal configuration
-    fetch("/api/paypal/status")
+    fetch("/api/paypal/status", { credentials: "include" })
       .then((r) => r.json())
       .then((d) => {
         setPaypalConfigured(!!d?.configured);

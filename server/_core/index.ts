@@ -40,6 +40,15 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  // Force HTTPS redirect in production (handles Cloudflare and direct HTTP)
+  app.use((req, res, next) => {
+    const proto = req.headers["x-forwarded-proto"];
+    const isHttps = proto === "https" || (Array.isArray(proto) && proto[0] === "https");
+    if (process.env.NODE_ENV === "production" && !isHttps) {
+      return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);
+    }
+    return next();
+  });
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));

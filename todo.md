@@ -1455,3 +1455,7 @@
 - [x] הוספת לוגים — גילוי: Manus OAuth cookie לא נשלח ל-Express routes
 - [x] פתרון: המרת create-order ו-capture-order ל-tRPC procedures (תמיכה מלאה ב-Manus OAuth)
 - [x] עדכון BuySuccess.tsx להשתמש ב-tRPC captureOrder mutation
+## תיקון PayPal על dxfai.net - מרץ 2026
+- [ ] תיקון: דרך dxfai.net PayPal מציג רק התחברות (לא אפשרות כרטיס) — Manus OAuth cookie לא עובד על custom domain
+## תיקון בדיקת הרשמה ב-AI Create - מרץ 2026
+- [x] תיקון: משתמש רשום ומחובר מקבל הודעה "צריך להירשם" כשמנסה להשתמש ב-AI Create — תוקן: credentials:include בכל fetch calls + HTTPS redirect + tokens.balance תומך ב-Manus OAuth

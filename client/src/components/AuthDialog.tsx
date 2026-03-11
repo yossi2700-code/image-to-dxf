@@ -138,6 +138,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
       const res = await fetch("/api/app-auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, origin: window.location.origin }),
       });
       const data = await res.json();
@@ -179,6 +180,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(body),
       });
       const data = await res.json();

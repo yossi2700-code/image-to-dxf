@@ -120,7 +120,7 @@ export default function Account() {
 
   // Load user on mount
   useEffect(() => {
-    fetch("/api/app-auth/me")
+    fetch("/api/app-auth/me", { credentials: "include" })
       .then((r) => r.json())
       .then((d) => {
         setUser(d.user ?? null);
@@ -130,7 +130,7 @@ export default function Account() {
   }, []);
 
   const handleLogout = async () => {
-    await fetch("/api/app-auth/logout", { method: "POST" });
+    await fetch("/api/app-auth/logout", { method: "POST", credentials: "include" });
     localStorage.removeItem("app_user_logged_in");
     window.location.href = "/";
   };
@@ -150,6 +150,7 @@ export default function Account() {
       const res = await fetch("/api/app-auth/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }),
       });
       const data = await res.json();
@@ -174,6 +175,7 @@ export default function Account() {
       const res = await fetch("/api/app-auth/update-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ name: displayName.trim() }),
       });
       const data = await res.json();

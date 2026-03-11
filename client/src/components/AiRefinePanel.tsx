@@ -50,6 +50,7 @@ export function AiRefinePanel({ imageUrl, originalPrompt, onRefined }: AiRefineP
     fetch("/api/ai-suggestions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ originalPrompt: originalPrompt.trim(), lang }),
     })
       .then((r) => r.json())
@@ -82,6 +83,7 @@ export function AiRefinePanel({ imageUrl, originalPrompt, onRefined }: AiRefineP
       const response = await fetch("/api/ai-refine", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           imageUrl,
           instruction: instruction.trim(),

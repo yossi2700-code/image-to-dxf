@@ -1,0 +1,130 @@
+{
+  "query": "\nSELECT 'app_users' as tbl, COLUMN_NAME, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'app_users'\nUNION ALL\nSELECT 'users' as tbl, COLUMN_NAME, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'users'\nORDER BY tbl, COLUMN_NAME;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT 'app_users' as tbl, COLUMN_NAME, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'app_users'\nUNION ALL\nSELECT 'users' as tbl, COLUMN_NAME, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'users'\nORDER BY tbl, COLUMN_NAME;\n",
+  "rows": [
+    {
+      "tbl": "app_users",
+      "COLUMN_NAME": "createdAt",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO"
+    },
+    {
+      "tbl": "app_users",
+      "COLUMN_NAME": "email",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO"
+    },
+    {
+      "tbl": "app_users",
+      "COLUMN_NAME": "emailVerified",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO"
+    },
+    {
+      "tbl": "app_users",
+      "COLUMN_NAME": "googleId",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES"
+    },
+    {
+      "tbl": "app_users",
+      "COLUMN_NAME": "id",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO"
+    },
+    {
+      "tbl": "app_users",
+      "COLUMN_NAME": "isBlocked",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO"
+    },
+    {
+      "tbl": "app_users",
+      "COLUMN_NAME": "lastLoginAt",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO"
+    },
+    {
+      "tbl": "app_users",
+      "COLUMN_NAME": "maxActions",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "YES"
+    },
+    {
+      "tbl": "app_users",
+      "COLUMN_NAME": "name",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES"
+    },
+    {
+      "tbl": "app_users",
+      "COLUMN_NAME": "passwordHash",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "YES"
+    },
+    {
+      "tbl": "app_users",
+      "COLUMN_NAME": "tokenBalance",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO"
+    },
+    {
+      "tbl": "users",
+      "COLUMN_NAME": "createdAt",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO"
+    },
+    {
+      "tbl": "users",
+      "COLUMN_NAME": "email",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES"
+    },
+    {
+      "tbl": "users",
+      "COLUMN_NAME": "id",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO"
+    },
+    {
+      "tbl": "users",
+      "COLUMN_NAME": "lastSignedIn",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO"
+    },
+    {
+      "tbl": "users",
+      "COLUMN_NAME": "loginMethod",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES"
+    },
+    {
+      "tbl": "users",
+      "COLUMN_NAME": "name",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "YES"
+    },
+    {
+      "tbl": "users",
+      "COLUMN_NAME": "openId",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO"
+    },
+    {
+      "tbl": "users",
+      "COLUMN_NAME": "role",
+      "DATA_TYPE": "enum",
+      "IS_NULLABLE": "NO"
+    },
+    {
+      "tbl": "users",
+      "COLUMN_NAME": "updatedAt",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO"
+    }
+  ],
+  "messages": [],
+  "stdout": "tbl\tCOLUMN_NAME\tDATA_TYPE\tIS_NULLABLE\napp_users\tcreatedAt\ttimestamp\tNO\napp_users\temail\tvarchar\tNO\napp_users\temailVerified\tint\tNO\napp_users\tgoogleId\tvarchar\tYES\napp_users\tid\tint\tNO\napp_users\tisBlocked\tint\tNO\napp_users\tlastLoginAt\ttimestamp\tNO\napp_users\tmaxActions\tint\tYES\napp_users\tname\tvarchar\tYES\napp_users\tpasswordHash\ttext\tYES\napp_users\ttokenBalance\tint\tNO\nusers\tcreatedAt\ttimestamp\tNO\nusers\temail\tvarchar\tYES\nusers\tid\tint\tNO\nusers\tlastSignedIn\ttimestamp\tNO\nusers\tloginMethod\tvarchar\tYES\nusers\tname\ttext\tYES\nusers\topenId\tvarchar\tNO\nusers\trole\tenum\tNO\nusers\tupdatedAt\ttimestamp\tNO\n",
+  "stderr": "",
+  "execution_time_ms": 1532
+}

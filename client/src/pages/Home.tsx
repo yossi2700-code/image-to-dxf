@@ -1820,11 +1820,14 @@ export default function Home() {
     setLimitReached(reason === "limit");
     setAuthOpen(true);
   };
-  const { data: tokenData, refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: !!appUser, refetchInterval: 30000 });
+  // Note: useAuth is imported from _core hooks for Manus OAuth support
+  const manusAuthData = trpc.auth.me.useQuery();
+  const manusUser = manusAuthData.data;
+  const { data: tokenData, refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: !!appUser || !!manusUser, refetchInterval: 30000 });
   const tokenBalance = tokenData?.balance ?? 0;
 
   useEffect(() => {
-    fetch("/api/app-auth/me")
+    fetch("/api/app-auth/me", { credentials: "include" })
       .then((r) => r.json())
       .then((d) => {
         if (d.user) {
@@ -1857,7 +1860,7 @@ export default function Home() {
   }, [userMenuOpen]);
 
   const handleLogout = async () => {
-    await fetch("/api/app-auth/logout", { method: "POST" });
+    await fetch("/api/app-auth/logout", { method: "POST", credentials: "include" });
     localStorage.removeItem("app_user_logged_in");
     setAppUser(null);
     toast.success(t("loggedOutSuccess"));

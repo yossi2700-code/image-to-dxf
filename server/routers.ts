@@ -611,24 +611,49 @@ export const appRouter = router({
     }),
   }),
 
-  /** Token balance for the logged-in user */
+   /** Token balance for the logged-in user */
   tokens: router({
     balance: publicProcedure.query(async ({ ctx }) => {
+      // Try app_user_session cookie first
       const appUser = getAppUserFromCookie(
         (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
       );
-      if (!appUser) return { balance: 0, loggedIn: false };
-      const balance = await getTokenBalance(appUser.userId);
-      return { balance, loggedIn: true };
+      if (appUser) {
+        const balance = await getTokenBalance(appUser.userId);
+        return { balance, loggedIn: true };
+      }
+      // Fallback: Manus OAuth user
+      if (ctx.user?.email) {
+        const db = await getDb();
+        if (!db) return { balance: 0, loggedIn: false };
+        const [existingAppUser] = await db
+          .select({ id: appUsers.id })
+          .from(appUsers)
+          .where(eq(appUsers.email, ctx.user.email));
+        if (!existingAppUser) return { balance: 0, loggedIn: true };
+        const balance = await getTokenBalance(existingAppUser.id);
+        return { balance, loggedIn: true };
+      }
+      return { balance: 0, loggedIn: false };
     }),
-
     /** Transaction history for the logged-in user */
     history: publicProcedure.query(async ({ ctx }) => {
       const appUser = getAppUserFromCookie(
         (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
       );
-      if (!appUser) return [];
-      return getTokenTransactions(appUser.userId, 50);
+      if (appUser) return getTokenTransactions(appUser.userId, 50);
+      // Fallback: Manus OAuth user
+      if (ctx.user?.email) {
+        const db = await getDb();
+        if (!db) return [];
+        const [existingAppUser] = await db
+          .select({ id: appUsers.id })
+          .from(appUsers)
+          .where(eq(appUsers.email, ctx.user.email));
+        if (!existingAppUser) return [];
+        return getTokenTransactions(existingAppUser.id, 50);
+      }
+      return [];
     }),
   }),
 
