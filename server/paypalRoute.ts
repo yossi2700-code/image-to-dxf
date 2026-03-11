@@ -125,46 +125,44 @@ router.post("/api/paypal/capture-order", async (req, res) => {
     if (!authUser) return res.status(401).json({ error: "לא מחובר" });
     const user = { id: authUser.userId, email: authUser.email };
 
-    const { orderId } = req.body as { orderId?: string };
-    if (!orderId) return res.status(400).json({ error: "orderId נדרש" });
+    // Support both 'orderId' and 'token' (PayPal returns 'token' in the redirect URL)
+    const { orderId, token, payerId } = req.body as { orderId?: string; token?: string; payerId?: string };
+    const resolvedOrderId = orderId || token;
+    if (!resolvedOrderId) return res.status(400).json({ error: "orderId נדרש" });
+    const finalOrderId = resolvedOrderId;
 
     const db = await getDb();
     if (!db) return res.status(500).json({ error: "שגיאת מסד נתונים" });
 
-    const [dbOrder] = await db
+      const [dbOrder] = await db
       .select()
       .from(paypalOrders)
-      .where(eq(paypalOrders.paypalOrderId, orderId));
-
+      .where(eq(paypalOrders.paypalOrderId, finalOrderId));
     if (!dbOrder) return res.status(404).json({ error: "הזמנה לא נמצאה" });
     if (dbOrder.appUserId !== user.id) return res.status(403).json({ error: "אין הרשאה" });
     if (dbOrder.status === "completed") {
       return res.json({ success: true, alreadyCaptured: true, tokens: dbOrder.tokenAmount });
     }
-
-    const capture = await capturePayPalOrder(orderId);
-
+    const capture = await capturePayPalOrder(finalOrderId);
     if (capture.status !== "COMPLETED") {
       await db
         .update(paypalOrders)
         .set({ status: "failed" })
-        .where(eq(paypalOrders.paypalOrderId, orderId));
+        .where(eq(paypalOrders.paypalOrderId, finalOrderId));
       return res.status(400).json({ error: `תשלום נכשל: ${capture.status}` });
     }
-
     if (!dbOrder.tokensCredited) {
       await addTokens(
         user.id,
         dbOrder.tokenAmount,
         "paypal_purchase",
-        `PayPal order ${orderId} — ${dbOrder.tokenAmount} tokens`
+        `PayPal order ${finalOrderId} — ${dbOrder.tokenAmount} tokens`
       );
     }
-
     await db
       .update(paypalOrders)
       .set({ status: "completed", tokensCredited: 1, completedAt: new Date() })
-      .where(eq(paypalOrders.paypalOrderId, orderId));
+      .where(eq(paypalOrders.paypalOrderId, finalOrderId));
 
     // Send purchase confirmation email (fire-and-forget)
     try {
@@ -183,7 +181,7 @@ router.post("/api/paypal/capture-order", async (req, res) => {
           tokens: dbOrder.tokenAmount,
           amount: dbOrder.priceAmount,
           currency: dbOrder.currency,
-          orderId,
+          orderId: finalOrderId,
           siteUrl: origin,
           language: lang,
         });
@@ -194,12 +192,12 @@ router.post("/api/paypal/capture-order", async (req, res) => {
     // Notify owner about new purchase (fire-and-forget)
     void notifyOwner({
       title: `💰 רכישה חדשה — ${dbOrder.tokenAmount} אסימונים`,
-      content: `לקוח רכש ${dbOrder.tokenAmount} אסימונים תמורת ${dbOrder.priceAmount} ${dbOrder.currency}.\nמזהה הזמנה: ${orderId}`,
+      content: `לקוח רכש ${dbOrder.tokenAmount} אסימונים תמורת ${dbOrder.priceAmount} ${dbOrder.currency}.\nמזהה הזמנה: ${finalOrderId}`,
     }).catch(() => {});
     return res.json({
       success: true,
       tokens: dbOrder.tokenAmount,
-      orderId,
+      orderId: finalOrderId,
       packageId: dbOrder.packageId,
       amount: dbOrder.priceAmount,
       currency: dbOrder.currency,
