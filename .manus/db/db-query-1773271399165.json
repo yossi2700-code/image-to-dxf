@@ -1,0 +1,28 @@
+{
+  "query": "\nSELECT u.id, u.name, u.email, u.tokenBalance, u.createdAt, u.lastLoginAt,\n       COUNT(a.id) as actionCount\nFROM app_users u\nLEFT JOIN user_actions a ON a.appUserId = u.id\nGROUP BY u.id\nORDER BY u.createdAt DESC\nLIMIT 2;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT u.id, u.name, u.email, u.tokenBalance, u.createdAt, u.lastLoginAt,\n       COUNT(a.id) as actionCount\nFROM app_users u\nLEFT JOIN user_actions a ON a.appUserId = u.id\nGROUP BY u.id\nORDER BY u.createdAt DESC\nLIMIT 2;\n",
+  "rows": [
+    {
+      "id": "720001",
+      "name": "Ronel peretz",
+      "email": "ronel037@gmail.com",
+      "tokenBalance": "20",
+      "createdAt": "2026-03-11 20:52:48",
+      "lastLoginAt": "2026-03-11 20:52:48",
+      "actionCount": "0"
+    },
+    {
+      "id": "690001",
+      "name": "יעקב עמור",
+      "email": "yaakov20026@gmail.com",
+      "tokenBalance": "15",
+      "createdAt": "2026-03-11 16:35:38",
+      "lastLoginAt": "2026-03-11 16:35:38",
+      "actionCount": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\ttokenBalance\tcreatedAt\tlastLoginAt\tactionCount\n720001\tRonel peretz\tronel037@gmail.com\t20\t2026-03-11 20:52:48\t2026-03-11 20:52:48\t0\n690001\tיעקב עמור\tyaakov20026@gmail.com\t15\t2026-03-11 16:35:38\t2026-03-11 16:35:38\t0\n",
+  "stderr": "",
+  "execution_time_ms": 1596
+}

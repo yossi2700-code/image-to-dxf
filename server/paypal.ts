@@ -54,7 +54,6 @@ export interface CreateOrderParams {
   userId: number;
   returnUrl: string;
   cancelUrl: string;
-  paymentMethod?: "paypal" | "card"; // "card" = show card form directly
 }
 
 export interface PayPalOrderResponse {
@@ -66,59 +65,35 @@ export interface PayPalOrderResponse {
 export async function createPayPalOrder(params: CreateOrderParams): Promise<PayPalOrderResponse> {
   const token = await getAccessToken();
 
-  // For card flow: use application_context with LOGIN_PAGE=NO to show card fields.
-  // For PayPal flow: use payment_source.paypal with GUEST_CHECKOUT.
-  const isCard = params.paymentMethod === "card";
-
-  const body = isCard
-    ? {
-        intent: "CAPTURE",
-        purchase_units: [
-          {
-            reference_id: `${params.packageId}_${params.userId}`,
-            description: `${params.tokens} Design Tokens — dxfai.net`,
-            amount: { currency_code: params.currency, value: params.amount },
-            custom_id: String(params.userId),
-          },
-        ],
-        // application_context without payment_source = PayPal shows its standard
-        // checkout page where the user can choose card or PayPal account.
-        // Setting landing_page=BILLING skips the PayPal login and shows card form.
-        application_context: {
+  const body = {
+    intent: "CAPTURE",
+    purchase_units: [
+      {
+        reference_id: `${params.packageId}_${params.userId}`,
+        description: `${params.tokens} Design Tokens — dxfai.net`,
+        amount: {
+          currency_code: params.currency,
+          value: params.amount,
+        },
+        custom_id: String(params.userId),
+      },
+    ],
+    // Use the new payment_source.paypal.experience_context (application_context is deprecated)
+    payment_source: {
+      paypal: {
+        experience_context: {
           brand_name: "DXF AI",
-          locale: "he-IL",
-          landing_page: "BILLING",
+          locale: "en-US",
+          landing_page: "GUEST_CHECKOUT",
           user_action: "PAY_NOW",
           return_url: params.returnUrl,
           cancel_url: params.cancelUrl,
+          payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
           shipping_preference: "NO_SHIPPING",
         },
-      }
-    : {
-        intent: "CAPTURE",
-        purchase_units: [
-          {
-            reference_id: `${params.packageId}_${params.userId}`,
-            description: `${params.tokens} Design Tokens — dxfai.net`,
-            amount: { currency_code: params.currency, value: params.amount },
-            custom_id: String(params.userId),
-          },
-        ],
-        payment_source: {
-          paypal: {
-            experience_context: {
-              brand_name: "DXF AI",
-              locale: "he-IL",
-              landing_page: "LOGIN",
-              user_action: "PAY_NOW",
-              return_url: params.returnUrl,
-              cancel_url: params.cancelUrl,
-              payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
-              shipping_preference: "NO_SHIPPING",
-            },
-          },
-        },
-      };
+      },
+    },
+  };
 
   const res = await fetch(`${BASE_URL}/v2/checkout/orders`, {
     method: "POST",

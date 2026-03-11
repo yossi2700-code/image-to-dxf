@@ -1,0 +1,28 @@
+{
+  "query": "SELECT id, name, email, tokenBalance, isBlocked, createdAt, lastLoginAt FROM app_users ORDER BY createdAt DESC LIMIT 2;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, name, email, tokenBalance, isBlocked, createdAt, lastLoginAt FROM app_users ORDER BY createdAt DESC LIMIT 2;",
+  "rows": [
+    {
+      "id": "720001",
+      "name": "Ronel peretz",
+      "email": "ronel037@gmail.com",
+      "tokenBalance": "20",
+      "isBlocked": "0",
+      "createdAt": "2026-03-11 20:52:48",
+      "lastLoginAt": "2026-03-11 20:52:48"
+    },
+    {
+      "id": "690001",
+      "name": "יעקב עמור",
+      "email": "yaakov20026@gmail.com",
+      "tokenBalance": "15",
+      "isBlocked": "0",
+      "createdAt": "2026-03-11 16:35:38",
+      "lastLoginAt": "2026-03-11 16:35:38"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\ttokenBalance\tisBlocked\tcreatedAt\tlastLoginAt\n720001\tRonel peretz\tronel037@gmail.com\t20\t0\t2026-03-11 20:52:48\t2026-03-11 20:52:48\n690001\tיעקב עמור\tyaakov20026@gmail.com\t15\t0\t2026-03-11 16:35:38\t2026-03-11 16:35:38\n",
+  "stderr": "",
+  "execution_time_ms": 1480
+}

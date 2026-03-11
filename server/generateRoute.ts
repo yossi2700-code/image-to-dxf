@@ -314,6 +314,8 @@ async function runGenerateJob(
     console.error("[generateRoute] Job error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     updateJob(jobId, { status: "error", error: message });
+    // Refund tokens on error
+    try { await addTokens(appUserId, TOKEN_COSTS["ai_generate"], "refund", "Job error — tokens refunded"); } catch (_) { /* ignore */ }
   }
 }
 

@@ -1459,10 +1459,3 @@
 - [ ] תיקון: דרך dxfai.net PayPal מציג רק התחברות (לא אפשרות כרטיס) — Manus OAuth cookie לא עובד על custom domain
 ## תיקון בדיקת הרשמה ב-AI Create - מרץ 2026
 - [x] תיקון: משתמש רשום ומחובר מקבל הודעה "צריך להירשם" כשמנסה להשתמש ב-AI Create — תוקן: credentials:include בכל fetch calls + HTTPS redirect + tokens.balance תומך ב-Manus OAuth
-## תיקון PayPal כפתור כרטיס לא מופיע תמיד - מרץ 2026
-- [x] הוספת enable-funding=card ל-SDK URL כדי לאלץ הצגת כרטיס תמיד
-## תיקון PayPal כרטיס - isEligible false - מרץ 2026
-- [x] תיקון: כפתור כרטיס מציג שגיאה כי isEligible() מחזיר false — נוסף fallback ל-PayPal Checkout עם כרטיס בתוך
-## שיפור UX טופס כרטיס אשראי - מרץ 2026
-- [ ] לחיצה על "כרטיס אשראי" תפתח ישר את הטופס ללא כפתור PayPal נוסף
-- [ ] עיצוב מקצועי ואמין לטופס פרטי כרטיס אשראי

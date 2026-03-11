@@ -665,7 +665,6 @@ export const appRouter = router({
         currency: z.string().default("USD"),
         termsAccepted: z.boolean(),
         origin: z.string().optional(),
-        paymentMethod: z.enum(["paypal", "card"]).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         if (!input.termsAccepted) throw new TRPCError({ code: "BAD_REQUEST", message: "יש לאשר את תנאי הרכישה" });
@@ -731,7 +730,6 @@ export const appRouter = router({
           userId: appUserId,
           returnUrl: `${safeOrigin}/buy/success`,
           cancelUrl: `${safeOrigin}/buy?cancelled=1`,
-          paymentMethod: input.paymentMethod,
         });
         await db.insert(paypalOrders).values({
           appUserId,
@@ -752,24 +750,23 @@ export const appRouter = router({
     captureOrder: publicProcedure
       .input(z.object({ orderId: z.string() }))
       .mutation(async ({ ctx, input }) => {
+        let appUserId: number;
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-        // Find the order first — if it exists in DB, PayPal already approved it
-        const [dbOrder] = await db.select().from(paypalOrders).where(eq(paypalOrders.paypalOrderId, input.orderId));
-        if (!dbOrder) throw new TRPCError({ code: "NOT_FOUND", message: "הזמנה לא נמצאה" });
-        // Resolve appUserId from auth (optional — order ownership is verified below)
-        let appUserId: number = dbOrder.appUserId;
         if (ctx.user?.email) {
           const [existingAppUser] = await db
-            .select({ id: appUsers.id })
+            .select({ id: appUsers.id, email: appUsers.email })
             .from(appUsers)
             .where(eq(appUsers.email, ctx.user.email));
-          if (existingAppUser) appUserId = existingAppUser.id;
+          if (!existingAppUser) throw new TRPCError({ code: "UNAUTHORIZED", message: "לא מחובר" });
+          appUserId = existingAppUser.id;
         } else {
           const cookieUser = getAppUserFromCookie((ctx.req as { cookies?: Record<string, string> }).cookies ?? {});
-          if (cookieUser) appUserId = cookieUser.userId;
+          if (!cookieUser) throw new TRPCError({ code: "UNAUTHORIZED", message: "לא מחובר" });
+          appUserId = cookieUser.userId;
         }
-        // Security: ensure the resolved user owns this order
+        const [dbOrder] = await db.select().from(paypalOrders).where(eq(paypalOrders.paypalOrderId, input.orderId));
+        if (!dbOrder) throw new TRPCError({ code: "NOT_FOUND", message: "הזמנה לא נמצאה" });
         if (dbOrder.appUserId !== appUserId) throw new TRPCError({ code: "FORBIDDEN", message: "אין הרשאה" });
         if (dbOrder.status === "completed") {
           return { success: true, alreadyCaptured: true, tokens: dbOrder.tokenAmount, orderId: input.orderId, packageId: dbOrder.packageId, amount: dbOrder.priceAmount, currency: dbOrder.currency, newBalance: await getTokenBalance(appUserId) };

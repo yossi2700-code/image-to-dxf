@@ -509,6 +509,8 @@ async function runTraceJob(
     console.error("[aiTraceRoute] Job error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     updateJob(jobId, { status: "error", error: message });
+    // Refund tokens on error
+    try { await addTokens(appUserId, TOKEN_COSTS["ai_trace"], "refund", "Job error — tokens refunded"); } catch (_) { /* ignore */ }
   }
 }
 

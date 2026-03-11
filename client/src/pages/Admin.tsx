@@ -156,12 +156,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const { data: daily, isLoading: dailyLoading } = trpc.admin.dailyActivity.useQuery();
   const { data: recent, isLoading: recentLoading } = trpc.admin.recentEvents.useQuery();
   const { data: registeredUsers, isLoading: usersLoading, refetch: refetchUsers } = trpc.admin.usersWithTokens.useQuery();
+  const { data: userActionsData, isLoading: actionsLoading } = trpc.admin.userActions.useQuery();
   const [expandedUser, setExpandedUser] = useState<number | null>(null);
-  // Per-user actions loaded on demand when a user row is expanded
-  const { data: userActionsData, isLoading: actionsLoading } = trpc.admin.userActionsByUser.useQuery(
-    { userId: expandedUser ?? 0 },
-    { enabled: expandedUser !== null }
-  );
   const [editingLimit, setEditingLimit] = useState<number | null>(null);
   const [limitInput, setLimitInput] = useState("");
   const [addingTokensUser, setAddingTokensUser] = useState<number | null>(null);
@@ -625,20 +621,13 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             {u.isBlocked ? <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">חסום</span> : null}
                           </div>
                           <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground mt-0.5">
-                            <span>נרשם: {new Date(u.createdAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}</span>
-                            {u.lastLoginAt && <span>כניסה אחרונה: {new Date(u.lastLoginAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}</span>}
-                            {lastAction && (() => {
-                              const diffMs = Date.now() - new Date(lastAction.createdAt).getTime();
-                              const diffMin = Math.round(diffMs / 60000);
-                              const diffHr = Math.round(diffMs / 3600000);
-                              const diffDay = Math.round(diffMs / 86400000);
-                              const agoStr = diffMin < 60 ? `לפני ${diffMin} דקות` : diffHr < 24 ? `לפני ${diffHr} שעות` : diffDay < 7 ? `לפני ${diffDay} ימים` : new Date(lastAction.createdAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" });
-                              return (
-                                <span className="text-slate-500">
-                                  פעולה אחרונה: <span className="font-medium text-slate-700">{actionLabel ?? lastAction.actionType}</span> — {agoStr}
-                                </span>
-                              );
-                            })()}
+                            <span>נרשם: {new Date(u.createdAt).toLocaleDateString("he-IL")}</span>
+                            {u.lastLoginAt && <span>כניסה: {new Date(u.lastLoginAt).toLocaleDateString("he-IL")}</span>}
+                            {lastAction && (
+                              <span className="text-slate-500">
+                                פעולה אחרונה: <span className="font-medium text-slate-700">{actionLabel}</span> לפני {Math.round((Date.now() - new Date(lastAction.createdAt).getTime()) / 60000)} דקות
+                              </span>
+                            )}
                             {lastPurchase && (
                               <span className="text-green-600 font-medium">רכישה: {lastPurchase.packageId} ({lastPurchase.priceAmount} {lastPurchase.currency})</span>
                             )}
@@ -730,7 +719,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       </button>
                       {/* Expanded actions */}
                       {isExpanded && (() => {
-                        const userActs = userActionsData ?? [];
+                        const userActs = userActionsData?.filter((a) => a.appUserId === u.id) ?? [];
                         return (
                         <div className="border-t bg-muted/20 px-3 py-2">
                           {actionsLoading ? (
