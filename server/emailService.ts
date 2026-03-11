@@ -227,7 +227,7 @@ export async function sendPurchaseConfirmationEmail(opts: {
       <!-- Token badge -->
       <div style="background: #f0fdf4; border-bottom: 1px solid #bbf7d0; padding: 24px 32px; text-align: center;">
         <div style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border-radius: 50px; padding: 12px 32px; font-size: 22px; font-weight: 900; box-shadow: 0 4px 16px rgba(99,102,241,0.35);">
-          ✨ +${opts.tokens} אסימונים
+          ✨ +<span style="background: linear-gradient(to bottom, #fde68a, #f59e0b, #d97706); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 28px; font-weight: 900;">${opts.tokens}</span> אסימונים
         </div>
         <p style="color: #065f46; font-size: 13px; margin: 10px 0 0;">זמינים עכשיו בחשבונך</p>
       </div>
@@ -295,7 +295,7 @@ export async function sendPurchaseConfirmationEmail(opts: {
       </div>
       <div style="background: #f0fdf4; border-bottom: 1px solid #bbf7d0; padding: 24px 32px; text-align: center;">
         <div style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border-radius: 50px; padding: 12px 32px; font-size: 22px; font-weight: 900; box-shadow: 0 4px 16px rgba(99,102,241,0.35);">
-          ✨ +${opts.tokens} tokens
+          ✨ +<span style="background: linear-gradient(to bottom, #fde68a, #f59e0b, #d97706); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 28px; font-weight: 900;">${opts.tokens}</span> tokens
         </div>
         <p style="color: #065f46; font-size: 13px; margin: 10px 0 0;">Available now in your account</p>
       </div>

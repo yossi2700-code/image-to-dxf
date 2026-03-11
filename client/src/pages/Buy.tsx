@@ -492,7 +492,7 @@ export default function Buy() {
                     />
                   </div>
                 )}
-                <div className="text-6xl font-black mb-1 tabular-nums">{p.tokens}</div>
+                <div className="text-6xl font-black mb-1 tabular-nums bg-gradient-to-b from-yellow-300 via-amber-400 to-orange-400 bg-clip-text text-transparent drop-shadow-lg">{p.tokens}</div>
                 <div className="text-blue-200 text-sm mb-5 uppercase tracking-widest">{t("buyTokensCount")}</div>
                 {discountedPrice ? (
                   <div className="mb-1">
