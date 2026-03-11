@@ -1439,3 +1439,4 @@
 - [ ] הוספת tRPC procedure להיסטוריית רכישות (purchases.history)
 - [ ] התראת אדמין בכל רכישה מוצלחת (notifyOwner)
 - [ ] עמוד/רכיב היסטוריית רכישות באזור האישי
+- [ ] סליקה ישירה בכרטיס אשראי ללא התחברות ל-PayPal (PayPal JS SDK Smart Buttons)

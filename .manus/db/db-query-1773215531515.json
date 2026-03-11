@@ -1,0 +1,70 @@
+{
+  "query": "SELECT id, paypalOrderId, appUserId, packageId, tokenAmount, priceAmount, currency, status, tokensCredited, createdAt FROM paypal_orders WHERE appUserId = 30001 ORDER BY createdAt DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, paypalOrderId, appUserId, packageId, tokenAmount, priceAmount, currency, status, tokensCredited, createdAt FROM paypal_orders WHERE appUserId = 30001 ORDER BY createdAt DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "60004",
+      "paypalOrderId": "8Y375166FP050022W",
+      "appUserId": "30001",
+      "packageId": "tokens_100",
+      "tokenAmount": "100",
+      "priceAmount": "185.00",
+      "currency": "ILS",
+      "status": "pending",
+      "tokensCredited": "0",
+      "createdAt": "2026-03-11 07:05:05"
+    },
+    {
+      "id": "60003",
+      "paypalOrderId": "2X18258868679164S",
+      "appUserId": "30001",
+      "packageId": "tokens_100",
+      "tokenAmount": "100",
+      "priceAmount": "185.00",
+      "currency": "ILS",
+      "status": "pending",
+      "tokensCredited": "0",
+      "createdAt": "2026-03-11 05:58:36"
+    },
+    {
+      "id": "60002",
+      "paypalOrderId": "84S46198W7291791M",
+      "appUserId": "30001",
+      "packageId": "300",
+      "tokenAmount": "300",
+      "priceAmount": "150",
+      "currency": "ILS",
+      "status": "pending",
+      "tokensCredited": "0",
+      "createdAt": "2026-03-11 05:36:09"
+    },
+    {
+      "id": "60001",
+      "paypalOrderId": "8BV1425653412715E",
+      "appUserId": "30001",
+      "packageId": "tokens_50",
+      "tokenAmount": "50",
+      "priceAmount": "49",
+      "currency": "ILS",
+      "status": "pending",
+      "tokensCredited": "0",
+      "createdAt": "2026-03-11 05:35:57"
+    },
+    {
+      "id": "30002",
+      "paypalOrderId": "16D84880E8958231C",
+      "appUserId": "30001",
+      "packageId": "tokens_50",
+      "tokenAmount": "50",
+      "priceAmount": "49",
+      "currency": "ILS",
+      "status": "pending",
+      "tokensCredited": "0",
+      "createdAt": "2026-03-10 22:17:14"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tpaypalOrderId\tappUserId\tpackageId\ttokenAmount\tpriceAmount\tcurrency\tstatus\ttokensCredited\tcreatedAt\n60004\t8Y375166FP050022W\t30001\ttokens_100\t100\t185.00\tILS\tpending\t0\t2026-03-11 07:05:05\n60003\t2X18258868679164S\t30001\ttokens_100\t100\t185.00\tILS\tpending\t0\t2026-03-11 05:58:36\n60002\t84S46198W7291791M\t30001\t300\t300\t150\tILS\tpending\t0\t2026-03-11 05:36:09\n60001\t8BV1425653412715E\t30001\ttokens_50\t50\t49\tILS\tpending\t0\t2026-03-11 05:35:57\n30002\t16D84880E8958231C\t30001\ttokens_50\t50\t49\tILS\tpending\t0\t2026-03-10 22:17:14\n",
+  "stderr": "",
+  "execution_time_ms": 1547
+}

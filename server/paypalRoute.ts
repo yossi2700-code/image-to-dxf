@@ -18,6 +18,7 @@ import { sendPurchaseConfirmationEmail } from "./emailService";
 import { appUsers } from "../drizzle/schema";
 import { eq as eqDrizzle } from "drizzle-orm";
 import { notifyOwner } from "./_core/notification";
+import { getTokenBalance } from "./tokenService";
 
 const router = express.Router();
 
@@ -194,6 +195,7 @@ router.post("/api/paypal/capture-order", async (req, res) => {
       title: `💰 רכישה חדשה — ${dbOrder.tokenAmount} אסימונים`,
       content: `לקוח רכש ${dbOrder.tokenAmount} אסימונים תמורת ${dbOrder.priceAmount} ${dbOrder.currency}.\nמזהה הזמנה: ${finalOrderId}`,
     }).catch(() => {});
+    const newBalance = await getTokenBalance(user.id);
     return res.json({
       success: true,
       tokens: dbOrder.tokenAmount,
@@ -201,6 +203,7 @@ router.post("/api/paypal/capture-order", async (req, res) => {
       packageId: dbOrder.packageId,
       amount: dbOrder.priceAmount,
       currency: dbOrder.currency,
+      newBalance,
     });
   } catch (err) {
     console.error("[paypal/capture-order]", err);
