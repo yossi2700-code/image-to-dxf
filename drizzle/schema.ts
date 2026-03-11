@@ -189,18 +189,26 @@ export const paypalOrders = mysqlTable("paypal_orders", {
   paypalOrderId: varchar("paypalOrderId", { length: 64 }).notNull().unique(),
   /** Package: "tokens_50" or "tokens_100" */
   packageId: varchar("packageId", { length: 16 }).notNull(),
+  /** Legacy package key column (kept for DB compatibility) */
+  packageKey: varchar("packageKey", { length: 64 }),
   /** Number of tokens purchased */
   tokenAmount: int("tokenAmount").notNull(),
+  /** Legacy amount in cents (kept for DB compatibility) */
+  amountCents: int("amountCents"),
   /** Amount charged */
   priceAmount: varchar("priceAmount", { length: 16 }).notNull(),
   /** Currency code (USD, EUR, ILS, etc.) */
   currency: varchar("currency", { length: 8 }).notNull(),
   /** Status: pending | completed | cancelled | failed */
   status: varchar("status", { length: 16 }).notNull().default("pending"),
+  /** PayPal capture ID */
+  captureId: varchar("captureId", { length: 64 }),
   /** Whether tokens have been credited (0/1) */
   tokensCredited: int("tokensCredited").notNull().default(0),
   /** User IP (anonymized) */
   ipAnon: varchar("ipAnon", { length: 20 }),
+  /** Legacy purchase terms field */
+  purchaseTermsAccepted: int("purchaseTermsAccepted").default(0),
   /** User accepted purchase terms (0/1) */
   termsAccepted: int("termsAccepted").notNull().default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

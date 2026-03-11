@@ -1,0 +1,61 @@
+{
+  "query": "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'paypal_orders' ORDER BY ORDINAL_POSITION;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'paypal_orders' ORDER BY ORDINAL_POSITION;",
+  "rows": [
+    {
+      "COLUMN_NAME": "id"
+    },
+    {
+      "COLUMN_NAME": "paypalOrderId"
+    },
+    {
+      "COLUMN_NAME": "appUserId"
+    },
+    {
+      "COLUMN_NAME": "packageId"
+    },
+    {
+      "COLUMN_NAME": "packageKey"
+    },
+    {
+      "COLUMN_NAME": "tokenAmount"
+    },
+    {
+      "COLUMN_NAME": "amountCents"
+    },
+    {
+      "COLUMN_NAME": "currency"
+    },
+    {
+      "COLUMN_NAME": "status"
+    },
+    {
+      "COLUMN_NAME": "captureId"
+    },
+    {
+      "COLUMN_NAME": "ipAnon"
+    },
+    {
+      "COLUMN_NAME": "purchaseTermsAccepted"
+    },
+    {
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "COLUMN_NAME": "completedAt"
+    },
+    {
+      "COLUMN_NAME": "priceAmount"
+    },
+    {
+      "COLUMN_NAME": "tokensCredited"
+    },
+    {
+      "COLUMN_NAME": "termsAccepted"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\nid\npaypalOrderId\nappUserId\npackageId\npackageKey\ntokenAmount\namountCents\ncurrency\nstatus\ncaptureId\nipAnon\npurchaseTermsAccepted\ncreatedAt\ncompletedAt\npriceAmount\ntokensCredited\ntermsAccepted\n",
+  "stderr": "",
+  "execution_time_ms": 1503
+}

@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `paypal_orders` MODIFY COLUMN `packageKey` varchar(64) NULL DEFAULT NULL; ALTER TABLE `paypal_orders` MODIFY COLUMN `amountCents` int NULL DEFAULT NULL; ALTER TABLE `paypal_orders` MODIFY COLUMN `purchaseTermsAccepted` int NULL DEFAULT 0; ALTER TABLE `paypal_orders` MODIFY COLUMN `captureId` varchar(64) NULL DEFAULT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute ALTER TABLE `paypal_orders` MODIFY COLUMN `packageKey` varchar(64) NULL DEFAULT NULL; ALTER TABLE `paypal_orders` MODIFY COLUMN `amountCents` int NULL DEFAULT NULL; ALTER TABLE `paypal_orders` MODIFY COLUMN `purchaseTermsAccepted` int NULL DEFAULT 0; ALTER TABLE `paypal_orders` MODIFY COLUMN `captureId` varchar(64) NULL DEFAULT NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2691
+}
