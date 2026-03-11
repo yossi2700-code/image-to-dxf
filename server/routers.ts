@@ -665,6 +665,7 @@ export const appRouter = router({
         currency: z.string().default("USD"),
         termsAccepted: z.boolean(),
         origin: z.string().optional(),
+        paymentMethod: z.enum(["paypal", "card"]).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         if (!input.termsAccepted) throw new TRPCError({ code: "BAD_REQUEST", message: "יש לאשר את תנאי הרכישה" });
@@ -730,6 +731,7 @@ export const appRouter = router({
           userId: appUserId,
           returnUrl: `${safeOrigin}/buy/success`,
           cancelUrl: `${safeOrigin}/buy?cancelled=1`,
+          paymentMethod: input.paymentMethod,
         });
         await db.insert(paypalOrders).values({
           appUserId,

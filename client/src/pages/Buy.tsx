@@ -270,9 +270,10 @@ export default function Buy() {
         currency,
         termsAccepted: true,
         origin: window.location.origin,
+        paymentMethod: "card",
       });
       if (!data.approvalUrl) throw new Error("שגיאה ביצירת הזמנה");
-      // Redirect to PayPal checkout page (GUEST_CHECKOUT shows card form directly)
+      // Redirect to PayPal checkout page (BILLING landing page shows card form directly)
       window.location.href = data.approvalUrl;
     } catch (e) {
       setCardError(e instanceof Error ? e.message : "שגיאה ביצירת הזמנה");
