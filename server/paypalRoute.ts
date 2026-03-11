@@ -42,7 +42,10 @@ router.get("/api/paypal/status", (_req, res) => {
 
 router.post("/api/paypal/create-order", async (req, res) => {
   try {
+    const cookieKeys = Object.keys(req.cookies ?? {});
+    console.log("[paypal/create-order] cookies:", cookieKeys);
     const authUser = await getAppUserFromRequest(req, res);
+    console.log("[paypal/create-order] authUser:", authUser ? `id=${authUser.userId} email=${authUser.email}` : "null");
     if (!authUser) return res.status(401).json({ error: "התחבר כדי לרכוש אסימונים" });
     const user = { id: authUser.userId, email: authUser.email };
 

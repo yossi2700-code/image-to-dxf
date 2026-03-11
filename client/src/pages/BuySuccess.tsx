@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { trpc } from "@/lib/trpc";
 
 interface OrderDetails {
   tokens: number;
@@ -18,29 +19,31 @@ export default function BuySuccess() {
   const [showConfetti, setShowConfetti] = useState(false);
   const hasVerified = useRef(false);
 
+  const captureOrderMutation = trpc.paypal.captureOrder.useMutation();
+
   useEffect(() => {
     if (hasVerified.current) return;
     hasVerified.current = true;
 
     const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-    const payerId = params.get("PayerID");
+    // Support both ?token=... (PayPal redirect flow) and ?orderId=... (Smart Buttons flow)
+    const orderId = params.get("token") ?? params.get("orderId");
 
-    if (!token) {
+    if (!orderId) {
       setStatus("failed");
       return;
     }
 
-    fetch("/api/paypal/capture-order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ token, payerId }),
-    })
-      .then((r) => r.json())
+    captureOrderMutation.mutateAsync({ orderId })
       .then((data) => {
         if (data.success) {
-          setOrder(data);
+          setOrder({
+            tokens: data.tokens,
+            amount: data.amount,
+            currency: data.currency,
+            orderId: data.orderId,
+            newBalance: data.newBalance,
+          });
           setStatus("success");
           setTimeout(() => setShowConfetti(true), 100);
         } else {

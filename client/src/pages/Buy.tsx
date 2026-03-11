@@ -220,6 +220,11 @@ export default function Buy() {
   const { data: dbPrices, isLoading: pricesLoading } = trpc.packages.prices.useQuery();
   // קריאת הגדרות יצירת קשר
   const { data: contactSettings } = trpc.admin.getContactSettings.useQuery();
+  // Manus OAuth auth check (primary)
+  const { data: manusUser } = trpc.auth.me.useQuery();
+  // tRPC mutations for PayPal
+  const createOrderMutation = trpc.paypal.createOrder.useMutation();
+  const captureOrderMutation = trpc.paypal.captureOrder.useMutation();
 
   // מטבעות פעילים — מבוסס על enabledCurrencies של החבילה הראשונה (או כולם אם לא הוגדר)
   const activeCurrencies = dbPrices && dbPrices.length > 0 && dbPrices[0].enabledCurrencies
@@ -244,7 +249,7 @@ export default function Buy() {
       })
       .catch(() => setPaypalConfigured(false));
 
-    // Check auth & balance
+    // Check auth & balance (app_user_session cookie)
     fetch("/api/app-auth/me", { credentials: "include" })
       .then((r) => r.json())
       .then((d) => {
@@ -253,6 +258,12 @@ export default function Buy() {
       })
       .catch(() => setIsLoggedIn(false));
   }, []);
+  // Also set isLoggedIn from Manus OAuth if available
+  useEffect(() => {
+    if (manusUser && !isLoggedIn) {
+      setIsLoggedIn(true);
+    }
+  }, [manusUser]);
 
   // PayPal Smart Buttons — load SDK and render card-only button
   useEffect(() => {
@@ -291,32 +302,25 @@ export default function Buy() {
             height: 50,
           },
           createOrder: async () => {
-            const res = await fetch("/api/paypal/create-order", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify({ packageId: selectedPackage, currency, termsAccepted: true, origin: window.location.origin }),
+            const data = await createOrderMutation.mutateAsync({
+              packageId: selectedPackage,
+              currency,
+              termsAccepted: true,
+              origin: window.location.origin,
             });
-            const data = await res.json() as { orderId?: string; error?: string };
-            if (!data.orderId) throw new Error(data.error ?? "שגיאה ביצירת הזמנה");
+            if (!data.orderId) throw new Error("שגיאה ביצירת הזמנה");
             return data.orderId;
           },
           onApprove: async (approveData: { orderID: string }) => {
             setCardLoading(true);
             setCardError(null);
             try {
-              const captureRes = await fetch("/api/paypal/capture-order", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ orderId: approveData.orderID }),
-              });
-              const captureData = await captureRes.json() as { success?: boolean; tokens?: number; newBalance?: number; error?: string };
+              const captureData = await captureOrderMutation.mutateAsync({ orderId: approveData.orderID });
               if (captureData.success) {
                 setCardSuccess(true);
                 setTimeout(() => { window.location.href = "/buy/success?orderId=" + approveData.orderID; }, 800);
               } else {
-                setCardError(captureData.error ?? "שגיאה בתשלום");
+                setCardError("שגיאה בתשלום");
               }
             } catch (e) {
               setCardError(e instanceof Error ? e.message : "שגיאה בתשלום");
@@ -379,29 +383,25 @@ export default function Buy() {
 
   async function handlePurchase() {
     if (!termsAccepted) { setError(t("buyTermsRequired")); return; }
-    if (!isLoggedIn) { setError(t("buyLoginRequired")); return; }
+    const loggedIn = isLoggedIn || !!manusUser;
+    if (!loggedIn) { setError(t("buyLoginRequired")); return; }
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/paypal/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          packageId: selectedPackage,
-          currency,
-          termsAccepted: true,
-          origin: window.location.origin,
-        }),
+      const data = await createOrderMutation.mutateAsync({
+        packageId: selectedPackage,
+        currency,
+        termsAccepted: true,
+        origin: window.location.origin,
       });
-      const data = await res.json();
-      if (!res.ok || !data.approvalUrl) {
-        setError(data.error ?? t("buyOrderError"));
+      if (!data.approvalUrl) {
+        setError(t("buyOrderError"));
         return;
       }
       window.location.href = data.approvalUrl;
-    } catch {
-      setError(t("buyOrderError"));
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : t("buyOrderError");
+      setError(msg);
     } finally {
       setLoading(false);
     }

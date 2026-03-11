@@ -1450,3 +1450,8 @@
 - [x] תיקון: שונה ל-payment_source.paypal.experience_context עם landing_page: GUEST_CHECKOUT (בדל application_context שהוא deprecated)
 ## דיבוג PayPal guest checkout - מרץ 2026
 - [x] תיקון: שינה ל-getAppUserFromRequest שתומך גם Manus OAuth בנתיבי PayPal
+## שגיאה ביצירת הזמנה - חקירה עמוקה - מרץ 2026
+- [ ] הוספת לוגים מפורטים לנתיב create-order לאיתור הסיבה המדויקת
+- [x] הוספת לוגים — גילוי: Manus OAuth cookie לא נשלח ל-Express routes
+- [x] פתרון: המרת create-order ו-capture-order ל-tRPC procedures (תמיכה מלאה ב-Manus OAuth)
+- [x] עדכון BuySuccess.tsx להשתמש ב-tRPC captureOrder mutation

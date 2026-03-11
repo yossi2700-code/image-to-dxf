@@ -13,6 +13,10 @@ import { sendPasswordResetEmail } from "./emailService";
 import { desc, eq, and, sql } from "drizzle-orm";
 import { getAppUserFromCookie } from "./appAuth";
 import { getTokenBalance, addTokens, getTokenTransactions, invalidateTokenCostsCache } from "./tokenService";
+import { createPayPalOrder, capturePayPalOrder } from "./paypal";
+import { getPackageById, getPriceForCurrency } from "./products";
+import { sendPurchaseConfirmationEmail } from "./emailService";
+import { notifyOwner } from "./_core/notification";
 
 const ADMIN_COOKIE = "admin_session";
 
@@ -626,6 +630,141 @@ export const appRouter = router({
       if (!appUser) return [];
       return getTokenTransactions(appUser.userId, 50);
     }),
+  }),
+
+  /** PayPal payment procedures — work with both Manus OAuth and app_user_session */
+  paypal: router({
+    createOrder: publicProcedure
+      .input(z.object({
+        packageId: z.string(),
+        currency: z.string().default("USD"),
+        termsAccepted: z.boolean(),
+        origin: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (!input.termsAccepted) throw new TRPCError({ code: "BAD_REQUEST", message: "יש לאשר את תנאי הרכישה" });
+        // Resolve appUser from Manus OAuth ctx.user or cookie
+        let appUserId: number;
+        let appUserEmail: string;
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "שגיאת מסד נתונים" });
+        if (ctx.user?.email) {
+          // Manus OAuth user — find or create appUser by email
+          let [existingAppUser] = await db
+            .select({ id: appUsers.id, email: appUsers.email })
+            .from(appUsers)
+            .where(eq(appUsers.email, ctx.user.email));
+          if (!existingAppUser) {
+            await db.insert(appUsers).values({
+              email: ctx.user.email,
+              name: ctx.user.name ?? null,
+              tokenBalance: 20,
+              emailVerified: 1,
+            });
+            [existingAppUser] = await db
+              .select({ id: appUsers.id, email: appUsers.email })
+              .from(appUsers)
+              .where(eq(appUsers.email, ctx.user.email!));
+          }
+          if (!existingAppUser) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "שגיאה ביצירת משתמש" });
+          appUserId = existingAppUser.id;
+          appUserEmail = existingAppUser.email;
+        } else {
+          const cookieUser = getAppUserFromCookie((ctx.req as { cookies?: Record<string, string> }).cookies ?? {});
+          if (!cookieUser) throw new TRPCError({ code: "UNAUTHORIZED", message: "התחבר כדי לרכוש אסימונים" });
+          appUserId = cookieUser.userId;
+          appUserEmail = cookieUser.email;
+        }
+        // Resolve package price
+        let resolvedAmount: string;
+        let resolvedCurrency: string;
+        let resolvedTokens: number;
+        const [dbPkg] = await db.select().from(packagePrices).where(eq(packagePrices.packageId, input.packageId));
+        if (dbPkg) {
+          resolvedTokens = dbPkg.tokenAmount;
+          const currencyMap: Record<string, string> = {
+            USD: dbPkg.priceUSD, EUR: dbPkg.priceEUR, ILS: dbPkg.priceILS,
+            GBP: dbPkg.priceGBP, AUD: dbPkg.priceAUD, CAD: dbPkg.priceCAD, JPY: dbPkg.priceJPY,
+          };
+          resolvedAmount = currencyMap[input.currency] ?? dbPkg.priceUSD;
+          resolvedCurrency = currencyMap[input.currency] ? input.currency : "USD";
+        } else {
+          const pkg = getPackageById(input.packageId);
+          if (!pkg) throw new TRPCError({ code: "BAD_REQUEST", message: "חבילה לא קיימת" });
+          const price = getPriceForCurrency(pkg, input.currency);
+          resolvedAmount = price.amount;
+          resolvedCurrency = price.currency;
+          resolvedTokens = pkg.tokens;
+        }
+        const safeOrigin = input.origin ?? "https://dxfai.net";
+        const paypalOrder = await createPayPalOrder({
+          packageId: input.packageId,
+          tokens: resolvedTokens,
+          amount: resolvedAmount,
+          currency: resolvedCurrency,
+          userId: appUserId,
+          returnUrl: `${safeOrigin}/buy/success`,
+          cancelUrl: `${safeOrigin}/buy?cancelled=1`,
+        });
+        await db.insert(paypalOrders).values({
+          appUserId,
+          paypalOrderId: paypalOrder.id,
+          packageId: input.packageId,
+          tokenAmount: resolvedTokens,
+          priceAmount: resolvedAmount,
+          currency: resolvedCurrency,
+          status: "pending",
+          tokensCredited: 0,
+          termsAccepted: 1,
+          ipAnon: "",
+        });
+        const approvalLink = paypalOrder.links.find((l) => l.rel === "approve" || l.rel === "payer-action");
+        return { orderId: paypalOrder.id, approvalUrl: approvalLink?.href };
+      }),
+
+    captureOrder: publicProcedure
+      .input(z.object({ orderId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        let appUserId: number;
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        if (ctx.user?.email) {
+          const [existingAppUser] = await db
+            .select({ id: appUsers.id, email: appUsers.email })
+            .from(appUsers)
+            .where(eq(appUsers.email, ctx.user.email));
+          if (!existingAppUser) throw new TRPCError({ code: "UNAUTHORIZED", message: "לא מחובר" });
+          appUserId = existingAppUser.id;
+        } else {
+          const cookieUser = getAppUserFromCookie((ctx.req as { cookies?: Record<string, string> }).cookies ?? {});
+          if (!cookieUser) throw new TRPCError({ code: "UNAUTHORIZED", message: "לא מחובר" });
+          appUserId = cookieUser.userId;
+        }
+        const [dbOrder] = await db.select().from(paypalOrders).where(eq(paypalOrders.paypalOrderId, input.orderId));
+        if (!dbOrder) throw new TRPCError({ code: "NOT_FOUND", message: "הזמנה לא נמצאה" });
+        if (dbOrder.appUserId !== appUserId) throw new TRPCError({ code: "FORBIDDEN", message: "אין הרשאה" });
+        if (dbOrder.status === "completed") {
+          return { success: true, alreadyCaptured: true, tokens: dbOrder.tokenAmount, orderId: input.orderId, packageId: dbOrder.packageId, amount: dbOrder.priceAmount, currency: dbOrder.currency, newBalance: await getTokenBalance(appUserId) };
+        }
+        const capture = await capturePayPalOrder(input.orderId);
+        if (capture.status !== "COMPLETED") {
+          await db.update(paypalOrders).set({ status: "failed" }).where(eq(paypalOrders.paypalOrderId, input.orderId));
+          throw new TRPCError({ code: "BAD_REQUEST", message: `תשלום נכשל: ${capture.status}` });
+        }
+        if (!dbOrder.tokensCredited) {
+          await addTokens(appUserId, dbOrder.tokenAmount, "paypal_purchase", `PayPal order ${input.orderId}`);
+        }
+        await db.update(paypalOrders).set({ status: "completed", tokensCredited: 1, completedAt: new Date() }).where(eq(paypalOrders.paypalOrderId, input.orderId));
+        try {
+          const [userRow] = await db.select({ name: appUsers.name, email: appUsers.email }).from(appUsers).where(eq(appUsers.id, appUserId));
+          if (userRow?.email) {
+            void sendPurchaseConfirmationEmail({ to: userRow.email, name: userRow.name ?? null, tokens: dbOrder.tokenAmount, amount: dbOrder.priceAmount, currency: dbOrder.currency, orderId: input.orderId, siteUrl: "https://dxfai.net", language: "he" });
+          }
+        } catch { /* ignore email errors */ }
+        void notifyOwner({ title: `💰 רכישה חדשה — ${dbOrder.tokenAmount} אסימונים`, content: `לקוח רכש ${dbOrder.tokenAmount} אסימונים תמורת ${dbOrder.priceAmount} ${dbOrder.currency}.` }).catch(() => {});
+        const newBalance = await getTokenBalance(appUserId);
+        return { success: true, tokens: dbOrder.tokenAmount, orderId: input.orderId, packageId: dbOrder.packageId, amount: dbOrder.priceAmount, currency: dbOrder.currency, newBalance };
+      }),
   }),
 
   /** Purchase history for the logged-in user */
