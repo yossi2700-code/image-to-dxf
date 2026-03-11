@@ -78,15 +78,20 @@ export async function createPayPalOrder(params: CreateOrderParams): Promise<PayP
         custom_id: String(params.userId),
       },
     ],
-    application_context: {
-      brand_name: "DXF AI",
-      locale: "en-US",
-      landing_page: "BILLING",
-      user_action: "PAY_NOW",
-      return_url: params.returnUrl,
-      cancel_url: params.cancelUrl,
-      payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
-      shipping_preference: "NO_SHIPPING",
+    // Use the new payment_source.paypal.experience_context (application_context is deprecated)
+    payment_source: {
+      paypal: {
+        experience_context: {
+          brand_name: "DXF AI",
+          locale: "en-US",
+          landing_page: "GUEST_CHECKOUT",
+          user_action: "PAY_NOW",
+          return_url: params.returnUrl,
+          cancel_url: params.cancelUrl,
+          payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
+          shipping_preference: "NO_SHIPPING",
+        },
+      },
     },
   };
 

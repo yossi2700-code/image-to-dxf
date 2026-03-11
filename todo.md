@@ -1446,3 +1446,5 @@
 - [ ] תיקון בנר מבצע בדף הבית — לא מוצג למרות שיש חבילה עם badge=sale או הנחה
 ## תיקון תשלום כרטיס אשראי ב-PayPal - מרץ 2026
 - [x] תיקון: PayPal מבקש התחברות לחשבון — שונה landing_page ל-BILLING והוסף shipping_preference=NO_SHIPPING
+## חקירה מעמיקה - PayPal guest checkout - מרץ 2026
+- [x] תיקון: שונה ל-payment_source.paypal.experience_context עם landing_page: GUEST_CHECKOUT (בדל application_context שהוא deprecated)
