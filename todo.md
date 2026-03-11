@@ -1448,3 +1448,5 @@
 - [x] תיקון: PayPal מבקש התחברות לחשבון — שונה landing_page ל-BILLING והוסף shipping_preference=NO_SHIPPING
 ## חקירה מעמיקה - PayPal guest checkout - מרץ 2026
 - [x] תיקון: שונה ל-payment_source.paypal.experience_context עם landing_page: GUEST_CHECKOUT (בדל application_context שהוא deprecated)
+## דיבוג PayPal guest checkout - מרץ 2026
+- [x] תיקון: שינה ל-getAppUserFromRequest שתומך גם Manus OAuth בנתיבי PayPal

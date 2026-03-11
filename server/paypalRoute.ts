@@ -9,7 +9,7 @@ import express from "express";
 import { getDb } from "./db";
 import { paypalOrders } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
-import { getAppUserFromCookie } from "./appAuth";
+import { getAppUserFromCookie, getAppUserFromRequest } from "./appAuth";
 import { addTokens } from "./tokenService";
 import { createPayPalOrder, capturePayPalOrder, isPayPalConfigured, getPayPalMode, getPayPalClientId } from "./paypal";
 import { getPackageById } from "./products";
@@ -42,7 +42,7 @@ router.get("/api/paypal/status", (_req, res) => {
 
 router.post("/api/paypal/create-order", async (req, res) => {
   try {
-    const authUser = getAppUserFromCookie(req.cookies);
+    const authUser = await getAppUserFromRequest(req, res);
     if (!authUser) return res.status(401).json({ error: "התחבר כדי לרכוש אסימונים" });
     const user = { id: authUser.userId, email: authUser.email };
 
@@ -122,7 +122,7 @@ router.post("/api/paypal/create-order", async (req, res) => {
 
 router.post("/api/paypal/capture-order", async (req, res) => {
   try {
-    const authUser = getAppUserFromCookie(req.cookies);
+    const authUser = await getAppUserFromRequest(req, res);
     if (!authUser) return res.status(401).json({ error: "לא מחובר" });
     const user = { id: authUser.userId, email: authUser.email };
 
@@ -213,7 +213,7 @@ router.post("/api/paypal/capture-order", async (req, res) => {
 
 router.get("/api/paypal/order/:orderId", async (req, res) => {
   try {
-    const authUser = getAppUserFromCookie(req.cookies);
+    const authUser = await getAppUserFromRequest(req, res);
     if (!authUser) return res.status(401).json({ error: "לא מחובר" });
     const user = { id: authUser.userId, email: authUser.email };
 
@@ -238,3 +238,4 @@ router.get("/api/paypal/order/:orderId", async (req, res) => {
 });
 
 export default router;
+

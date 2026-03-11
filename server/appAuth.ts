@@ -394,7 +394,62 @@ router.post("/api/app-auth/logout", (_req, res) => {
   return res.json({ success: true });
 });
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Get user from request (cookie or Manus OAuth) ────────────────────────────────────────
+
+/** Get app user from request — checks cookie first, then Manus OAuth */
+export async function getAppUserFromRequest(
+  req: import("express").Request,
+  res?: import("express").Response
+): Promise<{ userId: number; email: string } | null> {
+  // First try app_user_session cookie
+  const fromCookie = getAppUserFromCookie(req.cookies);
+  if (fromCookie) return fromCookie;
+  // Fallback: try Manus OAuth session
+  try {
+    const manusUser = await sdk.authenticateRequest(req as any);
+    if (!manusUser || !manusUser.email) return null;
+    const db = await getDb();
+    if (!db) return null;
+    let [existingAppUser] = await db
+      .select({ id: appUsers.id, email: appUsers.email })
+      .from(appUsers)
+      .where(eq(appUsers.email, manusUser.email));
+    if (!existingAppUser) {
+      await db.insert(appUsers).values({
+        email: manusUser.email,
+        name: manusUser.name ?? null,
+        tokenBalance: 20,
+        emailVerified: 1,
+      });
+      const [newUser] = await db
+        .select({ id: appUsers.id, email: appUsers.email })
+        .from(appUsers)
+        .where(eq(appUsers.email, manusUser.email));
+      existingAppUser = newUser;
+    }
+    if (!existingAppUser) return null;
+    // Auto-set cookie for subsequent requests
+    if (res) {
+      const token = jwt.sign(
+        { userId: existingAppUser.id, email: existingAppUser.email },
+        JWT_SECRET,
+        { expiresIn: "30d" }
+      );
+      res.cookie(APP_USER_COOKIE, token, {
+        httpOnly: true,
+        secure: ENV.isProduction,
+        sameSite: ENV.isProduction ? "none" : "lax",
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        path: "/",
+      });
+    }
+    return { userId: existingAppUser.id, email: existingAppUser.email };
+  } catch {
+    return null;
+  }
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────────────────────────
 
 export { ANON_DAILY_LIMIT, USER_DAILY_LIMIT, APP_USER_COOKIE };
 export default router;
