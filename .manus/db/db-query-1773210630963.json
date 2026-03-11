@@ -1,0 +1,9 @@
+{
+  "query": "\nUPDATE package_prices SET imageUrl = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/package-trial-3dhLk2Bzc6UngCHD6AvgJR.webp' WHERE id = 30003;\nUPDATE package_prices SET imageUrl = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/package-recommended-8u7ZgmoWgLDt7TiiuZxZNY.webp' WHERE id = 30004;\nUPDATE package_prices SET imageUrl = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/package-best-value-RmymCarAcHkWjJEigx4L3y.webp' WHERE id = 30008;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nUPDATE package_prices SET imageUrl = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/package-trial-3dhLk2Bzc6UngCHD6AvgJR.webp' WHERE id = 30003;\nUPDATE package_prices SET imageUrl = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/package-recommended-8u7ZgmoWgLDt7TiiuZxZNY.webp' WHERE id = 30004;\nUPDATE package_prices SET imageUrl = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/package-best-value-RmymCarAcHkWjJEigx4L3y.webp' WHERE id = 30008;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2011
+}

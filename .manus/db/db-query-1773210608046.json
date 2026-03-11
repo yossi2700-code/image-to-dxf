@@ -1,0 +1,31 @@
+{
+  "query": "SELECT id, packageId, tokenAmount, badge, imageUrl FROM package_prices ORDER BY tokenAmount ASC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, packageId, tokenAmount, badge, imageUrl FROM package_prices ORDER BY tokenAmount ASC;",
+  "rows": [
+    {
+      "id": "30003",
+      "packageId": "tokens_3",
+      "tokenAmount": "30",
+      "badge": "trial",
+      "imageUrl": "NULL"
+    },
+    {
+      "id": "30004",
+      "packageId": "tokens_1",
+      "tokenAmount": "100",
+      "badge": "recommended",
+      "imageUrl": "NULL"
+    },
+    {
+      "id": "30008",
+      "packageId": "tokens_300",
+      "tokenAmount": "300",
+      "badge": "best_value",
+      "imageUrl": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tpackageId\ttokenAmount\tbadge\timageUrl\n30003\ttokens_3\t30\ttrial\tNULL\n30004\ttokens_1\t100\trecommended\tNULL\n30008\ttokens_300\t300\tbest_value\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1484
+}
