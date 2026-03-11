@@ -263,10 +263,16 @@ export async function sendPurchaseConfirmationEmail(opts: {
         </div>
 
         <!-- CTA -->
+        <div style="text-align: center; margin-bottom: 12px;">
+          <a href="${opts.siteUrl}/personal"
+             style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 14px 36px; border-radius: 50px; text-decoration: none; font-weight: 900; font-size: 16px; box-shadow: 0 4px 16px rgba(99,102,241,0.4);">
+            🚀 עבור לאזור האישי
+          </a>
+        </div>
         <div style="text-align: center; margin-bottom: 28px;">
           <a href="${opts.siteUrl}"
-             style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 14px 36px; border-radius: 50px; text-decoration: none; font-weight: 900; font-size: 16px; box-shadow: 0 4px 16px rgba(99,102,241,0.4);">
-            🚀 התחל להמיר עכשיו
+             style="display: inline-block; color: #6366f1; padding: 8px 20px; text-decoration: none; font-size: 14px; font-weight: 600;">
+            🎨 התחל להמיר עכשיו
           </a>
         </div>
 
@@ -307,8 +313,11 @@ export async function sendPurchaseConfirmationEmail(opts: {
             <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Order ID</td><td style="padding: 8px 0; color: #9ca3af; font-size: 12px; font-family: monospace;">${opts.orderId.substring(0, 16)}...</td></tr>
           </table>
         </div>
+        <div style="text-align: center; margin-bottom: 12px;">
+          <a href="${opts.siteUrl}/personal" style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 14px 36px; border-radius: 50px; text-decoration: none; font-weight: 900; font-size: 16px; box-shadow: 0 4px 16px rgba(99,102,241,0.4);">🚀 Go to Personal Area</a>
+        </div>
         <div style="text-align: center; margin-bottom: 28px;">
-          <a href="${opts.siteUrl}" style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 14px 36px; border-radius: 50px; text-decoration: none; font-weight: 900; font-size: 16px; box-shadow: 0 4px 16px rgba(99,102,241,0.4);">🚀 Start converting now</a>
+          <a href="${opts.siteUrl}" style="display: inline-block; color: #6366f1; padding: 8px 20px; text-decoration: none; font-size: 14px; font-weight: 600;">🎨 Start converting now</a>
         </div>
         <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">Need help? Contact us anytime • <a href="${opts.siteUrl}" style="color: #6366f1; text-decoration: none;">dxfai.net</a></p>
       </div>
@@ -320,5 +329,9 @@ export async function sendPurchaseConfirmationEmail(opts: {
     to: opts.to,
     subject,
     html: isHe ? heHtml : enHtml,
+    headers: {
+      'List-Unsubscribe': `<mailto:noreply@dxfai.net?subject=unsubscribe>`,
+      'X-Entity-Ref-ID': opts.orderId,
+    },
   });
 }
