@@ -81,11 +81,12 @@ export async function createPayPalOrder(params: CreateOrderParams): Promise<PayP
     application_context: {
       brand_name: "DXF AI",
       locale: "en-US",
-      landing_page: "NO_PREFERENCE",
+      landing_page: "BILLING",
       user_action: "PAY_NOW",
       return_url: params.returnUrl,
       cancel_url: params.cancelUrl,
       payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
+      shipping_preference: "NO_SHIPPING",
     },
   };
 
