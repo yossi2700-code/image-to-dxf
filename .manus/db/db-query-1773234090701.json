@@ -1,0 +1,20 @@
+{
+  "query": "SELECT \n  COUNT(*) as total_users,\n  SUM(CASE WHEN tokenBalance = 0 THEN 1 ELSE 0 END) as zero_balance,\n  SUM(CASE WHEN tokenBalance > 0 AND tokenBalance <= 5 THEN 1 ELSE 0 END) as low_balance,\n  SUM(CASE WHEN tokenBalance > 5 THEN 1 ELSE 0 END) as good_balance,\n  SUM(CASE WHEN isBlocked = 1 THEN 1 ELSE 0 END) as blocked,\n  MIN(tokenBalance) as min_balance,\n  MAX(tokenBalance) as max_balance,\n  AVG(tokenBalance) as avg_balance\nFROM app_users;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT \n  COUNT(*) as total_users,\n  SUM(CASE WHEN tokenBalance = 0 THEN 1 ELSE 0 END) as zero_balance,\n  SUM(CASE WHEN tokenBalance > 0 AND tokenBalance <= 5 THEN 1 ELSE 0 END) as low_balance,\n  SUM(CASE WHEN tokenBalance > 5 THEN 1 ELSE 0 END) as good_balance,\n  SUM(CASE WHEN isBlocked = 1 THEN 1 ELSE 0 END) as blocked,\n  MIN(tokenBalance) as min_balance,\n  MAX(tokenBalance) as max_balance,\n  AVG(tokenBalance) as avg_balance\nFROM app_users;",
+  "rows": [
+    {
+      "total_users": "33",
+      "zero_balance": "0",
+      "low_balance": "0",
+      "good_balance": "33",
+      "blocked": "0",
+      "min_balance": "6",
+      "max_balance": "930",
+      "avg_balance": "59.2121"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_users\tzero_balance\tlow_balance\tgood_balance\tblocked\tmin_balance\tmax_balance\tavg_balance\n33\t0\t0\t33\t0\t6\t930\t59.2121\n",
+  "stderr": "",
+  "execution_time_ms": 1602
+}
