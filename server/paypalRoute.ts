@@ -17,6 +17,7 @@ import { packagePrices as packagePricesTable } from "../drizzle/schema";
 import { sendPurchaseConfirmationEmail } from "./emailService";
 import { appUsers } from "../drizzle/schema";
 import { eq as eqDrizzle } from "drizzle-orm";
+import { notifyOwner } from "./_core/notification";
 
 const router = express.Router();
 
@@ -187,10 +188,14 @@ router.post("/api/paypal/capture-order", async (req, res) => {
           language: lang,
         });
       }
-    } catch (e) {
+     } catch (e) {
       console.warn("[paypal/capture-order] Failed to send confirmation email:", e);
     }
-
+    // Notify owner about new purchase (fire-and-forget)
+    void notifyOwner({
+      title: `💰 רכישה חדשה — ${dbOrder.tokenAmount} אסימונים`,
+      content: `לקוח רכש ${dbOrder.tokenAmount} אסימונים תמורת ${dbOrder.priceAmount} ${dbOrder.currency}.\nמזהה הזמנה: ${orderId}`,
+    }).catch(() => {});
     return res.json({
       success: true,
       tokens: dbOrder.tokenAmount,
