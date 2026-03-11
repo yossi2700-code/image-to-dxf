@@ -520,7 +520,56 @@ function HeroBeforeAfterCarousel() {
   );
 }
 
-// ─── Announcement Banner ─────────────────────────────────────────────────────
+// // ─── Sale Banner ────────────────────────────────────────────────────
+function SaleBanner() {
+  const { isRtl } = useLanguage();
+  const [dismissed, setDismissed] = useState(false);
+  const { data: prices } = trpc.packages.prices.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
+
+  if (dismissed || !prices || prices.length === 0) return null;
+
+  // Find the best sale package (badge=sale first, then highest discount)
+  const salePackage = prices.find(p => p.badge === 'sale') ||
+    prices.filter(p => (p.discountPercent ?? 0) > 0).sort((a, b) => (b.discountPercent ?? 0) - (a.discountPercent ?? 0))[0];
+
+  if (!salePackage) return null;
+
+  const discount = salePackage.discountPercent ?? 0;
+  const label = salePackage.label || (isRtl ? `${salePackage.tokenAmount} אסימונים` : `${salePackage.tokenAmount} tokens`);
+
+  return (
+    <div
+      className="mb-4 rounded-xl px-4 py-2.5 flex items-center gap-3 cursor-pointer"
+      style={{
+        background: 'linear-gradient(135deg, #ef4444 0%, #f97316 50%, #eab308 100%)',
+        boxShadow: '0 2px 12px rgba(239,68,68,0.3)',
+        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+      }}
+      dir={isRtl ? 'rtl' : 'ltr'}
+      onClick={() => window.location.href = '/buy'}
+    >
+      <span className="shrink-0 text-lg">🔥</span>
+      <p className="flex-1 text-sm font-bold text-white leading-snug">
+        {discount > 0
+          ? (isRtl
+            ? `מבצע מיוחד! הנחה של ${discount}% על חבילת ${label} — לחץ לרכישה »`
+            : `Special offer! ${discount}% off ${label} package — Click to buy »`)
+          : (isRtl
+            ? `מבצע מיוחד על חבילת ${label}! לחץ לרכישה »`
+            : `Special offer on ${label} package! Click to buy »`)}
+      </p>
+      <button
+        onClick={(e) => { e.stopPropagation(); setDismissed(true); }}
+        className="shrink-0 text-white/70 hover:text-white transition-colors p-0.5 rounded"
+        aria-label="Dismiss"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
+
+// ─── Announcement Banner ─────────────────────────────────────────────
 function AnnouncementBanner() {
   const { isRtl } = useLanguage();
   const [dismissed, setDismissed] = useState(false);
@@ -2005,7 +2054,9 @@ export default function Home() {
         {/* Responsive layout */}
         <div className="mx-auto" style={{ maxWidth: '100%' }}>
 
-         {/* ── Announcement Banner ── */}
+         {/* ── Sale Banner ── */}
+        <SaleBanner />
+        {/* ── Announcement Banner ── */}
         <AnnouncementBanner />
         {/* ── Insufficient Tokens Banner ── */}
         {showTokensBanner && (

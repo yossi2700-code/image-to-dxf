@@ -248,7 +248,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     { enabled: activeSection === "consents" }
   );
 
-  const [paypalStatusFilter, setPaypalStatusFilter] = useState<"all" | "completed" | "pending" | "cancelled">("completed");
+  const [paypalStatusFilter, setPaypalStatusFilter] = useState<"all" | "completed" | "pending" | "failed">("all");
   const { data: paypalOrdersData, isLoading: paypalOrdersLoading } = trpc.admin.paypalOrders.useQuery(
     undefined,
     { enabled: activeSection === "payments" }
@@ -1320,20 +1320,21 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                     <CreditCard className="w-4 h-4 text-blue-500" />
                     תשלומי PayPal
                   </CardTitle>
-                  <div className="flex gap-1 text-xs">
-                    {(["completed", "pending", "all"] as const).map(f => (
+                  <div className="flex gap-1 text-xs flex-wrap">
+                    {(["all", "completed", "pending", "failed"] as const).map(f => (
                       <button
                         key={f}
                         onClick={() => setPaypalStatusFilter(f)}
                         className={`px-2 py-1 rounded-full border transition-colors ${
                           paypalStatusFilter === f
                             ? f === "completed" ? "bg-green-100 text-green-700 border-green-300"
-                              : f === "pending" ? "bg-yellow-100 text-yellow-700 border-yellow-300"
+                              : f === "pending" ? "bg-amber-100 text-amber-700 border-amber-300"
+                              : f === "failed" ? "bg-red-100 text-red-700 border-red-300"
                               : "bg-slate-200 text-slate-700 border-slate-300"
                             : "bg-white text-muted-foreground border-border hover:bg-slate-50"
                         }`}
                       >
-                        {f === "completed" ? "✓ הושלמו" : f === "pending" ? "⏳ ממתינות" : "הכל"}
+                        {f === "completed" ? "✅ הושלמו" : f === "pending" ? "🟠 לא הושלמו" : f === "failed" ? "❌ נכשלו" : "הכל"}
                         {paypalOrdersData && (
                           <span className="mr-1 opacity-60">
                             ({f === "all" ? paypalOrdersData.length : paypalOrdersData.filter(o => o.status === f).length})
@@ -1351,16 +1352,21 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   <div className="text-center py-8 text-muted-foreground text-sm">
                     <CreditCard className="w-8 h-8 mx-auto mb-2 opacity-30" />
                     {paypalStatusFilter === "completed" ? "אין תשלומים שהושלמו עדיין" :
-                     paypalStatusFilter === "pending" ? "אין הזמנות ממתינות" :
+                     paypalStatusFilter === "pending" ? "אין הזמנות שלא הושלמו" :
+                     paypalStatusFilter === "failed" ? "אין הזמנות שנכשלו" :
                      "אין הזמנות PayPal עדיין"}
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     {/* Revenue summary cards */}
-                    <div className="grid grid-cols-3 gap-3 mb-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                       <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
-                        <p className="text-xs text-green-600 font-medium">השלמות</p>
+                        <p className="text-xs text-green-600 font-medium">✅ הושלמו</p>
                         <p className="text-lg font-bold text-green-700">{(paypalOrdersData ?? []).filter(o => o.status === "completed").length}</p>
+                      </div>
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
+                        <p className="text-xs text-amber-600 font-medium">🟠 עצרו באמצע</p>
+                        <p className="text-lg font-bold text-amber-700">{(paypalOrdersData ?? []).filter(o => o.status === "pending").length}</p>
                       </div>
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
                         <p className="text-xs text-blue-600 font-medium">הכנסה ב-ILS</p>
@@ -1391,7 +1397,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                               {new Date(order.createdAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}
                             </td>
                             <td className="py-2.5 pr-2">
-                              <span className="text-sm font-medium">{order.appUserId}</span>
+                              <div>
+                                <p className="text-sm font-medium">{order.userName || order.userEmail?.split('@')[0] || '—'}</p>
+                                <p className="text-xs text-muted-foreground">{order.userEmail || '—'}</p>
+                              </div>
                             </td>
                             <td className="py-2.5 pr-2">
                               <span className="bg-slate-100 text-slate-700 rounded-md px-2 py-0.5 text-xs font-medium">{order.packageId}</span>
@@ -1406,13 +1415,31 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                               </span>
                             </td>
                             <td className="py-2.5 pr-2">
-                              <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                                order.status === "completed" ? "bg-green-100 text-green-700" :
-                                order.status === "pending" ? "bg-amber-100 text-amber-700" :
-                                "bg-red-100 text-red-700"
-                              }`}>
-                                {order.status === "completed" ? "✓ הושלם" : order.status === "pending" ? "⏳ ממתין" : order.status}
-                              </span>
+                              <div className="flex flex-col gap-0.5">
+                                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold w-fit ${
+                                  order.status === "completed" ? "bg-green-100 text-green-700" :
+                                  order.status === "pending" ? "bg-amber-100 text-amber-700" :
+                                  "bg-red-100 text-red-700"
+                                }`}>
+                                  {order.status === "completed" ? (
+                                    <>✅ הושלם</>
+                                  ) : order.status === "pending" ? (
+                                    <>🟠 עצר לפני אישור</>
+                                  ) : (
+                                    <>❌ נכשל</>
+                                  )}
+                                </span>
+                                {order.status === "pending" && (
+                                  <span className="text-xs text-muted-foreground">
+                                    יצר הזמנה, לא אישר ב-PayPal
+                                  </span>
+                                )}
+                                {order.status === "completed" && order.completedAt && (
+                                  <span className="text-xs text-green-600">
+                                    הושלם {new Date(order.completedAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}
+                                  </span>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))}

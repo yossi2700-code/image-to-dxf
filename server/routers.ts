@@ -392,11 +392,27 @@ export const appRouter = router({
     paypalOrders: adminProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
-      return db
-        .select()
+      const rows = await db
+        .select({
+          id: paypalOrders.id,
+          paypalOrderId: paypalOrders.paypalOrderId,
+          packageId: paypalOrders.packageId,
+          tokenAmount: paypalOrders.tokenAmount,
+          priceAmount: paypalOrders.priceAmount,
+          currency: paypalOrders.currency,
+          status: paypalOrders.status,
+          tokensCredited: paypalOrders.tokensCredited,
+          ipAnon: paypalOrders.ipAnon,
+          createdAt: paypalOrders.createdAt,
+          completedAt: paypalOrders.completedAt,
+          userEmail: appUsers.email,
+          userName: appUsers.name,
+        })
         .from(paypalOrders)
+        .leftJoin(appUsers, eq(paypalOrders.appUserId, appUsers.id))
         .orderBy(desc(paypalOrders.createdAt))
-        .limit(200);
+        .limit(500);
+      return rows;
     }),
 
     /** Get all package prices */
