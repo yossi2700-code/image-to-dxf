@@ -992,12 +992,17 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             const amt = e.target.value;
                             const autoId = amt ? `tokens_${amt}` : "";
                             const autoLabel = amt ? `${amt} אסימונים` : "";
-                            setNewPkg(p => ({
-                              ...p,
-                              tokenAmount: amt,
-                              packageId: p.packageId || autoId,
-                              label: p.label || autoLabel,
-                            }));
+                            setNewPkg(p => {
+                              // Update packageId if it's empty or still matches auto-pattern (not manually edited)
+                              const isAutoId = !p.packageId || /^tokens_\d*$/.test(p.packageId);
+                              const isAutoLabel = !p.label || /^\d+ אסימונים$/.test(p.label);
+                              return {
+                                ...p,
+                                tokenAmount: amt,
+                                packageId: isAutoId ? autoId : p.packageId,
+                                label: isAutoLabel ? autoLabel : p.label,
+                              };
+                            });
                           }}
                           dir="ltr" />
                       </div>
