@@ -213,7 +213,7 @@ export type InsertPaypalOrder = typeof paypalOrders.$inferInsert;
 export const packagePrices = mysqlTable("package_prices", {
   id: int("id").autoincrement().primaryKey(),
   /** Package identifier: "tokens_50" or "tokens_100" */
-  packageId: varchar("packageId", { length: 16 }).notNull().unique(),
+  packageId: varchar("packageId", { length: 32 }).notNull().unique(),
   /** Number of tokens in this package */
   tokenAmount: int("tokenAmount").notNull(),
   /** Base price in USD */
@@ -236,6 +236,8 @@ export const packagePrices = mysqlTable("package_prices", {
   enabledCurrencies: varchar("enabledCurrencies", { length: 128 }),
   /** Display label (e.g. "Starter", "Pro") */
   label: varchar("label", { length: 64 }),
+  /** Discount percentage (0-100). When set, shows original price crossed out + discounted price */
+  discountPercent: int("discountPercent").default(0),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type PackagePrice = typeof packagePrices.$inferSelect;

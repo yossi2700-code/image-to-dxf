@@ -267,7 +267,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     onError: (e) => toast.error("שגיאה: " + e.message),
   });
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
-  const [priceEdits, setPriceEdits] = useState<Record<string, Record<string, string | boolean>>>({});
+  const [priceEdits, setPriceEdits] = useState<Record<string, Record<string, string | boolean | number>>>({});
   const ALL_CURRENCIES = ["USD", "EUR", "ILS", "GBP", "AUD", "CAD", "JPY"] as const;
 
   // ── Token Costs state ───
@@ -294,9 +294,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
   // הה Add Package state ההה
   const [showAddPackage, setShowAddPackage] = useState(false);
-  const [newPkg, setNewPkg] = useState({ packageId: "", label: "", tokenAmount: "", priceILS: "", priceUSD: "", priceEUR: "", priceGBP: "", priceAUD: "", priceCAD: "", priceJPY: "" });
+  const emptyPkg = { packageId: "", label: "", tokenAmount: "", priceILS: "", priceUSD: "", priceEUR: "", priceGBP: "", priceAUD: "", priceCAD: "", priceJPY: "", discountPercent: "" };
+  const [newPkg, setNewPkg] = useState(emptyPkg);
   const addPackageMutation = trpc.admin.addPackage.useMutation({
-    onSuccess: () => { toast.success("חבילה נוספה!"); refetchPrices(); setShowAddPackage(false); setNewPkg({ packageId: "", label: "", tokenAmount: "", priceILS: "", priceUSD: "", priceEUR: "", priceGBP: "", priceAUD: "", priceCAD: "", priceJPY: "" }); },
+    onSuccess: () => { toast.success("חבילה נוספה!"); refetchPrices(); setShowAddPackage(false); setNewPkg(emptyPkg); },
     onError: (e) => toast.error("שגיאה: " + e.message),
   });
   const deletePackageMutation = trpc.admin.deletePackage.useMutation({
@@ -986,7 +987,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="text-xs text-muted-foreground">מזהה (לא רווחים, למשל tokens_200)</label>
-                        <Input className="h-7 text-xs mt-0.5" placeholder="tokens_200" value={newPkg.packageId} onChange={e => setNewPkg(p => ({ ...p, packageId: e.target.value }))} dir="ltr" />
+                        <Input className="h-7 text-xs mt-0.5" placeholder="tokens_200" value={newPkg.packageId} onChange={e => setNewPkg(p => ({ ...p, packageId: e.target.value }))} dir="ltr" maxLength={32} />
                       </div>
                       <div>
                         <label className="text-xs text-muted-foreground">שם תצוגה</label>
@@ -1006,6 +1007,18 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                           }}
                           dir="ltr" />
                       </div>
+                      <div className="col-span-2">
+                        <label className="text-xs text-muted-foreground">הנחה באחוזים (0 = אין הנחה, 20 = 20% הנחה)</label>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <Input className="h-7 text-xs w-24" type="number" placeholder="0" min={0} max={100} value={newPkg.discountPercent} onChange={e => setNewPkg(p => ({ ...p, discountPercent: e.target.value }))} dir="ltr" />
+                          <span className="text-xs text-muted-foreground">%</span>
+                          {newPkg.discountPercent && parseInt(newPkg.discountPercent) > 0 && newPkg.priceILS ? (
+                            <span className="text-xs text-green-600 font-medium">
+                              מחיר לאחר הנחה: ₪{(parseFloat(newPkg.priceILS) * (1 - parseInt(newPkg.discountPercent) / 100)).toFixed(2)}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
                     </div>
                     <div className="flex gap-2 pt-1">
                       <Button size="sm" variant="outline" onClick={() => setShowAddPackage(false)} className="text-xs">בטל</Button>
@@ -1022,6 +1035,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                           priceAUD: newPkg.priceAUD || "0",
                           priceCAD: newPkg.priceCAD || "0",
                           priceJPY: newPkg.priceJPY || "0",
+                          discountPercent: newPkg.discountPercent ? parseInt(newPkg.discountPercent) : 0,
                         })}
                       >
                         {addPackageMutation.isPending ? "שומר..." : "הוסף חבילה"}
@@ -1181,6 +1195,42 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             );
                           })}
                         </div>
+                        {/* Discount field */}
+                        {editingPriceId === pkg.packageId ? (
+                          <div className="mt-3 pt-3 border-t">
+                            <label className="text-xs text-muted-foreground block mb-1">הנחה באחוזים (0 = אין הנחה)</label>
+                            <div className="flex items-center gap-2">
+                              <Input
+                                className="h-7 text-sm w-24"
+                                type="number"
+                                min={0}
+                                max={100}
+                                defaultValue={pkg.discountPercent ?? 0}
+                                onChange={(e) => setPriceEdits(prev => ({
+                                  ...prev,
+                                  [pkg.packageId]: { ...(prev[pkg.packageId] || {}), discountPercent: parseInt(e.target.value) || 0 }
+                                }))}
+                                dir="ltr"
+                              />
+                              <span className="text-xs text-muted-foreground">%</span>
+                              {(() => {
+                                const discRaw = priceEdits[pkg.packageId]?.discountPercent;
+                                const disc = typeof discRaw === 'number' ? discRaw : (pkg.discountPercent ?? 0);
+                                const price = parseFloat(String(priceEdits[pkg.packageId]?.priceILS ?? pkg.priceILS));
+                                return disc > 0 && price > 0 ? (
+                                  <span className="text-xs text-green-600 font-medium">מחיר לאחר הנחה: ₪{(price * (1 - disc / 100)).toFixed(2)}</span>
+                                ) : null;
+                              })()}
+                            </div>
+                          </div>
+                        ) : pkg.discountPercent && pkg.discountPercent > 0 ? (
+                          <div className="mt-2 flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full border border-red-200">
+                              הנחה {pkg.discountPercent}%
+                            </span>
+                            <span className="text-xs text-muted-foreground">מחיר לאחר הנחה: ₪{(parseFloat(pkg.priceILS) * (1 - pkg.discountPercent / 100)).toFixed(2)}</span>
+                          </div>
+                        ) : null}
                       </div>
                     ))}
                   </div>

@@ -441,7 +441,7 @@ export const appRouter = router({
     /** Add a new package */
     addPackage: adminProcedure
       .input(z.object({
-        packageId: z.string().min(1).max(16),
+        packageId: z.string().min(1).max(32),
         label: z.string().min(1).max(64),
         tokenAmount: z.number().int().min(1),
         priceUSD: z.string(),
@@ -452,6 +452,7 @@ export const appRouter = router({
         priceCAD: z.string(),
         priceJPY: z.string(),
         enabledCurrencies: z.string().nullable().optional(),
+        discountPercent: z.number().int().min(0).max(100).optional(),
       }))
       .mutation(async ({ input }) => {
         const db = await getDb();
@@ -469,6 +470,7 @@ export const appRouter = router({
           priceJPY: input.priceJPY,
           isActive: 1,
           enabledCurrencies: input.enabledCurrencies ?? null,
+          discountPercent: input.discountPercent ?? 0,
         });
         return { success: true };
       }),
@@ -521,6 +523,7 @@ export const appRouter = router({
           label: z.string().optional(),
           isActive: z.number().optional(),
           enabledCurrencies: z.string().nullable().optional(),
+          discountPercent: z.number().int().min(0).max(100).optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -539,6 +542,7 @@ export const appRouter = router({
             ...(input.label !== undefined ? { label: input.label } : {}),
             ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
             ...(input.enabledCurrencies !== undefined ? { enabledCurrencies: input.enabledCurrencies } : {}),
+            ...(input.discountPercent !== undefined ? { discountPercent: input.discountPercent } : {}),
           })
           .where(eq(packagePrices.packageId, input.packageId));
         return { success: true };

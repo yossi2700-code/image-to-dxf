@@ -342,6 +342,7 @@ export default function Buy() {
         tokens: p.tokenAmount,
         popular: p.packageId === "tokens_100",
         label: p.label,
+        discountPercent: p.discountPercent ?? 0,
         prices: {
           USD: p.priceUSD,
           EUR: p.priceEUR,
@@ -439,6 +440,9 @@ export default function Buy() {
           const pPerToken = (parseFloat(pPrice) / p.tokens).toFixed(2);
           const isSelected = selectedPackage === p.id;
 
+          const discount = (p as { discountPercent?: number }).discountPercent ?? 0;
+          const discountedPrice = discount > 0 ? (parseFloat(pPrice) * (1 - discount / 100)).toFixed(2) : null;
+
           return (
             <div
               key={p.id}
@@ -449,7 +453,12 @@ export default function Buy() {
                   : "border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10"
               }`}
             >
-              {p.popular && (
+              {discount > 0 && (
+                <div className="absolute -top-3.5 right-4 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-black px-3 py-1 rounded-full shadow-lg">
+                  -{discount}% הנחה!
+                </div>
+              )}
+              {p.popular && !discount && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 to-orange-400 text-black text-xs font-black px-5 py-1 rounded-full shadow-lg">
                   ⭐ {t("buyBestValue")}
                 </div>
@@ -458,9 +467,16 @@ export default function Buy() {
               <div className="text-center">
                 <div className="text-6xl font-black mb-1 tabular-nums">{p.tokens}</div>
                 <div className="text-blue-200 text-sm mb-5 uppercase tracking-widest">{t("buyTokensCount")}</div>
-                <div className="text-4xl font-bold mb-1">{symbol}{pPrice}</div>
+                {discountedPrice ? (
+                  <div className="mb-1">
+                    <span className="text-2xl text-blue-400/60 line-through mr-2">{symbol}{pPrice}</span>
+                    <span className="text-4xl font-bold text-green-300">{symbol}{discountedPrice}</span>
+                  </div>
+                ) : (
+                  <div className="text-4xl font-bold mb-1">{symbol}{pPrice}</div>
+                )}
                 <div className="text-blue-300 text-xs mt-1">
-                  {symbol}{pPerToken} {t("buyPerToken")}
+                  {symbol}{discountedPrice ? (parseFloat(discountedPrice) / p.tokens).toFixed(2) : pPerToken} {t("buyPerToken")}
                 </div>
               </div>
 
