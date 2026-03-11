@@ -279,8 +279,8 @@ export default function Buy() {
     if (smartButtonsRef.current) smartButtonsRef.current.innerHTML = "";
     const script = document.createElement("script");
     script.id = "paypal-sdk-card";
-    // Load buttons component — disable PayPal wallet, show only card
-    script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&components=buttons&currency=${currency}&intent=capture&enable-funding=card&disable-funding=paypal,paylater,venmo,sepa,bancontact,eps,giropay,ideal,mybank,p24,sofort`;
+    // Load buttons component — enable card funding
+    script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&components=buttons&currency=${currency}&intent=capture&enable-funding=card,paylater`;
     script.setAttribute("data-namespace", "paypalSDKCard");
     script.onload = async () => {
       const paypal = (window as unknown as Record<string, unknown>).paypalSDKCard as {
@@ -288,11 +288,12 @@ export default function Buy() {
           render: (el: HTMLElement) => Promise<void>;
           isEligible: () => boolean;
         };
-        FUNDING: { CARD: string };
+        FUNDING: { CARD: string; PAYPAL: string };
       } | undefined;
       if (!paypal || !smartButtonsRef.current) return;
       try {
-        const buttons = paypal.Buttons({
+        // Use CARD funding source if eligible, otherwise fall back to standard PayPal (which allows card inside)
+        const cardButtons = paypal.Buttons({
           fundingSource: paypal.FUNDING?.CARD ?? "card",
           style: {
             layout: "vertical",
@@ -336,11 +337,59 @@ export default function Buy() {
             setCardError(null);
           },
         });
-        if (buttons.isEligible()) {
-          await buttons.render(smartButtonsRef.current!);
+        if (cardButtons.isEligible()) {
+          await cardButtons.render(smartButtonsRef.current!);
           setSmartButtonsReady(true);
         } else {
-          setCardError("תשלום בכרטיס אשראי אינו זמין כרגע — נסה שוב מאוחר יותר");
+          // Fallback: render standard PayPal button which allows card payment inside PayPal checkout
+          const paypalButtons = paypal.Buttons({
+            fundingSource: paypal.FUNDING?.PAYPAL ?? "paypal",
+            style: {
+              layout: "vertical",
+              color: "blue",
+              shape: "rect",
+              label: "pay",
+              height: 50,
+            },
+            createOrder: async () => {
+              const data = await createOrderMutation.mutateAsync({
+                packageId: selectedPackage,
+                currency,
+                termsAccepted: true,
+                origin: window.location.origin,
+              });
+              if (!data.orderId) throw new Error("שגיאה ביצירת הזמנה");
+              return data.orderId;
+            },
+            onApprove: async (approveData: { orderID: string }) => {
+              setCardLoading(true);
+              setCardError(null);
+              try {
+                const captureData = await captureOrderMutation.mutateAsync({ orderId: approveData.orderID });
+                if (captureData.success) {
+                  setCardSuccess(true);
+                  setTimeout(() => { window.location.href = "/buy/success?orderId=" + approveData.orderID; }, 800);
+                } else {
+                  setCardError("שגיאה בתשלום");
+                }
+              } catch (e) {
+                setCardError(e instanceof Error ? e.message : "שגיאה בתשלום");
+              } finally {
+                setCardLoading(false);
+              }
+            },
+            onError: (err: unknown) => {
+              console.error("PayPal error:", err);
+              setCardError("שגיאה בתשלום — נסה שוב");
+            },
+            onCancel: () => { setCardError(null); },
+          });
+          if (paypalButtons.isEligible()) {
+            await paypalButtons.render(smartButtonsRef.current!);
+            setSmartButtonsReady(true);
+          } else {
+            setCardError("תשלום אינו זמין כרגע — נסה שוב מאוחר יותר");
+          }
         }
       } catch (e) {
         setCardError(e instanceof Error ? e.message : "שגיאה בטעינת PayPal");

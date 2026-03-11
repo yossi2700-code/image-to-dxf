@@ -1461,3 +1461,5 @@
 - [x] תיקון: משתמש רשום ומחובר מקבל הודעה "צריך להירשם" כשמנסה להשתמש ב-AI Create — תוקן: credentials:include בכל fetch calls + HTTPS redirect + tokens.balance תומך ב-Manus OAuth
 ## תיקון PayPal כפתור כרטיס לא מופיע תמיד - מרץ 2026
 - [x] הוספת enable-funding=card ל-SDK URL כדי לאלץ הצגת כרטיס תמיד
+## תיקון PayPal כרטיס - isEligible false - מרץ 2026
+- [x] תיקון: כפתור כרטיס מציג שגיאה כי isEligible() מחזיר false — נוסף fallback ל-PayPal Checkout עם כרטיס בתוך
