@@ -294,7 +294,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
   // הה Add Package state ההה
   const [showAddPackage, setShowAddPackage] = useState(false);
-  const emptyPkg = { packageId: "", label: "", tokenAmount: "", priceILS: "", priceUSD: "", priceEUR: "", priceGBP: "", priceAUD: "", priceCAD: "", priceJPY: "", discountPercent: "", badge: "" as "" | "recommended" | "best_value" | "sale" | "trial" };
+  const emptyPkg = { packageId: "", label: "", tokenAmount: "", priceILS: "", priceUSD: "", priceEUR: "", priceGBP: "", priceAUD: "", priceCAD: "", priceJPY: "", discountPercent: "", badge: "" as "" | "recommended" | "best_value" | "sale" | "trial", imageUrl: "" };
   const [newPkg, setNewPkg] = useState(emptyPkg);
   const addPackageMutation = trpc.admin.addPackage.useMutation({
     onSuccess: () => { toast.success("חבילה נוספה!"); refetchPrices(); setShowAddPackage(false); setNewPkg(emptyPkg); },
@@ -1037,6 +1037,13 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                         </div>
                       </div>
                       <div className="col-span-2">
+                        <label className="text-xs text-muted-foreground">ציור/תמונה לכרטיס (URL, אופציונלי)</label>
+                        <Input className="h-7 text-xs mt-0.5" placeholder="https://..." value={newPkg.imageUrl} onChange={e => setNewPkg(p => ({ ...p, imageUrl: e.target.value }))} dir="ltr" />
+                        {newPkg.imageUrl && (
+                          <img src={newPkg.imageUrl} alt="תצוגה מקדימה" className="mt-1 h-16 w-auto rounded border object-cover" onError={e => (e.currentTarget.style.display='none')} />
+                        )}
+                      </div>
+                      <div className="col-span-2">
                         <label className="text-xs text-muted-foreground">תגית מיוחדת (אופציונלי)</label>
                         <div className="flex gap-2 mt-0.5 flex-wrap">                          {(["", "recommended", "best_value", "sale", "trial"] as const).map(opt => (
                             <button key={opt} type="button"
@@ -1073,6 +1080,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                           priceJPY: newPkg.priceJPY || "0",
                           discountPercent: newPkg.discountPercent ? parseInt(newPkg.discountPercent) : 0,
                           badge: (newPkg.badge || null) as "recommended" | "best_value" | "sale" | null | undefined,
+                          imageUrl: newPkg.imageUrl || null,
                         })}
                       >
                         {addPackageMutation.isPending ? "שומר..." : "הוסף חבילה"}
@@ -1116,6 +1124,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                     priceJPY: String(edits.priceJPY ?? pkg.priceJPY),
                                     label: edits.label ? String(edits.label) : pkg.label ?? undefined,
                                     enabledCurrencies: enabledList || null,
+                                    discountPercent: typeof edits.discountPercent === 'number' ? edits.discountPercent : (pkg.discountPercent ?? 0),
+                                    badge: (edits.badge !== undefined ? edits.badge : pkg.badge) as "recommended" | "best_value" | "sale" | "trial" | null | undefined,
+                                    imageUrl: edits.imageUrl !== undefined ? (edits.imageUrl as string | null) : (pkg.imageUrl ?? null),
                                   });
                                 }}
                                 disabled={updatePriceMutation.isPending}
@@ -1260,6 +1271,23 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                   ) : null;
                                 })()}
                               </div>
+                            </div>
+                            <div className="col-span-2 mt-1">
+                              <label className="text-xs text-muted-foreground block mb-1">ציור/תמונה לכרטיס (URL)</label>
+                              <Input
+                                className="h-7 text-xs"
+                                placeholder="https://..."
+                                dir="ltr"
+                                value={String(priceEdits[pkg.packageId]?.imageUrl ?? pkg.imageUrl ?? "")}
+                                onChange={e => setPriceEdits(prev => ({
+                                  ...prev,
+                                  [pkg.packageId]: { ...(prev[pkg.packageId] || {}), imageUrl: e.target.value || null }
+                                }))}
+                              />
+                              {(() => {
+                                const url = String(priceEdits[pkg.packageId]?.imageUrl ?? pkg.imageUrl ?? "");
+                                return url ? <img src={url} alt="" className="mt-1 h-14 w-auto rounded border object-cover" onError={e => (e.currentTarget.style.display='none')} /> : null;
+                              })()}
                             </div>
                             <div>
                               <label className="text-xs text-muted-foreground block mb-1">תגית מיוחדת</label>

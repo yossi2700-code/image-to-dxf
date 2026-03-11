@@ -346,6 +346,7 @@ export default function Buy() {
         label: p.label,
         discountPercent: p.discountPercent ?? 0,
         badge: p.badge ?? null,
+        imageUrl: p.imageUrl ?? null,
         prices: {
           USD: p.priceUSD,
           EUR: p.priceEUR,
@@ -481,6 +482,16 @@ export default function Buy() {
               )}
 
               <div className="text-center">
+                {(p as { imageUrl?: string | null }).imageUrl && (
+                  <div className="flex justify-center mb-4">
+                    <img
+                      src={(p as { imageUrl?: string | null }).imageUrl!}
+                      alt={(p as { label?: string | null }).label ?? ""}
+                      className="h-24 w-auto object-contain rounded-xl opacity-90"
+                      onError={e => (e.currentTarget.style.display = 'none')}
+                    />
+                  </div>
+                )}
                 <div className="text-6xl font-black mb-1 tabular-nums">{p.tokens}</div>
                 <div className="text-blue-200 text-sm mb-5 uppercase tracking-widest">{t("buyTokensCount")}</div>
                 {discountedPrice ? (

@@ -240,6 +240,8 @@ export const packagePrices = mysqlTable("package_prices", {
   discountPercent: int("discountPercent").default(0),
   /** Badge label: null | 'recommended' | 'best_value' | 'sale' | 'trial' */
   badge: mysqlEnum("badge", ["recommended", "best_value", "sale", "trial"]),
+  /** Optional illustration image URL for the package card */
+  imageUrl: varchar("imageUrl", { length: 512 }),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type PackagePrice = typeof packagePrices.$inferSelect;
