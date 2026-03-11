@@ -208,13 +208,7 @@ export default function Buy() {
   const [cardLoading, setCardLoading] = useState(false);
   const [cardError, setCardError] = useState<string | null>(null);
   const [cardSuccess, setCardSuccess] = useState(false);
-  const [cardFieldsReady, setCardFieldsReady] = useState(false);
-  const [cardFieldsEligible, setCardFieldsEligible] = useState<boolean | null>(null);
   const cardFormRef = useRef<HTMLDivElement>(null);
-  const paypalButtonsRef = useRef<HTMLDivElement>(null);
-  const hostedFieldsRef = useRef<{ submit: () => Promise<void> } | null>(null);
-  const smartButtonsRef = useRef<HTMLDivElement>(null);
-  const [smartButtonsReady, setSmartButtonsReady] = useState(false);
 
   // קריאת מחירים דינמיים מה-DB
   const { data: dbPrices, isLoading: pricesLoading } = trpc.packages.prices.useQuery();
@@ -265,143 +259,26 @@ export default function Buy() {
     }
   }, [manusUser]);
 
-  // PayPal Smart Buttons — load SDK and render card-only button
-  useEffect(() => {
-    if (!paypalClientId || paymentMethod !== "card" || !termsAccepted || !isLoggedIn) return;
-    // Reset state
-    setSmartButtonsReady(false);
+  // Card payment via redirect: create order then redirect to PayPal checkout page
+  const handleCardPayment = async () => {
+    if (!termsAccepted || !isLoggedIn || cardLoading) return;
+    setCardLoading(true);
     setCardError(null);
-    setCardSuccess(false);
-    // Remove old script if any
-    const oldScript = document.getElementById("paypal-sdk-card");
-    if (oldScript) oldScript.remove();
-    // Clear the container
-    if (smartButtonsRef.current) smartButtonsRef.current.innerHTML = "";
-    const script = document.createElement("script");
-    script.id = "paypal-sdk-card";
-    // Load buttons component — enable card funding
-    script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&components=buttons&currency=${currency}&intent=capture&enable-funding=card,paylater`;
-    script.setAttribute("data-namespace", "paypalSDKCard");
-    script.onload = async () => {
-      const paypal = (window as unknown as Record<string, unknown>).paypalSDKCard as {
-        Buttons: (config: Record<string, unknown>) => {
-          render: (el: HTMLElement) => Promise<void>;
-          isEligible: () => boolean;
-        };
-        FUNDING: { CARD: string; PAYPAL: string };
-      } | undefined;
-      if (!paypal || !smartButtonsRef.current) return;
-      try {
-        // Use CARD funding source if eligible, otherwise fall back to standard PayPal (which allows card inside)
-        const cardButtons = paypal.Buttons({
-          fundingSource: paypal.FUNDING?.CARD ?? "card",
-          style: {
-            layout: "vertical",
-            color: "black",
-            shape: "rect",
-            label: "pay",
-            height: 50,
-          },
-          createOrder: async () => {
-            const data = await createOrderMutation.mutateAsync({
-              packageId: selectedPackage,
-              currency,
-              termsAccepted: true,
-              origin: window.location.origin,
-            });
-            if (!data.orderId) throw new Error("שגיאה ביצירת הזמנה");
-            return data.orderId;
-          },
-          onApprove: async (approveData: { orderID: string }) => {
-            setCardLoading(true);
-            setCardError(null);
-            try {
-              const captureData = await captureOrderMutation.mutateAsync({ orderId: approveData.orderID });
-              if (captureData.success) {
-                setCardSuccess(true);
-                setTimeout(() => { window.location.href = "/buy/success?orderId=" + approveData.orderID; }, 800);
-              } else {
-                setCardError("שגיאה בתשלום");
-              }
-            } catch (e) {
-              setCardError(e instanceof Error ? e.message : "שגיאה בתשלום");
-            } finally {
-              setCardLoading(false);
-            }
-          },
-          onError: (err: unknown) => {
-            console.error("PayPal error:", err);
-            setCardError("שגיאה בתשלום — נסה שוב");
-          },
-          onCancel: () => {
-            setCardError(null);
-          },
-        });
-        if (cardButtons.isEligible()) {
-          await cardButtons.render(smartButtonsRef.current!);
-          setSmartButtonsReady(true);
-        } else {
-          // Fallback: render standard PayPal button which allows card payment inside PayPal checkout
-          const paypalButtons = paypal.Buttons({
-            fundingSource: paypal.FUNDING?.PAYPAL ?? "paypal",
-            style: {
-              layout: "vertical",
-              color: "blue",
-              shape: "rect",
-              label: "pay",
-              height: 50,
-            },
-            createOrder: async () => {
-              const data = await createOrderMutation.mutateAsync({
-                packageId: selectedPackage,
-                currency,
-                termsAccepted: true,
-                origin: window.location.origin,
-              });
-              if (!data.orderId) throw new Error("שגיאה ביצירת הזמנה");
-              return data.orderId;
-            },
-            onApprove: async (approveData: { orderID: string }) => {
-              setCardLoading(true);
-              setCardError(null);
-              try {
-                const captureData = await captureOrderMutation.mutateAsync({ orderId: approveData.orderID });
-                if (captureData.success) {
-                  setCardSuccess(true);
-                  setTimeout(() => { window.location.href = "/buy/success?orderId=" + approveData.orderID; }, 800);
-                } else {
-                  setCardError("שגיאה בתשלום");
-                }
-              } catch (e) {
-                setCardError(e instanceof Error ? e.message : "שגיאה בתשלום");
-              } finally {
-                setCardLoading(false);
-              }
-            },
-            onError: (err: unknown) => {
-              console.error("PayPal error:", err);
-              setCardError("שגיאה בתשלום — נסה שוב");
-            },
-            onCancel: () => { setCardError(null); },
-          });
-          if (paypalButtons.isEligible()) {
-            await paypalButtons.render(smartButtonsRef.current!);
-            setSmartButtonsReady(true);
-          } else {
-            setCardError("תשלום אינו זמין כרגע — נסה שוב מאוחר יותר");
-          }
-        }
-      } catch (e) {
-        setCardError(e instanceof Error ? e.message : "שגיאה בטעינת PayPal");
-      }
-    };
-    script.onerror = () => setCardError("שגיאה בטעינת PayPal");
-    document.head.appendChild(script);
-    return () => {
-      setSmartButtonsReady(false);
-      if (smartButtonsRef.current) smartButtonsRef.current.innerHTML = "";
-    };
-  }, [paypalClientId, paymentMethod, termsAccepted, selectedPackage, currency, isLoggedIn]);
+    try {
+      const data = await createOrderMutation.mutateAsync({
+        packageId: selectedPackage,
+        currency,
+        termsAccepted: true,
+        origin: window.location.origin,
+      });
+      if (!data.approvalUrl) throw new Error("שגיאה ביצירת הזמנה");
+      // Redirect to PayPal checkout page (GUEST_CHECKOUT shows card form directly)
+      window.location.href = data.approvalUrl;
+    } catch (e) {
+      setCardError(e instanceof Error ? e.message : "שגיאה ביצירת הזמנה");
+      setCardLoading(false);
+    }
+  };
 
   // בניית חבילות מה-DB או מה-fallback
   const packages = dbPrices && dbPrices.length > 0
@@ -708,38 +585,41 @@ export default function Buy() {
                 <p className="text-blue-300 text-sm mt-1">מעביר אותך...</p>
               </div>
             ) : (
-              <>
+              <div className="space-y-4">
                 {cardError && (
-                  <div className="mb-3 p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-300 text-sm text-center">
+                  <div className="p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-300 text-sm text-center">
                     {cardError}
                   </div>
                 )}
 
-                {/* Loading: waiting for Smart Buttons to render */}
-                {!smartButtonsReady && !cardError && (
-                  <div className="text-center py-6 text-blue-300 text-sm flex items-center justify-center gap-2">
-                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    טוען אפשרויות תשלום...
-                  </div>
-                )}
-                {/* PayPal Smart Buttons container — card button rendered here */}
-                {cardLoading && (
-                  <div className="text-center py-4 text-blue-300 text-sm flex items-center justify-center gap-2">
-                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    מעבד תשלום...
-                  </div>
-                )}
-                <div ref={smartButtonsRef} className={`min-h-[50px] ${cardLoading ? "opacity-50 pointer-events-none" : ""}`} />
-                <p className="text-center text-xs text-blue-400/70 mt-3">
+                {/* Pay with card button — redirects to PayPal checkout with card form */}
+                <button
+                  onClick={handleCardPayment}
+                  disabled={cardLoading}
+                  className="w-full h-14 rounded-xl bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 border border-white/20 text-white font-bold text-base transition-all shadow-lg flex items-center justify-center gap-3 disabled:opacity-60"
+                >
+                  {cardLoading ? (
+                    <>
+                      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      מעבד...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                      </svg>
+                      שלם בכרטיס אשראי
+                    </>
+                  )}
+                </button>
+
+                <p className="text-center text-xs text-blue-400/70">
                   🔒 מאובטח על ידי PayPal — פרטי הכרטיס לא נשמרים
                 </p>
-              </>
+              </div>
             )}
           </div>
         )}
