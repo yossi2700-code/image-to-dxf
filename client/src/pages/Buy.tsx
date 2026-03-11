@@ -280,7 +280,7 @@ export default function Buy() {
     const script = document.createElement("script");
     script.id = "paypal-sdk-card";
     // Load buttons component — disable PayPal wallet, show only card
-    script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&components=buttons&currency=${currency}&intent=capture&disable-funding=paypal,paylater,venmo,sepa,bancontact,eps,giropay,ideal,mybank,p24,sofort`;
+    script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&components=buttons&currency=${currency}&intent=capture&enable-funding=card&disable-funding=paypal,paylater,venmo,sepa,bancontact,eps,giropay,ideal,mybank,p24,sofort`;
     script.setAttribute("data-namespace", "paypalSDKCard");
     script.onload = async () => {
       const paypal = (window as unknown as Record<string, unknown>).paypalSDKCard as {
