@@ -36,39 +36,20 @@ export type PortraitStyle = "simple" | "detailed";
 
 const PORTRAIT_STYLE_PROMPTS: Record<PortraitStyle, string> = {
   simple:
-    "You are a forensic portrait artist. Your task is to trace this exact person's face as a clean line art drawing. " +
-    "IDENTITY PRESERVATION IS THE #1 PRIORITY: You must faithfully reproduce THIS specific person's unique facial features — " +
-    "their exact jawline shape, brow ridge height and shape, eye shape and spacing, nose bridge width and tip shape, " +
-    "lip thickness and shape, cheekbone prominence, forehead height, ear shape, and any beard/stubble pattern. " +
-    "Do NOT draw a generic face — draw THIS person. The result must be recognizable as the same individual. " +
-    "Technique: Clean bold black outlines on pure white (#FFFFFF) background. " +
-    "No fill, no shading, no grey tones, no gradients — only pure black (#000000) lines. " +
-    "Draw ONLY the face and head — crop out all clothing and background. " +
-    "Include: outer face contour, hairline and hair silhouette, eyes with pupils and lashes, " +
-    "eyebrows matching the person's exact shape, nose, lips, ears, neck. " +
-    "If the person has a beard or stubble, draw it accurately with short lines matching the growth pattern. " +
-    "Lines should be smooth and confident. Hair as clean outline with minimal interior lines. " +
-    "Face must occupy 65-75% of image. Entire head fully visible, nothing cropped. " +
-    "DO NOT include any text, labels, watermarks, or decorative elements.",
+    "Convert this face photo to clean black-and-white line art for laser engraving. " +
+    "CRITICAL: Preserve this exact person's identity — match their jawline, eye shape, nose, lips, brow shape, and hair silhouette precisely. " +
+    "Pure black lines on white background only. No shading, no fill, no grey. " +
+    "Draw only the head and face (no clothing/background). Face occupies 65-75% of image. Full head visible. " +
+    "Include: face outline, hairline, eyes with lashes, eyebrows, nose, lips, ears, neck. Beard/stubble if present. " +
+    "No text or watermarks.",
 
   detailed:
-    "You are a master forensic portrait artist. Your task is to trace this exact person's face as a detailed line art drawing. " +
-    "IDENTITY PRESERVATION IS THE #1 PRIORITY: You must faithfully reproduce THIS specific person's unique facial features — " +
-    "their exact jawline shape, brow ridge height and shape, eye shape and spacing, nose bridge width and tip shape, " +
-    "lip thickness and shape, cheekbone prominence, forehead height, ear shape, and any beard/stubble pattern. " +
-    "Do NOT draw a generic face — draw THIS person. The result must be recognizable as the same individual. " +
-    "Technique: Precise black lines on pure white (#FFFFFF) background. " +
-    "No fill, no shading, no grey tones — only pure black (#000000) lines. " +
-    "Draw ONLY the face and head — crop out all clothing and background. " +
-    "Include: precise outer face contour, detailed hair with strand lines, " +
-    "eyes with iris detail, pupils, lashes, eyelid folds and under-eye lines, " +
-    "eyebrows with individual hair strokes matching the person's exact brow shape, " +
-    "detailed nose with bridge, nostrils, and tip shape, " +
-    "lips with cupid's bow and philtrum, ears with inner structure, neck with muscle lines. " +
-    "If the person has a beard or stubble, draw it accurately with detailed short lines following the growth direction. " +
-    "Add subtle lines for cheekbone definition, jaw structure, nasolabial folds if present. " +
-    "Face must occupy 65-75% of image. Entire head fully visible, nothing cropped. " +
-    "DO NOT include any text, labels, watermarks, or decorative elements.",
+    "Convert this face photo to detailed black-and-white line art for laser engraving. " +
+    "CRITICAL: Preserve this exact person's identity — match their jawline, eye shape, nose, lips, brow shape, and hair silhouette precisely. " +
+    "Pure black lines on white background only. No shading, no fill, no grey. " +
+    "Draw only the head and face (no clothing/background). Face occupies 65-75% of image. Full head visible. " +
+    "Include: precise face outline, detailed hair strands, eyes with iris/lashes/eyelid folds, brow hairs, nose bridge/nostrils, lips with cupid's bow, ears with inner detail, neck. Beard/stubble if present with growth direction. " +
+    "Add cheekbone and jaw structure lines. No text or watermarks.",
 };
 
 const STYLE_ORDER: PortraitStyle[] = ["simple", "detailed"];
@@ -258,10 +239,14 @@ async function runFaceDetectJob(
       .png({ compressionLevel: 6 })
       .toBuffer();
 
-    // ── Step B: Generate 1 portrait for the chosen style ────────────────────
+    // ── Step B: Generate portrait + AI suggestions in parallel ───────────────
     heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
 
-    const portraitResult = await generatePortraitVariation(editSourceBuffer, style, hairline, lineweightMm, minGapMm);
+    // Run portrait generation and AI suggestions in parallel to save time
+    const [portraitResult, suggestions] = await Promise.all([
+      generatePortraitVariation(editSourceBuffer, style, hairline, lineweightMm, minGapMm),
+      generateAiSuggestions(style, lang),
+    ]);
 
     if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = undefined; }
 
@@ -270,15 +255,7 @@ async function runFaceDetectJob(
 
     const images = [portraitResult];
 
-    // ── Step C: AI suggestions ────────────────────────────────────────────────
-    updateJob(jobId, {
-      step: isHe ? "מייצר הצעות שיפור..." : "Generating suggestions...",
-      stepEn: "Generating suggestions...",
-    });
-
-    const suggestions = await generateAiSuggestions(style, lang);
-
-    // ── Step D: Log & finish ──────────────────────────────────────────────────
+    // ── Step C: Log & finish ──────────────────────────────────────────────────
     void logUsageEvent({
       type: "ai_generate",
       segmentCount: images[0]?.segmentCount ?? 0,

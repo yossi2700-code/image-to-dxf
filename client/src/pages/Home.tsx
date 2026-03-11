@@ -1908,28 +1908,36 @@ export default function Home() {
                         </div>
                       </div>
                       {/* Menu items */}
-                      <div style={{ padding: '8px 8px 4px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <div style={{ padding: '8px 8px 4px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {/* Personal Area */}
                         <button
                           onClick={() => { setUserMenuOpen(false); window.location.href = '/account'; }}
-                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: 'none', background: 'transparent', cursor: 'pointer', width: '100%', color: '#cbd5e1', fontSize: 13, fontWeight: 500, textAlign: isRtl ? 'right' : 'left' }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(139,92,246,0.15)'; (e.currentTarget as HTMLButtonElement).style.color = '#a78bfa'; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#cbd5e1'; }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.1)', cursor: 'pointer', width: '100%', color: '#c4b5fd', fontSize: 13, fontWeight: 600, textAlign: isRtl ? 'right' : 'left', transition: 'all 0.15s' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(139,92,246,0.22)'; (e.currentTarget as HTMLButtonElement).style.color = '#ddd6fe'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(139,92,246,0.5)'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(139,92,246,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#c4b5fd'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(139,92,246,0.25)'; }}
                         >
-                          <span style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(139,92,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <User style={{ width: 14, height: 14 }} />
+                          <span style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg, #7c3aed, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(124,58,237,0.4)' }}>
+                            <User style={{ width: 15, height: 15, color: 'white' }} />
                           </span>
-                          <span>{isRtl ? 'אזור אישי' : 'My Account'}</span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 700, fontSize: 13 }}>{isRtl ? 'אזור אישי' : 'My Account'}</div>
+                            <div style={{ fontSize: 10, color: 'rgba(196,181,253,0.65)', fontWeight: 400 }}>{isRtl ? 'פרופיל וסטטיסטיקות' : 'Profile & stats'}</div>
+                          </div>
                         </button>
+                        {/* History */}
                         <button
                           onClick={() => { setUserMenuOpen(false); window.location.href = '/history'; }}
-                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: 'none', background: 'transparent', cursor: 'pointer', width: '100%', color: '#cbd5e1', fontSize: 13, fontWeight: 500, textAlign: isRtl ? 'right' : 'left' }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(99,102,241,0.15)'; (e.currentTarget as HTMLButtonElement).style.color = '#818cf8'; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#cbd5e1'; }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(99,102,241,0.25)', background: 'rgba(99,102,241,0.1)', cursor: 'pointer', width: '100%', color: '#a5b4fc', fontSize: 13, fontWeight: 600, textAlign: isRtl ? 'right' : 'left', transition: 'all 0.15s' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(99,102,241,0.22)'; (e.currentTarget as HTMLButtonElement).style.color = '#c7d2fe'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(99,102,241,0.5)'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(99,102,241,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#a5b4fc'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(99,102,241,0.25)'; }}
                         >
-                          <span style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <History style={{ width: 14, height: 14 }} />
+                          <span style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg, #4f46e5, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(79,70,229,0.4)' }}>
+                            <History style={{ width: 15, height: 15, color: 'white' }} />
                           </span>
-                          <span>{isRtl ? 'היסטוריה' : 'History'}</span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 700, fontSize: 13 }}>{isRtl ? 'היסטוריה' : 'History'}</div>
+                            <div style={{ fontSize: 10, color: 'rgba(165,180,252,0.65)', fontWeight: 400 }}>{isRtl ? 'כל העיצובים שלך' : 'All your designs'}</div>
+                          </div>
                         </button>
                         <button
                           onClick={() => { setUserMenuOpen(false); window.location.href = '/buy'; }}
