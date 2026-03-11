@@ -209,6 +209,13 @@ export default function Buy() {
   const [cardError, setCardError] = useState<string | null>(null);
   const [cardSuccess, setCardSuccess] = useState(false);
   const cardFormRef = useRef<HTMLDivElement>(null);
+  const cardNumberRef = useRef<HTMLDivElement>(null);
+  const cardExpiryRef = useRef<HTMLDivElement>(null);
+  const cardCvvRef = useRef<HTMLDivElement>(null);
+  const cardNameRef = useRef<HTMLDivElement>(null);
+  const [cardFieldsReady, setCardFieldsReady] = useState(false);
+  const cardFieldsInstanceRef = useRef<{ submit: (data: Record<string, unknown>) => Promise<void> } | null>(null);
+  const [cardHolderName, setCardHolderName] = useState("");
 
   // קריאת מחירים דינמיים מה-DB
   const { data: dbPrices, isLoading: pricesLoading } = trpc.packages.prices.useQuery();
@@ -259,24 +266,124 @@ export default function Buy() {
     }
   }, [manusUser]);
 
-  // Card payment via redirect: create order then redirect to PayPal checkout page
+  // PayPal Card Fields — load SDK and render inline card form
+  useEffect(() => {
+    if (!paypalClientId || paymentMethod !== "card" || !termsAccepted || !isLoggedIn) return;
+    setCardFieldsReady(false);
+    setCardError(null);
+    setCardSuccess(false);
+    cardFieldsInstanceRef.current = null;
+
+    const existingScript = document.getElementById("paypal-sdk-card-fields");
+    if (existingScript) existingScript.remove();
+
+    const script = document.createElement("script");
+    script.id = "paypal-sdk-card-fields";
+    script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&components=card-fields&currency=${currency}&intent=capture`;
+    script.setAttribute("data-namespace", "paypalCardSDK");
+
+    script.onload = async () => {
+      const paypal = (window as unknown as Record<string, unknown>).paypalCardSDK as {
+        CardFields: (config: {
+          createOrder: () => Promise<string>;
+          onApprove: (data: { orderID: string }) => void;
+          onError: (err: unknown) => void;
+          style?: Record<string, unknown>;
+        }) => {
+          isEligible: () => boolean;
+          NameField: (opts: { placeholder?: string }) => { render: (el: HTMLElement) => Promise<void> };
+          NumberField: (opts: { placeholder?: string }) => { render: (el: HTMLElement) => Promise<void> };
+          ExpiryField: (opts: { placeholder?: string }) => { render: (el: HTMLElement) => Promise<void> };
+          CVVField: (opts: { placeholder?: string }) => { render: (el: HTMLElement) => Promise<void> };
+          submit: (data: Record<string, unknown>) => Promise<void>;
+        };
+      } | undefined;
+
+      if (!paypal?.CardFields) {
+        setCardError("תשלום בכרטיס אינו זמין כרגע — נסה שוב מאוחר יותר");
+        return;
+      }
+
+      const cardFields = paypal.CardFields({
+        createOrder: async () => {
+          const data = await createOrderMutation.mutateAsync({
+            packageId: selectedPackage,
+            currency,
+            termsAccepted: true,
+            origin: window.location.origin,
+            paymentMethod: "card",
+          });
+          if (!data.orderId) throw new Error("שגיאה ביצירת הזמנה");
+          return data.orderId;
+        },
+        onApprove: async ({ orderID }: { orderID: string }) => {
+          setCardLoading(true);
+          try {
+            const capture = await captureOrderMutation.mutateAsync({ orderId: orderID });
+            if (capture.success) {
+              setCardSuccess(true);
+              setTimeout(() => { window.location.href = "/buy/success?orderId=" + orderID; }, 800);
+            } else {
+              setCardError("שגיאה בתשלום");
+            }
+          } catch (e) {
+            setCardError(e instanceof Error ? e.message : "שגיאה בתשלום");
+          } finally {
+            setCardLoading(false);
+          }
+        },
+        onError: (err: unknown) => {
+          console.error("PayPal CardFields error:", err);
+          setCardError("שגיאה בתשלום — נסה שוב");
+          setCardLoading(false);
+        },
+        style: {
+          input: {
+            "font-size": "16px",
+            "color": "#1e293b",
+            "font-family": "system-ui, sans-serif",
+            "padding": "0 12px",
+          },
+          ".valid": { "color": "#16a34a" },
+          ".invalid": { "color": "#dc2626" },
+        },
+      });
+
+      if (!cardFields.isEligible()) {
+        setCardError("תשלום בכרטיס אינו זמין לחשבון זה — פנה לתמיכת PayPal");
+        return;
+      }
+
+      // Render each field into its container div
+      if (cardNumberRef.current) await cardFields.NumberField({ placeholder: "מספר כרטיס" }).render(cardNumberRef.current);
+      if (cardExpiryRef.current) await cardFields.ExpiryField({ placeholder: "MM/YY" }).render(cardExpiryRef.current);
+      if (cardCvvRef.current) await cardFields.CVVField({ placeholder: "CVV" }).render(cardCvvRef.current);
+
+      cardFieldsInstanceRef.current = cardFields;
+      setCardFieldsReady(true);
+    };
+
+    script.onerror = () => setCardError("שגיאה בטעינת PayPal");
+    document.head.appendChild(script);
+
+    return () => {
+      setCardFieldsReady(false);
+      cardFieldsInstanceRef.current = null;
+    };
+  }, [paypalClientId, paymentMethod, termsAccepted, selectedPackage, currency, isLoggedIn]);
+
+  // Submit card payment
   const handleCardPayment = async () => {
-    if (!termsAccepted || !isLoggedIn || cardLoading) return;
+    if (!cardFieldsInstanceRef.current || cardLoading) return;
     setCardLoading(true);
     setCardError(null);
     try {
-      const data = await createOrderMutation.mutateAsync({
-        packageId: selectedPackage,
-        currency,
-        termsAccepted: true,
-        origin: window.location.origin,
-        paymentMethod: "card",
+      await cardFieldsInstanceRef.current.submit({
+        cardholderName: cardHolderName,
+        billingAddress: { countryCode: "IL" },
       });
-      if (!data.approvalUrl) throw new Error("שגיאה ביצירת הזמנה");
-      // Redirect to PayPal checkout page (BILLING landing page shows card form directly)
-      window.location.href = data.approvalUrl;
     } catch (e) {
-      setCardError(e instanceof Error ? e.message : "שגיאה ביצירת הזמנה");
+      setCardError(e instanceof Error ? e.message : "שגיאה בתשלום");
       setCardLoading(false);
     }
   };
@@ -593,33 +700,90 @@ export default function Buy() {
                   </div>
                 )}
 
-                {/* Pay with card button — redirects to PayPal checkout with card form */}
-                <button
-                  onClick={handleCardPayment}
-                  disabled={cardLoading}
-                  className="w-full h-14 rounded-xl bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 border border-white/20 text-white font-bold text-base transition-all shadow-lg flex items-center justify-center gap-3 disabled:opacity-60"
-                >
-                  {cardLoading ? (
-                    <>
-                      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      מעבד...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-5 h-5 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                      </svg>
-                      שלם בכרטיס אשראי
-                    </>
-                  )}
-                </button>
+                {/* Loading skeleton while SDK initialises */}
+                {!cardFieldsReady && !cardError && (
+                  <div className="text-center py-6 text-blue-300 text-sm flex items-center justify-center gap-2">
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    טוען שדות תשלום...
+                  </div>
+                )}
 
-                <p className="text-center text-xs text-blue-400/70">
-                  🔒 מאובטח על ידי PayPal — פרטי הכרטיס לא נשמרים
-                </p>
+                {/* Inline card form */}
+                <div className={cardFieldsReady ? "space-y-3" : "hidden"}>
+                  {/* Card number */}
+                  <div>
+                    <label className="block text-xs text-blue-300 mb-1 font-medium">מספר כרטיס</label>
+                    <div
+                      ref={cardNumberRef}
+                      className="w-full h-12 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
+                    />
+                  </div>
+
+                  {/* Expiry + CVV side by side */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-blue-300 mb-1 font-medium">תוקף</label>
+                      <div
+                        ref={cardExpiryRef}
+                        className="w-full h-12 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-blue-300 mb-1 font-medium">CVV</label>
+                      <div
+                        ref={cardCvvRef}
+                        className="w-full h-12 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Cardholder name — plain input (not a PayPal field) */}
+                  <div>
+                    <label className="block text-xs text-blue-300 mb-1 font-medium">שם בעל הכרטיס</label>
+                    <input
+                      type="text"
+                      value={cardHolderName}
+                      onChange={(e) => setCardHolderName(e.target.value)}
+                      placeholder="שם מלא כפי שמופיע על הכרטיס"
+                      className="w-full h-12 px-4 bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      dir="ltr"
+                    />
+                  </div>
+
+                  {/* Submit button */}
+                  <button
+                    onClick={handleCardPayment}
+                    disabled={cardLoading || !cardHolderName.trim()}
+                    className="w-full h-14 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold text-base transition-all shadow-lg flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                  >
+                    {cardLoading ? (
+                      <>
+                        <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        מעבד תשלום...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        שלם עכשיו — {CURRENCY_SYMBOLS[currency] || ""}{packages.find(p => p.id === selectedPackage)?.prices[currency] || ""}
+                      </>
+                    )}
+                  </button>
+
+                  <div className="flex items-center justify-center gap-2 text-xs text-blue-400/70 mt-1">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    מאובטח על ידי PayPal — פרטי הכרטיס לא נשמרים
+                  </div>
+                </div>
               </div>
             )}
           </div>
