@@ -22,6 +22,7 @@ import {
   Mail,
   Loader2,
   LogOut,
+  ShoppingBag,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -112,6 +113,10 @@ export default function Account() {
   // Token data
   const { data: tokenData } = trpc.tokens.balance.useQuery();
   const { data: txHistory } = trpc.tokens.history.useQuery();
+
+  // Purchase history
+  const { data: purchaseHistory } = trpc.purchases.list.useQuery();
+  const [purchasesExpanded, setPurchasesExpanded] = useState(false);
 
   // Load user on mount
   useEffect(() => {
@@ -433,6 +438,69 @@ export default function Account() {
                   <p className="text-xs text-gray-400 text-center py-3">{isRtl ? "אין עדיין היסטוריית אסימונים" : "No token history yet"}</p>
                 )}
               </div>
+            </SectionCard>
+
+            {/* ── 3b. Purchase History ── */}
+            <SectionCard icon={ShoppingBag} title={isRtl ? "היסטוריית רכישות" : "Purchase History"} color="linear-gradient(135deg, #0d9488, #06b6d4)">
+              {!purchaseHistory || purchaseHistory.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-400">{isRtl ? "אין עדיין רכישות" : "No purchases yet"}</p>
+                  <Link href="/buy">
+                    <button className="mt-3 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #0d9488, #06b6d4)" }}>
+                      {isRtl ? "רכוש אסימונים" : "Purchase Tokens"}
+                    </button>
+                  </Link>
+                </div>
+              ) : (
+                <div>
+                  <div className="space-y-2">
+                    {(purchasesExpanded ? purchaseHistory : purchaseHistory.slice(0, 3)).map((p) => {
+                      const date = new Date(p.completedAt ?? p.createdAt).toLocaleDateString(
+                        isRtl ? "he-IL" : "en-US",
+                        { year: "numeric", month: "short", day: "numeric" }
+                      );
+                      return (
+                        <div
+                          key={p.id}
+                          className="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs"
+                          style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-7 h-7 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
+                              <Coins className="w-3.5 h-3.5 text-teal-600" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-gray-700">+{p.tokenAmount} {isRtl ? "אסימונים" : "tokens"}</p>
+                              <p className="text-gray-400">{date}</p>
+                            </div>
+                          </div>
+                          <div className="text-end shrink-0">
+                            <p className="font-bold text-teal-700">{p.priceAmount} {p.currency}</p>
+                            <p className="text-gray-400 font-mono" style={{ fontSize: "10px" }}>{p.paypalOrderId.slice(0, 12)}…</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {purchaseHistory.length > 3 && (
+                    <button
+                      onClick={() => setPurchasesExpanded(!purchasesExpanded)}
+                      className="w-full mt-2 text-center text-xs text-teal-600 hover:text-teal-800 py-1 font-medium"
+                    >
+                      {purchasesExpanded
+                        ? (isRtl ? "הצג פחות ▲" : "Show less ▲")
+                        : (isRtl ? `הצג עוד ${purchaseHistory.length - 3} ▼` : `Show ${purchaseHistory.length - 3} more ▼`)}
+                    </button>
+                  )}
+                  <div className="mt-3 pt-3 border-t border-gray-100 text-center">
+                    <Link href="/buy">
+                      <button className="px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #0d9488, #06b6d4)" }}>
+                        {isRtl ? "רכוש אסימונים נוספים" : "Purchase More Tokens"}
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              )}
             </SectionCard>
 
             {/* ── 4. Subscription ── */}

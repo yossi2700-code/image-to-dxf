@@ -628,6 +628,34 @@ export const appRouter = router({
     }),
   }),
 
+  /** Purchase history for the logged-in user */
+  purchases: router({
+    list: publicProcedure.query(async ({ ctx }) => {
+      const appUser = getAppUserFromCookie(
+        (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
+      );
+      if (!appUser) return [];
+      const db = await getDb();
+      if (!db) return [];
+      return db
+        .select({
+          id: paypalOrders.id,
+          paypalOrderId: paypalOrders.paypalOrderId,
+          packageId: paypalOrders.packageId,
+          tokenAmount: paypalOrders.tokenAmount,
+          priceAmount: paypalOrders.priceAmount,
+          currency: paypalOrders.currency,
+          status: paypalOrders.status,
+          createdAt: paypalOrders.createdAt,
+          completedAt: paypalOrders.completedAt,
+        })
+        .from(paypalOrders)
+        .where(and(eq(paypalOrders.appUserId, appUser.userId), eq(paypalOrders.status, "completed")))
+        .orderBy(desc(paypalOrders.createdAt))
+        .limit(50);
+    }),
+  }),
+
   /** History — returns the logged-in app user's own actions */
   history: router({
     list: publicProcedure.query(async ({ ctx }) => {
