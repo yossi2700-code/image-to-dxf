@@ -1766,12 +1766,122 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
   );
 }
 
+// ─── Token History Popup ────────────────────────────────────────────────────
+function TokenHistoryPopup({ onClose, isRtl, containerRef }: { onClose: () => void; isRtl: boolean; containerRef: React.RefObject<HTMLDivElement | null> }) {
+  const { data: history, isLoading } = trpc.tokens.history.useQuery();
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [onClose, containerRef]);
+
+  const reasonLabel = (reason: string) => {
+    const labels: Record<string, string> = {
+      signup_bonus: isRtl ? 'בונוס הרשמה' : 'Signup Bonus',
+      ai_trace: isRtl ? 'AI Outline' : 'AI Outline',
+      ai_generate: isRtl ? 'AI Create' : 'AI Create',
+      ai_refine: isRtl ? 'שיפור AI' : 'AI Refine',
+      convert: isRtl ? 'המרה' : 'Convert',
+      admin_add: isRtl ? 'הוספ על ידי מנהל' : 'Admin Add',
+      campaign_bonus: isRtl ? 'בונוס קמפיין' : 'Campaign Bonus',
+      purchase: isRtl ? 'רכישה' : 'Purchase',
+      refund: isRtl ? 'זיכוי' : 'Refund',
+    };
+    return labels[reason] || reason;
+  };
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 'calc(100% + 8px)',
+        [isRtl ? 'right' : 'left']: 0,
+        zIndex: 9999,
+        minWidth: 300,
+        maxWidth: 360,
+        background: 'linear-gradient(160deg, #1a1a2e 0%, #16213e 100%)',
+        border: '1px solid rgba(139,92,246,0.3)',
+        borderRadius: 16,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header */}
+      <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ color: '#e0e7ff', fontWeight: 700, fontSize: 14 }}>
+          {isRtl ? 'היסטוריית אסימונים' : 'Token History'}
+        </span>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#a5b4fc', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: '0 2px' }}>✕</button>
+      </div>
+      {/* List */}
+      <div style={{ maxHeight: 320, overflowY: 'auto', padding: '8px 0' }}>
+        {isLoading ? (
+          <div style={{ padding: '20px', textAlign: 'center', color: '#a5b4fc', fontSize: 13 }}>
+            <Loader2 style={{ width: 18, height: 18, display: 'inline-block', animation: 'spin 1s linear infinite' }} />
+          </div>
+        ) : !history || history.length === 0 ? (
+          <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280', fontSize: 13 }}>
+            {isRtl ? 'אין פעולות עדיין' : 'No transactions yet'}
+          </div>
+        ) : (
+          history.map((tx) => (
+            <div key={tx.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+              {/* Icon */}
+              <div style={{
+                width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                background: tx.amount > 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 14,
+              }}>
+                {tx.amount > 0 ? '➕' : '➖'}
+              </div>
+              {/* Info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: '#e0e7ff', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {reasonLabel(tx.reason)}
+                </div>
+                <div style={{ color: '#6b7280', fontSize: 10, marginTop: 1 }}>
+                  {tx.description || ''}
+                </div>
+              </div>
+              {/* Amount */}
+              <div style={{ color: tx.amount > 0 ? '#34d399' : '#f87171', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
+                {tx.amount > 0 ? '+' : ''}{tx.amount}
+              </div>
+              {/* Balance after */}
+              <div style={{ color: '#6b7280', fontSize: 11, flexShrink: 0, minWidth: 30, textAlign: 'right' }}>
+                ={tx.balanceAfter}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+      {/* Footer */}
+      <div style={{ padding: '10px 16px', borderTop: '1px solid rgba(139,92,246,0.15)', textAlign: 'center' }}>
+        <button
+          onClick={() => { onClose(); window.location.href = '/buy'; }}
+          style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: 'white', border: 'none', borderRadius: 20, padding: '7px 20px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+        >
+          {isRtl ? '✨ קנה אסימונים' : '✨ Buy Tokens'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ───────────────────────────────────────────────────────────────
 export default function Home() {
   const { t, isRtl, language } = useLanguage();
   const [appUser, setAppUser] = useState<{ id: number; email: string; name: string | null } | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const [tokenHistoryOpen, setTokenHistoryOpen] = useState(false);
+  const tokenHistoryRef = useRef<HTMLDivElement>(null);
 
   // Track active background jobs across all AI tabs
   const [activeJobs, setActiveJobs] = useState<{ generate: boolean; trace: boolean; doc: boolean; face: boolean }>(() => ({
@@ -1916,16 +2026,25 @@ export default function Home() {
           <div className="flex items-center gap-2 ms-auto">
             {appUser ? (
               <>
-                {/* Token balance badge */}
-                <button
-                  onClick={() => window.location.href = "/buy"}
-                  className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full shrink-0 hover:opacity-80 transition-opacity"
-                  style={{ background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4338ca', fontSize: '12px', whiteSpace: 'nowrap' }}
-                  title={isRtl ? 'רכוש אסימונים' : 'Buy tokens'}
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>{tokenBalance}</span>
-                </button>
+                {/* Token balance badge with history popup */}
+                <div className="relative" ref={tokenHistoryRef}>
+                  <button
+                    onClick={() => setTokenHistoryOpen(v => !v)}
+                    className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full shrink-0 hover:opacity-80 transition-opacity"
+                    style={{ background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4338ca', fontSize: '12px', whiteSpace: 'nowrap' }}
+                    title={isRtl ? 'היסטוריית אסימונים' : 'Token history'}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{tokenBalance}</span>
+                  </button>
+                  {tokenHistoryOpen && (
+                    <TokenHistoryPopup
+                      onClose={() => setTokenHistoryOpen(false)}
+                      isRtl={isRtl}
+                      containerRef={tokenHistoryRef}
+                    />
+                  )}
+                </div>
 
                 {/* User avatar dropdown */}
                 <div className="relative" ref={userMenuRef}>

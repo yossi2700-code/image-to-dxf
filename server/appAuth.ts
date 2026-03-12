@@ -191,7 +191,14 @@ router.post("/api/app-auth/register", async (req, res) => {
     const token = signToken(userId, email.toLowerCase());
     setSessionCookie(res, token);
 
-    return res.json({ success: true, user: { id: userId, email: email.toLowerCase(), name: name?.trim() || null } });
+    // Award campaign bonus if campaign code is present
+    const { campaignCode: regCampaignCode } = req.body as { campaignCode?: string };
+    let regCampaignBonusAwarded = false;
+    if (regCampaignCode) {
+      regCampaignBonusAwarded = await awardCampaignBonus(userId, regCampaignCode);
+    }
+
+    return res.json({ success: true, user: { id: userId, email: email.toLowerCase(), name: name?.trim() || null }, campaignBonusAwarded: regCampaignBonusAwarded, campaignTokens: regCampaignBonusAwarded ? 15 : 0 });
   } catch (err) {
     console.error("[app-auth/register]", err);
     return res.status(500).json({ error: "שגיאה בהרשמה" });
