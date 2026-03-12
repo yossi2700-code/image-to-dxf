@@ -17,6 +17,7 @@ import AdminAnnouncement from "./pages/AdminAnnouncement";
 import Account from "./pages/Account";
 import Buy from "./pages/Buy";
 import BuySuccess from "./pages/BuySuccess";
+import Marketing from "./pages/Marketing";
 import PurchaseTerms from "./pages/PurchaseTerms";
 import MaintenancePage from "./pages/Maintenance";
 import { trpc } from "./lib/trpc";
@@ -57,6 +58,7 @@ function Router() {
         <Route path={"/buy"} component={Buy} />
         <Route path={"/buy/success"} component={BuySuccess} />
         <Route path={"/purchase-terms"} component={PurchaseTerms} />
+        <Route path={"/welcome"} component={Marketing} />
         <Route path={"/404"} component={NotFound} />
         {/* Final fallback route */}
         <Route component={NotFound} />
