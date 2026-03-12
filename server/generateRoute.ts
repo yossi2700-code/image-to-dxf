@@ -6,7 +6,6 @@ import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { deductTokens, addTokens, TOKEN_COSTS, TokenAction } from "./tokenService";
 import { createJob, getJob, updateJob, cancelJob } from "./jobStore";
-import OpenAI from "openai";
 import { svgToDxf } from "./svgToDxf";
 import { cleanSvgForPreview } from "./svgClean";
 import potrace from "potrace";
@@ -14,7 +13,38 @@ import sharp from "sharp";
 
 const router = Router();
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
+/**
+ * Generate an image using the Manus Forge API (gpt-image-1 via internal service).
+ * Returns a Buffer of the PNG image.
+ */
+async function generateImageViaForge(prompt: string): Promise<Buffer> {
+  const forgeUrl = process.env.BUILT_IN_FORGE_API_URL;
+  const forgeKey = process.env.BUILT_IN_FORGE_API_KEY;
+  if (!forgeUrl || !forgeKey) throw new Error("Forge API not configured");
+
+  const baseUrl = forgeUrl.endsWith("/") ? forgeUrl : `${forgeUrl}/`;
+  const fullUrl = new URL("images.v1.ImageService/GenerateImage", baseUrl).toString();
+
+  const response = await fetch(fullUrl, {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+      "connect-protocol-version": "1",
+      authorization: `Bearer ${forgeKey}`,
+    },
+    body: JSON.stringify({ prompt, original_images: [] }),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Image generation failed (${response.status})${detail ? ": " + detail : ""}`);
+  }
+
+  const result = await response.json() as { image: { b64Json: string; mimeType: string } };
+  if (!result.image?.b64Json) throw new Error("לא התקבלה תמונה מה-AI");
+  return Buffer.from(result.image.b64Json, "base64");
+}
 
 /**
  * Three distinct style variations for the same subject.
@@ -216,27 +246,7 @@ async function runGenerateJob(
         ? buildLandscapePrompt(fullPrompt, idx)
         : buildLineArtPrompt(fullPrompt, idx);
 
-      const response = await openai.images.generate({
-        model: "gpt-image-1",
-        prompt: imagePrompt,
-        n: 1,
-        size: "1024x1024",
-        quality: "medium",
-      });
-
-      const imageData = response.data?.[0];
-      if (!imageData) throw new Error("לא הצלחנו לייצר תמונה");
-
-      let rawBuffer: Buffer;
-      if (imageData.b64_json) {
-        rawBuffer = Buffer.from(imageData.b64_json, "base64");
-      } else if (imageData.url) {
-        const imgResponse = await fetch(imageData.url);
-        if (!imgResponse.ok) throw new Error("שגיאה בהורדת התמונה שנוצרה");
-        rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
-      } else {
-        throw new Error("לא התקבלה תמונה מה-AI");
-      }
+      const rawBuffer = await generateImageViaForge(imagePrompt);
 
       const paddedBuffer = await sharp(rawBuffer)
         .extend({

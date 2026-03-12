@@ -1,0 +1,125 @@
+{
+  "query": "SELECT ua.id, ua.appUserId, au.name, ua.actionType, ua.feature, ua.description, ua.createdAt FROM user_actions ua JOIN app_users au ON ua.appUserId = au.id ORDER BY ua.createdAt DESC LIMIT 15;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT ua.id, ua.appUserId, au.name, ua.actionType, ua.feature, ua.description, ua.createdAt FROM user_actions ua JOIN app_users au ON ua.appUserId = au.id ORDER BY ua.createdAt DESC LIMIT 15;",
+  "rows": [
+    {
+      "id": "3210001",
+      "appUserId": "780001",
+      "name": "Elad",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "description": "Camera angle: PURE SIDE PROFILE. The subject is a stylized, light-colored wooden horse toy, facing left, captured mid-stride as if running. Its body is composed of multiple layered wooden pieces, givi",
+      "createdAt": "2026-03-12 06:41:05"
+    },
+    {
+      "id": "3180002",
+      "appUserId": "60001",
+      "name": "ליאורה",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "תיק שאנל",
+      "createdAt": "2026-03-11 22:56:45"
+    },
+    {
+      "id": "3180001",
+      "appUserId": "60001",
+      "name": "ליאורה",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "תיק שאנל",
+      "createdAt": "2026-03-11 22:56:44"
+    },
+    {
+      "id": "3120023",
+      "appUserId": "660001",
+      "name": "מאור",
+      "actionType": "ai_generate",
+      "feature": "ai_refine",
+      "description": "להוריד סימני קיפול בידיים ולקצר את המפרק כף יד קצת",
+      "createdAt": "2026-03-11 13:18:08"
+    },
+    {
+      "id": "3120022",
+      "appUserId": "660001",
+      "name": "מאור",
+      "actionType": "ai_generate",
+      "feature": "ai_refine",
+      "description": "ידי כהנים משולב מגן דוד",
+      "createdAt": "2026-03-11 13:16:24"
+    },
+    {
+      "id": "3120021",
+      "appUserId": "660001",
+      "name": "מאור",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "ידי כהנים למצבות",
+      "createdAt": "2026-03-11 13:15:09"
+    },
+    {
+      "id": "3120020",
+      "appUserId": "660001",
+      "name": "מאור",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "ידי כהנים למצבות",
+      "createdAt": "2026-03-11 13:15:09"
+    },
+    {
+      "id": "3120019",
+      "appUserId": "660001",
+      "name": "מאור",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "ידי כהנים למצבות",
+      "createdAt": "2026-03-11 13:15:09"
+    },
+    {
+      "id": "3120018",
+      "appUserId": "660001",
+      "name": "מאור",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "בית המקדש בתלת מימד אוטנטי",
+      "createdAt": "2026-03-11 13:07:04"
+    },
+    {
+      "id": "3120015",
+      "appUserId": "30001",
+      "name": "יוסף",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "סחלב לבן",
+      "createdAt": "2026-03-11 12:39:07"
+    },
+    {
+      "id": "3120016",
+      "appUserId": "30001",
+      "name": "יוסף",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "סחלב לבן",
+      "createdAt": "2026-03-11 12:39:07"
+    },
+    {
+      "id": "3120017",
+      "appUserId": "30001",
+      "name": "יוסף",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "סחלב לבן",
+      "createdAt": "2026-03-11 12:39:07"
+    }
+  ],
+  "messages": [
+    "3150003\t600002\tRan T\tai_generate\tai_generate\tאנא צור לי משטח מלבני בגודל 100*60 מ\"מ , באמצעו עיגול בקוטר 30 מ\"מ",
+    "נא לעגל את הפינות של המלבן ברדיוס 5 מ\"מ , 4 חורי 5 מ\"מ בריחוק 10*10 מהפינות\t2026-03-11 20:03:09",
+    "3150002\t600002\tRan T\tai_generate\tai_generate\tאנא צור לי משטח מלבני בגודל 100*60 מ\"מ , באמצעו עיגול בקוטר 30 מ\"מ",
+    "נא לעגל את הפינות של המלבן ברדיוס 5 מ\"מ , 4 חורי 5 מ\"מ בריחוק 10*10 מהפינות\t2026-03-11 20:03:09",
+    "3150001\t600002\tRan T\tai_generate\tai_generate\tאנא צור לי משטח מלבני בגודל 100*60 מ\"מ , באמצעו עיגול בקוטר 30 מ\"מ",
+    "נא לעגל את הפינות של המלבן ברדיוס 5 מ\"מ , 4 חורי 5 מ\"מ בריחוק 10*10 מהפינות\t2026-03-11 20:03:09"
+  ],
+  "stdout": "id\tappUserId\tname\tactionType\tfeature\tdescription\tcreatedAt\n3210001\t780001\tElad\tai_generate\tai_trace\tCamera angle: PURE SIDE PROFILE. The subject is a stylized, light-colored wooden horse toy, facing left, captured mid-stride as if running. Its body is composed of multiple layered wooden pieces, givi\t2026-03-12 06:41:05\n3180002\t60001\tליאורה\tai_generate\tai_generate\tתיק שאנל\t2026-03-11 22:56:45\n3180001\t60001\tליאורה\tai_generate\tai_generate\tתיק שאנל\t2026-03-11 22:56:44\n3150003\t600002\tRan T\tai_generate\tai_generate\tאנא צור לי משטח מלבני בגודל 100*60 מ\"מ , באמצעו עיגול בקוטר 30 מ\"מ\nנא לעגל את הפינות של המלבן ברדיוס 5 מ\"מ , 4 חורי 5 מ\"מ בריחוק 10*10 מהפינות\t2026-03-11 20:03:09\n3150002\t600002\tRan T\tai_generate\tai_generate\tאנא צור לי משטח מלבני בגודל 100*60 מ\"מ , באמצעו עיגול בקוטר 30 מ\"מ\nנא לעגל את הפינות של המלבן ברדיוס 5 מ\"מ , 4 חורי 5 מ\"מ בריחוק 10*10 מהפינות\t2026-03-11 20:03:09\n3150001\t600002\tRan T\tai_generate\tai_generate\tאנא צור לי משטח מלבני בגודל 100*60 מ\"מ , באמצעו עיגול בקוטר 30 מ\"מ\nנא לעגל את הפינות של המלבן ברדיוס 5 מ\"מ , 4 חורי 5 מ\"מ בריחוק 10*10 מהפינות\t2026-03-11 20:03:09\n3120023\t660001\tמאור\tai_generate\tai_refine\tלהוריד סימני קיפול בידיים ולקצר את המפרק כף יד קצת\t2026-03-11 13:18:08\n3120022\t660001\tמאור\tai_generate\tai_refine\tידי כהנים משולב מגן דוד\t2026-03-11 13:16:24\n3120021\t660001\tמאור\tai_generate\tai_generate\tידי כהנים למצבות\t2026-03-11 13:15:09\n3120020\t660001\tמאור\tai_generate\tai_generate\tידי כהנים למצבות\t2026-03-11 13:15:09\n3120019\t660001\tמאור\tai_generate\tai_generate\tידי כהנים למצבות\t2026-03-11 13:15:09\n3120018\t660001\tמאור\tai_generate\tai_generate\tבית המקדש בתלת מימד אוטנטי\t2026-03-11 13:07:04\n3120015\t30001\tיוסף\tai_generate\tai_generate\tסחלב לבן\t2026-03-11 12:39:07\n3120016\t30001\tיוסף\tai_generate\tai_generate\tסחלב לבן\t2026-03-11 12:39:07\n3120017\t30001\tיוסף\tai_generate\tai_generate\tסחלב לבן\t2026-03-11 12:39:07\n",
+  "stderr": "",
+  "execution_time_ms": 1555
+}

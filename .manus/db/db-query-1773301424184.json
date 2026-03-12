@@ -1,0 +1,66 @@
+{
+  "query": "SELECT id, appUserId, amount, reason, createdAt FROM token_transactions WHERE appUserId = 600002 ORDER BY createdAt DESC LIMIT 15;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, appUserId, amount, reason, createdAt FROM token_transactions WHERE appUserId = 600002 ORDER BY createdAt DESC LIMIT 15;",
+  "rows": [
+    {
+      "id": "3180002",
+      "appUserId": "600002",
+      "amount": "-3",
+      "reason": "ai_generate",
+      "createdAt": "2026-03-11 20:02:45"
+    },
+    {
+      "id": "3180001",
+      "appUserId": "600002",
+      "amount": "-4",
+      "reason": "face_detect",
+      "createdAt": "2026-03-11 18:55:52"
+    },
+    {
+      "id": "3090012",
+      "appUserId": "600002",
+      "amount": "20",
+      "reason": "admin_add",
+      "createdAt": "2026-03-11 08:05:50"
+    },
+    {
+      "id": "3090008",
+      "appUserId": "600002",
+      "amount": "-3",
+      "reason": "ai_generate",
+      "createdAt": "2026-03-11 06:13:34"
+    },
+    {
+      "id": "3090007",
+      "appUserId": "600002",
+      "amount": "-3",
+      "reason": "ai_generate",
+      "createdAt": "2026-03-11 06:08:16"
+    },
+    {
+      "id": "3090006",
+      "appUserId": "600002",
+      "amount": "-3",
+      "reason": "ai_generate",
+      "createdAt": "2026-03-11 06:07:05"
+    },
+    {
+      "id": "2970034",
+      "appUserId": "600002",
+      "amount": "-1",
+      "reason": "ai_generate",
+      "createdAt": "2026-03-10 17:38:00"
+    },
+    {
+      "id": "2970033",
+      "appUserId": "600002",
+      "amount": "20",
+      "reason": "admin_add",
+      "createdAt": "2026-03-10 17:35:18"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tappUserId\tamount\treason\tcreatedAt\n3180002\t600002\t-3\tai_generate\t2026-03-11 20:02:45\n3180001\t600002\t-4\tface_detect\t2026-03-11 18:55:52\n3090012\t600002\t20\tadmin_add\t2026-03-11 08:05:50\n3090008\t600002\t-3\tai_generate\t2026-03-11 06:13:34\n3090007\t600002\t-3\tai_generate\t2026-03-11 06:08:16\n3090006\t600002\t-3\tai_generate\t2026-03-11 06:07:05\n2970034\t600002\t-1\tai_generate\t2026-03-10 17:38:00\n2970033\t600002\t20\tadmin_add\t2026-03-10 17:35:18\n",
+  "stderr": "",
+  "execution_time_ms": 1541
+}

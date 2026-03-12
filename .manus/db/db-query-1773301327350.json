@@ -1,0 +1,52 @@
+{
+  "query": "SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE();",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE();",
+  "rows": [
+    {
+      "table_name": "users"
+    },
+    {
+      "table_name": "user_actions"
+    },
+    {
+      "table_name": "usage_events"
+    },
+    {
+      "table_name": "token_transactions"
+    },
+    {
+      "table_name": "token_costs"
+    },
+    {
+      "table_name": "system_settings"
+    },
+    {
+      "table_name": "paypal_orders"
+    },
+    {
+      "table_name": "password_resets"
+    },
+    {
+      "table_name": "package_prices"
+    },
+    {
+      "table_name": "email_verifications"
+    },
+    {
+      "table_name": "consent_records"
+    },
+    {
+      "table_name": "app_users"
+    },
+    {
+      "table_name": "app_settings"
+    },
+    {
+      "table_name": "__drizzle_migrations"
+    }
+  ],
+  "messages": [],
+  "stdout": "table_name\nusers\nuser_actions\nusage_events\ntoken_transactions\ntoken_costs\nsystem_settings\npaypal_orders\npassword_resets\npackage_prices\nemail_verifications\nconsent_records\napp_users\napp_settings\n__drizzle_migrations\n",
+  "stderr": "",
+  "execution_time_ms": 1595
+}

@@ -1,0 +1,24 @@
+{
+  "query": "DESCRIBE user_actions; SELECT * FROM user_actions ORDER BY created_at DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute DESCRIBE user_actions; SELECT * FROM user_actions ORDER BY created_at DESC LIMIT 10;",
+  "returncode": 1,
+  "logs": [
+    "Field\tType\tNull\tKey\tDefault\tExtra",
+    "id\tint\tNO\tPRI\tNULL\tauto_increment",
+    "appUserId\tint\tNO\t\tNULL\t",
+    "actionType\tenum('convert','ai_generate','download')\tNO\t\tNULL\t",
+    "description\ttext\tYES\t\tNULL\t",
+    "segmentCount\tint\tYES\t\t0\t",
+    "dxfUrl\ttext\tYES\t\tNULL\t",
+    "imageUrl\ttext\tYES\t\tNULL\t",
+    "createdAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t",
+    "svgPreview\ttext\tYES\t\tNULL\t",
+    "shareToken\tvarchar(64)\tYES\tUNI\tNULL\t",
+    "shareTitle\tvarchar(200)\tYES\t\tNULL\t",
+    "groupId\tvarchar(64)\tYES\t\tNULL\t",
+    "variationLabel\tvarchar(32)\tYES\t\tNULL\t",
+    "sourceImageUrl\ttext\tYES\t\tNULL\t",
+    "feature\tvarchar(32)\tYES\t\tNULL",
+    "ERROR 1054 (42S22) at line 1: Unknown column 'created_at' in 'order clause'"
+  ]
+}

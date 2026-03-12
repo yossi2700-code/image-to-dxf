@@ -1,0 +1,16 @@
+{
+  "query": "SHOW TABLES LIKE '%job%'; SHOW TABLES LIKE '%generat%'; SHOW TABLES LIKE '%action%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SHOW TABLES LIKE '%job%'; SHOW TABLES LIKE '%generat%'; SHOW TABLES LIKE '%action%';",
+  "rows": [
+    {
+      "Tables_in_hnDFdLkzVGYJYdws9hbnLw (%action%)": "token_transactions"
+    },
+    {
+      "Tables_in_hnDFdLkzVGYJYdws9hbnLw (%action%)": "user_actions"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_hnDFdLkzVGYJYdws9hbnLw (%action%)\ntoken_transactions\nuser_actions\n",
+  "stderr": "",
+  "execution_time_ms": 1914
+}
