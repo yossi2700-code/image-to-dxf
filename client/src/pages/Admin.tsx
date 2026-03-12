@@ -41,6 +41,7 @@ import {
   Wrench,
   Mail,
   CreditCard,
+  Gift,
 } from "lucide-react";
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
@@ -241,7 +242,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     return result;
   })();
 
-  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email" | "campaign">("overview");
 
   // ── Bulk Email state ──
   const [emailSubject, setEmailSubject] = useState("");
@@ -321,6 +322,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const { data: contactSettings, refetch: refetchContact } = trpc.admin.getContactSettings.useQuery(
     undefined, { enabled: activeSection === "settings" }
   );
+  const { data: campaignData, isLoading: campaignLoading } = trpc.admin.getCampaignRedemptions.useQuery(
+    {},
+    { enabled: activeSection === "campaign" }
+  );
   const [contactEmail, setContactEmail] = useState("");
   const [contactWhatsapp, setContactWhatsapp] = useState("");
   const updateContactMutation = trpc.admin.updateContactSettings.useMutation({
@@ -372,6 +377,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               { id: "consents", label: "הסכמות", icon: CheckCircle2 },
               { id: "payments", label: "תשלומי PayPal", icon: CreditCard },
               { id: "email", label: "שליחת מייל", icon: Mail },
+              { id: "campaign", label: "קמפיין מייל", icon: Gift },
               { id: "settings", label: "הגדרות", icon: Settings },
             ] as const).map(({ id, label, icon: Icon }) => (
               <button
@@ -400,6 +406,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               { id: "consents", label: "הסכמות", icon: CheckCircle2 },
               { id: "payments", label: "PayPal", icon: CreditCard },
               { id: "email", label: "מייל", icon: Mail },
+              { id: "campaign", label: "קמפיין", icon: Gift },
               { id: "settings", label: "הגדרות", icon: Settings },
             ] as const).map(({ id, label, icon: Icon }) => (
               <button
@@ -1793,6 +1800,76 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   <p>• ניתן להוסיף HTML כגון <code className="bg-slate-100 px-1 rounded">&lt;strong&gt;</code>, <code className="bg-slate-100 px-1 rounded">&lt;a href="..."&gt;</code>, <code className="bg-slate-100 px-1 rounded">&lt;p&gt;</code></p>
                   <p>• בדוק תמיד עם "שלח בדיקה" לפני שליחה לכולם</p>
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* ── CAMPAIGN REPORT SECTION ── */}
+        {activeSection === "campaign" && (
+          <div className="space-y-5">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Gift className="w-5 h-5 text-purple-500" />
+                  דוח קמפיין מייל — מי תבע 15 אסימונים
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {campaignLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <RefreshCw className="w-5 h-5 animate-spin text-slate-400" />
+                  </div>
+                ) : !campaignData || campaignData.length === 0 ? (
+                  <div className="text-center py-8 text-slate-400">
+                    <Gift className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">עדיין אף אחד לא תבע את הבונוס</p>
+                    <p className="text-xs mt-1">הלקוחות יופיעו כאן לאחר שילחצו על הקישור במייל</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg px-4 py-2 text-center">
+                        <div className="text-2xl font-bold text-purple-700">{campaignData.length}</div>
+                        <div className="text-xs text-purple-500">תבעו בונוס</div>
+                      </div>
+                      <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-2 text-center">
+                        <div className="text-2xl font-bold text-green-700">{campaignData.reduce((s, r) => s + r.tokensAwarded, 0)}</div>
+                        <div className="text-xs text-green-500">אסימונים חולקו</div>
+                      </div>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b text-slate-500 text-right">
+                            <th className="pb-2 font-medium">שם</th>
+                            <th className="pb-2 font-medium">מייל</th>
+                            <th className="pb-2 font-medium">קמפיין</th>
+                            <th className="pb-2 font-medium">אסימונים</th>
+                            <th className="pb-2 font-medium">תאריך</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {campaignData.map((row) => (
+                            <tr key={row.id} className="hover:bg-slate-50">
+                              <td className="py-2 font-medium">{row.userName || '—'}</td>
+                              <td className="py-2 text-slate-500 text-xs">{row.userEmail || '—'}</td>
+                              <td className="py-2">
+                                <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full">{row.campaignCode}</span>
+                              </td>
+                              <td className="py-2">
+                                <span className="font-bold text-green-600">+{row.tokensAwarded}</span>
+                              </td>
+                              <td className="py-2 text-slate-400 text-xs">
+                                {new Date(row.redeemedAt).toLocaleString('he-IL')}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

@@ -7,7 +7,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts } from "../drizzle/schema";
+import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions } from "../drizzle/schema";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "./emailService";
 import { desc, eq, and, sql } from "drizzle-orm";
@@ -532,6 +532,28 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    /** Get campaign redemption report — who clicked the email link and claimed bonus */
+    getCampaignRedemptions: adminProcedure
+      .input(z.object({ campaignCode: z.string().optional() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const rows = await db
+          .select({
+            id: campaignRedemptions.id,
+            campaignCode: campaignRedemptions.campaignCode,
+            tokensAwarded: campaignRedemptions.tokensAwarded,
+            redeemedAt: campaignRedemptions.redeemedAt,
+            userName: appUsers.name,
+            userEmail: appUsers.email,
+          })
+          .from(campaignRedemptions)
+          .leftJoin(appUsers, eq(campaignRedemptions.appUserId, appUsers.id))
+          .where(input.campaignCode ? eq(campaignRedemptions.campaignCode, input.campaignCode) : sql`1=1`)
+          .orderBy(desc(campaignRedemptions.redeemedAt))
+          .limit(200);
+        return rows;
+      }),
     /** Send a bulk email to all registered users with a verified email */
     sendBulkEmail: adminProcedure
       .input(z.object({
