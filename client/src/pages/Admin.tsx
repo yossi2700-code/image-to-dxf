@@ -551,6 +551,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                     <thead>
                       <tr className="border-b text-muted-foreground">
                         <th className="text-right py-2 pr-2 font-medium">תמונה</th>
+                        <th className="text-right py-2 pr-2 font-medium">משתמש</th>
                         <th className="text-right py-2 pr-2 font-medium">סוג</th>
                         <th className="text-right py-2 font-medium">קווים</th>
                         <th className="text-right py-2 font-medium">IP</th>
@@ -567,6 +568,16 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                               <div className="w-10 h-10 rounded border bg-muted flex items-center justify-center">
                                 <Upload className="w-4 h-4 text-muted-foreground" />
                               </div>
+                            )}
+                          </td>
+                          <td className="py-2 pr-2">
+                            {ev.userName || ev.userEmail ? (
+                              <div className="min-w-[90px]">
+                                <p className="text-xs font-medium text-slate-700 truncate max-w-[120px]">{ev.userName || ev.userEmail?.split("@")[0]}</p>
+                                {ev.userEmail && <p className="text-xs text-muted-foreground truncate max-w-[120px]">{ev.userEmail}</p>}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">אורח</span>
                             )}
                           </td>
                           <td className="py-2 pr-2">

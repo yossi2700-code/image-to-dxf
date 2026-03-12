@@ -1,6 +1,6 @@
-import { desc, gte, sql, count, sum } from "drizzle-orm";
+import { desc, gte, sql, count, sum, eq } from "drizzle-orm";
 import { getDb } from "./db";
-import { usageEvents, InsertUsageEvent } from "../drizzle/schema";
+import { usageEvents, InsertUsageEvent, appUsers } from "../drizzle/schema";
 
 /** Anonymize IP: keep first 3 octets only (e.g. 1.2.3.x) */
 export function anonymizeIp(ip: string | undefined): string | null {
@@ -113,8 +113,19 @@ export async function getRecentEvents(limit = 20) {
   if (!db) return [];
 
   return db
-    .select()
+    .select({
+      id: usageEvents.id,
+      type: usageEvents.type,
+      segmentCount: usageEvents.segmentCount,
+      ipAnon: usageEvents.ipAnon,
+      imageUrl: usageEvents.imageUrl,
+      createdAt: usageEvents.createdAt,
+      appUserId: usageEvents.appUserId,
+      userName: appUsers.name,
+      userEmail: appUsers.email,
+    })
     .from(usageEvents)
+    .leftJoin(appUsers, eq(usageEvents.appUserId, appUsers.id))
     .orderBy(desc(usageEvents.createdAt))
     .limit(limit);
 }
