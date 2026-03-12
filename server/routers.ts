@@ -161,7 +161,7 @@ export const appRouter = router({
 
     /** Recent events list */
     recentEvents: adminProcedure.query(async () => {
-      return getRecentEvents(50);
+      return getRecentEvents(500);
     }),
 
     /** Registered app users list */

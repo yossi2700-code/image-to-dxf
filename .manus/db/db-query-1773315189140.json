@@ -1,0 +1,17 @@
+{
+  "query": "SELECT u.id, u.name, u.email, u.tokenBalance, COUNT(a.id) as action_count FROM app_users u LEFT JOIN user_actions a ON a.appUserId = u.id WHERE u.name LIKE '%אביבית%' GROUP BY u.id, u.name, u.email, u.tokenBalance;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT u.id, u.name, u.email, u.tokenBalance, COUNT(a.id) as action_count FROM app_users u LEFT JOIN user_actions a ON a.appUserId = u.id WHERE u.name LIKE '%אביבית%' GROUP BY u.id, u.name, u.email, u.tokenBalance;",
+  "rows": [
+    {
+      "id": "750001",
+      "name": "אביבית קירשנר",
+      "email": "avivi2284@gmail.com",
+      "tokenBalance": "27",
+      "action_count": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\ttokenBalance\taction_count\n750001\tאביבית קירשנר\tavivi2284@gmail.com\t27\t0\n",
+  "stderr": "",
+  "execution_time_ms": 1676
+}

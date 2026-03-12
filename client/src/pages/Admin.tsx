@@ -149,7 +149,134 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-// ─── Dashboard ────────────────────────────────────────────────────────────────
+/// ─── Activity Section ─────────────────────────────────────────────────────
+type RecentEvent = {
+  id: number;
+  type: string;
+  segmentCount: number | null;
+  ipAnon: string | null;
+  imageUrl: string | null;
+  createdAt: Date;
+  appUserId: number | null;
+  userName: string | null;
+  userEmail: string | null;
+};
+
+function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | undefined; recentLoading: boolean }) {
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<"all" | "convert" | "ai">("all");
+
+  const filtered = (recent ?? []).filter((ev) => {
+    const matchSearch = !search ||
+      (ev.userName ?? "").toLowerCase().includes(search.toLowerCase()) ||
+      (ev.userEmail ?? "").toLowerCase().includes(search.toLowerCase());
+    const matchType = typeFilter === "all" ||
+      (typeFilter === "convert" && ev.type === "convert") ||
+      (typeFilter === "ai" && ev.type !== "convert");
+    return matchSearch && matchType;
+  });
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Clock className="w-4 h-4 text-primary" />
+              היסטוריית פעולות
+            </CardTitle>
+            <span className="text-xs text-muted-foreground bg-slate-100 px-2 py-0.5 rounded-full">
+              {filtered.length} פעולות
+            </span>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <Input
+              placeholder="חפש לפי שם או מייל..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="max-w-[220px] h-8 text-sm"
+            />
+            <div className="flex gap-1">
+              {(["all", "convert", "ai"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setTypeFilter(f)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                    typeFilter === f
+                      ? "bg-primary text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {f === "all" ? "הכל" : f === "convert" ? "המרה" : "AI"}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        {recentLoading ? (
+          <div className="space-y-2 p-4">{[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-muted animate-pulse rounded-lg" />)}</div>
+        ) : filtered.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-slate-50 text-slate-500">
+                  <th className="text-right py-2 px-3 font-medium">תמונה</th>
+                  <th className="text-right py-2 px-3 font-medium">משתמש</th>
+                  <th className="text-right py-2 px-3 font-medium">סוג</th>
+                  <th className="text-right py-2 px-3 font-medium">קווים</th>
+                  <th className="text-right py-2 px-3 font-medium">תאריך</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((ev) => (
+                  <tr key={ev.id} className="border-b last:border-0 hover:bg-blue-50/40 transition-colors">
+                    <td className="py-2 px-3">
+                      {ev.imageUrl ? (
+                        <img src={ev.imageUrl} alt="" className="w-10 h-10 object-cover rounded-lg border shadow-sm" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg border bg-slate-100 flex items-center justify-center">
+                          <Upload className="w-4 h-4 text-slate-400" />
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-2 px-3">
+                      {ev.userName || ev.userEmail ? (
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">{ev.userName || ev.userEmail?.split("@")[0]}</p>
+                          {ev.userEmail && <p className="text-xs text-slate-400">{ev.userEmail}</p>}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">אורח</span>
+                      )}
+                    </td>
+                    <td className="py-2 px-3">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        ev.type === "convert" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
+                      }`}>
+                        {ev.type === "convert" ? <><Upload className="w-3 h-3" />המרה</> : <><Sparkles className="w-3 h-3" />AI</>}
+                      </span>
+                    </td>
+                    <td className="py-2 px-3 text-slate-500 font-mono text-sm">{(ev.segmentCount ?? 0).toLocaleString()}</td>
+                    <td className="py-2 px-3 text-slate-400 text-xs whitespace-nowrap">{new Date(ev.createdAt).toLocaleString("he-IL")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="py-10 text-center text-slate-400">
+            <Clock className="w-8 h-8 mx-auto mb-2 opacity-30" />
+            <p className="text-sm">{search ? `לא נמצאו תוצאות עבור "${search}"` : "אין פעולות עדיין"}</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Dashboard ──────────────────────────────────────────────────────────────
 function Dashboard({ onLogout }: { onLogout: () => void }) {
   const utils = trpc.useUtils();
 
@@ -542,71 +669,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
         {/* ── ACTIVITY SECTION ── */}
         {activeSection === "activity" && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary" />
-                פעולות אחרונות (כל המשתמשים)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {recentLoading ? (
-                <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-muted animate-pulse rounded-lg" />)}</div>
-              ) : recent && recent.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b text-muted-foreground">
-                        <th className="text-right py-2 pr-2 font-medium">תמונה</th>
-                        <th className="text-right py-2 pr-2 font-medium">משתמש</th>
-                        <th className="text-right py-2 pr-2 font-medium">סוג</th>
-                        <th className="text-right py-2 font-medium">קווים</th>
-                        <th className="text-right py-2 font-medium">IP</th>
-                        <th className="text-right py-2 font-medium">תאריך ושעה</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recent.map((ev) => (
-                        <tr key={ev.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                          <td className="py-2 pr-2">
-                            {ev.imageUrl ? (
-                              <img src={ev.imageUrl} alt="" className="w-10 h-10 object-cover rounded border" />
-                            ) : (
-                              <div className="w-10 h-10 rounded border bg-muted flex items-center justify-center">
-                                <Upload className="w-4 h-4 text-muted-foreground" />
-                              </div>
-                            )}
-                          </td>
-                          <td className="py-2 pr-2">
-                            {ev.userName || ev.userEmail ? (
-                              <div className="min-w-[90px]">
-                                <p className="text-xs font-medium text-slate-700 truncate max-w-[120px]">{ev.userName || ev.userEmail?.split("@")[0]}</p>
-                                {ev.userEmail && <p className="text-xs text-muted-foreground truncate max-w-[120px]">{ev.userEmail}</p>}
-                              </div>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">אורח</span>
-                            )}
-                          </td>
-                          <td className="py-2 pr-2">
-                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
-                              ev.type === "convert" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
-                            }`}>
-                              {ev.type === "convert" ? <><Upload className="w-3 h-3" />המרה</> : <><Sparkles className="w-3 h-3" />AI</>}
-                            </span>
-                          </td>
-                          <td className="py-2 text-muted-foreground">{(ev.segmentCount ?? 0).toLocaleString()}</td>
-                          <td className="py-2 font-mono text-xs text-muted-foreground">{ev.ipAnon ?? "—"}</td>
-                          <td className="py-2 text-muted-foreground text-xs">{new Date(ev.createdAt).toLocaleString("he-IL")}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="py-8 text-center text-muted-foreground text-sm">אין פעולות עדיין.</div>
-              )}
-            </CardContent>
-          </Card>
+          <ActivitySection recent={recent} recentLoading={recentLoading} />
         )}
 
         {/* ── USERS SECTION ── */}
