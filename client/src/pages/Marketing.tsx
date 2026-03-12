@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 const BUTTERFLY_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/before-after-butterfly-JGTRb3W3JyRGncTEJNbZNn.webp";
 const PARROT_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/before-after-parrot-V2SyKT5B8gKcum3rQXnaVo.webp";
-const BOTTLE_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/before-after-bottle-oL6McrZYMKzizo28Teg76z.webp";
+const BOTTLE_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/before-after-bottle-W6htTBxD25Xx45PEobDDAU.webp";
 const FLOWER_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/before-after-flower-jEbBiuCtPGgAmLQLPA24WN.webp";
 const BIKE_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/before-after-bike-Zo6kmezpPh3J6smmgb3hYT.webp";
 
