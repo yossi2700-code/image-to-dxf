@@ -406,7 +406,7 @@ const HERO_SLIDES = [
     alt: 'Gaming controller photo to DXF vector',
   },
   {
-    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-parrot-ba-GpEFunJvP6NHZeiZJUeYvQ.webp',
+    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/before-after-parrot-V2SyKT5B8gKcum3rQXnaVo.webp',
     alt: 'Parrot photo to DXF vector',
   },
   {
@@ -426,8 +426,12 @@ const HERO_SLIDES = [
     alt: 'Classic car photo to DXF vector',
   },
   {
-    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-ba-flower-ZLjxVZyJdERmSc2JgRNbGV.webp',
-    alt: 'Rose flower photo to DXF vector',
+    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/before-after-bottle-kitchen-NMZfnioMoqX7XgjurPfovQ.webp',
+    alt: 'Water bottle photo to DXF vector',
+  },
+  {
+    src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/before-after-butterfly-JGTRb3W3JyRGncTEJNbZNn.webp',
+    alt: 'Butterfly photo to DXF vector',
   },
 ];
 
