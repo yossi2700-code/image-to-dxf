@@ -3,11 +3,35 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { eq, and, gte, count, sql } from "drizzle-orm";
 import { getDb } from "./db";
-import { appUsers, usageEvents, emailVerifications, passwordResets, consentRecords, users } from "../drizzle/schema";
+import { appUsers, usageEvents, emailVerifications, passwordResets, consentRecords, users, campaignRedemptions } from "../drizzle/schema";
 import { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } from "./emailService";
 import { randomBytes } from "crypto";
 import { ENV } from "./_core/env";
 import { sdk } from "./_core/sdk";
+import { addTokens } from "./tokenService";
+
+/**
+ * Award campaign bonus tokens to a user if they haven't already claimed this campaign.
+ * Returns true if tokens were awarded, false if already claimed.
+ */
+async function awardCampaignBonus(appUserId: number, campaignCode: string, tokens = 15): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  try {
+    const [existing] = await db
+      .select({ id: campaignRedemptions.id })
+      .from(campaignRedemptions)
+      .where(and(eq(campaignRedemptions.appUserId, appUserId), eq(campaignRedemptions.campaignCode, campaignCode)))
+      .limit(1);
+    if (existing) return false; // Already claimed
+    await db.insert(campaignRedemptions).values({ appUserId, campaignCode, tokensAwarded: tokens });
+    await addTokens(appUserId, tokens, "campaign_bonus", `בונוס קמפיין: ${campaignCode}`);
+    return true;
+  } catch (err) {
+    console.error("[campaign] Failed to award bonus:", err);
+    return false;
+  }
+}
 
 const router = Router();
 
@@ -193,10 +217,17 @@ router.post("/api/app-auth/login", async (req, res) => {
     // Update last login
     await db.update(appUsers).set({ lastLoginAt: new Date() }).where(eq(appUsers.id, user.id));
 
+    // Award campaign bonus if campaign code is present
+    const campaignCode = req.body.campaignCode as string | undefined;
+    let campaignBonusAwarded = false;
+    if (campaignCode) {
+      campaignBonusAwarded = await awardCampaignBonus(user.id, campaignCode);
+    }
+
     const token = signToken(user.id, user.email);
     setSessionCookie(res, token, rememberMe !== false); // default true for backwards compat
 
-    return res.json({ success: true, user: { id: user.id, email: user.email, name: user.name } });
+    return res.json({ success: true, user: { id: user.id, email: user.email, name: user.name }, campaignBonusAwarded, campaignTokens: campaignBonusAwarded ? 15 : 0 });
   } catch (err) {
     console.error("[app-auth/login]", err);
     return res.status(500).json({ error: "שגיאה בכניסה" });

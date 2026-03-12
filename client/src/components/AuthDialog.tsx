@@ -172,9 +172,11 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
 
     try {
       const endpoint = mode === "register" ? "/api/app-auth/register" : "/api/app-auth/login";
+      // Read campaign code from URL params (e.g. ?campaign=email_bonus_2026_03)
+      const campaignCode = new URLSearchParams(window.location.search).get("campaign") || undefined;
       const body = mode === "register"
-        ? { name, email, password, termsAccepted: true, termsVersion: "2026-03-10", privacyVersion: "2026-03-10" }
-        : { email, password, rememberMe };
+        ? { name, email, password, termsAccepted: true, termsVersion: "2026-03-10", privacyVersion: "2026-03-10", campaignCode }
+        : { email, password, rememberMe, campaignCode };
       try { localStorage.setItem("auth_remember_me", String(rememberMe)); } catch { /* ignore */ }
 
       const res = await fetch(endpoint, {
@@ -191,7 +193,11 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
         return;
       }
 
-      toast.success(mode === "register" ? "נרשמת בהצלחה! 🎉" : "ברוך הבא! 👋");
+      if (data.campaignBonusAwarded) {
+        toast.success(`🎁 קיבלת ${data.campaignTokens} אסימונים בונוס! הם נוספו לחשבונך.`, { duration: 5000 });
+      } else {
+        toast.success(mode === "register" ? "נרשמת בהצלחה! 🎉" : "ברוך הבא! 👋");
+      }
       reset();
       onOpenChange(false);
       onSuccess(data.user);

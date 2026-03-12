@@ -270,3 +270,17 @@ export const tokenCosts = mysqlTable("token_costs", {
 });
 export type TokenCost = typeof tokenCosts.$inferSelect;
 export type InsertTokenCost = typeof tokenCosts.$inferInsert;
+
+// Campaign redemptions — tracks which users already claimed a campaign bonus
+export const campaignRedemptions = mysqlTable("campaign_redemptions", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Campaign code (e.g. "email_bonus_2026_03") */
+  campaignCode: varchar("campaignCode", { length: 64 }).notNull(),
+  /** App user who redeemed the bonus */
+  appUserId: int("appUserId").notNull(),
+  /** Number of tokens awarded */
+  tokensAwarded: int("tokensAwarded").notNull().default(15),
+  redeemedAt: timestamp("redeemedAt").defaultNow().notNull(),
+});
+export type CampaignRedemption = typeof campaignRedemptions.$inferSelect;
+export type InsertCampaignRedemption = typeof campaignRedemptions.$inferInsert;
