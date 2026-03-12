@@ -559,6 +559,7 @@ export const appRouter = router({
       .input(z.object({
         subject: z.string().min(1).max(200),
         htmlBody: z.string().min(1).max(50000),
+        plainText: z.string().max(10000).optional(),
         testOnly: z.boolean().optional(), // if true, send only to first user (preview)
       }))
       .mutation(async ({ input }) => {
@@ -580,6 +581,7 @@ export const appRouter = router({
               name: user.name,
               subject: input.subject,
               htmlBody: input.htmlBody,
+              plainText: input.plainText,
             });
             sent++;
             // Small delay to avoid rate limiting

@@ -372,8 +372,27 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email" | "campaign">("overview");
 
   // ── Bulk Email state ──
-  const [emailSubject, setEmailSubject] = useState("");
-  const [emailBody, setEmailBody] = useState("");
+  const CAMPAIGN_EMAIL_SUBJECT = "עדכונים חדשים ב-AI DXF + 15 אסימונים חינם";
+  const CAMPAIGN_EMAIL_BODY = `<p style="font-size:15px; color:#374151; line-height:1.8; margin:0 0 16px;">שלום {{name}},</p>
+<p style="font-size:15px; color:#374151; line-height:1.8; margin:0 0 16px;">תודה שנרשמת לאתר AI DXF. הוספנו יכולות חדשות ורצינו לעדכן אותך.</p>
+<p style="font-size:14px; font-weight:bold; color:#1e1b4b; margin:0 0 10px;">מה חדש באתר:</p>
+<p style="font-size:14px; color:#374151; line-height:1.8; margin:0 0 6px;">&#10024; יצירת תמונה מטקסט (AI Create) — תאר בטקסט מה אתה רוצה וה-AI יצור תמונה ויהפוך אותה לקובץ DXF.</p>
+<p style="font-size:14px; color:#374151; line-height:1.8; margin:0 0 6px;">&#128176; רכישת אסימונים — עכשיו ניתן לרכוש אסימונים נוספים ישירות מהאתר.</p>
+<p style="font-size:14px; color:#374151; line-height:1.8; margin:0 0 20px;">&#128247; ממשק משופר — עיצוב חדש ומהיר יותר עם תצוגה מקדימה.</p>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fef9c3; border:1px solid #fde68a; border-radius:8px; margin-bottom:20px;">
+<tr><td style="padding:16px 20px; direction:rtl; text-align:right;">
+<p style="margin:0 0 6px; font-size:15px; font-weight:bold; color:#92400e;">מתנה מיוחדת: 15 אסימונים נוספים</p>
+<p style="margin:0; font-size:13px; color:#78350f; line-height:1.7;">כל משתמש רשום שייכנס לאתר דרך הקישור הזה יקבל 15 אסימונים שיתווספו אוטומטית לחשבונו.</p>
+</td></tr>
+</table>
+<p style="text-align:center; margin:0 0 8px;">
+<a href="https://dxfai.net/?campaign=email_bonus_2026_03" style="display:inline-block; background:#4f46e5; color:#ffffff; font-size:15px; font-weight:bold; padding:12px 36px; text-decoration:none; border-radius:6px;">כניסה לאתר וקבלת האסימונים</a>
+</p>`;
+  const CAMPAIGN_EMAIL_TEXT = `שלום {{name}},\n\nתודה שנרשמת לאתר AI DXF.\n\nמה חדש:\n- יצירת תמונה מטקסט (AI Create)\n- רכישת אסימונים\n- ממשק משופר\n\nמתנה מיוחדת: 15 אסימונים נוספים לכל מי שנכנס דרך הקישור:\nhttps://dxfai.net/?campaign=email_bonus_2026_03\n\nAI DXF - dxfai.net`;
+
+  const [emailSubject, setEmailSubject] = useState(CAMPAIGN_EMAIL_SUBJECT);
+  const [emailBody, setEmailBody] = useState(CAMPAIGN_EMAIL_BODY);
+  const [emailPlainText, setEmailPlainText] = useState(CAMPAIGN_EMAIL_TEXT);
   const [emailSending, setEmailSending] = useState(false);
   const sendBulkEmailMutation = trpc.admin.sendBulkEmail.useMutation({
     onSuccess: (data) => {
@@ -1831,7 +1850,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                     onClick={() => {
                       if (!confirm("לשלוח מייל בדיקה למשתמש הראשון בלבד?")) return;
                       setEmailSending(true);
-                      sendBulkEmailMutation.mutate({ subject: emailSubject, htmlBody: emailBody, testOnly: true });
+                      sendBulkEmailMutation.mutate({ subject: emailSubject, htmlBody: emailBody, plainText: emailPlainText, testOnly: true });
                     }}
                     className="gap-2"
                   >
@@ -1845,7 +1864,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                     onClick={() => {
                       if (!confirm("לשלוח את המייל לכל המשתמשים הרשומים? פעולה זו לא ניתנת לביטול.")) return;
                       setEmailSending(true);
-                      sendBulkEmailMutation.mutate({ subject: emailSubject, htmlBody: emailBody, testOnly: false });
+                      sendBulkEmailMutation.mutate({ subject: emailSubject, htmlBody: emailBody, plainText: emailPlainText, testOnly: false });
                     }}
                     className="gap-2 bg-indigo-600 hover:bg-indigo-700"
                   >

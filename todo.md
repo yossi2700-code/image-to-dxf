@@ -1459,3 +1459,11 @@
 - [ ] תיקון: דרך dxfai.net PayPal מציג רק התחברות (לא אפשרות כרטיס) — Manus OAuth cookie לא עובד על custom domain
 ## תיקון בדיקת הרשמה ב-AI Create - מרץ 2026
 - [x] תיקון: משתמש רשום ומחובר מקבל הודעה "צריך להירשם" כשמנסה להשתמש ב-AI Create — תוקן: credentials:include בכל fetch calls + HTTPS redirect + tokens.balance תומך ב-Manus OAuth
+
+## שיפור מיילים - מרץ 2026
+
+- [x] שכתוב HTML של מייל קמפיין לגרסה ידידותית לפילטרי ספאם (HTML נקי, ללא gradients מורכבים)
+- [x] הוספת גרסת טקסט רגיל (plain text) לכל מייל המוני
+- [x] הוספת headers: List-Unsubscribe, Precedence: bulk
+- [x] עדכון ממשק ניהול עם תוכן מייל קמפיין מוכן מראש
+- [x] שליחת מייל בדיקה עם הגרסה החדשה

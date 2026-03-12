@@ -339,41 +339,75 @@ export async function sendPurchaseConfirmationEmail(opts: {
 /**
  * Send a custom bulk email to a single recipient (called in a loop for all users).
  * Admin provides subject and htmlBody. Use {{name}} in htmlBody to personalize.
+ * Uses clean, spam-filter-friendly HTML with plain text fallback.
  */
 export async function sendBulkEmail(opts: {
   to: string;
   name: string | null;
   subject: string;
   htmlBody: string;
+  plainText?: string;
 }): Promise<void> {
   if (!resend) { console.warn("[emailService] RESEND_API_KEY not set, skipping bulk email"); return; }
   const displayName = opts.name?.split(" ")[0] || opts.name || "";
   const personalizedHtml = opts.htmlBody.replace(/\{\{name\}\}/g, displayName);
+  const personalizedText = (opts.plainText || "").replace(/\{\{name\}\}/g, displayName);
 
-  const wrappedHtml = `
-    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
-      <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 24px 32px; text-align: center;">
-        <span style="color: white; font-size: 20px; font-weight: 900;">Ai<span style="color: #c4b5fd;">DXF</span></span>
-      </div>
-      <div style="padding: 32px;">
-        ${personalizedHtml}
-      </div>
-      <div style="padding: 16px 32px; border-top: 1px solid #f1f5f9; text-align: center;">
-        <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-          dxfai.net &nbsp;&bull;&nbsp;
-          <a href="https://dxfai.net" style="color: #6366f1; text-decoration: none;">כניסה לאתר</a>
-        </p>
-      </div>
-    </div>
-  `;
+  // Clean, spam-filter-friendly wrapper — no gradients, no box-shadows, no complex CSS
+  const wrappedHtml = `<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin:0; padding:0; background:#f4f4f4; font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f4; padding:20px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff; max-width:560px;">
+  <tr>
+    <td align="center" style="background:#1e1b4b; padding:20px 32px;">
+      <p style="margin:0; font-size:22px; font-weight:bold; color:#ffffff; font-family:Arial,sans-serif;">AI DXF</p>
+      <p style="margin:4px 0 0; font-size:12px; color:#a5b4fc; font-family:Arial,sans-serif;">dxfai.net</p>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:24px 32px; direction:rtl; text-align:right; font-family:Arial,sans-serif;">
+      ${personalizedHtml}
+    </td>
+  </tr>
+  <tr>
+    <td style="background:#f9fafb; padding:14px 32px; text-align:center; border-top:1px solid #e5e7eb; direction:rtl;">
+      <p style="margin:0 0 4px; font-size:12px; color:#9ca3af; font-family:Arial,sans-serif;">
+        AI DXF &bull; <a href="https://dxfai.net" style="color:#4f46e5; text-decoration:none;">dxfai.net</a>
+      </p>
+      <p style="margin:0; font-size:11px; color:#d1d5db; font-family:Arial,sans-serif;">
+        קיבלת מייל זה כי נרשמת לאתר AI DXF. <a href="mailto:noreply@dxfai.net?subject=unsubscribe" style="color:#d1d5db;">הסרה מרשימת תפוצה</a>
+      </p>
+    </td>
+  </tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+
+  // Build plain text version (important for spam filters)
+  const textVersion = personalizedText ||
+    `AI DXF - dxfai.net\n\n` +
+    `שלום ${displayName},\n\n` +
+    `לכניסה לאתר: https://dxfai.net\n\n` +
+    `להסרה מרשימת תפוצה: noreply@dxfai.net`;
 
   await resend.emails.send({
     from: FROM_ADDRESS,
     to: opts.to,
     subject: opts.subject,
     html: wrappedHtml,
+    text: textVersion,
     headers: {
-      'List-Unsubscribe': `<mailto:noreply@dxfai.net?subject=unsubscribe>`,
+      'List-Unsubscribe': `<mailto:noreply@dxfai.net?subject=unsubscribe>, <https://dxfai.net/unsubscribe>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      'Precedence': 'bulk',
     },
   });
 }
