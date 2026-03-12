@@ -1766,6 +1766,130 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
   );
 }
 
+// ─── Token Bonus Animation ───────────────────────────────────────────────────
+function TokenBonusAnimation({ tokens, onDone }: { tokens: number; onDone: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 4000);
+    return () => clearTimeout(t);
+  }, [onDone]);
+
+  const coins = Array.from({ length: 18 }, (_, i) => ({
+    id: i,
+    left: 10 + Math.random() * 80,
+    delay: Math.random() * 0.8,
+    size: 14 + Math.random() * 14,
+    duration: 1.2 + Math.random() * 0.8,
+  }));
+
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 99999,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        pointerEvents: 'none',
+      }}
+    >
+      {/* Backdrop blur */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'rgba(0,0,0,0.55)',
+        backdropFilter: 'blur(4px)',
+        animation: 'fadeIn 0.3s ease',
+        pointerEvents: 'all',
+      }} onClick={onDone} />
+
+      {/* Coins rain */}
+      {coins.map(c => (
+        <div key={c.id} style={{
+          position: 'absolute',
+          top: '-10%',
+          left: `${c.left}%`,
+          fontSize: c.size,
+          animation: `coinFall ${c.duration}s ${c.delay}s ease-in forwards`,
+          opacity: 0,
+        }}>✨</div>
+      ))}
+
+      {/* Center card */}
+      <div style={{
+        position: 'relative',
+        background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4c1d95 100%)',
+        border: '2px solid rgba(167,139,250,0.6)',
+        borderRadius: 28,
+        padding: '40px 56px',
+        textAlign: 'center',
+        boxShadow: '0 0 60px rgba(139,92,246,0.5), 0 20px 60px rgba(0,0,0,0.6)',
+        animation: 'popIn 0.5s cubic-bezier(0.34,1.56,0.64,1)',
+        minWidth: 280,
+      }}>
+        {/* Glow ring */}
+        <div style={{
+          position: 'absolute', inset: -2, borderRadius: 30,
+          background: 'linear-gradient(135deg, #7c3aed, #a855f7, #6366f1)',
+          zIndex: -1, filter: 'blur(12px)', opacity: 0.6,
+          animation: 'pulse 1.5s ease-in-out infinite',
+        }} />
+
+        <div style={{ fontSize: 64, marginBottom: 8, animation: 'bounce 0.6s 0.3s ease' }}>🎁</div>
+        <div style={{ color: '#fbbf24', fontSize: 22, fontWeight: 900, marginBottom: 4, letterSpacing: '-0.5px' }}>
+          בונוס קיבלת!
+        </div>
+        <div style={{
+          color: '#ffffff',
+          fontSize: 52,
+          fontWeight: 900,
+          lineHeight: 1.1,
+          marginBottom: 6,
+          textShadow: '0 0 30px rgba(251,191,36,0.8)',
+          animation: 'countUp 0.6s 0.4s ease both',
+        }}>
+          +{tokens}
+        </div>
+        <div style={{ color: '#c4b5fd', fontSize: 16, fontWeight: 600, marginBottom: 20 }}>
+          אסימונים נוספו לחשבונך! ✨
+        </div>
+        <button
+          onClick={onDone}
+          style={{
+            background: 'linear-gradient(135deg,#7c3aed,#a855f7)',
+            color: 'white', border: 'none', borderRadius: 50,
+            padding: '10px 32px', fontSize: 14, fontWeight: 700,
+            cursor: 'pointer', pointerEvents: 'all',
+            boxShadow: '0 4px 20px rgba(124,58,237,0.5)',
+          }}
+        >
+          תודה! 🚀
+        </button>
+      </div>
+
+      <style>{`
+        @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+        @keyframes popIn {
+          from { transform: scale(0.4) translateY(40px); opacity:0 }
+          to   { transform: scale(1) translateY(0); opacity:1 }
+        }
+        @keyframes coinFall {
+          0%   { opacity:0; transform: translateY(0) rotate(0deg) }
+          10%  { opacity:1 }
+          100% { opacity:0; transform: translateY(110vh) rotate(720deg) }
+        }
+        @keyframes bounce {
+          0%,100% { transform: scale(1) }
+          50%     { transform: scale(1.3) }
+        }
+        @keyframes pulse {
+          0%,100% { opacity:0.4 }
+          50%     { opacity:0.8 }
+        }
+        @keyframes countUp {
+          from { transform: scale(0.5); opacity:0 }
+          to   { transform: scale(1); opacity:1 }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 // ─── Token History Popup ────────────────────────────────────────────────────
 function TokenHistoryPopup({ onClose, isRtl, containerRef }: { onClose: () => void; isRtl: boolean; containerRef: React.RefObject<HTMLDivElement | null> }) {
   const { data: history, isLoading } = trpc.tokens.history.useQuery();
@@ -1882,6 +2006,7 @@ export default function Home() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [tokenHistoryOpen, setTokenHistoryOpen] = useState(false);
   const tokenHistoryRef = useRef<HTMLDivElement>(null);
+  const [bonusAnimation, setBonusAnimation] = useState<{ tokens: number } | null>(null);
 
   // Track active background jobs across all AI tabs
   const [activeJobs, setActiveJobs] = useState<{ generate: boolean; trace: boolean; doc: boolean; face: boolean }>(() => ({
@@ -1957,6 +2082,27 @@ export default function Home() {
         if (d.user) {
           localStorage.setItem("app_user_logged_in", "1");
           setAppUser(d.user);
+          // Auto-claim campaign bonus if URL has ?campaign=...
+          const campaignCode = new URLSearchParams(window.location.search).get("campaign");
+          if (campaignCode) {
+            fetch("/api/app-auth/claim-campaign", {
+              method: "POST",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ campaignCode }),
+            })
+              .then(r => r.json())
+              .then(res => {
+                if (res.awarded && res.tokens > 0) {
+                  setBonusAnimation({ tokens: res.tokens });
+                  // Remove campaign param from URL without reload
+                  const url = new URL(window.location.href);
+                  url.searchParams.delete("campaign");
+                  window.history.replaceState({}, '', url.toString());
+                }
+              })
+              .catch(() => {});
+          }
         } else {
           // Not logged in — clear flag and cached results
           localStorage.removeItem("app_user_logged_in");
@@ -1996,6 +2142,13 @@ export default function Home() {
       style={{ background: '#f8f9fb' }}
       dir={isRtl ? "rtl" : "ltr"}
     >
+      {/* Token Bonus Animation Overlay */}
+      {bonusAnimation && (
+        <TokenBonusAnimation
+          tokens={bonusAnimation.tokens}
+          onDone={() => setBonusAnimation(null)}
+        />
+      )}
       {/* Header */}
       <header
         className="sticky top-0 z-20"

@@ -425,8 +425,43 @@ router.post("/api/app-auth/update-profile", async (req, res) => {
   }
 });
 
-// ─── Logout ───────────────────────────────────────────────────────────────────
+/// ─── Claim Campaign Bonus (for already-logged-in users) ─────────────────────
+router.post("/api/app-auth/claim-campaign", async (req, res) => {
+  try {
+    const { campaignCode } = req.body as { campaignCode?: string };
+    if (!campaignCode) return res.status(400).json({ error: "קוד קמפיין חסר" });
 
+    // Get user from cookie or Manus OAuth
+    const appUser = getAppUserFromCookie(req.cookies);
+    let userId: number | null = null;
+
+    if (appUser) {
+      userId = appUser.userId;
+    } else {
+      // Try Manus OAuth
+      try {
+        const manusUser = await sdk.authenticateRequest(req as any);
+        if (manusUser?.email) {
+          const db = await getDb();
+          if (db) {
+            const [u] = await db.select({ id: appUsers.id }).from(appUsers).where(eq(appUsers.email, manusUser.email));
+            if (u) userId = u.id;
+          }
+        }
+      } catch { /* ignore */ }
+    }
+
+    if (!userId) return res.status(401).json({ error: "לא מחובר" });
+
+    const awarded = await awardCampaignBonus(userId, campaignCode);
+    return res.json({ success: true, awarded, tokens: awarded ? 15 : 0 });
+  } catch (err) {
+    console.error("[claim-campaign]", err);
+    return res.status(500).json({ error: "שגיאה" });
+  }
+});
+
+// ─── Logout ───────────────────────────────────────────────────────────────────
 router.post("/api/app-auth/logout", (_req, res) => {
   res.clearCookie(APP_USER_COOKIE, { path: "/" });
   return res.json({ success: true });
