@@ -15,7 +15,7 @@ import { getAppUserFromCookie } from "./appAuth";
 import { getTokenBalance, addTokens, getTokenTransactions, invalidateTokenCostsCache } from "./tokenService";
 import { createPayPalOrder, capturePayPalOrder } from "./paypal";
 import { getPackageById, getPriceForCurrency } from "./products";
-import { sendPurchaseConfirmationEmail } from "./emailService";
+import { sendPurchaseConfirmationEmail, sendBulkEmail } from "./emailService";
 import { notifyOwner } from "./_core/notification";
 
 const ADMIN_COOKIE = "admin_session";
@@ -532,7 +532,44 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    /** Update a package price */
+    /** Send a bulk email to all registered users with a verified email */
+    sendBulkEmail: adminProcedure
+      .input(z.object({
+        subject: z.string().min(1).max(200),
+        htmlBody: z.string().min(1).max(50000),
+        testOnly: z.boolean().optional(), // if true, send only to first user (preview)
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        // Get all users with a verified email
+        const users = await db
+          .select({ id: appUsers.id, email: appUsers.email, name: appUsers.name })
+          .from(appUsers)
+          .where(sql`${appUsers.email} IS NOT NULL AND ${appUsers.email} != ''`);
+        const targets = input.testOnly ? users.slice(0, 1) : users;
+        let sent = 0;
+        let failed = 0;
+        for (const user of targets) {
+          if (!user.email) continue;
+          try {
+            await sendBulkEmail({
+              to: user.email,
+              name: user.name,
+              subject: input.subject,
+              htmlBody: input.htmlBody,
+            });
+            sent++;
+            // Small delay to avoid rate limiting
+            await new Promise(r => setTimeout(r, 120));
+          } catch (e) {
+            console.error(`[bulkEmail] Failed to send to ${user.email}:`, e);
+            failed++;
+          }
+        }
+        return { sent, failed, total: targets.length };
+      }),
+
     updatePackagePrice: adminProcedure
       .input(
         z.object({

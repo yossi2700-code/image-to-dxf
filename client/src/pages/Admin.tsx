@@ -241,7 +241,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     return result;
   })();
 
-  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email">("overview");
+
+  // ── Bulk Email state ──
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [emailSending, setEmailSending] = useState(false);
+  const sendBulkEmailMutation = trpc.admin.sendBulkEmail.useMutation({
+    onSuccess: (data) => {
+      toast.success(`נשלח ל-${data.sent} משתמשים${data.failed > 0 ? ` (${data.failed} נכשלו)` : ""}`);
+      setEmailSending(false);
+    },
+    onError: (e) => { toast.error("שגיאה: " + e.message); setEmailSending(false); },
+  });
 
   const { data: consentData, isLoading: consentLoading } = trpc.admin.consentRecords.useQuery(
     undefined,
@@ -359,6 +371,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               { id: "users", label: "משתמשים", icon: Users },
               { id: "consents", label: "הסכמות", icon: CheckCircle2 },
               { id: "payments", label: "תשלומי PayPal", icon: CreditCard },
+              { id: "email", label: "שליחת מייל", icon: Mail },
               { id: "settings", label: "הגדרות", icon: Settings },
             ] as const).map(({ id, label, icon: Icon }) => (
               <button
@@ -386,6 +399,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               { id: "users", label: "משתמשים", icon: Users },
               { id: "consents", label: "הסכמות", icon: CheckCircle2 },
               { id: "payments", label: "PayPal", icon: CreditCard },
+              { id: "email", label: "מייל", icon: Mail },
               { id: "settings", label: "הגדרות", icon: Settings },
             ] as const).map(({ id, label, icon: Icon }) => (
               <button
@@ -1686,6 +1700,88 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 {newPw && confirmPw && newPw !== confirmPw && (
                   <p className="text-xs text-destructive text-center">הסיסמאות אינן תואמות</p>
                 )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* ── BULK EMAIL SECTION ── */}
+        {activeSection === "email" && (
+          <div className="space-y-5">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Mail className="w-5 h-5 text-indigo-500" />
+                  שליחת מייל לכל הרשומים
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+                  ⚠️ המייל ישלח לכל המשתמשים הרשומים עם כתובת מייל. ניתן להשתמש ב-<code className="bg-amber-100 px-1 rounded">&#123;&#123;name&#125;&#125;</code> בגוף המייל כדי להוסיף את שם המשתמש.
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">נושא המייל</label>
+                  <Input
+                    placeholder="לדוגמה: עדכון חשוב מ-DXF AI ✨"
+                    value={emailSubject}
+                    onChange={e => setEmailSubject(e.target.value)}
+                    className="text-right"
+                    dir="rtl"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">גוף המייל (HTML מותר)</label>
+                  <textarea
+                    className="w-full min-h-[200px] rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y font-mono"
+                    placeholder={`<p>שלום {{name}},</p>\n<p>יש לנו חדשות מרגשות עבורך!</p>`}
+                    value={emailBody}
+                    onChange={e => setEmailBody(e.target.value)}
+                    dir="ltr"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!emailSubject.trim() || !emailBody.trim() || emailSending}
+                    onClick={() => {
+                      if (!confirm("לשלוח מייל בדיקה למשתמש הראשון בלבד?")) return;
+                      setEmailSending(true);
+                      sendBulkEmailMutation.mutate({ subject: emailSubject, htmlBody: emailBody, testOnly: true });
+                    }}
+                    className="gap-2"
+                  >
+                    <Mail className="w-4 h-4" />
+                    שלח בדיקה (משתמש אחד)
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    disabled={!emailSubject.trim() || !emailBody.trim() || emailSending}
+                    onClick={() => {
+                      if (!confirm("לשלוח את המייל לכל המשתמשים הרשומים? פעולה זו לא ניתנת לביטול.")) return;
+                      setEmailSending(true);
+                      sendBulkEmailMutation.mutate({ subject: emailSubject, htmlBody: emailBody, testOnly: false });
+                    }}
+                    className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    {emailSending ? (
+                      <><RefreshCw className="w-4 h-4 animate-spin" /> שולח...</>
+                    ) : (
+                      <><Mail className="w-4 h-4" /> שלח לכולם</>
+                    )}
+                  </Button>
+                </div>
+
+                <div className="bg-slate-50 border rounded-lg p-3 text-xs text-slate-500 space-y-1">
+                  <p className="font-medium text-slate-600">טיפים:</p>
+                  <p>• השתמש ב-<code className="bg-slate-100 px-1 rounded">&#123;&#123;name&#125;&#125;</code> לאישיות — יוחלף בשם הפרטי של המשתמש</p>
+                  <p>• ניתן להוסיף HTML כגון <code className="bg-slate-100 px-1 rounded">&lt;strong&gt;</code>, <code className="bg-slate-100 px-1 rounded">&lt;a href="..."&gt;</code>, <code className="bg-slate-100 px-1 rounded">&lt;p&gt;</code></p>
+                  <p>• בדוק תמיד עם "שלח בדיקה" לפני שליחה לכולם</p>
+                </div>
               </CardContent>
             </Card>
           </div>

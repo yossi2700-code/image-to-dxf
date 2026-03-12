@@ -335,3 +335,45 @@ export async function sendPurchaseConfirmationEmail(opts: {
     },
   });
 }
+
+/**
+ * Send a custom bulk email to a single recipient (called in a loop for all users).
+ * Admin provides subject and htmlBody. Use {{name}} in htmlBody to personalize.
+ */
+export async function sendBulkEmail(opts: {
+  to: string;
+  name: string | null;
+  subject: string;
+  htmlBody: string;
+}): Promise<void> {
+  if (!resend) { console.warn("[emailService] RESEND_API_KEY not set, skipping bulk email"); return; }
+  const displayName = opts.name?.split(" ")[0] || opts.name || "";
+  const personalizedHtml = opts.htmlBody.replace(/\{\{name\}\}/g, displayName);
+
+  const wrappedHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+      <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 24px 32px; text-align: center;">
+        <span style="color: white; font-size: 20px; font-weight: 900;">Ai<span style="color: #c4b5fd;">DXF</span></span>
+      </div>
+      <div style="padding: 32px;">
+        ${personalizedHtml}
+      </div>
+      <div style="padding: 16px 32px; border-top: 1px solid #f1f5f9; text-align: center;">
+        <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+          dxfai.net &nbsp;&bull;&nbsp;
+          <a href="https://dxfai.net" style="color: #6366f1; text-decoration: none;">כניסה לאתר</a>
+        </p>
+      </div>
+    </div>
+  `;
+
+  await resend.emails.send({
+    from: FROM_ADDRESS,
+    to: opts.to,
+    subject: opts.subject,
+    html: wrappedHtml,
+    headers: {
+      'List-Unsubscribe': `<mailto:noreply@dxfai.net?subject=unsubscribe>`,
+    },
+  });
+}
