@@ -511,6 +511,21 @@ async function runTraceJob(
     updateJob(jobId, { status: "error", error: message });
     // Refund tokens on error
     try { await addTokens(appUserId, TOKEN_COSTS["ai_trace"], "refund", "Job error — tokens refunded"); } catch (_) { /* ignore */ }
+    // Alert admin if billing/quota issue
+    const isBillingError = message.toLowerCase().includes("quota") ||
+      message.toLowerCase().includes("billing") ||
+      message.toLowerCase().includes("insufficient_quota") ||
+      message.toLowerCase().includes("429") ||
+      message.toLowerCase().includes("402");
+    if (isBillingError) {
+      try {
+        const { notifyOwner } = await import("./_core/notification");
+        await notifyOwner({
+          title: "🔴 שגיאת חיוב OpenAI — נדרש טעינת כרטיס",
+          content: `שגיאת billing ב-AI Outline:\n${message}\n\nנא להיכנס ל-OpenAI ולטעון את הכרטיס: https://platform.openai.com/settings/organization/billing`,
+        });
+      } catch (_) { /* ignore notification errors */ }
+    }
   }
 }
 
