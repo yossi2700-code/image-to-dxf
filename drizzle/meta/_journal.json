@@ -176,6 +176,13 @@
       "when": 1773311335603,
       "tag": "0024_handy_centennial",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1773406162726,
+      "tag": "0025_dizzy_blindfold",
+      "breakpoints": true
     }
   ]
 }

@@ -61,8 +61,8 @@ export const appUsers = mysqlTable("app_users", {
   emailVerified: int("emailVerified").default(0).notNull(),
   /** Max number of actions allowed (null = unlimited) */
   maxActions: int("maxActions").default(10),
-  /** Token (credit) balance — starts at 20 for new users */
-  tokenBalance: int("tokenBalance").default(20).notNull(),
+  /** Token (credit) balance — starts at 10 for new users */
+  tokenBalance: int("tokenBalance").default(10).notNull(),
   /** Whether this user is blocked from using the service */
   isBlocked: int("isBlocked").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

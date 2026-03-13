@@ -1,0 +1,1 @@
+ALTER TABLE `app_users` MODIFY COLUMN `tokenBalance` int NOT NULL DEFAULT 10;

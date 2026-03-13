@@ -180,7 +180,7 @@ router.post("/api/app-auth/register", async (req, res) => {
       void sendWelcomeEmail({
         to: email.toLowerCase(),
         name: name?.trim() || null,
-        tokens: 20,
+        tokens: 10,
         siteUrl: origin,
         language: lang,
       });

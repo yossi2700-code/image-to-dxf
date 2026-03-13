@@ -1,0 +1,19 @@
+{
+  "query": "SHOW TABLES LIKE '%user%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SHOW TABLES LIKE '%user%';",
+  "rows": [
+    {
+      "Tables_in_hnDFdLkzVGYJYdws9hbnLw (%user%)": "app_users"
+    },
+    {
+      "Tables_in_hnDFdLkzVGYJYdws9hbnLw (%user%)": "user_actions"
+    },
+    {
+      "Tables_in_hnDFdLkzVGYJYdws9hbnLw (%user%)": "users"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_hnDFdLkzVGYJYdws9hbnLw (%user%)\napp_users\nuser_actions\nusers\n",
+  "stderr": "",
+  "execution_time_ms": 1541
+}
