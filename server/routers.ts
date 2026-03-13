@@ -1049,16 +1049,32 @@ export const appRouter = router({
           .limit(1);
         return !!row;
       }
+      // Helper: check if user registered with email (not Google OAuth)
+      // Only email-registered users receive the welcome email with the bonus link
+      async function registeredWithEmail(userId: number): Promise<boolean> {
+        const db = await getDb();
+        if (!db) return false;
+        const [row] = await db
+          .select({ passwordHash: appUsers.passwordHash })
+          .from(appUsers)
+          .where(eq(appUsers.id, userId))
+          .limit(1);
+        return !!row?.passwordHash; // has password = registered via email form
+      }
       // Try app_user_session cookie first
       const appUser = getAppUserFromCookie(
         (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
       );
       if (appUser) {
         const balance = await getTokenBalance(appUser.userId);
-        const claimed = await hasClaimedWelcome(appUser.userId);
-        return { balance, loggedIn: true, hasPendingWelcomeBonus: !claimed };
+        const [claimed, isEmailUser] = await Promise.all([
+          hasClaimedWelcome(appUser.userId),
+          registeredWithEmail(appUser.userId),
+        ]);
+        // Only show pending bonus if: registered with email AND not yet claimed
+        return { balance, loggedIn: true, hasPendingWelcomeBonus: isEmailUser && !claimed };
       }
-      // Fallback: Manus OAuth user
+      // Fallback: Manus OAuth user (no welcome email sent)
       if (ctx.user?.email) {
         const db = await getDb();
         if (!db) return { balance: 0, loggedIn: false, hasPendingWelcomeBonus: false };
@@ -1068,8 +1084,8 @@ export const appRouter = router({
           .where(eq(appUsers.email, ctx.user.email));
         if (!existingAppUser) return { balance: 0, loggedIn: true, hasPendingWelcomeBonus: false };
         const balance = await getTokenBalance(existingAppUser.id);
-        const claimed = await hasClaimedWelcome(existingAppUser.id);
-        return { balance, loggedIn: true, hasPendingWelcomeBonus: !claimed };
+        // Manus OAuth users don't get the welcome email, so no pending bonus
+        return { balance, loggedIn: true, hasPendingWelcomeBonus: false };
       }
       return { balance: 0, loggedIn: false, hasPendingWelcomeBonus: false };
     }),

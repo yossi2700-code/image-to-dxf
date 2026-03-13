@@ -289,6 +289,12 @@ async function runFaceDetectJob(
     if (heartbeatInterval) clearInterval(heartbeatInterval);
     console.error("[faceDetectRoute] Job error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
+    // Refund tokens on error so user is not charged for failed jobs
+    try {
+      await addTokens(appUserId, TOKEN_COSTS["face_detect"], "refund", "Job failed — tokens refunded");
+    } catch (refundErr) {
+      console.error("[faceDetectRoute] Failed to refund tokens:", refundErr);
+    }
     updateJob(jobId, { status: "error", error: message });
   }
 }
@@ -318,7 +324,7 @@ router.post(
         if (userRow?.isBlocked) {
           return res.status(403).json({
             error: "USER_BLOCKED",
-            message: "חשבונך חסום. לפרטים פנה לרובוטיקה וטכנולוגיה.",
+            message: "חשבונך חסום. לפרטים פנה לתמיכה.",
             messageEn: "Your account has been blocked.",
           });
         }
@@ -330,8 +336,8 @@ router.post(
         return res.status(402).json({
           error: "INSUFFICIENT_TOKENS",
           balance: tokenResult.balance,
-          message: "נגמרו לך האסימונים. ליצירת קשר ורכישת אסימונים נוספים פנה לרובוטיקה וטכנולוגיה.",
-          messageEn: "You have run out of tokens. Contact Robotics & Technology to purchase more.",
+          message: "נגמרו לך האסימונים. יש לטעון אסימונים להמשך שימוש.",
+          messageEn: "You have run out of tokens. Please purchase more tokens to continue.",
         });
       }
 

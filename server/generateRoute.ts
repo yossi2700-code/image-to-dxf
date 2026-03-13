@@ -369,8 +369,8 @@ router.post("/api/generate-images", async (req, res) => {
       if (userRow?.isBlocked) {
         return res.status(403).json({
           error: "USER_BLOCKED",
-          message: "חשבונך חסום. לפרטים פנה לרובוטיקה וטכנולוגיה.",
-          messageEn: "Your account has been blocked. Please contact Robotics & Technology.",
+          message: "חשבונך חסום. לפרטים פנה לתמיכה.",
+          messageEn: "Your account has been blocked. Please contact support.",
         });
       }
     }
@@ -380,8 +380,8 @@ router.post("/api/generate-images", async (req, res) => {
       return res.status(402).json({
         error: "INSUFFICIENT_TOKENS",
         balance: tokenResult.balance,
-        message: "נגמרו לך האסימונים. ליצירת קשר ורכישת אסימונים נוספים פנה לרובוטיקה וטכנולוגיה.",
-        messageEn: "You have run out of tokens. To purchase more tokens, contact Robotics & Technology.",
+        message: "נגמרו לך האסימונים. יש לטעון אסימונים להמשך שימוש.",
+        messageEn: "You have run out of tokens. Please purchase more tokens to continue.",
       });
     }
 

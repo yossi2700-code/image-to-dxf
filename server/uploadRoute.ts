@@ -44,9 +44,9 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
     if (!limitCheck.allowed) {
       let quotaMessage: string;
       if (limitCheck.reason === "daily") {
-        quotaMessage = `הגעת למכסה החינמית של ${limitCheck.max} עיצובים ליום. לפרטים נוספים ולשדרוג, פנה למפתח התוכנה — רובוטיקה וטכנולוגיה.`;
+        quotaMessage = `הגעת למכסה החינמית של ${limitCheck.max} עיצובים ליום. יש לטעון אסימונים להמשך שימוש.`;
       } else if (limitCheck.reason === "expired") {
-        quotaMessage = `תקופת הניסיון החינמית הסתיימה. לפרטים נוספים ולשדרוג, פנה למפתח התוכנה — רובוטיקה וטכנולוגיה.`;
+        quotaMessage = `תקופת הניסיון החינמית הסתיימה. יש לטעון אסימונים להמשך שימוש.`;
       } else {
         quotaMessage = `הגעת למכסה החינמית. לפרטים נוספים ולשדרוג, פנה למפתח התוכנה — רובוטיקה וטכנולוגיה.`;
       }

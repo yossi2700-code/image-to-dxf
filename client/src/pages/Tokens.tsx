@@ -159,7 +159,7 @@ export default function Tokens() {
           <CardContent className="p-5">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                <MessageCircle className="w-5 h-5 text-green-600" />
+                <Coins className="w-5 h-5 text-green-600" />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-green-800 text-sm">
@@ -167,17 +167,15 @@ export default function Tokens() {
                 </h3>
                 <p className="text-xs text-green-700 mt-1">
                   {isRtl
-                    ? "לרכישת אסימונים נוספים, צור קשר עם רובוטיקה וטכנולוגיה בוואטסאפ"
-                    : "To purchase additional tokens, contact Robotics & Technology on WhatsApp"}
+                    ? "יש לטעון אסימונים להמשך שימוש בתכונה"
+                    : "Purchase tokens to continue using the app"}
                 </p>
                 <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="/buy"
                   className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition-colors"
                 >
-                  <MessageCircle className="w-4 h-4" />
-                  {isRtl ? "פנה לרובוטיקה וטכנולוגיה" : "Contact Robotics & Technology"}
+                  <Coins className="w-4 h-4" />
+                  {isRtl ? "לרכישת אסימונים" : "Buy Tokens"}
                 </a>
               </div>
             </div>

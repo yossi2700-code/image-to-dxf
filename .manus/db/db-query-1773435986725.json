@@ -1,0 +1,30 @@
+{
+  "query": "\nSELECT tt.id, tt.amount, tt.reason, tt.description, tt.balanceAfter, tt.createdAt,\n       au.email, au.tokenBalance\nFROM token_transactions tt\nJOIN app_users au ON au.id = tt.appUserId\nWHERE au.email = 'ladaatn@gmail.com'\nORDER BY tt.createdAt DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT tt.id, tt.amount, tt.reason, tt.description, tt.balanceAfter, tt.createdAt,\n       au.email, au.tokenBalance\nFROM token_transactions tt\nJOIN app_users au ON au.id = tt.appUserId\nWHERE au.email = 'ladaatn@gmail.com'\nORDER BY tt.createdAt DESC;\n",
+  "rows": [
+    {
+      "id": "3300008",
+      "amount": "-4",
+      "reason": "face_detect",
+      "description": "NULL",
+      "balanceAfter": "2",
+      "createdAt": "2026-03-13 16:34:43",
+      "email": "ladaatn@gmail.com",
+      "tokenBalance": "2"
+    },
+    {
+      "id": "3300007",
+      "amount": "-4",
+      "reason": "face_detect",
+      "description": "NULL",
+      "balanceAfter": "6",
+      "createdAt": "2026-03-13 16:32:26",
+      "email": "ladaatn@gmail.com",
+      "tokenBalance": "2"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tamount\treason\tdescription\tbalanceAfter\tcreatedAt\temail\ttokenBalance\n3300008\t-4\tface_detect\tNULL\t2\t2026-03-13 16:34:43\tladaatn@gmail.com\t2\n3300007\t-4\tface_detect\tNULL\t6\t2026-03-13 16:32:26\tladaatn@gmail.com\t2\n",
+  "stderr": "",
+  "execution_time_ms": 1598
+}

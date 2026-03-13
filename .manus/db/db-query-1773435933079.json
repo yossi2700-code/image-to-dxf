@@ -1,0 +1,73 @@
+{
+  "query": "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME;",
+  "rows": [
+    {
+      "TABLE_NAME": "__drizzle_migrations"
+    },
+    {
+      "TABLE_NAME": "admin_tasks"
+    },
+    {
+      "TABLE_NAME": "app_settings"
+    },
+    {
+      "TABLE_NAME": "app_users"
+    },
+    {
+      "TABLE_NAME": "bug_reports"
+    },
+    {
+      "TABLE_NAME": "campaign_redemptions"
+    },
+    {
+      "TABLE_NAME": "consent_records"
+    },
+    {
+      "TABLE_NAME": "daily_usage"
+    },
+    {
+      "TABLE_NAME": "email_verifications"
+    },
+    {
+      "TABLE_NAME": "news_items"
+    },
+    {
+      "TABLE_NAME": "package_prices"
+    },
+    {
+      "TABLE_NAME": "password_resets"
+    },
+    {
+      "TABLE_NAME": "paypal_orders"
+    },
+    {
+      "TABLE_NAME": "subscription_plans"
+    },
+    {
+      "TABLE_NAME": "system_settings"
+    },
+    {
+      "TABLE_NAME": "token_costs"
+    },
+    {
+      "TABLE_NAME": "token_transactions"
+    },
+    {
+      "TABLE_NAME": "usage_events"
+    },
+    {
+      "TABLE_NAME": "user_actions"
+    },
+    {
+      "TABLE_NAME": "user_subscriptions"
+    },
+    {
+      "TABLE_NAME": "users"
+    }
+  ],
+  "messages": [],
+  "stdout": "TABLE_NAME\n__drizzle_migrations\nadmin_tasks\napp_settings\napp_users\nbug_reports\ncampaign_redemptions\nconsent_records\ndaily_usage\nemail_verifications\nnews_items\npackage_prices\npassword_resets\npaypal_orders\nsubscription_plans\nsystem_settings\ntoken_costs\ntoken_transactions\nusage_events\nuser_actions\nuser_subscriptions\nusers\n",
+  "stderr": "",
+  "execution_time_ms": 1495
+}

@@ -55,13 +55,10 @@ export function InsufficientTokensBanner({ onDismiss, hasPendingWelcomeBonus }: 
           </p>
           {/* Pending welcome bonus reminder */}
           {hasPendingWelcomeBonus && (
-            <p className="text-xs mt-1 font-semibold flex items-center gap-1" style={{ color: "#78350f" }}>
-              <span>📧</span>
-              <span>
-                {isRtl
-                  ? 'מחכים לך 20 בונוס אסימונים במייל — בדוק ספאם!'
-                  : '20 bonus tokens waiting in your email — check spam!'}
-              </span>
+            <p className="text-xs mt-1" style={{ color: "#92400e", opacity: 0.8 }}>
+              {isRtl
+                ? 'מחכים לך 20 בונוס אסימונים במייל — אם לא קיבלת, בדוק בספאם'
+                : '20 bonus tokens waiting in your email — if not received, check spam'}
             </p>
           )}
         </div>

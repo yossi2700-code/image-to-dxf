@@ -1,0 +1,22 @@
+{
+  "query": "\nSELECT au.id, au.email, au.tokenBalance, au.createdAt, au.lastLoginAt,\n       ua.id as action_id, ua.actionType, ua.feature, ua.createdAt as action_date, ua.description\nFROM app_users au\nLEFT JOIN user_actions ua ON ua.appUserId = au.id\nWHERE au.email = 'ladaatn@gmail.com'\nORDER BY ua.createdAt DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT au.id, au.email, au.tokenBalance, au.createdAt, au.lastLoginAt,\n       ua.id as action_id, ua.actionType, ua.feature, ua.createdAt as action_date, ua.description\nFROM app_users au\nLEFT JOIN user_actions ua ON ua.appUserId = au.id\nWHERE au.email = 'ladaatn@gmail.com'\nORDER BY ua.createdAt DESC\nLIMIT 20;\n",
+  "rows": [
+    {
+      "id": "840007",
+      "email": "ladaatn@gmail.com",
+      "tokenBalance": "2",
+      "createdAt": "2026-03-13 16:32:15",
+      "lastLoginAt": "2026-03-13 16:32:15",
+      "action_id": "NULL",
+      "actionType": "NULL",
+      "feature": "NULL",
+      "action_date": "NULL",
+      "description": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\ttokenBalance\tcreatedAt\tlastLoginAt\taction_id\tactionType\tfeature\taction_date\tdescription\n840007\tladaatn@gmail.com\t2\t2026-03-13 16:32:15\t2026-03-13 16:32:15\tNULL\tNULL\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1504
+}

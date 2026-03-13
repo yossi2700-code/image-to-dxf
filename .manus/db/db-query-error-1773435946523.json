@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT u.email, u.id as user_id, u.created_at as registered,\n       ua.id as action_id, ua.action_type, ua.created_at as action_date, ua.tokens_used, ua.status, ua.metadata\nFROM users u\nLEFT JOIN user_actions ua ON ua.user_id = u.id\nWHERE u.email = 'ladaatn@gmail.com'\nORDER BY ua.created_at DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT u.email, u.id as user_id, u.created_at as registered,\n       ua.id as action_id, ua.action_type, ua.created_at as action_date, ua.tokens_used, ua.status, ua.metadata\nFROM users u\nLEFT JOIN user_actions ua ON ua.user_id = u.id\nWHERE u.email = 'ladaatn@gmail.com'\nORDER BY ua.created_at DESC\nLIMIT 20;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'ua.user_id' in 'on clause'"
+  ]
+}

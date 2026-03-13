@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT au.id as app_user_id, au.email, au.tokenBalance,\n       tt.id, tt.amount, tt.type, tt.reason, tt.createdAt\nFROM app_users au\nLEFT JOIN token_transactions tt ON tt.appUserId = au.id\nWHERE au.email = 'ladaatn@gmail.com'\nORDER BY tt.createdAt DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT au.id as app_user_id, au.email, au.tokenBalance,\n       tt.id, tt.amount, tt.type, tt.reason, tt.createdAt\nFROM app_users au\nLEFT JOIN token_transactions tt ON tt.appUserId = au.id\nWHERE au.email = 'ladaatn@gmail.com'\nORDER BY tt.createdAt DESC;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'tt.type' in 'field list'"
+  ]
+}
