@@ -2,7 +2,9 @@
  * svgToDxf.ts
  *
  * Converts an SVG string (with path/line/polyline/circle/rect/ellipse elements)
- * to a DXF R12 file. Each SVG element becomes one or more DXF LINE entities.
+ * to a DXF R2000 file. Each SVG element becomes one DXF LWPOLYLINE entity
+ * (a connected polyline), dramatically reducing object count and producing
+ * clean, connected output for CNC/laser use.
  *
  * This is used for the AI generation flow where GPT-4o produces clean SVG
  * directly — no image processing or edge detection needed.
@@ -74,17 +76,35 @@ function quadBezier(
 }
 
 type Point = [number, number];
-type LineSegment = { x1: number; y1: number; x2: number; y2: number };
 
-/** Convert SVG path "d" attribute to a list of line segments */
-function pathToSegments(d: string): LineSegment[] {
+/**
+ * A polyline is an ordered list of points, plus a flag indicating whether
+ * the path was closed (Z command). Closed polylines become closed LWPOLYLINE.
+ */
+interface SvgPolyline {
+  points: Point[];
+  closed: boolean;
+}
+
+// ─── Path "d" → list of polylines ────────────────────────────────────────────
+
+/**
+ * Convert SVG path "d" attribute to a list of polylines.
+ * Each M command starts a new polyline. Z closes it.
+ * Curves are approximated with STEPS line segments.
+ */
+function pathToPolylines(d: string): SvgPolyline[] {
   const tokens = tokenizePath(d);
-  const segments: LineSegment[] = [];
+  const polylines: SvgPolyline[] = [];
 
-  let cx = 0, cy = 0;          // current point
-  let startX = 0, startY = 0;  // start of current subpath
-  let lastCtrl: Point | null = null; // last control point for S/T commands
+  let cx = 0, cy = 0;
+  let startX = 0, startY = 0;
+  let lastCtrl: Point | null = null;
   let lastCmd = "";
+  let currentPoly: Point[] = [];
+  let currentClosed = false;
+
+  const STEPS = 12;
 
   let i = 0;
   const nextNum = (): number => {
@@ -92,7 +112,13 @@ function pathToSegments(d: string): LineSegment[] {
     return typeof tokens[i] === "number" ? (tokens[i++] as number) : 0;
   };
 
-  const STEPS = 12; // segments per curve
+  const finishPoly = () => {
+    if (currentPoly.length >= 2) {
+      polylines.push({ points: currentPoly, closed: currentClosed });
+    }
+    currentPoly = [];
+    currentClosed = false;
+  };
 
   while (i < tokens.length) {
     const token = tokens[i];
@@ -110,14 +136,17 @@ function pathToSegments(d: string): LineSegment[] {
 
     switch (cmd.toUpperCase()) {
       case "M": {
+        // Start a new subpath — finish previous if any
+        finishPoly();
         const [nx, ny] = rel(nextNum(), nextNum());
         cx = nx; cy = ny;
         startX = cx; startY = cy;
         lastCtrl = null;
+        currentPoly = [[cx, cy]];
         // Subsequent coordinate pairs are implicit L
         while (i < tokens.length && typeof tokens[i] === "number") {
           const [lx, ly] = rel(nextNum(), nextNum());
-          segments.push({ x1: cx, y1: cy, x2: lx, y2: ly });
+          currentPoly.push([lx, ly]);
           cx = lx; cy = ly;
         }
         break;
@@ -125,7 +154,7 @@ function pathToSegments(d: string): LineSegment[] {
       case "L": {
         while (i < tokens.length && typeof tokens[i] === "number") {
           const [lx, ly] = rel(nextNum(), nextNum());
-          segments.push({ x1: cx, y1: cy, x2: lx, y2: ly });
+          currentPoly.push([lx, ly]);
           cx = lx; cy = ly;
         }
         lastCtrl = null;
@@ -134,7 +163,7 @@ function pathToSegments(d: string): LineSegment[] {
       case "H": {
         while (i < tokens.length && typeof tokens[i] === "number") {
           const nx = isRel ? cx + nextNum() : nextNum();
-          segments.push({ x1: cx, y1: cy, x2: nx, y2: cy });
+          currentPoly.push([nx, cy]);
           cx = nx;
         }
         lastCtrl = null;
@@ -143,7 +172,7 @@ function pathToSegments(d: string): LineSegment[] {
       case "V": {
         while (i < tokens.length && typeof tokens[i] === "number") {
           const ny = isRel ? cy + nextNum() : nextNum();
-          segments.push({ x1: cx, y1: cy, x2: cx, y2: ny });
+          currentPoly.push([cx, ny]);
           cy = ny;
         }
         lastCtrl = null;
@@ -158,10 +187,8 @@ function pathToSegments(d: string): LineSegment[] {
           const p1: Point = [x1, y1];
           const p2: Point = [x2, y2];
           const p3: Point = [ex, ey];
-          for (let s = 0; s < STEPS; s++) {
-            const [ax, ay] = cubicBezier(p0, p1, p2, p3, s / STEPS);
-            const [bx, by] = cubicBezier(p0, p1, p2, p3, (s + 1) / STEPS);
-            segments.push({ x1: ax, y1: ay, x2: bx, y2: by });
+          for (let s = 1; s <= STEPS; s++) {
+            currentPoly.push(cubicBezier(p0, p1, p2, p3, s / STEPS));
           }
           lastCtrl = p2;
           cx = ex; cy = ey;
@@ -170,7 +197,7 @@ function pathToSegments(d: string): LineSegment[] {
       }
       case "S": {
         while (i < tokens.length && typeof tokens[i] === "number") {
-          const ctrl1: Point = lastCtrl && lastCmd.toUpperCase() === "C" || lastCmd.toUpperCase() === "S"
+          const ctrl1: Point = lastCtrl && (lastCmd.toUpperCase() === "C" || lastCmd.toUpperCase() === "S")
             ? [2 * cx - lastCtrl![0], 2 * cy - lastCtrl![1]]
             : [cx, cy];
           const [x2, y2] = rel(nextNum(), nextNum());
@@ -178,10 +205,8 @@ function pathToSegments(d: string): LineSegment[] {
           const p0: Point = [cx, cy];
           const p2: Point = [x2, y2];
           const p3: Point = [ex, ey];
-          for (let s = 0; s < STEPS; s++) {
-            const [ax, ay] = cubicBezier(p0, ctrl1, p2, p3, s / STEPS);
-            const [bx, by] = cubicBezier(p0, ctrl1, p2, p3, (s + 1) / STEPS);
-            segments.push({ x1: ax, y1: ay, x2: bx, y2: by });
+          for (let s = 1; s <= STEPS; s++) {
+            currentPoly.push(cubicBezier(p0, ctrl1, p2, p3, s / STEPS));
           }
           lastCtrl = p2;
           cx = ex; cy = ey;
@@ -195,10 +220,8 @@ function pathToSegments(d: string): LineSegment[] {
           const p0: Point = [cx, cy];
           const p1: Point = [x1, y1];
           const p2: Point = [ex, ey];
-          for (let s = 0; s < STEPS; s++) {
-            const [ax, ay] = quadBezier(p0, p1, p2, s / STEPS);
-            const [bx, by] = quadBezier(p0, p1, p2, (s + 1) / STEPS);
-            segments.push({ x1: ax, y1: ay, x2: bx, y2: by });
+          for (let s = 1; s <= STEPS; s++) {
+            currentPoly.push(quadBezier(p0, p1, p2, s / STEPS));
           }
           lastCtrl = p1;
           cx = ex; cy = ey;
@@ -213,10 +236,8 @@ function pathToSegments(d: string): LineSegment[] {
           const [ex, ey] = rel(nextNum(), nextNum());
           const p0: Point = [cx, cy];
           const p2: Point = [ex, ey];
-          for (let s = 0; s < STEPS; s++) {
-            const [ax, ay] = quadBezier(p0, ctrl1, p2, s / STEPS);
-            const [bx, by] = quadBezier(p0, ctrl1, p2, (s + 1) / STEPS);
-            segments.push({ x1: ax, y1: ay, x2: bx, y2: by });
+          for (let s = 1; s <= STEPS; s++) {
+            currentPoly.push(quadBezier(p0, ctrl1, p2, s / STEPS));
           }
           lastCtrl = ctrl1;
           cx = ex; cy = ey;
@@ -224,104 +245,95 @@ function pathToSegments(d: string): LineSegment[] {
         break;
       }
       case "Z": {
-        if (cx !== startX || cy !== startY) {
-          segments.push({ x1: cx, y1: cy, x2: startX, y2: startY });
-        }
+        currentClosed = true;
         cx = startX; cy = startY;
         lastCtrl = null;
+        finishPoly();
         break;
       }
       default:
-        // Skip unknown commands
         break;
     }
   }
 
-  return segments;
+  // Finish any remaining open subpath
+  finishPoly();
+
+  return polylines;
 }
 
-// ─── Element parsers ──────────────────────────────────────────────────────────
+// ─── Element parsers → polylines ─────────────────────────────────────────────
 
-function parseLineElement(el: string): LineSegment[] {
-  return [{
-    x1: numAttr(el, "x1"),
-    y1: numAttr(el, "y1"),
-    x2: numAttr(el, "x2"),
-    y2: numAttr(el, "y2"),
-  }];
+function parseLineElementAsPoly(el: string): SvgPolyline[] {
+  const x1 = numAttr(el, "x1"), y1 = numAttr(el, "y1");
+  const x2 = numAttr(el, "x2"), y2 = numAttr(el, "y2");
+  return [{ points: [[x1, y1], [x2, y2]], closed: false }];
 }
 
-function parsePolylineElement(el: string): LineSegment[] {
+function parsePolylineElementAsPoly(el: string): SvgPolyline[] {
   const pts = attr(el, "points").trim().split(/[\s,]+/).map(Number).filter((n) => !isNaN(n));
-  const segs: LineSegment[] = [];
-  for (let i = 0; i + 3 < pts.length; i += 2) {
-    segs.push({ x1: pts[i], y1: pts[i + 1], x2: pts[i + 2], y2: pts[i + 3] });
+  const points: Point[] = [];
+  for (let i = 0; i + 1 < pts.length; i += 2) {
+    points.push([pts[i], pts[i + 1]]);
   }
-  return segs;
+  if (points.length < 2) return [];
+  return [{ points, closed: false }];
 }
 
-function parsePolygonElement(el: string): LineSegment[] {
+function parsePolygonElementAsPoly(el: string): SvgPolyline[] {
   const pts = attr(el, "points").trim().split(/[\s,]+/).map(Number).filter((n) => !isNaN(n));
-  const segs: LineSegment[] = [];
-  for (let i = 0; i + 3 < pts.length; i += 2) {
-    segs.push({ x1: pts[i], y1: pts[i + 1], x2: pts[i + 2], y2: pts[i + 3] });
+  const points: Point[] = [];
+  for (let i = 0; i + 1 < pts.length; i += 2) {
+    points.push([pts[i], pts[i + 1]]);
   }
-  // Close polygon
-  if (pts.length >= 4) {
-    segs.push({ x1: pts[pts.length - 2], y1: pts[pts.length - 1], x2: pts[0], y2: pts[1] });
-  }
-  return segs;
+  if (points.length < 2) return [];
+  return [{ points, closed: true }];
 }
 
-function parseCircleElement(el: string): LineSegment[] {
+function parseCircleElementAsPoly(el: string): SvgPolyline[] {
   const cx = numAttr(el, "cx", 250);
   const cy = numAttr(el, "cy", 250);
   const r = numAttr(el, "r", 10);
   const STEPS = 36;
-  const segs: LineSegment[] = [];
-  for (let i = 0; i < STEPS; i++) {
-    const a1 = (i / STEPS) * 2 * Math.PI;
-    const a2 = ((i + 1) / STEPS) * 2 * Math.PI;
-    segs.push({
-      x1: cx + r * Math.cos(a1), y1: cy + r * Math.sin(a1),
-      x2: cx + r * Math.cos(a2), y2: cy + r * Math.sin(a2),
-    });
+  const points: Point[] = [];
+  for (let i = 0; i <= STEPS; i++) {
+    const a = (i / STEPS) * 2 * Math.PI;
+    points.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]);
   }
-  return segs;
+  return [{ points, closed: true }];
 }
 
-function parseEllipseElement(el: string): LineSegment[] {
+function parseEllipseElementAsPoly(el: string): SvgPolyline[] {
   const cx = numAttr(el, "cx", 250);
   const cy = numAttr(el, "cy", 250);
   const rx = numAttr(el, "rx", 10);
   const ry = numAttr(el, "ry", 10);
   const STEPS = 36;
-  const segs: LineSegment[] = [];
-  for (let i = 0; i < STEPS; i++) {
-    const a1 = (i / STEPS) * 2 * Math.PI;
-    const a2 = ((i + 1) / STEPS) * 2 * Math.PI;
-    segs.push({
-      x1: cx + rx * Math.cos(a1), y1: cy + ry * Math.sin(a1),
-      x2: cx + rx * Math.cos(a2), y2: cy + ry * Math.sin(a2),
-    });
+  const points: Point[] = [];
+  for (let i = 0; i <= STEPS; i++) {
+    const a = (i / STEPS) * 2 * Math.PI;
+    points.push([cx + rx * Math.cos(a), cy + ry * Math.sin(a)]);
   }
-  return segs;
+  return [{ points, closed: true }];
 }
 
-function parseRectElement(el: string): LineSegment[] {
+function parseRectElementAsPoly(el: string): SvgPolyline[] {
   const x = numAttr(el, "x");
   const y = numAttr(el, "y");
   const w = numAttr(el, "width");
   const h = numAttr(el, "height");
-  return [
-    { x1: x,     y1: y,     x2: x + w, y2: y     },
-    { x1: x + w, y1: y,     x2: x + w, y2: y + h },
-    { x1: x + w, y1: y + h, x2: x,     y2: y + h },
-    { x1: x,     y1: y + h, x2: x,     y2: y     },
-  ];
+  return [{
+    points: [
+      [x, y],
+      [x + w, y],
+      [x + w, y + h],
+      [x, y + h],
+    ],
+    closed: true,
+  }];
 }
 
-// ─── SVG → DXF main function ──────────────────────────────────────────────────
+// ─── DXF LWPOLYLINE writer ────────────────────────────────────────────────────
 
 // DXF R2000 lineweight codes (hundredths of mm)
 const SVG_DXF_LW_CODES = [0, 5, 9, 13, 15, 18, 20, 25, 30, 35, 40, 50, 53, 60, 70, 80, 90, 100, 106, 120, 140, 158, 200, 211];
@@ -331,6 +343,38 @@ function svgMmToLwCode(mm: number): number {
   for (const c of SVG_DXF_LW_CODES) { const d = Math.abs(h - c); if (d < bestDiff) { best = c; bestDiff = d; } }
   return best;
 }
+
+/**
+ * Write a single LWPOLYLINE entity to the DXF lines array.
+ * LWPOLYLINE is an R2000 entity that stores all vertices in one object —
+ * this is what CAD software (AutoCAD, CorelDRAW, etc.) shows as a single
+ * connected polyline instead of hundreds of separate LINE objects.
+ */
+function writeLwPolyline(
+  lines: string[],
+  points: Point[],
+  closed: boolean,
+  outputHeight: number,
+  lwCode: number | null
+): void {
+  if (points.length < 2) return;
+
+  const flags = closed ? 1 : 0;
+  lines.push("0\nLWPOLYLINE");
+  lines.push("8\n0");                          // layer
+  if (lwCode !== null) lines.push(`370\n${lwCode}`);
+  lines.push("90\n" + points.length);          // number of vertices
+  lines.push("70\n" + flags);                  // 1 = closed, 0 = open
+  lines.push("43\n0.0");                       // constant width = 0
+
+  for (const [px, py] of points) {
+    const dxfY = outputHeight - py;            // flip Y for DXF coordinate system
+    lines.push(`10\n${px.toFixed(3)}`);
+    lines.push(`20\n${dxfY.toFixed(3)}`);
+  }
+}
+
+// ─── SVG → DXF main function ──────────────────────────────────────────────────
 
 export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: number, minGapMm = 0): DxfResult {
   // Extract viewBox dimensions
@@ -346,7 +390,7 @@ export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: nu
     if (hm) height = parseFloat(hm[1]);
   }
 
-  const allSegments: LineSegment[] = [];
+  const allPolylines: SvgPolyline[] = [];
 
   // Extract all elements (self-closing and paired tags)
   const elementRe = /<(path|line|polyline|polygon|circle|ellipse|rect)(\s[^>]*)?\/?>/gi;
@@ -356,58 +400,73 @@ export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: nu
     const tag = m[1].toLowerCase();
     const el = m[0];
 
-    let segs: LineSegment[] = [];
+    let polys: SvgPolyline[] = [];
     switch (tag) {
-      case "path":     segs = pathToSegments(attr(el, "d")); break;
-      case "line":     segs = parseLineElement(el); break;
-      case "polyline": segs = parsePolylineElement(el); break;
-      case "polygon":  segs = parsePolygonElement(el); break;
-      case "circle":   segs = parseCircleElement(el); break;
-      case "ellipse":  segs = parseEllipseElement(el); break;
-      case "rect":     segs = parseRectElement(el); break;
+      case "path":     polys = pathToPolylines(attr(el, "d")); break;
+      case "line":     polys = parseLineElementAsPoly(el); break;
+      case "polyline": polys = parsePolylineElementAsPoly(el); break;
+      case "polygon":  polys = parsePolygonElementAsPoly(el); break;
+      case "circle":   polys = parseCircleElementAsPoly(el); break;
+      case "ellipse":  polys = parseEllipseElementAsPoly(el); break;
+      case "rect":     polys = parseRectElementAsPoly(el); break;
     }
 
-    // Use for-loop instead of spread to avoid "Maximum call stack size exceeded"
-    // when segs is very large (complex images with 100k+ path segments)
-    for (let si = 0; si < segs.length; si++) allSegments.push(segs[si]);
+    for (const poly of polys) allPolylines.push(poly);
   }
 
-  // Compute tight bounding box of all drawn segments
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (const seg of allSegments) {
-    minX = Math.min(minX, seg.x1, seg.x2);
-    minY = Math.min(minY, seg.y1, seg.y2);
-    maxX = Math.max(maxX, seg.x1, seg.x2);
-    maxY = Math.max(maxY, seg.y1, seg.y2);
+  // Count total segment count for reporting
+  let segmentCount = 0;
+  for (const poly of allPolylines) {
+    segmentCount += Math.max(0, poly.points.length - 1);
   }
-  const realWidth  = allSegments.length > 0 ? (maxX - minX) : width;
-  const realHeight = allSegments.length > 0 ? (maxY - minY) : height;
+
+  // Compute tight bounding box of all drawn points
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const poly of allPolylines) {
+    for (const [px, py] of poly.points) {
+      minX = Math.min(minX, px);
+      minY = Math.min(minY, py);
+      maxX = Math.max(maxX, px);
+      maxY = Math.max(maxY, py);
+    }
+  }
+  const realWidth  = allPolylines.length > 0 ? (maxX - minX) : width;
+  const realHeight = allPolylines.length > 0 ? (maxY - minY) : height;
 
   // ── Min-gap scaling ──────────────────────────────────────────────────────────
-  // If minGapMm > 0, scale the entire drawing so the smallest distance between
-  // any two segment midpoints is at least minGapMm (converted from mm to SVG px
-  // at 96 DPI). This ensures CNC engraving tools have enough material between lines.
-  let outputSegments = allSegments;
+  let outputPolylines = allPolylines;
   let outputWidth = width;
   let outputHeight = height;
-  if (minGapMm > 0 && allSegments.length > 1) {
+
+  if (minGapMm > 0 && allPolylines.length > 1) {
     const DPI = 96;
     const minGapPx = (minGapMm / 25.4) * DPI;
-    // Sample midpoints (cap at 1500 for performance)
-    const midpoints = allSegments.map(s => ({ x: (s.x1 + s.x2) / 2, y: (s.y1 + s.y2) / 2 }));
+    // Sample midpoints from all polylines (cap at 1500 for performance)
+    const midpoints: Point[] = [];
+    for (const poly of allPolylines) {
+      for (let pi = 0; pi < poly.points.length - 1; pi++) {
+        midpoints.push([
+          (poly.points[pi][0] + poly.points[pi + 1][0]) / 2,
+          (poly.points[pi][1] + poly.points[pi + 1][1]) / 2,
+        ]);
+      }
+    }
     const maxSamples = 1500;
     const step = midpoints.length > maxSamples ? Math.floor(midpoints.length / maxSamples) : 1;
     let globalMinDist = Infinity;
-    outer: for (let i = 0; i < midpoints.length; i += step) {
-      for (let j = i + step; j < midpoints.length; j += step) {
-        const d = Math.hypot(midpoints[j].x - midpoints[i].x, midpoints[j].y - midpoints[i].y);
+    outer: for (let pi = 0; pi < midpoints.length; pi += step) {
+      for (let pj = pi + step; pj < midpoints.length; pj += step) {
+        const d = Math.hypot(midpoints[pj][0] - midpoints[pi][0], midpoints[pj][1] - midpoints[pi][1]);
         if (d < globalMinDist) globalMinDist = d;
         if (globalMinDist < 0.5) break outer;
       }
     }
     if (globalMinDist < minGapPx && globalMinDist > 0) {
       const scale = minGapPx / globalMinDist;
-      outputSegments = allSegments.map(s => ({ x1: s.x1 * scale, y1: s.y1 * scale, x2: s.x2 * scale, y2: s.y2 * scale }));
+      outputPolylines = allPolylines.map(poly => ({
+        points: poly.points.map(([px, py]) => [px * scale, py * scale] as Point),
+        closed: poly.closed,
+      }));
       outputWidth = Math.round(width * scale);
       outputHeight = Math.round(height * scale);
     }
@@ -417,40 +476,34 @@ export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: nu
   const lwCode = lineweightMm != null
     ? svgMmToLwCode(lineweightMm)
     : hairline ? 0 : null;
-  const useLw = lwCode !== null;
 
-  // Build DXF (R12 or R2000)
+  // Build DXF R2000 (AC1015) — required for LWPOLYLINE support
   const lines: string[] = [];
   lines.push("0\nSECTION");
   lines.push("2\nHEADER");
-  // AC1009 = R12 (no lineweight), AC1015 = R2000 (supports lineweight)
-  lines.push(useLw ? "9\n$ACADVER\n1\nAC1015" : "9\n$ACADVER\n1\nAC1009");
+  lines.push("9\n$ACADVER\n1\nAC1015");
   lines.push(`9\n$EXTMIN\n10\n0.0\n20\n0.0\n30\n0.0`);
   lines.push(`9\n$EXTMAX\n10\n${outputWidth}\n20\n${outputHeight}\n30\n0.0`);
   lines.push("0\nENDSEC");
 
   lines.push("0\nSECTION\n2\nTABLES");
   lines.push("0\nTABLE\n2\nLAYER\n70\n1");
-  lines.push(useLw
+  lines.push(lwCode !== null
     ? `0\nLAYER\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS\n370\n${lwCode}`
     : "0\nLAYER\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS");
   lines.push("0\nENDTAB\n0\nENDSEC");
 
   lines.push("0\nSECTION\n2\nENTITIES");
 
-  for (const seg of outputSegments) {
-    const y1 = outputHeight - seg.y1; // flip Y for DXF coordinate system
-    const y2 = outputHeight - seg.y2;
-    lines.push(useLw ? `0\nLINE\n8\n0\n370\n${lwCode}` : "0\nLINE\n8\n0");
-    lines.push(`10\n${seg.x1.toFixed(3)}\n20\n${y1.toFixed(3)}\n30\n0.0`);
-    lines.push(`11\n${seg.x2.toFixed(3)}\n21\n${y2.toFixed(3)}\n31\n0.0`);
+  for (const poly of outputPolylines) {
+    writeLwPolyline(lines, poly.points, poly.closed, outputHeight, lwCode);
   }
 
   lines.push("0\nENDSEC\n0\nEOF");
 
   return {
     dxf: lines.join("\n"),
-    segmentCount: allSegments.length,
+    segmentCount,
     width,
     height,
     realWidth,

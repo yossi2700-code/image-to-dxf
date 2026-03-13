@@ -666,10 +666,10 @@ export function doubleLineSegments(
 }
 
 /**
- * Generate DXF file content from line segments (DXF R12)
+ * Generate DXF file content from polylines (DXF R2000 LWPOLYLINE).
+ * Each polyline becomes a single LWPOLYLINE entity — connected, not fragmented.
  */
 // DXF R2000 lineweight codes (group 370): standard values in hundredths of mm
-// -3 = BYLAYER, -2 = BYBLOCK, -1 = DEFAULT, 0 = hairline, then 5,9,13,15,18,20,25,30,35,40,50,53,60,70,80,90,100,106,120,140,158,200,211
 const DXF_LW_CODES = [0, 5, 9, 13, 15, 18, 20, 25, 30, 35, 40, 50, 53, 60, 70, 80, 90, 100, 106, 120, 140, 158, 200, 211];
 
 /** Convert mm value to nearest DXF lineweight code (hundredths of mm) */
@@ -684,6 +684,60 @@ function mmToLwCode(mm: number): number {
   return best;
 }
 
+/**
+ * Write polylines as DXF LWPOLYLINE entities (R2000).
+ * Each polyline = one connected object in CAD software.
+ */
+export function polylinesToDxf(
+  polylines: Polyline[],
+  width: number,
+  height: number,
+  hairline = false,
+  lineweightMm?: number
+): string {
+  const lwCode = lineweightMm != null
+    ? mmToLwCode(lineweightMm)
+    : hairline ? 0 : null;
+  const useLw = lwCode !== null;
+
+  const lines: string[] = [];
+
+  lines.push("0\nSECTION");
+  lines.push("2\nHEADER");
+  lines.push("9\n$ACADVER\n1\nAC1015"); // R2000 required for LWPOLYLINE
+  lines.push(`9\n$EXTMIN\n10\n0.0\n20\n0.0\n30\n0.0`);
+  lines.push(`9\n$EXTMAX\n10\n${width}\n20\n${height}\n30\n0.0`);
+  lines.push("0\nENDSEC");
+
+  lines.push("0\nSECTION\n2\nTABLES");
+  lines.push("0\nTABLE\n2\nLAYER\n70\n1");
+  lines.push(useLw
+    ? `0\nLAYER\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS\n370\n${lwCode}`
+    : "0\nLAYER\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS");
+  lines.push("0\nENDTAB\n0\nENDSEC");
+
+  lines.push("0\nSECTION\n2\nENTITIES");
+
+  for (const poly of polylines) {
+    if (poly.length < 2) continue;
+    lines.push("0\nLWPOLYLINE");
+    lines.push("8\n0");                        // layer
+    if (useLw) lines.push(`370\n${lwCode}`);
+    lines.push("90\n" + poly.length);           // vertex count
+    lines.push("70\n0");                        // open polyline
+    lines.push("43\n0.0");                      // constant width = 0
+    for (const [px, py] of poly) {
+      const dxfY = height - py;                 // flip Y
+      lines.push(`10\n${px.toFixed(3)}`);
+      lines.push(`20\n${dxfY.toFixed(3)}`);
+    }
+  }
+
+  lines.push("0\nENDSEC\n0\nEOF");
+  return lines.join("\n");
+}
+
+/** @deprecated Use polylinesToDxf instead — kept for backward compatibility */
 export function segmentsToDxf(
   segments: Segment[],
   width: number,
@@ -691,65 +745,9 @@ export function segmentsToDxf(
   hairline = false,
   lineweightMm?: number
 ): string {
-  // Determine lineweight code: explicit mm value takes priority over hairline boolean
-  const lwCode = lineweightMm != null
-    ? mmToLwCode(lineweightMm)
-    : hairline ? 0 : null;
-  const useLineweight = lwCode !== null;
-
-  const lines: string[] = [];
-
-  lines.push("0\nSECTION");
-  lines.push("2\nHEADER");
-  lines.push("9\n$ACADVER");
-  // AC1009 = R12 (no lineweight), AC1015 = R2000 (supports lineweight)
-  lines.push(useLineweight ? "1\nAC1015" : "1\nAC1009");
-  lines.push("9\n$EXTMIN");
-  lines.push("10\n0.0");
-  lines.push("20\n0.0");
-  lines.push("30\n0.0");
-  lines.push("9\n$EXTMAX");
-  lines.push(`10\n${width}.0`);
-  lines.push(`20\n${height}.0`);
-  lines.push("30\n0.0");
-  lines.push("0\nENDSEC");
-
-  lines.push("0\nSECTION");
-  lines.push("2\nTABLES");
-  lines.push("0\nTABLE");
-  lines.push("2\nLAYER");
-  lines.push("70\n1");
-  lines.push("0\nLAYER");
-  lines.push("2\n0");
-  lines.push("70\n0");
-  lines.push("62\n7");
-  lines.push("6\nCONTINUOUS");
-  if (useLineweight) lines.push(`370\n${lwCode}`);
-  lines.push("0\nENDTAB");
-  lines.push("0\nENDSEC");
-
-  lines.push("0\nSECTION");
-  lines.push("2\nENTITIES");
-
-  for (const seg of segments) {
-    const y1 = height - seg.y1;
-    const y2 = height - seg.y2;
-
-    lines.push("0\nLINE");
-    lines.push("8\n0");
-    if (useLineweight) lines.push(`370\n${lwCode}`);
-    lines.push(`10\n${seg.x1}`);
-    lines.push(`20\n${y1}`);
-    lines.push("30\n0.0");
-    lines.push(`11\n${seg.x2}`);
-    lines.push(`21\n${y2}`);
-    lines.push("31\n0.0");
-  }
-
-  lines.push("0\nENDSEC");
-  lines.push("0\nEOF");
-
-  return lines.join("\n");
+  // Convert segments to polylines by chaining them, then use polylinesToDxf
+  const polylines = chainSegmentsToPolylines(segments, 2);
+  return polylinesToDxf(polylines, width, height, hairline, lineweightMm);
 }
 
 /**
@@ -945,21 +943,25 @@ export async function aiTracePipeline(
   const epsilon = Math.max(0.5, options.simplifyTolerance ?? 1.5);
   const polylines = traceCenterlines(thinned, width, height, epsilon);
 
-  const segments = polylinesToSegments(polylines);
-  const dxf = segmentsToDxf(segments, width, height, options.hairline ?? false, options.lineweightMm);
+  const dxf = polylinesToDxf(polylines, width, height, options.hairline ?? false, options.lineweightMm);
   const svgPreview = polylinesToSvg(polylines, width, height);
 
+  // Count total segment count for reporting
+  let segmentCount = 0;
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (const seg of segments) {
-    minX = Math.min(minX, seg.x1, seg.x2);
-    minY = Math.min(minY, seg.y1, seg.y2);
-    maxX = Math.max(maxX, seg.x1, seg.x2);
-    maxY = Math.max(maxY, seg.y1, seg.y2);
+  for (const poly of polylines) {
+    segmentCount += Math.max(0, poly.length - 1);
+    for (const [px, py] of poly) {
+      minX = Math.min(minX, px);
+      minY = Math.min(minY, py);
+      maxX = Math.max(maxX, px);
+      maxY = Math.max(maxY, py);
+    }
   }
-  const realWidth  = segments.length > 0 ? (maxX - minX) : width;
-  const realHeight = segments.length > 0 ? (maxY - minY) : height;
+  const realWidth  = polylines.length > 0 ? (maxX - minX) : width;
+  const realHeight = polylines.length > 0 ? (maxY - minY) : height;
 
-  return { dxf, svgPreview, segmentCount: segments.length, width, height, realWidth, realHeight };
+  return { dxf, svgPreview, segmentCount, width, height, realWidth, realHeight };
 }
 
 /**
@@ -1105,21 +1107,23 @@ export async function convertImageToDxf(
   }
   // ────────────────────────────────────────────────────────────────────────────
 
-  const segments = polylinesToSegments(scaledPolylines);
-
-  const dxf = segmentsToDxf(segments, dxfWidth, dxfHeight, options.hairline ?? false, options.lineweightMm);
+  const dxf = polylinesToDxf(scaledPolylines, dxfWidth, dxfHeight, options.hairline ?? false, options.lineweightMm);
   const svgPreview = polylinesToSvg(outputPolylines, width, height); // preview always uses original scale
 
-  // Compute tight bounding box of actual drawn segments (in mm after scaling)
+  // Count total segment count and compute tight bounding box (in mm after scaling)
+  let segmentCount = 0;
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (const seg of segments) {
-    minX = Math.min(minX, seg.x1, seg.x2);
-    minY = Math.min(minY, seg.y1, seg.y2);
-    maxX = Math.max(maxX, seg.x1, seg.x2);
-    maxY = Math.max(maxY, seg.y1, seg.y2);
+  for (const poly of scaledPolylines) {
+    segmentCount += Math.max(0, poly.length - 1);
+    for (const [px, py] of poly) {
+      minX = Math.min(minX, px);
+      minY = Math.min(minY, py);
+      maxX = Math.max(maxX, px);
+      maxY = Math.max(maxY, py);
+    }
   }
-  const realWidth  = segments.length > 0 ? Math.round(maxX - minX) : dxfWidth;
-  const realHeight = segments.length > 0 ? Math.round(maxY - minY) : dxfHeight;
+  const realWidth  = scaledPolylines.length > 0 ? Math.round(maxX - minX) : dxfWidth;
+  const realHeight = scaledPolylines.length > 0 ? Math.round(maxY - minY) : dxfHeight;
 
-  return { dxf, svgPreview, segmentCount: segments.length, width: dxfWidth, height: dxfHeight, realWidth, realHeight };
+  return { dxf, svgPreview, segmentCount, width: dxfWidth, height: dxfHeight, realWidth, realHeight };
 }
