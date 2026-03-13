@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, email, tokenBalance FROM app_users WHERE email LIKE '%yossi2700xl3%' OR email LIKE '%yossi2700xl90%';\nSELECT id, email FROM app_users WHERE email IN ('yossi2700xl3@gmail.com', 'yossi2700xl90@gmail.con');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, email, tokenBalance FROM app_users WHERE email LIKE '%yossi2700xl3%' OR email LIKE '%yossi2700xl90%';\nSELECT id, email FROM app_users WHERE email IN ('yossi2700xl3@gmail.com', 'yossi2700xl90@gmail.con');",
+  "rows": [
+    {
+      "id": "840002",
+      "email": "yossi2700xl90@gmail.com",
+      "tokenBalance": "20"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\ttokenBalance\n840002\tyossi2700xl90@gmail.com\t20\n",
+  "stderr": "",
+  "execution_time_ms": 1871
+}

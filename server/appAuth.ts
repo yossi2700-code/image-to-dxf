@@ -173,15 +173,16 @@ router.post("/api/app-auth/register", async (req, res) => {
 
     // Send welcome email (fire-and-forget)
     try {
-      const origin = (req.headers["x-forwarded-proto"]
-        ? `${req.headers["x-forwarded-proto"]}://${req.headers["x-forwarded-host"]}`
-        : `${req.protocol}://${req.get("host")}`);
+      // Use the frontend origin from the request header if available, otherwise fallback to dxfai.net
+      const frontendOrigin = (req.headers["x-frontend-origin"] as string)
+        || (req.headers["origin"] as string)
+        || "https://dxfai.net";
       const lang = (req.headers["accept-language"] ?? "").startsWith("he") ? "he" : "en";
       void sendWelcomeEmail({
         to: email.toLowerCase(),
         name: name?.trim() || null,
         tokens: 10,
-        siteUrl: origin,
+        siteUrl: frontendOrigin,
         language: lang,
       });
     } catch (e) {

@@ -1,0 +1,25 @@
+{
+  "query": "SELECT id, email, name FROM app_users WHERE LOWER(email) LIKE '%yossi%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, email, name FROM app_users WHERE LOWER(email) LIKE '%yossi%';",
+  "rows": [
+    {
+      "id": "30001",
+      "email": "yossi2700@gmail.com",
+      "name": "יוסף"
+    },
+    {
+      "id": "630001",
+      "email": "yossi2700@icloud.com",
+      "name": "יוסי אייזנבך"
+    },
+    {
+      "id": "840002",
+      "email": "yossi2700xl90@gmail.com",
+      "name": "טסט 2"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\n30001\tyossi2700@gmail.com\tיוסף\n630001\tyossi2700@icloud.com\tיוסי אייזנבך\n840002\tyossi2700xl90@gmail.com\tטסט 2\n",
+  "stderr": "",
+  "execution_time_ms": 1501
+}

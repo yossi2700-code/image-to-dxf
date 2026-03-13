@@ -1,0 +1,19 @@
+{
+  "query": "DELETE FROM app_users WHERE LOWER(email) LIKE '%yossi%';\nDELETE FROM users WHERE LOWER(email) LIKE '%yossi%';\nSELECT COUNT(*) as remaining_app_users FROM app_users WHERE LOWER(email) LIKE '%yossi%';\nSELECT COUNT(*) as remaining_users FROM users WHERE LOWER(email) LIKE '%yossi%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute DELETE FROM app_users WHERE LOWER(email) LIKE '%yossi%';\nDELETE FROM users WHERE LOWER(email) LIKE '%yossi%';\nSELECT COUNT(*) as remaining_app_users FROM app_users WHERE LOWER(email) LIKE '%yossi%';\nSELECT COUNT(*) as remaining_users FROM users WHERE LOWER(email) LIKE '%yossi%';",
+  "rows": [
+    {
+      "remaining_app_users": "0"
+    },
+    {
+      "remaining_app_users": "remaining_users"
+    },
+    {
+      "remaining_app_users": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "remaining_app_users\n0\nremaining_users\n0\n",
+  "stderr": "",
+  "execution_time_ms": 2300
+}

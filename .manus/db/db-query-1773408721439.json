@@ -1,0 +1,150 @@
+{
+  "query": "SELECT id, email, name, tokenBalance, createdAt FROM app_users ORDER BY createdAt DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, email, name, tokenBalance, createdAt FROM app_users ORDER BY createdAt DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "840002",
+      "email": "yossi2700xl90@gmail.com",
+      "name": "טסט 2",
+      "tokenBalance": "20",
+      "createdAt": "2026-03-13 12:26:51"
+    },
+    {
+      "id": "810002",
+      "email": "liron.photography@gmail.com",
+      "name": "לירון אלגרבלי",
+      "tokenBalance": "20",
+      "createdAt": "2026-03-12 08:24:47"
+    },
+    {
+      "id": "810001",
+      "email": "erez.biton@gmail.com",
+      "name": "Erez",
+      "tokenBalance": "20",
+      "createdAt": "2026-03-12 07:44:55"
+    },
+    {
+      "id": "780001",
+      "email": "eladkb@gmail.com",
+      "name": "Elad",
+      "tokenBalance": "15",
+      "createdAt": "2026-03-12 06:04:55"
+    },
+    {
+      "id": "750001",
+      "email": "avivi2284@gmail.com",
+      "name": "אביבית קירשנר",
+      "tokenBalance": "27",
+      "createdAt": "2026-03-12 05:42:31"
+    },
+    {
+      "id": "720001",
+      "email": "ronel037@gmail.com",
+      "name": "Ronel peretz",
+      "tokenBalance": "20",
+      "createdAt": "2026-03-11 20:52:48"
+    },
+    {
+      "id": "690001",
+      "email": "yaakov20026@gmail.com",
+      "name": "יעקב עמור",
+      "tokenBalance": "20",
+      "createdAt": "2026-03-11 16:35:38"
+    },
+    {
+      "id": "660001",
+      "email": "maorbayazi@gmail.com",
+      "name": "מאור",
+      "tokenBalance": "20",
+      "createdAt": "2026-03-11 12:29:46"
+    },
+    {
+      "id": "630001",
+      "email": "yossi2700@icloud.com",
+      "name": "יוסי אייזנבך",
+      "tokenBalance": "15",
+      "createdAt": "2026-03-10 20:14:03"
+    },
+    {
+      "id": "600002",
+      "email": "ran.tid@outlook.com",
+      "name": "Ran T",
+      "tokenBalance": "19",
+      "createdAt": "2026-03-10 17:31:36"
+    },
+    {
+      "id": "600001",
+      "email": "genishmati@gmail.com",
+      "name": "מטי גניש",
+      "tokenBalance": "15",
+      "createdAt": "2026-03-10 09:59:25"
+    },
+    {
+      "id": "570001",
+      "email": "edenturgeman200@gmail.com",
+      "name": "עדן תורגמן",
+      "tokenBalance": "15",
+      "createdAt": "2026-03-09 10:26:43"
+    },
+    {
+      "id": "540001",
+      "email": "asafamar037979@gmail.com",
+      "name": "אסף",
+      "tokenBalance": "15",
+      "createdAt": "2026-03-09 07:44:28"
+    },
+    {
+      "id": "510005",
+      "email": "tatoici@gmail.com",
+      "name": "איציק",
+      "tokenBalance": "15",
+      "createdAt": "2026-03-08 13:16:57"
+    },
+    {
+      "id": "510004",
+      "email": "y0505357632@gmail.com",
+      "name": "יהודה ביאזי",
+      "tokenBalance": "15",
+      "createdAt": "2026-03-08 12:59:08"
+    },
+    {
+      "id": "510003",
+      "email": "bayazi@walla.com",
+      "name": "גלעד ביאזי",
+      "tokenBalance": "15",
+      "createdAt": "2026-03-08 11:51:10"
+    },
+    {
+      "id": "510002",
+      "email": "amos2656@gmail.com",
+      "name": "עמוס עטיה",
+      "tokenBalance": "15",
+      "createdAt": "2026-03-08 11:13:30"
+    },
+    {
+      "id": "510001",
+      "email": "noamafia@gmail.com",
+      "name": "afia noam",
+      "tokenBalance": "15",
+      "createdAt": "2026-03-08 11:01:57"
+    },
+    {
+      "id": "480002",
+      "email": "koralg28@gmail.com",
+      "name": "Koralg",
+      "tokenBalance": "15",
+      "createdAt": "2026-03-08 08:55:32"
+    },
+    {
+      "id": "480001",
+      "email": "odelia650@gmail.com",
+      "name": "אודליה",
+      "tokenBalance": "15",
+      "createdAt": "2026-03-08 08:32:06"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\ttokenBalance\tcreatedAt\n840002\tyossi2700xl90@gmail.com\tטסט 2\t20\t2026-03-13 12:26:51\n810002\tliron.photography@gmail.com\tלירון אלגרבלי\t20\t2026-03-12 08:24:47\n810001\terez.biton@gmail.com\tErez\t20\t2026-03-12 07:44:55\n780001\teladkb@gmail.com\tElad\t15\t2026-03-12 06:04:55\n750001\tavivi2284@gmail.com\tאביבית קירשנר\t27\t2026-03-12 05:42:31\n720001\tronel037@gmail.com\tRonel peretz\t20\t2026-03-11 20:52:48\n690001\tyaakov20026@gmail.com\tיעקב עמור\t20\t2026-03-11 16:35:38\n660001\tmaorbayazi@gmail.com\tמאור\t20\t2026-03-11 12:29:46\n630001\tyossi2700@icloud.com\tיוסי אייזנבך\t15\t2026-03-10 20:14:03\n600002\tran.tid@outlook.com\tRan T\t19\t2026-03-10 17:31:36\n600001\tgenishmati@gmail.com\tמטי גניש\t15\t2026-03-10 09:59:25\n570001\tedenturgeman200@gmail.com\tעדן תורגמן\t15\t2026-03-09 10:26:43\n540001\tasafamar037979@gmail.com\tאסף\t15\t2026-03-09 07:44:28\n510005\ttatoici@gmail.com\tאיציק\t15\t2026-03-08 13:16:57\n510004\ty0505357632@gmail.com\tיהודה ביאזי\t15\t2026-03-08 12:59:08\n510003\tbayazi@walla.com\tגלעד ביאזי\t15\t2026-03-08 11:51:10\n510002\tamos2656@gmail.com\tעמוס עטיה\t15\t2026-03-08 11:13:30\n510001\tnoamafia@gmail.com\tafia noam\t15\t2026-03-08 11:01:57\n480002\tkoralg28@gmail.com\tKoralg\t15\t2026-03-08 08:55:32\n480001\todelia650@gmail.com\tאודליה\t15\t2026-03-08 08:32:06\n",
+  "stderr": "",
+  "execution_time_ms": 1591
+}
