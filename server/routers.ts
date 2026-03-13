@@ -970,27 +970,41 @@ export const appRouter = router({
    /** Token balance for the logged-in user */
   tokens: router({
     balance: publicProcedure.query(async ({ ctx }) => {
+      const WELCOME_CAMPAIGN = "welcome_bonus_2026";
+      // Helper: check if user has already claimed the welcome bonus
+      async function hasClaimedWelcome(userId: number): Promise<boolean> {
+        const db = await getDb();
+        if (!db) return true; // assume claimed if DB unavailable
+        const [row] = await db
+          .select({ id: campaignRedemptions.id })
+          .from(campaignRedemptions)
+          .where(and(eq(campaignRedemptions.appUserId, userId), eq(campaignRedemptions.campaignCode, WELCOME_CAMPAIGN)))
+          .limit(1);
+        return !!row;
+      }
       // Try app_user_session cookie first
       const appUser = getAppUserFromCookie(
         (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
       );
       if (appUser) {
         const balance = await getTokenBalance(appUser.userId);
-        return { balance, loggedIn: true };
+        const claimed = await hasClaimedWelcome(appUser.userId);
+        return { balance, loggedIn: true, hasPendingWelcomeBonus: !claimed };
       }
       // Fallback: Manus OAuth user
       if (ctx.user?.email) {
         const db = await getDb();
-        if (!db) return { balance: 0, loggedIn: false };
+        if (!db) return { balance: 0, loggedIn: false, hasPendingWelcomeBonus: false };
         const [existingAppUser] = await db
           .select({ id: appUsers.id })
           .from(appUsers)
           .where(eq(appUsers.email, ctx.user.email));
-        if (!existingAppUser) return { balance: 0, loggedIn: true };
+        if (!existingAppUser) return { balance: 0, loggedIn: true, hasPendingWelcomeBonus: false };
         const balance = await getTokenBalance(existingAppUser.id);
-        return { balance, loggedIn: true };
+        const claimed = await hasClaimedWelcome(existingAppUser.id);
+        return { balance, loggedIn: true, hasPendingWelcomeBonus: !claimed };
       }
-      return { balance: 0, loggedIn: false };
+      return { balance: 0, loggedIn: false, hasPendingWelcomeBonus: false };
     }),
     /** Transaction history for the logged-in user */
     history: publicProcedure.query(async ({ ctx }) => {

@@ -2,6 +2,7 @@
  * InsufficientTokensBanner
  * Shown when the user has run out of tokens during a conversion attempt.
  * Displays a prominent banner with a link to the /buy page.
+ * Optionally shows a reminder about pending welcome bonus tokens in email.
  */
 import { useState } from "react";
 import { ShoppingCart, X, Coins } from "lucide-react";
@@ -10,9 +11,11 @@ import { useLanguage } from "@/contexts/LanguageContext";
 interface InsufficientTokensBannerProps {
   /** Called when the user dismisses the banner */
   onDismiss?: () => void;
+  /** Whether the user has a pending welcome bonus in their email (not yet claimed) */
+  hasPendingWelcomeBonus?: boolean;
 }
 
-export function InsufficientTokensBanner({ onDismiss }: InsufficientTokensBannerProps) {
+export function InsufficientTokensBanner({ onDismiss, hasPendingWelcomeBonus }: InsufficientTokensBannerProps) {
   const { t, isRtl } = useLanguage();
   const [dismissed, setDismissed] = useState(false);
 
@@ -50,6 +53,17 @@ export function InsufficientTokensBanner({ onDismiss }: InsufficientTokensBanner
           <p className="text-xs mt-0.5 leading-snug" style={{ color: "#b45309" }}>
             {t("insufficientTokensMsg")}
           </p>
+          {/* Pending welcome bonus reminder */}
+          {hasPendingWelcomeBonus && (
+            <p className="text-xs mt-1 font-semibold flex items-center gap-1" style={{ color: "#78350f" }}>
+              <span>📧</span>
+              <span>
+                {isRtl
+                  ? 'מחכים לך 20 בונוס אסימונים במייל — בדוק ספאם!'
+                  : '20 bonus tokens waiting in your email — check spam!'}
+              </span>
+            </p>
+          )}
         </div>
 
         {/* Buy button */}

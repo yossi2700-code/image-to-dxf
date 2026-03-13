@@ -2204,6 +2204,7 @@ export default function Home() {
   const manusUser = manusAuthData.data;
   const { data: tokenData, refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: !!appUser || !!manusUser, refetchInterval: 30000 });
   const tokenBalance = tokenData?.balance ?? 0;
+  const hasPendingWelcomeBonus = tokenData?.hasPendingWelcomeBonus ?? false;
 
   // Helper to claim a campaign code and show bonus animation
   const claimCampaignCode = (campaignCode: string) => {
@@ -2255,6 +2256,13 @@ export default function Home() {
           localStorage.removeItem("ai_trace_jobId");
           localStorage.removeItem("doc_redraw_jobId");
           localStorage.removeItem("active_tab");
+          // If URL has ?campaign= and user is NOT logged in → open login dialog immediately
+          if (campaignCode) {
+            setTimeout(() => {
+              setAuthReason("generic");
+              setAuthOpen(true);
+            }, 400); // small delay so page renders first
+          }
         }
       })
       .catch(() => {});
@@ -2332,6 +2340,14 @@ export default function Home() {
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>{tokenBalance}</span>
+                    {/* Pending welcome bonus dot */}
+                    {hasPendingWelcomeBonus && (
+                      <span
+                        className="w-2 h-2 rounded-full animate-pulse"
+                        style={{ background: '#f59e0b', display: 'inline-block', marginLeft: 2 }}
+                        title={isRtl ? 'מחכים לך 20 בונוס במייל' : '20 bonus tokens waiting in your email'}
+                      />
+                    )}
                   </button>
                   {tokenHistoryOpen && (
                     <TokenHistoryPopup
@@ -2507,7 +2523,7 @@ export default function Home() {
         <NewsWidget isRtl={isRtl} />
         {/* ── Insufficient Tokens Banner ── */}
         {showTokensBanner && (
-          <InsufficientTokensBanner onDismiss={() => setShowTokensBanner(false)} />
+          <InsufficientTokensBanner onDismiss={() => setShowTokensBanner(false)} hasPendingWelcomeBonus={hasPendingWelcomeBonus} />
         )}
         {/* ── Hero Section ── */}
         <div className="mb-6 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #f0f0ff 0%, #faf5ff 50%, #f0f9ff 100%)', border: '1px solid #e8eaf0' }}>
