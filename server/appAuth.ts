@@ -14,7 +14,7 @@ import { addTokens } from "./tokenService";
  * Award campaign bonus tokens to a user if they haven't already claimed this campaign.
  * Returns true if tokens were awarded, false if already claimed.
  */
-async function awardCampaignBonus(appUserId: number, campaignCode: string, tokens = 15): Promise<boolean> {
+async function awardCampaignBonus(appUserId: number, campaignCode: string, tokens = 20): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
   try {
@@ -198,7 +198,7 @@ router.post("/api/app-auth/register", async (req, res) => {
       regCampaignBonusAwarded = await awardCampaignBonus(userId, regCampaignCode);
     }
 
-    return res.json({ success: true, user: { id: userId, email: email.toLowerCase(), name: name?.trim() || null }, campaignBonusAwarded: regCampaignBonusAwarded, campaignTokens: regCampaignBonusAwarded ? 15 : 0 });
+    return res.json({ success: true, user: { id: userId, email: email.toLowerCase(), name: name?.trim() || null }, campaignBonusAwarded: regCampaignBonusAwarded, campaignTokens: regCampaignBonusAwarded ? 20 : 0 });
   } catch (err) {
     console.error("[app-auth/register]", err);
     return res.status(500).json({ error: "שגיאה בהרשמה" });
@@ -234,7 +234,7 @@ router.post("/api/app-auth/login", async (req, res) => {
     const token = signToken(user.id, user.email);
     setSessionCookie(res, token, rememberMe !== false); // default true for backwards compat
 
-    return res.json({ success: true, user: { id: user.id, email: user.email, name: user.name }, campaignBonusAwarded, campaignTokens: campaignBonusAwarded ? 15 : 0 });
+    return res.json({ success: true, user: { id: user.id, email: user.email, name: user.name }, campaignBonusAwarded, campaignTokens: campaignBonusAwarded ? 20 : 0 });
   } catch (err) {
     console.error("[app-auth/login]", err);
     return res.status(500).json({ error: "שגיאה בכניסה" });
@@ -454,7 +454,7 @@ router.post("/api/app-auth/claim-campaign", async (req, res) => {
     if (!userId) return res.status(401).json({ error: "לא מחובר" });
 
     const awarded = await awardCampaignBonus(userId, campaignCode);
-    return res.json({ success: true, awarded, tokens: awarded ? 15 : 0 });
+    return res.json({ success: true, awarded, tokens: awarded ? 20 : 0 });
   } catch (err) {
     console.error("[claim-campaign]", err);
     return res.status(500).json({ error: "שגיאה" });

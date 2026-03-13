@@ -526,23 +526,57 @@ function HeroBeforeAfterCarousel() {
 
 // ─── Welcome Banner (new registrations) ───────────────────────────────────────────────────────────────────
 function WelcomeBanner({ onDismiss }: { onDismiss: () => void }) {
+  const [visible, setVisible] = useState(false);
+  const [exiting, setExiting] = useState(false);
+
+  useEffect(() => {
+    // Slide in after mount
+    const t = setTimeout(() => setVisible(true), 30);
+    return () => clearTimeout(t);
+  }, []);
+
+  const handleDismiss = () => {
+    setExiting(true);
+    setTimeout(() => onDismiss(), 420);
+  };
+
   return (
     <div
       className="mb-5 rounded-2xl overflow-hidden"
       style={{
         background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4c1d95 100%)',
-        boxShadow: '0 4px 24px rgba(99,102,241,0.35)',
-        border: '1px solid rgba(165,180,252,0.2)',
+        boxShadow: visible && !exiting ? '0 8px 32px rgba(99,102,241,0.45)' : '0 2px 8px rgba(99,102,241,0.1)',
+        border: '1px solid rgba(165,180,252,0.25)',
+        opacity: visible && !exiting ? 1 : 0,
+        transform: visible && !exiting ? 'translateY(0) scale(1)' : 'translateY(-18px) scale(0.97)',
+        transition: 'opacity 0.4s cubic-bezier(0.34,1.56,0.64,1), transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.4s ease',
       }}
       dir="rtl"
     >
-      {/* Top accent line */}
-      <div style={{ height: '3px', background: 'linear-gradient(90deg, #818cf8, #a78bfa, #c084fc)' }} />
+      {/* Shimmer top accent */}
+      <div style={{
+        height: '3px',
+        background: 'linear-gradient(90deg, #818cf8, #a78bfa, #c084fc, #818cf8)',
+        backgroundSize: '200% 100%',
+        animation: 'shimmer 2s linear infinite',
+      }} />
+
+      <style>{`
+        @keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+        @keyframes bounce-in { 0% { transform: scale(0.5); opacity: 0 } 60% { transform: scale(1.15) } 80% { transform: scale(0.95) } 100% { transform: scale(1); opacity: 1 } }
+        @keyframes float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-4px) } }
+      `}</style>
 
       <div className="px-5 py-4 flex items-start gap-4">
-        {/* Icon */}
-        <div className="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-          style={{ background: 'rgba(165,180,252,0.15)', border: '1px solid rgba(165,180,252,0.25)' }}>
+        {/* Animated icon */}
+        <div
+          className="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+          style={{
+            background: 'rgba(165,180,252,0.18)',
+            border: '1px solid rgba(165,180,252,0.3)',
+            animation: visible ? 'bounce-in 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.2s both, float 3s ease-in-out 1s infinite' : 'none',
+          }}
+        >
           🎉
         </div>
 
@@ -552,26 +586,32 @@ function WelcomeBanner({ onDismiss }: { onDismiss: () => void }) {
             ברוכים הבאים! עכשיו אתה מקצוען בווקטורים וקבצי DXF באמצעות AI ✨
           </p>
           <p className="text-indigo-200 text-sm leading-relaxed mb-3">
-            <span className="text-white font-semibold">קיבלת 10 אסימונים</span> להתנסות בחינם — ועוד <span className="text-yellow-300 font-semibold">20 אסימונים בונוס</span> מחכים לך במייל שקיבלת עכשיו.
+            <span className="text-white font-semibold">קיבלת 10 אסימונים</span> להתנסות בחינם — ועוד{' '}
+            <span
+              className="text-yellow-300 font-semibold"
+              style={{ animation: 'float 2s ease-in-out infinite' }}
+            >20 אסימונים בונוס</span>{' '}
+            מחכים לך במייל שקיבלת עכשיו.
           </p>
           {/* Email CTA */}
           <div
             className="rounded-xl px-4 py-3 flex items-start gap-3"
-            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(165,180,252,0.2)' }}
+            style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(165,180,252,0.22)' }}
           >
             <span className="text-xl shrink-0 mt-0.5">📧</span>
             <p className="text-indigo-100 text-sm leading-relaxed">
-              <span className="text-white font-semibold">לקבלת ה-20 אסימונים — היכנס לתיבת הדואר שלך ולחץ על הקישור במייל.</span>{" "}
-              אם המייל נמצא בתיקיית הדואר הזבל — סמן אותו כדואר רצוי כדי שהמיילים הבאים יגיעו ישיר לתיבת הדואר הראשית.
+              <span className="text-white font-semibold">לקבלת ה-20 אסימונים — היכנס לתיבת הדואר שלך ולחץ על הקישור במייל.</span>{' '}
+              אם המייל נמצא בתיקיית הדואר הזבל — סמן אותו כ"דואר רצוי" כדי שהמיילים הבאים יגיעו ישיר לתיבת הדואר הראשית.
             </p>
           </div>
         </div>
 
-        {/* Dismiss */}
+        {/* Dismiss button */}
         <button
-          onClick={onDismiss}
-          className="shrink-0 text-indigo-300 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
+          onClick={handleDismiss}
+          className="shrink-0 text-indigo-300 hover:text-white transition-all p-1.5 rounded-lg hover:bg-white/10 hover:scale-110 active:scale-95"
           aria-label="סגור"
+          title="סגור"
         >
           <X className="w-4 h-4" />
         </button>
