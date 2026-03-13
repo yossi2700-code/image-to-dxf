@@ -2172,33 +2172,46 @@ export default function Home() {
   const { data: tokenData, refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: !!appUser || !!manusUser, refetchInterval: 30000 });
   const tokenBalance = tokenData?.balance ?? 0;
 
+  // Helper to claim a campaign code and show bonus animation
+  const claimCampaignCode = (campaignCode: string) => {
+    fetch("/api/app-auth/claim-campaign", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ campaignCode }),
+    })
+      .then(r => r.json())
+      .then(res => {
+        if (res.awarded && res.tokens > 0) {
+          setBonusAnimation({ tokens: res.tokens });
+          refetchTokens();
+        }
+        // Always remove from localStorage and URL after attempt
+        localStorage.removeItem("pending_campaign");
+        const url = new URL(window.location.href);
+        url.searchParams.delete("campaign");
+        window.history.replaceState({}, '', url.toString());
+      })
+      .catch(() => {});
+  };
+
   useEffect(() => {
+    // If URL has ?campaign=, save it to localStorage for later (user may not be logged in yet)
+    const campaignCode = new URLSearchParams(window.location.search).get("campaign");
+    if (campaignCode) {
+      localStorage.setItem("pending_campaign", campaignCode);
+    }
+
     fetch("/api/app-auth/me", { credentials: "include" })
       .then((r) => r.json())
       .then((d) => {
         if (d.user) {
           localStorage.setItem("app_user_logged_in", "1");
           setAppUser(d.user);
-          // Auto-claim campaign bonus if URL has ?campaign=...
-          const campaignCode = new URLSearchParams(window.location.search).get("campaign");
-          if (campaignCode) {
-            fetch("/api/app-auth/claim-campaign", {
-              method: "POST",
-              credentials: "include",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ campaignCode }),
-            })
-              .then(r => r.json())
-              .then(res => {
-                if (res.awarded && res.tokens > 0) {
-                  setBonusAnimation({ tokens: res.tokens });
-                  // Remove campaign param from URL without reload
-                  const url = new URL(window.location.href);
-                  url.searchParams.delete("campaign");
-                  window.history.replaceState({}, '', url.toString());
-                }
-              })
-              .catch(() => {});
+          // Auto-claim campaign bonus if URL has ?campaign= OR if there's a pending one in localStorage
+          const pendingCampaign = campaignCode || localStorage.getItem("pending_campaign");
+          if (pendingCampaign) {
+            claimCampaignCode(pendingCampaign);
           }
         } else {
           // Not logged in — clear flag and cached results
@@ -2436,6 +2449,11 @@ export default function Home() {
           // Show welcome banner only for brand-new registrations
           if (isNewRegistration) {
             setShowWelcomeBanner(true);
+          }
+          // Claim any pending campaign bonus after login/register
+          const pendingCampaign = localStorage.getItem("pending_campaign");
+          if (pendingCampaign) {
+            claimCampaignCode(pendingCampaign);
           }
         }}
       />
