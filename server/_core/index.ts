@@ -24,6 +24,7 @@ import {
   uploadLimiter,
   inputSanitizer,
 } from "../security";
+import { startReminderScheduler } from "../reminderScheduler";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -134,6 +135,8 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    // Start the 48h bonus reminder scheduler
+    startReminderScheduler();
   });
 }
 

@@ -197,6 +197,13 @@
       "when": 1773416718990,
       "tag": "0027_broken_deathbird",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "5",
+      "when": 1773438471195,
+      "tag": "0028_broken_zarda",
+      "breakpoints": true
     }
   ]
 }

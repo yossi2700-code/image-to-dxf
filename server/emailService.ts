@@ -101,31 +101,32 @@ export async function sendWelcomeEmail(opts: {
 <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
   <!-- Header -->
-  <tr><td style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#4338ca 100%);border-radius:20px 20px 0 0;padding:40px 40px 32px;text-align:center;">
-    <div style="display:inline-block;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:50px;padding:8px 20px;margin-bottom:20px;">
-      <span style="color:#c7d2fe;font-size:13px;font-weight:600;">✦ AI DXF — dxfai.net</span>
+  <tr><td style="background:#4338ca;border-radius:20px 20px 0 0;padding:36px 40px 28px;text-align:center;">
+    <div style="display:inline-block;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:50px;padding:7px 18px;margin-bottom:18px;">
+      <span style="color:#ffffff;font-size:13px;font-weight:700;">✦ AI DXF — dxfai.net</span>
     </div>
-    <h1 style="color:#ffffff;font-size:26px;font-weight:900;margin:0 0 10px;line-height:1.3;">ברוכים הבאים!<br/>עכשיו אתה <span style="color:#a5b4fc;">מקצוען בווקטורים</span></h1>
-    <p style="color:#c7d2fe;font-size:14px;margin:0;line-height:1.6;">הכלי המתקדם ביותר להמרת תמונות לקבצי DXF<br/>מוכנים לחריטה, כרסום ולייזר</p>
+    <h1 style="color:#ffffff;font-size:26px;font-weight:900;margin:0 0 10px;line-height:1.3;">ברוכים הבאים!<br/>עכשיו אתה <span style="color:#fde68a;">מקצוען בווקטורים</span></h1>
+    <p style="color:#e0e7ff;font-size:14px;margin:0;line-height:1.6;">הכלי המתקדם ביותר להמרת תמונות לקבצי DXF<br/>מוכנים לחריטה, כרסום ולייזר</p>
   </td></tr>
 
   <!-- Token Banner -->
-  <tr><td style="background:linear-gradient(135deg,#4338ca 0%,#7c3aed 100%);padding:24px 40px;text-align:center;border-top:1px solid rgba(255,255,255,0.1);">
+  <tr><td style="background:#ffffff;border:2px solid #e0e7ff;padding:24px 40px;text-align:center;">
+    <p style="color:#1e1b4b;font-size:14px;font-weight:700;margin:0 0 16px;">🎯 יתרת האסימונים שלך:</p>
     <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
       <tr>
-        <td style="text-align:center;padding:0 12px;">
-          <div style="color:#ffffff;font-size:34px;font-weight:900;line-height:1;">${opts.tokens}</div>
-          <div style="color:#c4b5fd;font-size:11px;font-weight:500;margin-top:4px;">אסימונים בחשבון</div>
+        <td style="text-align:center;padding:0 16px;">
+          <div style="color:#1e1b4b;font-size:36px;font-weight:900;line-height:1;">${opts.tokens}</div>
+          <div style="color:#6b7280;font-size:12px;font-weight:600;margin-top:5px;">אסימונים בחשבון</div>
         </td>
-        <td style="color:rgba(255,255,255,0.3);font-size:26px;padding:0 8px;">+</td>
-        <td style="text-align:center;padding:0 12px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.22);border-radius:12px;">
-          <div style="color:#fde68a;font-size:34px;font-weight:900;line-height:1;">20</div>
-          <div style="color:#fde68a;font-size:11px;font-weight:500;margin-top:4px;">בונוס — ממתינים לך</div>
+        <td style="color:#d1d5db;font-size:28px;padding:0 8px;">+</td>
+        <td style="text-align:center;padding:0 16px;background:#fef9c3;border:2px solid #fbbf24;border-radius:12px;">
+          <div style="color:#92400e;font-size:36px;font-weight:900;line-height:1;">20</div>
+          <div style="color:#92400e;font-size:12px;font-weight:700;margin-top:5px;">בונוס במייל</div>
         </td>
-        <td style="color:rgba(255,255,255,0.3);font-size:26px;padding:0 8px;">=</td>
-        <td style="text-align:center;padding:0 12px;">
-          <div style="color:#a5f3fc;font-size:34px;font-weight:900;line-height:1;">${opts.tokens + 20}</div>
-          <div style="color:#c4b5fd;font-size:11px;font-weight:500;margin-top:4px;">סה"כ אסימונים</div>
+        <td style="color:#d1d5db;font-size:28px;padding:0 8px;">=</td>
+        <td style="text-align:center;padding:0 16px;">
+          <div style="color:#4338ca;font-size:36px;font-weight:900;line-height:1;">${opts.tokens + 20}</div>
+          <div style="color:#6b7280;font-size:12px;font-weight:600;margin-top:5px;">סה"כ אסימונים</div>
         </td>
       </tr>
     </table>
@@ -498,6 +499,118 @@ export async function sendBulkEmail(opts: {
       'List-Unsubscribe': `<mailto:noreply@dxfai.net?subject=unsubscribe>, <https://dxfai.net/unsubscribe>`,
       'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
       'Precedence': 'bulk',
+    },
+  });
+}
+
+
+/**
+ * 48-hour reminder email for users who haven't claimed their welcome bonus yet.
+ */
+export async function sendReminderEmail(opts: {
+  to: string;
+  name: string | null;
+  siteUrl: string;
+  language?: "he" | "en";
+}): Promise<void> {
+  if (!resend) { console.warn("[emailService] RESEND_API_KEY not set, skipping reminder email"); return; }
+  const isHe = (opts.language ?? "he") === "he";
+  const displayName = opts.name ?? (isHe ? "משתמש יקר" : "there");
+  const bonusUrl = `${opts.siteUrl}/?campaign=welcome_bonus_2026`;
+
+  const subject = isHe
+    ? "⏰ עוד לא קיבלת את 20 האסימונים שלך — הם מחכים לך!"
+    : "⏰ Your 20 bonus tokens are still waiting for you!";
+
+  const heHtml = `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>האסימונים שלך מחכים</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,Helvetica,sans-serif;direction:rtl;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fb;padding:32px 16px;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+  <!-- Header -->
+  <tr><td style="background:#7c3aed;border-radius:20px 20px 0 0;padding:36px 40px 28px;text-align:center;">
+    <div style="display:inline-block;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:50px;padding:7px 18px;margin-bottom:18px;">
+      <span style="color:#ffffff;font-size:13px;font-weight:700;">✦ AI DXF — dxfai.net</span>
+    </div>
+    <div style="font-size:48px;margin-bottom:12px;">⏰</div>
+    <h1 style="color:#ffffff;font-size:24px;font-weight:900;margin:0 0 10px;line-height:1.3;">שלום ${displayName},<br/>האסימונים שלך עוד מחכים!</h1>
+    <p style="color:#e9d5ff;font-size:14px;margin:0;line-height:1.6;">נרשמת לפני יומיים אבל עוד לא קיבלת את 20 האסימונים הבונוס שלך</p>
+  </td></tr>
+
+  <!-- Body -->
+  <tr><td style="background:#ffffff;padding:36px 40px;">
+    <p style="color:#374151;font-size:15px;margin:0 0 20px;line-height:1.7;">שלחנו לך מייל עם קישור לקבלת 20 אסימונים בונוס — אבל נראה שעוד לא לחצת עליו.</p>
+
+    <!-- Bonus Box -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #fbbf24;border-radius:16px;margin-bottom:28px;">
+      <tr><td style="padding:28px;text-align:center;">
+        <div style="font-size:36px;font-weight:900;color:#92400e;margin-bottom:8px;">🎁 20 אסימונים</div>
+        <p style="color:#78350f;font-size:14px;line-height:1.6;margin:0 0 20px;">לחץ על הכפתור כדי לקבל אותם עכשיו — הם יתווספו אוטומטית לחשבונך.</p>
+        <a href="${bonusUrl}" style="display:inline-block;background:#4338ca;color:#ffffff;font-size:15px;font-weight:700;padding:14px 36px;border-radius:50px;text-decoration:none;">קבל את 20 האסימונים שלי »</a>
+        <p style="color:#92400e;font-size:11px;margin:12px 0 0;">האסימונים יתווספו אוטומטית לאחר לחיצה</p>
+      </td></tr>
+    </table>
+
+    <p style="color:#6b7280;font-size:13px;line-height:1.6;margin:0 0 8px;">לא מצאת את המייל המקורי? בדוק בתיקיית הספאם — אם הוא שם, סמן אותו כ"דואר רצוי".</p>
+  </td></tr>
+
+  <!-- Footer -->
+  <tr><td style="background:#f8f9ff;border-radius:0 0 20px 20px;padding:24px 40px;text-align:center;border-top:1px solid #e0e7ff;">
+    <p style="font-size:13px;font-weight:700;color:#4338ca;margin:0 0 6px;">AI DXF — dxfai.net</p>
+    <p style="font-size:11px;color:#9ca3af;line-height:1.7;margin:0;">
+      קיבלת מייל זה כיוון שנרשמת לאתר AI DXF.<br/>
+      <a href="${opts.siteUrl}" style="color:#6366f1;text-decoration:none;">dxfai.net</a> &nbsp;|&nbsp;
+      <a href="mailto:support@dxfai.net" style="color:#6366f1;text-decoration:none;">support@dxfai.net</a>
+    </p>
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body></html>`;
+
+  const enHtml = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><title>Your tokens are waiting</title></head>
+<body style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fb;padding:32px 16px;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+  <tr><td style="background:#7c3aed;border-radius:20px 20px 0 0;padding:36px 40px 28px;text-align:center;">
+    <div style="font-size:48px;margin-bottom:12px;">⏰</div>
+    <h1 style="color:#ffffff;font-size:24px;font-weight:900;margin:0 0 10px;">Hi ${displayName},<br/>Your bonus tokens are still waiting!</h1>
+    <p style="color:#e9d5ff;font-size:14px;margin:0;">You signed up 2 days ago but haven't claimed your 20 bonus tokens yet</p>
+  </td></tr>
+  <tr><td style="background:#ffffff;padding:36px 40px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #fbbf24;border-radius:16px;margin-bottom:28px;">
+      <tr><td style="padding:28px;text-align:center;">
+        <div style="font-size:36px;font-weight:900;color:#92400e;margin-bottom:8px;">🎁 20 Bonus Tokens</div>
+        <p style="color:#78350f;font-size:14px;margin:0 0 20px;">Click the button to claim them — they'll be added to your account instantly.</p>
+        <a href="${bonusUrl}" style="display:inline-block;background:#4338ca;color:#ffffff;font-size:15px;font-weight:700;padding:14px 36px;border-radius:50px;text-decoration:none;">Claim My 20 Tokens »</a>
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="background:#f8f9ff;border-radius:0 0 20px 20px;padding:24px 40px;text-align:center;border-top:1px solid #e0e7ff;">
+    <p style="font-size:11px;color:#9ca3af;">You received this because you registered at DXF AI. <a href="${opts.siteUrl}" style="color:#6366f1;">dxfai.net</a></p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+
+  await resend.emails.send({
+    from: "DXF AI <noreply@dxfai.net>",
+    to: opts.to,
+    subject,
+    html: isHe ? heHtml : enHtml,
+    headers: {
+      'List-Unsubscribe': `<mailto:noreply@dxfai.net?subject=unsubscribe>, <https://dxfai.net/unsubscribe>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
     },
   });
 }

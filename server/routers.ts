@@ -7,7 +7,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks } from "../drizzle/schema";
+import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks, emailVerifications } from "../drizzle/schema";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "./emailService";
 import { desc, eq, and, sql } from "drizzle-orm";
@@ -996,6 +996,25 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         await db.delete(adminTasks).where(eq(adminTasks.id, input.id));
+        return { success: true };
+      }),
+
+    /** Permanently delete a user and all their data */
+    deleteUser: adminProcedure
+      .input(z.object({ userId: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const { userId } = input;
+        // Delete in dependency order
+        await db.delete(tokenTransactions).where(eq(tokenTransactions.appUserId, userId));
+        await db.delete(userActions).where(eq(userActions.appUserId, userId));
+        await db.delete(emailVerifications).where(eq(emailVerifications.appUserId, userId));
+        await db.delete(passwordResets).where(eq(passwordResets.appUserId, userId));
+        await db.delete(campaignRedemptions).where(eq(campaignRedemptions.appUserId, userId));
+        await db.delete(consentRecords).where(eq(consentRecords.appUserId, userId));
+        await db.delete(paypalOrders).where(eq(paypalOrders.appUserId, userId));
+        await db.delete(appUsers).where(eq(appUsers.id, userId));
         return { success: true };
       }),
   }),

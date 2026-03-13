@@ -67,6 +67,10 @@ export const appUsers = mysqlTable("app_users", {
   isBlocked: int("isBlocked").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   lastLoginAt: timestamp("lastLoginAt").defaultNow().notNull(),
+  /** Timestamp when the 48h bonus reminder email was sent (null = not sent yet) */
+  reminderSentAt: bigint("reminderSentAt", { mode: "number" }),
+  /** Preferred language for emails: he or en */
+  language: varchar("language", { length: 8 }).default("he"),
 });
 
 export type AppUser = typeof appUsers.$inferSelect;

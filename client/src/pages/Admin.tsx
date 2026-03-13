@@ -355,6 +355,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     onError: (err) => toast.error(err.message ?? "שגיאה בשחרור חסימה"),
   });
 
+  const deleteUserMutation = trpc.admin.deleteUser.useMutation({
+    onSuccess: () => { toast.success("המשתמש נמחק לצמיתות"); refetchUsers(); },
+    onError: (err) => toast.error(err.message ?? "שגיאה במחיקת משתמש"),
+  });
+
   const { data: maintenanceData, refetch: refetchMaintenance } = trpc.admin.getMaintenanceMode.useQuery();
   const setMaintenanceMutation = trpc.admin.setMaintenanceMode.useMutation({
     onSuccess: (data) => { toast.success(data.enabled ? "מצב תחזוקה הופעל" : "מצב תחזוקה כבה"); refetchMaintenance(); },
@@ -1139,6 +1144,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             title="היסטוריית אסימונים"
                           >
                             <History className="w-3.5 h-3.5" />
+                          </button>
+                          {/* Delete user button */}
+                          <button
+                            className="text-xs text-muted-foreground hover:text-red-600 transition-colors ml-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`⚠️ מחיקה לצמיתות!\n\nהמשתמש ${u.name ?? u.email} וכל הנתונים שלו יימחקו לצמיתות.\n\nהאם אתה בטוח?`)) {
+                                deleteUserMutation.mutate({ userId: u.id });
+                              }
+                            }}
+                            title="מחק משתמש לצמיתות"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                           {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                         </div>

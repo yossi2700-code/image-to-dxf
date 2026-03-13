@@ -2193,6 +2193,7 @@ export default function Home() {
   const [authReason, setAuthReason] = useState<AuthReason>("generic");
   const [showTokensBanner, setShowTokensBanner] = useState(false);
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
+  const [bonusBannerDismissed, setBonusBannerDismissed] = useState(() => localStorage.getItem('bonus_banner_dismissed') === '1');
 
   const openAuthAs = (reason: AuthReason) => {
     setAuthReason(reason);
@@ -2205,6 +2206,7 @@ export default function Home() {
   const { data: tokenData, refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: !!appUser || !!manusUser, refetchInterval: 30000 });
   const tokenBalance = tokenData?.balance ?? 0;
   const hasPendingWelcomeBonus = tokenData?.hasPendingWelcomeBonus ?? false;
+  const showBonusBanner = hasPendingWelcomeBonus && !bonusBannerDismissed && !showWelcomeBanner;
 
   // Helper to claim a campaign code and show bonus animation
   const claimCampaignCode = (campaignCode: string) => {
@@ -2514,6 +2516,29 @@ export default function Home() {
          {/* ── Welcome Banner (new registrations only) ── */}
         {showWelcomeBanner && (
           <WelcomeBanner onDismiss={() => setShowWelcomeBanner(false)} />
+        )}
+        {/* ── Pending Bonus Banner ── */}
+        {showBonusBanner && (
+          <div
+            className="mx-2 mt-2 mb-1 rounded-xl px-4 py-3 flex items-center justify-between gap-3"
+            style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', color: 'white' }}
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="text-lg shrink-0">📧</span>
+              <p className="text-sm font-medium leading-snug">
+                {isRtl
+                  ? 'מחכים לך 20 אסימונים בונוס במייל — לחץ על הקישור לקבלתם'
+                  : '20 bonus tokens waiting in your email — click the link to claim'}
+              </p>
+            </div>
+            <button
+              onClick={() => { setBonusBannerDismissed(true); localStorage.setItem('bonus_banner_dismissed', '1'); }}
+              className="shrink-0 text-white/70 hover:text-white transition-colors p-1 rounded"
+              aria-label="סגור"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
         )}
         {/* ── Sale Banner ── */}
         <SaleBanner />
