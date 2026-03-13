@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, appUserId, LEFT(token, 20) as token_preview, expiresAt, usedAt, createdAt FROM email_verifications ORDER BY id DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, appUserId, LEFT(token, 20) as token_preview, expiresAt, usedAt, createdAt FROM email_verifications ORDER BY id DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "750004",
+      "appUserId": "840005",
+      "token_preview": "9cb19eb39154e6dd50df",
+      "expiresAt": "2026-03-14 13:56:20",
+      "usedAt": "NULL",
+      "createdAt": "2026-03-13 13:56:20"
+    },
+    {
+      "id": "750003",
+      "appUserId": "840003",
+      "token_preview": "fb387a5e3e8ad12a73ff",
+      "expiresAt": "2026-03-14 13:33:17",
+      "usedAt": "NULL",
+      "createdAt": "2026-03-13 13:33:17"
+    },
+    {
+      "id": "750002",
+      "appUserId": "840002",
+      "token_preview": "56835f2abac91742173b",
+      "expiresAt": "2026-03-14 12:26:51",
+      "usedAt": "NULL",
+      "createdAt": "2026-03-13 12:26:51"
+    },
+    {
+      "id": "750001",
+      "appUserId": "840001",
+      "token_preview": "602e6a8010a850364130",
+      "expiresAt": "2026-03-14 11:10:50",
+      "usedAt": "NULL",
+      "createdAt": "2026-03-13 11:10:49"
+    },
+    {
+      "id": "720002",
+      "appUserId": "810002",
+      "token_preview": "b133c41d192304805ef6",
+      "expiresAt": "2026-03-13 08:24:47",
+      "usedAt": "NULL",
+      "createdAt": "2026-03-12 08:24:47"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tappUserId\ttoken_preview\texpiresAt\tusedAt\tcreatedAt\n750004\t840005\t9cb19eb39154e6dd50df\t2026-03-14 13:56:20\tNULL\t2026-03-13 13:56:20\n750003\t840003\tfb387a5e3e8ad12a73ff\t2026-03-14 13:33:17\tNULL\t2026-03-13 13:33:17\n750002\t840002\t56835f2abac91742173b\t2026-03-14 12:26:51\tNULL\t2026-03-13 12:26:51\n750001\t840001\t602e6a8010a850364130\t2026-03-14 11:10:50\tNULL\t2026-03-13 11:10:49\n720002\t810002\tb133c41d192304805ef6\t2026-03-13 08:24:47\tNULL\t2026-03-12 08:24:47\n",
+  "stderr": "",
+  "execution_time_ms": 1517
+}

@@ -7,7 +7,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions } from "../drizzle/schema";
+import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems } from "../drizzle/schema";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "./emailService";
 import { desc, eq, and, sql } from "drizzle-orm";
@@ -594,6 +594,301 @@ export const appRouter = router({
         return { sent, failed, total: targets.length };
       }),
 
+    // ── Subscription plan management (admin) ───────────────────────────────────
+    getSubscriptionPlans: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.select().from(subscriptionPlans).orderBy(subscriptionPlans.sortOrder);
+    }),
+
+    upsertSubscriptionPlan: adminProcedure
+      .input(z.object({
+        planId: z.string().min(1).max(32),
+        name: z.string().min(1).max(64),
+        dailyConversions: z.number().int().min(1),
+        priceILS: z.string(),
+        priceUSD: z.string(),
+        discountPercent: z.number().int().min(0).max(100).optional(),
+        badge: z.enum(["recommended", "best_value", "sale"]).nullable().optional(),
+        isActive: z.number().int().min(0).max(1).optional(),
+        sortOrder: z.number().int().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db
+          .insert(subscriptionPlans)
+          .values({
+            planId: input.planId,
+            name: input.name,
+            dailyConversions: input.dailyConversions,
+            priceILS: input.priceILS,
+            priceUSD: input.priceUSD,
+            discountPercent: input.discountPercent ?? 0,
+            badge: input.badge ?? null,
+            isActive: input.isActive ?? 1,
+            sortOrder: input.sortOrder ?? 0,
+          })
+          .onDuplicateKeyUpdate({
+            set: {
+              name: input.name,
+              dailyConversions: input.dailyConversions,
+              priceILS: input.priceILS,
+              priceUSD: input.priceUSD,
+              discountPercent: input.discountPercent ?? 0,
+              badge: input.badge ?? null,
+              isActive: input.isActive ?? 1,
+              sortOrder: input.sortOrder ?? 0,
+            },
+          });
+        return { success: true };
+      }),
+
+    deleteSubscriptionPlan: adminProcedure
+      .input(z.object({ planId: z.string() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db.delete(subscriptionPlans).where(eq(subscriptionPlans.planId, input.planId));
+        return { success: true };
+      }),
+
+    /** All active user subscriptions */
+    getUserSubscriptions: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db
+        .select({
+          id: userSubscriptions.id,
+          appUserId: userSubscriptions.appUserId,
+          planId: userSubscriptions.planId,
+          status: userSubscriptions.status,
+          periodStart: userSubscriptions.periodStart,
+          periodEnd: userSubscriptions.periodEnd,
+          adminNote: userSubscriptions.adminNote,
+          createdAt: userSubscriptions.createdAt,
+          userName: appUsers.name,
+          userEmail: appUsers.email,
+        })
+        .from(userSubscriptions)
+        .leftJoin(appUsers, eq(userSubscriptions.appUserId, appUsers.id))
+        .orderBy(desc(userSubscriptions.createdAt))
+        .limit(200);
+    }),
+
+    /** Manually assign a subscription to a user */
+    assignSubscription: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+        planId: z.string(),
+        months: z.number().int().min(1).max(24).default(1),
+        adminNote: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const now = new Date();
+        const periodEnd = new Date(now);
+        periodEnd.setMonth(periodEnd.getMonth() + input.months);
+        // Cancel any existing active subscription
+        await db
+          .update(userSubscriptions)
+          .set({ status: "cancelled" })
+          .where(
+            and(
+              eq(userSubscriptions.appUserId, input.userId),
+              eq(userSubscriptions.status, "active")
+            )
+          );
+        await db.insert(userSubscriptions).values({
+          appUserId: input.userId,
+          planId: input.planId,
+          status: "active",
+          periodStart: now,
+          periodEnd,
+          adminNote: input.adminNote ?? `Admin assigned ${input.months} month(s)`,
+        });
+        return { success: true };
+      }),
+
+    /** Cancel a user's subscription */
+    cancelSubscription: adminProcedure
+      .input(z.object({ subscriptionId: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db
+          .update(userSubscriptions)
+          .set({ status: "cancelled" })
+          .where(eq(userSubscriptions.id, input.subscriptionId));
+        return { success: true };
+      }),
+
+    // ── Bug reports (admin) ───────────────────────────────────────────────────
+    getBugReports: adminProcedure
+      .input(z.object({ status: z.string().optional() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return [];
+        return db
+          .select({
+            id: bugReports.id,
+            appUserId: bugReports.appUserId,
+            errorType: bugReports.errorType,
+            errorMessage: bugReports.errorMessage,
+            feature: bugReports.feature,
+            imageUrl: bugReports.imageUrl,
+            status: bugReports.status,
+            adminNote: bugReports.adminNote,
+            ipAnon: bugReports.ipAnon,
+            createdAt: bugReports.createdAt,
+            userName: appUsers.name,
+            userEmail: appUsers.email,
+          })
+          .from(bugReports)
+          .leftJoin(appUsers, eq(bugReports.appUserId, appUsers.id))
+          .where(input.status ? eq(bugReports.status, input.status) : sql`1=1`)
+          .orderBy(desc(bugReports.createdAt))
+          .limit(200);
+      }),
+
+    updateBugStatus: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        status: z.enum(["new", "investigating", "resolved", "ignored"]),
+        adminNote: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db
+          .update(bugReports)
+          .set({
+            status: input.status,
+            ...(input.adminNote !== undefined ? { adminNote: input.adminNote } : {}),
+          })
+          .where(eq(bugReports.id, input.id));
+        return { success: true };
+      }),
+
+    // ── News items management (admin) ────────────────────────────────────────────
+    getNewsItems: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db
+        .select()
+        .from(newsItems)
+        .orderBy(desc(newsItems.sortOrder), desc(newsItems.createdAt));
+    }),
+
+    upsertNewsItem: adminProcedure
+      .input(z.object({
+        id: z.number().optional(),
+        title: z.string().min(1).max(200),
+        content: z.string().min(1),
+        emoji: z.string().max(8).optional(),
+        isPublished: z.number().int().min(0).max(1).optional(),
+        sortOrder: z.number().int().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        if (input.id) {
+          await db
+            .update(newsItems)
+            .set({
+              title: input.title,
+              content: input.content,
+              emoji: input.emoji ?? null,
+              isPublished: input.isPublished ?? 1,
+              sortOrder: input.sortOrder ?? 0,
+            })
+            .where(eq(newsItems.id, input.id));
+        } else {
+          await db.insert(newsItems).values({
+            title: input.title,
+            content: input.content,
+            emoji: input.emoji ?? null,
+            isPublished: input.isPublished ?? 1,
+            sortOrder: input.sortOrder ?? 0,
+          });
+        }
+        return { success: true };
+      }),
+
+    deleteNewsItem: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db.delete(newsItems).where(eq(newsItems.id, input.id));
+        return { success: true };
+      }),
+
+    // ── Enhanced user list with subscription info ──────────────────────────────────
+    usersEnhanced: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      const rows = await db
+        .select({
+          id: appUsers.id,
+          name: appUsers.name,
+          email: appUsers.email,
+          tokenBalance: appUsers.tokenBalance,
+          isBlocked: appUsers.isBlocked,
+          emailVerified: appUsers.emailVerified,
+          createdAt: appUsers.createdAt,
+          lastLoginAt: appUsers.lastLoginAt,
+        })
+        .from(appUsers)
+        .orderBy(desc(appUsers.createdAt))
+        .limit(500);
+      if (rows.length === 0) return [];
+      const userIds = rows.map(r => r.id);
+      const idList = userIds.join(",");
+      // Last action per user
+      const allActions = await db
+        .select({
+          appUserId: userActions.appUserId,
+          actionType: userActions.actionType,
+          feature: userActions.feature,
+          createdAt: userActions.createdAt,
+        })
+        .from(userActions)
+        .where(sql`${userActions.appUserId} IN (${sql.raw(idList)})`)
+        .orderBy(desc(userActions.createdAt))
+        .limit(1000);
+      // Active subscriptions
+      const now = new Date();
+      const activeSubs = await db
+        .select({
+          appUserId: userSubscriptions.appUserId,
+          planId: userSubscriptions.planId,
+          periodEnd: userSubscriptions.periodEnd,
+        })
+        .from(userSubscriptions)
+        .where(
+          and(
+            sql`${userSubscriptions.appUserId} IN (${sql.raw(idList)})`,
+            eq(userSubscriptions.status, "active"),
+            sql`${userSubscriptions.periodEnd} > ${now}`
+          )
+        );
+      const lastActionMap = new Map<number, typeof allActions[0]>();
+      for (const a of allActions) {
+        if (!lastActionMap.has(a.appUserId)) lastActionMap.set(a.appUserId, a);
+      }
+      const subMap = new Map<number, typeof activeSubs[0]>();
+      for (const s of activeSubs) {
+        subMap.set(s.appUserId, s);
+      }
+      return rows.map(r => ({
+        ...r,
+        lastAction: lastActionMap.get(r.id) ?? null,
+        subscription: subMap.get(r.id) ?? null,
+      }));
+    }),
+
     updatePackagePrice: adminProcedure
       .input(
         z.object({
@@ -982,6 +1277,118 @@ export const appRouter = router({
         return action ?? null;
       }),
    }),
+
+  // ── Bug reporting (public — frontend logs errors automatically) ─────────────────
+  bugs: router({
+    report: publicProcedure
+      .input(z.object({
+        errorType: z.enum(["convert_failed", "ai_failed", "download_failed", "other"]),
+        errorMessage: z.string().max(2000).optional(),
+        feature: z.string().max(32).optional(),
+        imageUrl: z.string().max(1000).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) return { success: false };
+        const appUser = getAppUserFromCookie(
+          (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
+        );
+        const req = ctx.req as { headers: Record<string, string | string[] | undefined>; socket?: { remoteAddress?: string } };
+        const rawIp: string = (req.headers["cf-connecting-ip"] as string) ||
+          (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
+          req.socket?.remoteAddress ||
+          "";
+        // Anonymize: keep first 3 octets only
+        const ipAnon = rawIp.replace(/(\d+\.\d+\.\d+)\.\d+/, "$1.x");
+        await db.insert(bugReports).values({
+          appUserId: appUser?.userId ?? null,
+          errorType: input.errorType,
+          errorMessage: input.errorMessage ?? null,
+          feature: input.feature ?? null,
+          imageUrl: input.imageUrl ?? null,
+          ipAnon,
+          status: "new",
+        });
+        return { success: true };
+      }),
+  }),
+
+  // ── Subscription plans (public) ──────────────────────────────────────────
+  subscriptions: router({
+    /** Get all active subscription plans (public) */
+    plans: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db
+        .select()
+        .from(subscriptionPlans)
+        .where(eq(subscriptionPlans.isActive, 1))
+        .orderBy(subscriptionPlans.sortOrder);
+    }),
+
+    /** Get the current user's active subscription */
+    mySubscription: publicProcedure.query(async ({ ctx }) => {
+      const appUser = getAppUserFromCookie(
+        (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
+      );
+      if (!appUser) return null;
+      const db = await getDb();
+      if (!db) return null;
+      const now = new Date();
+      const [sub] = await db
+        .select()
+        .from(userSubscriptions)
+        .where(
+          and(
+            eq(userSubscriptions.appUserId, appUser.userId),
+            eq(userSubscriptions.status, "active"),
+            sql`${userSubscriptions.periodEnd} > ${now}`
+          )
+        )
+        .orderBy(desc(userSubscriptions.periodEnd))
+        .limit(1);
+      if (!sub) return null;
+      // Get today's usage
+      const today = new Date().toISOString().slice(0, 10);
+      const [usage] = await db
+        .select()
+        .from(dailyUsage)
+        .where(
+          and(
+            eq(dailyUsage.appUserId, appUser.userId),
+            eq(dailyUsage.usageDate, today)
+          )
+        )
+        .limit(1);
+      // Get plan details
+      const [plan] = await db
+        .select()
+        .from(subscriptionPlans)
+        .where(eq(subscriptionPlans.planId, sub.planId))
+        .limit(1);
+      return {
+        ...sub,
+        plan: plan ?? null,
+        todayUsed: usage?.conversionsUsed ?? 0,
+        todayLimit: plan?.dailyConversions ?? 0,
+      };
+    }),
+  }),
+
+  // ── News items (What's New widget) ──────────────────────────────────────────
+  news: router({
+    /** Get published news items (public) */
+    list: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db
+        .select()
+        .from(newsItems)
+        .where(eq(newsItems.isPublished, 1))
+        .orderBy(desc(newsItems.sortOrder), desc(newsItems.createdAt))
+        .limit(10);
+    }),
+  }),
 
   // ── Announcement banner (What's New) ─────────────────────────────────────
   announcement: router({

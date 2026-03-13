@@ -284,3 +284,107 @@ export const campaignRedemptions = mysqlTable("campaign_redemptions", {
 });
 export type CampaignRedemption = typeof campaignRedemptions.$inferSelect;
 export type InsertCampaignRedemption = typeof campaignRedemptions.$inferInsert;
+
+// Subscription plans — admin-configurable plans with daily conversion limits
+export const subscriptionPlans = mysqlTable("subscription_plans", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Internal identifier, e.g. "basic", "pro" */
+  planId: varchar("planId", { length: 32 }).notNull().unique(),
+  /** Display name, e.g. "בסיסי", "מקצועי" */
+  name: varchar("name", { length: 64 }).notNull(),
+  /** Number of conversions allowed per day */
+  dailyConversions: int("dailyConversions").notNull(),
+  /** Price in ILS per month */
+  priceILS: varchar("priceILS", { length: 16 }).notNull(),
+  /** Price in USD per month */
+  priceUSD: varchar("priceUSD", { length: 16 }).notNull(),
+  /** Optional discount percentage (0-100) */
+  discountPercent: int("discountPercent").default(0),
+  /** Badge: null | 'recommended' | 'best_value' | 'sale' */
+  badge: mysqlEnum("badge", ["recommended", "best_value", "sale"]),
+  /** Whether this plan is active/visible */
+  isActive: int("isActive").notNull().default(1),
+  /** Sort order for display */
+  sortOrder: int("sortOrder").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertSubscriptionPlan = typeof subscriptionPlans.$inferInsert;
+
+// User subscriptions — active subscription per user
+export const userSubscriptions = mysqlTable("user_subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  appUserId: int("appUserId").notNull(),
+  planId: varchar("planId", { length: 32 }).notNull(),
+  /** Status: active | cancelled | expired */
+  status: varchar("status", { length: 16 }).notNull().default("active"),
+  /** When the current billing period started */
+  periodStart: timestamp("periodStart").notNull(),
+  /** When the current billing period ends */
+  periodEnd: timestamp("periodEnd").notNull(),
+  /** PayPal subscription ID or manual */
+  paypalSubscriptionId: varchar("paypalSubscriptionId", { length: 64 }),
+  /** Notes from admin */
+  adminNote: text("adminNote"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type UserSubscription = typeof userSubscriptions.$inferSelect;
+export type InsertUserSubscription = typeof userSubscriptions.$inferInsert;
+
+// Daily usage tracking — tracks daily conversions per user for subscription quota
+export const dailyUsage = mysqlTable("daily_usage", {
+  id: int("id").autoincrement().primaryKey(),
+  appUserId: int("appUserId").notNull(),
+  /** Date in YYYY-MM-DD format */
+  usageDate: varchar("usageDate", { length: 10 }).notNull(),
+  /** Number of conversions used today */
+  conversionsUsed: int("conversionsUsed").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type DailyUsage = typeof dailyUsage.$inferSelect;
+export type InsertDailyUsage = typeof dailyUsage.$inferInsert;
+
+// Bug reports — tracks failed conversions for admin review
+export const bugReports = mysqlTable("bug_reports", {
+  id: int("id").autoincrement().primaryKey(),
+  appUserId: int("appUserId"),
+  /** Type of failure: convert_failed | ai_failed | download_failed */
+  errorType: varchar("errorType", { length: 32 }).notNull(),
+  /** Error message */
+  errorMessage: text("errorMessage"),
+  /** Feature that failed */
+  feature: varchar("feature", { length: 32 }),
+  /** URL of the image that failed (if any) */
+  imageUrl: text("imageUrl"),
+  /** Status: new | investigating | resolved | ignored */
+  status: varchar("status", { length: 16 }).notNull().default("new"),
+  /** Admin notes */
+  adminNote: text("adminNote"),
+  /** User IP (anonymized) */
+  ipAnon: varchar("ipAnon", { length: 20 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type BugReport = typeof bugReports.$inferSelect;
+export type InsertBugReport = typeof bugReports.$inferInsert;
+
+// News/updates items — admin-editable news widget on homepage
+export const newsItems = mysqlTable("news_items", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Title of the news item */
+  title: varchar("title", { length: 200 }).notNull(),
+  /** Content/body */
+  content: text("content").notNull(),
+  /** Optional emoji or icon */
+  emoji: varchar("emoji", { length: 8 }),
+  /** Whether this item is published/visible */
+  isPublished: int("isPublished").notNull().default(1),
+  /** Sort order (higher = shown first) */
+  sortOrder: int("sortOrder").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type NewsItem = typeof newsItems.$inferSelect;
+export type InsertNewsItem = typeof newsItems.$inferInsert;

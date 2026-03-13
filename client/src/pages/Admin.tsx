@@ -42,6 +42,17 @@ import {
   Mail,
   CreditCard,
   Gift,
+  Bug,
+  Crown,
+  Newspaper,
+  CircleDot,
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  Search,
+  Pencil,
+  Trash2,
+  Star,
 } from "lucide-react";
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
@@ -369,7 +380,67 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     return result;
   })();
 
-  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email" | "campaign">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email" | "campaign" | "bugs" | "subscriptions" | "news">("overview");
+
+  // ── Enhanced users (with subscription info) ──
+  const { data: enhancedUsers, isLoading: enhancedUsersLoading, refetch: refetchEnhanced } = trpc.admin.usersEnhanced.useQuery(
+    undefined, { enabled: activeSection === "users" }
+  );
+
+  // ── Bug reports ──
+  const [bugStatusFilter, setBugStatusFilter] = useState<"all" | "new" | "investigating" | "resolved" | "ignored">("all");
+  const { data: bugData, isLoading: bugLoading, refetch: refetchBugs } = trpc.admin.getBugReports.useQuery(
+    { status: bugStatusFilter === "all" ? undefined : bugStatusFilter },
+    { enabled: activeSection === "bugs" }
+  );
+  const updateBugMutation = trpc.admin.updateBugStatus.useMutation({
+    onSuccess: () => { toast.success("סטטוס עודכן"); refetchBugs(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  // ── Subscription plans ──
+  const { data: subPlans, isLoading: subPlansLoading, refetch: refetchSubPlans } = trpc.admin.getSubscriptionPlans.useQuery(
+    undefined, { enabled: activeSection === "subscriptions" }
+  );
+  const { data: userSubs, isLoading: userSubsLoading, refetch: refetchUserSubs } = trpc.admin.getUserSubscriptions.useQuery(
+    undefined, { enabled: activeSection === "subscriptions" }
+  );
+  const upsertPlanMutation = trpc.admin.upsertSubscriptionPlan.useMutation({
+    onSuccess: () => { toast.success("תוכנית נשמרה"); refetchSubPlans(); setEditingPlan(null); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deletePlanMutation = trpc.admin.deleteSubscriptionPlan.useMutation({
+    onSuccess: () => { toast.success("תוכנית נמחקה"); refetchSubPlans(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const assignSubMutation = trpc.admin.assignSubscription.useMutation({
+    onSuccess: () => { toast.success("מנוי הוקצה בהצלחה"); refetchUserSubs(); setAssigningSubUser(null); },
+    onError: (e) => toast.error(e.message),
+  });
+  const cancelSubMutation = trpc.admin.cancelSubscription.useMutation({
+    onSuccess: () => { toast.success("מנוי בוטל"); refetchUserSubs(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const [editingPlan, setEditingPlan] = useState<string | null>(null);
+  const [planForm, setPlanForm] = useState({ planId: "", name: "", dailyConversions: "10", priceILS: "", priceUSD: "", discountPercent: "0", badge: "" as "" | "recommended" | "best_value" | "sale", sortOrder: "0" });
+  const [assigningSubUser, setAssigningSubUser] = useState<number | null>(null);
+  const [assignPlanId, setAssignPlanId] = useState("");
+  const [assignMonths, setAssignMonths] = useState("1");
+
+  // ── News items ──
+  const { data: newsData, isLoading: newsLoading, refetch: refetchNews } = trpc.admin.getNewsItems.useQuery(
+    undefined, { enabled: activeSection === "news" }
+  );
+  const upsertNewsMutation = trpc.admin.upsertNewsItem.useMutation({
+    onSuccess: () => { toast.success("פריט נשמר"); refetchNews(); setEditingNews(null); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteNewsMutation = trpc.admin.deleteNewsItem.useMutation({
+    onSuccess: () => { toast.success("פריט נמחק"); refetchNews(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const [editingNews, setEditingNews] = useState<number | null>(null);
+  const [newsForm, setNewsForm] = useState({ title: "", content: "", emoji: "", isPublished: 1, sortOrder: "0" });
 
   // ── Bulk Email state ──
   const CAMPAIGN_EMAIL_SUBJECT = "עדכונים חדשים ב-AI DXF + 15 אסימונים חינם";
@@ -520,6 +591,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               { id: "overview", label: "סקירה כללית", icon: TrendingUp },
               { id: "activity", label: "פעילות", icon: Activity },
               { id: "users", label: "משתמשים", icon: Users },
+              { id: "subscriptions", label: "מנויים", icon: Crown },
+              { id: "bugs", label: "דוחות באגים", icon: Bug },
+              { id: "news", label: "חדשות", icon: Newspaper },
               { id: "consents", label: "הסכמות", icon: CheckCircle2 },
               { id: "payments", label: "תשלומי PayPal", icon: CreditCard },
               { id: "email", label: "שליחת מייל", icon: Mail },
@@ -544,11 +618,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
         {/* Mobile Tab Bar */}
         <div className="md:hidden w-full mb-4">
-          <div className="flex bg-white rounded-xl border shadow-sm p-1 gap-1">
+          <div className="flex flex-wrap bg-white rounded-xl border shadow-sm p-1 gap-1">
             {([
               { id: "overview", label: "סקירה", icon: TrendingUp },
               { id: "activity", label: "פעילות", icon: Activity },
               { id: "users", label: "משתמשים", icon: Users },
+              { id: "subscriptions", label: "מנויים", icon: Crown },
+              { id: "bugs", label: "באגים", icon: Bug },
+              { id: "news", label: "חדשות", icon: Newspaper },
               { id: "consents", label: "הסכמות", icon: CheckCircle2 },
               { id: "payments", label: "PayPal", icon: CreditCard },
               { id: "email", label: "מייל", icon: Mail },
@@ -697,14 +774,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Users className="w-4 h-4 text-primary" />
               משתמשים רשומים
-              {registeredUsers && (
+              {(enhancedUsers ?? registeredUsers) && (
                 <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                  {registeredUsers.length} משתמשים
+                  {(enhancedUsers ?? registeredUsers)!.length} משתמשים
                 </span>
               )}
               <button
                 className="mr-auto text-muted-foreground hover:text-primary transition-colors"
-                onClick={() => refetchUsers()}
+                onClick={() => { refetchUsers(); refetchEnhanced(); }}
                 title="רענן נתונים"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
@@ -712,15 +789,20 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {usersLoading ? (
+            {(enhancedUsersLoading || usersLoading) ? (
               <div className="space-y-2">{[...Array(3)].map((_, i) => <div key={i} className="h-10 bg-muted animate-pulse rounded-lg" />)}</div>
-            ) : registeredUsers && registeredUsers.length > 0 ? (
+            ) : (enhancedUsers ?? registeredUsers) && (enhancedUsers ?? registeredUsers)!.length > 0 ? (
               <div className="space-y-2">
-                {registeredUsers.map((u) => {
+                {(enhancedUsers ?? registeredUsers)!.map((u) => {
                   const isExpanded = expandedUser === u.id;
                   const lastAction = u.lastAction;
-                  const lastPurchase = u.lastPurchase;
+                  const lastPurchase = (u as { lastPurchase?: { packageId: string; priceAmount: number; currency: string } }).lastPurchase;
+                  const subscription = (u as { subscription?: { planId: string; periodEnd: Date | string } | null }).subscription;
                   const actionLabel = lastAction?.actionType === "ai_generate" ? "יצירת AI" : lastAction?.actionType === "convert" ? "המרה" : lastAction?.actionType === "download" ? "הורדה" : null;
+                  // Activity dot: green = active last 24h, yellow = active last 7d, gray = inactive
+                  const lastActivityMs = lastAction ? Date.now() - new Date(lastAction.createdAt).getTime() : Infinity;
+                  const activityDot = lastActivityMs < 86400000 ? "bg-green-500" : lastActivityMs < 604800000 ? "bg-yellow-400" : "bg-gray-300";
+                  const activityTitle = lastActivityMs < 86400000 ? "פעיל ב-24 שעות אחרונות" : lastActivityMs < 604800000 ? "פעיל ב-7 ימים אחרונים" : "לא פעיל";
                   return (
                     <div key={u.id} className="border rounded-lg overflow-hidden">
                       {/* User row */}
@@ -728,11 +810,18 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                         className="w-full text-right px-3 py-2.5 flex items-center gap-3 hover:bg-muted/30 transition-colors"
                         onClick={() => setExpandedUser(isExpanded ? null : u.id)}
                       >
+                        {/* Activity dot */}
+                        <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${activityDot}`} title={activityTitle} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-medium text-sm">{u.name ?? <span className="text-muted-foreground">ללא שם</span>}</span>
                             <span className="text-xs text-muted-foreground font-mono">{u.email}</span>
                             {u.isBlocked ? <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">חסום</span> : null}
+                            {subscription && (
+                              <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                                <Crown className="w-2.5 h-2.5" />{subscription.planId}
+                              </span>
+                            )}
                           </div>
                           <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground mt-0.5">
                             <span>נרשם: {new Date(u.createdAt).toLocaleDateString("he-IL")}</span>
@@ -943,6 +1032,404 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             )}
           </CardContent>
         </Card>}
+        {/* ── BUGS SECTION ── */}
+        {activeSection === "bugs" && (
+          <div className="space-y-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Bug className="w-4 h-4 text-red-500" />
+                    דוחות באגים
+                    {bugData && <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{bugData.length}</span>}
+                  </CardTitle>
+                  <div className="flex gap-1">
+                    {(["all", "new", "investigating", "resolved", "ignored"] as const).map(s => (
+                      <button key={s} onClick={() => setBugStatusFilter(s)}
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                          bugStatusFilter === s ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}>
+                        {s === "all" ? "הכל" : s === "new" ? "חדש" : s === "investigating" ? "בבדיקה" : s === "resolved" ? "נפתר" : "בוטל"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {bugLoading ? (
+                  <div className="p-4 space-y-2">{[...Array(3)].map((_,i) => <div key={i} className="h-12 bg-muted animate-pulse rounded-lg" />)}</div>
+                ) : !bugData || bugData.length === 0 ? (
+                  <div className="py-10 text-center text-muted-foreground">
+                    <Bug className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">אין דוחות באגים עדיין</p>
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {bugData.map((bug) => (
+                      <div key={bug.id} className="p-3 hover:bg-muted/20 transition-colors">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                bug.errorType === "convert_failed" ? "bg-red-100 text-red-700" :
+                                bug.errorType === "ai_failed" ? "bg-purple-100 text-purple-700" :
+                                bug.errorType === "download_failed" ? "bg-orange-100 text-orange-700" :
+                                "bg-gray-100 text-gray-700"
+                              }`}>
+                                {bug.errorType === "convert_failed" ? "כשלון המרה" :
+                                 bug.errorType === "ai_failed" ? "כשלון AI" :
+                                 bug.errorType === "download_failed" ? "כשלון הורדה" : "אחר"}
+                              </span>
+                              {bug.feature && <span className="text-xs text-muted-foreground bg-slate-100 px-1.5 py-0.5 rounded">{bug.feature}</span>}
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                bug.status === "new" ? "bg-yellow-100 text-yellow-700" :
+                                bug.status === "investigating" ? "bg-blue-100 text-blue-700" :
+                                bug.status === "resolved" ? "bg-green-100 text-green-700" :
+                                "bg-gray-100 text-gray-500"
+                              }`}>
+                                {bug.status === "new" ? "חדש" : bug.status === "investigating" ? "בבדיקה" : bug.status === "resolved" ? "נפתר" : "בוטל"}
+                              </span>
+                            </div>
+                            {bug.errorMessage && <p className="text-xs text-muted-foreground font-mono truncate">{bug.errorMessage}</p>}
+                            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                              {bug.userName && <span className="font-medium text-slate-700">{bug.userName}</span>}
+                              {bug.userEmail && <span>{bug.userEmail}</span>}
+                              {bug.ipAnon && <span className="font-mono">{bug.ipAnon}</span>}
+                              <span>{new Date(bug.createdAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}</span>
+                            </div>
+                            {bug.adminNote && <p className="text-xs text-blue-600 mt-1 bg-blue-50 px-2 py-1 rounded">הערה: {bug.adminNote}</p>}
+                          </div>
+                          <div className="flex gap-1 shrink-0">
+                            {bug.status !== "investigating" && (
+                              <button onClick={() => updateBugMutation.mutate({ id: bug.id, status: "investigating" })}
+                                className="p-1 rounded hover:bg-blue-100 text-blue-500 transition-colors" title="סמן כבבדיקה">
+                                <Search className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            {bug.status !== "resolved" && (
+                              <button onClick={() => updateBugMutation.mutate({ id: bug.id, status: "resolved" })}
+                                className="p-1 rounded hover:bg-green-100 text-green-500 transition-colors" title="סמן כנפתר">
+                                <CheckCircle className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            {bug.status !== "ignored" && (
+                              <button onClick={() => updateBugMutation.mutate({ id: bug.id, status: "ignored" })}
+                                className="p-1 rounded hover:bg-gray-100 text-gray-400 transition-colors" title="בטל">
+                                <XCircle className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* ── SUBSCRIPTIONS SECTION ── */}
+        {activeSection === "subscriptions" && (
+          <div className="space-y-5">
+            {/* Plans management */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Crown className="w-4 h-4 text-amber-500" />
+                    תוכניות מנוי
+                  </CardTitle>
+                  <Button size="sm" variant="outline" className="gap-1.5 text-xs"
+                    onClick={() => { setEditingPlan("new"); setPlanForm({ planId: "", name: "", dailyConversions: "10", priceILS: "", priceUSD: "", discountPercent: "0", badge: "", sortOrder: "0" }); }}>
+                    <Plus className="w-3.5 h-3.5" /> הוסף תוכנית
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {editingPlan && (
+                  <div className="mb-4 p-4 border rounded-xl bg-muted/30 space-y-3">
+                    <p className="text-sm font-semibold">{editingPlan === "new" ? "תוכנית חדשה" : "עריכת תוכנית"}</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs text-muted-foreground">מזהה (ID)</label>
+                        <Input value={planForm.planId} onChange={e => setPlanForm(p => ({...p, planId: e.target.value}))} placeholder="basic" className="h-8 text-sm" disabled={editingPlan !== "new"} />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">שם</label>
+                        <Input value={planForm.name} onChange={e => setPlanForm(p => ({...p, name: e.target.value}))} placeholder="בסיס" className="h-8 text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">המרות ביום</label>
+                        <Input type="number" value={planForm.dailyConversions} onChange={e => setPlanForm(p => ({...p, dailyConversions: e.target.value}))} className="h-8 text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">מחיר בשקל (ILS)</label>
+                        <Input value={planForm.priceILS} onChange={e => setPlanForm(p => ({...p, priceILS: e.target.value}))} placeholder="49" className="h-8 text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">מחיר בדולר (USD)</label>
+                        <Input value={planForm.priceUSD} onChange={e => setPlanForm(p => ({...p, priceUSD: e.target.value}))} placeholder="14" className="h-8 text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">הנחה %</label>
+                        <Input type="number" min={0} max={100} value={planForm.discountPercent} onChange={e => setPlanForm(p => ({...p, discountPercent: e.target.value}))} className="h-8 text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">תג</label>
+                        <select value={planForm.badge} onChange={e => setPlanForm(p => ({...p, badge: e.target.value as "" | "recommended" | "best_value" | "sale"}))} className="h-8 text-sm border rounded px-2 w-full">
+                          <option value="">אין</option>
+                          <option value="recommended">מומלץ</option>
+                          <option value="best_value">הכי משתלם</option>
+                          <option value="sale">מבצע</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">סדר תצוגה</label>
+                        <Input type="number" value={planForm.sortOrder} onChange={e => setPlanForm(p => ({...p, sortOrder: e.target.value}))} className="h-8 text-sm" />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" className="text-xs" onClick={() => upsertPlanMutation.mutate({
+                        planId: planForm.planId, name: planForm.name,
+                        dailyConversions: parseInt(planForm.dailyConversions) || 10,
+                        priceILS: planForm.priceILS, priceUSD: planForm.priceUSD,
+                        discountPercent: parseInt(planForm.discountPercent) || 0,
+                        badge: planForm.badge || null,
+                        sortOrder: parseInt(planForm.sortOrder) || 0,
+                      })} disabled={upsertPlanMutation.isPending}>שמור</Button>
+                      <Button size="sm" variant="ghost" className="text-xs" onClick={() => setEditingPlan(null)}>בטל</Button>
+                    </div>
+                  </div>
+                )}
+                {subPlansLoading ? (
+                  <div className="space-y-2">{[...Array(3)].map((_,i) => <div key={i} className="h-12 bg-muted animate-pulse rounded-lg" />)}</div>
+                ) : !subPlans || subPlans.length === 0 ? (
+                  <div className="py-8 text-center text-muted-foreground text-sm">אין תוכניות עדיין. לחץ הוסף כדי ליצור אחת.</div>
+                ) : (
+                  <div className="space-y-2">
+                    {subPlans.map(plan => (
+                      <div key={plan.planId} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/20">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">{plan.name}</span>
+                            {plan.badge && <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                              plan.badge === "recommended" ? "bg-blue-100 text-blue-700" :
+                              plan.badge === "best_value" ? "bg-green-100 text-green-700" :
+                              "bg-orange-100 text-orange-700"
+                            }`}>{plan.badge === "recommended" ? "מומלץ" : plan.badge === "best_value" ? "הכי משתלם" : "מבצע"}</span>}
+                            {!plan.isActive && <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">לא פעיל</span>}
+                          </div>
+                          <p className="text-xs text-muted-foreground">{plan.dailyConversions} המרות/יום • ₪{plan.priceILS} / ${plan.priceUSD}</p>
+                        </div>
+                        <div className="flex gap-1">
+                          <button onClick={() => { setEditingPlan(plan.planId); setPlanForm({ planId: plan.planId, name: plan.name, dailyConversions: String(plan.dailyConversions), priceILS: plan.priceILS, priceUSD: plan.priceUSD, discountPercent: String(plan.discountPercent ?? 0), badge: (plan.badge ?? "") as "" | "recommended" | "best_value" | "sale", sortOrder: String(plan.sortOrder ?? 0) }); }}
+                            className="p-1.5 rounded hover:bg-blue-100 text-blue-500">
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => { if (confirm("למחוק תוכנית?")) deletePlanMutation.mutate({ planId: plan.planId }); }}
+                            className="p-1.5 rounded hover:bg-red-100 text-red-500">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Active user subscriptions */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Users className="w-4 h-4 text-primary" />
+                  מנויים פעילים
+                  {userSubs && <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{userSubs.length}</span>}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {userSubsLoading ? (
+                  <div className="p-4 space-y-2">{[...Array(3)].map((_,i) => <div key={i} className="h-10 bg-muted animate-pulse rounded-lg" />)}</div>
+                ) : !userSubs || userSubs.length === 0 ? (
+                  <div className="py-8 text-center text-muted-foreground text-sm">אין מנויים פעילים</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b text-muted-foreground text-xs">
+                          <th className="py-2 px-3 text-right font-medium">משתמש</th>
+                          <th className="py-2 px-3 text-right font-medium">תוכנית</th>
+                          <th className="py-2 px-3 text-right font-medium">סטטוס</th>
+                          <th className="py-2 px-3 text-right font-medium">פג</th>
+                          <th className="py-2 px-3 text-right font-medium">פעולות</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {userSubs.map(sub => (
+                          <tr key={sub.id} className="hover:bg-muted/20">
+                            <td className="py-2 px-3">
+                              <p className="text-sm font-medium">{sub.userName ?? sub.userEmail?.split("@")[0]}</p>
+                              <p className="text-xs text-muted-foreground">{sub.userEmail}</p>
+                            </td>
+                            <td className="py-2 px-3">
+                              <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">{sub.planId}</span>
+                            </td>
+                            <td className="py-2 px-3">
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                sub.status === "active" ? "bg-green-100 text-green-700" :
+                                sub.status === "cancelled" ? "bg-red-100 text-red-600" :
+                                "bg-gray-100 text-gray-600"
+                              }`}>{sub.status === "active" ? "פעיל" : sub.status === "cancelled" ? "בוטל" : sub.status}</span>
+                            </td>
+                            <td className="py-2 px-3 text-xs text-muted-foreground">
+                              {new Date(sub.periodEnd).toLocaleDateString("he-IL")}
+                            </td>
+                            <td className="py-2 px-3">
+                              {sub.status === "active" && (
+                                <button onClick={() => { if (confirm("לבטל מנוי?")) cancelSubMutation.mutate({ subscriptionId: sub.id }); }}
+                                  className="text-xs text-red-500 hover:text-red-700 transition-colors">בטל</button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Assign subscription to user */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Gift className="w-4 h-4 text-purple-500" />
+                  הקצאת מנוי למשתמש
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div>
+                    <label className="text-xs text-muted-foreground">ID משתמש</label>
+                    <Input type="number" placeholder="123" value={assigningSubUser ?? ""} onChange={e => setAssigningSubUser(parseInt(e.target.value) || null)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">תוכנית</label>
+                    <select value={assignPlanId} onChange={e => setAssignPlanId(e.target.value)} className="h-8 text-sm border rounded px-2 w-full">
+                      <option value="">בחר תוכנית</option>
+                      {(subPlans ?? []).map(p => <option key={p.planId} value={p.planId}>{p.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">חודשים</label>
+                    <Input type="number" min={1} max={24} value={assignMonths} onChange={e => setAssignMonths(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div className="flex items-end">
+                    <Button size="sm" className="w-full text-xs" disabled={!assigningSubUser || !assignPlanId || assignSubMutation.isPending}
+                      onClick={() => assignSubMutation.mutate({ userId: assigningSubUser!, planId: assignPlanId, months: parseInt(assignMonths) || 1 })}>
+                      הקצא
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* ── NEWS SECTION ── */}
+        {activeSection === "news" && (
+          <div className="space-y-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Newspaper className="w-4 h-4 text-blue-500" />
+                    פריטי חדשות
+                  </CardTitle>
+                  <Button size="sm" variant="outline" className="gap-1.5 text-xs"
+                    onClick={() => { setEditingNews(-1); setNewsForm({ title: "", content: "", emoji: "", isPublished: 1, sortOrder: "0" }); }}>
+                    <Plus className="w-3.5 h-3.5" /> הוסף פריט
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {editingNews !== null && (
+                  <div className="mb-4 p-4 border rounded-xl bg-muted/30 space-y-3">
+                    <p className="text-sm font-semibold">{editingNews === -1 ? "פריט חדש" : "עריכת פריט"}</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs text-muted-foreground">אימוג׳י</label>
+                        <Input value={newsForm.emoji} onChange={e => setNewsForm(p => ({...p, emoji: e.target.value}))} placeholder="✨" className="h-8 text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">סדר תצוגה</label>
+                        <Input type="number" value={newsForm.sortOrder} onChange={e => setNewsForm(p => ({...p, sortOrder: e.target.value}))} className="h-8 text-sm" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">כותרת</label>
+                      <Input value={newsForm.title} onChange={e => setNewsForm(p => ({...p, title: e.target.value}))} placeholder="פיצר שיפור חדש" className="h-8 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">תוכן</label>
+                      <textarea value={newsForm.content} onChange={e => setNewsForm(p => ({...p, content: e.target.value}))} rows={3}
+                        className="w-full text-sm border rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        placeholder="תיאור קצר של העדכון..." />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="checkbox" checked={newsForm.isPublished === 1} onChange={e => setNewsForm(p => ({...p, isPublished: e.target.checked ? 1 : 0}))} className="rounded" />
+                        פורסם
+                      </label>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" className="text-xs" onClick={() => upsertNewsMutation.mutate({
+                        id: editingNews > 0 ? editingNews : undefined,
+                        title: newsForm.title, content: newsForm.content,
+                        emoji: newsForm.emoji || undefined,
+                        isPublished: newsForm.isPublished,
+                        sortOrder: parseInt(newsForm.sortOrder) || 0,
+                      })} disabled={upsertNewsMutation.isPending}>שמור</Button>
+                      <Button size="sm" variant="ghost" className="text-xs" onClick={() => setEditingNews(null)}>בטל</Button>
+                    </div>
+                  </div>
+                )}
+                {newsLoading ? (
+                  <div className="space-y-2">{[...Array(3)].map((_,i) => <div key={i} className="h-12 bg-muted animate-pulse rounded-lg" />)}</div>
+                ) : !newsData || newsData.length === 0 ? (
+                  <div className="py-8 text-center text-muted-foreground text-sm">אין פריטי חדשות עדיין</div>
+                ) : (
+                  <div className="space-y-2">
+                    {newsData.map(item => (
+                      <div key={item.id} className="flex items-start justify-between p-3 border rounded-lg hover:bg-muted/20">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            {item.emoji && <span className="text-lg">{item.emoji}</span>}
+                            <span className="font-medium text-sm">{item.title}</span>
+                            {!item.isPublished && <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">טיוטא</span>}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{item.content}</p>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <button onClick={() => { setEditingNews(item.id); setNewsForm({ title: item.title, content: item.content, emoji: item.emoji ?? "", isPublished: item.isPublished, sortOrder: String(item.sortOrder ?? 0) }); }}
+                            className="p-1.5 rounded hover:bg-blue-100 text-blue-500">
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => { if (confirm("למחוק?")) deleteNewsMutation.mutate({ id: item.id }); }}
+                            className="p-1.5 rounded hover:bg-red-100 text-red-500">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* ── CONSENTS SECTION ── */}
         {activeSection === "consents" && (
           <div className="space-y-5">

@@ -1,0 +1,50 @@
+{
+  "query": "SELECT * FROM email_verifications ORDER BY id DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT * FROM email_verifications ORDER BY id DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "750004",
+      "appUserId": "840005",
+      "token": "9cb19eb39154e6dd50df8b13c99073160e4ff017570d27d873cbc9dea0d20906bf83bd07804201da277eb7b840af7b43",
+      "expiresAt": "2026-03-14 13:56:20",
+      "usedAt": "NULL",
+      "createdAt": "2026-03-13 13:56:20"
+    },
+    {
+      "id": "750003",
+      "appUserId": "840003",
+      "token": "fb387a5e3e8ad12a73ffc544925f868e0de87b50cacb189abd630ba5745ad22e1ea34ef68e8c3e83a8991721650b348a",
+      "expiresAt": "2026-03-14 13:33:17",
+      "usedAt": "NULL",
+      "createdAt": "2026-03-13 13:33:17"
+    },
+    {
+      "id": "750002",
+      "appUserId": "840002",
+      "token": "56835f2abac91742173bd1e7d0ef76c3515770736bb53e0f2dc4eb416db55070e7dcebdf01594988079af5c9f4b0ccac",
+      "expiresAt": "2026-03-14 12:26:51",
+      "usedAt": "NULL",
+      "createdAt": "2026-03-13 12:26:51"
+    },
+    {
+      "id": "750001",
+      "appUserId": "840001",
+      "token": "602e6a8010a85036413085e4883f9520c7b4cd68b5d993723f0636a397e029084313ddbb351a8f42bb22cf0046290087",
+      "expiresAt": "2026-03-14 11:10:50",
+      "usedAt": "NULL",
+      "createdAt": "2026-03-13 11:10:49"
+    },
+    {
+      "id": "720002",
+      "appUserId": "810002",
+      "token": "b133c41d192304805ef6c1fa68b2da7be1f10cb6004a7fde5af683a25f9b5bb6e959fe8f3fc6d53e481db927bb4971df",
+      "expiresAt": "2026-03-13 08:24:47",
+      "usedAt": "NULL",
+      "createdAt": "2026-03-12 08:24:47"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tappUserId\ttoken\texpiresAt\tusedAt\tcreatedAt\n750004\t840005\t9cb19eb39154e6dd50df8b13c99073160e4ff017570d27d873cbc9dea0d20906bf83bd07804201da277eb7b840af7b43\t2026-03-14 13:56:20\tNULL\t2026-03-13 13:56:20\n750003\t840003\tfb387a5e3e8ad12a73ffc544925f868e0de87b50cacb189abd630ba5745ad22e1ea34ef68e8c3e83a8991721650b348a\t2026-03-14 13:33:17\tNULL\t2026-03-13 13:33:17\n750002\t840002\t56835f2abac91742173bd1e7d0ef76c3515770736bb53e0f2dc4eb416db55070e7dcebdf01594988079af5c9f4b0ccac\t2026-03-14 12:26:51\tNULL\t2026-03-13 12:26:51\n750001\t840001\t602e6a8010a85036413085e4883f9520c7b4cd68b5d993723f0636a397e029084313ddbb351a8f42bb22cf0046290087\t2026-03-14 11:10:50\tNULL\t2026-03-13 11:10:49\n720002\t810002\tb133c41d192304805ef6c1fa68b2da7be1f10cb6004a7fde5af683a25f9b5bb6e959fe8f3fc6d53e481db927bb4971df\t2026-03-13 08:24:47\tNULL\t2026-03-12 08:24:47\n",
+  "stderr": "",
+  "execution_time_ms": 1601
+}

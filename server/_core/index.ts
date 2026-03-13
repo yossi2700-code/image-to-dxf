@@ -17,6 +17,13 @@ import aiDocumentRedrawRoute from "../aiDocumentRedrawRoute";
 import svgToPngRoute from "../svgToPngRoute";
 import faceDetectRoute from "../faceDetectRoute";
 import paypalRoute from "../paypalRoute";
+import {
+  helmetMiddleware,
+  globalApiLimiter,
+  authLimiter,
+  uploadLimiter,
+  inputSanitizer,
+} from "../security";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -40,7 +47,11 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
-  // Force HTTPS redirect in production (handles Cloudflare and direct HTTP)
+
+  // ── Security: Helmet (HTTP headers) ─────────────────────────────────────────
+  app.use(helmetMiddleware);
+
+  // ── Force HTTPS in production ────────────────────────────────────────────────
   app.use((req, res, next) => {
     const proto = req.headers["x-forwarded-proto"];
     const isHttps = proto === "https" || (Array.isArray(proto) && proto[0] === "https");
@@ -49,11 +60,34 @@ async function startServer() {
     }
     return next();
   });
-  // Configure body parser with larger size limit for file uploads
+
+  // ── Body parsers ─────────────────────────────────────────────────────────────
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
-  // Parse cookies so req.cookies is populated for admin auth
+
+  // ── Cookie parser ────────────────────────────────────────────────────────────
   app.use(cookieParser());
+
+  // ── Input sanitizer (null bytes, oversized strings) ──────────────────────────
+  app.use(inputSanitizer);
+
+  // ── Rate limiting ────────────────────────────────────────────────────────────
+  // Global: 300 req / 5 min per IP on all /api routes
+  app.use("/api", globalApiLimiter);
+  // Auth: 20 req / 15 min per IP — prevents credential stuffing
+  app.use("/api/app-auth/login", authLimiter);
+  app.use("/api/app-auth/register", authLimiter);
+  app.use("/api/app-auth/forgot-password", authLimiter);
+  app.use("/api/app-auth/reset-password", authLimiter);
+  // Conversion: 30 req / 10 min per IP — prevents token farming
+  app.use("/api/upload", uploadLimiter);
+  app.use("/api/generate", uploadLimiter);
+  app.use("/api/ai-trace", uploadLimiter);
+  app.use("/api/ai-refine", uploadLimiter);
+  app.use("/api/face-detect", uploadLimiter);
+  app.use("/api/ai-document-redraw", uploadLimiter);
+
+  // ── Routes ───────────────────────────────────────────────────────────────────
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // App user auth routes (register, login, logout, me)
@@ -74,7 +108,8 @@ async function startServer() {
   app.use(faceDetectRoute);
   // PayPal payment routes
   app.use(paypalRoute);
-  // tRPC API
+
+  // ── tRPC API ─────────────────────────────────────────────────────────────────
   app.use(
     "/api/trpc",
     createExpressMiddleware({
@@ -82,7 +117,8 @@ async function startServer() {
       createContext,
     })
   );
-  // development mode uses Vite, production mode uses static files
+
+  // ── Frontend ─────────────────────────────────────────────────────────────────
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {

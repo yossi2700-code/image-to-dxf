@@ -183,6 +183,13 @@
       "when": 1773406162726,
       "tag": "0025_dizzy_blindfold",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1773412635313,
+      "tag": "0026_luxuriant_elektra",
+      "breakpoints": true
     }
   ]
 }

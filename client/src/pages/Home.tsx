@@ -2092,9 +2092,42 @@ function TokenHistoryPopup({ onClose, isRtl, containerRef }: { onClose: () => vo
       </div>
     </div>
   );
+}// ─── News Widget ──────────────────────────────────────────────────────────────────────────────────
+function NewsWidget({ isRtl: _isRtl }: { isRtl: boolean }) {
+  const { data: newsItems } = trpc.news.list.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
+  const [dismissed, setDismissed] = useState<number[]>(() => {
+    try { return JSON.parse(localStorage.getItem('dismissed_news') ?? '[]'); } catch { return []; }
+  });
+
+  const visibleItems = (newsItems ?? []).filter((item: { id: number }) => !dismissed.includes(item.id));
+  if (!visibleItems.length) return null;
+
+  const dismiss = (id: number) => {
+    const next = [...dismissed, id];
+    setDismissed(next);
+    localStorage.setItem('dismissed_news', JSON.stringify(next));
+  };
+
+  return (
+    <div className="mb-4 space-y-2">
+      {visibleItems.map((item: { id: number; title: string; content: string; emoji?: string | null }) => (
+        <div key={item.id} className="flex items-start gap-3 rounded-xl px-4 py-3 relative"
+          style={{ background: 'linear-gradient(135deg, #eff6ff, #f0fdf4)', border: '1px solid #bfdbfe' }}>
+          <span className="text-xl shrink-0 mt-0.5">{item.emoji || '📢'}</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-gray-800">{item.title}</p>
+            {item.content && <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{item.content}</p>}
+          </div>
+          <button onClick={() => dismiss(item.id)} className="shrink-0 text-gray-300 hover:text-gray-500 transition-colors p-1 -mt-1 -mr-1">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
 }
 
-// ─── Main Page ───────────────────────────────────────────────────────────────
+// ─── Main Page ──────────────────────────────────────────────────────────────────────────────────
 export default function Home() {
   const { t, isRtl, language } = useLanguage();
   const [appUser, setAppUser] = useState<{ id: number; email: string; name: string | null } | null>(null);
@@ -2470,6 +2503,8 @@ export default function Home() {
         <SaleBanner />
         {/* ── Announcement Banner ── */}
         <AnnouncementBanner />
+        {/* ── News Widget ── */}
+        <NewsWidget isRtl={isRtl} />
         {/* ── Insufficient Tokens Banner ── */}
         {showTokensBanner && (
           <InsufficientTokensBanner onDismiss={() => setShowTokensBanner(false)} />
