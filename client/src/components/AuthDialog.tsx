@@ -18,7 +18,7 @@ interface AuthDialogProps {
   limitReached?: boolean;
   /** Reason for opening — determines the header copy */
   authReason?: AuthReason;
-  onSuccess: (user: { id: number; email: string; name: string | null }) => void;
+  onSuccess: (user: { id: number; email: string; name: string | null }, isNewRegistration?: boolean) => void;
 }
 
 type Mode = "login" | "register" | "forgot";
@@ -195,12 +195,13 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
 
       if (data.campaignBonusAwarded) {
         toast.success(`🎁 קיבלת ${data.campaignTokens} אסימונים בונוס! הם נוספו לחשבונך.`, { duration: 5000 });
-      } else {
-        toast.success(mode === "register" ? "נרשמת בהצלחה! 🎉" : "ברוך הבא! 👋");
+      } else if (mode === "login") {
+        toast.success("ברוך הבא! 👋");
       }
+      // For register mode — no toast, the welcome banner will show instead
       reset();
       onOpenChange(false);
-      onSuccess(data.user);
+      onSuccess(data.user, mode === "register");
     } catch {
       setInlineError("שגיאת רשת. נסה שוב.");
       setLoading(false);

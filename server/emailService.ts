@@ -86,64 +86,154 @@ export async function sendWelcomeEmail(opts: {
     ? `ברוכים הבאים ל-DXF AI ✨ — ${opts.tokens} אסימונים מחכים לך!`
     : `Welcome to DXF AI ✨ — Your ${opts.tokens} free tokens are ready!`;
 
-  const heHtml = `
-    <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
-      <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 36px 32px; text-align: center;">
-        <div style="display: inline-block; background: rgba(255,255,255,0.15); border-radius: 12px; padding: 8px 16px; margin-bottom: 16px;">
-          <span style="color: white; font-size: 20px; font-weight: 900; letter-spacing: -0.5px;">Ai<span style="color: #c4b5fd;">DXF</span></span>
-        </div>
-        <h1 style="color: white; font-size: 26px; font-weight: 900; margin: 0 0 8px; line-height: 1.2;">ברוכים הבאים! 🎉</h1>
-        <p style="color: rgba(255,255,255,0.85); font-size: 15px; margin: 0;">הפלטפורמה המובילה להמרת תמונות ל-DXF</p>
-      </div>
+  const bonusUrl = `${opts.siteUrl}/?campaign=welcome_bonus_2026`;
 
-      <div style="background: #f0fdf4; border-bottom: 1px solid #bbf7d0; padding: 20px 32px; text-align: center;">
-        <div style="display: inline-block; background: linear-gradient(135deg, #059669, #10b981); color: white; border-radius: 50px; padding: 10px 28px; font-size: 18px; font-weight: 900;">
-          🎁 ${opts.tokens} אסימונים חינם מחכים לך!
-        </div>
-        <p style="color: #065f46; font-size: 13px; margin: 10px 0 0;">האסימונים כבר זמינים בחשבונך — אין צורך בפעולה נוספת</p>
-      </div>
+  const heHtml = `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ברוכים הבאים ל-AI DXF</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,Helvetica,sans-serif;direction:rtl;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fb;padding:32px 16px;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
-      <div style="padding: 32px;">
-        <p style="color: #374151; font-size: 16px; margin: 0 0 16px;">שלום ${displayName},</p>
-        <p style="color: #374151; font-size: 15px; line-height: 1.7; margin: 0 0 24px;">
-          אנחנו שמחים שהצטרפת! עם <strong>${opts.tokens} אסימונים חינמיים</strong> תוכל להתחיל להמיר תמונות לקבצי DXF מוכנים לחיתוך לייזר ו-CNC — מיידית.
-        </p>
-
-        <div style="background: #f8fafc; border-radius: 12px; padding: 20px 24px; margin-bottom: 28px; border: 1px solid #e2e8f0;">
-          <p style="color: #1e293b; font-weight: 700; font-size: 14px; margin: 0 0 14px;">מה אפשר לעשות עם האסימונים:</p>
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr style="border-bottom: 1px solid #f1f5f9;">
-              <td style="padding: 8px 0; color: #374151; font-size: 14px;">🖼️ AI Outline — תמונה לוקטור</td>
-              <td style="padding: 8px 0; color: #6366f1; font-weight: 700; font-size: 14px; text-align: left;">5 אסימונים</td>
-            </tr>
-            <tr style="border-bottom: 1px solid #f1f5f9;">
-              <td style="padding: 8px 0; color: #374151; font-size: 14px;">✨ AI Create — יצירה מטקסט</td>
-              <td style="padding: 8px 0; color: #6366f1; font-weight: 700; font-size: 14px; text-align: left;">3 אסימונים</td>
-            </tr>
-            <tr style="border-bottom: 1px solid #f1f5f9;">
-              <td style="padding: 8px 0; color: #374151; font-size: 14px;">👤 Portrait — פורטרט DXF</td>
-              <td style="padding: 8px 0; color: #6366f1; font-weight: 700; font-size: 14px; text-align: left;">4 אסימונים</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; color: #374151; font-size: 14px;">🔄 AI Refine — עריכה חכמה</td>
-              <td style="padding: 8px 0; color: #6366f1; font-weight: 700; font-size: 14px; text-align: left;">2 אסימונים</td>
-            </tr>
-          </table>
-        </div>
-
-        <div style="text-align: center; margin-bottom: 28px;">
-          <a href="${opts.siteUrl}"
-             style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 14px 36px; border-radius: 50px; text-decoration: none; font-weight: 900; font-size: 16px; box-shadow: 0 4px 16px rgba(99,102,241,0.4);">
-            🚀 התחל להמיר עכשיו
-          </a>
-        </div>
-
-        <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
-          צריך עזרה? פנה אלינו בכל עת • <a href="${opts.siteUrl}" style="color: #6366f1; text-decoration: none;">dxfai.net</a>
-        </p>
-      </div>
+  <!-- Header -->
+  <tr><td style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#4338ca 100%);border-radius:20px 20px 0 0;padding:40px 40px 32px;text-align:center;">
+    <div style="display:inline-block;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:50px;padding:8px 20px;margin-bottom:20px;">
+      <span style="color:#c7d2fe;font-size:13px;font-weight:600;">✦ AI DXF — dxfai.net</span>
     </div>
-  `;
+    <h1 style="color:#ffffff;font-size:26px;font-weight:900;margin:0 0 10px;line-height:1.3;">ברוכים הבאים!<br/>עכשיו אתה <span style="color:#a5b4fc;">מקצוען בווקטורים</span></h1>
+    <p style="color:#c7d2fe;font-size:14px;margin:0;line-height:1.6;">הכלי המתקדם ביותר להמרת תמונות לקבצי DXF<br/>מוכנים לחריטה, כרסום ולייזר</p>
+  </td></tr>
+
+  <!-- Token Banner -->
+  <tr><td style="background:linear-gradient(135deg,#4338ca 0%,#7c3aed 100%);padding:24px 40px;text-align:center;border-top:1px solid rgba(255,255,255,0.1);">
+    <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
+      <tr>
+        <td style="text-align:center;padding:0 12px;">
+          <div style="color:#ffffff;font-size:34px;font-weight:900;line-height:1;">${opts.tokens}</div>
+          <div style="color:#c4b5fd;font-size:11px;font-weight:500;margin-top:4px;">אסימונים בחשבון</div>
+        </td>
+        <td style="color:rgba(255,255,255,0.3);font-size:26px;padding:0 8px;">+</td>
+        <td style="text-align:center;padding:0 12px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.22);border-radius:12px;">
+          <div style="color:#fde68a;font-size:34px;font-weight:900;line-height:1;">20</div>
+          <div style="color:#fde68a;font-size:11px;font-weight:500;margin-top:4px;">בונוס — ממתינים לך</div>
+        </td>
+        <td style="color:rgba(255,255,255,0.3);font-size:26px;padding:0 8px;">=</td>
+        <td style="text-align:center;padding:0 12px;">
+          <div style="color:#a5f3fc;font-size:34px;font-weight:900;line-height:1;">${opts.tokens + 20}</div>
+          <div style="color:#c4b5fd;font-size:11px;font-weight:500;margin-top:4px;">סה"כ אסימונים</div>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+
+  <!-- Body -->
+  <tr><td style="background:#ffffff;padding:36px 40px;">
+
+    <p style="color:#374151;font-size:15px;margin:0 0 20px;line-height:1.7;">שלום ${displayName},</p>
+
+    <!-- Features Title -->
+    <p style="color:#1e1b4b;font-size:17px;font-weight:700;margin:0 0 16px;padding-bottom:10px;border-bottom:2px solid #e0e7ff;">🚀 מה תוכל לעשות עם AI DXF?</p>
+
+    <!-- Features Grid (table-based for email) -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+      <tr>
+        <td width="48%" style="background:#f8f9ff;border:1px solid #e0e7ff;border-radius:12px;padding:16px;vertical-align:top;">
+          <div style="font-size:24px;margin-bottom:8px;">🎨</div>
+          <div style="font-size:13px;font-weight:700;color:#312e81;margin-bottom:5px;">AI Create — יצירה מטקסט</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.5;">כתוב תיאור בעברית — ה-AI יצור עיצוב וקטורי מוכן כ-DXF</div>
+        </td>
+        <td width="4%"></td>
+        <td width="48%" style="background:#f8f9ff;border:1px solid #e0e7ff;border-radius:12px;padding:16px;vertical-align:top;">
+          <div style="font-size:24px;margin-bottom:8px;">📸</div>
+          <div style="font-size:13px;font-weight:700;color:#312e81;margin-bottom:5px;">AI Outline — המרת תמונה</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.5;">העלה תמונה — ה-AI יחלץ קווים ויצור DXF מדויק ללייזר ו-CNC</div>
+        </td>
+      </tr>
+      <tr><td colspan="3" style="padding:8px 0;"></td></tr>
+      <tr>
+        <td width="48%" style="background:#f8f9ff;border:1px solid #e0e7ff;border-radius:12px;padding:16px;vertical-align:top;">
+          <div style="font-size:24px;margin-bottom:8px;">📄</div>
+          <div style="font-size:13px;font-weight:700;color:#312e81;margin-bottom:5px;">AI Sketch — מסמכים</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.5;">חלץ ציורים וסקיצות ממסמכים סרוקים ו-PDF</div>
+        </td>
+        <td width="4%"></td>
+        <td width="48%" style="background:#f8f9ff;border:1px solid #e0e7ff;border-radius:12px;padding:16px;vertical-align:top;">
+          <div style="font-size:24px;margin-bottom:8px;">🖼️</div>
+          <div style="font-size:13px;font-weight:700;color:#312e81;margin-bottom:5px;">AI Portrait — פורטרטים</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.5;">המר פורטרט לקווי חריטה — מושלם לחריטה על עץ ומתכת</div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Benefits -->
+    <p style="color:#1e1b4b;font-size:17px;font-weight:700;margin:0 0 16px;padding-bottom:10px;border-bottom:2px solid #e0e7ff;">✅ למה AI DXF?</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+      <tr><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;">
+        <table cellpadding="0" cellspacing="0"><tr>
+          <td style="width:36px;height:36px;background:#eef2ff;border-radius:10px;text-align:center;vertical-align:middle;font-size:16px;">⚡</td>
+          <td style="padding-right:12px;"><strong style="display:block;font-size:13px;color:#1f2937;">תוצאה תוך שניות</strong><span style="font-size:12px;color:#6b7280;">אין צורך בתוכנות מורכבות — תמונה נכנסת, DXF יוצא</span></td>
+        </tr></table>
+      </td></tr>
+      <tr><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;">
+        <table cellpadding="0" cellspacing="0"><tr>
+          <td style="width:36px;height:36px;background:#eef2ff;border-radius:10px;text-align:center;vertical-align:middle;font-size:16px;">🔗</td>
+          <td style="padding-right:12px;"><strong style="display:block;font-size:13px;color:#1f2937;">קבצים מחוברים ורציפים</strong><span style="font-size:12px;color:#6b7280;">קווי DXF מחוברים כ-Polylines — תואם לכל תוכנת CAD ומכונת CNC</span></td>
+        </tr></table>
+      </td></tr>
+      <tr><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;">
+        <table cellpadding="0" cellspacing="0"><tr>
+          <td style="width:36px;height:36px;background:#eef2ff;border-radius:10px;text-align:center;vertical-align:middle;font-size:16px;">📐</td>
+          <td style="padding-right:12px;"><strong style="display:block;font-size:13px;color:#1f2937;">גדלים מדויקים</strong><span style="font-size:12px;color:#6b7280;">הגדר גודל פלט במ"מ — הקובץ יגיע בדיוק בגודל שצריך</span></td>
+        </tr></table>
+      </td></tr>
+      <tr><td style="padding:10px 0;">
+        <table cellpadding="0" cellspacing="0"><tr>
+          <td style="width:36px;height:36px;background:#eef2ff;border-radius:10px;text-align:center;vertical-align:middle;font-size:16px;">💾</td>
+          <td style="padding-right:12px;"><strong style="display:block;font-size:13px;color:#1f2937;">ייצוא בפורמטים מרובים</strong><span style="font-size:12px;color:#6b7280;">DXF, SVG, PDF — כל הפורמטים לחריטה, לייזר ו-CNC</span></td>
+        </tr></table>
+      </td></tr>
+    </table>
+
+    <!-- CTA Box -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #fbbf24;border-radius:16px;margin-bottom:24px;">
+      <tr><td style="padding:24px;text-align:center;">
+        <h3 style="color:#92400e;font-size:16px;font-weight:700;margin:0 0 8px;">🎁 20 אסימונים בונוס מחכים לך!</h3>
+        <p style="color:#78350f;font-size:13px;line-height:1.6;margin:0 0 16px;">לחץ על הכפתור כדי לקבל 20 אסימונים נוספים שיתווספו אוטומטית לחשבונך.</p>
+        <a href="${bonusUrl}" style="display:inline-block;background:linear-gradient(135deg,#4338ca,#7c3aed);color:#ffffff;font-size:14px;font-weight:700;padding:13px 32px;border-radius:50px;text-decoration:none;">לחץ כאן לקבלת 20 האסימונים »</a>
+        <p style="color:#92400e;font-size:11px;margin:10px 0 0;">האסימונים יתווספו אוטומטית לאחר לחיצה</p>
+      </td></tr>
+    </table>
+
+    <!-- Spam Notice -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;margin-bottom:8px;">
+      <tr><td style="padding:14px 18px;">
+        <table cellpadding="0" cellspacing="0"><tr>
+          <td style="font-size:18px;padding-left:12px;vertical-align:top;">📬</td>
+          <td style="font-size:12px;color:#166534;line-height:1.6;"><strong style="color:#14532d;">אם המייל הגיע לתיקיית הספאם</strong> — סמן אותו כ"דואר רצוי" (Not Spam) כדי שעדכונים ובונוסים יגיעו ישיר לתיבה הראשית.</td>
+        </tr></table>
+      </td></tr>
+    </table>
+
+  </td></tr>
+
+  <!-- Footer -->
+  <tr><td style="background:#f8f9ff;border-radius:0 0 20px 20px;padding:24px 40px;text-align:center;border-top:1px solid #e0e7ff;">
+    <p style="font-size:13px;font-weight:700;color:#4338ca;margin:0 0 6px;">AI DXF — dxfai.net</p>
+    <p style="font-size:11px;color:#9ca3af;line-height:1.7;margin:0;">
+      קיבלת מייל זה כיוון שנרשמת לאתר AI DXF.<br/>
+      <a href="${opts.siteUrl}" style="color:#6366f1;text-decoration:none;">dxfai.net</a> &nbsp;|&nbsp;
+      <a href="mailto:support@dxfai.net" style="color:#6366f1;text-decoration:none;">support@dxfai.net</a>
+    </p>
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body></html>`;
 
   const enHtml = `
     <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
