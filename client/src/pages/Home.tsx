@@ -601,7 +601,7 @@ function WelcomeBanner({ onDismiss }: { onDismiss: () => void }) {
             <span className="text-xl shrink-0 mt-0.5">📧</span>
             <p className="text-indigo-100 text-sm leading-relaxed">
               <span className="text-white font-semibold">לקבלת ה-20 אסימונים — היכנס לתיבת הדואר שלך ולחץ על הקישור במייל.</span>{' '}
-              אם המייל נמצא בתיקיית הדואר הזבל — סמן אותו כ"דואר רצוי" כדי שהמיילים הבאים יגיעו ישיר לתיבת הדואר הראשית.
+              אם לא קיבלת, בדוק בספאם.
             </p>
           </div>
         </div>

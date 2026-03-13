@@ -1,0 +1,9 @@
+{
+  "query": "\nDELETE FROM token_transactions WHERE appUserId IN (SELECT id FROM app_users WHERE email IN ('Yossi2700apple@gmail.com', 'Yossi2700xl3@gmail.com'));\nDELETE FROM user_actions WHERE appUserId IN (SELECT id FROM app_users WHERE email IN ('Yossi2700apple@gmail.com', 'Yossi2700xl3@gmail.com'));\nDELETE FROM email_verifications WHERE appUserId IN (SELECT id FROM app_users WHERE email IN ('Yossi2700apple@gmail.com', 'Yossi2700xl3@gmail.com'));\nDELETE FROM campaign_redemptions WHERE appUserId IN (SELECT id FROM app_users WHERE email IN ('Yossi2700apple@gmail.com', 'Yossi2700xl3@gmail.com'));\nDELETE FROM app_users WHERE email IN ('Yossi2700apple@gmail.com', 'Yossi2700xl3@gmail.com');\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nDELETE FROM token_transactions WHERE appUserId IN (SELECT id FROM app_users WHERE email IN ('Yossi2700apple@gmail.com', 'Yossi2700xl3@gmail.com'));\nDELETE FROM user_actions WHERE appUserId IN (SELECT id FROM app_users WHERE email IN ('Yossi2700apple@gmail.com', 'Yossi2700xl3@gmail.com'));\nDELETE FROM email_verifications WHERE appUserId IN (SELECT id FROM app_users WHERE email IN ('Yossi2700apple@gmail.com', 'Yossi2700xl3@gmail.com'));\nDELETE FROM campaign_redemptions WHERE appUserId IN (SELECT id FROM app_users WHERE email IN ('Yossi2700apple@gmail.com', 'Yossi2700xl3@gmail.com'));\nDELETE FROM app_users WHERE email IN ('Yossi2700apple@gmail.com', 'Yossi2700xl3@gmail.com');\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2479
+}
