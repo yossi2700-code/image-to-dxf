@@ -7,7 +7,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems } from "../drizzle/schema";
+import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks } from "../drizzle/schema";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "./emailService";
 import { desc, eq, and, sql } from "drizzle-orm";
@@ -929,6 +929,73 @@ export const appRouter = router({
             ...(input.imageUrl !== undefined ? { imageUrl: input.imageUrl } : {}),
           })
           .where(eq(packagePrices.packageId, input.packageId));
+        return { success: true };
+      }),
+
+    // ── Admin Tasks (todo list) ───────────────────────────────────────────────────────────────
+    getTasks: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db
+        .select()
+        .from(adminTasks)
+        .orderBy(adminTasks.sortOrder, adminTasks.createdAt);
+    }),
+
+    addTask: adminProcedure
+      .input(z.object({
+        text: z.string().min(1).max(500),
+        priority: z.number().int().min(0).max(2).default(0),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const [result] = await db.insert(adminTasks).values({
+          text: input.text.trim(),
+          priority: input.priority,
+          isDone: 0,
+          sortOrder: 0,
+        });
+        return { id: (result as { insertId: number }).insertId };
+      }),
+
+    updateTask: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        text: z.string().min(1).max(500).optional(),
+        priority: z.number().int().min(0).max(2).optional(),
+        sortOrder: z.number().int().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const updates: Record<string, unknown> = {};
+        if (input.text !== undefined) updates.text = input.text.trim();
+        if (input.priority !== undefined) updates.priority = input.priority;
+        if (input.sortOrder !== undefined) updates.sortOrder = input.sortOrder;
+        if (Object.keys(updates).length > 0) {
+          await db.update(adminTasks).set(updates).where(eq(adminTasks.id, input.id));
+        }
+        return { success: true };
+      }),
+
+    toggleTask: adminProcedure
+      .input(z.object({ id: z.number(), isDone: z.boolean() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db.update(adminTasks)
+          .set({ isDone: input.isDone ? 1 : 0 })
+          .where(eq(adminTasks.id, input.id));
+        return { success: true };
+      }),
+
+    deleteTask: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db.delete(adminTasks).where(eq(adminTasks.id, input.id));
         return { success: true };
       }),
   }),

@@ -190,6 +190,13 @@
       "when": 1773412635313,
       "tag": "0026_luxuriant_elektra",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1773416718990,
+      "tag": "0027_broken_deathbird",
+      "breakpoints": true
     }
   ]
 }

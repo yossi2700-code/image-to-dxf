@@ -53,6 +53,9 @@ import {
   Pencil,
   Trash2,
   Star,
+  ClipboardList,
+  GripVertical,
+  Flag,
 } from "lucide-react";
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
@@ -61,31 +64,37 @@ function StatCard({
   label,
   value,
   sub,
-  color = "text-primary",
+  color = "#3b82f6",
+  bgColor = "#eff6ff",
 }: {
   icon: React.ElementType;
   label: string;
   value: number | string;
   sub?: string;
   color?: string;
+  bgColor?: string;
 }) {
   return (
-    <Card>
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">{label}</p>
-            <p className={`text-3xl font-bold ${color}`}>
-              {typeof value === "number" ? value.toLocaleString() : value}
-            </p>
-            {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-            <Icon className="w-5 h-5 text-primary" />
-          </div>
+    <div
+      className="rounded-2xl p-4"
+      style={{ background: 'white', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9' }}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium mb-1" style={{ color: '#94a3b8' }}>{label}</p>
+          <p className="text-2xl font-black" style={{ color }}>
+            {typeof value === "number" ? value.toLocaleString() : value}
+          </p>
+          {sub && <p className="text-xs mt-1" style={{ color: '#94a3b8' }}>{sub}</p>}
         </div>
-      </CardContent>
-    </Card>
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: bgColor }}
+        >
+          <Icon className="w-5 h-5" style={{ color }} />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -112,50 +121,64 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-4">
-      <Card className="w-full max-w-sm shadow-lg">
-        <CardContent className="p-8">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)' }} dir="rtl">
+      <div className="w-full max-w-sm">
+        {/* Logo area */}
+        <div className="text-center mb-6">
+          <img
+            src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663365044246/SslVmktvndMoFSwH.png"
+            alt="לוגו"
+            className="w-14 h-14 rounded-2xl object-contain mx-auto mb-3"
+            style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}
+          />
+          <h1 className="text-xl font-black text-white">משרד ניהול המערכת</h1>
+          <p className="text-sm mt-1" style={{ color: 'rgba(199,210,254,0.8)' }}>AI DXF — לוח בקרה מאובטח</p>
+        </div>
+        <div className="rounded-2xl p-7" style={{ background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.15)', boxShadow: '0 24px 64px rgba(0,0,0,0.4)' }}>
           <div className="flex flex-col items-center gap-5 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <Lock className="w-8 h-8 text-primary" />
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.15)' }}>
+              <Lock className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold mb-1">דשבורד ניהול</h2>
-              <p className="text-sm text-muted-foreground">הכנס את קוד הגישה שלך</p>
+              <h2 className="text-lg font-bold text-white mb-1">הזדהות מנהל</h2>
+              <p className="text-sm" style={{ color: 'rgba(199,210,254,0.8)' }}>הכנס את קוד הגישה שלך</p>
             </div>
             <form onSubmit={handleSubmit} className="w-full space-y-3">
               <div className="relative">
-                <Input
+                <input
                   type={showPin ? "text" : "password"}
                   placeholder="קוד גישה"
                   value={pin}
                   onChange={(e) => setPin(e.target.value)}
-                  className="text-center text-lg tracking-widest pr-10"
+                  className="w-full text-center text-lg tracking-widest pr-10 pl-10 py-3 rounded-xl outline-none transition-all"
+                  style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'white' }}
                   autoFocus
                   dir="ltr"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPin(!showPin)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
+                  style={{ color: 'rgba(199,210,254,0.7)' }}
                 >
                   {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <Button
+              <button
                 type="submit"
-                className="w-full"
                 disabled={!pin.trim() || loginMutation.isPending}
+                className="w-full py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #6366f1, #4338ca)', color: 'white', boxShadow: '0 4px 16px rgba(99,102,241,0.5)' }}
               >
-                {loginMutation.isPending ? "מתחבר..." : "כניסה"}
-              </Button>
+                {loginMutation.isPending ? "מתחבר..." : "כניסה למשרד"}
+              </button>
             </form>
-            <a href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              ← חזור לאפליקציה
+            <a href="/" className="text-sm transition-colors" style={{ color: 'rgba(199,210,254,0.7)' }}>
+              ← חזור לאתר
             </a>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -556,97 +579,150 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     }
   }, [contactSettings]);
 
+  // ── Admin Tasks state ──
+  const { data: tasksData, isLoading: tasksLoading, refetch: refetchTasks } = trpc.admin.getTasks.useQuery();
+  const [newTaskText, setNewTaskText] = useState("");
+  const [newTaskPriority, setNewTaskPriority] = useState(0);
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [editingTaskText, setEditingTaskText] = useState("");
+  const addTaskMutation = trpc.admin.addTask.useMutation({
+    onSuccess: () => { refetchTasks(); setNewTaskText(""); setNewTaskPriority(0); },
+    onError: (e) => toast.error(e.message),
+  });
+  const toggleTaskMutation = trpc.admin.toggleTask.useMutation({
+    onSuccess: () => refetchTasks(),
+    onError: (e) => toast.error(e.message),
+  });
+  const updateTaskMutation = trpc.admin.updateTask.useMutation({
+    onSuccess: () => { refetchTasks(); setEditingTaskId(null); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteTaskMutation = trpc.admin.deleteTask.useMutation({
+    onSuccess: () => refetchTasks(),
+    onError: (e) => toast.error(e.message),
+  });
+
+  const NAV_ITEMS = [
+    { id: "overview", label: "סקירה כללית", shortLabel: "סקירה", icon: TrendingUp, color: "#3b82f6" },
+    { id: "activity", label: "פעילות", shortLabel: "פעילות", icon: Activity, color: "#10b981" },
+    { id: "users", label: "משתמשים", shortLabel: "משתמשים", icon: Users, color: "#8b5cf6" },
+    { id: "subscriptions", label: "מנויים", shortLabel: "מנויים", icon: Crown, color: "#f59e0b" },
+    { id: "bugs", label: "דוחות באגים", shortLabel: "באגים", icon: Bug, color: "#ef4444" },
+    { id: "news", label: "חדשות", shortLabel: "חדשות", icon: Newspaper, color: "#06b6d4" },
+    { id: "consents", label: "הסכמות", shortLabel: "הסכמות", icon: CheckCircle2, color: "#64748b" },
+    { id: "payments", label: "תשלומי PayPal", shortLabel: "PayPal", icon: CreditCard, color: "#0ea5e9" },
+    { id: "email", label: "שליחת מייל", shortLabel: "מייל", icon: Mail, color: "#6366f1" },
+    { id: "campaign", label: "קמפיין מייל", shortLabel: "קמפיין", icon: Gift, color: "#ec4899" },
+    { id: "settings", label: "הגדרות", shortLabel: "הגדרות", icon: Settings, color: "#94a3b8" },
+  ] as const;
+
+  const activeNav = NAV_ITEMS.find(n => n.id === activeSection);
+
   return (
-    <div className="min-h-screen bg-slate-50" dir="rtl">
-      {/* Top Header */}
-      <header className="border-b bg-white sticky top-0 z-20 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <img
-              src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663365044246/SslVmktvndMoFSwH.png"
-              alt="לוגו"
-              className="w-9 h-9 rounded-lg object-contain shrink-0"
-            />
-            <div>
-              <h1 className="text-sm font-bold leading-tight text-slate-800">דשבורד ניהול</h1>
-              <p className="text-xs text-slate-400">מעקב שימוש ופעילות</p>
+    <div className="min-h-screen" style={{ background: '#f1f5f9' }} dir="rtl">
+      {/* ── Beautiful Header ── */}
+      <header className="sticky top-0 z-20" style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)', boxShadow: '0 4px 24px rgba(67,56,202,0.35)' }}>
+        <div className="max-w-7xl mx-auto px-4">
+          {/* Top row */}
+          <div className="flex items-center justify-between gap-3 py-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}>
+                <img
+                  src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663365044246/SslVmktvndMoFSwH.png"
+                  alt="לוגו"
+                  className="w-7 h-7 rounded-lg object-contain"
+                />
+              </div>
+              <div>
+                <h1 className="text-base font-black text-white leading-tight tracking-tight">משרד ניהול המערכת</h1>
+                <p className="text-xs font-medium" style={{ color: 'rgba(199,210,254,0.85)' }}>AI DXF — לוח בקרה מאובטח</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => { window.location.href = "/"; }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95"
+                style={{ background: 'rgba(255,255,255,0.15)', color: 'white', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}
+              >
+                ← חזור לאתר
+              </button>
+              <button
+                onClick={() => logoutMutation.mutate()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95"
+                style={{ background: 'rgba(239,68,68,0.25)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.3)' }}
+              >
+                <LogOut className="w-3.5 h-3.5" />יציאה
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => { window.location.href = "/"; }} className="text-xs">
-              ← חזור לאפליקציה
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => logoutMutation.mutate()} className="text-slate-400 gap-1.5 text-xs">
-              <LogOut className="w-3.5 h-3.5" />יציאה
-            </Button>
-          </div>
+          {/* Section indicator */}
+          {activeNav && (
+            <div className="pb-2 flex items-center gap-2">
+              <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(199,210,254,0.9)' }}>
+                <activeNav.icon className="w-3 h-3 inline ml-1" />
+                {activeNav.label}
+              </span>
+            </div>
+          )}
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col md:flex-row gap-6">
-        {/* Sidebar Nav */}
-        <aside className="w-48 shrink-0 hidden md:block">
-          <nav className="bg-white rounded-xl border shadow-sm p-2 sticky top-20 space-y-1">
-            {([
-              { id: "overview", label: "סקירה כללית", icon: TrendingUp },
-              { id: "activity", label: "פעילות", icon: Activity },
-              { id: "users", label: "משתמשים", icon: Users },
-              { id: "subscriptions", label: "מנויים", icon: Crown },
-              { id: "bugs", label: "דוחות באגים", icon: Bug },
-              { id: "news", label: "חדשות", icon: Newspaper },
-              { id: "consents", label: "הסכמות", icon: CheckCircle2 },
-              { id: "payments", label: "תשלומי PayPal", icon: CreditCard },
-              { id: "email", label: "שליחת מייל", icon: Mail },
-              { id: "campaign", label: "קמפיין מייל", icon: Gift },
-              { id: "settings", label: "הגדרות", icon: Settings },
-            ] as const).map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => setActiveSection(id)}
-                className={`w-full text-right flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeSection === id
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                {label}
-              </button>
-            ))}
+      <div className="max-w-7xl mx-auto px-3 py-5 flex flex-col md:flex-row gap-5">
+        {/* ── Sidebar Nav (desktop) ── */}
+        <aside className="w-52 shrink-0 hidden md:block">
+          <nav className="rounded-2xl sticky top-24 overflow-hidden" style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', border: '1px solid #e2e8f0' }}>
+            <div className="px-3 py-3 border-b" style={{ background: 'linear-gradient(135deg, #f8faff, #f0f4ff)' }}>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">ניווט</p>
+            </div>
+            <div className="p-2 space-y-0.5">
+              {NAV_ITEMS.map(({ id, label, icon: Icon, color }) => (
+                <button
+                  key={id}
+                  onClick={() => setActiveSection(id as typeof activeSection)}
+                  className="w-full text-right flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+                  style={activeSection === id
+                    ? { background: `${color}18`, color, fontWeight: 700 }
+                    : { color: '#64748b' }
+                  }
+                >
+                  <div
+                    className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: activeSection === id ? `${color}22` : '#f1f5f9' }}
+                  >
+                    <Icon className="w-3.5 h-3.5" style={{ color: activeSection === id ? color : '#94a3b8' }} />
+                  </div>
+                  {label}
+                </button>
+              ))}
+            </div>
           </nav>
         </aside>
 
-        {/* Mobile Tab Bar */}
-        <div className="md:hidden w-full mb-4">
-          <div className="flex flex-wrap bg-white rounded-xl border shadow-sm p-1 gap-1">
-            {([
-              { id: "overview", label: "סקירה", icon: TrendingUp },
-              { id: "activity", label: "פעילות", icon: Activity },
-              { id: "users", label: "משתמשים", icon: Users },
-              { id: "subscriptions", label: "מנויים", icon: Crown },
-              { id: "bugs", label: "באגים", icon: Bug },
-              { id: "news", label: "חדשות", icon: Newspaper },
-              { id: "consents", label: "הסכמות", icon: CheckCircle2 },
-              { id: "payments", label: "PayPal", icon: CreditCard },
-              { id: "email", label: "מייל", icon: Mail },
-              { id: "campaign", label: "קמפיין", icon: Gift },
-              { id: "settings", label: "הגדרות", icon: Settings },
-            ] as const).map(({ id, label, icon: Icon }) => (
+        {/* ── Mobile Nav (scrollable horizontal) ── */}
+        <div className="md:hidden w-full mb-2">
+          <div
+            className="flex gap-2 overflow-x-auto pb-1"
+            style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
+          >
+            {NAV_ITEMS.map(({ id, shortLabel, icon: Icon, color }) => (
               <button
                 key={id}
-                onClick={() => setActiveSection(id)}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  activeSection === id ? "bg-blue-600 text-white" : "text-slate-500"
-                }`}
+                onClick={() => setActiveSection(id as typeof activeSection)}
+                className="flex-shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold transition-all"
+                style={activeSection === id
+                  ? { background: color, color: 'white', boxShadow: `0 4px 12px ${color}55`, minWidth: 64 }
+                  : { background: 'white', color: '#64748b', border: '1px solid #e2e8f0', minWidth: 64 }
+                }
               >
-                <Icon className="w-3.5 h-3.5" />{label}
+                <Icon className="w-4 h-4" />
+                <span style={{ fontSize: 10 }}>{shortLabel}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0 space-y-5">
+        <main className="flex-1 min-w-0 space-y-4">
 
         {/* ── OVERVIEW SECTION ── */}
         {activeSection === "overview" && (
@@ -660,15 +736,15 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           </div>
         ) : stats ? (
           <>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard icon={Activity} label="סה״כ פעולות" value={stats.total} sub="מאז ההשקה" />
-              <StatCard icon={Calendar} label="היום" value={stats.today} color="text-blue-600" />
-              <StatCard icon={Upload} label="המרות תמונה" value={stats.totalConvert} sub="סה״כ" />
-              <StatCard icon={Sparkles} label="יצירות AI" value={stats.totalAi} sub="סה״כ" color="text-purple-600" />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <StatCard icon={Activity} label="סה״כ פעולות" value={stats.total} sub="מאז ההשקה" color="#1e1b4b" bgColor="#eef2ff" />
+              <StatCard icon={Calendar} label="היום" value={stats.today} color="#2563eb" bgColor="#dbeafe" />
+              <StatCard icon={Upload} label="המרות תמונה" value={stats.totalConvert} sub="סה״כ" color="#0891b2" bgColor="#cffafe" />
+              <StatCard icon={Sparkles} label="יצירות AI" value={stats.totalAi} sub="סה״כ" color="#7c3aed" bgColor="#ede9fe" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <StatCard icon={TrendingUp} label="השבוע" value={stats.thisWeek} sub="7 ימים אחרונים" />
-              <StatCard icon={Calendar} label="החודש" value={stats.thisMonth} sub="30 ימים אחרונים" />
+            <div className="grid grid-cols-2 gap-3">
+              <StatCard icon={TrendingUp} label="השבוע" value={stats.thisWeek} sub="7 ימים אחרונים" color="#059669" bgColor="#d1fae5" />
+              <StatCard icon={Calendar} label="החודש" value={stats.thisMonth} sub="30 ימים אחרונים" color="#d97706" bgColor="#fef3c7" />
             </div>
           </>
         ) : null}
@@ -756,6 +832,153 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             ) : (
               <div className="py-8 text-center text-muted-foreground text-sm">
                 אין פעולות עדיין. ברגע שמשתמשים יתחילו להשתמש — הנתונים יופיעו כאן.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* ── ADMIN TASKS WIDGET ── */}
+        <Card className="overflow-hidden" style={{ borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+          <CardHeader className="pb-2" style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)' }}>
+            <CardTitle className="text-base font-semibold flex items-center justify-between">
+              <span className="flex items-center gap-2 text-white">
+                <ClipboardList className="w-4 h-4" />
+                משימות לעשות
+              </span>
+              <span className="text-xs font-normal" style={{ color: 'rgba(199,210,254,0.7)' }}>
+                {tasksData ? `${tasksData.filter(t => !t.isDone).length} פתוחות` : ''}
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            {/* Add new task */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (newTaskText.trim()) {
+                  addTaskMutation.mutate({ text: newTaskText.trim(), priority: newTaskPriority });
+                }
+              }}
+              className="flex gap-2 mb-4"
+            >
+              <select
+                value={newTaskPriority}
+                onChange={(e) => setNewTaskPriority(Number(e.target.value))}
+                className="text-xs border rounded-lg px-2 py-1.5 bg-white outline-none"
+                style={{ minWidth: 80 }}
+              >
+                <option value={0}>רגיל</option>
+                <option value={1}>גבוהה</option>
+                <option value={2}>דחוף</option>
+              </select>
+              <input
+                type="text"
+                value={newTaskText}
+                onChange={(e) => setNewTaskText(e.target.value)}
+                placeholder="הוסף משימה חדשה..."
+                className="flex-1 text-sm border rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-indigo-300"
+              />
+              <button
+                type="submit"
+                disabled={!newTaskText.trim() || addTaskMutation.isPending}
+                className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-lg text-white transition-all hover:opacity-90 disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}
+              >
+                <Plus className="w-4 h-4" />
+                הוסף
+              </button>
+            </form>
+
+            {/* Task list */}
+            {tasksLoading ? (
+              <div className="space-y-2">
+                {[1,2,3].map(i => <div key={i} className="h-9 bg-muted animate-pulse rounded-lg" />)}
+              </div>
+            ) : !tasksData || tasksData.length === 0 ? (
+              <div className="py-6 text-center text-muted-foreground text-sm">
+                אין משימות עדיין. הוסף את המשימה הראשונה לעיל!
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {/* Open tasks first, then done */}
+                {[...tasksData].sort((a, b) => {
+                  if (a.isDone !== b.isDone) return a.isDone - b.isDone;
+                  if (a.priority !== b.priority) return b.priority - a.priority;
+                  return 0;
+                }).map(task => (
+                  <div
+                    key={task.id}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg group transition-all ${
+                      task.isDone ? 'bg-gray-50 opacity-60' : 'bg-white border border-gray-100 hover:border-indigo-200 hover:shadow-sm'
+                    }`}
+                  >
+                    {/* Priority dot */}
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                      task.priority === 2 ? 'bg-red-500' :
+                      task.priority === 1 ? 'bg-amber-400' : 'bg-gray-300'
+                    }`} />
+                    {/* Checkbox */}
+                    <button
+                      onClick={() => toggleTaskMutation.mutate({ id: task.id, isDone: !task.isDone })}
+                      className={`w-5 h-5 rounded border-2 flex-shrink-0 flex items-center justify-center transition-all ${
+                        task.isDone
+                          ? 'bg-indigo-500 border-indigo-500 text-white'
+                          : 'border-gray-300 hover:border-indigo-400'
+                      }`}
+                    >
+                      {task.isDone && <CheckCircle2 className="w-3 h-3" />}
+                    </button>
+                    {/* Text */}
+                    {editingTaskId === task.id ? (
+                      <form
+                        className="flex-1 flex gap-1"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (editingTaskText.trim()) {
+                            updateTaskMutation.mutate({ id: task.id, text: editingTaskText.trim() });
+                          }
+                        }}
+                      >
+                        <input
+                          autoFocus
+                          value={editingTaskText}
+                          onChange={(e) => setEditingTaskText(e.target.value)}
+                          className="flex-1 text-sm border rounded px-2 py-0.5 outline-none focus:ring-1 focus:ring-indigo-300"
+                          onKeyDown={(e) => { if (e.key === 'Escape') setEditingTaskId(null); }}
+                        />
+                        <button type="submit" className="text-xs text-indigo-600 font-medium px-2">שמור</button>
+                        <button type="button" onClick={() => setEditingTaskId(null)} className="text-xs text-gray-400 px-1">בטל</button>
+                      </form>
+                    ) : (
+                      <span
+                        className={`flex-1 text-sm cursor-pointer ${
+                          task.isDone ? 'line-through text-muted-foreground' : 'text-foreground'
+                        }`}
+                        onDoubleClick={() => { setEditingTaskId(task.id); setEditingTaskText(task.text); }}
+                        title="לחץ פעמיים לעריכה"
+                      >
+                        {task.text}
+                      </span>
+                    )}
+                    {/* Actions */}
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => { setEditingTaskId(task.id); setEditingTaskText(task.text); }}
+                        className="p-1 rounded hover:bg-indigo-50 text-muted-foreground hover:text-indigo-600 transition-colors"
+                        title="ערוך"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => { if (confirm('למחוק משימה זו?')) deleteTaskMutation.mutate({ id: task.id }); }}
+                        className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors"
+                        title="מחק"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>

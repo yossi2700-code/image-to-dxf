@@ -388,3 +388,20 @@ export const newsItems = mysqlTable("news_items", {
 });
 export type NewsItem = typeof newsItems.$inferSelect;
 export type InsertNewsItem = typeof newsItems.$inferInsert;
+
+// Admin tasks / todo list — private notes for the admin dashboard
+export const adminTasks = mysqlTable("admin_tasks", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Task text */
+  text: varchar("text", { length: 500 }).notNull(),
+  /** Whether the task is completed */
+  isDone: int("isDone").notNull().default(0),
+  /** Optional priority: 0=normal, 1=high, 2=urgent */
+  priority: int("priority").notNull().default(0),
+  /** Sort order */
+  sortOrder: int("sortOrder").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type AdminTask = typeof adminTasks.$inferSelect;
+export type InsertAdminTask = typeof adminTasks.$inferInsert;
