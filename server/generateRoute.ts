@@ -177,11 +177,11 @@ function promptToFilename(prompt: string): string {
 function pngToSvg(pngBuffer: Buffer): Promise<string> {
   return new Promise((resolve, reject) => {
     potrace.trace(pngBuffer, {
-      threshold: 180,
-      turdSize: 8,
-      alphaMax: 1,
+      threshold: 128,
+      turdSize: 40,       // aggressively remove small noise/specks
+      alphaMax: 1.0,      // smoother corners
       optCurve: true,
-      optTolerance: 0.2,
+      optTolerance: 0.4,  // balanced smoothness
     }, (err: Error | null, svg: string) => {
       if (err) reject(err);
       else resolve(svg);
@@ -239,6 +239,7 @@ async function runGenerateJob(
         throw new Error("לא התקבלה תמונה מה-AI");
       }
 
+      // blur(1.5) merges thick AI lines → eliminates double contours in potrace output
       const paddedBuffer = await sharp(rawBuffer)
         .extend({
           top: 140,
@@ -249,7 +250,8 @@ async function runGenerateJob(
         })
         .resize(1024, 1024, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .grayscale()
-        .threshold(200)
+        .blur(1.5)
+        .threshold(160)
         .png()
         .toBuffer();
 

@@ -223,11 +223,11 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number): 
 function pngToSvg(pngBuffer: Buffer): Promise<string> {
   return new Promise((resolve, reject) => {
     potrace.trace(pngBuffer, {
-      threshold: 180,
-      turdSize: 12,       // remove more noise/specks
-      alphaMax: 1.3,      // smoother corners (higher = rounder curves)
+      threshold: 128,
+      turdSize: 40,       // aggressively remove small noise/specks
+      alphaMax: 1.0,      // smoother corners
       optCurve: true,
-      optTolerance: 0.6,  // higher = smoother curves, less jagged
+      optTolerance: 0.4,  // balanced smoothness
     }, (err: Error | null, svg: string) => {
       if (err) reject(err);
       else resolve(svg);
@@ -426,11 +426,13 @@ async function runTraceJob(
       let rawBuffer = Buffer.from(b64, "base64");
 
       // Add white padding around the AI-generated image, then resize to max 1024px
+      // blur(1.5) merges thick AI lines into single-pixel skeleton → eliminates double contours
       const processedBuffer = await sharp(rawBuffer)
         .extend({ top: 80, bottom: 80, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .grayscale()
-        .threshold(200)
+        .blur(1.5)
+        .threshold(160)
         .png()
         .toBuffer();
 
@@ -730,10 +732,11 @@ router.post(
         return res.status(400).json({ error: "NO_PNG", message: "לא סופק PNG לעיבוד" });
       }
 
-      // Pre-process and run potrace (same as generateRoute)
+      // Pre-process and run potrace — blur merges thick lines to reduce double contours
       const processedBuffer = await sharp(pngBuffer)
         .grayscale()
-        .threshold(200)
+        .blur(1.5)
+        .threshold(160)
         .png()
         .toBuffer();
 
