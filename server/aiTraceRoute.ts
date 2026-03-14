@@ -78,14 +78,18 @@ const STYLE_VARIATIONS = [
       "STRICT LINE ART ONLY: pure black (#000000) lines on pure white (#FFFFFF) background. " +
       "Draw all structural features AND add surface texture on prominent textured surfaces. " +
       "TEXTURE RULE: For any surface with visible texture (knurled grip, rubber handle, ribbed surface, woven fabric, wood grain, fur, feathers, scales, tire tread, mesh): " +
-      "draw texture using THIN SINGLE-STROKE PARALLEL LINES only — evenly spaced, all going the same direction. " +
-      "CRITICAL: Each texture line must be a SINGLE thin stroke — NO double lines, NO cross-hatching, NO overlapping lines, NO filled areas. " +
-      "Texture lines must be sparse and evenly spaced (leave white space between each line). " +
-      "Apply texture ONLY on the specific textured surface — not on smooth areas. " +
-      "ABSOLUTELY NO: shading, shadows, gradients, grey tones, large filled dark areas, cross-hatching. " +
+      "draw texture using PERFECTLY UNIFORM PARALLEL LINES — all lines straight, same length, same spacing, same direction. " +
+      "CRITICAL TEXTURE RULES: " +
+      "(1) Lines must be PERFECTLY STRAIGHT and PARALLEL — like ruled lines on paper. " +
+      "(2) ALL lines in a texture area must go the SAME direction (e.g. all horizontal, or all at 45°). " +
+      "(3) Spacing between lines must be EQUAL and CONSISTENT throughout. " +
+      "(4) ABSOLUTELY NO: random marks, scribbles, zigzags, curves, cross-hatching, irregular spacing, or chaotic lines. " +
+      "(5) Each line is a SINGLE thin stroke — no double lines, no overlapping. " +
+      "(6) Apply texture ONLY on the specific textured surface — smooth areas stay clean white. " +
+      "ABSOLUTELY NO: shading, shadows, gradients, grey tones, large filled dark areas. " +
       "Every large enclosed area must remain mostly white. " +
-      "All lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines. " +
-      "Style: clean technical illustration with selective single-stroke parallel texture on prominent surfaces only.",
+      "All structural lines must be SMOOTH, CONTINUOUS, and FLOWING. " +
+      "Style: clean technical illustration with uniform ruled-line texture on prominent surfaces only.",
   },
   {
     label: "decorative",
@@ -379,10 +383,23 @@ async function runTraceJob(
     const aiResizeW = isLandscapeImg ? 1536 : 1024;
     const aiResizeH = isLandscapeImg ? 1024 : 1536;
 
-    const editSourceBuffer = await sharp(imageBuffer)
+    // Normalize dark/underexposed images before sending to gpt-image-1
+    // Detect average brightness: if image is very dark, apply auto-levels to improve quality
+    const rawResized = await sharp(imageBuffer)
       .resize(aiResizeW, aiResizeH, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-      .png({ compressionLevel: 6 })
       .toBuffer();
+    const { channels } = await sharp(rawResized).stats();
+    const avgBrightness = (channels[0].mean + channels[1].mean + channels[2].mean) / 3;
+    // If average brightness < 80 (out of 255), image is dark — apply normalization
+    const editSourceBuffer = avgBrightness < 80
+      ? await sharp(rawResized)
+          .normalise()           // auto-levels: stretches histogram to full 0-255 range
+          .modulate({ brightness: 1.2 })  // slight brightness boost
+          .png({ compressionLevel: 6 })
+          .toBuffer()
+      : await sharp(rawResized)
+          .png({ compressionLevel: 6 })
+          .toBuffer();
 
     // Initialize partialImages array for streaming results to client as each image completes
     updateJob(jobId, { partialImages: [] });
