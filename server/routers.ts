@@ -195,6 +195,7 @@ export const appRouter = router({
           dxfUrl: userActions.dxfUrl,
           imageUrl: userActions.imageUrl,
           createdAt: userActions.createdAt,
+          durationMs: userActions.durationMs,
           userName: appUsers.name,
           userEmail: appUsers.email,
         })

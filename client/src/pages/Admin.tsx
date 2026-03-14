@@ -1161,107 +1161,152 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                           {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                         </div>
                       </button>
-                      {/* Expanded actions */}
+                      {/* Expanded panel with tabs: Actions + Token History */}
                       {isExpanded && (() => {
                         const userActs = userActionsData?.filter((a) => a.appUserId === u.id) ?? [];
+                        const activeUserTab = tokenHistoryUser === u.id ? "tokens" : "actions";
                         return (
-                        <div className="border-t bg-muted/20 px-3 py-2">
-                          {actionsLoading ? (
-                            <div className="h-8 bg-muted animate-pulse rounded" />
-                          ) : userActs.length === 0 ? (
-                            <p className="text-xs text-muted-foreground py-2">אין פעולות עדיין.</p>
-                          ) : (
-                            <table className="w-full text-xs">
-                              <thead>
-                                <tr className="text-muted-foreground border-b">
-                                  <th className="text-right py-1.5 pr-2 font-medium">סוג</th>
-                                  <th className="text-right py-1.5 pr-2 font-medium">תיאור</th>
-                                  <th className="text-right py-1.5 font-medium">תאריך</th>
-                                  <th className="text-right py-1.5 font-medium">תצוגה / הורדה</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {userActs.map((a) => (
-                                  <tr key={a.id} className="border-b last:border-0">
-                                    <td className="py-1.5 pr-2">
-                                      <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                                        a.actionType === "ai_generate"
-                                          ? "bg-purple-100 text-purple-700"
-                                          : a.actionType === "convert"
-                                          ? "bg-blue-100 text-blue-700"
-                                          : "bg-green-100 text-green-700"
-                                      }`}>
-                                        {a.actionType === "ai_generate" ? "יצירת AI" : a.actionType === "convert" ? "המרה" : "הורדה"}
-                                      </span>
-                                    </td>
-                                    <td className="py-1.5 pr-2 text-muted-foreground max-w-[140px] truncate">{a.description ?? "—"}</td>
-                                    <td className="py-1.5 text-muted-foreground">{new Date(a.createdAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}</td>
-                                    <td className="py-1.5">
-                                      <div className="flex items-center gap-2">
-                                        {a.imageUrl && (
-                                          <a href={a.imageUrl} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-slate-700" title="תצוגה">
-                                            <span className="text-xs underline">תמונה</span>
-                                          </a>
-                                        )}
-                                        {a.dxfUrl ? (
-                                          <a href={a.dxfUrl} download className="text-primary hover:underline flex items-center gap-1 text-xs">
-                                            <FileCode2 className="w-3 h-3" />DXF
-                                          </a>
-                                        ) : "—"}
-                                      </div>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                        <div className="border-t bg-muted/20">
+                          {/* Tab bar */}
+                          <div className="flex border-b bg-white/60">
+                            <button
+                              className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold transition-colors border-b-2 ${
+                                activeUserTab === "actions"
+                                  ? "border-indigo-500 text-indigo-700 bg-white"
+                                  : "border-transparent text-muted-foreground hover:text-foreground"
+                              }`}
+                              onClick={(e) => { e.stopPropagation(); setTokenHistoryUser(null); }}
+                            >
+                              <Activity className="w-3 h-3" />
+                              פעולות ({userActs.length})
+                            </button>
+                            <button
+                              className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold transition-colors border-b-2 ${
+                                activeUserTab === "tokens"
+                                  ? "border-blue-500 text-blue-700 bg-white"
+                                  : "border-transparent text-muted-foreground hover:text-foreground"
+                              }`}
+                              onClick={(e) => { e.stopPropagation(); setTokenHistoryUser(u.id); }}
+                            >
+                              <Coins className="w-3 h-3" />
+                              אסימונים
+                            </button>
+                          </div>
+
+                          {/* Actions tab */}
+                          {activeUserTab === "actions" && (
+                            <div className="px-3 py-2 max-h-64 overflow-y-auto">
+                              {actionsLoading ? (
+                                <div className="h-8 bg-muted animate-pulse rounded" />
+                              ) : userActs.length === 0 ? (
+                                <p className="text-xs text-muted-foreground py-2">אין פעולות עדיין.</p>
+                              ) : (
+                                <table className="w-full text-xs">
+                                  <thead className="sticky top-0 bg-muted/80">
+                                    <tr className="text-muted-foreground border-b">
+                                      <th className="text-right py-1.5 pr-2 font-medium">סוג</th>
+                                      <th className="text-right py-1.5 pr-2 font-medium">תיאור</th>
+                                      <th className="text-right py-1.5 font-medium">זמן עיבוד</th>
+                                      <th className="text-right py-1.5 font-medium">תאריך</th>
+                                      <th className="text-right py-1.5 font-medium">קבצים</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {userActs.map((a) => (
+                                      <tr key={a.id} className="border-b last:border-0 hover:bg-white/60">
+                                        <td className="py-1.5 pr-2">
+                                          <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                                            a.actionType === "ai_generate"
+                                              ? "bg-purple-100 text-purple-700"
+                                              : a.actionType === "convert"
+                                              ? "bg-blue-100 text-blue-700"
+                                              : "bg-green-100 text-green-700"
+                                          }`}>
+                                            {a.actionType === "ai_generate" ? "יצירת AI" : a.actionType === "convert" ? "המרה" : "הורדה"}
+                                          </span>
+                                        </td>
+                                        <td className="py-1.5 pr-2 text-muted-foreground max-w-[120px] truncate">{a.description ?? "—"}</td>
+                                        <td className="py-1.5 font-mono text-xs">
+                                          {a.durationMs != null ? (
+                                            <span className={`font-semibold ${
+                                              a.durationMs < 30000 ? "text-green-600" :
+                                              a.durationMs < 90000 ? "text-amber-600" :
+                                              "text-red-600"
+                                            }`}>
+                                              {a.durationMs < 60000
+                                                ? `${(a.durationMs / 1000).toFixed(1)}ש"`
+                                                : `${Math.floor(a.durationMs / 60000)}:${String(Math.floor((a.durationMs % 60000) / 1000)).padStart(2,'0')}ד`
+                                              }
+                                            </span>
+                                          ) : <span className="text-muted-foreground">—</span>}
+                                        </td>
+                                        <td className="py-1.5 text-muted-foreground">{new Date(a.createdAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}</td>
+                                        <td className="py-1.5">
+                                          <div className="flex items-center gap-2">
+                                            {a.imageUrl && (
+                                              <a href={a.imageUrl} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-slate-700" title="תצוגה">
+                                                <span className="text-xs underline">תמונה</span>
+                                              </a>
+                                            )}
+                                            {a.dxfUrl ? (
+                                              <a href={a.dxfUrl} download className="text-primary hover:underline flex items-center gap-1 text-xs">
+                                                <FileCode2 className="w-3 h-3" />DXF
+                                              </a>
+                                            ) : "—"}
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Token history tab */}
+                          {activeUserTab === "tokens" && (
+                            <div className="px-3 py-2 max-h-64 overflow-y-auto">
+                              {tokenHistoryLoading ? (
+                                <div className="h-8 bg-muted animate-pulse rounded" />
+                              ) : !tokenHistory || tokenHistory.length === 0 ? (
+                                <p className="text-xs text-muted-foreground">אין היסטוריה עדיין.</p>
+                              ) : (
+                                <table className="w-full text-xs">
+                                  <thead className="sticky top-0 bg-muted/80">
+                                    <tr className="text-muted-foreground border-b">
+                                      <th className="text-right py-1 font-medium">סוג</th>
+                                      <th className="text-right py-1 font-medium">כמות</th>
+                                      <th className="text-right py-1 font-medium">יתרה</th>
+                                      <th className="text-right py-1 font-medium">תאריך</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {tokenHistory.map((tx) => (
+                                      <tr key={tx.id} className="border-b last:border-0">
+                                        <td className="py-1">
+                                          <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                                            tx.reason === "signup_grant" ? "bg-green-100 text-green-700" :
+                                            tx.reason === "admin_add" ? "bg-blue-100 text-blue-700" :
+                                            "bg-red-100 text-red-700"
+                                          }`}>
+                                            {tx.reason === "signup_grant" ? "מתנה" : tx.reason === "admin_add" ? "הוספה" : "ניכוי"}
+                                          </span>
+                                        </td>
+                                        <td className={`py-1 font-mono font-semibold ${
+                                          tx.amount > 0 ? "text-green-600" : "text-red-600"
+                                        }`}>{tx.amount > 0 ? "+" : ""}{tx.amount}</td>
+                                        <td className="py-1 font-mono">{tx.balanceAfter}</td>
+                                        <td className="py-1 text-muted-foreground">{new Date(tx.createdAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              )}
+                            </div>
                           )}
                         </div>
                         );
                       })()}
-                      {/* Token history panel */}
-                      {tokenHistoryUser === u.id && (
-                        <div className="border-t bg-blue-50/50 px-3 py-2">
-                          <p className="text-xs font-semibold text-blue-700 mb-2 flex items-center gap-1">
-                            <Coins className="w-3 h-3" /> היסטוריית אסימונים
-                          </p>
-                          {tokenHistoryLoading ? (
-                            <div className="h-8 bg-muted animate-pulse rounded" />
-                          ) : !tokenHistory || tokenHistory.length === 0 ? (
-                            <p className="text-xs text-muted-foreground">אין היסטוריה עדיין.</p>
-                          ) : (
-                            <table className="w-full text-xs">
-                              <thead>
-                                <tr className="text-muted-foreground border-b">
-                                  <th className="text-right py-1 font-medium">סוג</th>
-                                  <th className="text-right py-1 font-medium">כמות</th>
-                                  <th className="text-right py-1 font-medium">יתרה</th>
-                                  <th className="text-right py-1 font-medium">תאריך</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {tokenHistory.map((tx) => (
-                                  <tr key={tx.id} className="border-b last:border-0">
-                                    <td className="py-1">
-                                      <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                                        tx.reason === "signup_grant" ? "bg-green-100 text-green-700" :
-                                        tx.reason === "admin_add" ? "bg-blue-100 text-blue-700" :
-                                        "bg-red-100 text-red-700"
-                                      }`}>
-                                        {tx.reason === "signup_grant" ? "מתנה" : tx.reason === "admin_add" ? "הוספה" : "ניכוי"}
-                                      </span>
-                                    </td>
-                                    <td className={`py-1 font-mono font-semibold ${
-                                      tx.amount > 0 ? "text-green-600" : "text-red-600"
-                                    }`}>{tx.amount > 0 ? "+" : ""}{tx.amount}</td>
-                                    <td className="py-1 font-mono">{tx.balanceAfter}</td>
-                                    <td className="py-1 text-muted-foreground">{new Date(tx.createdAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          )}
-                        </div>
-                      )}
                     </div>
                   );
                 })}
