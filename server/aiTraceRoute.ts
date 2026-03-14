@@ -76,17 +76,12 @@ const STYLE_VARIATIONS = [
     label: "detailed",
     style:
       "STRICT LINE ART ONLY: pure black (#000000) lines on pure white (#FFFFFF) background. " +
-      "Draw EVERY visible detail with maximum precision — like a high-quality technical patent illustration. " +
-      "MANDATORY DETAILS TO INCLUDE: " +
-      "(1) All mechanical components: chain links (draw each individual link), gear teeth (draw every tooth), sprocket teeth, bolts, screws, nuts, hinges, joints, axles. " +
-      "(2) Full spoke count on wheels — draw ALL spokes visible, not a simplified subset. " +
-      "(3) All structural subdivisions: tube seams, panel edges, component boundaries, slots, openings, grooves. " +
-      "(4) Small connecting parts: cables, wires, brackets, clips, fasteners. " +
-      "(5) Surface contour lines that define 3D form: ridges, edges, recesses. " +
-      "ABSOLUTELY NO: texture fills, hatching, cross-hatching, shading, shadows, gradients, grey tones, stippling, or filled regions. " +
+      "Draw the outer silhouette PLUS all visible interior structural lines: panel edges, component boundaries, mechanical parts, joints, openings, slots, buttons, seams, and surface divisions. " +
+      "Include 25-40 interior lines that define the object's structure and form. " +
+      "ABSOLUTELY NO: texture, hatching, cross-hatching, shading, shadows, gradients, grey tones, stippling, filled regions, or any decorative marks. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
-      "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines. " +
-      "Style: precise technical patent drawing with every mechanical detail rendered as clean outlines.",
+      "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
+      "Style: clean detailed technical line drawing — like a precise engineering illustration, outlines only, no fills.",
   },
   {
     label: "decorative",
