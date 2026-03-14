@@ -464,11 +464,15 @@ async function runTraceJob(
     const jobBeforeGen = getJob(jobId);
     if (!jobBeforeGen || jobBeforeGen.status === "cancelled") return;
 
-    clearInterval(heartbeatInterval);
+    // Keep heartbeat running during the full Promise.all (images + suggestions)
+    // to prevent the stale-job watchdog from timing out during long AI calls
     const [images, suggestions] = await Promise.all([
       Promise.all(generationPromises),
       generateImprovementSuggestions(objectDescription, imageBase64, lang),
     ]);
+    // Now safe to stop heartbeat — all async work is done
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = undefined;
 
     const jobAfterGen = getJob(jobId);
     if (!jobAfterGen || jobAfterGen.status === "cancelled") return;
