@@ -22,6 +22,7 @@ import PurchaseTerms from "./pages/PurchaseTerms";
 import MaintenancePage from "./pages/Maintenance";
 import VerifyEmail from "./pages/VerifyEmail";
 import Pricing from "./pages/Pricing";
+import Landing from "./pages/Landing";
 import { trpc } from "./lib/trpc";
 
 /** Wraps all routes — shows maintenance page when enabled, except for /admin routes */
@@ -63,6 +64,7 @@ function Router() {
         <Route path={"/welcome"} component={Marketing} />
         <Route path={"/verify-email"} component={VerifyEmail} />
         <Route path={"/pricing"} component={Pricing} />
+        <Route path={"/landing"} component={Landing} />
         <Route path={"/404"} component={NotFound} />
         {/* Final fallback route */}
         <Route component={NotFound} />
