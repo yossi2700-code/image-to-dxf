@@ -439,18 +439,30 @@ async function runTraceJob(
       let rawBuffer = Buffer.from(b64, "base64");
 
       // Add white padding around the AI-generated image, then process at full 1536px resolution
-      // Higher resolution → more detail preserved through potrace vectorization
-      // blur(1.5) merges thick AI lines into single-pixel skeleton → eliminates double contours
+      // For detailed mode (idx=1): use stronger blur to merge dense hatching into clean lines
+      // For simple mode (idx=0): light blur to preserve clean outlines
+      const isDetailedMode = idx === 1;
+      const blurAmount = isDetailedMode ? 2.5 : 1.5;
+      const thresholdValue = isDetailedMode ? 175 : 160; // higher threshold = more white = less noise
       const processedBuffer = await sharp(rawBuffer)
         .extend({ top: 80, bottom: 80, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .resize(1536, 1536, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .grayscale()
-        .blur(1.5)
-        .threshold(160)
+        .blur(blurAmount)
+        .threshold(thresholdValue)
         .png()
         .toBuffer();
 
-      const rawSvg = await pngToSvg(processedBuffer);
+      // For detailed mode: use smaller turdSize to keep texture lines but still remove tiny noise
+      const potraceOptions = isDetailedMode
+        ? { threshold: 128, turdSize: 15, alphaMax: 1.0, optCurve: true, optTolerance: 0.3 }
+        : { threshold: 128, turdSize: 40, alphaMax: 1.0, optCurve: true, optTolerance: 0.4 };
+
+      const rawSvg = await new Promise<string>((resolve, reject) => {
+        potrace.trace(processedBuffer, potraceOptions, (err: Error | null, svg: string) => {
+          if (err) reject(err); else resolve(svg);
+        });
+      });
       const cleanSvg = cleanSvgForPreview(rawSvg);
 
       const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm);

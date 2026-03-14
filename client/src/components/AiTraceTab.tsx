@@ -799,12 +799,12 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                     }
                   >
                     {/* Demo image */}
-                    <div className="relative w-full" style={{ height: "72px" }}>
+                    <div className="relative w-full" style={{ height: "72px", background: '#fff' }}>
                       <img
                         src={demoImages[v]}
                         alt={labels[v]}
-                        className="w-full h-full object-cover"
-                        style={{ borderRadius: 0 }}
+                        className="w-full h-full"
+                        style={{ borderRadius: 0, objectFit: 'contain', objectPosition: 'center' }}
                       />
                       {v === 0 && (
                         <span
