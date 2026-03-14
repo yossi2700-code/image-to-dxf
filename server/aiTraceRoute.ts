@@ -800,4 +800,181 @@ router.post(
   }
 );
 
+// ─── POST /api/ai-trace/direct ─────────────────────────────────────────────────
+// Direct edge-detection trace: sharp (Canny-like) → potrace → DXF
+// No AI generation — 100% faithful to the original photo shapes.
+
+router.post(
+  "/api/ai-trace/direct",
+  upload.single("image"),
+  async (req, res) => {
+    const startMs = Date.now();
+    try {
+      const appUser = getAppUserFromCookie(req.cookies);
+      if (!appUser) {
+        return res.status(401).json({ error: "UNAUTHORIZED", message: "יש להתחבר" });
+      }
+
+      // Block check
+      const { getDb } = await import("./db");
+      const { appUsers } = await import("../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      const db = await getDb();
+      if (db) {
+        const [userRow] = await db.select({ isBlocked: appUsers.isBlocked }).from(appUsers).where(eq(appUsers.id, appUser.userId)).limit(1);
+        if (userRow?.isBlocked) {
+          return res.status(403).json({ error: "USER_BLOCKED", message: "חשבונך חסום." });
+        }
+      }
+
+      // Token deduction (same cost as ai_trace)
+      const tokenResult = await deductTokens(appUser.userId, "ai_trace");
+      if (!tokenResult.success) {
+        return res.status(402).json({
+          error: "INSUFFICIENT_TOKENS",
+          balance: tokenResult.balance,
+          message: "נגמרו לך האסימונים.",
+          messageEn: "You have run out of tokens.",
+        });
+      }
+
+      // Get image buffer
+      let imageBuffer: Buffer;
+      if (req.file) {
+        imageBuffer = req.file.buffer;
+      } else if (req.body?.imageUrl) {
+        const response = await fetch(req.body.imageUrl);
+        imageBuffer = Buffer.from(await response.arrayBuffer());
+      } else {
+        await addTokens(appUser.userId, TOKEN_COSTS["ai_trace"], "refund", "No image provided");
+        return res.status(400).json({ error: "NO_IMAGE", message: "לא סופקה תמונה" });
+      }
+
+      // Auto-correct EXIF orientation
+      imageBuffer = await sharp(imageBuffer).rotate().toBuffer();
+
+      const hairline = req.body?.hairline === "true" || req.body?.hairline === true;
+      const lineweightMmRaw = parseFloat((req.body?.lineweightMm as string) ?? "");
+      const lineweightMm = isNaN(lineweightMmRaw) ? undefined : Math.min(2.0, Math.max(0, lineweightMmRaw));
+      const userDesc = (req.body?.description || "").trim();
+      const lang = ((req.body?.lang as string) || "en") === "he" ? "he" : "en";
+      const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+      const ipAnon = anonymizeIp(rawIp);
+
+      // ── Edge detection pipeline ────────────────────────────────────────────────
+      // Step 1: Get image metadata to preserve aspect ratio
+      const meta = await sharp(imageBuffer).metadata();
+      const maxDim = 1500;
+      const resizeOpts = (meta.width && meta.height && (meta.width > maxDim || meta.height > maxDim))
+        ? { width: maxDim, height: maxDim, fit: "inside" as const }
+        : undefined;
+
+      // Step 2: Convert to grayscale, resize, then apply edge detection
+      // We use a multi-step approach:
+      //   a) Grayscale + slight blur to reduce noise
+      //   b) Threshold to create clean B&W
+      //   c) Negate (edges become black on white)
+      //   d) Dilate slightly to connect broken edges
+      const edgeBuffer = await sharp(imageBuffer)
+        .rotate() // EXIF already applied but re-apply just in case
+        .grayscale()
+        .resize(resizeOpts)
+        .blur(0.5)          // slight blur to reduce noise before edge detection
+        .convolve({         // Laplacian edge detection kernel
+          width: 3,
+          height: 3,
+          kernel: [-1, -1, -1, -1, 8, -1, -1, -1, -1],
+          scale: 1,
+          offset: 0,
+        })
+        .normalise()        // stretch contrast to full 0-255 range
+        .threshold(30)      // keep only strong edges
+        .png()
+        .toBuffer();
+
+      // Step 3: Run potrace on the edge image
+      const rawSvg = await pngToSvg(edgeBuffer);
+      const cleanSvg = cleanSvgForPreview(rawSvg);
+      const { dxf, segmentCount, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm);
+
+      // Step 4: Save preview PNG (the edge-detected image) to S3
+      const imgKey = `ai-trace-direct/${nanoid()}.png`;
+      const { url: imageUrl } = await storagePut(imgKey, edgeBuffer, "image/png");
+
+      // Step 5: Save DXF to S3
+      const baseFilename = buildFilename(userDesc || "direct_trace");
+      const dxfFilename = `${baseFilename}.dxf`;
+      const dxfKey = `ai-trace-dxf/${nanoid()}-${dxfFilename}`;
+      const dxfBuf = Buffer.from(dxf, "utf-8");
+      const { url: dxfUrl } = await storagePut(dxfKey, dxfBuf, "application/dxf");
+      const fileSizeKb = Math.round(dxfBuf.length / 1024 * 10) / 10;
+      const durationMs = Date.now() - startMs;
+
+      // Step 6: Upload source image for history
+      let sourceImageUrl: string | undefined;
+      try {
+        const srcKey = `source-images/${appUser.userId}-${nanoid(8)}.jpg`;
+        const jpegBuf = await sharp(imageBuffer)
+          .resize(800, 800, { fit: "inside", withoutEnlargement: true })
+          .jpeg({ quality: 85 })
+          .toBuffer();
+        const { url } = await storagePut(srcKey, jpegBuf, "image/jpeg");
+        sourceImageUrl = url;
+      } catch (e) {
+        console.warn("[directTrace] Failed to upload source image:", e);
+      }
+
+      // Log usage
+      void logUsageEvent({
+        type: "ai_generate",
+        segmentCount,
+        ipAnon: anonymizeIp(ipAnon ?? undefined),
+        durationMs,
+        fileSizeKb,
+      });
+      await recordUserAction({
+        appUserId: appUser.userId,
+        actionType: "ai_generate",
+        description: userDesc || "direct trace",
+        segmentCount,
+        dxfUrl,
+        imageUrl,
+        svgPreview: cleanSvg,
+        sourceImageUrl,
+        feature: "ai_trace",
+        durationMs,
+      });
+
+      return res.json({
+        success: true,
+        imageUrl,
+        svgPreview: cleanSvg,
+        dxfUrl,
+        segmentCount,
+        realWidth,
+        realHeight,
+        filename: dxfFilename,
+        description: userDesc || "direct trace",
+        sourceImageUrl,
+      });
+
+    } catch (err: unknown) {
+      console.error("[directTrace] Error:", err);
+      // Refund tokens on error
+      try {
+        const appUser = getAppUserFromCookie(req.cookies);
+        if (appUser) {
+          await addTokens(appUser.userId, TOKEN_COSTS["ai_trace"], "refund", "Direct trace error");
+        }
+      } catch (_) {}
+      const message = err instanceof Error ? err.message : "Unknown error";
+      return res.status(500).json({
+        error: "INTERNAL_ERROR",
+        message: `שגיאה: ${message}`,
+        messageEn: `Error: ${message}`,
+      });
+    }
+  }
+);
+
 export default router;

@@ -247,6 +247,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   // Always use mode 0 (simple/clean) — single mode, no selector needed
   const [lineweightMm, setLineweightMm] = useState<string>(""); // empty = default
+  // Direct trace mode: uses edge detection + potrace instead of AI generation
+  const [directMode, setDirectMode] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [fullImageMode, setFullImageMode] = useState(false);
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("ai_trace_jobId"));
@@ -495,10 +497,51 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
       const effectiveFocusText = overrideFocusText !== undefined ? overrideFocusText : focusText;
       if (effectiveFocusText.trim()) formData.append("focusText", effectiveFocusText.trim());
       formData.append("lang", language);
-      formData.append("landscapeMode", fullImageMode ? "true" : "false");
-      formData.append("variationIndex", "0"); // Always use simple/clean mode
       const lwVal = parseFloat(lineweightMm);
       if (!isNaN(lwVal) && lwVal >= 0) formData.append("lineweightMm", String(lwVal));
+
+      // ── DIRECT TRACE MODE: edge detection + potrace, no AI ───────────────────────────
+      if (directMode) {
+        setCurrentStep(isRtl ? "עוקב קצוות ישירות מהתמונה..." : "Tracing edges from photo...");
+        const directRes = await fetch("/api/ai-trace/direct", { method: "POST", body: formData, credentials: "include" });
+        const directData = await directRes.json();
+        if (!directRes.ok) {
+          if (directData.error === "UNAUTHORIZED") { onOpenAuth(); setStatus("idle"); return; }
+          if (directData.error === "INSUFFICIENT_TOKENS") {
+            const msg = language === "he" ? (directData.message || t("quotaExceeded")) : (directData.messageEn || directData.message || t("quotaExceeded"));
+            toast.error(msg); setErrorMsg(msg); setStatus("error"); refetchTokens(); return;
+          }
+          throw new Error(isRtl ? (directData.message || directData.error) : (directData.messageEn || directData.error || "Error"));
+        }
+        // Direct trace returns a single image result (not job-based)
+        const singleImage: GeneratedImage = {
+          imageUrl: directData.imageUrl,
+          svgPreview: directData.svgPreview,
+          dxfUrl: directData.dxfUrl,
+          dxfFilename: directData.filename,
+          segmentCount: directData.segmentCount,
+          width: directData.realWidth,
+          height: directData.realHeight,
+          realWidth: directData.realWidth,
+          realHeight: directData.realHeight,
+        };
+        const traceResult: TraceResult = {
+          images: [singleImage],
+          objectDescription: directData.description || "",
+          suggestions: [],
+        };
+        setResult(traceResult);
+        saveResultToCache(traceResult);
+        setStatus("success");
+        refetchTokens();
+        if (timerRef.current) clearInterval(timerRef.current);
+        toast.success(isRtl ? "עקיבה ישירה מוכנה!" : "Direct trace ready!");
+        return;
+      }
+
+      // ── AI TRACE MODE (default) ──────────────────────────────────────────────────────
+      formData.append("landscapeMode", fullImageMode ? "true" : "false");
+      formData.append("variationIndex", "0"); // Always use simple/clean mode
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
       const data = await res.json();
       if (!res.ok) {
@@ -836,6 +879,46 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                     </button>
                   );
                 })}
+            {/* Mode toggle: AI Trace vs Direct Trace */}
+            <div className="mb-3">
+              <div
+                className="flex rounded-xl overflow-hidden p-1 gap-1"
+                style={{background: '#f1f5f9', border: '1px solid #e2e8f0'}}
+              >
+                <button
+                  type="button"
+                  onClick={() => setDirectMode(false)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all"
+                  style={!directMode ? {
+                    background: 'linear-gradient(135deg, #0d9488, #06b6d4)',
+                    color: 'white',
+                    boxShadow: '0 2px 8px rgba(13,148,136,0.35)',
+                  } : {color: '#6b7280', background: 'transparent'}}
+                >
+                  <Wand2 className="w-3.5 h-3.5" />
+                  <span>{isRtl ? 'AI Outline' : 'AI Outline'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDirectMode(true)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all"
+                  style={directMode ? {
+                    background: 'linear-gradient(135deg, #7c3aed, #6366f1)',
+                    color: 'white',
+                    boxShadow: '0 2px 8px rgba(124,58,237,0.35)',
+                  } : {color: '#6b7280', background: 'transparent'}}
+                >
+                  <Scan className="w-3.5 h-3.5" />
+                  <span>{isRtl ? 'עקיבה ישירה' : 'Direct Trace'}</span>
+                </button>
+              </div>
+              <p className="text-xs mt-1 px-1 text-gray-400">
+                {directMode
+                  ? (isRtl ? 'עוקב בדיוק 100% את הקצוות האמיתיים בתמונה — ללא AI, מהיר יותר' : 'Traces the exact real edges in the photo — no AI, faster')
+                  : (isRtl ? 'AI מנתח ומצייר קווי מתאר נקיים ויפים' : 'AI analyzes and draws clean beautiful line art')}
+              </p>
+            </div>
+
             {/* Lineweight option */}
             <div className="flex items-center gap-2 pt-1 pb-1 flex-wrap">
               <label className="text-sm font-medium shrink-0">
@@ -867,9 +950,11 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                 onClick={() => handleTrace()}
               >
                 {status === "loading" ? (
-                  <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />{t("aiAnalyzing")}</>
+                  <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />{directMode ? (isRtl ? 'עוקב...' : 'Tracing...') : t("aiAnalyzing")}</>
                 ) : (
-                  <><Wand2 className="w-4 h-4" />{t("createAiOutline")}</>
+                  directMode
+                    ? <><Scan className="w-4 h-4" />{isRtl ? 'עקיבה ישירה' : 'Direct Trace'}</>
+                    : <><Wand2 className="w-4 h-4" />{t("createAiOutline")}</>
                 )}
               </button>
               {tryAgainUrl && status !== "loading" && (
