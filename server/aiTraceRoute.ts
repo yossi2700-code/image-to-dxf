@@ -619,7 +619,7 @@ router.post(
       const focusText = (req.body?.focusText || "").trim();
       const landscapeMode = req.body?.landscapeMode === "true" || req.body?.landscapeMode === true;
       const lang = ((req.body?.lang as string) || "en") === "he" ? "he" : "en";
-      const variationIndex = Math.min(2, Math.max(0, parseInt((req.body?.variationIndex as string) ?? "1", 10) || 1));
+      const variationIndex = Math.min(2, Math.max(0, parseInt((req.body?.variationIndex as string) ?? "0", 10)));
       const hairline = req.body?.hairline === "true" || req.body?.hairline === true;
       const lineweightMmRaw = parseFloat((req.body?.lineweightMm as string) ?? "");
       const lineweightMm = isNaN(lineweightMmRaw) ? undefined : Math.min(2.0, Math.max(0, lineweightMmRaw));

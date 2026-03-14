@@ -245,7 +245,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
   const [errorMsg, setErrorMsg] = useState("");
   const [downloadTarget, setDownloadTarget] = useState<GeneratedImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
-  // Always use mode 0 (simple/clean) — single mode, no selector needed
+  // Detail level: 0 = simple (default), 1 = detailed
+  const [detailLevel, setDetailLevel] = useState<0 | 1>(0);
   const [lineweightMm, setLineweightMm] = useState<string>(""); // empty = default
   const [dragOver, setDragOver] = useState(false);
   const [fullImageMode, setFullImageMode] = useState(false);
@@ -492,7 +493,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
       if (effectiveFocusText.trim()) formData.append("focusText", effectiveFocusText.trim());
       formData.append("lang", language);
       formData.append("landscapeMode", fullImageMode ? "true" : "false");
-      formData.append("variationIndex", "0"); // Always use simple/clean mode
+      formData.append("variationIndex", String(detailLevel));
       const lwVal = parseFloat(lineweightMm);
       if (!isNaN(lwVal) && lwVal >= 0) formData.append("lineweightMm", String(lwVal));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
@@ -545,7 +546,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
       if (focusText.trim()) formData.append("focusText", focusText.trim());
       formData.append("lang", language);
       formData.append("landscapeMode", fullImageMode ? "true" : "false");
-      formData.append("variationIndex", "0"); // Always use simple/clean mode
+      formData.append("variationIndex", String(detailLevel));
       const lwVal = parseFloat(lineweightMm);
       if (!isNaN(lwVal) && lwVal >= 0) formData.append("lineweightMm", String(lwVal));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
@@ -749,7 +750,69 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
             </div>
             <input type="hidden" value={description} onChange={(e) => setDescription(e.target.value)} />
 
-            {/* Variation selector removed — always uses simple/clean mode (variationIndex=0) */}
+            {/* Detail level selector: Simple (default) vs Detailed */}
+            <div className="flex gap-2 w-full">
+              {([0, 1] as const).map((v) => {
+                const labels = isRtl ? ["פשוט", "מפורט"] : ["Simple", "Detailed"];
+                const descs = isRtl
+                  ? ["קווי מתאר נקיים ומהירים", "עשיר בפרטים, מדויק יותר"]
+                  : ["Clean outlines, faster", "Rich detail, more precise"];
+                const demoImages = [
+                  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/detail-simple-gDNq9YD3XCXKDooZNErzYc.webp",
+                  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/detail-detailed-kGkY8iongZX7eMb2RoAzKp.webp",
+                ];
+                const borderColors = ["#6366f1", "#0d9488"];
+                const gradients = [
+                  "linear-gradient(135deg, #6366f1, #818cf8)",
+                  "linear-gradient(135deg, #0d9488, #06b6d4)",
+                ];
+                const shadows = [
+                  "0 3px 12px rgba(99,102,241,0.35)",
+                  "0 3px 12px rgba(13,148,136,0.35)",
+                ];
+                const isSelected = detailLevel === v;
+                return (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setDetailLevel(v)}
+                    className="relative flex-1 flex flex-col items-start rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-95 overflow-hidden"
+                    style={isSelected
+                      ? { border: `2px solid ${borderColors[v]}`, boxShadow: shadows[v], background: "#fff" }
+                      : { border: "2px solid #e2e8f0", background: "#f8fafc" }
+                    }
+                  >
+                    {/* Demo image */}
+                    <div className="relative w-full" style={{ height: "72px" }}>
+                      <img
+                        src={demoImages[v]}
+                        alt={labels[v]}
+                        className="w-full h-full object-cover"
+                        style={{ borderRadius: 0 }}
+                      />
+                      {v === 0 && (
+                        <span
+                          className="absolute top-1 right-1 text-xs font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
+                          style={{ background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "white", fontSize: "8px", lineHeight: "1.4", boxShadow: "0 1px 4px rgba(245,158,11,0.4)" }}
+                        >
+                          {isRtl ? "מומלץ" : "Recommended"}
+                        </span>
+                      )}
+                    </div>
+                    {/* Label */}
+                    <div className="w-full px-2 py-1.5 flex flex-col gap-0.5"
+                      style={{ color: isSelected ? borderColors[v] : "#374151" }}
+                    >
+                      <span className="font-bold text-xs">{labels[v]}</span>
+                      <span style={{ fontSize: "9px", opacity: 0.7 }}>{descs[v]}</span>
+                    </div>
+                    {isSelected && (
+                      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-1 rounded-full" style={{ background: gradients[v] }} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
             {(false as boolean) && ([1, 2] as const).map((v) => {
                   const labels = isRtl
                     ? ["נקי ופשוט", "מפורט"]
