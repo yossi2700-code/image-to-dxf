@@ -375,9 +375,9 @@ async function runTraceJob(
     heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
 
     // Prepare a clean PNG version of the source image for the edit API.
-    // 512px gives better quality output from gpt-image-1 edit.
+    // 1024px gives gpt-image-1 more detail to trace from, improving accuracy.
     const editSourceBuffer = await sharp(imageBuffer)
-      .resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .resize(1024, 1024, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
       .png({ compressionLevel: 6 })
       .toBuffer();
 
@@ -422,18 +422,33 @@ async function runTraceJob(
             `No text, no letters, no numbers anywhere.`
           )
         : (
-            // General object prompt — gpt-image-1 edit: accurate + smooth + beautiful
-            `Convert this image to a beautiful, precise black and white line art drawing suitable for CNC engraving or laser cutting. ` +
-            `ACCURACY FIRST: Draw ONLY the main subject — remove the background completely. ` +
-            `Faithfully reproduce the EXACT shape, proportions, and structure of the original object as it appears in the photo. ` +
-            `Every line must correspond to a REAL visible edge or contour in the original image. ` +
-            `DO NOT invent, add, or change any part of the object. ` +
-            `BUTTONS/KNOBS/LOGOS: Draw as simple geometric shapes only (plain circles, rectangles). Do NOT add symbols, icons, arrows, or markings inside them. ` +
-            `LINE QUALITY: All lines must be perfectly smooth, clean, and continuous — like a professional product design illustration. ` +
-            `Use smooth Bezier curves for rounded shapes. No jagged edges, no rough strokes, no broken lines. ` +
-            `Use only pure black (#000000) lines on pure white (#FFFFFF). No shading, no grey tones, no gradients, no hatching, no fills. ` +
-            `${variation.style} ` +
-            `No text, no letters, no numbers, no logos, no watermarks anywhere.`
+            // General object prompt — EXACT TRACING of visible edges
+            `TASK: Trace this photo into a clean black and white line art. ` +
+            `You are acting as a TRACER, not an artist. Your only job is to follow the exact edges and contours that are ALREADY VISIBLE in this photo. ` +
+            `
+
+RULE 1 — TRACE ONLY WHAT YOU SEE: ` +
+            `Draw ONLY the lines, edges, and contours that are physically visible in this photo. ` +
+            `Every single line you draw must correspond to a real visible edge in the image. ` +
+            `DO NOT invent, imagine, add, or redesign ANY part. If you cannot see it clearly, draw a simple outline only. ` +
+            `
+RULE 2 — EXACT SHAPES: ` +
+            `Reproduce the EXACT shape of every component as it appears in the photo. ` +
+            `Knobs must look like the actual knobs in the photo. Buttons must match the actual button shapes. ` +
+            `The overall silhouette must be pixel-faithful to the original. ` +
+            `
+RULE 3 — NO SYMBOLS OR TEXT: ` +
+            `Do NOT draw any text, letters, numbers, symbols, icons, or markings — even if you can see them in the photo. ` +
+            `Where text or labels appear, draw only the outline of the area (rectangle or shape) with no content inside. ` +
+            `
+RULE 4 — REMOVE BACKGROUND: ` +
+            `Draw ONLY the main subject. Replace the background with pure white (#FFFFFF). ` +
+            `
+RULE 5 — LINE QUALITY: ` +
+            `Use only pure black (#000000) lines on pure white (#FFFFFF). ` +
+            `No shading, no grey tones, no gradients, no hatching, no fills, no shadows. ` +
+            `Lines must be smooth and clean. ` +
+            `${variation.style}`
           );
 
       // Use gpt-image-1 edit API for high-quality line art generation
