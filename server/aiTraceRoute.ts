@@ -408,12 +408,13 @@ async function runTraceJob(
         : (
             // General object prompt — gpt-image-1 edit (REALISTIC, not cartoon)
             `TASK: Trace this exact image into clean black-and-white line art for laser cutting / CNC engraving. ` +
+            `SUBJECT ISOLATION RULE: Draw ONLY the main subject — COMPLETELY REMOVE the background, floor, wall, table, and any surrounding environment. ` +
+            `The subject must appear on a pure white background with NO environmental context. ` +
             `STYLE RULE #1 — PHOTOREALISTIC TRACING: The line art must look like a faithful hand-drawn tracing of the ACTUAL photograph. ` +
             `Preserve every realistic detail: exact body proportions, actual eye shape and size, real fur/feather/skin texture lines, true facial features. ` +
             `STYLE RULE #2 — NO CARTOON: ABSOLUTELY FORBIDDEN: cartoon eyes, chibi proportions, rounded cute shapes, simplified anime features, coloring-book simplification. ` +
             `The result must look like a realistic illustration, NOT a cartoon or children's drawing. ` +
             `STYLE RULE #3 — LINE QUALITY: Pure black (#000000) lines on pure white (#FFFFFF) only. No shading, no grey, no gradients, no fills. ` +
-            `Draw ONLY the main subject — remove background completely. ` +
             `${variation.style} ` +
             `No text, no letters, no numbers, no logos, no watermarks anywhere.`
           );
