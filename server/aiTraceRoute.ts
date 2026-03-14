@@ -66,12 +66,11 @@ const STYLE_VARIATIONS = [
     label: "simple",
     style:
       "STRICT LINE ART ONLY: pure black (#000000) lines on pure white (#FFFFFF) background. " +
-      "Draw outer silhouette and key structural interior lines that capture the realistic form. " +
+      "Draw outer silhouette and 10-15 key structural interior lines. " +
       "ABSOLUTELY NO: shading, shadows, gradients, grey tones, hatching, cross-hatching, stippling, texture fills, dark areas, filled regions. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
       "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
-      "CRITICAL: Preserve REALISTIC proportions — do NOT cartoonify, do NOT enlarge eyes, do NOT round body shapes. " +
-      "Style: clean realistic line art with smooth ink strokes, preserving natural anatomy.",
+      "Style: clean coloring-book outline drawing with smooth ink strokes.",
   },
   {
     label: "detailed",
@@ -81,8 +80,7 @@ const STYLE_VARIATIONS = [
       "ABSOLUTELY NO: shading, shadows, gradients, grey tones, hatching, cross-hatching, stippling, texture fills, dark areas, filled regions. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
       "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
-      "CRITICAL: Preserve REALISTIC proportions — do NOT cartoonify, do NOT enlarge eyes, do NOT round body shapes. " +
-      "Style: detailed realistic technical illustration with smooth clean ink lines, preserving natural anatomy.",
+      "Style: detailed technical illustration with smooth clean ink lines only.",
   },
   {
     label: "decorative",
@@ -255,7 +253,6 @@ async function runTraceJob(
 ) {
   const isHe = lang === "he";
   let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
-  const jobStartTime = Date.now();
   try {
     updateJob(jobId, {
       status: "processing",
@@ -288,15 +285,15 @@ async function runTraceJob(
           "CRITICAL: Describe ONLY the physical object itself — its shape, structure, camera angle, proportions. " +
           "DO NOT mention people holding it, playing it, or interacting with it unless the user specifically asked to include a person. " +
           "DO NOT mention musical notes, decorative backgrounds, or contextual elements unless they are physically part of the object."
-        : "Identify and describe the MAIN SUBJECT in this image for line art generation. " +
+        : "Identify and describe the MOST VISUALLY PROMINENT SUBJECT in this image for line art generation. " +
           "CRITICAL RULES: " +
-          "(1) If the image shows a PRODUCT (lighter, bottle, cup, phone, box, bag, shoe, etc.), describe THE PRODUCT ITSELF as the main subject, including its shape and any illustration printed on it. " +
-          "Example: lighter with dragon illustration → 'a lighter with a dragon illustration on its body'. " +
-          "(2) If the image shows a person, animal, or standalone object (not a product), describe THAT as the subject. " +
-          "(3) DO NOT mention background objects, secondary items, or anything behind the main subject. " +
-          "(4) DO NOT mention musical notes, staff lines, or any musical notation. " +
-          "Focus on: exact camera angle/view, facing direction, shape, structure, key features, proportions. " +
-          "FINE DETAILS — describe these precisely: mouth/smile exact shape, eye exact shape and tilt, tail position and curve (if any), ear shape, hand/paw shape.";
+          "(1) The subject can be: a physical object, a person, an animal, OR an illustration/character printed on a product label/packaging. " +
+          "(2) If the most eye-catching element is a baby face or character printed on a product label, describe THAT CHARACTER as the subject — not the package. " +
+          "(3) If the most prominent element is a physical object (shoe, instrument, bag), describe THAT OBJECT. " +
+          "(4) DO NOT mention background objects, secondary items, or anything behind the main subject. " +
+          "(5) DO NOT mention musical notes, staff lines, or any musical notation. " +
+          "(6) Focus on the SINGLE most visually dominant subject only. " +
+          "Focus on: exact camera angle/view, facing direction, shape, structure, key features, proportions.";
     }
 
     const llmResponse = await invokeLLM({
@@ -306,15 +303,13 @@ async function runTraceJob(
           content:
             "You are a world-class expert at analyzing images for precise line art / engraving generation. " +
             "Your analysis will be used to generate line art that EXACTLY reproduces the OBJECT in the image. " +
-            "CRITICAL RULE — ALWAYS DESCRIBE THE PHYSICAL OBJECT FIRST: " +
-            "If the image shows a PRODUCT (lighter, bottle, cup, phone, box, bag, shoe, etc.), describe THE PRODUCT ITSELF as the main subject — including its shape, proportions, and any illustration/design printed on it. " +
-            "Do NOT describe only the illustration/character printed on the product label while ignoring the product itself. " +
-            "Example: A lighter with a dragon illustration → describe 'a lighter with a dragon illustration on it', NOT just 'a dragon'. " +
-            "Example: A bottle with a baby face label → describe 'a bottle with a baby face label', NOT just 'a baby face'. " +
-            "EXCEPTION: If the user's focus text explicitly asks to draw only the illustration/character, then describe just that. " +
+            "CRITICAL CONSTRAINT: Identify and describe the MOST VISUALLY PROMINENT SUBJECT in the image. " +
+            "The subject can be a physical object, a person, an animal, OR a character/illustration printed on a product label. " +
+            "If the most eye-catching element is a baby face, character, or illustration printed on packaging, describe THAT as the subject — not the package shape. " +
             "NEVER describe: (a) people holding/using the object unless they ARE the main subject, " +
             "(b) musical notes, staff lines, or musical notation, " +
             "(c) background objects or secondary items. " +
+            "Focus on the SINGLE most visually dominant subject. " +
             "Accuracy is critical — any mistake in your description will cause the generated art to look wrong. " +
             "\n\nYou MUST describe ALL of the following with maximum precision:\n" +
             "(1) CAMERA ANGLE / VIEW TYPE — THE MOST CRITICAL DETAIL. State it first and be extremely specific:\n" +
@@ -328,19 +323,13 @@ async function runTraceJob(
             "(2) FACING DIRECTION: which direction is the subject facing? (facing left, facing right, facing viewer, facing away).\n" +
             "(3) BODY POSE / POSITION: exact pose (standing upright, sitting, crouching, running, lying down, arms raised, etc.).\n" +
             "(4) KEY STRUCTURAL FEATURES: main body parts, proportions, distinctive features, decorative elements.\n" +
-            "(5) FINE DETAILS — CRITICAL: Describe these EXACTLY as they appear in the photo:\n" +
-            "    - MOUTH/SMILE: exact shape (tiny curved line? open mouth? closed smile? which direction does it curve?).\n" +
-            "    - EYES: exact shape (round? oval? almond/slanted? which direction do they tilt? any visible whites?).\n" +
-            "    - TAIL: is there a tail? where is it positioned? what shape/curve does it have?\n" +
-            "    - EARS: exact shape and position.\n" +
-            "    - HANDS/PAWS: exact shape (round balls? claws? open fingers?).\n" +
-            "(6) STYLE NOTES: is it realistic, cartoon, stylized, ornamental, etc.?\n" +
-            "\nFormat: Start with 'Camera angle: [exact angle].' then describe the rest in 4-6 sentences. Include a dedicated sentence for fine details. No preamble.",
+            "(5) STYLE NOTES: is it realistic, cartoon, stylized, ornamental, etc.?\n" +
+            "\nFormat: Start with 'Camera angle: [exact angle].' then describe the rest in 3-5 sentences. No preamble.",
         },
         {
           role: "user",
           content: [
-            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "high" } },
+            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "low" } },
             { type: "text", text: analysisInstruction },
           ],
         },
@@ -373,7 +362,7 @@ async function runTraceJob(
     // 512px gives better quality output from gpt-image-1 edit.
     const editSourceBuffer = await sharp(imageBuffer)
       .resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-      .png()
+      .png({ compressionLevel: 6 })
       .toBuffer();
 
     // Initialize partialImages array for streaming results to client as each image completes
@@ -418,10 +407,7 @@ async function runTraceJob(
             `Convert this image to clean black and white line art suitable for CNC engraving or laser cutting. ` +
             `Draw ONLY the main subject on a pure white background — remove the background completely. ` +
             `Use only pure black (#000000) lines on pure white (#FFFFFF). No shading, no grey tones, no gradients, no hatching. ` +
-            `CRITICAL: Preserve the EXACT realistic proportions, anatomy, and features of the original subject. ` +
-            `DO NOT simplify, cartoonify, chibi-fy, or stylize — keep the realistic adult proportions and natural features. ` +
-            `If the subject is an animal, preserve its realistic adult anatomy: correct eye size, natural body proportions, realistic fur/texture lines. ` +
-            `DO NOT make eyes larger, DO NOT round the body, DO NOT add cute/cartoon features. ` +
+            `Preserve the exact proportions and shape of the original object. ` +
             `${variation.style} ` +
             `No text, no letters, no numbers, no logos, no watermarks anywhere.`
           );
@@ -453,8 +439,7 @@ async function runTraceJob(
 
       const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm);
       const imgKey = `ai-trace-generated/${nanoid()}.png`;
-      // Upload the processed B&W buffer (grayscale+threshold) — NOT rawBuffer which may contain color pixels
-      const { url: imageUrl } = await storagePut(imgKey, processedBuffer, "image/png");
+      const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
       const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
       const dxfKey = `ai-trace-dxf/${nanoid()}-${dxfFilename}`;
       const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
@@ -479,31 +464,21 @@ async function runTraceJob(
     const jobBeforeGen = getJob(jobId);
     if (!jobBeforeGen || jobBeforeGen.status === "cancelled") return;
 
-    // Keep heartbeat running during the full Promise.all (images + suggestions)
-    // to prevent the stale-job watchdog from timing out during long AI calls
+    clearInterval(heartbeatInterval);
     const [images, suggestions] = await Promise.all([
       Promise.all(generationPromises),
       generateImprovementSuggestions(objectDescription, imageBase64, lang),
     ]);
-    // Now safe to stop heartbeat — all async work is done
-    clearInterval(heartbeatInterval);
-    heartbeatInterval = undefined;
 
     const jobAfterGen = getJob(jobId);
     if (!jobAfterGen || jobAfterGen.status === "cancelled") return;
 
     // Log usage
     const totalSegments = images.reduce((s, img) => s + img.segmentCount, 0);
-    // Estimate total file size from DXF SVG previews (proxy for output size)
-    const totalFileSizeKb = Math.round(
-      images.reduce((sum, img) => sum + Buffer.byteLength(img.svgPreview ?? "", "utf-8"), 0) / 1024
-    );
     void logUsageEvent({
       type: "ai_generate",
       segmentCount: Math.round(totalSegments / images.length),
       ipAnon: anonymizeIp(ipAnon),
-      durationMs: Date.now() - jobStartTime,
-      fileSizeKb: totalFileSizeKb,
     });
 
     // Record user actions
@@ -524,7 +499,6 @@ async function runTraceJob(
         variationLabel: variationLabels[i] ?? `v${i + 1}`,
         sourceImageUrl: sourceImageUrl ?? undefined,
         feature: "ai_trace",
-        durationMs: Date.now() - jobStartTime,
       });
     }
 
@@ -535,23 +509,6 @@ async function runTraceJob(
     console.error("[aiTraceRoute] Job error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     updateJob(jobId, { status: "error", error: message });
-    // Refund tokens on error
-    try { await addTokens(appUserId, TOKEN_COSTS["ai_trace"], "refund", "Job error — tokens refunded"); } catch (_) { /* ignore */ }
-    // Alert admin if billing/quota issue
-    const isBillingError = message.toLowerCase().includes("quota") ||
-      message.toLowerCase().includes("billing") ||
-      message.toLowerCase().includes("insufficient_quota") ||
-      message.toLowerCase().includes("429") ||
-      message.toLowerCase().includes("402");
-    if (isBillingError) {
-      try {
-        const { notifyOwner } = await import("./_core/notification");
-        await notifyOwner({
-          title: "🔴 שגיאת חיוב OpenAI — נדרש טעינת כרטיס",
-          content: `שגיאת billing ב-AI Outline:\n${message}\n\nנא להיכנס ל-OpenAI ולטעון את הכרטיס: https://platform.openai.com/settings/organization/billing`,
-        });
-      } catch (_) { /* ignore notification errors */ }
-    }
   }
 }
 
@@ -582,8 +539,8 @@ router.post(
         if (userRow?.isBlocked) {
           return res.status(403).json({
             error: "USER_BLOCKED",
-            message: "חשבונך חסום. לפרטים פנה לתמיכה.",
-            messageEn: "Your account has been blocked. Please contact support.",
+            message: "חשבונך חסום. לפרטים פנה לרובוטיקה וטכנולוגיה.",
+            messageEn: "Your account has been blocked. Please contact Robotics & Technology.",
           });
         }
       }
@@ -594,8 +551,8 @@ router.post(
         return res.status(402).json({
           error: "INSUFFICIENT_TOKENS",
           balance: tokenResult.balance,
-          message: "נגמרו לך האסימונים. יש לטעון אסימונים להמשך שימוש.",
-          messageEn: "You have run out of tokens. Please purchase more tokens to continue.",
+          message: "נגמרו לך האסימונים. ליצירת קשר ורכישת אסימונים נוספים פנה לרובוטיקה וטכנולוגיה.",
+          messageEn: "You have run out of tokens. To purchase more tokens, contact Robotics & Technology.",
         });
       }
 
