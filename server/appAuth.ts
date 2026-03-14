@@ -310,6 +310,19 @@ router.get("/api/app-auth/verify-email", async (req, res) => {
     await db.update(emailVerifications).set({ usedAt: new Date() }).where(eq(emailVerifications.id, row.id));
     await db.update(appUsers).set({ emailVerified: 1 }).where(eq(appUsers.id, row.appUserId));
 
+    // Fetch user details to set session cookie — user stays logged in after verification
+    const [user] = await db
+      .select({ id: appUsers.id, email: appUsers.email, name: appUsers.name, tokenBalance: appUsers.tokenBalance })
+      .from(appUsers)
+      .where(eq(appUsers.id, row.appUserId))
+      .limit(1);
+
+    if (user) {
+      const sessionToken = signToken(user.id, user.email);
+      setSessionCookie(res, sessionToken);
+      return res.json({ success: true, user: { id: user.id, email: user.email, name: user.name, tokenBalance: user.tokenBalance } });
+    }
+
     return res.json({ success: true });
   } catch (err) {
     console.error("[verify-email]", err);

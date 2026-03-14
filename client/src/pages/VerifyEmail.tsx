@@ -20,8 +20,14 @@ export default function VerifyEmail() {
       .then((r) => r.json())
       .then((data) => {
         if (data.success) {
+          // If server returned user data, store login flag so Home.tsx picks it up
+          if (data.user) {
+            localStorage.setItem("app_user_logged_in", "1");
+          }
           setStatus("success");
           setMessage("המייל אומת בהצלחה! ✅");
+          // Auto-redirect to home after 2 seconds
+          setTimeout(() => navigate("/"), 2000);
         } else {
           setStatus("error");
           setMessage(data.error || "שגיאה באימות המייל.");
@@ -69,8 +75,11 @@ export default function VerifyEmail() {
           <>
             <div style={{ fontSize: "56px", marginBottom: "16px" }}>🎉</div>
             <h2 style={{ color: "#1e1b4b", marginBottom: "8px" }}>המייל אומת בהצלחה!</h2>
-            <p style={{ color: "#6b7280", marginBottom: "24px" }}>
-              החשבון שלך מאומת. עכשיו אפשר להשתמש בכל הפיצ'רים.
+            <p style={{ color: "#6b7280", marginBottom: "8px" }}>
+              החשבון שלך מאומת ואתה מחובר. מעביר אותך לאתר...
+            </p>
+            <p style={{ color: "#9ca3af", fontSize: "13px", marginBottom: "24px" }}>
+              (מועבר אוטומטית תוך שניה)
             </p>
             <button
               onClick={() => navigate("/")}
@@ -85,7 +94,7 @@ export default function VerifyEmail() {
                 cursor: "pointer",
               }}
             >
-              🚀 חזור לאתר
+              🚀 עבור לאתר עכשיו
             </button>
           </>
         )}

@@ -2330,6 +2330,14 @@ export default function Home() {
 
           {/* Right side nav */}
           <div className="flex items-center gap-2 ms-auto">
+            {/* Pricing link — always visible */}
+            <a
+              href="/pricing"
+              className="hidden sm:flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-80 shrink-0"
+              style={{ color: '#6366f1', background: '#eef2ff', border: '1px solid #c7d2fe', textDecoration: 'none', whiteSpace: 'nowrap' }}
+            >
+              {isRtl ? '💎 מחירים' : '💎 Pricing'}
+            </a>
             {appUser ? (
               <>
                 {/* Token balance badge with history popup */}
