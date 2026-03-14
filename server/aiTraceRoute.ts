@@ -297,7 +297,8 @@ async function runTraceJob(
           "(4) DO NOT mention background objects, secondary items, or anything behind the main subject. " +
           "(5) DO NOT mention musical notes, staff lines, or any musical notation. " +
           "(6) Focus on the SINGLE most visually dominant subject only. " +
-          "Focus on: exact camera angle/view, facing direction, shape, structure, key features, proportions.";
+          "Focus on: exact camera angle/view, facing direction, shape, structure, key features, proportions. " +
+          "FINE DETAILS — describe these precisely: mouth/smile exact shape, eye exact shape and tilt, tail position and curve (if any), ear shape, hand/paw shape.";
     }
 
     const llmResponse = await invokeLLM({
@@ -327,13 +328,19 @@ async function runTraceJob(
             "(2) FACING DIRECTION: which direction is the subject facing? (facing left, facing right, facing viewer, facing away).\n" +
             "(3) BODY POSE / POSITION: exact pose (standing upright, sitting, crouching, running, lying down, arms raised, etc.).\n" +
             "(4) KEY STRUCTURAL FEATURES: main body parts, proportions, distinctive features, decorative elements.\n" +
-            "(5) STYLE NOTES: is it realistic, cartoon, stylized, ornamental, etc.?\n" +
-            "\nFormat: Start with 'Camera angle: [exact angle].' then describe the rest in 3-5 sentences. No preamble.",
+            "(5) FINE DETAILS — CRITICAL: Describe these EXACTLY as they appear in the photo:\n" +
+            "    - MOUTH/SMILE: exact shape (tiny curved line? open mouth? closed smile? which direction does it curve?).\n" +
+            "    - EYES: exact shape (round? oval? almond/slanted? which direction do they tilt? any visible whites?).\n" +
+            "    - TAIL: is there a tail? where is it positioned? what shape/curve does it have?\n" +
+            "    - EARS: exact shape and position.\n" +
+            "    - HANDS/PAWS: exact shape (round balls? claws? open fingers?).\n" +
+            "(6) STYLE NOTES: is it realistic, cartoon, stylized, ornamental, etc.?\n" +
+            "\nFormat: Start with 'Camera angle: [exact angle].' then describe the rest in 4-6 sentences. Include a dedicated sentence for fine details. No preamble.",
         },
         {
           role: "user",
           content: [
-            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "low" } },
+            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "high" } },
             { type: "text", text: analysisInstruction },
           ],
         },
@@ -363,9 +370,9 @@ async function runTraceJob(
     heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
 
     // Prepare a clean PNG version of the source image for the edit API.
-    // 512px gives better quality output from gpt-image-1 edit.
+    // 1024px preserves fine details (smile curve, eye tilt, tail shape) better than 512px.
     const editSourceBuffer = await sharp(imageBuffer)
-      .resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .resize(1024, 1024, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
       .png({ compressionLevel: 6 })
       .toBuffer();
 
@@ -404,8 +411,13 @@ async function runTraceJob(
             `MOST IMPORTANT RULE — EXACT SHAPE TRACING: You MUST trace the ACTUAL silhouette and contours visible in THIS specific photo. ` +
             `DO NOT invent, redesign, or reimagine the shape. DO NOT draw a generic version. ` +
             `Every outline you draw must correspond to a real edge or boundary visible in the photo. ` +
-            `If the toy has specific proportions (big head, small body, round shape), preserve those EXACT proportions. ` +
-            `If the toy has specific facial features (specific eye shape, nose, mouth position), trace those EXACT features. ` +
+            `PROPORTIONS: Preserve the EXACT proportions from the photo — head size relative to body, limb lengths, base size. ` +
+            `FINE DETAILS — CRITICAL (trace these EXACTLY as visible in the photo): ` +
+            `(1) SMILE/MOUTH: trace the exact curve and size of the mouth as it appears — do not make it bigger, rounder, or more expressive than in the photo. ` +
+            `(2) EYES: trace the exact eye shape — if they are almond-shaped or tilted, keep that exact tilt and shape. Do not make them rounder than they are. ` +
+            `(3) TAIL: if a tail is visible in the photo, trace it exactly where it is positioned and with its exact curve. If no tail is visible, do not add one. ` +
+            `(4) EARS: trace the exact ear shape — pointy, rounded, folded — exactly as in the photo. ` +
+            `(5) HANDS/PAWS: trace the exact shape of the hands/paws as visible. ` +
             `SUBJECT ISOLATION: Draw ONLY the toy/figurine — remove background, floor, hands, and environment. ` +
             `LINE QUALITY: Pure black (#000000) lines on pure white (#FFFFFF) only. No shading, no grey, no gradients, no fills. ` +
             `${variation.style} ` +

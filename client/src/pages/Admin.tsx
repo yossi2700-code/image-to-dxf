@@ -202,6 +202,13 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "convert" | "ai">("all");
   const [timeFilter, setTimeFilter] = useState<"day" | "week" | "month" | "all">("all");
+  const [revealedIps, setRevealedIps] = useState<Set<number>>(new Set());
+
+  const toggleIp = (id: number) => setRevealedIps(prev => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
 
   const filtered = (recent ?? []).filter((ev) => {
     const matchSearch = !search ||
@@ -285,6 +292,7 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
                   <th className="text-right py-2 px-3 font-medium">סוג</th>
                   <th className="text-right py-2 px-3 font-medium">נפח</th>
                   <th className="text-right py-2 px-3 font-medium">זמן עיבוד</th>
+                  <th className="text-right py-2 px-3 font-medium">IP</th>
                   <th className="text-right py-2 px-3 font-medium">תאריך</th>
                 </tr>
               </thead>
@@ -332,6 +340,29 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
                           }
                         </span>
                       ) : <span className="text-slate-300">—</span>}
+                    </td>
+                    <td className="py-2 px-3 text-xs">
+                      {ev.ipAnon ? (
+                        revealedIps.has(ev.id) ? (
+                          <button
+                            onClick={() => toggleIp(ev.id)}
+                            className="font-mono text-slate-600 hover:text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded text-[11px] transition-colors"
+                            title="לחץ להסתר"
+                          >
+                            {ev.ipAnon}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => toggleIp(ev.id)}
+                            className="text-slate-300 hover:text-slate-500 transition-colors text-[11px] flex items-center gap-1"
+                            title="לחץ להציג IP"
+                          >
+                            <span className="font-mono tracking-wider">••••</span>
+                          </button>
+                        )
+                      ) : (
+                        <span className="text-slate-200">—</span>
+                      )}
                     </td>
                     <td className="py-2 px-3 text-slate-400 text-xs whitespace-nowrap">{new Date(ev.createdAt).toLocaleString("he-IL")}</td>
                   </tr>
