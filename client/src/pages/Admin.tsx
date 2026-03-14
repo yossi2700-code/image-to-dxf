@@ -192,6 +192,7 @@ type RecentEvent = {
   imageUrl: string | null;
   createdAt: Date;
   appUserId: number | null;
+  durationMs: number | null;
   userName: string | null;
   userEmail: string | null;
 };
@@ -199,6 +200,7 @@ type RecentEvent = {
 function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | undefined; recentLoading: boolean }) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "convert" | "ai">("all");
+  const [timeFilter, setTimeFilter] = useState<"day" | "week" | "month" | "all">("all");
 
   const filtered = (recent ?? []).filter((ev) => {
     const matchSearch = !search ||
@@ -207,7 +209,13 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
     const matchType = typeFilter === "all" ||
       (typeFilter === "convert" && ev.type === "convert") ||
       (typeFilter === "ai" && ev.type !== "convert");
-    return matchSearch && matchType;
+    const now = Date.now();
+    const evTime = new Date(ev.createdAt).getTime();
+    const matchTime = timeFilter === "all" ||
+      (timeFilter === "day" && now - evTime < 86400000) ||
+      (timeFilter === "week" && now - evTime < 7 * 86400000) ||
+      (timeFilter === "month" && now - evTime < 30 * 86400000);
+    return matchSearch && matchType && matchTime;
   });
 
   return (
@@ -245,6 +253,21 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
                 </button>
               ))}
             </div>
+            <div className="flex gap-1 border-r border-slate-200 pr-2 mr-1">
+              {(["day", "week", "month", "all"] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTimeFilter(t)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                    timeFilter === t
+                      ? "bg-indigo-600 text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {t === "day" ? "יום" : t === "week" ? "שבוע" : t === "month" ? "חודש" : "הכל"}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -260,6 +283,7 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
                   <th className="text-right py-2 px-3 font-medium">משתמש</th>
                   <th className="text-right py-2 px-3 font-medium">סוג</th>
                   <th className="text-right py-2 px-3 font-medium">קווים</th>
+                  <th className="text-right py-2 px-3 font-medium">זמן עיבוד</th>
                   <th className="text-right py-2 px-3 font-medium">תאריך</th>
                 </tr>
               </thead>
@@ -293,6 +317,19 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
                       </span>
                     </td>
                     <td className="py-2 px-3 text-slate-500 font-mono text-sm">{(ev.segmentCount ?? 0).toLocaleString()}</td>
+                    <td className="py-2 px-3 text-xs whitespace-nowrap">
+                      {ev.durationMs != null ? (
+                        <span className={`font-mono font-medium ${
+                          ev.durationMs < 30000 ? 'text-green-600' :
+                          ev.durationMs < 90000 ? 'text-amber-600' : 'text-red-500'
+                        }`}>
+                          {ev.durationMs < 60000
+                            ? `${(ev.durationMs / 1000).toFixed(0)}ש'`
+                            : `${Math.floor(ev.durationMs / 60000)}:${((ev.durationMs % 60000) / 1000).toFixed(0).padStart(2,'0')}ד'`
+                          }
+                        </span>
+                      ) : <span className="text-slate-300">—</span>}
+                    </td>
                     <td className="py-2 px-3 text-slate-400 text-xs whitespace-nowrap">{new Date(ev.createdAt).toLocaleString("he-IL")}</td>
                   </tr>
                 ))}
@@ -799,6 +836,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       <th className="text-right py-2 pr-2 font-medium">תמונה</th>
                       <th className="text-right py-2 pr-2 font-medium">סוג</th>
                       <th className="text-right py-2 font-medium">קווים</th>
+                      <th className="text-right py-2 font-medium">זמן עיבוד</th>
                       <th className="text-right py-2 font-medium">IP</th>
                       <th className="text-right py-2 font-medium">תאריך ושעה</th>
                     </tr>
@@ -826,6 +864,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                           </span>
                         </td>
                         <td className="py-2 text-muted-foreground">{(ev.segmentCount ?? 0).toLocaleString()}</td>
+                        <td className="py-2 text-xs">
+                          {ev.durationMs != null ? (
+                            <span className={`font-mono font-medium ${
+                              ev.durationMs < 30000 ? 'text-green-600' :
+                              ev.durationMs < 90000 ? 'text-amber-600' : 'text-red-500'
+                            }`}>
+                              {ev.durationMs < 60000
+                                ? `${(ev.durationMs / 1000).toFixed(0)}ש'`
+                                : `${Math.floor(ev.durationMs / 60000)}:${((ev.durationMs % 60000) / 1000).toFixed(0).padStart(2,'0')}ד'`
+                              }
+                            </span>
+                          ) : <span className="text-muted-foreground/40">—</span>}
+                        </td>
                         <td className="py-2 font-mono text-xs text-muted-foreground">{ev.ipAnon ?? "—"}</td>
                         <td className="py-2 text-muted-foreground text-xs">{new Date(ev.createdAt).toLocaleString("he-IL")}</td>
                       </tr>

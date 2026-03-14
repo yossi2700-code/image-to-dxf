@@ -71,7 +71,7 @@ const STYLE_VARIATIONS = [
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
       "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
       "CRITICAL: Preserve REALISTIC proportions — do NOT cartoonify, do NOT enlarge eyes, do NOT round body shapes. " +
-      "Style: clean realistic line art with smooth ink strokes, preserving natural anatomy.",
+      "This must look like a realistic illustration, NOT a cartoon or coloring book. Photorealistic tracing style.",
   },
   {
     label: "detailed",
@@ -82,7 +82,7 @@ const STYLE_VARIATIONS = [
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
       "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
       "CRITICAL: Preserve REALISTIC proportions — do NOT cartoonify, do NOT enlarge eyes, do NOT round body shapes. " +
-      "Style: detailed realistic technical illustration with smooth clean ink lines, preserving natural anatomy.",
+      "This must look like a detailed realistic illustration, NOT a cartoon. Photorealistic tracing with fine detail lines.",
   },
   {
     label: "decorative",
@@ -255,6 +255,7 @@ async function runTraceJob(
 ) {
   const isHe = lang === "he";
   let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
+  const jobStartTime = Date.now();
   try {
     updateJob(jobId, {
       status: "processing",
@@ -405,14 +406,14 @@ async function runTraceJob(
             `No text, no letters, no numbers anywhere.`
           )
         : (
-            // General object prompt — gpt-image-1 edit
-            `Convert this image to clean black and white line art suitable for CNC engraving or laser cutting. ` +
-            `Draw ONLY the main subject on a pure white background — remove the background completely. ` +
-            `Use only pure black (#000000) lines on pure white (#FFFFFF). No shading, no grey tones, no gradients, no hatching. ` +
-            `CRITICAL: Preserve the EXACT realistic proportions, anatomy, and features of the original subject. ` +
-            `DO NOT simplify, cartoonify, chibi-fy, or stylize — keep the realistic adult proportions and natural features. ` +
-            `If the subject is an animal, preserve its realistic adult anatomy: correct eye size, natural body proportions, realistic fur/texture lines. ` +
-            `DO NOT make eyes larger, DO NOT round the body, DO NOT add cute/cartoon features. ` +
+            // General object prompt — gpt-image-1 edit (REALISTIC, not cartoon)
+            `TASK: Trace this exact image into clean black-and-white line art for laser cutting / CNC engraving. ` +
+            `STYLE RULE #1 — PHOTOREALISTIC TRACING: The line art must look like a faithful hand-drawn tracing of the ACTUAL photograph. ` +
+            `Preserve every realistic detail: exact body proportions, actual eye shape and size, real fur/feather/skin texture lines, true facial features. ` +
+            `STYLE RULE #2 — NO CARTOON: ABSOLUTELY FORBIDDEN: cartoon eyes, chibi proportions, rounded cute shapes, simplified anime features, coloring-book simplification. ` +
+            `The result must look like a realistic illustration, NOT a cartoon or children's drawing. ` +
+            `STYLE RULE #3 — LINE QUALITY: Pure black (#000000) lines on pure white (#FFFFFF) only. No shading, no grey, no gradients, no fills. ` +
+            `Draw ONLY the main subject — remove background completely. ` +
             `${variation.style} ` +
             `No text, no letters, no numbers, no logos, no watermarks anywhere.`
           );
@@ -489,6 +490,7 @@ async function runTraceJob(
       type: "ai_generate",
       segmentCount: Math.round(totalSegments / images.length),
       ipAnon: anonymizeIp(ipAnon),
+      durationMs: Date.now() - jobStartTime,
     });
 
     // Record user actions

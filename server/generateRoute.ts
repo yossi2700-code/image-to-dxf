@@ -203,6 +203,7 @@ async function runGenerateJob(
   lineweightMm?: number,
   minGapMm = 0
 ) {
+  const jobStartTime = Date.now();
   try {
     updateJob(jobId, { status: "processing" });
 
@@ -287,6 +288,7 @@ async function runGenerateJob(
       type: "ai_generate",
       segmentCount: Math.round(totalSegments / images.length),
       ipAnon: anonymizeIp(ipAnon ?? undefined),
+      durationMs: Date.now() - jobStartTime,
     });
 
     // Record user actions

@@ -975,33 +975,36 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                   </p>
                 </div>
               </div>
-              {/* Elapsed time counter */}
-              {elapsedSeconds > 0 && (
-                <p className="text-xs font-mono" style={{ color: '#94a3b8' }}>
-                  {t("processingTimer")} {Math.floor(elapsedSeconds / 60).toString().padStart(2, '0')}:{(elapsedSeconds % 60).toString().padStart(2, '0')}
+              {/* Animated processing dots with phase-based messages */}
+              <div className="flex flex-col items-center gap-2">
+                {/* Morphing dots animation */}
+                <div className="flex items-center gap-1">
+                  {[0,1,2,3,4].map((i) => (
+                    <div
+                      key={i}
+                      className="rounded-full"
+                      style={{
+                        width: 8,
+                        height: 8,
+                        background: `hsl(${168 + i * 8}, 80%, ${45 + i * 5}%)`,
+                        animation: `wave 1.4s ease-in-out infinite`,
+                        animationDelay: `${i * 0.12}s`,
+                      }}
+                    />
+                  ))}
+                </div>
+                {/* Phase message */}
+                <p className="text-xs font-medium" style={{ color: '#0d9488', minHeight: 18 }}>
+                  {elapsedSeconds < 10
+                    ? (isRtl ? '🧠 AI מנתח את התמונה...' : '🧠 AI analyzing image...')
+                    : elapsedSeconds < 40
+                    ? (isRtl ? '✏️ מצייר קווים וקטוריים...' : '✏️ Drawing vector lines...')
+                    : elapsedSeconds < 80
+                    ? (isRtl ? '✨ משפר פרטים דקים...' : '✨ Refining fine details...')
+                    : (isRtl ? '💫 כמעט מוכן...' : '💫 Almost ready...')
+                  }
                 </p>
-              )}
-              {elapsedSeconds === 0 && <p className="text-xs text-gray-400">{t("processingTime")}</p>}
-              {/* "Almost done" patience message after 30 seconds */}
-              {elapsedSeconds >= 30 && elapsedSeconds < 90 && (
-                <div
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium"
-                  style={{ background: 'rgba(13,148,136,0.08)', color: '#0d9488', border: '1px solid rgba(13,148,136,0.2)', animation: 'fadeIn 0.5s ease-in' }}
-                >
-                  <span style={{ animation: 'pulse 2s ease-in-out infinite' }}>✨</span>
-                  <span>{t("almostDone")}</span>
-                </div>
-              )}
-              {/* "Taking longer" message after 90 seconds */}
-              {elapsedSeconds >= 90 && (
-                <div
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium"
-                  style={{ background: 'rgba(245,158,11,0.08)', color: '#d97706', border: '1px solid rgba(245,158,11,0.25)', animation: 'fadeIn 0.5s ease-in' }}
-                >
-                  <span style={{ animation: 'pulse 2s ease-in-out infinite' }}>⏳</span>
-                  <span>{t("takingLonger")}</span>
-                </div>
-              )}
+              </div>
               <div className="flex gap-1.5">
                 {[0, 1, 2].map((i) => (
                   <div key={i} className="w-1.5 h-1.5 rounded-full bg-teal-400" style={{animation: `bounce 1s infinite ${i * 0.15}s`}} />

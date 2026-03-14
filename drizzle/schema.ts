@@ -40,6 +40,8 @@ export const usageEvents = mysqlTable("usage_events", {
   imageUrl: text("imageUrl"),
   /** App user ID (null for anonymous) */
   appUserId: int("appUserId"),
+  /** Processing duration in milliseconds (null for old records) */
+  durationMs: int("durationMs"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
