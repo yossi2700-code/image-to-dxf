@@ -16,48 +16,64 @@ const BEFORE_AFTER = [
   {
     label_he: "מצלמה",
     label_en: "Camera",
+    desc_he: "מצלמת SLR קלאסית — פרטים עדינים, עדשה, כפתורים",
+    desc_en: "Classic SLR camera — fine details, lens, buttons",
     before: `${CDN}/before-camera_e8ff1c90.jpg`,
     after: `${CDN}/after-camera_de9f1f99.png`,
   },
   {
     label_he: "אופניים",
     label_en: "Bicycle",
+    desc_he: "אופניים — שלדה, גלגלים, שרשרת",
+    desc_en: "Bicycle — frame, wheels, chain",
     before: `${CDN}/before-bicycle_dbe6f82f.jpg`,
     after: `${CDN}/after-bicycle_10ff03f6.png`,
   },
   {
     label_he: "אריה",
     label_en: "Lion",
+    desc_he: "ראש אריה — רעמה, פנים, ביטוי",
+    desc_en: "Lion head — mane, face, expression",
     before: `${CDN}/before-lion_06430793.jpg`,
     after: `${CDN}/after-lion_51a7de96.png`,
   },
   {
     label_he: "מפתח ברגים",
     label_en: "Wrench",
+    desc_he: "מפתח ברגים — כלי עבודה מתכתי",
+    desc_en: "Wrench — metal workshop tool",
     before: `${CDN}/before-wrench_c1f95777.jpg`,
     after: `${CDN}/after-wrench_07e4cc11.png`,
   },
   {
     label_he: "מקדחה",
     label_en: "Drill",
+    desc_he: "מקדחה חשמלית — גוף, ידית, מקדח",
+    desc_en: "Power drill — body, handle, bit",
     before: `${CDN}/before-drill_64d49d0c.jpg`,
     after: `${CDN}/after-drill_fe1af063.png`,
   },
   {
     label_he: "חתול",
     label_en: "Cat",
+    desc_he: "חתול יושב — פרווה, עיניים, זנב",
+    desc_en: "Sitting cat — fur, eyes, tail",
     before: `${CDN}/before-cat_dcacb10f.jpg`,
     after: `${CDN}/after-cat_b2225f8d.png`,
   },
   {
     label_he: "אופנוע",
     label_en: "Motorcycle",
+    desc_he: "אופנוע קלאסי — מנוע, גלגלים, מסגרת",
+    desc_en: "Classic motorcycle — engine, wheels, frame",
     before: `${CDN}/before-motorcycle_45e267a0.jpg`,
     after: `${CDN}/after-motorcycle_75dff73c.png`,
   },
   {
     label_he: "טוקן",
     label_en: "Toucan",
+    desc_he: "ציפור טוקי — מקור גדול, נוצות, ענף",
+    desc_en: "Toucan bird — large beak, feathers, branch",
     before: `${CDN}/before-toucan_5f8de07e.jpg`,
     after: `${CDN}/after-toucan_c73d6aac.png`,
   },
@@ -169,6 +185,13 @@ const AI_EXAMPLES = [
     prompt_en: "Modern space rocket",
     img: `${CDN}/ai-rocket_d39317d5.png`,
   },
+  {
+    label_he: "מספריים מקצועיות",
+    label_en: "Professional Scissors",
+    prompt_he: "מספריים מקצועיות",
+    prompt_en: "Professional scissors",
+    img: `${CDN}/ai-create-scissors-QopeAzD8GtJKXM92QkvmRD.webp`,
+  },
 ];
 
 const FALLBACK_PACKAGES = [
@@ -206,11 +229,18 @@ function BeforeAfterCard({ item, isRtl }: { item: typeof BEFORE_AFTER[0]; isRtl:
           {showAfter ? (isRtl ? "אחרי ← לפני" : "After ← Before") : (isRtl ? "לחץ לראות DXF" : "Click to see DXF")}
         </div>
       </div>
-      <div style={{ padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ fontWeight: 700, fontSize: 14, color: "#1e1b4b" }}>{isRtl ? item.label_he : item.label_en}</span>
-        <span style={{ fontSize: 11, color: showAfter ? "#6366f1" : "#9ca3af", fontWeight: 600 }}>
-          {showAfter ? "DXF" : (isRtl ? "מקור" : "Original")}
-        </span>
+      <div style={{ padding: "10px 14px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
+          <span style={{ fontWeight: 700, fontSize: 14, color: "#1e1b4b" }}>{isRtl ? item.label_he : item.label_en}</span>
+          <span style={{ fontSize: 11, color: showAfter ? "#6366f1" : "#9ca3af", fontWeight: 600 }}>
+            {showAfter ? "DXF" : (isRtl ? "מקור" : "Original")}
+          </span>
+        </div>
+        {'desc_he' in item && (
+          <div style={{ fontSize: 11, color: "#6b7280", lineHeight: 1.4 }}>
+            {isRtl ? (item as any).desc_he : (item as any).desc_en}
+          </div>
+        )}
       </div>
     </div>
   );
