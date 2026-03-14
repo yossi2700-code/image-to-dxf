@@ -1132,6 +1132,45 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
               </div>
             )}
 
+            {/* Before / After comparison panel */}
+            {(imagePreview || tryAgainUrl) && result.images.length > 0 && (
+              <div
+                className="rounded-xl overflow-hidden"
+                style={{ border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+              >
+                <div className="flex items-center gap-2 px-4 py-2.5" style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                  <Eye className="w-3.5 h-3.5 text-gray-500" />
+                  <span className="text-xs font-semibold text-gray-600">{isRtl ? 'לפני ואחרי' : 'Before & After'}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-0">
+                  <div className="relative" style={{ borderRight: '1px solid #e2e8f0' }}>
+                    <div className="absolute top-2 left-2 z-10 text-xs font-bold px-2 py-0.5 rounded" style={{ background: 'rgba(0,0,0,0.55)', color: 'white' }}>
+                      {isRtl ? 'מקור' : 'Original'}
+                    </div>
+                    <img
+                      src={imagePreview || tryAgainUrl || ''}
+                      alt="original"
+                      className="w-full block cursor-zoom-in"
+                      style={{ aspectRatio: '1', objectFit: 'contain', background: '#f8fafc' }}
+                      onClick={() => setZoomImg({ src: imagePreview || tryAgainUrl || '', alt: isRtl ? 'תמונה מקורית' : 'Original' })}
+                    />
+                  </div>
+                  <div className="relative">
+                    <div className="absolute top-2 left-2 z-10 text-xs font-bold px-2 py-0.5 rounded" style={{ background: 'rgba(13,148,136,0.85)', color: 'white' }}>
+                      {isRtl ? 'וקטור' : 'Vector'}
+                    </div>
+                    <img
+                      src={result.images[0].imageUrl}
+                      alt="vector"
+                      className="w-full block cursor-zoom-in"
+                      style={{ aspectRatio: '1', objectFit: 'contain', background: '#f8fafc' }}
+                      onClick={() => setZoomImg({ src: result.images[0].imageUrl, alt: isRtl ? 'וקטור' : 'Vector' })}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {result.images.map((image, idx) => (
                 <ImageCard

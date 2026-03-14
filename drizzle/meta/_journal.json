@@ -204,6 +204,34 @@
       "when": 1773438471195,
       "tag": "0028_broken_zarda",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "5",
+      "when": 1773493645747,
+      "tag": "0029_fearless_spiral",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "5",
+      "when": 1773495198130,
+      "tag": "0030_magical_jane_foster",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "5",
+      "when": 1773495855583,
+      "tag": "0031_thick_vanisher",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "5",
+      "when": 1773501907593,
+      "tag": "0032_right_mesmero",
+      "breakpoints": true
     }
   ]
 }
