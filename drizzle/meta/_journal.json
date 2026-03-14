@@ -211,6 +211,13 @@
       "when": 1773493645747,
       "tag": "0029_fearless_spiral",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "5",
+      "when": 1773495198130,
+      "tag": "0030_magical_jane_foster",
+      "breakpoints": true
     }
   ]
 }

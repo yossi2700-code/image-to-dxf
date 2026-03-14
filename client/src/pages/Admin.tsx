@@ -193,6 +193,7 @@ type RecentEvent = {
   createdAt: Date;
   appUserId: number | null;
   durationMs: number | null;
+  fileSizeKb: number | null;
   userName: string | null;
   userEmail: string | null;
 };
@@ -282,7 +283,7 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
                   <th className="text-right py-2 px-3 font-medium">תמונה</th>
                   <th className="text-right py-2 px-3 font-medium">משתמש</th>
                   <th className="text-right py-2 px-3 font-medium">סוג</th>
-                  <th className="text-right py-2 px-3 font-medium">קווים</th>
+                  <th className="text-right py-2 px-3 font-medium">נפח</th>
                   <th className="text-right py-2 px-3 font-medium">זמן עיבוד</th>
                   <th className="text-right py-2 px-3 font-medium">תאריך</th>
                 </tr>
@@ -316,7 +317,9 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
                         {ev.type === "convert" ? <><Upload className="w-3 h-3" />המרה</> : <><Sparkles className="w-3 h-3" />AI</>}
                       </span>
                     </td>
-                    <td className="py-2 px-3 text-slate-500 font-mono text-sm">{(ev.segmentCount ?? 0).toLocaleString()}</td>
+                    <td className="py-2 px-3 text-slate-500 font-mono text-sm">
+                      {ev.fileSizeKb != null ? `${ev.fileSizeKb} KB` : <span className="text-slate-300">—</span>}
+                    </td>
                     <td className="py-2 px-3 text-xs whitespace-nowrap">
                       {ev.durationMs != null ? (
                         <span className={`font-mono font-medium ${
@@ -835,9 +838,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                     <tr className="border-b text-muted-foreground">
                       <th className="text-right py-2 pr-2 font-medium">תמונה</th>
                       <th className="text-right py-2 pr-2 font-medium">סוג</th>
-                      <th className="text-right py-2 font-medium">קווים</th>
+                      <th className="text-right py-2 font-medium">נפח</th>
                       <th className="text-right py-2 font-medium">זמן עיבוד</th>
-                      <th className="text-right py-2 font-medium">IP</th>
                       <th className="text-right py-2 font-medium">תאריך ושעה</th>
                     </tr>
                   </thead>
@@ -863,7 +865,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             {ev.type === "convert" ? <><Upload className="w-3 h-3" />המרה</> : <><Sparkles className="w-3 h-3" />AI</>}
                           </span>
                         </td>
-                        <td className="py-2 text-muted-foreground">{(ev.segmentCount ?? 0).toLocaleString()}</td>
+                        <td className="py-2 text-muted-foreground font-mono text-xs">
+                          {ev.fileSizeKb != null ? `${ev.fileSizeKb} KB` : <span className="opacity-40">—</span>}
+                        </td>
                         <td className="py-2 text-xs">
                           {ev.durationMs != null ? (
                             <span className={`font-mono font-medium ${
@@ -877,7 +881,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             </span>
                           ) : <span className="text-muted-foreground/40">—</span>}
                         </td>
-                        <td className="py-2 font-mono text-xs text-muted-foreground">{ev.ipAnon ?? "—"}</td>
                         <td className="py-2 text-muted-foreground text-xs">{new Date(ev.createdAt).toLocaleString("he-IL")}</td>
                       </tr>
                     ))}

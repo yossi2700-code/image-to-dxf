@@ -42,6 +42,8 @@ export const usageEvents = mysqlTable("usage_events", {
   appUserId: int("appUserId"),
   /** Processing duration in milliseconds (null for old records) */
   durationMs: int("durationMs"),
+  /** Output file size in kilobytes (null for old records) */
+  fileSizeKb: int("fileSizeKb"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

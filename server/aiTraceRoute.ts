@@ -487,11 +487,16 @@ async function runTraceJob(
 
     // Log usage
     const totalSegments = images.reduce((s, img) => s + img.segmentCount, 0);
+    // Estimate total file size from DXF SVG previews (proxy for output size)
+    const totalFileSizeKb = Math.round(
+      images.reduce((sum, img) => sum + Buffer.byteLength(img.svgPreview ?? "", "utf-8"), 0) / 1024
+    );
     void logUsageEvent({
       type: "ai_generate",
       segmentCount: Math.round(totalSegments / images.length),
       ipAnon: anonymizeIp(ipAnon),
       durationMs: Date.now() - jobStartTime,
+      fileSizeKb: totalFileSizeKb,
     });
 
     // Record user actions
