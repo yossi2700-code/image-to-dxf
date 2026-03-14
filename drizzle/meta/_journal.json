@@ -218,6 +218,13 @@
       "when": 1773495198130,
       "tag": "0030_magical_jane_foster",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "5",
+      "when": 1773495855583,
+      "tag": "0031_thick_vanisher",
+      "breakpoints": true
     }
   ]
 }

@@ -523,6 +523,7 @@ async function runTraceJob(
         variationLabel: variationLabels[i] ?? `v${i + 1}`,
         sourceImageUrl: sourceImageUrl ?? undefined,
         feature: "ai_trace",
+        durationMs: Date.now() - jobStartTime,
       });
     }
 

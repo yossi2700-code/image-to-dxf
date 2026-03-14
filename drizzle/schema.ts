@@ -109,6 +109,8 @@ export const userActions = mysqlTable("user_actions", {
   sourceImageUrl: text("sourceImageUrl"),
   /** Feature/category: convert | ai_trace | ai_generate | portrait | document_redraw */
   feature: varchar("feature", { length: 32 }),
+  /** Processing duration in milliseconds */
+  durationMs: int("durationMs"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

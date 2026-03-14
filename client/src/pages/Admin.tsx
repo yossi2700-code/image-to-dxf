@@ -276,9 +276,9 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
         {recentLoading ? (
           <div className="space-y-2 p-4">{[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-muted animate-pulse rounded-lg" />)}</div>
         ) : filtered.length > 0 ? (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
             <table className="w-full text-sm">
-              <thead>
+              <thead className="sticky top-0 z-10">
                 <tr className="border-b bg-slate-50 text-slate-500">
                   <th className="text-right py-2 px-3 font-medium">תמונה</th>
                   <th className="text-right py-2 px-3 font-medium">משתמש</th>
@@ -832,9 +832,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             {recentLoading ? (
               <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-muted animate-pulse rounded-lg" />)}</div>
             ) : recent && recent.length > 0 ? (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
                 <table className="w-full text-sm">
-                  <thead>
+                  <thead className="sticky top-0 bg-card z-10">
                     <tr className="border-b text-muted-foreground">
                       <th className="text-right py-2 pr-2 font-medium">תמונה</th>
                       <th className="text-right py-2 pr-2 font-medium">סוג</th>
@@ -1230,6 +1230,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                 <tr className="text-muted-foreground border-b">
                                   <th className="text-right py-1.5 pr-2 font-medium">סוג</th>
                                   <th className="text-right py-1.5 pr-2 font-medium">תיאור</th>
+                                  <th className="text-right py-1.5 font-medium">זמן עיבוד</th>
                                   <th className="text-right py-1.5 font-medium">תאריך</th>
                                   <th className="text-right py-1.5 font-medium">תצוגה / הורדה</th>
                                 </tr>
@@ -1249,6 +1250,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                       </span>
                                     </td>
                                     <td className="py-1.5 pr-2 text-muted-foreground max-w-[140px] truncate">{a.description ?? "—"}</td>
+                                    <td className="py-1.5 text-xs">
+                                      {a.durationMs != null ? (
+                                        <span className={`font-mono font-medium ${
+                                          a.durationMs < 30000 ? 'text-green-600' :
+                                          a.durationMs < 90000 ? 'text-amber-600' : 'text-red-500'
+                                        }`}>
+                                          {a.durationMs < 60000
+                                            ? `${(a.durationMs / 1000).toFixed(0)}ש'`
+                                            : `${Math.floor(a.durationMs / 60000)}:${((a.durationMs % 60000) / 1000).toFixed(0).padStart(2,'0')}ד'`
+                                          }
+                                        </span>
+                                      ) : <span className="text-muted-foreground/40">—</span>}
+                                    </td>
                                     <td className="py-1.5 text-muted-foreground">{new Date(a.createdAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}</td>
                                     <td className="py-1.5">
                                       <div className="flex items-center gap-2">

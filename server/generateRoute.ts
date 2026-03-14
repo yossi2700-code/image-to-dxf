@@ -313,6 +313,7 @@ async function runGenerateJob(
         groupId,
         variationLabel: variationLabels[i] ?? `v${i + 1}`,
         feature: "ai_generate",
+        durationMs: Date.now() - jobStartTime,
       });
     }
 
