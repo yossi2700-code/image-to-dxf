@@ -66,11 +66,12 @@ const STYLE_VARIATIONS = [
     label: "simple",
     style:
       "STRICT LINE ART ONLY: pure black (#000000) lines on pure white (#FFFFFF) background. " +
-      "Draw outer silhouette and 10-15 key structural interior lines. " +
+      "Draw outer silhouette and key structural interior lines that capture the realistic form. " +
       "ABSOLUTELY NO: shading, shadows, gradients, grey tones, hatching, cross-hatching, stippling, texture fills, dark areas, filled regions. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
       "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
-      "Style: clean coloring-book outline drawing with smooth ink strokes.",
+      "CRITICAL: Preserve REALISTIC proportions — do NOT cartoonify, do NOT enlarge eyes, do NOT round body shapes. " +
+      "Style: clean realistic line art with smooth ink strokes, preserving natural anatomy.",
   },
   {
     label: "detailed",
@@ -80,7 +81,8 @@ const STYLE_VARIATIONS = [
       "ABSOLUTELY NO: shading, shadows, gradients, grey tones, hatching, cross-hatching, stippling, texture fills, dark areas, filled regions. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
       "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
-      "Style: detailed technical illustration with smooth clean ink lines only.",
+      "CRITICAL: Preserve REALISTIC proportions — do NOT cartoonify, do NOT enlarge eyes, do NOT round body shapes. " +
+      "Style: detailed realistic technical illustration with smooth clean ink lines, preserving natural anatomy.",
   },
   {
     label: "decorative",
@@ -407,7 +409,10 @@ async function runTraceJob(
             `Convert this image to clean black and white line art suitable for CNC engraving or laser cutting. ` +
             `Draw ONLY the main subject on a pure white background — remove the background completely. ` +
             `Use only pure black (#000000) lines on pure white (#FFFFFF). No shading, no grey tones, no gradients, no hatching. ` +
-            `Preserve the exact proportions and shape of the original object. ` +
+            `CRITICAL: Preserve the EXACT realistic proportions, anatomy, and features of the original subject. ` +
+            `DO NOT simplify, cartoonify, chibi-fy, or stylize — keep the realistic adult proportions and natural features. ` +
+            `If the subject is an animal, preserve its realistic adult anatomy: correct eye size, natural body proportions, realistic fur/texture lines. ` +
+            `DO NOT make eyes larger, DO NOT round the body, DO NOT add cute/cartoon features. ` +
             `${variation.style} ` +
             `No text, no letters, no numbers, no logos, no watermarks anywhere.`
           );
