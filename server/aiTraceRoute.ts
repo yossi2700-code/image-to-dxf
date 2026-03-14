@@ -439,7 +439,8 @@ async function runTraceJob(
 
       const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm);
       const imgKey = `ai-trace-generated/${nanoid()}.png`;
-      const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
+      // Upload the processed B&W buffer (grayscale+threshold) — NOT rawBuffer which may contain color pixels
+      const { url: imageUrl } = await storagePut(imgKey, processedBuffer, "image/png");
       const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
       const dxfKey = `ai-trace-dxf/${nanoid()}-${dxfFilename}`;
       const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");

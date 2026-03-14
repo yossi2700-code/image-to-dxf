@@ -259,7 +259,8 @@ async function runGenerateJob(
       const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, minGapMm);
 
       const imgKey = `ai-generated/${nanoid()}.png`;
-      const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
+      // Upload the processed B&W buffer (grayscale+threshold) — NOT rawBuffer which may contain color pixels
+      const { url: imageUrl } = await storagePut(imgKey, paddedBuffer, "image/png");
 
       const variation = STYLE_VARIATIONS[idx % STYLE_VARIATIONS.length];
       const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
