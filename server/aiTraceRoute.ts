@@ -76,11 +76,13 @@ const STYLE_VARIATIONS = [
     label: "detailed",
     style:
       "STRICT LINE ART ONLY: pure black (#000000) lines on pure white (#FFFFFF) background. " +
-      "Draw all structural features, surface details, and fine contours as clean lines. " +
-      "ABSOLUTELY NO: shading, shadows, gradients, grey tones, hatching, cross-hatching, stippling, texture fills, dark areas, filled regions. " +
-      "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
+      "Draw all structural features AND add surface texture patterns on prominent textured surfaces. " +
+      "TEXTURE RULE: For any surface that has visible texture in the original (knurled grip, rubber handle, ribbed surface, woven fabric, wood grain, fur, feathers, scales, tire tread, mesh, perforated surface): " +
+      "draw that texture using repeated short lines, cross-hatch, or dot patterns ONLY on that specific surface area — not everywhere. " +
+      "ABSOLUTELY NO: shading, shadows, gradients, grey tones, large filled dark areas. " +
+      "Every large enclosed area must remain mostly white — texture lines are sparse, not dense fills. " +
       "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
-      "Style: detailed technical illustration with smooth clean ink lines only.",
+      "Style: detailed technical illustration with clean ink lines and selective surface texture on prominent parts only.",
   },
   {
     label: "decorative",
@@ -417,7 +419,7 @@ async function runTraceJob(
             // General object prompt — gpt-image-1 edit
             `Convert this image to clean black and white line art suitable for CNC engraving or laser cutting. ` +
             `Draw ONLY the main subject on a pure white background — remove the background completely. ` +
-            `Use only pure black (#000000) lines on pure white (#FFFFFF). No shading, no grey tones, no gradients, no hatching. ` +
+            `Use only pure black (#000000) lines on pure white (#FFFFFF). No shading, no grey tones, no gradients. ` +
             `Preserve the exact proportions and shape of the original object. ` +
             `${variation.style} ` +
             `No text, no letters, no numbers, no logos, no watermarks anywhere.`

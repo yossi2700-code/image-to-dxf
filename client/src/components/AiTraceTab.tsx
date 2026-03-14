@@ -758,8 +758,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                   ? ["קווי מתאר נקיים ומהירים", "עשיר בפרטים, מדויק יותר"]
                   : ["Clean outlines, faster", "Rich detail, more precise"];
                 const demoImages = [
-                  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-simple-v2-EXVZzWzFw9SqyJ3KGzAuHu.webp",
-                  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-detailed-v2-fkBrMaQoFG3yrFaAAqSLda.webp",
+                  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-simple-drill-VUf8DhCySNEXzBujeagGhm.webp",
+                  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-detailed-drill-We5GLXBRmWGvi3TAW4UnEt.webp",
                 ];
                 const borderColors = ["#6366f1", "#0d9488"];
                 const gradients = [
