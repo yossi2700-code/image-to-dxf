@@ -23,6 +23,8 @@ export interface RecordActionParams {
   sourceImageUrl?: string;
   /** Feature/category: convert | ai_trace | ai_generate | portrait | document_redraw */
   feature?: string;
+  /** Processing duration in milliseconds */
+  durationMs?: number;
 }
 
 export async function recordUserAction(params: RecordActionParams): Promise<void> {
@@ -41,6 +43,7 @@ export async function recordUserAction(params: RecordActionParams): Promise<void
       variationLabel: params.variationLabel ?? null,
       sourceImageUrl: params.sourceImageUrl ?? null,
       feature: params.feature ?? null,
+      durationMs: params.durationMs ?? null,
     });
   } catch (err) {
     // Non-critical — don't fail the request if logging fails

@@ -252,14 +252,16 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("ai_trace_jobId"));
   const [tryAgainUrl, setTryAgainUrl] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<string>("");
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // previewRef holds the latest preview URL without causing re-renders when read inside handleTrace
   const previewRef = useRef<string | null>(localStorage.getItem("ai_trace_imagePreview"));
 
   const setJobIdPersisted = useCallback((id: string | null) => {
     if (id) localStorage.setItem("ai_trace_jobId", id);
-    else { localStorage.removeItem("ai_trace_jobId"); localStorage.removeItem("ai_trace_imagePreview"); }
+    else { localStorage.removeItem("ai_trace_jobId"); } // Keep imagePreview so before/after panel shows after job completes
     setJobId(id);
   }, []);
 
@@ -290,11 +292,13 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
         const data = await res.json();
         if (data.status === "done") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
           const traceResult = data.result as TraceResult;
           setResult(traceResult);
           saveResultToCache(traceResult);
           setStatus("success");
           setCurrentStep("");
+          setElapsedSeconds(0);
           setJobIdPersisted(null);
           refetchTokens();
           const successMsg = isRtl ? `העיצוב מוכן! לחץ הורד DXF` : `Design ready! Click Download DXF`;
@@ -334,13 +338,17 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
           setErrorMsg(msg);
           setStatus("error");
           setCurrentStep("");
+          setElapsedSeconds(0);
+          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
           setJobIdPersisted(null);
           if (!isTokenError) refetchTokens(); // Refresh balance to show refunded tokens
           toast.error(msg);
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
           setStatus("idle");
           setCurrentStep("");
+          setElapsedSeconds(0);
           setJobIdPersisted(null);
         } else if (data.step || data.stepEn) {
           // Update current step message
@@ -373,13 +381,18 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
         }
       } catch (_) { /* ignore */ }
     }
-    return () => { if (pollIntervalRef.current) clearInterval(pollIntervalRef.current); };
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCancel = useCallback(async () => {
     if (!jobId) return;
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    setElapsedSeconds(0);
     try {
       const res = await fetch(`/api/ai-trace/cancel/${jobId}`, { method: "POST", credentials: "include" });
       const data = await res.json();
@@ -495,10 +508,13 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
       // Server returns jobId — start polling (background processing)
       if (data.jobId) {
         setJobIdPersisted(data.jobId);
+        setElapsedSeconds(0);
+        if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
         startPolling(data.jobId);
         // Request push notification permission so we can notify when done
         if ("Notification" in window && Notification.permission === "default") {
-          Notification.requestPermission();
+          setTimeout(() => Notification.requestPermission(), 3000);
         }
       } else {
         // Legacy direct response
@@ -954,11 +970,36 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                   </p>
                 </div>
               </div>
-              <p className="text-xs text-gray-400">{t("processingTime")}</p>
-              <div className="flex gap-1.5">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-teal-400" style={{animation: `bounce 1s infinite ${i * 0.15}s`}} />
-                ))}
+              {/* Wave animation + elapsed timer + phase messages */}
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center gap-1">
+                  {[0,1,2,3,4].map((i) => (
+                    <div
+                      key={i}
+                      className="rounded-full"
+                      style={{
+                        width: 8,
+                        height: 8,
+                        background: `hsl(${168 + i * 8}, 80%, ${45 + i * 5}%)`,
+                        animation: `wave 1.4s ease-in-out infinite`,
+                        animationDelay: `${i * 0.12}s`,
+                      }}
+                    />
+                  ))}
+                </div>
+                <p className="text-xs font-medium" style={{ color: '#0d9488', minHeight: 18 }}>
+                  {elapsedSeconds < 10
+                    ? (isRtl ? '🧠 AI מנתח את התמונה...' : '🧠 AI analyzing image...')
+                    : elapsedSeconds < 40
+                    ? (isRtl ? '✏️ מצייר קווים וקטוריים...' : '✏️ Drawing vector lines...')
+                    : elapsedSeconds < 80
+                    ? (isRtl ? '✨ משפר פרטים דקים...' : '✨ Refining fine details...')
+                    : (isRtl ? '💫 כמעט מוכן...' : '💫 Almost ready...')
+                  }
+                </p>
+                <p className="text-xs text-gray-400">
+                  {Math.floor(elapsedSeconds / 60).toString().padStart(2,'0')}:{(elapsedSeconds % 60).toString().padStart(2,'0')}
+                </p>
               </div>
               {jobId && (
                 <p className="text-xs text-gray-400">
@@ -1034,7 +1075,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                     style={{ background: '#0d9488', color: 'white', border: 'none' }}
                   >
                     <ImageIcon className="w-3.5 h-3.5" />
-                    {t("imageSelected")}
+                    {t("changeImage")}
                   </label>
                 </div>
                 {result.objectDescription && (
