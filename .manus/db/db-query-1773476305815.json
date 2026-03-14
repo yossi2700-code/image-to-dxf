@@ -1,0 +1,37 @@
+{
+  "query": "SELECT packageId, label, tokenAmount, priceILS, priceUSD, priceEUR, badge FROM package_prices ORDER BY tokenAmount;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT packageId, label, tokenAmount, priceILS, priceUSD, priceEUR, badge FROM package_prices ORDER BY tokenAmount;",
+  "rows": [
+    {
+      "packageId": "tokens_3",
+      "label": "30",
+      "tokenAmount": "30",
+      "priceILS": "29",
+      "priceUSD": "7.83",
+      "priceEUR": "7.25",
+      "badge": "trial"
+    },
+    {
+      "packageId": "tokens_1",
+      "label": "100",
+      "tokenAmount": "100",
+      "priceILS": "59",
+      "priceUSD": "15.93",
+      "priceEUR": "14.75",
+      "badge": "recommended"
+    },
+    {
+      "packageId": "tokens_300",
+      "label": "300 אסימונים",
+      "tokenAmount": "300",
+      "priceILS": "129",
+      "priceUSD": "34.83",
+      "priceEUR": "32.25",
+      "badge": "sale"
+    }
+  ],
+  "messages": [],
+  "stdout": "packageId\tlabel\ttokenAmount\tpriceILS\tpriceUSD\tpriceEUR\tbadge\ntokens_3\t30\t30\t29\t7.83\t7.25\ttrial\ntokens_1\t100\t100\t59\t15.93\t14.75\trecommended\ntokens_300\t300 אסימונים\t300\t129\t34.83\t32.25\tsale\n",
+  "stderr": "",
+  "execution_time_ms": 2106
+}

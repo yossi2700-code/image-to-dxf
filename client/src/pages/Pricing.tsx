@@ -8,45 +8,31 @@ import {
   ChevronDown, ChevronUp, Layers
 } from "lucide-react";
 
-// ─── Currency detection ───────────────────────────────────────────────────────
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  USD: "$", EUR: "€", GBP: "£", ILS: "₪", CAD: "CA$", AUD: "A$",
-};
-
-const TZ_CURRENCY: Record<string, string> = {
-  "Asia/Jerusalem": "ILS", "Asia/Tel_Aviv": "ILS",
-  "Europe/London": "GBP",
-  "America/Toronto": "CAD", "America/Vancouver": "CAD",
-  "Australia/Sydney": "AUD", "Australia/Melbourne": "AUD",
-  "Europe/Berlin": "EUR", "Europe/Paris": "EUR", "Europe/Madrid": "EUR",
-};
-
-function detectCurrency(): string {
-  try {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (TZ_CURRENCY[tz]) return TZ_CURRENCY[tz];
-    const locale = navigator.language || "en-US";
-    if (locale.startsWith("he")) return "ILS";
-    if (locale.startsWith("en-GB")) return "GBP";
-    if (locale.startsWith("en-CA")) return "CAD";
-    if (locale.startsWith("en-AU")) return "AUD";
-    if (locale.startsWith("de") || locale.startsWith("fr") || locale.startsWith("es")) return "EUR";
-  } catch { /* ignore */ }
-  return "USD";
-}
+// ─── Currency: ILS only ───────────────────────────────────────────────────────
+const CURRENCY = "ILS";
+const CURRENCY_SYMBOL = "₪";
 
 const FALLBACK_PACKAGES = [
   {
-    id: "tokens_50",
-    tokens: 50,
+    id: "tokens_3",
+    tokens: 30,
     popular: false,
-    prices: { USD: "29.00", EUR: "27.00", GBP: "23.00", ILS: "109.00", CAD: "40.00", AUD: "45.00" } as Record<string, string>,
+    badge: "trial",
+    prices: { ILS: "29" } as Record<string, string>,
   },
   {
-    id: "tokens_100",
+    id: "tokens_1",
     tokens: 100,
     popular: true,
-    prices: { USD: "49.00", EUR: "45.00", GBP: "39.00", ILS: "185.00", CAD: "67.00", AUD: "75.00" } as Record<string, string>,
+    badge: "recommended",
+    prices: { ILS: "59" } as Record<string, string>,
+  },
+  {
+    id: "tokens_300",
+    tokens: 300,
+    popular: false,
+    badge: "sale",
+    prices: { ILS: "129" } as Record<string, string>,
   },
 ];
 
@@ -187,7 +173,6 @@ function AnimatedNumber({ target, suffix = "" }: { target: number; suffix?: stri
 export default function Pricing() {
   const { isRtl } = useLanguage();
   const [, navigate] = useLocation();
-  const [currency, setCurrency] = useState(() => detectCurrency());
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [statsVisible, setStatsVisible] = useState(false);
 
@@ -197,21 +182,17 @@ export default function Pricing() {
     ? dbPrices.map((p) => ({
         id: p.packageId,
         tokens: p.tokenAmount,
-        popular: p.packageId === "tokens_100",
+        popular: p.packageId === "tokens_1",
         label: p.label,
         badge: p.badge ?? null,
-        prices: {
-          USD: p.priceUSD, EUR: p.priceEUR, ILS: p.priceILS,
-          GBP: p.priceGBP, AUD: p.priceAUD, CAD: p.priceCAD,
-        } as Record<string, string>,
+        prices: { ILS: p.priceILS } as Record<string, string>,
       }))
     : FALLBACK_PACKAGES;
 
   const testimonials = isRtl ? TESTIMONIALS_HE : TESTIMONIALS_EN;
   const comparison = isRtl ? COMPARISON_HE : COMPARISON_EN;
   const faq = isRtl ? FAQ_HE : FAQ_EN;
-  const symbol = CURRENCY_SYMBOLS[currency] ?? "$";
-  const currencies = ["ILS", "USD", "EUR", "GBP", "CAD", "AUD"];
+  const symbol = CURRENCY_SYMBOL;
 
   // Trigger stats animation on scroll
   useEffect(() => {
@@ -280,22 +261,9 @@ export default function Pricing() {
               : "Convert images to DXF, generate AI designs, and trace outlines — all for one token per action"}
           </p>
 
-          {/* Currency selector */}
-          <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap" }}>
-            {currencies.map((c) => (
-              <button
-                key={c}
-                onClick={() => setCurrency(c)}
-                style={{
-                  padding: "7px 16px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.15s",
-                  background: currency === c ? "#fff" : "rgba(255,255,255,0.08)",
-                  color: currency === c ? "#6366f1" : "rgba(255,255,255,0.7)",
-                  border: currency === c ? "1px solid #fff" : "1px solid rgba(255,255,255,0.15)",
-                }}
-              >
-                {CURRENCY_SYMBOLS[c]} {c}
-              </button>
-            ))}
+          {/* Currency badge */}
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 100, padding: "6px 16px" }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>₪ מחירים בשקל ישראלי</span>
           </div>
         </div>
       </section>
@@ -303,7 +271,7 @@ export default function Pricing() {
       {/* ── Packages ── */}
       <section style={{ maxWidth: 900, margin: "-40px auto 0", padding: "0 20px 60px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24, position: "relative", zIndex: 2 }}>
         {packages.map((pkg) => {
-          const price = pkg.prices[currency] ?? pkg.prices["USD"] ?? "—";
+          const price = pkg.prices[CURRENCY] ?? "—";
           const perToken = price !== "—" ? (parseFloat(price) / pkg.tokens).toFixed(2) : "—";
 
           return (
@@ -353,7 +321,7 @@ export default function Pricing() {
               </p>
 
               <button
-                onClick={() => navigate(`/buy?package=${pkg.id}&currency=${currency}`)}
+                onClick={() => navigate(`/buy?package=${pkg.id}&currency=ILS`)}
                 style={{
                   width: "100%", padding: "15px 0", borderRadius: 14, fontWeight: 800, fontSize: 16, cursor: "pointer",
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 0.2s",
@@ -632,6 +600,66 @@ export default function Pricing() {
               )}
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── Business Plan Teaser ── */}
+      <section style={{ maxWidth: 860, margin: "0 auto 60px", padding: "0 20px" }}>
+        <div style={{
+          background: "linear-gradient(135deg, #0f172a, #1e1b4b)",
+          borderRadius: 24,
+          padding: "40px 40px",
+          display: "flex",
+          alignItems: "center",
+          gap: 28,
+          flexWrap: "wrap",
+          boxShadow: "0 8px 40px rgba(99,102,241,0.25)",
+          border: "1px solid rgba(99,102,241,0.3)",
+          position: "relative",
+          overflow: "hidden",
+        }}>
+          {/* Glow */}
+          <div style={{ position: "absolute", top: -40, right: -40, width: 200, height: 200, borderRadius: "50%", background: "rgba(99,102,241,0.15)", filter: "blur(50px)", pointerEvents: "none" }} />
+          <div style={{ fontSize: 52, position: "relative", zIndex: 1 }}>🏢</div>
+          <div style={{ flex: 1, minWidth: 220, position: "relative", zIndex: 1 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(99,102,241,0.2)", border: "1px solid rgba(99,102,241,0.4)", borderRadius: 100, padding: "3px 12px", marginBottom: 10 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#a5b4fc", letterSpacing: "0.05em" }}>בקרוב</span>
+            </div>
+            <p style={{ fontWeight: 900, fontSize: 22, color: "#fff", margin: "0 0 8px", letterSpacing: "-0.02em" }}>
+              {isRtl ? "מנוי עסקי" : "Business Subscription"}
+            </p>
+            <p style={{ fontSize: 14, color: "rgba(199,210,254,0.75)", margin: "0 0 16px", lineHeight: 1.6 }}>
+              {isRtl
+                ? "מנוי חודשי לעסקים עם אסימונים ללא הגבלה, ניהול צוות, ו-API גישה. מתאים לסטודיות, מפעלים ומעצבים מקצועיים."
+                : "Monthly subscription for businesses with unlimited tokens, team management, and API access."}
+            </p>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              {[
+                isRtl ? "אסימונים ללא הגבלה" : "Unlimited tokens",
+                isRtl ? "ניהול צוות" : "Team management",
+                isRtl ? "גישת API" : "API access",
+                isRtl ? "חשבונית מס" : "Tax invoice",
+              ].map((f, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(255,255,255,0.06)", borderRadius: 8, padding: "5px 12px" }}>
+                  <Check size={12} color="#6366f1" strokeWidth={3} />
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>{f}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <button
+            onClick={() => { window.location.href = "mailto:support@dxfai.net?subject=מנוי עסקי"; }}
+            style={{
+              background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#fff", border: "none", borderRadius: 14,
+              padding: "14px 28px", fontWeight: 800, fontSize: 15, cursor: "pointer",
+              boxShadow: "0 4px 20px rgba(99,102,241,0.5)", whiteSpace: "nowrap", transition: "all 0.2s",
+              position: "relative", zIndex: 1,
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = "none"; }}
+          >
+            {isRtl ? "השאר פרטים →" : "Get notified →"}
+          </button>
         </div>
       </section>
 
