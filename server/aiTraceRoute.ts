@@ -441,16 +441,18 @@ async function runTraceJob(
       if (!b64) throw new Error("gpt-image-1 did not return image data");
       let rawBuffer = Buffer.from(b64, "base64");
 
-      // Add white padding around the AI-generated image, then process at full 1536px resolution
+      // Add white padding around the AI-generated image, then process at 3072px resolution
+      // Higher resolution = more pixels for potrace → smoother curves, less jagged edges
       // Simple mode (idx=0): light blur, higher threshold → clean outlines, removes fine noise
       // Detailed mode (idx=1): moderate blur merges double texture lines into single strokes,
       //   lower threshold keeps detail, higher optTolerance gives smoother curves
       const isDetailedMode = idx === 1;
-      const blurAmount = isDetailedMode ? 1.8 : 1.5;  // more blur in detailed → merges double lines
+      // Blur scaled up proportionally for 3072px (was 1.5/1.8 at 1536px → 3.0/3.6 at 3072px)
+      const blurAmount = isDetailedMode ? 3.6 : 3.0;
       const thresholdValue = isDetailedMode ? 148 : 160;
       const processedBuffer = await sharp(rawBuffer)
-        .extend({ top: 80, bottom: 80, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-        .resize(1536, 1536, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .grayscale()
         .blur(blurAmount)
         .threshold(thresholdValue)
@@ -458,10 +460,11 @@ async function runTraceJob(
         .toBuffer();
 
       // Simple: large turdSize removes small details; Detailed: small turdSize keeps texture/detail lines
+      // turdSize scaled up for 3072px (4x area = ~4x turdSize)
       // Detailed: higher optTolerance (0.6) = smoother curves; lower alphaMax = rounder corners
       const potraceOptions = isDetailedMode
-        ? { threshold: 128, turdSize: 12, alphaMax: 0.8, optCurve: true, optTolerance: 0.6 }
-        : { threshold: 128, turdSize: 40, alphaMax: 1.0, optCurve: true, optTolerance: 0.4 };
+        ? { threshold: 128, turdSize: 48, alphaMax: 0.8, optCurve: true, optTolerance: 0.6 }
+        : { threshold: 128, turdSize: 160, alphaMax: 1.0, optCurve: true, optTolerance: 0.4 };
 
       const rawSvg = await new Promise<string>((resolve, reject) => {
         potrace.trace(processedBuffer, potraceOptions, (err: Error | null, svg: string) => {
