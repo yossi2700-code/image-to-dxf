@@ -70,8 +70,8 @@ const STYLE_VARIATIONS = [
       "ABSOLUTELY NO: shading, shadows, gradients, grey tones, hatching, cross-hatching, stippling, texture fills, dark areas, filled regions. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
       "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
-      "CRITICAL: Preserve REALISTIC proportions — do NOT cartoonify, do NOT enlarge eyes, do NOT round body shapes. " +
-      "This must look like a realistic illustration, NOT a cartoon or coloring book. Photorealistic tracing style.",
+      "CRITICAL: Preserve the EXACT proportions visible in the source photo — do not idealize, beautify, or change the shape. " +
+      "Trace what you see, not what you imagine the subject should look like.",
   },
   {
     label: "detailed",
@@ -81,8 +81,8 @@ const STYLE_VARIATIONS = [
       "ABSOLUTELY NO: shading, shadows, gradients, grey tones, hatching, cross-hatching, stippling, texture fills, dark areas, filled regions. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
       "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
-      "CRITICAL: Preserve REALISTIC proportions — do NOT cartoonify, do NOT enlarge eyes, do NOT round body shapes. " +
-      "This must look like a detailed realistic illustration, NOT a cartoon. Photorealistic tracing with fine detail lines.",
+      "CRITICAL: Preserve the EXACT proportions and details visible in the source photo — trace every visible edge and contour precisely. " +
+      "Do not invent or add details not visible in the photo.",
   },
   {
     label: "decorative",
@@ -92,7 +92,8 @@ const STYLE_VARIATIONS = [
       "ABSOLUTELY NO: shading, shadows, gradients, grey tones, hatching, cross-hatching, stippling, texture fills, dark areas, filled regions. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
       "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
-      "Style: ornamental line art with smooth flowing lines, suitable for laser engraving.",
+      "CRITICAL: Preserve the EXACT proportions visible in the source photo — trace the actual shape, then add decorative details within the traced outline. " +
+      "Do not change the overall shape or proportions of the subject.",
   },
 ];
 
@@ -387,34 +388,39 @@ async function runTraceJob(
         ? buildFullImagePrompt(objectDescription, idx)
         : (isPortrait && !isToyOrFigurine)
         ? (
-            // Portrait prompt — preserve facial likeness
-            `Convert this portrait photo to clean black and white line art suitable for laser engraving. ` +
-            `Preserve the EXACT facial likeness: face shape, eye shape, nose, mouth, jawline, hair style. ` +
-            `Keep the same pose, angle, and proportions. ` +
+            // Portrait prompt — exact tracing of the actual face
+            `TASK: Trace this EXACT portrait photo into clean black-and-white line art for laser engraving. ` +
+            `MOST IMPORTANT RULE — EXACT SHAPE TRACING: Trace the ACTUAL face visible in this photo. ` +
+            `DO NOT idealize, beautify, or generalize. Preserve the exact face shape, eye shape, nose shape, mouth, jawline, hair style as they appear in the photo. ` +
+            `Keep the same pose, angle, and proportions from the photo. ` +
             `Use only pure black lines on pure white background. No shading, no grey tones, no gradients. ` +
             `${variation.style} ` +
             `No text, no letters, no numbers anywhere.`
           )
         : isToyOrFigurine
         ? (
-            // Toy/figurine prompt
-            `Convert this toy/figurine/cartoon character to clean black and white line art suitable for laser engraving. ` +
-            `Preserve the EXACT toy appearance: cartoon eyes, toy proportions, stylized features. ` +
-            `Do NOT humanize — keep it looking like a toy/cartoon, not a real person. ` +
-            `Use only pure black lines on pure white background. No shading, no grey tones. ` +
+            // Toy/figurine prompt — exact tracing of the actual toy shape
+            `TASK: Trace this EXACT image into clean black-and-white line art for laser cutting / CNC engraving. ` +
+            `MOST IMPORTANT RULE — EXACT SHAPE TRACING: You MUST trace the ACTUAL silhouette and contours visible in THIS specific photo. ` +
+            `DO NOT invent, redesign, or reimagine the shape. DO NOT draw a generic version. ` +
+            `Every outline you draw must correspond to a real edge or boundary visible in the photo. ` +
+            `If the toy has specific proportions (big head, small body, round shape), preserve those EXACT proportions. ` +
+            `If the toy has specific facial features (specific eye shape, nose, mouth position), trace those EXACT features. ` +
+            `SUBJECT ISOLATION: Draw ONLY the toy/figurine — remove background, floor, hands, and environment. ` +
+            `LINE QUALITY: Pure black (#000000) lines on pure white (#FFFFFF) only. No shading, no grey, no gradients, no fills. ` +
             `${variation.style} ` +
             `No text, no letters, no numbers anywhere.`
           )
         : (
-            // General object prompt — gpt-image-1 edit (REALISTIC, not cartoon)
-            `TASK: Trace this exact image into clean black-and-white line art for laser cutting / CNC engraving. ` +
+            // General object prompt — exact tracing of the actual photo
+            `TASK: Trace this EXACT image into clean black-and-white line art for laser cutting / CNC engraving. ` +
+            `MOST IMPORTANT RULE — EXACT SHAPE TRACING: You MUST trace the ACTUAL silhouette and contours visible in THIS specific photo. ` +
+            `DO NOT invent, redesign, or reimagine the shape. DO NOT draw a generic version of the subject. ` +
+            `Every outline you draw must correspond to a real edge or boundary visible in the photo. ` +
+            `Preserve the EXACT proportions, pose, and shape from the photo — do not beautify, simplify, or idealize. ` +
             `SUBJECT ISOLATION RULE: Draw ONLY the main subject — COMPLETELY REMOVE the background, floor, wall, table, and any surrounding environment. ` +
             `The subject must appear on a pure white background with NO environmental context. ` +
-            `STYLE RULE #1 — PHOTOREALISTIC TRACING: The line art must look like a faithful hand-drawn tracing of the ACTUAL photograph. ` +
-            `Preserve every realistic detail: exact body proportions, actual eye shape and size, real fur/feather/skin texture lines, true facial features. ` +
-            `STYLE RULE #2 — NO CARTOON: ABSOLUTELY FORBIDDEN: cartoon eyes, chibi proportions, rounded cute shapes, simplified anime features, coloring-book simplification. ` +
-            `The result must look like a realistic illustration, NOT a cartoon or children's drawing. ` +
-            `STYLE RULE #3 — LINE QUALITY: Pure black (#000000) lines on pure white (#FFFFFF) only. No shading, no grey, no gradients, no fills. ` +
+            `LINE QUALITY: Pure black (#000000) lines on pure white (#FFFFFF) only. No shading, no grey, no gradients, no fills. ` +
             `${variation.style} ` +
             `No text, no letters, no numbers, no logos, no watermarks anywhere.`
           );
