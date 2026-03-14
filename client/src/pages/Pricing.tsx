@@ -248,7 +248,7 @@ export default function Pricing() {
           <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 100, padding: "6px 16px", marginBottom: 24 }}>
             <Sparkles size={14} color="#a5b4fc" />
             <span style={{ fontSize: 13, fontWeight: 600, color: "#c7d2fe" }}>
-              {isRtl ? "ללא מנוי חודשי — שלם רק על מה שאתה משתמש" : "No monthly subscription — pay only for what you use"}
+              {isRtl ? "שלם לפי שימוש או בחר מנוי עסקי" : "Pay per use or choose a business subscription"}
             </span>
           </div>
 
@@ -317,7 +317,7 @@ export default function Pricing() {
               </div>
 
               <p style={{ fontSize: 13, color: pkg.popular ? "rgba(255,255,255,0.55)" : "#9ca3af", marginBottom: 28 }}>
-                {symbol}{perToken} {isRtl ? "לאסימון" : "per token"}
+                {symbol}{perToken} {isRtl ? "לפעולה" : "per action"}
               </p>
 
               <button
@@ -342,8 +342,8 @@ export default function Pricing() {
 
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 11 }}>
                 {(isRtl
-                  ? ["המרת תמונה ל-DXF", "יצירת עיצוב AI", "AI Trace — עקיבה חכמה", "פורטרט — זיהוי פנים", "היסטוריית עיצובים", "DXF + SVG", "אסימונים לא פגים", "תמיכה בעברית"]
-                  : ["Image to DXF conversion", "AI design generation", "AI Trace — smart tracing", "Portrait — face detection", "Design history", "DXF + SVG download", "Tokens never expire", "Hebrew & English support"]
+                  ? ["המרת תמונה ל-DXF", "יצירת עיצוב AI", "AI Trace — עקיבה חכמה", "פורטרט — זיהוי פנים", "היסטוריית עיצובים", "DXF + SVG", "אסימונים לא פגים", "חשבונית מס", "תמיכה בעברית"]
+                  : ["Image to DXF conversion", "AI design generation", "AI Trace — smart tracing", "Portrait — face detection", "Design history", "DXF + SVG download", "Tokens never expire", "Tax invoice", "Hebrew & English support"]
                 ).map((f, i) => (
                   <li key={i} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: pkg.popular ? "rgba(255,255,255,0.9)" : "#374151" }}>
                     <div style={{
@@ -362,27 +362,7 @@ export default function Pricing() {
         })}
       </section>
 
-      {/* ── Social proof stats ── */}
-      <section style={{ background: "linear-gradient(135deg, #f0f9ff, #eef2ff)", padding: "60px 20px", borderTop: "1px solid #e0e7ff", borderBottom: "1px solid #e0e7ff" }}>
-        <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 32, textAlign: "center" }}>
-          {[
-            { icon: <Users size={28} color="#6366f1" />, value: 1200, suffix: "+", labelHe: "משתמשים רשומים", labelEn: "Registered users" },
-            { icon: <TrendingUp size={28} color="#8b5cf6" />, value: 15000, suffix: "+", labelHe: "קבצי DXF נוצרו", labelEn: "DXF files created" },
-            { icon: <Shield size={28} color="#06b6d4" />, value: 99, suffix: "%", labelHe: "שביעות רצון", labelEn: "Satisfaction rate" },
-            { icon: <Clock size={28} color="#10b981" />, value: 5, suffix: "s", labelHe: "זמן המרה ממוצע", labelEn: "Avg. conversion time" },
-          ].map((stat, i) => (
-            <div key={i}>
-              <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>{stat.icon}</div>
-              <div style={{ fontSize: 40, fontWeight: 900, color: "#111827", lineHeight: 1, marginBottom: 6 }}>
-                {statsVisible ? <AnimatedNumber target={stat.value} suffix={stat.suffix} /> : `0${stat.suffix}`}
-              </div>
-              <p style={{ fontSize: 14, color: "#6b7280", margin: 0, fontWeight: 500 }}>
-                {isRtl ? stat.labelHe : stat.labelEn}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
+
 
       {/* ── What can you do with one token ── */}
       <section style={{ maxWidth: 900, margin: "0 auto", padding: "72px 20px 60px" }}>
@@ -706,7 +686,12 @@ export default function Pricing() {
       </section>
 
       {/* ── Footer ── */}
-      <footer style={{ background: "#0f172a", padding: "28px 20px", textAlign: "center" }}>
+      <footer style={{ background: "#0f172a", padding: "36px 20px", textAlign: "center" }}>
+        <p style={{ fontSize: 12, color: "#6b7280", margin: "0 auto 16px", maxWidth: 680, lineHeight: 1.7 }}>
+          {isRtl
+            ? "החברה שומרת לעצמה את הזכות לסגור את השירות בכל עת. במקרה שיסגר השירות, ייעשה מאמץ סביר להחזיר אסימונים שלא נוצלו או לתת זיכוי כספי יחסי על האסימונים הנותרים."
+            : "The company reserves the right to close the service at any time. In such a case, a reasonable effort will be made to refund unused tokens or provide a proportional monetary credit for remaining tokens."}
+        </p>
         <p style={{ fontSize: 13, color: "#4b5563", margin: 0 }}>
           © 2026 DXF.AI ·{" "}
           <a href="/terms" style={{ color: "#6b7280", textDecoration: "none" }}>{isRtl ? "תנאי שימוש" : "Terms"}</a>
