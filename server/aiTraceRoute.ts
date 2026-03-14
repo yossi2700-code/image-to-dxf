@@ -288,14 +288,13 @@ async function runTraceJob(
           "CRITICAL: Describe ONLY the physical object itself — its shape, structure, camera angle, proportions. " +
           "DO NOT mention people holding it, playing it, or interacting with it unless the user specifically asked to include a person. " +
           "DO NOT mention musical notes, decorative backgrounds, or contextual elements unless they are physically part of the object."
-        : "Identify and describe the MOST VISUALLY PROMINENT SUBJECT in this image for line art generation. " +
+        : "Identify and describe the MAIN SUBJECT in this image for line art generation. " +
           "CRITICAL RULES: " +
-          "(1) The subject can be: a physical object, a person, an animal, OR an illustration/character printed on a product label/packaging. " +
-          "(2) If the most eye-catching element is a baby face or character printed on a product label, describe THAT CHARACTER as the subject — not the package. " +
-          "(3) If the most prominent element is a physical object (shoe, instrument, bag), describe THAT OBJECT. " +
-          "(4) DO NOT mention background objects, secondary items, or anything behind the main subject. " +
-          "(5) DO NOT mention musical notes, staff lines, or any musical notation. " +
-          "(6) Focus on the SINGLE most visually dominant subject only. " +
+          "(1) If the image shows a PRODUCT (lighter, bottle, cup, phone, box, bag, shoe, etc.), describe THE PRODUCT ITSELF as the main subject, including its shape and any illustration printed on it. " +
+          "Example: lighter with dragon illustration → 'a lighter with a dragon illustration on its body'. " +
+          "(2) If the image shows a person, animal, or standalone object (not a product), describe THAT as the subject. " +
+          "(3) DO NOT mention background objects, secondary items, or anything behind the main subject. " +
+          "(4) DO NOT mention musical notes, staff lines, or any musical notation. " +
           "Focus on: exact camera angle/view, facing direction, shape, structure, key features, proportions. " +
           "FINE DETAILS — describe these precisely: mouth/smile exact shape, eye exact shape and tilt, tail position and curve (if any), ear shape, hand/paw shape.";
     }
@@ -307,13 +306,15 @@ async function runTraceJob(
           content:
             "You are a world-class expert at analyzing images for precise line art / engraving generation. " +
             "Your analysis will be used to generate line art that EXACTLY reproduces the OBJECT in the image. " +
-            "CRITICAL CONSTRAINT: Identify and describe the MOST VISUALLY PROMINENT SUBJECT in the image. " +
-            "The subject can be a physical object, a person, an animal, OR a character/illustration printed on a product label. " +
-            "If the most eye-catching element is a baby face, character, or illustration printed on packaging, describe THAT as the subject — not the package shape. " +
+            "CRITICAL RULE — ALWAYS DESCRIBE THE PHYSICAL OBJECT FIRST: " +
+            "If the image shows a PRODUCT (lighter, bottle, cup, phone, box, bag, shoe, etc.), describe THE PRODUCT ITSELF as the main subject — including its shape, proportions, and any illustration/design printed on it. " +
+            "Do NOT describe only the illustration/character printed on the product label while ignoring the product itself. " +
+            "Example: A lighter with a dragon illustration → describe 'a lighter with a dragon illustration on it', NOT just 'a dragon'. " +
+            "Example: A bottle with a baby face label → describe 'a bottle with a baby face label', NOT just 'a baby face'. " +
+            "EXCEPTION: If the user's focus text explicitly asks to draw only the illustration/character, then describe just that. " +
             "NEVER describe: (a) people holding/using the object unless they ARE the main subject, " +
             "(b) musical notes, staff lines, or musical notation, " +
             "(c) background objects or secondary items. " +
-            "Focus on the SINGLE most visually dominant subject. " +
             "Accuracy is critical — any mistake in your description will cause the generated art to look wrong. " +
             "\n\nYou MUST describe ALL of the following with maximum precision:\n" +
             "(1) CAMERA ANGLE / VIEW TYPE — THE MOST CRITICAL DETAIL. State it first and be extremely specific:\n" +
