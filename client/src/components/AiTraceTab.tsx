@@ -774,8 +774,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                   ? ["קווי מתאר נקיים ומהירים", "עשיר בפרטים, מדויק יותר"]
                   : ["Clean outlines, faster", "Rich detail, more precise"];
                 const demoImages = [
-                  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-simple-drill-VUf8DhCySNEXzBujeagGhm.webp",
-                  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-detailed-drill-We5GLXBRmWGvi3TAW4UnEt.webp",
+                  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-simple-drill_1b894e4d.png",
+                  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-detailed-drill_9db37b01.png",
                 ];
                 const borderColors = ["#6366f1", "#0d9488"];
                 const gradients = [
@@ -799,7 +799,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                     }
                   >
                     {/* Demo image */}
-                    <div className="relative w-full" style={{ height: "72px", background: '#fff' }}>
+                    <div className="relative w-full" style={{ height: "120px", background: '#fff', padding: '8px' }}>
                       <img
                         src={demoImages[v]}
                         alt={labels[v]}
