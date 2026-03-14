@@ -191,7 +191,13 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number): 
   return (
     `Professional black and white line art illustration. ` +
     `EXACT SUBJECT TO DRAW: ${objectDescription} ` +
-    "\n=== CAMERA ANGLE — ABSOLUTE RULE (MOST IMPORTANT) === " +
+    "\n=== ACCURACY — MOST IMPORTANT RULE === " +
+    "You MUST draw the EXACT object described above with FAITHFUL proportions and shapes. " +
+    "Every part of the drawing must correspond to a REAL feature of the described object. " +
+    "DO NOT invent, add, or substitute any part that is not described. " +
+    "DO NOT simplify the shape into a generic version — draw THIS specific object. " +
+    "=== END ACCURACY RULE === " +
+    "\n=== CAMERA ANGLE — ABSOLUTE RULE === " +
     "You MUST reproduce the EXACT camera angle and view described in the subject description above. " +
     "- If description says 'pure side profile' or 'side view' or 'profile view': draw FLAT 90-DEGREE SIDE VIEW. The viewer sees ONLY one side. Do NOT add any 3D perspective or 3/4 angle. " +
     "- If description says 'front view' or 'facing viewer': draw the subject facing DIRECTLY toward the viewer, both sides symmetrical. " +
@@ -200,6 +206,11 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number): 
     "- If description says 'facing right': the subject's head/front points to the RIGHT side of the image. " +
     "DO NOT change, rotate, mirror, or reinterpret the camera angle. Draw EXACTLY what the description says. " +
     "=== END CAMERA ANGLE RULE === " +
+    "\n=== LINE QUALITY === " +
+    "All lines MUST be perfectly smooth, clean, and continuous — like a professional technical illustration or product design drawing. " +
+    "Use smooth Bezier curves for rounded shapes. No jagged edges, no rough strokes, no broken lines. " +
+    "Lines should be elegant and precise, as if drawn by a skilled illustrator with a fine ink pen. " +
+    "=== END LINE QUALITY === " +
     "\n=== STYLE === " +
     "Pure white background (#FFFFFF). " +
     "Bold thick black outlines, no fill, no shading, no gradients, no grey tones. " +
@@ -212,6 +223,11 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number): 
     "=== END FRAMING RULES === " +
     "Single centered object, complete, fully inside the frame. " +
     "DO NOT include any text, letters, words, numbers, labels, or captions. " +
+    "=== BUTTONS / KNOBS / LOGOS / ICONS RULE === " +
+    "Draw buttons, knobs, dials, and logos as SIMPLE GEOMETRIC SHAPES ONLY (circles, rectangles, ovals). " +
+    "DO NOT invent or add any symbols, icons, arrows, plus/minus signs, numbers, or markings inside buttons or knobs. " +
+    "A button = a plain circle or rectangle outline. A knob = a plain circle outline. A logo area = a plain rectangle outline. " +
+    "=== END BUTTONS RULE === " +
     "No watermarks, no background elements."
   );
 }
@@ -384,30 +400,38 @@ async function runTraceJob(
         ? buildFullImagePrompt(objectDescription, idx)
         : (isPortrait && !isToyOrFigurine)
         ? (
-            // Portrait prompt — preserve facial likeness
-            `Convert this portrait photo to clean black and white line art suitable for laser engraving. ` +
-            `Preserve the EXACT facial likeness: face shape, eye shape, nose, mouth, jawline, hair style. ` +
-            `Keep the same pose, angle, and proportions. ` +
-            `Use only pure black lines on pure white background. No shading, no grey tones, no gradients. ` +
+            // Portrait prompt — preserve facial likeness with smooth elegant lines
+            `Convert this portrait photo to a beautiful, precise black and white line art drawing suitable for laser engraving. ` +
+            `ACCURACY FIRST: Preserve the EXACT facial likeness — face shape, eye shape and size, nose shape, mouth, jawline, hair style and texture. ` +
+            `Keep the same pose, angle, and proportions as in the original photo. Do NOT beautify, idealize, or change any feature. ` +
+            `LINE QUALITY: All lines must be perfectly smooth, clean, and flowing — like a master illustrator's fine ink drawing. ` +
+            `Use smooth curves for face contours and hair. No jagged edges, no rough strokes. ` +
+            `Use only pure black (#000000) lines on pure white (#FFFFFF) background. No shading, no grey tones, no gradients, no fills. ` +
             `${variation.style} ` +
             `No text, no letters, no numbers anywhere.`
           )
         : isToyOrFigurine
         ? (
-            // Toy/figurine prompt
-            `Convert this toy/figurine/cartoon character to clean black and white line art suitable for laser engraving. ` +
-            `Preserve the EXACT toy appearance: cartoon eyes, toy proportions, stylized features. ` +
-            `Do NOT humanize — keep it looking like a toy/cartoon, not a real person. ` +
-            `Use only pure black lines on pure white background. No shading, no grey tones. ` +
+            // Toy/figurine prompt — exact toy shape with smooth lines
+            `Convert this toy/figurine/cartoon character to a beautiful, precise black and white line art drawing suitable for laser engraving. ` +
+            `ACCURACY FIRST: Preserve the EXACT toy appearance — cartoon eyes, toy proportions, stylized features, specific design details. ` +
+            `Do NOT humanize or change the style — keep it looking exactly like this specific toy/cartoon character. ` +
+            `LINE QUALITY: All lines must be perfectly smooth, clean, and flowing — elegant curves, no jagged edges, no rough strokes. ` +
+            `Use only pure black (#000000) lines on pure white (#FFFFFF) background. No shading, no grey tones, no gradients, no fills. ` +
             `${variation.style} ` +
             `No text, no letters, no numbers anywhere.`
           )
         : (
-            // General object prompt — gpt-image-1 edit
-            `Convert this image to clean black and white line art suitable for CNC engraving or laser cutting. ` +
-            `Draw ONLY the main subject on a pure white background — remove the background completely. ` +
-            `Use only pure black (#000000) lines on pure white (#FFFFFF). No shading, no grey tones, no gradients, no hatching. ` +
-            `Preserve the exact proportions and shape of the original object. ` +
+            // General object prompt — gpt-image-1 edit: accurate + smooth + beautiful
+            `Convert this image to a beautiful, precise black and white line art drawing suitable for CNC engraving or laser cutting. ` +
+            `ACCURACY FIRST: Draw ONLY the main subject — remove the background completely. ` +
+            `Faithfully reproduce the EXACT shape, proportions, and structure of the original object as it appears in the photo. ` +
+            `Every line must correspond to a REAL visible edge or contour in the original image. ` +
+            `DO NOT invent, add, or change any part of the object. ` +
+            `BUTTONS/KNOBS/LOGOS: Draw as simple geometric shapes only (plain circles, rectangles). Do NOT add symbols, icons, arrows, or markings inside them. ` +
+            `LINE QUALITY: All lines must be perfectly smooth, clean, and continuous — like a professional product design illustration. ` +
+            `Use smooth Bezier curves for rounded shapes. No jagged edges, no rough strokes, no broken lines. ` +
+            `Use only pure black (#000000) lines on pure white (#FFFFFF). No shading, no grey tones, no gradients, no hatching, no fills. ` +
             `${variation.style} ` +
             `No text, no letters, no numbers, no logos, no watermarks anywhere.`
           );
