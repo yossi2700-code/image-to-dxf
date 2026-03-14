@@ -303,12 +303,17 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
           refetchTokens();
           const successMsg = isRtl ? `העיצוב מוכן! לחץ הורד DXF` : `Design ready! Click Download DXF`;
           toast.success(successMsg);
-          // Push notification when page is hidden (user left the browser)
-          if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+          // Push notification when page is hidden (user switched tabs or minimized)
+          if ("Notification" in window && Notification.permission === "granted") {
             new Notification(t("aiOutlineComplete"), {
               body: successMsg,
               icon: "/favicon.ico",
+              tag: "ai-outline-done", // Replace any previous notification with same tag
+              requireInteraction: false,
             });
+          } else if ("Notification" in window && Notification.permission === "default") {
+            // Request permission now (user is waiting, good moment)
+            Notification.requestPermission();
           }
         } else if (
           data.status === "processing" &&
@@ -509,8 +514,9 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
         setJobIdPersisted(data.jobId);
         startPolling(data.jobId);
         // Request push notification permission so we can notify when done
+        // We request with a slight delay so the user has context (they just started processing)
         if ("Notification" in window && Notification.permission === "default") {
-          Notification.requestPermission();
+          setTimeout(() => Notification.requestPermission(), 3000);
         }
       } else {
         // Legacy direct response
@@ -969,15 +975,31 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                   </p>
                 </div>
               </div>
-              <p className="text-xs text-gray-400">{t("processingTime")}</p>
+              {/* Elapsed time counter */}
+              {elapsedSeconds > 0 && (
+                <p className="text-xs font-mono" style={{ color: '#94a3b8' }}>
+                  {t("processingTimer")} {Math.floor(elapsedSeconds / 60).toString().padStart(2, '0')}:{(elapsedSeconds % 60).toString().padStart(2, '0')}
+                </p>
+              )}
+              {elapsedSeconds === 0 && <p className="text-xs text-gray-400">{t("processingTime")}</p>}
               {/* "Almost done" patience message after 30 seconds */}
-              {elapsedSeconds >= 30 && (
+              {elapsedSeconds >= 30 && elapsedSeconds < 90 && (
                 <div
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium"
                   style={{ background: 'rgba(13,148,136,0.08)', color: '#0d9488', border: '1px solid rgba(13,148,136,0.2)', animation: 'fadeIn 0.5s ease-in' }}
                 >
                   <span style={{ animation: 'pulse 2s ease-in-out infinite' }}>✨</span>
                   <span>{t("almostDone")}</span>
+                </div>
+              )}
+              {/* "Taking longer" message after 90 seconds */}
+              {elapsedSeconds >= 90 && (
+                <div
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium"
+                  style={{ background: 'rgba(245,158,11,0.08)', color: '#d97706', border: '1px solid rgba(245,158,11,0.25)', animation: 'fadeIn 0.5s ease-in' }}
+                >
+                  <span style={{ animation: 'pulse 2s ease-in-out infinite' }}>⏳</span>
+                  <span>{t("takingLonger")}</span>
                 </div>
               )}
               <div className="flex gap-1.5">
