@@ -1179,6 +1179,56 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
               </div>
             )}
 
+            {/* Before / After comparison */}
+            {imagePreview && result.images.length > 0 && (
+              <div
+                className="rounded-xl p-4"
+                style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-sm font-semibold text-gray-700">
+                    {isRtl ? '🔍 השוואה: לפני ואחרי' : '🔍 Before & After Comparison'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Original image */}
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-semibold text-center text-gray-500 uppercase tracking-wide">
+                      {isRtl ? 'מקור' : 'Original'}
+                    </span>
+                    <div
+                      className="rounded-lg overflow-hidden border border-gray-200 bg-gray-50 cursor-zoom-in"
+                      onClick={() => setZoomImg({ src: imagePreview, alt: isRtl ? 'תמונה מקורית' : 'Original image' })}
+                    >
+                      <img
+                        src={imagePreview}
+                        alt={isRtl ? 'תמונה מקורית' : 'Original image'}
+                        className="w-full block"
+                        style={{ aspectRatio: '1', objectFit: 'contain', background: '#f8fafc' }}
+                      />
+                    </div>
+                  </div>
+                  {/* AI result */}
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-semibold text-center text-teal-600 uppercase tracking-wide">
+                      {isRtl ? 'DXF וקטורי' : 'DXF Vector'}
+                    </span>
+                    <div
+                      className="rounded-lg overflow-hidden border border-teal-200 bg-gray-50 cursor-zoom-in"
+                      onClick={() => setZoomImg({ src: result.images[0].imageUrl, alt: isRtl ? 'תוצאת AI' : 'AI result' })}
+                    >
+                      <img
+                        src={result.images[0].imageUrl}
+                        alt={isRtl ? 'תוצאת AI' : 'AI result'}
+                        className="w-full block"
+                        style={{ aspectRatio: '1', objectFit: 'contain', background: '#f8fafc' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {result.images.map((image, idx) => (
                 <ImageCard
