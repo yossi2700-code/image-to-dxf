@@ -76,20 +76,12 @@ const STYLE_VARIATIONS = [
     label: "detailed",
     style:
       "STRICT LINE ART ONLY: pure black (#000000) lines on pure white (#FFFFFF) background. " +
-      "Draw all structural features AND add surface texture on prominent textured surfaces. " +
-      "TEXTURE RULE: For any surface with visible texture (knurled grip, rubber handle, ribbed surface, woven fabric, wood grain, fur, feathers, scales, tire tread, mesh): " +
-      "draw texture using PERFECTLY UNIFORM PARALLEL LINES — all lines straight, same length, same spacing, same direction. " +
-      "CRITICAL TEXTURE RULES: " +
-      "(1) Lines must be PERFECTLY STRAIGHT and PARALLEL — like ruled lines on paper. " +
-      "(2) ALL lines in a texture area must go the SAME direction (e.g. all horizontal, or all at 45°). " +
-      "(3) Spacing between lines must be EQUAL and CONSISTENT throughout. " +
-      "(4) ABSOLUTELY NO: random marks, scribbles, zigzags, curves, cross-hatching, irregular spacing, or chaotic lines. " +
-      "(5) Each line is a SINGLE thin stroke — no double lines, no overlapping. " +
-      "(6) Apply texture ONLY on the specific textured surface — smooth areas stay clean white. " +
-      "ABSOLUTELY NO: shading, shadows, gradients, grey tones, large filled dark areas. " +
-      "Every large enclosed area must remain mostly white. " +
-      "All structural lines must be SMOOTH, CONTINUOUS, and FLOWING. " +
-      "Style: clean technical illustration with uniform ruled-line texture on prominent surfaces only.",
+      "Draw the outer silhouette PLUS all visible interior structural lines: panel edges, component boundaries, mechanical parts, joints, openings, slots, buttons, seams, and surface divisions. " +
+      "Include 25-40 interior lines that define the object's structure and form. " +
+      "ABSOLUTELY NO: texture, hatching, cross-hatching, shading, shadows, gradients, grey tones, stippling, filled regions, or any decorative marks. " +
+      "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
+      "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
+      "Style: clean detailed technical line drawing — like a precise engineering illustration, outlines only, no fills.",
   },
   {
     label: "decorative",
