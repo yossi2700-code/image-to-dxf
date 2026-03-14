@@ -360,9 +360,19 @@ async function runTraceJob(
     heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
 
     // Prepare a clean PNG version of the source image for the edit API.
-    // 512px gives better quality output from gpt-image-1 edit.
+    // Use 1536px to preserve fine details (wheel spokes, engine parts, etc.)
+    // Detect image orientation to pick the best output size for gpt-image-1
+    const sourceMeta = await sharp(imageBuffer).metadata();
+    const srcW = sourceMeta.width ?? 1;
+    const srcH = sourceMeta.height ?? 1;
+    const isLandscapeImg = srcW >= srcH;
+    // gpt-image-1 supported sizes: 1024x1024, 1536x1024 (landscape), 1024x1536 (portrait)
+    const aiOutputSize = isLandscapeImg ? "1536x1024" : "1024x1536";
+    const aiResizeW = isLandscapeImg ? 1536 : 1024;
+    const aiResizeH = isLandscapeImg ? 1024 : 1536;
+
     const editSourceBuffer = await sharp(imageBuffer)
-      .resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .resize(aiResizeW, aiResizeH, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
       .png({ compressionLevel: 6 })
       .toBuffer();
 
@@ -419,18 +429,19 @@ async function runTraceJob(
         image: new File([editSourceBuffer as unknown as BlobPart], "source.png", { type: "image/png" }),
         prompt: editPrompt,
         n: 1,
-        size: "1024x1024",
+        size: aiOutputSize as "1024x1024" | "1536x1024" | "1024x1536",
       } as Parameters<typeof openai.images.edit>[0]);
 
       const b64 = (imageEditResponse as { data?: Array<{ b64_json?: string }> }).data?.[0]?.b64_json;
       if (!b64) throw new Error("gpt-image-1 did not return image data");
       let rawBuffer = Buffer.from(b64, "base64");
 
-      // Add white padding around the AI-generated image, then resize to max 1024px
+      // Add white padding around the AI-generated image, then process at full 1536px resolution
+      // Higher resolution → more detail preserved through potrace vectorization
       // blur(1.5) merges thick AI lines into single-pixel skeleton → eliminates double contours
       const processedBuffer = await sharp(rawBuffer)
         .extend({ top: 80, bottom: 80, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-        .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .resize(1536, 1536, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .grayscale()
         .blur(1.5)
         .threshold(160)
