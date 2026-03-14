@@ -76,13 +76,16 @@ const STYLE_VARIATIONS = [
     label: "detailed",
     style:
       "STRICT LINE ART ONLY: pure black (#000000) lines on pure white (#FFFFFF) background. " +
-      "Draw all structural features AND add surface texture patterns on prominent textured surfaces. " +
-      "TEXTURE RULE: For any surface that has visible texture in the original (knurled grip, rubber handle, ribbed surface, woven fabric, wood grain, fur, feathers, scales, tire tread, mesh, perforated surface): " +
-      "draw that texture using repeated short lines, cross-hatch, or dot patterns ONLY on that specific surface area — not everywhere. " +
-      "ABSOLUTELY NO: shading, shadows, gradients, grey tones, large filled dark areas. " +
-      "Every large enclosed area must remain mostly white — texture lines are sparse, not dense fills. " +
-      "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
-      "Style: detailed technical illustration with clean ink lines and selective surface texture on prominent parts only.",
+      "Draw all structural features AND add surface texture on prominent textured surfaces. " +
+      "TEXTURE RULE: For any surface with visible texture (knurled grip, rubber handle, ribbed surface, woven fabric, wood grain, fur, feathers, scales, tire tread, mesh): " +
+      "draw texture using THIN SINGLE-STROKE PARALLEL LINES only — evenly spaced, all going the same direction. " +
+      "CRITICAL: Each texture line must be a SINGLE thin stroke — NO double lines, NO cross-hatching, NO overlapping lines, NO filled areas. " +
+      "Texture lines must be sparse and evenly spaced (leave white space between each line). " +
+      "Apply texture ONLY on the specific textured surface — not on smooth areas. " +
+      "ABSOLUTELY NO: shading, shadows, gradients, grey tones, large filled dark areas, cross-hatching. " +
+      "Every large enclosed area must remain mostly white. " +
+      "All lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines. " +
+      "Style: clean technical illustration with selective single-stroke parallel texture on prominent surfaces only.",
   },
   {
     label: "decorative",
@@ -440,10 +443,11 @@ async function runTraceJob(
 
       // Add white padding around the AI-generated image, then process at full 1536px resolution
       // Simple mode (idx=0): light blur, higher threshold → clean outlines, removes fine noise
-      // Detailed mode (idx=1): minimal blur, lower threshold → keeps more lines/detail, stronger output
+      // Detailed mode (idx=1): moderate blur merges double texture lines into single strokes,
+      //   lower threshold keeps detail, higher optTolerance gives smoother curves
       const isDetailedMode = idx === 1;
-      const blurAmount = isDetailedMode ? 0.8 : 1.5;
-      const thresholdValue = isDetailedMode ? 140 : 160;
+      const blurAmount = isDetailedMode ? 1.8 : 1.5;  // more blur in detailed → merges double lines
+      const thresholdValue = isDetailedMode ? 148 : 160;
       const processedBuffer = await sharp(rawBuffer)
         .extend({ top: 80, bottom: 80, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .resize(1536, 1536, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
@@ -454,8 +458,9 @@ async function runTraceJob(
         .toBuffer();
 
       // Simple: large turdSize removes small details; Detailed: small turdSize keeps texture/detail lines
+      // Detailed: higher optTolerance (0.6) = smoother curves; lower alphaMax = rounder corners
       const potraceOptions = isDetailedMode
-        ? { threshold: 128, turdSize: 10, alphaMax: 1.0, optCurve: true, optTolerance: 0.2 }
+        ? { threshold: 128, turdSize: 12, alphaMax: 0.8, optCurve: true, optTolerance: 0.6 }
         : { threshold: 128, turdSize: 40, alphaMax: 1.0, optCurve: true, optTolerance: 0.4 };
 
       const rawSvg = await new Promise<string>((resolve, reject) => {
