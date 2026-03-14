@@ -154,9 +154,10 @@ interface ImageCardProps {
   isRtl: boolean;
   onDownload: (image: GeneratedImage) => void;
   onZoom: (src: string, alt: string) => void;
+  processingTime?: number | null;
 }
 
-function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) {
+function ImageCard({ image, index, isRtl, onDownload, onZoom, processingTime }: ImageCardProps) {
   const [showVector, setShowVector] = useState(false);
   const { t } = useLanguage();
   const label = isRtl ? VARIATION_LABELS[index] : VARIATION_LABELS_EN[index];
@@ -182,6 +183,16 @@ function ImageCard({ image, index, isRtl, onDownload, onZoom }: ImageCardProps) 
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
             <ZoomIn className="w-7 h-7 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
           </div>
+          {processingTime != null && (
+            <span
+              className="absolute bottom-1.5 left-1.5 text-xs font-semibold px-2 py-0.5 rounded-full"
+              style={{ background: 'rgba(0,0,0,0.55)', color: '#fff', backdropFilter: 'blur(4px)', fontSize: '10px' }}
+            >
+              {Math.floor(processingTime / 60) > 0
+                ? `${Math.floor(processingTime / 60)}:${String(processingTime % 60).padStart(2,'0')} ${isRtl ? 'דק\'' : 'min'}`
+                : `${processingTime}${isRtl ? 'ש\'' : 's'}`}
+            </span>
+          )}
         </div>
 
         {/* Export buttons */}
@@ -254,6 +265,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
   const [tryAgainUrl, setTryAgainUrl] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<string>("");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [processingTime, setProcessingTime] = useState<number | null>(null); // seconds taken for last job
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -299,6 +311,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
           saveResultToCache(traceResult);
           setStatus("success");
           setCurrentStep("");
+          setProcessingTime(elapsedSeconds > 0 ? elapsedSeconds : null);
           setElapsedSeconds(0);
           setJobIdPersisted(null);
           refetchTokens();
@@ -365,6 +378,9 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
     const savedId = localStorage.getItem("ai_trace_jobId");
     if (savedId) {
       setStatus("loading");
+      // Resume background timer so elapsed seconds keep counting after tab switch / reload
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
       startPolling(savedId);
     }
     // Handle "Try Again" from history — load source image URL and auto-submit
@@ -1284,6 +1300,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                   isRtl={isRtl}
                   onDownload={setDownloadTarget}
                   onZoom={(src, alt) => setZoomImg({ src, alt })}
+                  processingTime={processingTime}
                 />
               ))}
             </div>
