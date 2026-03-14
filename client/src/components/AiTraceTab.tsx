@@ -252,7 +252,10 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("ai_trace_jobId"));
   const [tryAgainUrl, setTryAgainUrl] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<string>("");
+  const [processingStartTime, setProcessingStartTime] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // previewRef holds the latest preview URL without causing re-renders when read inside handleTrace
   const previewRef = useRef<string | null>(localStorage.getItem("ai_trace_imagePreview"));
@@ -290,6 +293,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
         const data = await res.json();
         if (data.status === "done") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
           const traceResult = data.result as TraceResult;
           setResult(traceResult);
           saveResultToCache(traceResult);
@@ -327,6 +331,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
           if (stepMsg) setCurrentStep(stepMsg);
         } else if (data.status === "error") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
           const isTokenError = data.error === "INSUFFICIENT_TOKENS" || data.error === "QUOTA_EXCEEDED";
           const msg = isTokenError
             ? (data.message || t("processingError"))
@@ -339,6 +344,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
           toast.error(msg);
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
           setStatus("idle");
           setCurrentStep("");
           setJobIdPersisted(null);
@@ -373,7 +379,10 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
         }
       } catch (_) { /* ignore */ }
     }
-    return () => { if (pollIntervalRef.current) clearInterval(pollIntervalRef.current); };
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -464,6 +473,9 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
     }
 
     setStatus("loading"); setResult(null); setErrorMsg(""); setCurrentStep("");
+    setProcessingStartTime(Date.now()); setElapsedSeconds(0);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
     try {
       const formData = new FormData();
       if (imageFile) {
@@ -516,6 +528,9 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
   // Handle Try Again from history — fetch source image URL and re-submit
   const handleTraceFromUrl = async (sourceUrl: string) => {
     setStatus("loading"); setResult(null); setErrorMsg("");
+    setProcessingStartTime(Date.now()); setElapsedSeconds(0);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
     try {
       // Fetch the image as a blob from S3
       const resp = await fetch(sourceUrl);
@@ -955,6 +970,16 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                 </div>
               </div>
               <p className="text-xs text-gray-400">{t("processingTime")}</p>
+              {/* "Almost done" patience message after 30 seconds */}
+              {elapsedSeconds >= 30 && (
+                <div
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium"
+                  style={{ background: 'rgba(13,148,136,0.08)', color: '#0d9488', border: '1px solid rgba(13,148,136,0.2)', animation: 'fadeIn 0.5s ease-in' }}
+                >
+                  <span style={{ animation: 'pulse 2s ease-in-out infinite' }}>✨</span>
+                  <span>{t("almostDone")}</span>
+                </div>
+              )}
               <div className="flex gap-1.5">
                 {[0, 1, 2].map((i) => (
                   <div key={i} className="w-1.5 h-1.5 rounded-full bg-teal-400" style={{animation: `bounce 1s infinite ${i * 0.15}s`}} />
