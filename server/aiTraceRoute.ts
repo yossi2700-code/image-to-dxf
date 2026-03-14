@@ -191,13 +191,7 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number): 
   return (
     `Professional black and white line art illustration. ` +
     `EXACT SUBJECT TO DRAW: ${objectDescription} ` +
-    "\n=== ACCURACY — MOST IMPORTANT RULE === " +
-    "You MUST draw the EXACT object described above with FAITHFUL proportions and shapes. " +
-    "Every part of the drawing must correspond to a REAL feature of the described object. " +
-    "DO NOT invent, add, or substitute any part that is not described. " +
-    "DO NOT simplify the shape into a generic version — draw THIS specific object. " +
-    "=== END ACCURACY RULE === " +
-    "\n=== CAMERA ANGLE — ABSOLUTE RULE === " +
+    "\n=== CAMERA ANGLE — ABSOLUTE RULE (MOST IMPORTANT) === " +
     "You MUST reproduce the EXACT camera angle and view described in the subject description above. " +
     "- If description says 'pure side profile' or 'side view' or 'profile view': draw FLAT 90-DEGREE SIDE VIEW. The viewer sees ONLY one side. Do NOT add any 3D perspective or 3/4 angle. " +
     "- If description says 'front view' or 'facing viewer': draw the subject facing DIRECTLY toward the viewer, both sides symmetrical. " +
@@ -206,11 +200,6 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number): 
     "- If description says 'facing right': the subject's head/front points to the RIGHT side of the image. " +
     "DO NOT change, rotate, mirror, or reinterpret the camera angle. Draw EXACTLY what the description says. " +
     "=== END CAMERA ANGLE RULE === " +
-    "\n=== LINE QUALITY === " +
-    "All lines MUST be perfectly smooth, clean, and continuous — like a professional technical illustration or product design drawing. " +
-    "Use smooth Bezier curves for rounded shapes. No jagged edges, no rough strokes, no broken lines. " +
-    "Lines should be elegant and precise, as if drawn by a skilled illustrator with a fine ink pen. " +
-    "=== END LINE QUALITY === " +
     "\n=== STYLE === " +
     "Pure white background (#FFFFFF). " +
     "Bold thick black outlines, no fill, no shading, no gradients, no grey tones. " +
@@ -223,11 +212,6 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number): 
     "=== END FRAMING RULES === " +
     "Single centered object, complete, fully inside the frame. " +
     "DO NOT include any text, letters, words, numbers, labels, or captions. " +
-    "=== BUTTONS / KNOBS / LOGOS / ICONS RULE === " +
-    "Draw buttons, knobs, dials, and logos as SIMPLE GEOMETRIC SHAPES ONLY (circles, rectangles, ovals). " +
-    "DO NOT invent or add any symbols, icons, arrows, plus/minus signs, numbers, or markings inside buttons or knobs. " +
-    "A button = a plain circle or rectangle outline. A knob = a plain circle outline. A logo area = a plain rectangle outline. " +
-    "=== END BUTTONS RULE === " +
     "No watermarks, no background elements."
   );
 }
@@ -375,9 +359,9 @@ async function runTraceJob(
     heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
 
     // Prepare a clean PNG version of the source image for the edit API.
-    // 1024px gives gpt-image-1 more detail to trace from, improving accuracy.
+    // 512px gives better quality output from gpt-image-1 edit.
     const editSourceBuffer = await sharp(imageBuffer)
-      .resize(1024, 1024, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
       .png({ compressionLevel: 6 })
       .toBuffer();
 
@@ -400,55 +384,32 @@ async function runTraceJob(
         ? buildFullImagePrompt(objectDescription, idx)
         : (isPortrait && !isToyOrFigurine)
         ? (
-            // Portrait prompt — preserve facial likeness with smooth elegant lines
-            `Convert this portrait photo to a beautiful, precise black and white line art drawing suitable for laser engraving. ` +
-            `ACCURACY FIRST: Preserve the EXACT facial likeness — face shape, eye shape and size, nose shape, mouth, jawline, hair style and texture. ` +
-            `Keep the same pose, angle, and proportions as in the original photo. Do NOT beautify, idealize, or change any feature. ` +
-            `LINE QUALITY: All lines must be perfectly smooth, clean, and flowing — like a master illustrator's fine ink drawing. ` +
-            `Use smooth curves for face contours and hair. No jagged edges, no rough strokes. ` +
-            `Use only pure black (#000000) lines on pure white (#FFFFFF) background. No shading, no grey tones, no gradients, no fills. ` +
+            // Portrait prompt — preserve facial likeness
+            `Convert this portrait photo to clean black and white line art suitable for laser engraving. ` +
+            `Preserve the EXACT facial likeness: face shape, eye shape, nose, mouth, jawline, hair style. ` +
+            `Keep the same pose, angle, and proportions. ` +
+            `Use only pure black lines on pure white background. No shading, no grey tones, no gradients. ` +
             `${variation.style} ` +
             `No text, no letters, no numbers anywhere.`
           )
         : isToyOrFigurine
         ? (
-            // Toy/figurine prompt — exact toy shape with smooth lines
-            `Convert this toy/figurine/cartoon character to a beautiful, precise black and white line art drawing suitable for laser engraving. ` +
-            `ACCURACY FIRST: Preserve the EXACT toy appearance — cartoon eyes, toy proportions, stylized features, specific design details. ` +
-            `Do NOT humanize or change the style — keep it looking exactly like this specific toy/cartoon character. ` +
-            `LINE QUALITY: All lines must be perfectly smooth, clean, and flowing — elegant curves, no jagged edges, no rough strokes. ` +
-            `Use only pure black (#000000) lines on pure white (#FFFFFF) background. No shading, no grey tones, no gradients, no fills. ` +
+            // Toy/figurine prompt
+            `Convert this toy/figurine/cartoon character to clean black and white line art suitable for laser engraving. ` +
+            `Preserve the EXACT toy appearance: cartoon eyes, toy proportions, stylized features. ` +
+            `Do NOT humanize — keep it looking like a toy/cartoon, not a real person. ` +
+            `Use only pure black lines on pure white background. No shading, no grey tones. ` +
             `${variation.style} ` +
             `No text, no letters, no numbers anywhere.`
           )
         : (
-            // General object prompt — EXACT TRACING of visible edges
-            `TASK: Trace this photo into a clean black and white line art. ` +
-            `You are acting as a TRACER, not an artist. Your only job is to follow the exact edges and contours that are ALREADY VISIBLE in this photo. ` +
-            `
-
-RULE 1 — TRACE ONLY WHAT YOU SEE: ` +
-            `Draw ONLY the lines, edges, and contours that are physically visible in this photo. ` +
-            `Every single line you draw must correspond to a real visible edge in the image. ` +
-            `DO NOT invent, imagine, add, or redesign ANY part. If you cannot see it clearly, draw a simple outline only. ` +
-            `
-RULE 2 — EXACT SHAPES: ` +
-            `Reproduce the EXACT shape of every component as it appears in the photo. ` +
-            `Knobs must look like the actual knobs in the photo. Buttons must match the actual button shapes. ` +
-            `The overall silhouette must be pixel-faithful to the original. ` +
-            `
-RULE 3 — NO SYMBOLS OR TEXT: ` +
-            `Do NOT draw any text, letters, numbers, symbols, icons, or markings — even if you can see them in the photo. ` +
-            `Where text or labels appear, draw only the outline of the area (rectangle or shape) with no content inside. ` +
-            `
-RULE 4 — REMOVE BACKGROUND: ` +
-            `Draw ONLY the main subject. Replace the background with pure white (#FFFFFF). ` +
-            `
-RULE 5 — LINE QUALITY: ` +
-            `Use only pure black (#000000) lines on pure white (#FFFFFF). ` +
-            `No shading, no grey tones, no gradients, no hatching, no fills, no shadows. ` +
-            `Lines must be smooth and clean. ` +
-            `${variation.style}`
+            // General object prompt — gpt-image-1 edit
+            `Convert this image to clean black and white line art suitable for CNC engraving or laser cutting. ` +
+            `Draw ONLY the main subject on a pure white background — remove the background completely. ` +
+            `Use only pure black (#000000) lines on pure white (#FFFFFF). No shading, no grey tones, no gradients, no hatching. ` +
+            `Preserve the exact proportions and shape of the original object. ` +
+            `${variation.style} ` +
+            `No text, no letters, no numbers, no logos, no watermarks anywhere.`
           );
 
       // Use gpt-image-1 edit API for high-quality line art generation
@@ -548,6 +509,23 @@ RULE 5 — LINE QUALITY: ` +
     console.error("[aiTraceRoute] Job error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     updateJob(jobId, { status: "error", error: message });
+    // Refund tokens on error
+    try { await addTokens(appUserId, TOKEN_COSTS["ai_trace"], "refund", "Job error — tokens refunded"); } catch (_) { /* ignore */ }
+    // Alert admin if billing/quota issue
+    const isBillingError = message.toLowerCase().includes("quota") ||
+      message.toLowerCase().includes("billing") ||
+      message.toLowerCase().includes("insufficient_quota") ||
+      message.toLowerCase().includes("429") ||
+      message.toLowerCase().includes("402");
+    if (isBillingError) {
+      try {
+        const { notifyOwner } = await import("./_core/notification");
+        await notifyOwner({
+          title: "🔴 שגיאת חיוב OpenAI — נדרש טעינת כרטיס",
+          content: `שגיאת billing ב-AI Outline:\n${message}\n\nנא להיכנס ל-OpenAI ולטעון את הכרטיס: https://platform.openai.com/settings/organization/billing`,
+        });
+      } catch (_) { /* ignore notification errors */ }
+    }
   }
 }
 
@@ -578,8 +556,8 @@ router.post(
         if (userRow?.isBlocked) {
           return res.status(403).json({
             error: "USER_BLOCKED",
-            message: "חשבונך חסום. לפרטים פנה לרובוטיקה וטכנולוגיה.",
-            messageEn: "Your account has been blocked. Please contact Robotics & Technology.",
+            message: "חשבונך חסום. לפרטים פנה לתמיכה.",
+            messageEn: "Your account has been blocked. Please contact support.",
           });
         }
       }
@@ -590,8 +568,8 @@ router.post(
         return res.status(402).json({
           error: "INSUFFICIENT_TOKENS",
           balance: tokenResult.balance,
-          message: "נגמרו לך האסימונים. ליצירת קשר ורכישת אסימונים נוספים פנה לרובוטיקה וטכנולוגיה.",
-          messageEn: "You have run out of tokens. To purchase more tokens, contact Robotics & Technology.",
+          message: "נגמרו לך האסימונים. יש לטעון אסימונים להמשך שימוש.",
+          messageEn: "You have run out of tokens. Please purchase more tokens to continue.",
         });
       }
 
@@ -795,183 +773,6 @@ router.post(
         error: "INTERNAL_ERROR",
         message: `שגיאת המרה: ${message}`,
         messageEn: `Conversion error: ${message}`,
-      });
-    }
-  }
-);
-
-// ─── POST /api/ai-trace/direct ─────────────────────────────────────────────────
-// Direct edge-detection trace: sharp (Canny-like) → potrace → DXF
-// No AI generation — 100% faithful to the original photo shapes.
-
-router.post(
-  "/api/ai-trace/direct",
-  upload.single("image"),
-  async (req, res) => {
-    const startMs = Date.now();
-    try {
-      const appUser = getAppUserFromCookie(req.cookies);
-      if (!appUser) {
-        return res.status(401).json({ error: "UNAUTHORIZED", message: "יש להתחבר" });
-      }
-
-      // Block check
-      const { getDb } = await import("./db");
-      const { appUsers } = await import("../drizzle/schema");
-      const { eq } = await import("drizzle-orm");
-      const db = await getDb();
-      if (db) {
-        const [userRow] = await db.select({ isBlocked: appUsers.isBlocked }).from(appUsers).where(eq(appUsers.id, appUser.userId)).limit(1);
-        if (userRow?.isBlocked) {
-          return res.status(403).json({ error: "USER_BLOCKED", message: "חשבונך חסום." });
-        }
-      }
-
-      // Token deduction (same cost as ai_trace)
-      const tokenResult = await deductTokens(appUser.userId, "ai_trace");
-      if (!tokenResult.success) {
-        return res.status(402).json({
-          error: "INSUFFICIENT_TOKENS",
-          balance: tokenResult.balance,
-          message: "נגמרו לך האסימונים.",
-          messageEn: "You have run out of tokens.",
-        });
-      }
-
-      // Get image buffer
-      let imageBuffer: Buffer;
-      if (req.file) {
-        imageBuffer = req.file.buffer;
-      } else if (req.body?.imageUrl) {
-        const response = await fetch(req.body.imageUrl);
-        imageBuffer = Buffer.from(await response.arrayBuffer());
-      } else {
-        await addTokens(appUser.userId, TOKEN_COSTS["ai_trace"], "refund", "No image provided");
-        return res.status(400).json({ error: "NO_IMAGE", message: "לא סופקה תמונה" });
-      }
-
-      // Auto-correct EXIF orientation
-      imageBuffer = await sharp(imageBuffer).rotate().toBuffer();
-
-      const hairline = req.body?.hairline === "true" || req.body?.hairline === true;
-      const lineweightMmRaw = parseFloat((req.body?.lineweightMm as string) ?? "");
-      const lineweightMm = isNaN(lineweightMmRaw) ? undefined : Math.min(2.0, Math.max(0, lineweightMmRaw));
-      const userDesc = (req.body?.description || "").trim();
-      const lang = ((req.body?.lang as string) || "en") === "he" ? "he" : "en";
-      const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
-      const ipAnon = anonymizeIp(rawIp);
-
-      // ── Edge detection pipeline ────────────────────────────────────────────────
-      // Step 1: Get image metadata to preserve aspect ratio
-      const meta = await sharp(imageBuffer).metadata();
-      const maxDim = 1500;
-      const resizeOpts = (meta.width && meta.height && (meta.width > maxDim || meta.height > maxDim))
-        ? { width: maxDim, height: maxDim, fit: "inside" as const }
-        : undefined;
-
-      // Step 2: Convert to grayscale, resize, then apply edge detection
-      // We use a multi-step approach:
-      //   a) Grayscale + slight blur to reduce noise
-      //   b) Threshold to create clean B&W
-      //   c) Negate (edges become black on white)
-      //   d) Dilate slightly to connect broken edges
-      const edgeBuffer = await sharp(imageBuffer)
-        .rotate() // EXIF already applied but re-apply just in case
-        .grayscale()
-        .resize(resizeOpts)
-        .blur(0.5)          // slight blur to reduce noise before edge detection
-        .convolve({         // Laplacian edge detection kernel
-          width: 3,
-          height: 3,
-          kernel: [-1, -1, -1, -1, 8, -1, -1, -1, -1],
-          scale: 1,
-          offset: 0,
-        })
-        .normalise()        // stretch contrast to full 0-255 range
-        .threshold(30)      // keep only strong edges
-        .png()
-        .toBuffer();
-
-      // Step 3: Run potrace on the edge image
-      const rawSvg = await pngToSvg(edgeBuffer);
-      const cleanSvg = cleanSvgForPreview(rawSvg);
-      const { dxf, segmentCount, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm);
-
-      // Step 4: Save preview PNG (the edge-detected image) to S3
-      const imgKey = `ai-trace-direct/${nanoid()}.png`;
-      const { url: imageUrl } = await storagePut(imgKey, edgeBuffer, "image/png");
-
-      // Step 5: Save DXF to S3
-      const baseFilename = buildFilename(userDesc || "direct_trace");
-      const dxfFilename = `${baseFilename}.dxf`;
-      const dxfKey = `ai-trace-dxf/${nanoid()}-${dxfFilename}`;
-      const dxfBuf = Buffer.from(dxf, "utf-8");
-      const { url: dxfUrl } = await storagePut(dxfKey, dxfBuf, "application/dxf");
-      const fileSizeKb = Math.round(dxfBuf.length / 1024 * 10) / 10;
-      const durationMs = Date.now() - startMs;
-
-      // Step 6: Upload source image for history
-      let sourceImageUrl: string | undefined;
-      try {
-        const srcKey = `source-images/${appUser.userId}-${nanoid(8)}.jpg`;
-        const jpegBuf = await sharp(imageBuffer)
-          .resize(800, 800, { fit: "inside", withoutEnlargement: true })
-          .jpeg({ quality: 85 })
-          .toBuffer();
-        const { url } = await storagePut(srcKey, jpegBuf, "image/jpeg");
-        sourceImageUrl = url;
-      } catch (e) {
-        console.warn("[directTrace] Failed to upload source image:", e);
-      }
-
-      // Log usage
-      void logUsageEvent({
-        type: "ai_generate",
-        segmentCount,
-        ipAnon: anonymizeIp(ipAnon ?? undefined),
-        durationMs,
-        fileSizeKb,
-      });
-      await recordUserAction({
-        appUserId: appUser.userId,
-        actionType: "ai_generate",
-        description: userDesc || "direct trace",
-        segmentCount,
-        dxfUrl,
-        imageUrl,
-        svgPreview: cleanSvg,
-        sourceImageUrl,
-        feature: "ai_trace",
-        durationMs,
-      });
-
-      return res.json({
-        success: true,
-        imageUrl,
-        svgPreview: cleanSvg,
-        dxfUrl,
-        segmentCount,
-        realWidth,
-        realHeight,
-        filename: dxfFilename,
-        description: userDesc || "direct trace",
-        sourceImageUrl,
-      });
-
-    } catch (err: unknown) {
-      console.error("[directTrace] Error:", err);
-      // Refund tokens on error
-      try {
-        const appUser = getAppUserFromCookie(req.cookies);
-        if (appUser) {
-          await addTokens(appUser.userId, TOKEN_COSTS["ai_trace"], "refund", "Direct trace error");
-        }
-      } catch (_) {}
-      const message = err instanceof Error ? err.message : "Unknown error";
-      return res.status(500).json({
-        error: "INTERNAL_ERROR",
-        message: `שגיאה: ${message}`,
-        messageEn: `Error: ${message}`,
       });
     }
   }

@@ -71,7 +71,6 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
     const dpiRaw = parseInt((req.body.dpi as string) ?? "300", 10);
     const dpi = isNaN(dpiRaw) ? 300 : Math.min(1200, Math.max(72, dpiRaw));
 
-    const convertStartTime = Date.now();
     const CONVERT_TIMEOUT_MS = 45_000; // 45 seconds
     const convertPromise = convertImageToDxf(
       req.file.buffer,
@@ -113,9 +112,7 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
     }
 
     // Log usage event (fire-and-forget)
-    const fileSizeKb = Math.round(Buffer.byteLength(dxf, 'utf-8') / 1024);
-    const durationMs = Date.now() - convertStartTime;
-    void logUsageEvent({ type: "convert", segmentCount, ipAnon, imageUrl, appUserId: appUser?.userId ?? undefined, fileSizeKb, durationMs });
+    void logUsageEvent({ type: "convert", segmentCount, ipAnon, imageUrl, appUserId: appUser?.userId ?? undefined });
 
     // Record user action if logged in
     if (appUser?.userId) {
@@ -128,7 +125,6 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
         imageUrl,
         svgPreview,
         feature: "convert",
-        durationMs,
       });
     }
 

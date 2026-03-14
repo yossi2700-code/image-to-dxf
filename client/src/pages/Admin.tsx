@@ -192,8 +192,6 @@ type RecentEvent = {
   imageUrl: string | null;
   createdAt: Date;
   appUserId: number | null;
-  durationMs: number | null;
-  fileSizeKb: number | null;
   userName: string | null;
   userEmail: string | null;
 };
@@ -201,14 +199,6 @@ type RecentEvent = {
 function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | undefined; recentLoading: boolean }) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "convert" | "ai">("all");
-  const [timeFilter, setTimeFilter] = useState<"day" | "week" | "month" | "all">("all");
-  const [revealedIps, setRevealedIps] = useState<Set<number>>(new Set());
-
-  const toggleIp = (id: number) => setRevealedIps(prev => {
-    const next = new Set(prev);
-    if (next.has(id)) next.delete(id); else next.add(id);
-    return next;
-  });
 
   const filtered = (recent ?? []).filter((ev) => {
     const matchSearch = !search ||
@@ -217,13 +207,7 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
     const matchType = typeFilter === "all" ||
       (typeFilter === "convert" && ev.type === "convert") ||
       (typeFilter === "ai" && ev.type !== "convert");
-    const now = Date.now();
-    const evTime = new Date(ev.createdAt).getTime();
-    const matchTime = timeFilter === "all" ||
-      (timeFilter === "day" && now - evTime < 86400000) ||
-      (timeFilter === "week" && now - evTime < 7 * 86400000) ||
-      (timeFilter === "month" && now - evTime < 30 * 86400000);
-    return matchSearch && matchType && matchTime;
+    return matchSearch && matchType;
   });
 
   return (
@@ -261,21 +245,6 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
                 </button>
               ))}
             </div>
-            <div className="flex gap-1 border-r border-slate-200 pr-2 mr-1">
-              {(["day", "week", "month", "all"] as const).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTimeFilter(t)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                    timeFilter === t
-                      ? "bg-indigo-600 text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  {t === "day" ? "יום" : t === "week" ? "שבוע" : t === "month" ? "חודש" : "הכל"}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       </CardHeader>
@@ -283,16 +252,14 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
         {recentLoading ? (
           <div className="space-y-2 p-4">{[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-muted animate-pulse rounded-lg" />)}</div>
         ) : filtered.length > 0 ? (
-          <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+          <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 z-10">
+              <thead>
                 <tr className="border-b bg-slate-50 text-slate-500">
                   <th className="text-right py-2 px-3 font-medium">תמונה</th>
                   <th className="text-right py-2 px-3 font-medium">משתמש</th>
                   <th className="text-right py-2 px-3 font-medium">סוג</th>
-                  <th className="text-right py-2 px-3 font-medium">נפח</th>
-                  <th className="text-right py-2 px-3 font-medium">זמן עיבוד</th>
-                  <th className="text-right py-2 px-3 font-medium">IP</th>
+                  <th className="text-right py-2 px-3 font-medium">קווים</th>
                   <th className="text-right py-2 px-3 font-medium">תאריך</th>
                 </tr>
               </thead>
@@ -325,45 +292,7 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
                         {ev.type === "convert" ? <><Upload className="w-3 h-3" />המרה</> : <><Sparkles className="w-3 h-3" />AI</>}
                       </span>
                     </td>
-                    <td className="py-2 px-3 text-slate-500 font-mono text-sm">
-                      {ev.fileSizeKb != null ? `${ev.fileSizeKb} KB` : <span className="text-slate-300">—</span>}
-                    </td>
-                    <td className="py-2 px-3 text-xs whitespace-nowrap">
-                      {ev.durationMs != null ? (
-                        <span className={`font-mono font-medium ${
-                          ev.durationMs < 30000 ? 'text-green-600' :
-                          ev.durationMs < 90000 ? 'text-amber-600' : 'text-red-500'
-                        }`}>
-                          {ev.durationMs < 60000
-                            ? `${(ev.durationMs / 1000).toFixed(0)}ש'`
-                            : `${Math.floor(ev.durationMs / 60000)}:${((ev.durationMs % 60000) / 1000).toFixed(0).padStart(2,'0')}ד'`
-                          }
-                        </span>
-                      ) : <span className="text-slate-300">—</span>}
-                    </td>
-                    <td className="py-2 px-3 text-xs">
-                      {ev.ipAnon ? (
-                        revealedIps.has(ev.id) ? (
-                          <button
-                            onClick={() => toggleIp(ev.id)}
-                            className="font-mono text-slate-600 hover:text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded text-[11px] transition-colors"
-                            title="לחץ להסתר"
-                          >
-                            {ev.ipAnon}
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => toggleIp(ev.id)}
-                            className="text-slate-300 hover:text-slate-500 transition-colors text-[11px] flex items-center gap-1"
-                            title="לחץ להציג IP"
-                          >
-                            <span className="font-mono tracking-wider">••••</span>
-                          </button>
-                        )
-                      ) : (
-                        <span className="text-slate-200">—</span>
-                      )}
-                    </td>
+                    <td className="py-2 px-3 text-slate-500 font-mono text-sm">{(ev.segmentCount ?? 0).toLocaleString()}</td>
                     <td className="py-2 px-3 text-slate-400 text-xs whitespace-nowrap">{new Date(ev.createdAt).toLocaleString("he-IL")}</td>
                   </tr>
                 ))}
@@ -863,14 +792,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             {recentLoading ? (
               <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-muted animate-pulse rounded-lg" />)}</div>
             ) : recent && recent.length > 0 ? (
-              <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+              <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-card z-10">
+                  <thead>
                     <tr className="border-b text-muted-foreground">
                       <th className="text-right py-2 pr-2 font-medium">תמונה</th>
                       <th className="text-right py-2 pr-2 font-medium">סוג</th>
-                      <th className="text-right py-2 font-medium">נפח</th>
-                      <th className="text-right py-2 font-medium">זמן עיבוד</th>
+                      <th className="text-right py-2 font-medium">קווים</th>
+                      <th className="text-right py-2 font-medium">IP</th>
                       <th className="text-right py-2 font-medium">תאריך ושעה</th>
                     </tr>
                   </thead>
@@ -896,22 +825,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             {ev.type === "convert" ? <><Upload className="w-3 h-3" />המרה</> : <><Sparkles className="w-3 h-3" />AI</>}
                           </span>
                         </td>
-                        <td className="py-2 text-muted-foreground font-mono text-xs">
-                          {ev.fileSizeKb != null ? `${ev.fileSizeKb} KB` : <span className="opacity-40">—</span>}
-                        </td>
-                        <td className="py-2 text-xs">
-                          {ev.durationMs != null ? (
-                            <span className={`font-mono font-medium ${
-                              ev.durationMs < 30000 ? 'text-green-600' :
-                              ev.durationMs < 90000 ? 'text-amber-600' : 'text-red-500'
-                            }`}>
-                              {ev.durationMs < 60000
-                                ? `${(ev.durationMs / 1000).toFixed(0)}ש'`
-                                : `${Math.floor(ev.durationMs / 60000)}:${((ev.durationMs % 60000) / 1000).toFixed(0).padStart(2,'0')}ד'`
-                              }
-                            </span>
-                          ) : <span className="text-muted-foreground/40">—</span>}
-                        </td>
+                        <td className="py-2 text-muted-foreground">{(ev.segmentCount ?? 0).toLocaleString()}</td>
+                        <td className="py-2 font-mono text-xs text-muted-foreground">{ev.ipAnon ?? "—"}</td>
                         <td className="py-2 text-muted-foreground text-xs">{new Date(ev.createdAt).toLocaleString("he-IL")}</td>
                       </tr>
                     ))}
@@ -1261,7 +1176,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                 <tr className="text-muted-foreground border-b">
                                   <th className="text-right py-1.5 pr-2 font-medium">סוג</th>
                                   <th className="text-right py-1.5 pr-2 font-medium">תיאור</th>
-                                  <th className="text-right py-1.5 font-medium">זמן עיבוד</th>
                                   <th className="text-right py-1.5 font-medium">תאריך</th>
                                   <th className="text-right py-1.5 font-medium">תצוגה / הורדה</th>
                                 </tr>
@@ -1281,19 +1195,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                       </span>
                                     </td>
                                     <td className="py-1.5 pr-2 text-muted-foreground max-w-[140px] truncate">{a.description ?? "—"}</td>
-                                    <td className="py-1.5 text-xs">
-                                      {a.durationMs != null ? (
-                                        <span className={`font-mono font-medium ${
-                                          a.durationMs < 30000 ? 'text-green-600' :
-                                          a.durationMs < 90000 ? 'text-amber-600' : 'text-red-500'
-                                        }`}>
-                                          {a.durationMs < 60000
-                                            ? `${(a.durationMs / 1000).toFixed(0)}ש'`
-                                            : `${Math.floor(a.durationMs / 60000)}:${((a.durationMs % 60000) / 1000).toFixed(0).padStart(2,'0')}ד'`
-                                          }
-                                        </span>
-                                      ) : <span className="text-muted-foreground/40">—</span>}
-                                    </td>
                                     <td className="py-1.5 text-muted-foreground">{new Date(a.createdAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}</td>
                                     <td className="py-1.5">
                                       <div className="flex items-center gap-2">

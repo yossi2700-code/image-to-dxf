@@ -234,76 +234,14 @@ async function runFaceDetectJob(
     const jobCheck = getJob(jobId);
     if (!jobCheck || jobCheck.status === "cancelled") return;
 
-    // ── Step A: Validate face is present using LLM vision ─────────────────────────
-    updateJob(jobId, {
-      step: isHe ? "מזהה פנים בתמונה..." : "Detecting face in image...",
-      stepEn: "Detecting face in image...",
-    });
-
-    const imageBase64 = imageBuffer.toString("base64");
-    const faceCheckResponse = await invokeLLM({
-      messages: [
-        {
-          role: "system",
-          content: "You are a face detection system. Analyze the image and determine if it contains a human face. Respond with JSON only: {\"hasFace\": true/false, \"confidence\": \"high\"/\"medium\"/\"low\"}",
-        },
-        {
-          role: "user",
-          content: [
-            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "low" } },
-            { type: "text", text: "Does this image contain a human face? Respond with JSON only." },
-          ],
-        },
-      ],
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "face_detection",
-          strict: true,
-          schema: {
-            type: "object",
-            properties: {
-              hasFace: { type: "boolean" },
-              confidence: { type: "string", enum: ["high", "medium", "low"] },
-            },
-            required: ["hasFace", "confidence"],
-            additionalProperties: false,
-          },
-        },
-      },
-    });
-
-    const faceCheckContent = (faceCheckResponse as { choices?: Array<{ message?: { content?: string } }> })
-      ?.choices?.[0]?.message?.content ?? "{}";
-    let hasFace = true;
-    try {
-      const parsed = JSON.parse(faceCheckContent);
-      hasFace = parsed.hasFace === true;
-    } catch { hasFace = true; } // default to true on parse error
-
-    if (!hasFace) {
-      // Refund tokens — no face found
-      try {
-        await addTokens(appUserId, TOKEN_COSTS["face_detect"], "refund", "No face detected — tokens refunded");
-      } catch { /* ignore */ }
-      const errorMsg = isHe
-        ? "לא זוהו פנים בתמונה. אנא נסה שוב עם תמונה ברורה יותר של פנים."
-        : "No face detected in the image. Please try again with a clearer photo of a face.";
-      updateJob(jobId, { status: "error", error: errorMsg });
-      return;
-    }
-
-    const jobAfterFaceCheck = getJob(jobId);
-    if (!jobAfterFaceCheck || jobAfterFaceCheck.status === "cancelled") return;
-
-    // ── Step B: Prepare source image ────────────────────────────────────────────────
+    // ── Step A: Prepare source image ────────────────────────────────────────────────
     // 256px input is sufficient for gpt-image-1 low quality and processes faster
     const editSourceBuffer = await sharp(imageBuffer)
       .resize(256, 256, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
       .png({ compressionLevel: 3 })
       .toBuffer();
 
-    // ── Step C: Generate portrait + AI suggestions in parallel ───────────────
+    // ── Step B: Generate portrait + AI suggestions in parallel ───────────────
     heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
 
     // Run portrait generation and AI suggestions in parallel to save time

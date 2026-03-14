@@ -121,8 +121,6 @@ export async function getRecentEvents(limit = 20) {
       imageUrl: usageEvents.imageUrl,
       createdAt: usageEvents.createdAt,
       appUserId: usageEvents.appUserId,
-      durationMs: usageEvents.durationMs,
-      fileSizeKb: usageEvents.fileSizeKb,
       userName: appUsers.name,
       userEmail: appUsers.email,
     })

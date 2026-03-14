@@ -101,10 +101,10 @@ export const authLimiter = rateLimit({
 });
 
 // ── 4. Upload / conversion rate limiter ──────────────────────────────────────
-// 100 conversions per 10 minutes per IP — prevents token farming via automation
+// 30 conversions per 10 minutes per IP — prevents token farming via automation
 export const uploadLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
-  max: 100,
+  max: 30,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   keyGenerator: (req) => getClientIp(req),

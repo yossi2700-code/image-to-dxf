@@ -247,17 +247,12 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   // Always use mode 0 (simple/clean) — single mode, no selector needed
   const [lineweightMm, setLineweightMm] = useState<string>(""); // empty = default
-  // Direct trace mode: uses edge detection + potrace instead of AI generation
-  const [directMode, setDirectMode] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [fullImageMode, setFullImageMode] = useState(false);
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("ai_trace_jobId"));
   const [tryAgainUrl, setTryAgainUrl] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<string>("");
-  const [processingStartTime, setProcessingStartTime] = useState<number | null>(null);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // previewRef holds the latest preview URL without causing re-renders when read inside handleTrace
   const previewRef = useRef<string | null>(localStorage.getItem("ai_trace_imagePreview"));
@@ -295,7 +290,6 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
         const data = await res.json();
         if (data.status === "done") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
           const traceResult = data.result as TraceResult;
           setResult(traceResult);
           saveResultToCache(traceResult);
@@ -305,17 +299,12 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
           refetchTokens();
           const successMsg = isRtl ? `העיצוב מוכן! לחץ הורד DXF` : `Design ready! Click Download DXF`;
           toast.success(successMsg);
-          // Push notification when page is hidden (user switched tabs or minimized)
-          if ("Notification" in window && Notification.permission === "granted") {
+          // Push notification when page is hidden (user left the browser)
+          if (document.hidden && "Notification" in window && Notification.permission === "granted") {
             new Notification(t("aiOutlineComplete"), {
               body: successMsg,
               icon: "/favicon.ico",
-              tag: "ai-outline-done", // Replace any previous notification with same tag
-              requireInteraction: false,
             });
-          } else if ("Notification" in window && Notification.permission === "default") {
-            // Request permission now (user is waiting, good moment)
-            Notification.requestPermission();
           }
         } else if (
           data.status === "processing" &&
@@ -338,7 +327,6 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
           if (stepMsg) setCurrentStep(stepMsg);
         } else if (data.status === "error") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
           const isTokenError = data.error === "INSUFFICIENT_TOKENS" || data.error === "QUOTA_EXCEEDED";
           const msg = isTokenError
             ? (data.message || t("processingError"))
@@ -351,7 +339,6 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
           toast.error(msg);
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
           setStatus("idle");
           setCurrentStep("");
           setJobIdPersisted(null);
@@ -386,10 +373,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
         }
       } catch (_) { /* ignore */ }
     }
-    return () => {
-      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    return () => { if (pollIntervalRef.current) clearInterval(pollIntervalRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -480,9 +464,6 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
     }
 
     setStatus("loading"); setResult(null); setErrorMsg(""); setCurrentStep("");
-    setProcessingStartTime(Date.now()); setElapsedSeconds(0);
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
     try {
       const formData = new FormData();
       if (imageFile) {
@@ -497,51 +478,10 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
       const effectiveFocusText = overrideFocusText !== undefined ? overrideFocusText : focusText;
       if (effectiveFocusText.trim()) formData.append("focusText", effectiveFocusText.trim());
       formData.append("lang", language);
-      const lwVal = parseFloat(lineweightMm);
-      if (!isNaN(lwVal) && lwVal >= 0) formData.append("lineweightMm", String(lwVal));
-
-      // ── DIRECT TRACE MODE: edge detection + potrace, no AI ───────────────────────────
-      if (directMode) {
-        setCurrentStep(isRtl ? "עוקב קצוות ישירות מהתמונה..." : "Tracing edges from photo...");
-        const directRes = await fetch("/api/ai-trace/direct", { method: "POST", body: formData, credentials: "include" });
-        const directData = await directRes.json();
-        if (!directRes.ok) {
-          if (directData.error === "UNAUTHORIZED") { onOpenAuth(); setStatus("idle"); return; }
-          if (directData.error === "INSUFFICIENT_TOKENS") {
-            const msg = language === "he" ? (directData.message || t("quotaExceeded")) : (directData.messageEn || directData.message || t("quotaExceeded"));
-            toast.error(msg); setErrorMsg(msg); setStatus("error"); refetchTokens(); return;
-          }
-          throw new Error(isRtl ? (directData.message || directData.error) : (directData.messageEn || directData.error || "Error"));
-        }
-        // Direct trace returns a single image result (not job-based)
-        const singleImage: GeneratedImage = {
-          imageUrl: directData.imageUrl,
-          svgPreview: directData.svgPreview,
-          dxfUrl: directData.dxfUrl,
-          dxfFilename: directData.filename,
-          segmentCount: directData.segmentCount,
-          width: directData.realWidth,
-          height: directData.realHeight,
-          realWidth: directData.realWidth,
-          realHeight: directData.realHeight,
-        };
-        const traceResult: TraceResult = {
-          images: [singleImage],
-          objectDescription: directData.description || "",
-          suggestions: [],
-        };
-        setResult(traceResult);
-        saveResultToCache(traceResult);
-        setStatus("success");
-        refetchTokens();
-        if (timerRef.current) clearInterval(timerRef.current);
-        toast.success(isRtl ? "עקיבה ישירה מוכנה!" : "Direct trace ready!");
-        return;
-      }
-
-      // ── AI TRACE MODE (default) ──────────────────────────────────────────────────────
       formData.append("landscapeMode", fullImageMode ? "true" : "false");
       formData.append("variationIndex", "0"); // Always use simple/clean mode
+      const lwVal = parseFloat(lineweightMm);
+      if (!isNaN(lwVal) && lwVal >= 0) formData.append("lineweightMm", String(lwVal));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
       const data = await res.json();
       if (!res.ok) {
@@ -557,9 +497,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
         setJobIdPersisted(data.jobId);
         startPolling(data.jobId);
         // Request push notification permission so we can notify when done
-        // We request with a slight delay so the user has context (they just started processing)
         if ("Notification" in window && Notification.permission === "default") {
-          setTimeout(() => Notification.requestPermission(), 3000);
+          Notification.requestPermission();
         }
       } else {
         // Legacy direct response
@@ -577,9 +516,6 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
   // Handle Try Again from history — fetch source image URL and re-submit
   const handleTraceFromUrl = async (sourceUrl: string) => {
     setStatus("loading"); setResult(null); setErrorMsg("");
-    setProcessingStartTime(Date.now()); setElapsedSeconds(0);
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
     try {
       // Fetch the image as a blob from S3
       const resp = await fetch(sourceUrl);
@@ -879,46 +815,6 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                     </button>
                   );
                 })}
-            {/* Mode toggle: AI Trace vs Direct Trace */}
-            <div className="mb-3">
-              <div
-                className="flex rounded-xl overflow-hidden p-1 gap-1"
-                style={{background: '#f1f5f9', border: '1px solid #e2e8f0'}}
-              >
-                <button
-                  type="button"
-                  onClick={() => setDirectMode(false)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all"
-                  style={!directMode ? {
-                    background: 'linear-gradient(135deg, #0d9488, #06b6d4)',
-                    color: 'white',
-                    boxShadow: '0 2px 8px rgba(13,148,136,0.35)',
-                  } : {color: '#6b7280', background: 'transparent'}}
-                >
-                  <Wand2 className="w-3.5 h-3.5" />
-                  <span>{isRtl ? 'AI Outline' : 'AI Outline'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDirectMode(true)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all"
-                  style={directMode ? {
-                    background: 'linear-gradient(135deg, #7c3aed, #6366f1)',
-                    color: 'white',
-                    boxShadow: '0 2px 8px rgba(124,58,237,0.35)',
-                  } : {color: '#6b7280', background: 'transparent'}}
-                >
-                  <Scan className="w-3.5 h-3.5" />
-                  <span>{isRtl ? 'עקיבה ישירה' : 'Direct Trace'}</span>
-                </button>
-              </div>
-              <p className="text-xs mt-1 px-1 text-gray-400">
-                {directMode
-                  ? (isRtl ? 'עוקב בדיוק 100% את הקצוות האמיתיים בתמונה — ללא AI, מהיר יותר' : 'Traces the exact real edges in the photo — no AI, faster')
-                  : (isRtl ? 'AI מנתח ומצייר קווי מתאר נקיים ויפים' : 'AI analyzes and draws clean beautiful line art')}
-              </p>
-            </div>
-
             {/* Lineweight option */}
             <div className="flex items-center gap-2 pt-1 pb-1 flex-wrap">
               <label className="text-sm font-medium shrink-0">
@@ -950,11 +846,9 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                 onClick={() => handleTrace()}
               >
                 {status === "loading" ? (
-                  <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />{directMode ? (isRtl ? 'עוקב...' : 'Tracing...') : t("aiAnalyzing")}</>
+                  <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />{t("aiAnalyzing")}</>
                 ) : (
-                  directMode
-                    ? <><Scan className="w-4 h-4" />{isRtl ? 'עקיבה ישירה' : 'Direct Trace'}</>
-                    : <><Wand2 className="w-4 h-4" />{t("createAiOutline")}</>
+                  <><Wand2 className="w-4 h-4" />{t("createAiOutline")}</>
                 )}
               </button>
               {tryAgainUrl && status !== "loading" && (
@@ -1060,36 +954,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                   </p>
                 </div>
               </div>
-              {/* Animated processing dots with phase-based messages */}
-              <div className="flex flex-col items-center gap-2">
-                {/* Morphing dots animation */}
-                <div className="flex items-center gap-1">
-                  {[0,1,2,3,4].map((i) => (
-                    <div
-                      key={i}
-                      className="rounded-full"
-                      style={{
-                        width: 8,
-                        height: 8,
-                        background: `hsl(${168 + i * 8}, 80%, ${45 + i * 5}%)`,
-                        animation: `wave 1.4s ease-in-out infinite`,
-                        animationDelay: `${i * 0.12}s`,
-                      }}
-                    />
-                  ))}
-                </div>
-                {/* Phase message */}
-                <p className="text-xs font-medium" style={{ color: '#0d9488', minHeight: 18 }}>
-                  {elapsedSeconds < 10
-                    ? (isRtl ? '🧠 AI מנתח את התמונה...' : '🧠 AI analyzing image...')
-                    : elapsedSeconds < 40
-                    ? (isRtl ? '✏️ מצייר קווים וקטוריים...' : '✏️ Drawing vector lines...')
-                    : elapsedSeconds < 80
-                    ? (isRtl ? '✨ משפר פרטים דקים...' : '✨ Refining fine details...')
-                    : (isRtl ? '💫 כמעט מוכן...' : '💫 Almost ready...')
-                  }
-                </p>
-              </div>
+              <p className="text-xs text-gray-400">{t("processingTime")}</p>
               <div className="flex gap-1.5">
                 {[0, 1, 2].map((i) => (
                   <div key={i} className="w-1.5 h-1.5 rounded-full bg-teal-400" style={{animation: `bounce 1s infinite ${i * 0.15}s`}} />
@@ -1264,56 +1129,6 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                       {t("apply")}
                     </button>
                   </div>
-              </div>
-            )}
-
-            {/* Before / After comparison */}
-            {imagePreview && result.images.length > 0 && (
-              <div
-                className="rounded-xl p-4"
-                style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-sm font-semibold text-gray-700">
-                    {isRtl ? '🔍 השוואה: לפני ואחרי' : '🔍 Before & After Comparison'}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Original image */}
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs font-semibold text-center text-gray-500 uppercase tracking-wide">
-                      {isRtl ? 'מקור' : 'Original'}
-                    </span>
-                    <div
-                      className="rounded-lg overflow-hidden border border-gray-200 bg-gray-50 cursor-zoom-in"
-                      onClick={() => setZoomImg({ src: imagePreview, alt: isRtl ? 'תמונה מקורית' : 'Original image' })}
-                    >
-                      <img
-                        src={imagePreview}
-                        alt={isRtl ? 'תמונה מקורית' : 'Original image'}
-                        className="w-full block"
-                        style={{ aspectRatio: '1', objectFit: 'contain', background: '#f8fafc' }}
-                      />
-                    </div>
-                  </div>
-                  {/* AI result */}
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs font-semibold text-center text-teal-600 uppercase tracking-wide">
-                      {isRtl ? 'DXF וקטורי' : 'DXF Vector'}
-                    </span>
-                    <div
-                      className="rounded-lg overflow-hidden border border-teal-200 bg-gray-50 cursor-zoom-in"
-                      onClick={() => setZoomImg({ src: result.images[0].imageUrl, alt: isRtl ? 'תוצאת AI' : 'AI result' })}
-                    >
-                      <img
-                        src={result.images[0].imageUrl}
-                        alt={isRtl ? 'תוצאת AI' : 'AI result'}
-                        className="w-full block"
-                        style={{ aspectRatio: '1', objectFit: 'contain', background: '#f8fafc' }}
-                      />
-                    </div>
-                  </div>
-                </div>
               </div>
             )}
 

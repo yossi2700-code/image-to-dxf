@@ -203,7 +203,6 @@ async function runGenerateJob(
   lineweightMm?: number,
   minGapMm = 0
 ) {
-  const jobStartTime = Date.now();
   try {
     updateJob(jobId, { status: "processing" });
 
@@ -260,8 +259,7 @@ async function runGenerateJob(
       const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, minGapMm);
 
       const imgKey = `ai-generated/${nanoid()}.png`;
-      // Upload the processed B&W buffer (grayscale+threshold) — NOT rawBuffer which may contain color pixels
-      const { url: imageUrl } = await storagePut(imgKey, paddedBuffer, "image/png");
+      const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
 
       const variation = STYLE_VARIATIONS[idx % STYLE_VARIATIONS.length];
       const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
@@ -284,15 +282,10 @@ async function runGenerateJob(
 
     // Log usage
     const totalSegments = images.reduce((s, img) => s + img.segmentCount, 0);
-    const totalFileSizeKb = Math.round(
-      images.reduce((sum, img) => sum + Buffer.byteLength(img.svgPreview ?? "", "utf-8"), 0) / 1024
-    );
     void logUsageEvent({
       type: "ai_generate",
       segmentCount: Math.round(totalSegments / images.length),
       ipAnon: anonymizeIp(ipAnon ?? undefined),
-      durationMs: Date.now() - jobStartTime,
-      fileSizeKb: totalFileSizeKb,
     });
 
     // Record user actions
@@ -313,7 +306,6 @@ async function runGenerateJob(
         groupId,
         variationLabel: variationLabels[i] ?? `v${i + 1}`,
         feature: "ai_generate",
-        durationMs: Date.now() - jobStartTime,
       });
     }
 
