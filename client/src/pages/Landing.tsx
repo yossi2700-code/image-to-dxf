@@ -3,66 +3,171 @@ import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
 import {
-  Zap, Shield, Clock, Download, Star, ArrowLeft, ArrowRight,
+  Zap, Shield, Clock, Download, Star,
   ChevronLeft, ChevronRight, Check, Sparkles, Cpu, FileDown,
-  Lock
+  Lock, MessageCircle, Mail, Phone
 } from "lucide-react";
+
+// ─── CDN base ────────────────────────────────────────────────────────────────
+const CDN = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw";
 
 // ─── Image data ───────────────────────────────────────────────────────────────
 const BEFORE_AFTER = [
   {
     label_he: "מצלמה",
     label_en: "Camera",
-    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/before-camera_e8ff1c90.jpg",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/after-camera_de9f1f99.png",
+    before: `${CDN}/before-camera_e8ff1c90.jpg`,
+    after: `${CDN}/after-camera_de9f1f99.png`,
   },
   {
     label_he: "אופניים",
     label_en: "Bicycle",
-    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/before-bicycle_dbe6f82f.jpg",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/after-bicycle_10ff03f6.png",
+    before: `${CDN}/before-bicycle_dbe6f82f.jpg`,
+    after: `${CDN}/after-bicycle_10ff03f6.png`,
   },
   {
     label_he: "אריה",
     label_en: "Lion",
-    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/before-lion_06430793.jpg",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/after-lion_51a7de96.png",
+    before: `${CDN}/before-lion_06430793.jpg`,
+    after: `${CDN}/after-lion_51a7de96.png`,
   },
   {
     label_he: "מפתח ברגים",
     label_en: "Wrench",
-    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/before-wrench_c1f95777.jpg",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/after-wrench_07e4cc11.png",
+    before: `${CDN}/before-wrench_c1f95777.jpg`,
+    after: `${CDN}/after-wrench_07e4cc11.png`,
   },
   {
     label_he: "מקדחה",
     label_en: "Drill",
-    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/before-drill_64d49d0c.jpg",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/after-drill_fe1af063.png",
+    before: `${CDN}/before-drill_64d49d0c.jpg`,
+    after: `${CDN}/after-drill_fe1af063.png`,
+  },
+  {
+    label_he: "חתול",
+    label_en: "Cat",
+    before: `${CDN}/before-cat_dcacb10f.jpg`,
+    after: `${CDN}/after-cat_b2225f8d.png`,
+  },
+  {
+    label_he: "אופנוע",
+    label_en: "Motorcycle",
+    before: `${CDN}/before-motorcycle_45e267a0.jpg`,
+    after: `${CDN}/after-motorcycle_75dff73c.png`,
+  },
+  {
+    label_he: "טוקן",
+    label_en: "Toucan",
+    before: `${CDN}/before-toucan_5f8de07e.jpg`,
+    after: `${CDN}/after-toucan_c73d6aac.png`,
   },
 ];
 
 const AI_EXAMPLES = [
   {
-    label_he: "קורטינה",
-    label_en: "Curtain",
-    prompt_he: "קורטינה מפוארת עם ציצים",
-    prompt_en: "Ornate curtain with tassels",
-    img: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-curtain_b7a74988.png",
+    label_he: "זאב גיאומטרי",
+    label_en: "Geometric Wolf",
+    prompt_he: "זאב גיאומטרי מודרני",
+    prompt_en: "Modern geometric wolf",
+    img: `${CDN}/ai-geometric-wolf_98d1980b.png`,
   },
   {
     label_he: "מנדלה",
     label_en: "Mandala",
     prompt_he: "מנדלה גיאומטרית סימטרית",
     prompt_en: "Geometric symmetric mandala",
-    img: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-mandala_51de496a.png",
+    img: `${CDN}/ai-mandala-v2_614c147f.png`,
   },
   {
-    label_he: "נשר",
-    label_en: "Eagle",
-    prompt_he: "נשר עם כנפיים פרושות",
-    prompt_en: "Eagle with spread wings",
-    img: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-eagle_fa4bc91a.png",
+    label_he: "מזלג",
+    label_en: "Fork",
+    prompt_he: "מזלג עם ידית מעוטרת",
+    prompt_en: "Fork with ornate handle",
+    img: `${CDN}/ai-fork_c40aff55.png`,
+  },
+  {
+    label_he: "גיטרה",
+    label_en: "Guitar",
+    prompt_he: "גיטרה אקוסטית קלאסית",
+    prompt_en: "Classic acoustic guitar",
+    img: `${CDN}/ai-guitar_c2583706.png`,
+  },
+  {
+    label_he: "פרפר",
+    label_en: "Butterfly",
+    prompt_he: "פרפר עם כנפיים מפורטות",
+    prompt_en: "Butterfly with detailed wings",
+    img: `${CDN}/ai-butterfly_4f4f3fba.png`,
+  },
+  {
+    label_he: "בית",
+    label_en: "House",
+    prompt_he: "בית קוטג' עם גינה",
+    prompt_en: "Cottage house with garden",
+    img: `${CDN}/ai-house_261c8791.png`,
+  },
+  {
+    label_he: "אופניים",
+    label_en: "Bicycle",
+    prompt_he: "אופניים קלאסיים",
+    prompt_en: "Classic bicycle",
+    img: `${CDN}/ai-bicycle-clean_8a1a189e.png`,
+  },
+  {
+    label_he: "סקייטבורד",
+    label_en: "Skateboard",
+    prompt_he: "סקייטבורד מקצועי",
+    prompt_en: "Professional skateboard",
+    img: `${CDN}/ai-skateboard_664b0f3a.png`,
+  },
+  {
+    label_he: "נעל",
+    label_en: "Sneaker",
+    prompt_he: "נעל סניקרס קלאסית",
+    prompt_en: "Classic sneaker shoe",
+    img: `${CDN}/ai-sneaker_18d964e4.png`,
+  },
+  {
+    label_he: "אוזניות",
+    label_en: "Headphones",
+    prompt_he: "אוזניות over-ear",
+    prompt_en: "Over-ear headphones",
+    img: `${CDN}/ai-headphones-v2_186a9ebd.png`,
+  },
+  {
+    label_he: "מצלמה",
+    label_en: "Camera",
+    prompt_he: "מצלמת SLR וינטאג'",
+    prompt_en: "Vintage SLR camera",
+    img: `${CDN}/ai-camera-art_5db350a3.png`,
+  },
+  {
+    label_he: "מכונית",
+    label_en: "Car",
+    prompt_he: "מכונית ספורט קלאסית",
+    prompt_en: "Classic sports car",
+    img: `${CDN}/ai-car_c6c9e6ef.png`,
+  },
+  {
+    label_he: "כלב",
+    label_en: "Dog",
+    prompt_he: "כלב יושב",
+    prompt_en: "Sitting dog",
+    img: `${CDN}/ai-dog_a52e996b.png`,
+  },
+  {
+    label_he: "עוגן",
+    label_en: "Anchor",
+    prompt_he: "עוגן ימי קלאסי",
+    prompt_en: "Classic nautical anchor",
+    img: `${CDN}/ai-anchor_5b6ebb85.png`,
+  },
+  {
+    label_he: "רקטה",
+    label_en: "Rocket",
+    prompt_he: "רקטה חלל מודרנית",
+    prompt_en: "Modern space rocket",
+    img: `${CDN}/ai-rocket_d39317d5.png`,
   },
 ];
 
@@ -72,7 +177,7 @@ const FALLBACK_PACKAGES = [
   { id: "tokens_300", tokens: 300, popular: false, prices: { ILS: "129" } },
 ];
 
-// ─── Before/After slider ──────────────────────────────────────────────────────
+// ─── Before/After Card ────────────────────────────────────────────────────────
 function BeforeAfterCard({ item, isRtl }: { item: typeof BEFORE_AFTER[0]; isRtl: boolean }) {
   const [showAfter, setShowAfter] = useState(false);
   return (
@@ -92,7 +197,6 @@ function BeforeAfterCard({ item, isRtl }: { item: typeof BEFORE_AFTER[0]; isRtl:
           alt={isRtl ? item.label_he : item.label_en}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "opacity 0.3s" }}
         />
-        {/* Toggle badge */}
         <div style={{
           position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)",
           background: showAfter ? "rgba(99,102,241,0.92)" : "rgba(0,0,0,0.55)",
@@ -112,19 +216,64 @@ function BeforeAfterCard({ item, isRtl }: { item: typeof BEFORE_AFTER[0]; isRtl:
   );
 }
 
+// ─── AI Example Card ──────────────────────────────────────────────────────────
+function AiExampleCard({ item, isRtl }: { item: typeof AI_EXAMPLES[0]; isRtl: boolean }) {
+  return (
+    <div style={{
+      borderRadius: 14, overflow: "hidden", background: "#fff",
+      boxShadow: "0 2px 16px rgba(99,102,241,0.10)", border: "1px solid #ede9fe",
+      transition: "transform 0.2s, box-shadow 0.2s",
+    }}
+      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(-3px)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 28px rgba(99,102,241,0.22)"; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = "none"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 2px 16px rgba(99,102,241,0.10)"; }}
+    >
+      <div style={{ position: "relative", width: "100%", paddingBottom: "100%", background: "#f8f6ff" }}>
+        <img
+          src={item.img}
+          alt={isRtl ? item.label_he : item.label_en}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+        />
+        <div style={{
+          position: "absolute", top: 8, right: 8,
+          background: "rgba(99,102,241,0.85)", color: "#fff",
+          borderRadius: 8, padding: "2px 8px", fontSize: 11, fontWeight: 700,
+        }}>
+          DXF
+        </div>
+      </div>
+      <div style={{ padding: "10px 12px", borderTop: "1px solid #f0eeff" }}>
+        <div style={{ fontSize: 11, color: "#7c3aed", fontWeight: 600, marginBottom: 3 }}>
+          {isRtl ? "נכתב:" : "Prompt:"}
+        </div>
+        <div style={{ fontSize: 12, color: "#374151", fontStyle: "italic", lineHeight: 1.4 }}>
+          "{isRtl ? item.prompt_he : item.prompt_en}"
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function Landing() {
   const { isRtl } = useLanguage();
   const [, navigate] = useLocation();
-  const [aiIdx, setAiIdx] = useState(0);
 
   const { data: dbPrices } = trpc.packages.prices.useQuery();
+  const { data: contactInfo } = trpc.contact.info.useQuery();
+
   const packages = dbPrices && dbPrices.length > 0
     ? dbPrices.map((p) => ({
         id: p.packageId, tokens: p.tokenAmount, popular: p.packageId === "tokens_1",
         prices: { ILS: p.priceILS },
       }))
     : FALLBACK_PACKAGES;
+
+  const whatsappNumber = contactInfo?.whatsappNumber || "";
+  const supportEmail = contactInfo?.supportEmail || "info@dxfai.net";
+
+  const whatsappUrl = whatsappNumber
+    ? `https://wa.me/${whatsappNumber.replace(/\D/g, "")}?text=${encodeURIComponent(isRtl ? "שלום, אני מעוניין בשירות AiDXF" : "Hello, I'm interested in AiDXF")}`
+    : "";
 
   const dir = isRtl ? "rtl" : "ltr";
   const t = isRtl ? he : en;
@@ -135,7 +284,6 @@ export default function Landing() {
       {/* ── Sticky nav ── */}
       <header style={{ position: "sticky", top: 0, zIndex: 30, background: "rgba(255,255,255,0.95)", backdropFilter: "blur(8px)", borderBottom: "1px solid #e8eaf0", boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          {/* Logo */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => navigate("/")}>
             <div style={{ width: 32, height: 32, borderRadius: 9, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
@@ -148,13 +296,21 @@ export default function Landing() {
             <span style={{ fontWeight: 900, fontSize: 18, color: "#6366f1", letterSpacing: "-0.02em" }}>Ai</span>
             <span style={{ fontWeight: 900, fontSize: 18, color: "#111827", letterSpacing: "-0.02em" }}>DXF</span>
           </div>
-          {/* CTA */}
-          <button
-            onClick={() => navigate("/")}
-            style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", borderRadius: 10, padding: "9px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer", boxShadow: "0 2px 10px rgba(99,102,241,0.3)" }}
-          >
-            {t.navCta}
-          </button>
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            {whatsappUrl && (
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
+                style={{ display: "flex", alignItems: "center", gap: 6, background: "#25d366", color: "#fff", border: "none", borderRadius: 10, padding: "8px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer", textDecoration: "none" }}>
+                <MessageCircle size={15} />
+                {isRtl ? "WhatsApp" : "WhatsApp"}
+              </a>
+            )}
+            <button
+              onClick={() => navigate("/")}
+              style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", borderRadius: 10, padding: "9px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer", boxShadow: "0 2px 10px rgba(99,102,241,0.3)" }}
+            >
+              {t.navCta}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -192,7 +348,6 @@ export default function Landing() {
               {t.heroCta2}
             </button>
           </div>
-          {/* Trust line */}
           <p style={{ color: "#7c6fcd", fontSize: 13, marginTop: 20 }}>{t.heroTrust}</p>
         </div>
       </section>
@@ -235,7 +390,7 @@ export default function Landing() {
 
       {/* ── AI CREATE EXAMPLES ── */}
       <section style={{ padding: "72px 24px", background: "linear-gradient(160deg,#f5f3ff 0%,#ede9fe 100%)" }}>
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 48 }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.25)", borderRadius: 20, padding: "5px 14px", marginBottom: 16 }}>
               <Sparkles size={13} color="#7c3aed" />
@@ -244,44 +399,21 @@ export default function Landing() {
             <h2 style={{ fontSize: "clamp(1.5rem,3vw,2.2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 12 }}>{t.aiCreateTitle}</h2>
             <p style={{ color: "#6b7280", fontSize: 16 }}>{t.aiCreateSubtitle}</p>
           </div>
-          {/* Carousel */}
-          <div style={{ position: "relative", maxWidth: 480, margin: "0 auto" }}>
-            <div style={{ borderRadius: 20, overflow: "hidden", boxShadow: "0 8px 40px rgba(99,102,241,0.18)", background: "#fff" }}>
-              <img
-                src={AI_EXAMPLES[aiIdx].img}
-                alt={isRtl ? AI_EXAMPLES[aiIdx].label_he : AI_EXAMPLES[aiIdx].label_en}
-                style={{ width: "100%", display: "block" }}
-              />
-              <div style={{ padding: "16px 20px", borderTop: "1px solid #f0f0f5" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ background: "#ede9fe", borderRadius: 8, padding: "4px 10px", fontSize: 12, color: "#7c3aed", fontWeight: 600 }}>
-                    {isRtl ? "פרומפט:" : "Prompt:"}
-                  </div>
-                  <span style={{ fontSize: 14, color: "#374151", fontStyle: "italic" }}>
-                    "{isRtl ? AI_EXAMPLES[aiIdx].prompt_he : AI_EXAMPLES[aiIdx].prompt_en}"
-                  </span>
-                </div>
-              </div>
-            </div>
-            {/* Nav buttons */}
+          {/* Grid of all 15 examples */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 16 }}>
+            {AI_EXAMPLES.map((item, i) => (
+              <AiExampleCard key={i} item={item} isRtl={isRtl} />
+            ))}
+          </div>
+          <div style={{ textAlign: "center", marginTop: 36 }}>
             <button
-              onClick={() => setAiIdx(v => (v - 1 + AI_EXAMPLES.length) % AI_EXAMPLES.length)}
-              style={{ position: "absolute", top: "50%", [isRtl ? "right" : "left"]: -20, transform: "translateY(-50%)", width: 40, height: 40, borderRadius: "50%", background: "#fff", border: "1px solid #e0e7ff", boxShadow: "0 2px 10px rgba(0,0,0,0.1)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              onClick={() => navigate("/")}
+              style={{ background: "linear-gradient(135deg,#7c3aed,#6366f1)", color: "#fff", border: "none", borderRadius: 12, padding: "13px 32px", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 16px rgba(124,58,237,0.3)" }}
+              onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.04)")}
+              onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
             >
-              {isRtl ? <ChevronRight size={18} color="#6366f1" /> : <ChevronLeft size={18} color="#6366f1" />}
+              {t.aiCreateCta}
             </button>
-            <button
-              onClick={() => setAiIdx(v => (v + 1) % AI_EXAMPLES.length)}
-              style={{ position: "absolute", top: "50%", [isRtl ? "left" : "right"]: -20, transform: "translateY(-50%)", width: 40, height: 40, borderRadius: "50%", background: "#fff", border: "1px solid #e0e7ff", boxShadow: "0 2px 10px rgba(0,0,0,0.1)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-            >
-              {isRtl ? <ChevronLeft size={18} color="#6366f1" /> : <ChevronRight size={18} color="#6366f1" />}
-            </button>
-            {/* Dots */}
-            <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 20 }}>
-              {AI_EXAMPLES.map((_, i) => (
-                <div key={i} onClick={() => setAiIdx(i)} style={{ width: i === aiIdx ? 20 : 8, height: 8, borderRadius: 4, background: i === aiIdx ? "#6366f1" : "#d1d5db", cursor: "pointer", transition: "all 0.2s" }} />
-              ))}
-            </div>
           </div>
         </div>
       </section>
@@ -299,7 +431,7 @@ export default function Landing() {
                 onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "none"; (e.currentTarget as HTMLDivElement).style.transform = "none"; }}
               >
                 <div style={{ width: 48, height: 48, borderRadius: 14, background: "linear-gradient(135deg,#ede9fe,#ddd6fe)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-                  {[<Zap size={22} color="#6366f1" />, <Clock size={22} color="#6366f1" />, <Shield size={22} color="#6366f1" />, <Download size={22} color="#6366f1" />, <Star size={22} color="#6366f1" />][i]}
+                  {[<Shield size={22} color="#6366f1" />, <Clock size={22} color="#6366f1" />, <Zap size={22} color="#6366f1" />, <Download size={22} color="#6366f1" />, <Star size={22} color="#6366f1" />][i]}
                 </div>
                 <h3 style={{ fontWeight: 700, fontSize: 16, color: "#1e1b4b", marginBottom: 8 }}>{b.title}</h3>
                 <p style={{ color: "#6b7280", fontSize: 14, lineHeight: 1.65 }}>{b.desc}</p>
@@ -420,7 +552,7 @@ export default function Landing() {
                 </div>
               </div>
               <button
-                onClick={() => { window.location.href = `mailto:info@dxfai.net?subject=${encodeURIComponent(isRtl ? "עניין במנוי עסקי" : "Business subscription interest")}`; }}
+                onClick={() => { window.location.href = `mailto:${supportEmail}?subject=${encodeURIComponent(isRtl ? "עניין במנוי עסקי" : "Business subscription interest")}`; }}
                 style={{ background: "rgba(255,255,255,0.12)", color: "#e0e7ff", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 12, padding: "12px 24px", fontWeight: 700, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap" }}
               >
                 {t.subCta}
@@ -439,10 +571,49 @@ export default function Landing() {
             </svg>
           </div>
 
-          {/* Legal note */}
           <p style={{ textAlign: "center", color: "#9ca3af", fontSize: 12, marginTop: 16, lineHeight: 1.6 }}>
             {t.legalNote}
           </p>
+        </div>
+      </section>
+
+      {/* ── CONTACT CTA ── */}
+      <section style={{ padding: "72px 24px", background: "#f8f7ff" }}>
+        <div style={{ maxWidth: 700, margin: "0 auto", textAlign: "center" }}>
+          <h2 style={{ fontSize: "clamp(1.4rem,3vw,2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 12 }}>{t.contactTitle}</h2>
+          <p style={{ color: "#6b7280", fontSize: 16, marginBottom: 36, lineHeight: 1.7 }}>{t.contactSubtitle}</p>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+            {/* Leave details / email */}
+            <a
+              href={`mailto:${supportEmail}?subject=${encodeURIComponent(isRtl ? "פנייה מהאתר" : "Contact from website")}`}
+              style={{ display: "flex", alignItems: "center", gap: 8, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", borderRadius: 12, padding: "14px 28px", fontWeight: 700, fontSize: 15, cursor: "pointer", textDecoration: "none", boxShadow: "0 4px 16px rgba(99,102,241,0.3)" }}
+            >
+              <Mail size={18} />
+              {t.contactEmail}
+            </a>
+            {/* WhatsApp */}
+            {whatsappUrl ? (
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: "flex", alignItems: "center", gap: 8, background: "#25d366", color: "#fff", border: "none", borderRadius: 12, padding: "14px 28px", fontWeight: 700, fontSize: 15, cursor: "pointer", textDecoration: "none", boxShadow: "0 4px 16px rgba(37,211,102,0.3)" }}
+              >
+                <MessageCircle size={18} />
+                {t.contactWhatsApp}
+              </a>
+            ) : (
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(isRtl ? "שלום, אני מעוניין בשירות AiDXF" : "Hello, I'm interested in AiDXF")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: "flex", alignItems: "center", gap: 8, background: "#25d366", color: "#fff", border: "none", borderRadius: 12, padding: "14px 28px", fontWeight: 700, fontSize: 15, cursor: "pointer", textDecoration: "none", boxShadow: "0 4px 16px rgba(37,211,102,0.3)" }}
+              >
+                <MessageCircle size={18} />
+                {t.contactWhatsApp}
+              </a>
+            )}
+          </div>
         </div>
       </section>
 
@@ -453,7 +624,7 @@ export default function Landing() {
           <p style={{ color: "#c4b5fd", fontSize: 16, marginBottom: 36, lineHeight: 1.7 }}>{t.finalCtaSubtitle}</p>
           <button
             onClick={() => navigate("/")}
-            style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", borderRadius: 14, padding: "16px 40px", fontWeight: 800, fontSize: 18, cursor: "pointer", boxShadow: "0 4px 24px rgba(99,102,241,0.4)" }}
+            style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", borderRadius: 14, padding: "16px 40px", fontWeight: 800, fontSize: 18, cursor: "pointer", boxShadow: "0 4px 24px rgba(99,102,241,0.4)", transition: "transform 0.15s" }}
             onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.04)")}
             onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
           >
@@ -488,7 +659,7 @@ const he = {
   heroSubtitle: "פשוט מעלים תמונה, ה-AI מזהה את הקווים ומייצר קובץ DXF מדויק לכל מכונת CNC, לייזר או נתב.",
   heroCta1: "התחל חינם — 10 אסימונים מתנה",
   heroCta2: "ראה מחירים",
-  heroTrust: "ללא כרטיס אשראי · אסימונים לא פגים · רכישה מאובטחת PayPal",
+  heroTrust: "ללא כרטיס אשראי · רכישה מאובטחת PayPal",
   howTitle: "איך זה עובד?",
   howSubtitle: "3 שלבים פשוטים מתמונה לקובץ מוכן לייצור",
   steps: [
@@ -502,13 +673,14 @@ const he = {
   aiCreateBadge: "AI Create — יצירה מטקסט",
   aiCreateTitle: "צור עיצובים חדשים מתיאור טקסטואלי",
   aiCreateSubtitle: "פשוט תאר מה אתה רוצה — ה-AI מייצר עיצוב DXF מוכן לחיתוך",
+  aiCreateCta: "נסה AI Create עכשיו",
   benefitsTitle: "למה לבחור ב-AiDXF?",
   benefits: [
-    { title: "מהיר כברק", desc: "המרה תוך 5-10 שניות. לא צריך להמתין — קובץ מוכן מיידית." },
-    { title: "אסימונים לא פגים", desc: "אסימונים שרכשת נשארים לתמיד. אין מנוי, אין לחץ." },
-    { title: "קווים נקיים ומדויקים", desc: "אלגוריתם AI מתקדם מייצר קווים חלקים המתאימים לחיתוך CNC ולייזר." },
+    { title: "עיבוד מקצועי ומדויק", desc: "אלגוריתם AI מתקדם מייצר קווים נקיים ומדויקים — ללא צורך להגדיר זמן עיבוד." },
     { title: "תואם לכל תוכנה", desc: "DXF תקני — עובד ב-Lightburn, AutoCAD, Fusion 360, Inkscape ועוד." },
+    { title: "שיטת תמחור גמישה", desc: "שלם לפי המרה בודדת (אסימונים) או מנוי חודשי — בחר מה שמתאים לך." },
     { title: "תמיכה בעברית", desc: "ממשק מלא בעברית, תמיכה בעברית, ומחירים בשקלים." },
+    { title: "רכישה מאובטחת", desc: "תשלום מאובטח דרך PayPal — ללא שמירת פרטי כרטיס אשראי." },
   ],
   testimonialsTitle: "מה אומרים המשתמשים",
   testimonials: [
@@ -518,14 +690,14 @@ const he = {
     { name: "רחל גולן", role: "אמנית עץ", avatar: "ר", color: "#10b981", text: "שלחתי תמונה של הנכד ויצא פורטרט מדהים לחריטה על עץ. מדויק ומהיר." },
   ],
   pricingTitle: "מחירים פשוטים ושקופים",
-  pricingSubtitle: "שלם לפי שימוש — קנה אסימונים כשצריך. מנוי חודשי ללא הגבלה — בקרוב.",
+  pricingSubtitle: "שיטת תמחור גמישה — לפי המרה בודדת או מנוי חודשי. מנוי חודשי ללא הגבלה — בקרוב.",
   pricingPayPerUse: "לפי שימוש — קנה אסימונים",
   pricingSubscription: "מנוי חודשי — בקרוב",
   pricingTokens: "אסימונים",
   pricingPerAction: "לפעולה",
   pricingPopular: "⭐ הנפוץ ביותר",
   pricingBuy: "קנה עכשיו",
-  packageFeatures: ["כל פעולה = אסימון אחד", "אסימונים לא פגים לעולם", "חשבונית מס", "רכישה מאובטחת PayPal"],
+  packageFeatures: ["כל פעולה = אסימון אחד", "חשבונית מס", "רכישה מאובטחת PayPal"],
   comingSoon: "בקרוב",
   subTitle: "מנוי עסקי חודשי",
   subDesc: "אסימונים ללא הגבלה, ניהול צוות, גישת API וחשבונית מס חודשית. מתאים לסטודיות, מפעלים ומעצבים מקצועיים.",
@@ -533,10 +705,14 @@ const he = {
   subCta: "השאר פרטים",
   paypalTrust: "רכישה מאובטחת באמצעות",
   legalNote: "החברה שומרת לעצמה את הזכות לסגור את השירות בהודעה מוקדמת. במקרה כזה ייעשה מאמץ סביר להחזיר אסימונים שלא נוצלו או לתת זיכוי כספי יחסי.",
+  contactTitle: "יש שאלות? אנחנו כאן",
+  contactSubtitle: "צרו קשר בכל שאלה — נשמח לעזור בבחירת החבילה המתאימה, בעניינים טכניים, או בכל נושא אחר.",
+  contactEmail: "השאר פרטים",
+  contactWhatsApp: "WhatsApp",
   finalCtaTitle: "מוכן להתחיל?",
   finalCtaSubtitle: "הירשם חינם וקבל 10 אסימונים מתנה — מספיק ל-10 המרות ראשונות.",
   finalCtaBtn: "התחל חינם עכשיו",
-  finalCtaTrust: "ללא כרטיס אשראי · אסימונים לא פגים",
+  finalCtaTrust: "ללא כרטיס אשראי · רכישה מאובטחת PayPal",
 };
 
 const en = {
@@ -546,7 +722,7 @@ const en = {
   heroSubtitle: "Simply upload an image, the AI detects the lines and generates a precise DXF file for any CNC, laser, or router machine.",
   heroCta1: "Start Free — 10 Tokens Gift",
   heroCta2: "See Pricing",
-  heroTrust: "No credit card · Tokens never expire · Secure PayPal checkout",
+  heroTrust: "No credit card · Secure PayPal checkout",
   howTitle: "How does it work?",
   howSubtitle: "3 simple steps from image to production-ready file",
   steps: [
@@ -560,13 +736,14 @@ const en = {
   aiCreateBadge: "AI Create — from text",
   aiCreateTitle: "Create new designs from text description",
   aiCreateSubtitle: "Simply describe what you want — AI generates a DXF design ready for cutting",
+  aiCreateCta: "Try AI Create Now",
   benefitsTitle: "Why choose AiDXF?",
   benefits: [
-    { title: "Lightning fast", desc: "Conversion in 5-10 seconds. No waiting — file ready instantly." },
-    { title: "Tokens never expire", desc: "Purchased tokens stay forever. No subscription, no pressure." },
-    { title: "Clean, precise lines", desc: "Advanced AI algorithm generates smooth lines suitable for CNC and laser cutting." },
+    { title: "Professional processing & accuracy", desc: "Advanced AI algorithm generates clean, precise lines — no need to define processing time." },
     { title: "Compatible with all software", desc: "Standard DXF — works in Lightburn, AutoCAD, Fusion 360, Inkscape and more." },
+    { title: "Flexible pricing method", desc: "Pay per conversion (tokens) or monthly subscription — choose what works for you." },
     { title: "Hebrew & English UI", desc: "Full Hebrew interface, Hebrew support, and prices in ILS." },
+    { title: "Secure payment", desc: "Secure payment via PayPal — no credit card details stored." },
   ],
   testimonialsTitle: "What users say",
   testimonials: [
@@ -576,23 +753,27 @@ const en = {
     { name: "Rachel Golan", role: "Wood artist", avatar: "R", color: "#10b981", text: "Sent a photo of my grandchild and got an amazing portrait for wood engraving. Accurate and fast." },
   ],
   pricingTitle: "Simple, transparent pricing",
-  pricingSubtitle: "Pay as you go — buy tokens when needed. Monthly unlimited subscription — coming soon.",
+  pricingSubtitle: "Flexible pricing — pay per conversion or monthly subscription. Monthly unlimited — coming soon.",
   pricingPayPerUse: "Pay per use — buy tokens",
   pricingSubscription: "Monthly subscription — coming soon",
   pricingTokens: "tokens",
   pricingPerAction: "per action",
   pricingPopular: "⭐ Most popular",
   pricingBuy: "Buy now",
-  packageFeatures: ["Every action = 1 token", "Tokens never expire", "Tax invoice", "Secure PayPal checkout"],
+  packageFeatures: ["Every action = 1 token", "Tax invoice", "Secure PayPal checkout"],
   comingSoon: "Coming soon",
   subTitle: "Business monthly subscription",
   subDesc: "Unlimited tokens, team management, API access and monthly tax invoice. Ideal for studios, factories and professional designers.",
   subFeatures: ["Unlimited tokens", "Team management", "API access", "Tax invoice"],
   subCta: "Leave details",
   paypalTrust: "Secure checkout via",
-  legalNote: "The company reserves the right to close the service with prior notice. In such case, a reasonable effort will be made to refund unused tokens or provide a proportional credit.",
+  legalNote: "The company reserves the right to discontinue the service with prior notice. In such case, reasonable effort will be made to refund unused tokens or provide proportional credit.",
+  contactTitle: "Questions? We're here",
+  contactSubtitle: "Contact us for any question — we're happy to help with package selection, technical issues, or anything else.",
+  contactEmail: "Leave details",
+  contactWhatsApp: "WhatsApp",
   finalCtaTitle: "Ready to start?",
-  finalCtaSubtitle: "Sign up free and get 10 gift tokens — enough for your first 10 conversions.",
+  finalCtaSubtitle: "Sign up free and get 10 tokens as a gift — enough for your first 10 conversions.",
   finalCtaBtn: "Start Free Now",
-  finalCtaTrust: "No credit card · Tokens never expire",
+  finalCtaTrust: "No credit card · Secure PayPal checkout",
 };
