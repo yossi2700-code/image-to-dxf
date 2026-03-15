@@ -1770,3 +1770,9 @@
 - [x] הסרת pricingModalOpen state מ-Home.tsx
 - [x] הסרת סקשן "המנוי שלי" מ-Account.tsx
 - [x] הסרת pricing section ו-subscription teaser מ-Landing.tsx
+
+## ניסוי - מצב מפורט עם קווים פתוחים
+
+- [x] הוסף פרמטר `forceOpenPaths` ל-svgToDxf שמאלץ closed=false על כל הנתיבים
+- [x] הוסף פרמטר `openLinesMode` ל-aiTraceRoute שמופעל כשvariationIndex=1 (מפורט)
+- [x] שלח `openLinesMode=true` מ-AiTraceTab כשdetailLevel=1 (אין צורך בשינוי פרונטאנד — isDetailedMode מוגדר סרברית)

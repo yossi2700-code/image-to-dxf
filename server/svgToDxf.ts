@@ -376,7 +376,7 @@ function writeLwPolyline(
 
 // ─── SVG → DXF main function ──────────────────────────────────────────────────
 
-export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: number, minGapMm = 0): DxfResult {
+export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: number, minGapMm = 0, forceOpenPaths = false): DxfResult {
   // Extract viewBox dimensions
   const vbMatch = svgContent.match(/viewBox="([^"]*)"/i);
   let width = 500, height = 500;
@@ -549,7 +549,8 @@ export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: nu
   lines.push("0\nSECTION\n2\nENTITIES");
 
   for (const poly of outputPolylines) {
-    writeLwPolyline(lines, poly.points, poly.closed, outputHeight, lwCode);
+    // forceOpenPaths: treat all paths as open (no closed loops) — used for detailed mode
+    writeLwPolyline(lines, poly.points, forceOpenPaths ? false : poly.closed, outputHeight, lwCode);
   }
 
   lines.push("0\nENDSEC\n0\nEOF");

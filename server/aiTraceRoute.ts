@@ -513,7 +513,8 @@ async function runTraceJob(
       });
       const cleanSvg = cleanSvgForPreview(rawSvg);
 
-      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm);
+      // Detailed mode: force all paths open (no closed loops) — produces open strokes instead of filled contours
+      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, 0, isDetailedMode);
       const imgKey = `ai-trace-generated/${nanoid()}.png`;
       const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
       const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
