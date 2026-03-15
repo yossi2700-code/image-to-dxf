@@ -2339,7 +2339,7 @@ export default function Home() {
             {/* Pricing button — opens token pricing modal */}
             <button
               onClick={() => setPricingModalOpen(true)}
-              className="hidden sm:flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-80 shrink-0"
+              className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-80 shrink-0"
               style={{ color: '#6366f1', background: '#eef2ff', border: '1px solid #c7d2fe', whiteSpace: 'nowrap' }}
             >
               {isRtl ? '💎 מחירון' : '💎 Pricing'}
