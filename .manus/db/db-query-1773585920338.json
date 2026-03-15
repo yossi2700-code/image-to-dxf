@@ -1,0 +1,32 @@
+{
+  "query": "SELECT id, feature, actionType, description, groupId, variationLabel, imageUrl, sourceImageUrl, createdAt FROM user_actions WHERE dxfUrl IS NULL AND svgPreview IS NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, feature, actionType, description, groupId, variationLabel, imageUrl, sourceImageUrl, createdAt FROM user_actions WHERE dxfUrl IS NULL AND svgPreview IS NULL;",
+  "rows": [
+    {
+      "id": "3270123",
+      "feature": "ai_trace",
+      "actionType": "ai_generate",
+      "description": "ai_trace",
+      "groupId": "NULL",
+      "variationLabel": "NULL",
+      "imageUrl": "NULL",
+      "sourceImageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/source-images/840003-ntqy9nUu.jpg",
+      "createdAt": "2026-03-15 10:15:07"
+    },
+    {
+      "id": "3270124",
+      "feature": "ai_trace",
+      "actionType": "ai_generate",
+      "description": "ai_trace",
+      "groupId": "NULL",
+      "variationLabel": "NULL",
+      "imageUrl": "NULL",
+      "sourceImageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/source-images/840003-5i5_2gFb.jpg",
+      "createdAt": "2026-03-15 10:15:52"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tfeature\tactionType\tdescription\tgroupId\tvariationLabel\timageUrl\tsourceImageUrl\tcreatedAt\n3270123\tai_trace\tai_generate\tai_trace\tNULL\tNULL\tNULL\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/source-images/840003-ntqy9nUu.jpg\t2026-03-15 10:15:07\n3270124\tai_trace\tai_generate\tai_trace\tNULL\tNULL\tNULL\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/source-images/840003-5i5_2gFb.jpg\t2026-03-15 10:15:52\n",
+  "stderr": "",
+  "execution_time_ms": 1592
+}

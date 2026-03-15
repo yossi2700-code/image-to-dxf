@@ -201,7 +201,8 @@ async function runGenerateJob(
   ipAnon: string,
   hairline = false,
   lineweightMm?: number,
-  minGapMm = 0
+  minGapMm = 0,
+  preGroupId?: string
 ) {
   const jobStartTime = Date.now();
   try {
@@ -296,8 +297,8 @@ async function runGenerateJob(
       fileSizeKb: totalFileSizeKb,
     });
 
-    // Record user actions
-    const groupId = nanoid(12);
+    // Record user actions — use pre-generated groupId so all 3 variations share the same group
+    const groupId = preGroupId ?? nanoid(12);
     const variationLabels = landscapeMode
       ? ["simple", "detailed", "decorative"]
       : ["simple", "detailed", "complex"];
@@ -394,19 +395,11 @@ router.post("/api/generate-images", async (req, res) => {
       });
     }
 
-    // Record preliminary action immediately so it always appears in history
-    void recordUserAction({
-      appUserId: appUser.userId,
-      actionType: "ai_generate",
-      description: prompt.trim().slice(0, 200),
-      segmentCount: 0,
-      feature: "ai_generate",
-    });
-
     const jobId = nanoid(12);
+    const jobGroupId = nanoid(12); // pre-generate groupId so all 3 variations share it
     createJob(jobId, appUser.userId, "ai_generate");
 
-    runGenerateJob(jobId, prompt.trim(), modifications, !!landscapeMode, appUser.userId, ipAnon ?? "", !!hairline, lineweightMmGen, minGapMmGen)
+    runGenerateJob(jobId, prompt.trim(), modifications, !!landscapeMode, appUser.userId, ipAnon ?? "", !!hairline, lineweightMmGen, minGapMmGen, jobGroupId)
       .catch((err) => console.error("[generateRoute] Unhandled job error:", err));
 
     return res.json({ jobId });

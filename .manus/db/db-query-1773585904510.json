@@ -1,0 +1,9 @@
+{
+  "query": "DELETE FROM user_actions WHERE dxfUrl IS NULL AND svgPreview IS NULL AND groupId IS NULL AND actionType = 'ai_generate' AND feature = 'ai_generate';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute DELETE FROM user_actions WHERE dxfUrl IS NULL AND svgPreview IS NULL AND groupId IS NULL AND actionType = 'ai_generate' AND feature = 'ai_generate';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1717
+}
