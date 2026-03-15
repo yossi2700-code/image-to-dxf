@@ -316,6 +316,7 @@ async function runGenerateJob(
         variationLabel: variationLabels[i] ?? `v${i + 1}`,
         feature: "ai_generate",
         durationMs: Date.now() - jobStartTime,
+        ipAnon: ipAnon ?? undefined,
       });
     }
 

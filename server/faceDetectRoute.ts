@@ -343,6 +343,7 @@ async function runFaceDetectJob(
         sourceImageUrl: sourceImageUrl ?? undefined,
         feature: "portrait",
         durationMs: Date.now() - jobStartTime,
+        ipAnon: ipAnon ?? undefined,
       });
     }
 

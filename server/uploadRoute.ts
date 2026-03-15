@@ -125,6 +125,7 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
         imageUrl,
         svgPreview,
         feature: "convert",
+        ipAnon: ipAnon ?? undefined,
       });
     }
 

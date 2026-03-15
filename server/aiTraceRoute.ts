@@ -584,6 +584,7 @@ async function runTraceJob(
         sourceImageUrl: sourceImageUrl ?? undefined,
         feature: "ai_trace",
         durationMs: Date.now() - jobStartTime,
+        ipAnon: ipAnon ?? undefined,
       });
     }
 
@@ -809,6 +810,8 @@ router.post(
       }
 
       const { previewPngUrl, previewPngBase64, description, imageUrl, hairline: hairlineParam, lineweightMm: lwMmParam } = req.body;
+      const rawIp2 = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+      const ipAnon = anonymizeIp(rawIp2);
       const hairline = hairlineParam === true || hairlineParam === "true";
       const lineweightMmRaw2 = parseFloat((lwMmParam as string) ?? "");
       const lineweightMm2 = isNaN(lineweightMmRaw2) ? undefined : Math.min(2.0, Math.max(0, lineweightMmRaw2));
@@ -853,6 +856,7 @@ router.post(
         imageUrl: imageUrl || previewPngUrl,
         svgPreview,
         feature: "ai_trace",
+        ipAnon: ipAnon ?? undefined,
       });
 
       return res.json({

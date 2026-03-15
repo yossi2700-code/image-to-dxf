@@ -1746,3 +1746,8 @@
 
 - [x] הסר גרף פעילות 30 ימים מהסקירה הכללית
 - [x] בדוק מדוע IP נעלם בכרטיסיית הפעילות
+
+## חיבור IP לפעולות - מרץ 2026
+
+- [x] חבר ipAnon לכל ה-routes (convert, AI trace, AI generate, AI refine, face detect, AI document redraw)
+- [x] ודא כפתור הצגה/הסתרה IP בכרטיסיית הפעילות

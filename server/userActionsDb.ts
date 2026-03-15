@@ -25,6 +25,8 @@ export interface RecordActionParams {
   feature?: string;
   /** Processing duration in milliseconds */
   durationMs?: number;
+  /** Anonymized IP address (last octet zeroed, e.g. 1.2.3.0) */
+  ipAnon?: string;
 }
 
 export async function recordUserAction(params: RecordActionParams): Promise<void> {
@@ -44,6 +46,7 @@ export async function recordUserAction(params: RecordActionParams): Promise<void
       sourceImageUrl: params.sourceImageUrl ?? null,
       feature: params.feature ?? null,
       durationMs: params.durationMs ?? null,
+      ipAnon: params.ipAnon ?? null,
     });
   } catch (err) {
     // Non-critical — don't fail the request if logging fails

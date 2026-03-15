@@ -272,6 +272,7 @@ async function runDocumentRedrawJob(
       groupId,
       variationLabel: "document-redraw",
       feature: "document_redraw",
+      ipAnon: ipAnon ?? undefined,
     });
 
     updateJob(jobId, {
