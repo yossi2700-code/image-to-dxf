@@ -202,6 +202,8 @@ type RecentEvent = {
 function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | undefined; recentLoading: boolean }) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "convert" | "ai">("all");
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [revealedIps, setRevealedIps] = useState<Set<number>>(new Set());
 
   const filtered = (recent ?? []).filter((ev) => {
     const matchSearch = !search ||
@@ -213,6 +215,20 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
     return matchSearch && matchType;
   });
 
+  const toggleIp = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRevealedIps(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const getActionLabel = (type: string) => {
+    if (type === "convert") return { label: "המרה", color: "bg-blue-100 text-blue-700" };
+    return { label: "AI", color: "bg-purple-100 text-purple-700" };
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -220,7 +236,7 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
           <div className="flex items-center justify-between">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Clock className="w-4 h-4 text-primary" />
-              היסטוריית פעולות
+              פעולות אחרונות
             </CardTitle>
             <span className="text-xs text-muted-foreground bg-slate-100 px-2 py-0.5 rounded-full">
               {filtered.length} פעולות
@@ -239,9 +255,7 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
                   key={f}
                   onClick={() => setTypeFilter(f)}
                   className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                    typeFilter === f
-                      ? "bg-primary text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    typeFilter === f ? "bg-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                   }`}
                 >
                   {f === "all" ? "הכל" : f === "convert" ? "המרה" : "AI"}
@@ -253,23 +267,26 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
       </CardHeader>
       <CardContent className="p-0">
         {recentLoading ? (
-          <div className="space-y-2 p-4">{[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-muted animate-pulse rounded-lg" />)}</div>
+          <div className="space-y-1 p-3">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-muted animate-pulse rounded-xl" />)}</div>
         ) : filtered.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-slate-50 text-slate-500">
-                  <th className="text-right py-2 px-3 font-medium">תמונה</th>
-                  <th className="text-right py-2 px-3 font-medium">משתמש</th>
-                  <th className="text-right py-2 px-3 font-medium">סוג</th>
-                  <th className="text-right py-2 px-3 font-medium">קווים</th>
-                  <th className="text-right py-2 px-3 font-medium">תאריך</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((ev) => (
-                  <tr key={ev.id} className="border-b last:border-0 hover:bg-blue-50/40 transition-colors">
-                    <td className="py-2 px-3">
+          <div className="divide-y">
+            {filtered.map((ev) => {
+              const isOpen = expandedId === ev.id;
+              const ipRevealed = revealedIps.has(ev.id);
+              const { label: typeLabel, color: typeColor } = getActionLabel(ev.type);
+              const dateStr = new Date(ev.createdAt).toLocaleDateString("he-IL");
+              const timeStr = new Date(ev.createdAt).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
+              const displayName = ev.userName || ev.userEmail?.split("@")[0] || "אורח";
+
+              return (
+                <div key={ev.id} className="transition-colors">
+                  {/* Collapsed row — always visible */}
+                  <button
+                    className="w-full text-right px-4 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors"
+                    onClick={() => setExpandedId(isOpen ? null : ev.id)}
+                  >
+                    {/* Thumbnail */}
+                    <div className="shrink-0">
                       {ev.imageUrl ? (
                         <img src={ev.imageUrl} alt="" className="w-10 h-10 object-cover rounded-lg border shadow-sm" />
                       ) : (
@@ -277,30 +294,88 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
                           <Upload className="w-4 h-4 text-slate-400" />
                         </div>
                       )}
-                    </td>
-                    <td className="py-2 px-3">
-                      {ev.userName || ev.userEmail ? (
-                        <div>
-                          <p className="text-sm font-semibold text-slate-800">{ev.userName || ev.userEmail?.split("@")[0]}</p>
-                          {ev.userEmail && <p className="text-xs text-slate-400">{ev.userEmail}</p>}
+                    </div>
+                    {/* Main info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-semibold text-slate-800 truncate">{displayName}</span>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${typeColor}`}>
+                          {ev.type === "convert" ? <Upload className="w-3 h-3" /> : <Sparkles className="w-3 h-3" />}
+                          {typeLabel}
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-400 mt-0.5">
+                        {dateStr} · {timeStr}
+                      </div>
+                    </div>
+                    {/* Chevron */}
+                    <svg
+                      className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {/* Expanded details */}
+                  {isOpen && (
+                    <div className="bg-slate-50 border-t px-4 py-3 space-y-2 text-sm">
+                      {/* Username */}
+                      <div className="flex items-start gap-2">
+                        <span className="text-slate-500 w-20 shrink-0 text-xs pt-0.5">שם משתמש</span>
+                        <span className="font-medium text-slate-800">{ev.userName || "—"}</span>
+                      </div>
+                      {/* Email */}
+                      <div className="flex items-start gap-2">
+                        <span className="text-slate-500 w-20 shrink-0 text-xs pt-0.5">מייל</span>
+                        <span className="text-slate-700 break-all">{ev.userEmail || "—"}</span>
+                      </div>
+                      {/* Action type */}
+                      <div className="flex items-start gap-2">
+                        <span className="text-slate-500 w-20 shrink-0 text-xs pt-0.5">סוג פעולה</span>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${typeColor}`}>
+                          {typeLabel}
+                        </span>
+                      </div>
+                      {/* Segments */}
+                      {(ev.segmentCount ?? 0) > 0 && (
+                        <div className="flex items-start gap-2">
+                          <span className="text-slate-500 w-20 shrink-0 text-xs pt-0.5">קווים</span>
+                          <span className="font-mono text-slate-700">{(ev.segmentCount ?? 0).toLocaleString()}</span>
                         </div>
-                      ) : (
-                        <span className="text-xs text-slate-400 italic">אורח</span>
                       )}
-                    </td>
-                    <td className="py-2 px-3">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        ev.type === "convert" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
-                      }`}>
-                        {ev.type === "convert" ? <><Upload className="w-3 h-3" />המרה</> : <><Sparkles className="w-3 h-3" />AI</>}
-                      </span>
-                    </td>
-                    <td className="py-2 px-3 text-slate-500 font-mono text-sm">{(ev.segmentCount ?? 0).toLocaleString()}</td>
-                    <td className="py-2 px-3 text-slate-400 text-xs whitespace-nowrap">{new Date(ev.createdAt).toLocaleString("he-IL")}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      {/* Date */}
+                      <div className="flex items-start gap-2">
+                        <span className="text-slate-500 w-20 shrink-0 text-xs pt-0.5">תאריך</span>
+                        <span className="text-slate-700">{dateStr}</span>
+                      </div>
+                      {/* Time */}
+                      <div className="flex items-start gap-2">
+                        <span className="text-slate-500 w-20 shrink-0 text-xs pt-0.5">שעה</span>
+                        <span className="text-slate-700">{timeStr}</span>
+                      </div>
+                      {/* IP — hidden by default */}
+                      {ev.ipAnon && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-500 w-20 shrink-0 text-xs">IP</span>
+                          {ipRevealed ? (
+                            <span className="font-mono text-xs text-slate-700">{ev.ipAnon}</span>
+                          ) : (
+                            <span className="font-mono text-xs text-slate-400 select-none">••••••••••</span>
+                          )}
+                          <button
+                            onClick={(e) => toggleIp(ev.id, e)}
+                            className="text-xs text-indigo-500 hover:text-indigo-700 underline ml-1"
+                          >
+                            {ipRevealed ? "הסתר" : "הצג"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="py-10 text-center text-slate-400">
