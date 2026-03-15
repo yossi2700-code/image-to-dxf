@@ -651,7 +651,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 <h1 className="text-base font-black text-white leading-tight tracking-tight">משרד ניהול המערכת</h1>
                 <p className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'rgba(199,210,254,0.85)' }}>
                   AI DXF — לוח בקרה מאובטח
-                  <span className="px-1.5 py-0.5 rounded text-xs font-bold" style={{ background: 'rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.95)', fontSize: '10px', letterSpacing: '0.03em' }}>v72df5b60</span>
+                  <span className="px-1.5 py-0.5 rounded text-xs font-bold" style={{ background: 'rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.95)', fontSize: '10px', letterSpacing: '0.03em' }}>v9bcfe49d</span>
+                  <span className="text-xs" style={{ color: 'rgba(199,210,254,0.7)', fontSize: '10px' }}>15.3.2026 • 12:29</span>
                 </p>
               </div>
             </div>

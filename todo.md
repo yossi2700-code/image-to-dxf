@@ -1684,3 +1684,10 @@
 - [x] טבלת failed_jobs בDB: userId, feature, duration, error, imageUrl, createdAt
 - [x] רישום כשלונות ב-failed_jobs בכל route אסינכרוני
 - [x] פאנל "כשלונות" בדף ניהול: מי, כמה זמן, למה נכשל, תמונה
+
+## תיקונים - מרץ 2026 (תמונת מקור בכשלונות)
+
+- [x] הוספת sourceImageUrl לכשלונות ב-faceDetectRoute ו-aiDocumentRedrawRoute
+- [x] הצגת תאריך ושעה של הגרסה הנוכחית בדף הניהול
+- [x] בדיקת באנר אסימונים במייל — לוודא שמוצג ללקוחות שלא מימשו
+- [x] הצגת תאריך ושעה של גרסה בדף ניהול

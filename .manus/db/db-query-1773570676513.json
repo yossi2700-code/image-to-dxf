@@ -1,0 +1,17 @@
+{
+  "query": "\nSELECT \n  u.id, u.email, \n  CASE WHEN u.passwordHash IS NOT NULL THEN 'email_user' ELSE 'oauth_user' END as user_type,\n  u.tokenBalance,\n  IFNULL(cr.campaignCode, 'NOT_CLAIMED') as bonus_status\nFROM app_users u\nLEFT JOIN campaign_redemptions cr ON cr.appUserId = u.id AND cr.campaignCode = 'welcome_bonus_2026'\nWHERE u.email LIKE '%liad%' OR u.email LIKE '%118811%';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT \n  u.id, u.email, \n  CASE WHEN u.passwordHash IS NOT NULL THEN 'email_user' ELSE 'oauth_user' END as user_type,\n  u.tokenBalance,\n  IFNULL(cr.campaignCode, 'NOT_CLAIMED') as bonus_status\nFROM app_users u\nLEFT JOIN campaign_redemptions cr ON cr.appUserId = u.id AND cr.campaignCode = 'welcome_bonus_2026'\nWHERE u.email LIKE '%liad%' OR u.email LIKE '%118811%';\n",
+  "rows": [
+    {
+      "id": "840013",
+      "email": "liad118811@gmail.com",
+      "user_type": "email_user",
+      "tokenBalance": "15",
+      "bonus_status": "NOT_CLAIMED"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tuser_type\ttokenBalance\tbonus_status\n840013\tliad118811@gmail.com\temail_user\t15\tNOT_CLAIMED\n",
+  "stderr": "",
+  "execution_time_ms": 1604
+}

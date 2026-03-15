@@ -153,7 +153,8 @@ async function runDocumentRedrawJob(
   userDesc: string,
   appUserId: number,
   ipAnon: string,
-  originalAspect: number
+  originalAspect: number,
+  sourceImageUrl?: string
 ) {
   let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
   const jobStartTime = Date.now();
@@ -292,6 +293,7 @@ async function runDocumentRedrawJob(
         feature: "document_redraw",
         durationMs: Date.now() - jobStartTime,
         errorMessage: message,
+        sourceImageUrl: sourceImageUrl ?? undefined,
       });
     } catch (_) { /* ignore logging errors */ }
   }
@@ -371,13 +373,24 @@ router.post(
         "") as string
       );
 
+      // ── Upload source image to S3 (for failed job debugging) ──────────────────
+      let sourceImageUrl: string | undefined;
+      try {
+        const jpegBuf = await sharp(imageBuffer).resize(512, 512, { fit: "inside", withoutEnlargement: true }).jpeg({ quality: 80 }).toBuffer();
+        const srcKey = `document-redraw-source/${appUser.userId}-${nanoid(8)}.jpg`;
+        const { url } = await storagePut(srcKey, jpegBuf, "image/jpeg");
+        sourceImageUrl = url;
+      } catch (e) {
+        console.warn("[aiDocumentRedrawRoute] Failed to upload source image:", e);
+      }
+
       // ── Create job and start background processing ────────────────────────────────────
       // Token deduction happens INSIDE the job after successful completion.
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "ai_trace");
 
       // Fire-and-forget — does NOT await
-      runDocumentRedrawJob(jobId, imageBuffer, userDesc, appUser.userId, ipAnon ?? "", originalAspect)
+      runDocumentRedrawJob(jobId, imageBuffer, userDesc, appUser.userId, ipAnon ?? "", originalAspect, sourceImageUrl)
         .catch((err) => console.error("[aiDocumentRedraw] Unhandled job error:", err));
 
       // Return job ID immediately

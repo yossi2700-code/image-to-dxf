@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT \n  u.id, u.email, \n  CASE WHEN u.password_hash IS NOT NULL THEN 'email_user' ELSE 'oauth_user' END as user_type,\n  u.token_balance,\n  cr.id as bonus_claimed_id,\n  cr.campaignCode,\n  cr.tokensAwarded,\n  cr.redeemedAt\nFROM app_users u\nLEFT JOIN campaign_redemptions cr ON cr.appUserId = u.id AND cr.campaignCode = 'welcome_bonus_2026'\nWHERE u.email LIKE '%liad%' OR u.email LIKE '%118811%'\nLIMIT 5;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT \n  u.id, u.email, \n  CASE WHEN u.password_hash IS NOT NULL THEN 'email_user' ELSE 'oauth_user' END as user_type,\n  u.token_balance,\n  cr.id as bonus_claimed_id,\n  cr.campaignCode,\n  cr.tokensAwarded,\n  cr.redeemedAt\nFROM app_users u\nLEFT JOIN campaign_redemptions cr ON cr.appUserId = u.id AND cr.campaignCode = 'welcome_bonus_2026'\nWHERE u.email LIKE '%liad%' OR u.email LIKE '%118811%'\nLIMIT 5;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'u.password_hash' in 'field list'"
+  ]
+}

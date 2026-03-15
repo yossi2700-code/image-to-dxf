@@ -1,0 +1,20 @@
+{
+  "query": "\nSELECT \n  u.id, u.email, \n  CASE WHEN u.passwordHash IS NOT NULL THEN 'email_user' ELSE 'oauth_user' END as user_type,\n  u.tokenBalance,\n  cr.id as bonus_claimed_id,\n  cr.campaignCode,\n  cr.tokensAwarded,\n  cr.redeemedAt\nFROM app_users u\nLEFT JOIN campaign_redemptions cr ON cr.appUserId = u.id AND cr.campaignCode = 'welcome_bonus_2026'\nWHERE u.email LIKE '%liad%' OR u.email LIKE '%118811%'\nLIMIT 5;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT \n  u.id, u.email, \n  CASE WHEN u.passwordHash IS NOT NULL THEN 'email_user' ELSE 'oauth_user' END as user_type,\n  u.tokenBalance,\n  cr.id as bonus_claimed_id,\n  cr.campaignCode,\n  cr.tokensAwarded,\n  cr.redeemedAt\nFROM app_users u\nLEFT JOIN campaign_redemptions cr ON cr.appUserId = u.id AND cr.campaignCode = 'welcome_bonus_2026'\nWHERE u.email LIKE '%liad%' OR u.email LIKE '%118811%'\nLIMIT 5;\n",
+  "rows": [
+    {
+      "id": "840013",
+      "email": "liad118811@gmail.com",
+      "user_type": "email_user",
+      "tokenBalance": "15",
+      "bonus_claimed_id": "NULL",
+      "campaignCode": "NULL",
+      "tokensAwarded": "NULL",
+      "redeemedAt": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tuser_type\ttokenBalance\tbonus_claimed_id\tcampaignCode\ttokensAwarded\tredeemedAt\n840013\tliad118811@gmail.com\temail_user\t15\tNULL\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1634
+}
