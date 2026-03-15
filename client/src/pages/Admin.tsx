@@ -891,68 +891,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           </CardContent>
         </Card>
 
-        {/* Recent Events */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Clock className="w-4 h-4 text-primary" />
-              פעולות אחרונות
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {recentLoading ? (
-              <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-muted animate-pulse rounded-lg" />)}</div>
-            ) : recent && recent.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b text-muted-foreground">
-                      <th className="text-right py-2 pr-2 font-medium">תמונה</th>
-                      <th className="text-right py-2 pr-2 font-medium">סוג</th>
-                      <th className="text-right py-2 font-medium">קווים</th>
-                      <th className="text-right py-2 font-medium">IP</th>
-                      <th className="text-right py-2 font-medium">תאריך ושעה</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recent.map((ev) => (
-                      <tr key={ev.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                        <td className="py-2 pr-2">
-                          {ev.imageUrl ? (
-                            <img
-                              src={ev.imageUrl}
-                              alt="תמונה מקורית"
-                              className="w-10 h-10 object-cover rounded border"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded border bg-muted flex items-center justify-center">
-                              <Upload className="w-4 h-4 text-muted-foreground" />
-                            </div>
-                          )}
-                        </td>
-                        <td className="py-2 pr-2">
-                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium
-                            ${ev.type === "convert" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>
-                            {ev.type === "convert" ? <><Upload className="w-3 h-3" />המרה</> : <><Sparkles className="w-3 h-3" />AI</>}
-                          </span>
-                        </td>
-                        <td className="py-2 text-muted-foreground">{(ev.segmentCount ?? 0).toLocaleString()}</td>
-                        <td className="py-2 font-mono text-xs text-muted-foreground">{ev.ipAnon ?? "—"}</td>
-                        <td className="py-2 text-muted-foreground text-xs">{new Date(ev.createdAt).toLocaleString("he-IL")}</td>
-                      </tr>
-                    ))}
-
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="py-8 text-center text-muted-foreground text-sm">
-                אין פעולות עדיין. ברגע שמשתמשים יתחילו להשתמש — הנתונים יופיעו כאן.
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
         {/* ── ADMIN TASKS WIDGET ── */}
         <Card className="overflow-hidden" style={{ borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
           <CardHeader className="pb-2" style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)' }}>
@@ -1167,7 +1105,17 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             {u.lastLoginAt && <span>כניסה: {new Date(u.lastLoginAt).toLocaleDateString("he-IL")}</span>}
                             {lastAction && (
                               <span className="text-slate-500">
-                                פעולה אחרונה: <span className="font-medium text-slate-700">{actionLabel}</span> לפני {Math.round((Date.now() - new Date(lastAction.createdAt).getTime()) / 60000)} דקות
+                                פעולה אחרונה: <span className="font-medium text-slate-700">{actionLabel}</span> {(() => {
+                                      const diffMs = Date.now() - new Date(lastAction.createdAt).getTime();
+                                      const diffSec = Math.round(diffMs / 1000);
+                                      const diffMin = Math.round(diffMs / 60000);
+                                      const diffHr = Math.round(diffMs / 3600000);
+                                      const diffDay = Math.round(diffMs / 86400000);
+                                      if (diffSec < 60) return `לפני ${diffSec} שניות`;
+                                      if (diffMin < 60) return `לפני ${diffMin} דקות`;
+                                      if (diffHr < 24) return `לפני ${diffHr} שעות`;
+                                      return `לפני ${diffDay} ימים`;
+                                    })()}
                               </span>
                             )}
                             {lastPurchase && (
