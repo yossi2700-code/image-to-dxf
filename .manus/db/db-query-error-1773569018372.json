@@ -1,0 +1,10 @@
+{
+  "query": "\nSELECT u.id as userId FROM app_users u WHERE u.email = 'liad118811@gmail.com';\nSELECT tt.id, tt.amount, tt.type, tt.description, tt.createdAt FROM token_transactions tt WHERE tt.appUserId = 840013 ORDER BY tt.createdAt DESC LIMIT 10;\nSELECT ue.id, ue.type, ue.imageUrl, ue.segmentCount, ue.createdAt FROM usage_events ue WHERE ue.appUserId = 840013 ORDER BY ue.createdAt DESC LIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT u.id as userId FROM app_users u WHERE u.email = 'liad118811@gmail.com';\nSELECT tt.id, tt.amount, tt.type, tt.description, tt.createdAt FROM token_transactions tt WHERE tt.appUserId = 840013 ORDER BY tt.createdAt DESC LIMIT 10;\nSELECT ue.id, ue.type, ue.imageUrl, ue.segmentCount, ue.createdAt FROM usage_events ue WHERE ue.appUserId = 840013 ORDER BY ue.createdAt DESC LIMIT 10;\n",
+  "returncode": 1,
+  "logs": [
+    "userId",
+    "840013",
+    "ERROR 1054 (42S22) at line 3: Unknown column 'tt.type' in 'field list'"
+  ]
+}

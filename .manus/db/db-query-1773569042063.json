@@ -1,0 +1,9 @@
+{
+  "query": "\nSELECT ue.id, ue.type, ue.imageUrl, ue.segmentCount, ue.createdAt FROM usage_events ue WHERE ue.appUserId = 840013 ORDER BY ue.createdAt DESC LIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT ue.id, ue.type, ue.imageUrl, ue.segmentCount, ue.createdAt FROM usage_events ue WHERE ue.appUserId = 840013 ORDER BY ue.createdAt DESC LIMIT 10;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1586
+}

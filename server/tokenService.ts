@@ -76,6 +76,21 @@ export async function getTokenBalance(appUserId: number): Promise<number> {
 }
 
 /**
+ * Check if a user has enough tokens for an action (without deducting).
+ * Returns { success: true } if balance is sufficient, { success: false, balance } if not.
+ */
+export async function checkTokenBalance(
+  appUserId: number,
+  action: TokenAction
+): Promise<{ success: true; balance: number } | { success: false; balance: number }> {
+  const costs = await getTokenCostsFromDb();
+  const cost = costs[action] ?? TOKEN_COSTS_DEFAULT[action] ?? 0;
+  const balance = await getTokenBalance(appUserId);
+  if (balance >= cost) return { success: true, balance };
+  return { success: false, balance };
+}
+
+/**
  * Deduct tokens for an action.
  * Returns { success: true, balanceAfter } on success.
  * Returns { success: false, balance } when insufficient tokens.
@@ -83,8 +98,13 @@ export async function getTokenBalance(appUserId: number): Promise<number> {
 export async function deductTokens(
   appUserId: number,
   action: TokenAction,
-  description?: string
+  descriptionOrOptions?: string | { checkOnly?: boolean }
 ): Promise<{ success: true; balanceAfter: number } | { success: false; balance: number }> {
+  // Support checkOnly option for pre-flight balance check without deduction
+  if (descriptionOrOptions && typeof descriptionOrOptions === 'object' && descriptionOrOptions.checkOnly) {
+    return checkTokenBalance(appUserId, action) as Promise<{ success: true; balanceAfter: number } | { success: false; balance: number }>;
+  }
+  const description = typeof descriptionOrOptions === 'string' ? descriptionOrOptions : undefined;
   const costs = await getTokenCostsFromDb();
   const cost = costs[action] ?? TOKEN_COSTS_DEFAULT[action] ?? 0;
   if (cost === 0) return { success: true, balanceAfter: await getTokenBalance(appUserId) };

@@ -1,0 +1,18 @@
+{
+  "query": "\nSELECT tt.id, tt.amount, tt.reason, tt.description, tt.balanceAfter, tt.createdAt FROM token_transactions tt WHERE tt.appUserId = 840013 ORDER BY tt.createdAt DESC LIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT tt.id, tt.amount, tt.reason, tt.description, tt.balanceAfter, tt.createdAt FROM token_transactions tt WHERE tt.appUserId = 840013 ORDER BY tt.createdAt DESC LIMIT 10;\n",
+  "rows": [
+    {
+      "id": "3300146",
+      "amount": "-5",
+      "reason": "ai_trace",
+      "description": "NULL",
+      "balanceAfter": "5",
+      "createdAt": "2026-03-15 08:26:13"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tamount\treason\tdescription\tbalanceAfter\tcreatedAt\n3300146\t-5\tai_trace\tNULL\t5\t2026-03-15 08:26:13\n",
+  "stderr": "",
+  "execution_time_ms": 1586
+}

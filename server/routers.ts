@@ -7,7 +7,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks, emailVerifications } from "../drizzle/schema";
+import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks, emailVerifications, failedJobs } from "../drizzle/schema";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "./emailService";
 import { desc, eq, and, sql } from "drizzle-orm";
@@ -999,6 +999,12 @@ export const appRouter = router({
         await db.delete(adminTasks).where(eq(adminTasks.id, input.id));
         return { success: true };
       }),
+
+    /** Get recent failed jobs for debugging */
+    getFailedJobs: adminProcedure.query(async () => {
+      const { getRecentFailedJobs } = await import("./failedJobsDb");
+      return getRecentFailedJobs(100);
+    }),
 
     /** Permanently delete a user and all their data */
     deleteUser: adminProcedure

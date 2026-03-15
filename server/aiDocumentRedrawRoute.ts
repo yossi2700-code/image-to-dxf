@@ -156,6 +156,7 @@ async function runDocumentRedrawJob(
   originalAspect: number
 ) {
   let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
+  const jobStartTime = Date.now();
   try {
     updateJob(jobId, { status: "processing" });
 
@@ -255,6 +256,9 @@ async function runDocumentRedrawJob(
       appUserId,
     });
 
+    // Deduct tokens NOW — only after successful job completion
+    await deductTokens(appUserId, "ai_trace");
+
     const groupId = `doc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     await recordUserAction({
       appUserId,
@@ -279,8 +283,17 @@ async function runDocumentRedrawJob(
     console.error("[aiDocumentRedraw] Job error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     updateJob(jobId, { status: "error", error: message });
-    // Refund tokens on error
-    try { await addTokens(appUserId, TOKEN_COSTS["ai_trace"], "refund", "Job error — tokens refunded"); } catch (_) { /* ignore */ }
+    // No refund needed — tokens are only deducted after success
+    // Log the failed job for admin debugging
+    try {
+      const { recordFailedJob } = await import("./failedJobsDb");
+      await recordFailedJob({
+        appUserId,
+        feature: "document_redraw",
+        durationMs: Date.now() - jobStartTime,
+        errorMessage: message,
+      });
+    } catch (_) { /* ignore logging errors */ }
   }
 }
 
@@ -320,8 +333,8 @@ router.post(
         }
       }
 
-      // ── Token check & deduction ───────────────────────────────────────────────
-      const tokenResult = await deductTokens(appUser.userId, "ai_trace");
+      // ── Token check only — deduction happens after successful job ──────────────
+      const tokenResult = await deductTokens(appUser.userId, "ai_trace", { checkOnly: true });
       if (!tokenResult.success) {
         return res.status(402).json({
           error: "INSUFFICIENT_TOKENS",
@@ -358,16 +371,8 @@ router.post(
         "") as string
       );
 
-      // Record preliminary action immediately so it always appears in history
-      void recordUserAction({
-        appUserId: appUser.userId,
-        actionType: "ai_generate",
-        description: (userDesc || "document_redraw").slice(0, 200),
-        segmentCount: 0,
-        feature: "document_redraw",
-      });
-
-      // ── Create job and start background processing ────────────────────────────
+      // ── Create job and start background processing ────────────────────────────────────
+      // Token deduction happens INSIDE the job after successful completion.
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "ai_trace");
 

@@ -562,6 +562,9 @@ async function runTraceJob(
       fileSizeKb: totalFileSizeKb,
     });
 
+    // Deduct tokens NOW — only after successful job completion
+    await deductTokens(appUserId, "ai_trace");
+
     // Record user actions
     const groupId = nanoid(12);
     const allVariationLabels = ["simple", "detailed", "decorative"];
@@ -591,8 +594,18 @@ async function runTraceJob(
     console.error("[aiTraceRoute] Job error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     updateJob(jobId, { status: "error", error: message });
-    // Refund tokens on error
-    try { await addTokens(appUserId, TOKEN_COSTS["ai_trace"], "refund", "Job error — tokens refunded"); } catch (_) { /* ignore */ }
+    // No token refund needed — tokens are only deducted after success
+    // Log the failed job for admin debugging
+    try {
+      const { recordFailedJob } = await import("./failedJobsDb");
+      await recordFailedJob({
+        appUserId,
+        feature: "ai_trace",
+        durationMs: Date.now() - jobStartTime,
+        errorMessage: message,
+        sourceImageUrl: sourceImageUrl ?? undefined,
+      });
+    } catch (_) { /* ignore logging errors */ }
     // Alert admin if billing/quota issue
     const isBillingError = message.toLowerCase().includes("quota") ||
       message.toLowerCase().includes("billing") ||
@@ -644,8 +657,8 @@ router.post(
         }
       }
 
-      // ── Token check & deduction ───────────────────────────────────────────────
-      const tokenResult = await deductTokens(appUser.userId, "ai_trace");
+      // ── Token check (balance only — deduction happens after successful job) ────
+      const tokenResult = await deductTokens(appUser.userId, "ai_trace", { checkOnly: true });
       if (!tokenResult.success) {
         return res.status(402).json({
           error: "INSUFFICIENT_TOKENS",
@@ -702,20 +715,8 @@ router.post(
         console.warn("[aiTraceRoute] Failed to upload source image:", e);
       }
 
-      // Record a preliminary action immediately after token deduction.
-      // This ensures the action always appears in history even if the job
-      // fails or the user closes the browser before the job finishes.
-      // The job's recordUserAction call will add the full details (dxf, svg, etc.).
-      void recordUserAction({
-        appUserId: appUser.userId,
-        actionType: "ai_generate",
-        description: (userDesc || focusText || "ai_trace").slice(0, 200),
-        segmentCount: 0,
-        sourceImageUrl: uploadedSourceImageUrl,
-        feature: "ai_trace",
-      });
-
       // Create job and start background processing
+      // Token deduction happens INSIDE the job after successful completion.
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "ai_trace");
 

@@ -325,6 +325,9 @@ async function runFaceDetectJob(
       durationMs: Date.now() - jobStartTime,
     });
 
+    // Deduct tokens NOW — only after successful job completion
+    await deductTokens(appUserId, "face_detect");
+
     const groupId = nanoid(12);
     for (const img of images) {
       void recordUserAction({
@@ -351,12 +354,18 @@ async function runFaceDetectJob(
     if (heartbeatInterval) clearInterval(heartbeatInterval);
     console.error("[faceDetectRoute] Job error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
-    // Refund tokens on error so user is not charged for failed jobs
+    // No refund needed — tokens are only deducted after success
+    // Log the failed job for admin debugging
     try {
-      await addTokens(appUserId, TOKEN_COSTS["face_detect"], "refund", "Job failed — tokens refunded");
-    } catch (refundErr) {
-      console.error("[faceDetectRoute] Failed to refund tokens:", refundErr);
-    }
+      const { recordFailedJob } = await import("./failedJobsDb");
+      await recordFailedJob({
+        appUserId,
+        feature: "portrait",
+        durationMs: Date.now() - jobStartTime,
+        errorMessage: message,
+        sourceImageUrl: sourceImageUrl ?? undefined,
+      });
+    } catch (_) { /* ignore logging errors */ }
     updateJob(jobId, { status: "error", error: message });
   }
 }
@@ -392,8 +401,8 @@ router.post(
         }
       }
 
-      // Token check & deduction
-      const tokenResult = await deductTokens(appUser.userId, "face_detect");
+      // Token check only — deduction happens after successful job
+      const tokenResult = await deductTokens(appUser.userId, "face_detect", { checkOnly: true });
       if (!tokenResult.success) {
         return res.status(402).json({
           error: "INSUFFICIENT_TOKENS",
@@ -445,17 +454,8 @@ router.post(
         console.warn("[faceDetectRoute] Failed to upload source image:", e);
       }
 
-      // Record preliminary action immediately so it always appears in history
-      void recordUserAction({
-        appUserId: appUser.userId,
-        actionType: "ai_generate",
-        description: `portrait/${style}`,
-        segmentCount: 0,
-        sourceImageUrl: uploadedSourceImageUrl,
-        feature: "portrait",
-      });
-
       // Create job and start background processing
+      // Token deduction happens INSIDE the job after successful completion.
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "face_detect");
       runFaceDetectJob(jobId, imageBuffer, lang, appUser.userId, ipAnon ?? "", style, uploadedSourceImageUrl, hairline, lineweightMm, minGapMm)

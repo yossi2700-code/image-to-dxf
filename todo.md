@@ -1677,3 +1677,10 @@
 
 - [ ] תיקון: רשום פעולה מיד אחרי ניכוי טוקנים בכל הפיצרים (generateRoute, uploadRoute, faceDetectRoute, aiDocumentRedrawRoute, aiRefineRoute)
 - [ ] הוספת ספירה לאחור אנימטיבית (ללא טקסט שניות) במהלך עיבוד AI (~40 שניות)
+
+## תיקונים - מרץ 2026 (ניכוי + כשלונות)
+
+- [x] ניכוי אסימונים רק אחרי job מוצלח — aiTraceRoute, faceDetectRoute, aiDocumentRedrawRoute
+- [x] טבלת failed_jobs בDB: userId, feature, duration, error, imageUrl, createdAt
+- [x] רישום כשלונות ב-failed_jobs בכל route אסינכרוני
+- [x] פאנל "כשלונות" בדף ניהול: מי, כמה זמן, למה נכשל, תמונה

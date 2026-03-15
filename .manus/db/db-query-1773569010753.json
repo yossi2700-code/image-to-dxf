@@ -1,0 +1,14 @@
+{
+  "query": "\nSELECT u.id, u.email FROM app_users u WHERE u.email = 'liad118811@gmail.com';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT u.id, u.email FROM app_users u WHERE u.email = 'liad118811@gmail.com';\n",
+  "rows": [
+    {
+      "id": "840013",
+      "email": "liad118811@gmail.com"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\n840013\tliad118811@gmail.com\n",
+  "stderr": "",
+  "execution_time_ms": 1627
+}

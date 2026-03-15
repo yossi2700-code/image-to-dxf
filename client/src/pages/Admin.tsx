@@ -56,6 +56,9 @@ import {
   ClipboardList,
   GripVertical,
   Flag,
+  AlertTriangle,
+  Timer,
+  ImageIcon,
 } from "lucide-react";
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
@@ -408,7 +411,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     return result;
   })();
 
-  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email" | "campaign" | "bugs" | "subscriptions" | "news">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email" | "campaign" | "bugs" | "subscriptions" | "news" | "failed_jobs">("overview");
+
+  // ── Failed jobs (for admin debugging) ──
+  const { data: failedJobsData, isLoading: failedJobsLoading, refetch: refetchFailedJobs } = trpc.admin.getFailedJobs.useQuery(
+    undefined, { enabled: activeSection === "failed_jobs" }
+  );
 
   // ── Enhanced users (with subscription info) ──
   const { data: enhancedUsers, isLoading: enhancedUsersLoading, refetch: refetchEnhanced } = trpc.admin.usersEnhanced.useQuery(
@@ -618,6 +626,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     { id: "payments", label: "תשלומי PayPal", shortLabel: "PayPal", icon: CreditCard, color: "#0ea5e9" },
     { id: "email", label: "שליחת מייל", shortLabel: "מייל", icon: Mail, color: "#6366f1" },
     { id: "campaign", label: "קמפיין מייל", shortLabel: "קמפיין", icon: Gift, color: "#ec4899" },
+    { id: "failed_jobs", label: "כשלונות", shortLabel: "כשלונות", icon: AlertTriangle, color: "#f97316" },
     { id: "settings", label: "הגדרות", shortLabel: "הגדרות", icon: Settings, color: "#94a3b8" },
   ] as const;
 
@@ -2726,6 +2735,98 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                         </tbody>
                       </table>
                     </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* ── Failed Jobs Debug Panel ── */}
+        {activeSection === "failed_jobs" && (
+          <div className="p-4 md:p-6 max-w-7xl mx-auto">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-orange-500" />
+                    <CardTitle className="text-base">כשלונות אחרונים</CardTitle>
+                    {failedJobsData && (
+                      <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
+                        {failedJobsData.length} רשומות
+                      </span>
+                    )}
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => refetchFailedJobs()} className="gap-1">
+                    <RefreshCw className="w-3.5 h-3.5" />רענן
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">פאנל איתור באגים — מי עבד, כמה זמן, למה נכשל, ותמונת המקור. אסימונים לא נוכו כאשר ה-job נכשל.</p>
+              </CardHeader>
+              <CardContent>
+                {failedJobsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : !failedJobsData || failedJobsData.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CheckCircle className="w-10 h-10 text-green-400 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">אין כשלונות רשומים עדכייו.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {failedJobsData.map((job) => (
+                      <div key={job.id} className="border rounded-lg p-3 bg-orange-50/50 hover:bg-orange-50 transition-colors">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            {/* Header row */}
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: '#fed7aa', color: '#9a3412' }}>
+                                {job.feature}
+                              </span>
+                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Timer className="w-3 h-3" />
+                                {job.durationMs < 1000 ? `${job.durationMs}ms` : `${(job.durationMs / 1000).toFixed(1)}שניות`}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(job.createdAt).toLocaleString('he-IL')}
+                              </span>
+                            </div>
+                            {/* User info */}
+                            <div className="text-xs text-slate-600 mb-1">
+                              <span className="font-medium">משתמש:</span>{' '}
+                              {job.userEmail ? (
+                                <span>{job.userName || 'ללא שם'} ({job.userEmail})</span>
+                              ) : (
+                                <span className="text-muted-foreground">אנונימי / לא ידוע</span>
+                              )}
+                            </div>
+                            {/* Error message */}
+                            {job.errorMessage && (
+                              <div className="text-xs bg-red-50 border border-red-200 rounded p-2 font-mono text-red-700 break-all">
+                                {job.errorMessage.slice(0, 300)}{job.errorMessage.length > 300 ? '...' : ''}
+                              </div>
+                            )}
+                          </div>
+                          {/* Source image thumbnail */}
+                          {job.sourceImageUrl && (
+                            <a href={job.sourceImageUrl} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                              <img
+                                src={job.sourceImageUrl}
+                                alt="תמונת מקור"
+                                className="w-16 h-16 object-cover rounded-lg border border-orange-200 hover:opacity-80 transition-opacity"
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                              />
+                            </a>
+                          )}
+                          {!job.sourceImageUrl && (
+                            <div className="shrink-0 w-16 h-16 rounded-lg border border-dashed border-orange-200 flex items-center justify-center">
+                              <ImageIcon className="w-5 h-5 text-orange-300" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>

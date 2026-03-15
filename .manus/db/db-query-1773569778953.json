@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `failed_jobs` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `appUserId` int DEFAULT NULL,\n  `feature` varchar(64) NOT NULL,\n  `durationMs` int NOT NULL DEFAULT 0,\n  `errorMessage` text,\n  `sourceImageUrl` text,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  CONSTRAINT `failed_jobs_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute CREATE TABLE IF NOT EXISTS `failed_jobs` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `appUserId` int DEFAULT NULL,\n  `feature` varchar(64) NOT NULL,\n  `durationMs` int NOT NULL DEFAULT 0,\n  `errorMessage` text,\n  `sourceImageUrl` text,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  CONSTRAINT `failed_jobs_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1708
+}

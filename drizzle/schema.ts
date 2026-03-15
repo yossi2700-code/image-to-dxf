@@ -415,3 +415,21 @@ export const adminTasks = mysqlTable("admin_tasks", {
 });
 export type AdminTask = typeof adminTasks.$inferSelect;
 export type InsertAdminTask = typeof adminTasks.$inferInsert;
+
+// Failed jobs log — for admin debugging
+export const failedJobs = mysqlTable("failed_jobs", {
+  id: int("id").autoincrement().primaryKey(),
+  /** App user who triggered the job (null for anonymous) */
+  appUserId: int("appUserId"),
+  /** Feature that failed: ai_trace, portrait, document_redraw, ai_generate */
+  feature: varchar("feature", { length: 64 }).notNull(),
+  /** How long the job ran before failing (milliseconds) */
+  durationMs: int("durationMs").notNull().default(0),
+  /** Error message from the caught exception */
+  errorMessage: text("errorMessage"),
+  /** Source image URL (S3) if available */
+  sourceImageUrl: text("sourceImageUrl"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type FailedJob = typeof failedJobs.$inferSelect;
+export type InsertFailedJob = typeof failedJobs.$inferInsert;

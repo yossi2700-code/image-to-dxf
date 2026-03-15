@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT ua.id, ua.action_type, ua.description, ua.dxf_url, ua.image_url, ua.segment_count, ua.feature, ua.created_at\nFROM user_actions ua\nJOIN app_users u ON ua.appUserId = u.id\nWHERE u.email = 'liad118811@gmail.com'\nORDER BY ua.created_at DESC\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT ua.id, ua.action_type, ua.description, ua.dxf_url, ua.image_url, ua.segment_count, ua.feature, ua.created_at\nFROM user_actions ua\nJOIN app_users u ON ua.appUserId = u.id\nWHERE u.email = 'liad118811@gmail.com'\nORDER BY ua.created_at DESC\nLIMIT 10;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'ua.created_at' in 'order clause'"
+  ]
+}
