@@ -189,14 +189,17 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
 /// ─── Activity Section ─────────────────────────────────────────────────────
 type RecentEvent = {
   id: number;
-  type: string;
+  actionType: string;
+  feature: string | null;
   segmentCount: number | null;
   ipAnon: string | null;
   imageUrl: string | null;
   createdAt: Date;
-  appUserId: number | null;
+  appUserId: number;
   userName: string | null;
   userEmail: string | null;
+  description: string | null;
+  durationMs: number | null;
 };
 
 function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | undefined; recentLoading: boolean }) {
@@ -210,8 +213,8 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
       (ev.userName ?? "").toLowerCase().includes(search.toLowerCase()) ||
       (ev.userEmail ?? "").toLowerCase().includes(search.toLowerCase());
     const matchType = typeFilter === "all" ||
-      (typeFilter === "convert" && ev.type === "convert") ||
-      (typeFilter === "ai" && ev.type !== "convert");
+      (typeFilter === "convert" && ev.actionType === "convert") ||
+      (typeFilter === "ai" && ev.actionType !== "convert");
     return matchSearch && matchType;
   });
 
@@ -224,24 +227,42 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
     });
   };
 
-  const getActionLabel = (type: string) => {
-    if (type === "convert") return { label: "המרה", color: "bg-blue-100 text-blue-700" };
+  const getActionLabel = (actionType: string, feature: string | null) => {
+    if (actionType === "convert") return { label: "המרה", color: "bg-blue-100 text-blue-700" };
+    if (feature === "ai_trace") return { label: "AI Outline", color: "bg-teal-100 text-teal-700" };
+    if (feature === "ai_generate") return { label: "AI Create", color: "bg-purple-100 text-purple-700" };
+    if (feature === "portrait") return { label: "פורטרט", color: "bg-pink-100 text-pink-700" };
+    if (feature === "document_redraw") return { label: "תיקון עיצוב", color: "bg-orange-100 text-orange-700" };
     return { label: "AI", color: "bg-purple-100 text-purple-700" };
   };
+
+  const [sectionOpen, setSectionOpen] = useState(false);
 
   return (
     <Card>
       <CardHeader className="pb-3">
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Clock className="w-4 h-4 text-primary" />
-              פעולות אחרונות
-            </CardTitle>
+            <button
+              className="flex items-center gap-2 text-right"
+              onClick={() => setSectionOpen(o => !o)}
+            >
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Clock className="w-4 h-4 text-primary" />
+                פעולות אחרונות
+              </CardTitle>
+              <svg
+                className={`w-4 h-4 text-slate-400 transition-transform ${sectionOpen ? "rotate-180" : ""}`}
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
             <span className="text-xs text-muted-foreground bg-slate-100 px-2 py-0.5 rounded-full">
               {filtered.length} פעולות
             </span>
           </div>
+          {sectionOpen && (
           <div className="flex gap-2 flex-wrap">
             <Input
               placeholder="חפש לפי שם או מייל..."
@@ -263,9 +284,10 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
               ))}
             </div>
           </div>
+          )}
         </div>
       </CardHeader>
-      <CardContent className="p-0">
+      {sectionOpen && <CardContent className="p-0">
         {recentLoading ? (
           <div className="space-y-1 p-3">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-muted animate-pulse rounded-xl" />)}</div>
         ) : filtered.length > 0 ? (
@@ -273,7 +295,7 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
             {filtered.map((ev) => {
               const isOpen = expandedId === ev.id;
               const ipRevealed = revealedIps.has(ev.id);
-              const { label: typeLabel, color: typeColor } = getActionLabel(ev.type);
+              const { label: typeLabel, color: typeColor } = getActionLabel(ev.actionType, ev.feature);
               const dateStr = new Date(ev.createdAt).toLocaleDateString("he-IL");
               const timeStr = new Date(ev.createdAt).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
               const displayName = ev.userName || ev.userEmail?.split("@")[0] || "אורח";
@@ -300,7 +322,7 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-semibold text-slate-800 truncate">{displayName}</span>
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${typeColor}`}>
-                          {ev.type === "convert" ? <Upload className="w-3 h-3" /> : <Sparkles className="w-3 h-3" />}
+                          {ev.actionType === "convert" ? <Upload className="w-3 h-3" /> : <Sparkles className="w-3 h-3" />}
                           {typeLabel}
                         </span>
                       </div>
@@ -383,7 +405,7 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
             <p className="text-sm">{search ? `לא נמצאו תוצאות עבור "${search}"` : "אין פעולות עדיין"}</p>
           </div>
         )}
-      </CardContent>
+      </CardContent>}
     </Card>
   );
 }
@@ -1082,7 +1104,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
         {/* ── ACTIVITY SECTION ── */}
         {activeSection === "activity" && (
-          <ActivitySection recent={recent} recentLoading={recentLoading} />
+          <ActivitySection recent={userActionsData as unknown as RecentEvent[] | undefined} recentLoading={actionsLoading} />
         )}
 
         {/* ── USERS SECTION ── */}

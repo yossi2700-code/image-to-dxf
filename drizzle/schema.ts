@@ -111,9 +111,10 @@ export const userActions = mysqlTable("user_actions", {
   feature: varchar("feature", { length: 32 }),
   /** Processing duration in milliseconds */
   durationMs: int("durationMs"),
+  /** Anonymized IP address (last octet removed) */
+  ipAnon: varchar("ipAnon", { length: 20 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
-
 export type UserAction = typeof userActions.$inferSelect;
 export type InsertUserAction = typeof userActions.$inferInsert;
 

@@ -1,0 +1,1 @@
+ALTER TABLE `user_actions` ADD `ipAnon` varchar(20);

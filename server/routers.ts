@@ -194,6 +194,8 @@ export const appRouter = router({
           segmentCount: userActions.segmentCount,
           dxfUrl: userActions.dxfUrl,
           imageUrl: userActions.imageUrl,
+          feature: userActions.feature,
+          ipAnon: userActions.ipAnon,
           createdAt: userActions.createdAt,
           durationMs: userActions.durationMs,
           userName: appUsers.name,
