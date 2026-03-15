@@ -1761,3 +1761,12 @@
 - [x] תיקון תאריך/שעה קשיחים בכותרת ניהול — הזרקת git hash + build time דרך vite.config define
 - [x] הוספת legend לנקודות צבעוניות בסקשן משתמשים (ירוק/צהוב/כחול/אפור) עם הסבר
 - [x] הוספת נקודה כחולה למשתמשים חדשים (נרשמו ב-48 שעות האחרונות)
+
+## הסרת מחירים ומנויים מהדפים הציבוריים
+
+- [x] הסרת כפתור "💎 מחירון" מ-header ב-Home.tsx
+- [x] הסרת SaleBanner (באנר מבצע) מ-Home.tsx
+- [x] הסרת TokenPricingModal מ-Home.tsx (import + render)
+- [x] הסרת pricingModalOpen state מ-Home.tsx
+- [x] הסרת סקשן "המנוי שלי" מ-Account.tsx
+- [x] הסרת pricing section ו-subscription teaser מ-Landing.tsx

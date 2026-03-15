@@ -194,11 +194,6 @@ const AI_EXAMPLES = [
   },
 ];
 
-const FALLBACK_PACKAGES = [
-  { id: "tokens_3", tokens: 30, popular: false, prices: { ILS: "29" } },
-  { id: "tokens_1", tokens: 100, popular: true, prices: { ILS: "59" } },
-  { id: "tokens_300", tokens: 300, popular: false, prices: { ILS: "129" } },
-];
 
 // ─── Before/After Card ────────────────────────────────────────────────────────
 function BeforeAfterCard({ item, isRtl }: { item: typeof BEFORE_AFTER[0]; isRtl: boolean }) {
@@ -288,15 +283,7 @@ export default function Landing() {
   const { isRtl } = useLanguage();
   const [, navigate] = useLocation();
 
-  const { data: dbPrices } = trpc.packages.prices.useQuery();
   const { data: contactInfo } = trpc.contact.info.useQuery();
-
-  const packages = dbPrices && dbPrices.length > 0
-    ? dbPrices.map((p) => ({
-        id: p.packageId, tokens: p.tokenAmount, popular: p.packageId === "tokens_1",
-        prices: { ILS: p.priceILS },
-      }))
-    : FALLBACK_PACKAGES;
 
   const whatsappNumber = contactInfo?.whatsappNumber || "";
   const supportEmail = contactInfo?.supportEmail || "info@dxfai.net";
@@ -371,12 +358,7 @@ export default function Landing() {
             >
               {t.heroCta1}
             </button>
-            <button
-              onClick={() => document.getElementById("pricing-section")?.scrollIntoView({ behavior: "smooth" })}
-              style={{ background: "rgba(255,255,255,0.1)", color: "#e0e7ff", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 12, padding: "14px 28px", fontWeight: 700, fontSize: 15, cursor: "pointer", backdropFilter: "blur(4px)" }}
-            >
-              {t.heroCta2}
-            </button>
+
           </div>
           <p style={{ color: "#7c6fcd", fontSize: 13, marginTop: 20 }}>{t.heroTrust}</p>
         </div>
@@ -497,116 +479,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── PRICING ── */}
-      <section id="pricing-section" style={{ padding: "80px 24px", background: "#fff" }}>
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 52 }}>
-            <h2 style={{ fontSize: "clamp(1.5rem,3vw,2.2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 12 }}>{t.pricingTitle}</h2>
-            <p style={{ color: "#6b7280", fontSize: 16 }}>{t.pricingSubtitle}</p>
-          </div>
-
-          {/* Pay-per-use packages */}
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
-              <div style={{ flex: 1, height: 1, background: "#e5e7eb" }} />
-              <span style={{ color: "#6b7280", fontSize: 14, fontWeight: 600, whiteSpace: "nowrap" }}>{t.pricingPayPerUse}</span>
-              <div style={{ flex: 1, height: 1, background: "#e5e7eb" }} />
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 20 }}>
-              {packages.map((pkg) => (
-                <div
-                  key={pkg.id}
-                  style={{
-                    borderRadius: 16, padding: "28px 24px", textAlign: "center", position: "relative",
-                    border: pkg.popular ? "2px solid #6366f1" : "1px solid #e5e7eb",
-                    background: pkg.popular ? "linear-gradient(160deg,#f5f3ff,#ede9fe)" : "#fafafa",
-                    boxShadow: pkg.popular ? "0 4px 24px rgba(99,102,241,0.15)" : "none",
-                  }}
-                >
-                  {pkg.popular && (
-                    <div style={{ position: "absolute", top: -13, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", borderRadius: 20, padding: "3px 14px", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>
-                      {t.pricingPopular}
-                    </div>
-                  )}
-                  <div style={{ fontSize: 28, fontWeight: 900, color: "#1e1b4b", marginBottom: 4 }}>
-                    {pkg.tokens} <span style={{ fontSize: 16, fontWeight: 600, color: "#6b7280" }}>{t.pricingTokens}</span>
-                  </div>
-                  <div style={{ fontSize: 32, fontWeight: 900, color: "#6366f1", marginBottom: 4 }}>
-                    ₪{pkg.prices.ILS}
-                  </div>
-                  <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 20 }}>
-                    ≈ ₪{(parseFloat(pkg.prices.ILS) / pkg.tokens).toFixed(2)} {t.pricingPerAction}
-                  </div>
-                  <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px", textAlign: isRtl ? "right" : "left" }}>
-                    {t.packageFeatures.map((f, fi) => (
-                      <li key={fi} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#374151", marginBottom: 8 }}>
-                        <Check size={14} color="#6366f1" style={{ flexShrink: 0 }} />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    onClick={() => navigate("/buy")}
-                    style={{
-                      width: "100%", borderRadius: 10, padding: "11px 0", fontWeight: 700, fontSize: 14, cursor: "pointer", border: "none",
-                      background: pkg.popular ? "linear-gradient(135deg,#6366f1,#8b5cf6)" : "#f3f4f6",
-                      color: pkg.popular ? "#fff" : "#374151",
-                      boxShadow: pkg.popular ? "0 3px 12px rgba(99,102,241,0.3)" : "none",
-                    }}
-                  >
-                    {t.pricingBuy}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Subscription teaser */}
-          <div style={{ marginTop: 32 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
-              <div style={{ flex: 1, height: 1, background: "#e5e7eb" }} />
-              <span style={{ color: "#6b7280", fontSize: 14, fontWeight: 600, whiteSpace: "nowrap" }}>{t.pricingSubscription}</span>
-              <div style={{ flex: 1, height: 1, background: "#e5e7eb" }} />
-            </div>
-            <div style={{ background: "linear-gradient(135deg,#1e1b4b,#312e81)", borderRadius: 16, padding: "32px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
-              <div>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.12)", borderRadius: 20, padding: "4px 12px", marginBottom: 12 }}>
-                  <span style={{ color: "#a5b4fc", fontSize: 12, fontWeight: 700 }}>{t.comingSoon}</span>
-                </div>
-                <h3 style={{ color: "#fff", fontWeight: 800, fontSize: 20, marginBottom: 8 }}>{t.subTitle}</h3>
-                <p style={{ color: "#c4b5fd", fontSize: 14, lineHeight: 1.6, maxWidth: 420 }}>{t.subDesc}</p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
-                  {t.subFeatures.map((f, i) => (
-                    <span key={i} style={{ background: "rgba(99,102,241,0.25)", color: "#e0e7ff", borderRadius: 20, padding: "4px 12px", fontSize: 12, fontWeight: 600 }}>✓ {f}</span>
-                  ))}
-                </div>
-              </div>
-              <button
-                onClick={() => { window.location.href = `mailto:${supportEmail}?subject=${encodeURIComponent(isRtl ? "עניין במנוי עסקי" : "Business subscription interest")}`; }}
-                style={{ background: "rgba(255,255,255,0.12)", color: "#e0e7ff", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 12, padding: "12px 24px", fontWeight: 700, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap" }}
-              >
-                {t.subCta}
-              </button>
-            </div>
-          </div>
-
-          {/* PayPal trust badge */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginTop: 28, color: "#6b7280", fontSize: 13 }}>
-            <Lock size={14} color="#6b7280" />
-            <span>{t.paypalTrust}</span>
-            <svg height="20" viewBox="0 0 101 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12.237 2.8C11.6 2.8 11.067 3.267 10.967 3.9L8.1 22.1c-.067.467.3.9.767.9h4.333c.567 0 1.1-.467 1.2-1.033l.8-5.067c.1-.567.633-1.033 1.2-1.033h2.767c3.933 0 6.2-1.9 6.8-5.667.267-1.633.033-2.933-.667-3.833-.767-.967-2.133-1.467-3.933-1.467H12.237z" fill="#009cde"/>
-              <path d="M38.337 2.8c-.567 0-1.1.467-1.2 1.033l-2.867 18.2c-.067.467.3.9.767.9h4.133c.567 0 1.1-.467 1.2-1.033l2.867-18.2c.067-.467-.3-.9-.767-.9h-4.133z" fill="#003087"/>
-              <path d="M53.037 9.867c-.567 0-1.1.467-1.2 1.033l-.167 1.067-.267-.367c-.833-1.2-2.667-1.6-4.5-1.6-4.2 0-7.8 3.167-8.5 7.6-.367 2.2.133 4.3 1.367 5.767 1.133 1.333 2.733 1.9 4.633 1.9 3.367 0 5.233-2.167 5.233-2.167l-.167 1.067c-.067.467.3.9.767.9h3.733c.567 0 1.1-.467 1.2-1.033l2.233-14.167c.067-.467-.3-.9-.767-.9h-3.6zm-2.033 7.333c-.367 2.1-2.067 3.5-4.2 3.5-1.067 0-1.933-.333-2.467-1-.533-.667-.733-1.6-.567-2.633.333-2.067 2.067-3.533 4.167-3.533 1.033 0 1.9.333 2.467 1 .533.7.733 1.633.6 2.666z" fill="#009cde"/>
-            </svg>
-          </div>
-
-          <p style={{ textAlign: "center", color: "#9ca3af", fontSize: 12, marginTop: 16, lineHeight: 1.6 }}>
-            {t.legalNote}
-          </p>
-        </div>
-      </section>
-
       {/* ── CONTACT CTA ── */}
       <section style={{ padding: "72px 24px", background: "#f8f7ff" }}>
         <div style={{ maxWidth: 700, margin: "0 auto", textAlign: "center" }}>
@@ -674,7 +546,6 @@ export default function Landing() {
             {" · "}
             <span style={{ cursor: "pointer", color: "#9ca3af" }} onClick={() => navigate("/privacy")}>{isRtl ? "פרטיות" : "Privacy"}</span>
           </p>
-          <p style={{ color: "#4b5563", fontSize: 12 }}>{t.legalNote}</p>
         </div>
       </footer>
     </div>
@@ -708,7 +579,7 @@ const he = {
   benefits: [
     { title: "עיבוד מקצועי ומדויק", desc: "אלגוריתם AI מתקדם מייצר קווים נקיים ומדויקים — ללא צורך להגדיר זמן עיבוד." },
     { title: "תואם לכל תוכנה", desc: "DXF תקני — עובד ב-Lightburn, AutoCAD, Fusion 360, Inkscape ועוד." },
-    { title: "שיטת תמחור גמישה", desc: "שלם לפי המרה בודדת (אסימונים) או מנוי חודשי — בחר מה שמתאים לך." },
+    { title: "פשוט ומהיר", desc: "עלה תמונה, קבל DXF בשניות — ללא התקנות, ללא סופטוור וללא ידע קודם." },
     { title: "תמיכה בעברית", desc: "ממשק מלא בעברית, תמיכה בעברית, ומחירים בשקלים." },
     { title: "רכישה מאובטחת", desc: "תשלום מאובטח דרך PayPal — ללא שמירת פרטי כרטיס אשראי." },
   ],
@@ -771,7 +642,7 @@ const en = {
   benefits: [
     { title: "Professional processing & accuracy", desc: "Advanced AI algorithm generates clean, precise lines — no need to define processing time." },
     { title: "Compatible with all software", desc: "Standard DXF — works in Lightburn, AutoCAD, Fusion 360, Inkscape and more." },
-    { title: "Flexible pricing method", desc: "Pay per conversion (tokens) or monthly subscription — choose what works for you." },
+    { title: "Fast & simple", desc: "Upload an image, get a DXF in seconds — no setup, no software, no prior knowledge." },
     { title: "Hebrew & English UI", desc: "Full Hebrew interface, Hebrew support, and prices in ILS." },
     { title: "Secure payment", desc: "Secure payment via PayPal — no credit card details stored." },
   ],

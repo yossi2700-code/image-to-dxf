@@ -8,7 +8,6 @@ import {
   Lock,
   CreditCard,
   Coins,
-  Crown,
   HeadphonesIcon,
   ChevronDown,
   ChevronUp,
@@ -503,19 +502,6 @@ export default function Account() {
                   </div>
                 </div>
               )}
-            </SectionCard>
-
-            {/* ── 4. Subscription ── */}
-            <SectionCard icon={Crown} title={isRtl ? "המנוי שלי" : "My Subscription"} color="linear-gradient(135deg, #7c3aed, #a855f7)">
-              <div className="p-4 rounded-xl text-center" style={{ background: "linear-gradient(135deg, #faf5ff, #f3e8ff)", border: "1px solid #e9d5ff" }}>
-                <Crown className="w-8 h-8 text-purple-400 mx-auto mb-2" />
-                <p className="font-bold text-purple-700 text-sm mb-1">{isRtl ? "תוכנית פרימיום — בקרוב" : "Premium Plan — Coming Soon"}</p>
-                <p className="text-xs text-purple-500">{isRtl ? "מנויים יקבלו אסימונים חודשיים, עיבוד מהיר יותר ותמיכה מועדפת" : "Subscribers will get monthly tokens, faster processing, and priority support"}</p>
-                <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: "#ede9fe", color: "#7c3aed" }}>
-                  <span>🔔</span>
-                  {isRtl ? "עדכן אותי כשיהיה זמין" : "Notify me when available"}
-                </div>
-              </div>
             </SectionCard>
 
             {/* ── 5. Support ── */}
