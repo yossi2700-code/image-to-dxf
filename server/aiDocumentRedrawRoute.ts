@@ -21,7 +21,7 @@ import { nanoid } from "nanoid";
 import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
-import { deductTokens, addTokens, TOKEN_COSTS, TokenAction } from "./tokenService";
+import { deductTokens } from "./tokenService";
 import { svgToDxf } from "./svgToDxf";
 import { cleanSvgForPreview } from "./svgClean";
 import { invokeLLM } from "./_core/llm";
@@ -447,11 +447,7 @@ router.post("/api/ai-document-redraw/cancel/:jobId", async (req, res) => {
 
   const wasCancelled = cancelJob(req.params.jobId);
   if (wasCancelled) {
-    try {
-      await addTokens(appUser.userId, TOKEN_COSTS[(job.tokenAction as TokenAction) || "ai_trace"], "refund", "Job cancelled — tokens refunded");
-    } catch (refundErr) {
-      console.error("[aiDocumentRedraw] Refund error:", refundErr);
-    }
+    // No refund needed — tokens are only deducted after successful completion
     return res.json({ cancelled: true });
   }
 
@@ -504,8 +500,8 @@ router.post(
         }
       }
 
-      // ── Token check & deduction ───────────────────────────────────────────────
-      const tokenResult = await deductTokens(appUser.userId, "ai_refine", instruction);
+      // ── Token check only — deduction happens after successful processing ──────────────
+      const tokenResult = await deductTokens(appUser.userId, "ai_refine", { checkOnly: true });
       if (!tokenResult.success) {
         return res.status(402).json({
           error: "INSUFFICIENT_TOKENS",
@@ -560,6 +556,9 @@ router.post(
 
       const baseFilename = buildFilename(origDesc || instruction);
       const result = await processImageToDxf(rawBuffer, baseFilename, "ai-document-refine");
+
+      // Deduct tokens NOW — only after successful AI processing and DXF generation
+      await deductTokens(appUser.userId, "ai_refine", instruction);
 
       return res.json({ success: true, image: result });
     } catch (err: unknown) {

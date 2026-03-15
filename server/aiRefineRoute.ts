@@ -88,8 +88,8 @@ router.post("/api/ai-refine", async (req, res) => {
       }
     }
 
-    // Token check & deduction (ai_refine = 2 tokens)
-    const tokenResult = await deductTokens(appUser.userId, "ai_refine", instruction);
+    // Token check only — deduction happens after successful AI processing
+    const tokenResult = await deductTokens(appUser.userId, "ai_refine", { checkOnly: true });
     if (!tokenResult.success) {
       return res.status(402).json({
         error: "INSUFFICIENT_TOKENS",
@@ -184,6 +184,9 @@ router.post("/api/ai-refine", async (req, res) => {
       Buffer.from(dxf, "utf-8"),
       "application/dxf"
     );
+
+    // Deduct tokens NOW — only after successful AI processing and DXF generation
+    await deductTokens(appUser.userId, "ai_refine", instruction);
 
     // Record usage
     await recordUserAction({

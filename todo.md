@@ -1800,3 +1800,15 @@
 
 - [x] בדוק למה user_actions לא נרשמות כשאסימונים מנוכים
 - [x] תקן את הרישום כך שכל ניכוי אסימונים ישמור גם פעולה ב-user_actions
+
+## ניכוי אסימונים רק אחרי הצלחה
+
+- [x] בדק כל route ומצא היכן deductTokens נקרא לפני התוצאה
+- [x] generateRoute: העבר deductTokens לאחר שה-job הצליח (בתוך runGenerateJob) + הסרת refund מה-cancel
+- [x] faceDetectRoute: כבר תקין (checkOnly לפני, ניכוי אחרי הצלחה)
+- [x] uploadRoute: לא מנכה טוקנים (משתמש במכסה יומית בלבד)
+- [x] aiTraceRoute: כבר תקין (checkOnly לפני, ניכוי אחרי הצלחה)
+- [x] aiRefineRoute: תוקן — checkOnly לפני, ניכוי אחרי הצלחה
+- [x] aiDocumentRedrawRoute (refine): תוקן — checkOnly לפני, ניכוי אחרי הצלחה
+- [x] הסרת refund מה-cancel endpoints (לא צריך כי לא ניכו טוקנים עד הצלחה)
+- [x] 148 בדיקות עוברות כולל 8 בדיקות חדשות לאימות היגיון

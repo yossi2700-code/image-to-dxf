@@ -4,7 +4,7 @@ import { nanoid } from "nanoid";
 import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
-import { deductTokens, addTokens, TOKEN_COSTS, TokenAction } from "./tokenService";
+import { deductTokens } from "./tokenService";
 import { createJob, getJob, updateJob, cancelJob } from "./jobStore";
 import OpenAI from "openai";
 import { svgToDxf } from "./svgToDxf";
@@ -284,6 +284,9 @@ async function runGenerateJob(
     const jobAfterGen = getJob(jobId);
     if (!jobAfterGen || jobAfterGen.status === "cancelled") return;
 
+    // Deduct tokens NOW — only after all 3 images generated successfully
+    await deductTokens(appUserId, "ai_generate");
+
     // Log usage
     const totalSegments = images.reduce((s, img) => s + img.segmentCount, 0);
     const totalFileSizeKb = Math.round(
@@ -326,8 +329,7 @@ async function runGenerateJob(
     console.error("[generateRoute] Job error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     updateJob(jobId, { status: "error", error: message });
-    // Refund tokens on error
-    try { await addTokens(appUserId, TOKEN_COSTS["ai_generate"], "refund", "Job error — tokens refunded"); } catch (_) { /* ignore */ }
+    // No refund needed — tokens were not deducted yet (deduction happens only on success)
     // Alert admin if billing/quota issue
     const isBillingError = message.toLowerCase().includes("quota") ||
       message.toLowerCase().includes("billing") ||
@@ -386,7 +388,8 @@ router.post("/api/generate-images", async (req, res) => {
       }
     }
 
-    const tokenResult = await deductTokens(appUser.userId, "ai_generate", prompt);
+    // Token check only — deduction happens after successful job completion
+    const tokenResult = await deductTokens(appUser.userId, "ai_generate", { checkOnly: true });
     if (!tokenResult.success) {
       return res.status(402).json({
         error: "INSUFFICIENT_TOKENS",
@@ -450,11 +453,7 @@ router.post("/api/generate-images/cancel/:jobId", async (req, res) => {
 
   const wasCancelled = cancelJob(req.params.jobId);
   if (wasCancelled) {
-    try {
-      await addTokens(appUser.userId, TOKEN_COSTS[(job.tokenAction as TokenAction) || "ai_generate"], "refund", "Job cancelled — tokens refunded");
-    } catch (refundErr) {
-      console.error("[generateRoute] Refund error:", refundErr);
-    }
+    // No refund needed — tokens are only deducted after successful completion
     return res.json({ cancelled: true });
   }
 
