@@ -140,150 +140,85 @@ interface PortraitCardProps {
 }
 function PortraitCard({ image, isRtl, style, originalImageUrl, onDownload, onZoom }: PortraitCardProps) {
   const [showVector, setShowVector] = useState(false);
-  const [sliderPct, setSliderPct] = useState(50);
-  const [isDragging, setIsDragging] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const styleLabel = {
     simple: isRtl ? "פשוט" : "Simple",
     detailed: isRtl ? "מפורט" : "Detailed",
   }[style] ?? (isRtl ? "פשוט" : "Simple");
 
-  const updateSlider = (clientX: number) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const pct = Math.min(95, Math.max(5, Math.round(((clientX - rect.left) / rect.width) * 100)));
-    setSliderPct(pct);
-  };
-
   const hasOriginal = !!originalImageUrl;
-  const showComparison = hasOriginal && !showVector;
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #e2e8f0', background: '#ffffff' }}>
-      {/* Header row */}
-      <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: '1px solid #f1f5f9' }}>
-        <div className="flex items-center gap-2">
-          {showComparison && (
-            <span className="flex items-center gap-1 text-xs font-semibold" style={{ color: '#7c3aed' }}>
-              <Eye className="w-3.5 h-3.5" />
-              {isRtl ? 'לפני ואחרי' : 'Before & After'}
-            </span>
-          )}
-          {!showComparison && (
-            <span className="text-xs font-bold text-purple-700">
-              {isRtl ? `פורטרט — סגנון ${styleLabel}` : `Portrait — ${styleLabel} style`}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400">{image.segmentCount.toLocaleString()} {isRtl ? "קווים" : "lines"}</span>
-          <span
-            className="text-xs px-2 py-0.5 rounded-full font-bold"
-            style={{ background: '#f3e8ff', color: '#7c3aed' }}
-          >
-            {styleLabel}
-          </span>
-        </div>
-      </div>
+    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
 
-      {/* Main view */}
-      {showVector ? (
-        <SvgViewer svgContent={image.svgPreview} />
-      ) : showComparison ? (
-        // ─── Before/After comparison slider (always shown when original available) ───
-        <div
-          ref={containerRef}
-          className="relative bg-white select-none overflow-hidden"
-          style={{ aspectRatio: '1/1', cursor: 'col-resize', touchAction: 'none' }}
-          onMouseDown={() => setIsDragging(true)}
-          onMouseUp={() => setIsDragging(false)}
-          onMouseLeave={() => setIsDragging(false)}
-          onMouseMove={(e) => { if (isDragging) updateSlider(e.clientX); }}
-          onClick={(e) => updateSlider(e.clientX)}
-          onTouchStart={(e) => { setIsDragging(true); updateSlider(e.touches[0].clientX); }}
-          onTouchMove={(e) => { e.preventDefault(); updateSlider(e.touches[0].clientX); }}
-          onTouchEnd={() => setIsDragging(false)}
-        >
-          {/* Right side: original photo (base layer, full width) */}
-          <img
-            src={originalImageUrl!}
-            alt="original"
-            className="absolute inset-0 w-full h-full object-contain"
-            draggable={false}
-          />
-
-          {/* Left side: vector result — clipped to left portion */}
-          <div
-            className="absolute inset-0 overflow-hidden"
-            style={{ width: `${sliderPct}%` }}
-          >
-            <img
-              src={image.imageUrl}
-              alt="vector"
-              className="absolute inset-0 w-full h-full object-contain"
-              style={{ width: '100%', maxWidth: 'none' }}
-              draggable={false}
-            />
+      {/* ─── Before/After side-by-side (same style as AiTraceTab) ─── */}
+      {hasOriginal && !showVector && (
+        <>
+          {/* Header */}
+          <div className="flex items-center gap-2 px-4 py-2.5" style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <Eye className="w-3.5 h-3.5 text-gray-500" />
+            <span className="text-xs font-semibold text-gray-600">{isRtl ? 'לפני ואחרי' : 'Before & After'}</span>
+            <span className="ml-auto text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: '#f3e8ff', color: '#7c3aed' }}>{styleLabel}</span>
           </div>
-
-          {/* Divider line + handle */}
-          <div
-            className="absolute top-0 bottom-0"
-            style={{ left: `${sliderPct}%`, transform: 'translateX(-50%)', zIndex: 10, width: 3, background: 'white', boxShadow: '0 0 8px rgba(0,0,0,0.25)' }}
-          >
-            {/* Handle circle */}
-            <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex items-center justify-center"
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: '50%',
-                background: 'white',
-                border: '2.5px solid #7c3aed',
-                boxShadow: '0 2px 12px rgba(124,58,237,0.35)',
-                cursor: 'col-resize',
-              }}
-            >
-              {/* Left/right arrows */}
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path d="M6 9H12M6 9L4 7M6 9L4 11M12 9L14 7M12 9L14 11" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+          {/* Two-panel grid */}
+          <div className="grid grid-cols-2 gap-0">
+            {/* Left: original photo */}
+            <div className="relative" style={{ borderRight: '1px solid #e2e8f0' }}>
+              <div className="absolute top-2 left-2 z-10 text-xs font-bold px-2 py-0.5 rounded"
+                style={{ background: 'rgba(0,0,0,0.55)', color: 'white' }}>
+                {isRtl ? 'מקור' : 'Original'}
+              </div>
+              <img
+                src={originalImageUrl!}
+                alt="original"
+                className="w-full block cursor-zoom-in"
+                style={{ aspectRatio: '1', objectFit: 'contain', background: '#f8fafc' }}
+                onClick={() => onZoom(originalImageUrl!, isRtl ? 'תמונה מקורית' : 'Original')}
+              />
+            </div>
+            {/* Right: vector result */}
+            <div className="relative">
+              <div className="absolute top-2 left-2 z-10 text-xs font-bold px-2 py-0.5 rounded"
+                style={{ background: 'rgba(124,58,237,0.85)', color: 'white' }}>
+                {isRtl ? 'וקטור' : 'Vector'}
+              </div>
+              <img
+                src={image.imageUrl}
+                alt="vector"
+                className="w-full block cursor-zoom-in"
+                style={{ aspectRatio: '1', objectFit: 'contain', background: '#ffffff' }}
+                onClick={() => onZoom(image.imageUrl, styleLabel)}
+              />
             </div>
           </div>
+        </>
+      )}
 
-          {/* Labels */}
-          <div
-            className="absolute top-2 flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold text-white"
-            style={{ left: 8, background: 'rgba(30,30,30,0.6)', backdropFilter: 'blur(4px)', zIndex: 5 }}
-          >
-            <span>וקטור</span>
+      {/* ─── Vector SVG viewer (when toggled) ─── */}
+      {showVector && (
+        <>
+          <div className="flex items-center gap-2 px-4 py-2.5" style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <Eye className="w-3.5 h-3.5 text-purple-600" />
+            <span className="text-xs font-semibold text-gray-600">{isRtl ? 'תצוגת וקטור' : 'Vector Preview'}</span>
+            <span className="ml-auto text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: '#f3e8ff', color: '#7c3aed' }}>{styleLabel}</span>
           </div>
-          <div
-            className="absolute top-2 flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold text-white"
-            style={{ right: 8, background: 'rgba(30,30,30,0.6)', backdropFilter: 'blur(4px)', zIndex: 5 }}
-          >
-            <span>מקור</span>
-          </div>
+          <SvgViewer svgContent={image.svgPreview} />
+        </>
+      )}
 
-          {/* Drag hint (fades after first interaction) */}
-          {sliderPct === 50 && (
-            <div
-              className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs text-white px-2 py-0.5 rounded-full"
-              style={{ background: 'rgba(0,0,0,0.45)', zIndex: 5, pointerEvents: 'none', whiteSpace: 'nowrap' }}
-            >
-              {isRtl ? 'גרור להשוואה' : 'Drag to compare'}
+      {/* ─── No original: plain vector image ─── */}
+      {!hasOriginal && !showVector && (
+        <>
+          <div className="flex items-center gap-2 px-4 py-2.5" style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <span className="text-xs font-semibold text-gray-600">{isRtl ? `פורטרט — ${styleLabel}` : `Portrait — ${styleLabel}`}</span>
+          </div>
+          <div className="relative bg-gray-50 cursor-pointer" style={{ aspectRatio: '1/1' }} onClick={() => onZoom(image.imageUrl, styleLabel)}>
+            <img src={image.imageUrl} alt="portrait" className="w-full h-full object-contain" />
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/10">
+              <ZoomIn className="w-8 h-8 text-white drop-shadow-lg" />
             </div>
-          )}
-        </div>
-      ) : (
-        // No original image — show vector result only
-        <div className="relative bg-gray-50 cursor-pointer" style={{ aspectRatio: '1/1' }} onClick={() => onZoom(image.imageUrl, styleLabel)}>
-          <img src={image.imageUrl} alt="portrait" className="w-full h-full object-contain" />
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/10">
-            <ZoomIn className="w-8 h-8 text-white drop-shadow-lg" />
           </div>
-        </div>
+        </>
       )}
 
       {/* Export buttons */}
