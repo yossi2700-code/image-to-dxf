@@ -130,112 +130,83 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
   );
 }
 
-// ─── Portrait Result Card ─────────────────────────────────────────────────────
+// ─── Portrait Result Card (matches AiTraceTab ImageCard style) ────────────────
 interface PortraitCardProps {
   image: GeneratedImage;
+  index: number;
   isRtl: boolean;
-  style: PortraitStyle;
-  originalImageUrl?: string | null;
   onDownload: (image: GeneratedImage) => void;
   onZoom: (src: string, alt: string) => void;
 }
-function PortraitCard({ image, isRtl, style, originalImageUrl, onDownload, onZoom }: PortraitCardProps) {
+function PortraitCard({ image, index, isRtl, onDownload, onZoom }: PortraitCardProps) {
   const [showVector, setShowVector] = useState(false);
 
-  const styleLabel = {
-    simple: isRtl ? "פשוט" : "Simple",
-    detailed: isRtl ? "מפורט" : "Detailed",
-  }[style] ?? (isRtl ? "פשוט" : "Simple");
-
-  const hasOriginal = !!originalImageUrl;
+  const LABELS_HE = ["פשוט", "מפורט", "אמנותי"];
+  const LABELS_EN = ["Simple", "Detailed", "Artistic"];
+  const label = isRtl ? (LABELS_HE[index] ?? LABELS_HE[0]) : (LABELS_EN[index] ?? LABELS_EN[0]);
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+    <div
+      className="rounded-xl p-4"
+      style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+    >
+      {/* Header row: label + line count */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: '#f3e8ff', color: '#7c3aed', border: '1px solid #e9d5ff' }}>
+          {label}
+        </span>
+        <span className="text-xs text-gray-400">{image.segmentCount.toLocaleString()} {isRtl ? 'קווים' : 'lines'}</span>
+      </div>
 
-      {/* ─── Before/After side-by-side (same style as AiTraceTab) ─── */}
-      {hasOriginal && !showVector && (
-        <>
-          {/* Header */}
-          <div className="flex items-center gap-2 px-4 py-2.5" style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-            <Eye className="w-3.5 h-3.5 text-gray-500" />
-            <span className="text-xs font-semibold text-gray-600">{isRtl ? 'לפני ואחרי' : 'Before & After'}</span>
-            <span className="ml-auto text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: '#f3e8ff', color: '#7c3aed' }}>{styleLabel}</span>
-          </div>
-          {/* Two-panel grid */}
-          <div className="grid grid-cols-2 gap-0">
-            {/* Left: original photo */}
-            <div className="relative" style={{ borderRight: '1px solid #e2e8f0' }}>
-              <div className="absolute top-2 left-2 z-10 text-xs font-bold px-2 py-0.5 rounded"
-                style={{ background: 'rgba(0,0,0,0.55)', color: 'white' }}>
-                {isRtl ? 'מקור' : 'Original'}
-              </div>
-              <img
-                src={originalImageUrl!}
-                alt="original"
-                className="w-full block cursor-zoom-in"
-                style={{ aspectRatio: '1', objectFit: 'contain', background: '#f8fafc' }}
-                onClick={() => onZoom(originalImageUrl!, isRtl ? 'תמונה מקורית' : 'Original')}
-              />
-            </div>
-            {/* Right: vector result */}
-            <div className="relative">
-              <div className="absolute top-2 left-2 z-10 text-xs font-bold px-2 py-0.5 rounded"
-                style={{ background: 'rgba(124,58,237,0.85)', color: 'white' }}>
-                {isRtl ? 'וקטור' : 'Vector'}
-              </div>
-              <img
-                src={image.imageUrl}
-                alt="vector"
-                className="w-full block cursor-zoom-in"
-                style={{ aspectRatio: '1', objectFit: 'contain', background: '#ffffff' }}
-                onClick={() => onZoom(image.imageUrl, styleLabel)}
-              />
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* ─── Vector SVG viewer (when toggled) ─── */}
-      {showVector && (
-        <>
-          <div className="flex items-center gap-2 px-4 py-2.5" style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-            <Eye className="w-3.5 h-3.5 text-purple-600" />
-            <span className="text-xs font-semibold text-gray-600">{isRtl ? 'תצוגת וקטור' : 'Vector Preview'}</span>
-            <span className="ml-auto text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: '#f3e8ff', color: '#7c3aed' }}>{styleLabel}</span>
-          </div>
-          <SvgViewer svgContent={image.svgPreview} />
-        </>
-      )}
-
-      {/* ─── No original: plain vector image ─── */}
-      {!hasOriginal && !showVector && (
-        <>
-          <div className="flex items-center gap-2 px-4 py-2.5" style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-            <span className="text-xs font-semibold text-gray-600">{isRtl ? `פורטרט — ${styleLabel}` : `Portrait — ${styleLabel}`}</span>
-          </div>
-          <div className="relative bg-gray-50 cursor-pointer" style={{ aspectRatio: '1/1' }} onClick={() => onZoom(image.imageUrl, styleLabel)}>
-            <img src={image.imageUrl} alt="portrait" className="w-full h-full object-contain" />
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/10">
-              <ZoomIn className="w-8 h-8 text-white drop-shadow-lg" />
-            </div>
-          </div>
-        </>
-      )}
+      {/* Vector image preview */}
+      <div
+        className="rounded-lg overflow-hidden mb-3 relative group cursor-zoom-in bg-gray-50 border border-gray-100"
+        onClick={() => onZoom(image.imageUrl, label)}
+      >
+        <img
+          src={image.imageUrl}
+          alt={`Portrait ${index + 1}`}
+          className="w-full block"
+          style={{ aspectRatio: '1', objectFit: 'contain', background: '#f8fafc' }}
+        />
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+          <ZoomIn className="w-7 h-7 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
+        </div>
+      </div>
 
       {/* Export buttons */}
-      <div className="px-3 py-3">
+      <div className="mb-3">
         <ExportButtons
           svgContent={image.svgPreview}
           dxfUrl={image.dxfUrl}
-          dxfFilename={image.dxfFilename || 'face_portrait.dxf'}
+          dxfFilename={image.dxfFilename || `portrait-${index + 1}.dxf`}
           svgWidthPx={image.realWidth ?? 500}
           svgHeightPx={image.realHeight ?? 500}
           showVector={showVector}
           onToggleVector={() => setShowVector(!showVector)}
           onMoreOptions={() => onDownload(image)}
           isRtl={isRtl}
-          layout="inline"
         />
+      </div>
+
+      {/* Inline SVG viewer — opens below when "Vector" is toggled */}
+      {showVector && (
+        <div className="mb-3">
+          <SvgViewer svgContent={image.svgPreview} />
+        </div>
+      )}
+
+      {/* Dimensions */}
+      <div className="grid grid-cols-2 gap-2 text-center">
+        {[
+          { v: image.realWidth ? (image.realWidth / 3.7795).toFixed(0) + ' mm' : '—', l: isRtl ? 'רוחב' : 'Width' },
+          { v: image.realHeight ? (image.realHeight / 3.7795).toFixed(0) + ' mm' : '—', l: isRtl ? 'גובה' : 'Height' },
+        ].map(({ v, l }, i) => (
+          <div key={i} className="rounded-lg p-1.5 bg-gray-50 border border-gray-100">
+            <p className="text-xs font-semibold text-purple-600">{v}</p>
+            <p className="text-xs text-gray-400">{l}</p>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -805,21 +776,82 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
       {result && result.images.length > 0 && (
         <>
           {/* Header */}
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-sm font-bold text-gray-800">
-              {isRtl ? "✅ פורטרט מוכן" : "✅ Portrait ready"}
-            </p>
+          <div
+            className="rounded-xl p-4"
+            style={{ background: '#f5f3ff', border: '1px solid #e9d5ff' }}
+          >
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-gray-700">
+                  {isRtl ? 'פורטרט מוכן — בחר סגנון' : 'Portrait ready — choose style'}
+                </span>
+              </div>
+              <button
+                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg shrink-0"
+                style={{ background: '#7c3aed', color: 'white', border: 'none' }}
+                onClick={reset}
+              >
+                <UserCircle className="w-3.5 h-3.5" />
+                {isRtl ? 'תמונה חדשה' : 'New photo'}
+              </button>
+            </div>
+            {result.faceDescription && (
+              <p className="text-xs mt-1 line-clamp-2 text-gray-500">
+                <span className="font-medium text-purple-700">{isRtl ? 'תיאור AI: ' : 'AI description: '}</span>
+                {result.faceDescription}
+              </p>
+            )}
           </div>
 
-          {/* Variation cards */}
-          <div className="space-y-3">
+          {/* Before / After comparison panel */}
+          {imagePreview && result.images.length > 0 && (
+            <div
+              className="rounded-xl overflow-hidden"
+              style={{ border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+            >
+              <div className="flex items-center gap-2 px-4 py-2.5" style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                <Eye className="w-3.5 h-3.5 text-gray-500" />
+                <span className="text-xs font-semibold text-gray-600">{isRtl ? 'לפני ואחרי' : 'Before & After'}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-0">
+                <div className="relative" style={{ borderRight: '1px solid #e2e8f0' }}>
+                  <div className="absolute top-2 left-2 z-10 text-xs font-bold px-2 py-0.5 rounded"
+                    style={{ background: 'rgba(0,0,0,0.55)', color: 'white' }}>
+                    {isRtl ? 'מקור' : 'Original'}
+                  </div>
+                  <img
+                    src={imagePreview}
+                    alt="original"
+                    className="w-full block cursor-zoom-in"
+                    style={{ aspectRatio: '1', objectFit: 'contain', background: '#f8fafc' }}
+                    onClick={() => setZoomImg({ src: imagePreview, alt: isRtl ? 'תמונה מקורית' : 'Original' })}
+                  />
+                </div>
+                <div className="relative">
+                  <div className="absolute top-2 left-2 z-10 text-xs font-bold px-2 py-0.5 rounded"
+                    style={{ background: 'rgba(124,58,237,0.85)', color: 'white' }}>
+                    {isRtl ? 'וקטור' : 'Vector'}
+                  </div>
+                  <img
+                    src={result.images[0].imageUrl}
+                    alt="vector"
+                    className="w-full block cursor-zoom-in"
+                    style={{ aspectRatio: '1', objectFit: 'contain', background: '#ffffff' }}
+                    onClick={() => setZoomImg({ src: result.images[0].imageUrl, alt: isRtl ? 'וקטור' : 'Vector' })}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Variation cards — grid like AiTraceTab */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {result.images.map((img, idx) => (
               <PortraitCard
                 key={idx}
                 image={img}
+                index={idx}
                 isRtl={isRtl}
-                style={(img.style as PortraitStyle) || portraitStyle}
-                originalImageUrl={imagePreview}
                 onDownload={setDownloadTarget}
                 onZoom={(src, alt) => setZoomImg({ src, alt })}
               />
