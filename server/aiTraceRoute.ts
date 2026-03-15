@@ -475,16 +475,16 @@ async function runTraceJob(
       let processedBuffer: Buffer;
       if (isDetailedMode) {
         // Detailed mode: AI often generates thin/grey lines.
-        // Pipeline: grayscale → contrast boost → resize (high res) → sharpen → threshold
-        // NO blur before threshold — blur softens edges and makes potrace produce jagged curves.
-        // Sharpen BEFORE threshold ensures crisp, hard edges → potrace traces smooth clean paths.
+        // Step 1: contrast boost — linear(2.0, -60) pushes grey lines toward black, background toward white
+        // Step 2: light blur (2.0px) to smooth jagged edges without erasing thin lines
+        // Step 3: high threshold (180) converts everything to pure black/white
         processedBuffer = await sharp(rawBuffer)
           .grayscale()
-          .linear(2.5, -80)           // aggressive contrast: push grey lines to black, bg to white
+          .linear(2.0, -60)          // strong contrast: darken lines, whiten background
           .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-          .sharpen({ sigma: 2.0, m1: 1.5, m2: 0.5, x1: 2, y2: 10, y3: 20 }) // crisp edges before binarization
-          .threshold(170)             // slightly lower threshold — catches more of the sharpened dark pixels
+          .blur(2.0)                  // gentle blur — smooth without erasing thin detail lines
+          .threshold(180)             // high threshold → only dark pixels survive → bold black lines
           .png()
           .toBuffer();
       } else {
@@ -503,9 +503,7 @@ async function runTraceJob(
       // turdSize scaled up for 3072px (4x area = ~4x turdSize)
       // Detailed: higher optTolerance (0.6) = smoother curves; lower alphaMax = rounder corners
       const potraceOptions = isDetailedMode
-        // Detailed: lower turdSize keeps fine details; alphaMax 0.7 = rounder corners;
-        // optTolerance 0.8 = more curve smoothing → smoother output lines
-        ? { threshold: 128, turdSize: 32, alphaMax: 0.7, optCurve: true, optTolerance: 0.8 }
+        ? { threshold: 128, turdSize: 48, alphaMax: 0.8, optCurve: true, optTolerance: 0.6 }
         : { threshold: 128, turdSize: 160, alphaMax: 1.0, optCurve: true, optTolerance: 0.4 };
 
       const rawSvg = await new Promise<string>((resolve, reject) => {
@@ -515,8 +513,7 @@ async function runTraceJob(
       });
       const cleanSvg = cleanSvgForPreview(rawSvg);
 
-      // Detailed mode: force all paths open (no closed loops) — produces open strokes instead of filled contours
-      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, 0, isDetailedMode);
+      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm);
       const imgKey = `ai-trace-generated/${nanoid()}.png`;
       const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
       const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
