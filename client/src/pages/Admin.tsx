@@ -753,8 +753,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 <h1 className="text-base font-black text-white leading-tight tracking-tight">משרד ניהול המערכת</h1>
                 <p className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'rgba(199,210,254,0.85)' }}>
                   AI DXF — לוח בקרה מאובטח
-                  <span className="px-1.5 py-0.5 rounded text-xs font-bold" style={{ background: 'rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.95)', fontSize: '10px', letterSpacing: '0.03em' }}>v9bcfe49d</span>
-                  <span className="text-xs" style={{ color: 'rgba(199,210,254,0.7)', fontSize: '10px' }}>15.3.2026 • 12:29</span>
+                  <span className="px-1.5 py-0.5 rounded text-xs font-bold" style={{ background: 'rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.95)', fontSize: '10px', letterSpacing: '0.03em' }}>v{__BUILD_GIT_HASH__}</span>
+                  <span className="text-xs" style={{ color: 'rgba(199,210,254,0.7)', fontSize: '10px' }}>{new Date(__BUILD_TIMESTAMP__).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })} • {new Date(__BUILD_TIMESTAMP__).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}</span>
                 </p>
               </div>
             </div>
@@ -1042,6 +1042,26 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 <RefreshCw className="w-3.5 h-3.5" />
               </button>
             </CardTitle>
+            {/* Dot legend */}
+            <div className="flex items-center gap-3 flex-wrap mt-1" dir="rtl">
+              <span className="text-xs text-muted-foreground font-medium">מקרא:</span>
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
+                משתמש חדש (48 שעות)
+              </span>
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+                פעיל היום (24 שעות)
+              </span>
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />
+                פעיל השבוע (7 ימים)
+              </span>
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />
+                לא פעיל
+              </span>
+            </div>
           </CardHeader>
           <CardContent>
             {(enhancedUsersLoading || usersLoading) ? (
@@ -1054,10 +1074,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   const lastPurchase = (u as { lastPurchase?: { packageId: string; priceAmount: number; currency: string } }).lastPurchase;
                   const subscription = (u as { subscription?: { planId: string; periodEnd: Date | string } | null }).subscription;
                   const actionLabel = lastAction?.actionType === "ai_generate" ? "יצירת AI" : lastAction?.actionType === "convert" ? "המרה" : lastAction?.actionType === "download" ? "הורדה" : null;
-                  // Activity dot: green = active last 24h, yellow = active last 7d, gray = inactive
+                  // Activity dot: blue = new user (registered <48h), green = active last 24h, yellow = active last 7d, gray = inactive
+                  const isNewUser = (Date.now() - new Date(u.createdAt).getTime()) < 172800000; // 48h
                   const lastActivityMs = lastAction ? Date.now() - new Date(lastAction.createdAt).getTime() : Infinity;
-                  const activityDot = lastActivityMs < 86400000 ? "bg-green-500" : lastActivityMs < 604800000 ? "bg-yellow-400" : "bg-gray-300";
-                  const activityTitle = lastActivityMs < 86400000 ? "פעיל ב-24 שעות אחרונות" : lastActivityMs < 604800000 ? "פעיל ב-7 ימים אחרונים" : "לא פעיל";
+                  const activityDot = isNewUser ? "bg-blue-500" : lastActivityMs < 86400000 ? "bg-green-500" : lastActivityMs < 604800000 ? "bg-yellow-400" : "bg-gray-300";
+                  const activityTitle = isNewUser ? "משתמש חדש (נרשם ב-48 שעות האחרונות)" : lastActivityMs < 86400000 ? "פעיל ב-24 שעות אחרונות" : lastActivityMs < 604800000 ? "פעיל ב-7 ימים אחרונים" : "לא פעיל";
                   return (
                     <div key={u.id} className="border rounded-lg overflow-hidden">
                       {/* User row */}

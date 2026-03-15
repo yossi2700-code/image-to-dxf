@@ -6,6 +6,18 @@ import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 import { createRequire } from "node:module";
+import { execSync } from "node:child_process";
+
+// Build-time constants injected into the frontend
+function getGitHash(): string {
+  try {
+    return execSync("git rev-parse --short HEAD", { cwd: import.meta.dirname }).toString().trim();
+  } catch {
+    return "unknown";
+  }
+}
+const BUILD_GIT_HASH = getGitHash();
+const BUILD_TIMESTAMP = new Date().toISOString();
 const _require = createRequire(import.meta.url);
 // Load postcss-oklab-function via createRequire (CJS module)
 // The module exports a function directly
@@ -182,6 +194,10 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+  },
+  define: {
+    __BUILD_GIT_HASH__: JSON.stringify(BUILD_GIT_HASH),
+    __BUILD_TIMESTAMP__: JSON.stringify(BUILD_TIMESTAMP),
   },
   server: {
     host: true,
