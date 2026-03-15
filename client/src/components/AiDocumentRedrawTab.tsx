@@ -491,6 +491,8 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem(LS_KEY_DOC));
   const [scanLine, setScanLine] = useState(0); // 0-100 percent for scanning animation
   const [currentStep, setCurrentStep] = useState<string>("");
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Restore cached result on mount if no active job
   const [result, setResult] = useState<RedrawResult | null>(() => {
     if (!localStorage.getItem(LS_KEY_DOC)) {
@@ -548,6 +550,7 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
         if (data.step) setCurrentStep(data.step);
         if (data.status === "done") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
           stopScanAnimation();
           const redrawResult = data.result as RedrawResult;
           setResult(redrawResult);
@@ -675,6 +678,9 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
       // Server returned a jobId — start polling
       if (data.jobId) {
         setJobIdPersisted(data.jobId);
+        setElapsedSeconds(0);
+        if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
         startPolling(data.jobId);
         // Request push notification permission so we can notify when done
         if ("Notification" in window && Notification.permission === "default") {
@@ -929,21 +935,27 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
                   {currentStep || (isRtl ? "מנתח תמונה עם AI..." : "Analyzing image with AI...")}
                 </p>
               </div>
-              {/* Step progress bar */}
-              <div className="w-full rounded-full h-1.5 overflow-hidden" style={{background: 'rgba(251,191,36,0.15)'}}>
+              {/* Countdown progress bar */}
+              <div className="w-full rounded-full h-3 overflow-hidden relative" style={{background: 'rgba(251,191,36,0.15)'}}>
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                    animation: 'shimmer 1.8s ease-in-out infinite',
+                  }}
+                />
                 <div
                   className="h-full rounded-full"
                   style={{
-                    background: 'linear-gradient(90deg, #d97706, #fbbf24)',
-                    width: currentStep.includes('יצר') || currentStep.includes('Generat') ? '66%'
-                      : currentStep.includes('ממיר') || currentStep.includes('Convert') ? '88%'
-                      : '33%',
-                    transition: 'width 0.8s ease-in-out',
+                    background: 'linear-gradient(90deg, #d97706, #fbbf24, #d97706)',
+                    backgroundSize: '200% 100%',
+                    animation: 'gradientMove 2s linear infinite',
+                    width: `${Math.min(95, Math.round((elapsedSeconds / 40) * 95))}%`,
+                    transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}
                 />
               </div>
             </div>
-            <p className="text-xs text-gray-400">{isRtl ? "זה עשוי לקחת 30-90 שניות" : "This may take 30-90 seconds"}</p>
             <div className="flex gap-1.5">
               {[0, 1, 2].map((i) => (
                 <div key={i} className="w-1.5 h-1.5 rounded-full" style={{background: '#fbbf24', animation: `bounce 1s infinite ${i * 0.15}s`}} />

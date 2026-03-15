@@ -394,6 +394,15 @@ router.post("/api/generate-images", async (req, res) => {
       });
     }
 
+    // Record preliminary action immediately so it always appears in history
+    void recordUserAction({
+      appUserId: appUser.userId,
+      actionType: "ai_generate",
+      description: prompt.trim().slice(0, 200),
+      segmentCount: 0,
+      feature: "ai_generate",
+    });
+
     const jobId = nanoid(12);
     createJob(jobId, appUser.userId, "ai_generate");
 

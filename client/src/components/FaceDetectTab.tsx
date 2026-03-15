@@ -738,13 +738,22 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
             })}
           </div>
 
-          {/* Progress bar */}
+          {/* Progress bar with shimmer */}
           <div className="w-full max-w-xs">
-            <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden mb-1.5">
+            <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden mb-1.5 relative">
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                  animation: 'shimmer 1.8s ease-in-out infinite',
+                }}
+              />
               <div
                 className="h-full rounded-full"
                 style={{
-                  background: 'linear-gradient(90deg, #7c3aed, #c084fc)',
+                  background: 'linear-gradient(90deg, #7c3aed, #c084fc, #7c3aed)',
+                  backgroundSize: '200% 100%',
+                  animation: 'gradientMove 2s linear infinite',
                   width: `${progressPct}%`,
                   transition: 'width 1.5s ease-in-out',
                 }}
@@ -753,7 +762,6 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
             <p className="text-xs text-gray-500">
               {currentStep || (isRtl ? 'מעבד תמונה...' : 'Processing image...')}
             </p>
-            <p className="text-xs text-gray-400 mt-0.5">{isRtl ? 'זה עשוי לקחת 20-60 שניות' : 'This may take 20-60 seconds'}</p>
           </div>
 
           {/* Cancel */}

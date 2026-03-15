@@ -358,6 +358,15 @@ router.post(
         "") as string
       );
 
+      // Record preliminary action immediately so it always appears in history
+      void recordUserAction({
+        appUserId: appUser.userId,
+        actionType: "ai_generate",
+        description: (userDesc || "document_redraw").slice(0, 200),
+        segmentCount: 0,
+        feature: "document_redraw",
+      });
+
       // ── Create job and start background processing ────────────────────────────
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "ai_trace");

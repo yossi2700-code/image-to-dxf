@@ -1008,36 +1008,28 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                   <Wand2 className="absolute inset-0 m-auto w-5 h-5 text-teal-600" />
                 </div>
               )}
-              {/* Step progress indicator */}
+              {/* Countdown progress bar — fills over ~40 seconds */}
               <div className="w-full max-w-xs">
-                {/* Step labels */}
-                <div className="flex justify-between text-xs text-gray-400 mb-1.5">
-                  <span style={{color: '#0d9488', fontWeight: 600}}>
-                    {isRtl ? 'שלב 1: ניתוח' : 'Step 1: Analyze'}
-                  </span>
-                  <span style={{
-                    color: (currentStep.includes('יצר') || currentStep.includes('Generat') || currentStep.includes('ממיר') || currentStep.includes('Convert')) ? '#0d9488' : '#d1d5db',
-                    fontWeight: (currentStep.includes('יצר') || currentStep.includes('Generat') || currentStep.includes('ממיר') || currentStep.includes('Convert')) ? 600 : 400,
-                  }}>
-                    {isRtl ? 'שלב 2: יצירה' : 'Step 2: Generate'}
-                  </span>
-                  <span style={{
-                    color: (currentStep.includes('ממיר') || currentStep.includes('Convert')) ? '#0d9488' : '#d1d5db',
-                    fontWeight: (currentStep.includes('ממיר') || currentStep.includes('Convert')) ? 600 : 400,
-                  }}>
-                    {isRtl ? 'שלב 3: וקטור' : 'Step 3: Vector'}
-                  </span>
-                </div>
-                {/* Progress bar */}
-                <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden mb-2">
+                {/* Animated progress bar */}
+                <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden mb-2 relative">
+                  {/* Background shimmer */}
+                  <div
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                      animation: 'shimmer 1.8s ease-in-out infinite',
+                      backgroundSize: '200% 100%',
+                    }}
+                  />
+                  {/* Fill bar — smoothly grows to ~95% over 40s, then stays */}
                   <div
                     className="h-full rounded-full"
                     style={{
-                      background: 'linear-gradient(90deg, #0d9488, #5eead4)',
-                      width: (currentStep.includes('ממיר') || currentStep.includes('Convert')) ? '90%'
-                        : (currentStep.includes('יצר') || currentStep.includes('Generat')) ? '60%'
-                        : '25%',
-                      transition: 'width 1s ease-in-out',
+                      background: 'linear-gradient(90deg, #0d9488, #5eead4, #0d9488)',
+                      backgroundSize: '200% 100%',
+                      animation: 'gradientMove 2s linear infinite',
+                      width: `${Math.min(95, Math.round((elapsedSeconds / 40) * 95))}%`,
+                      transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                   />
                 </div>

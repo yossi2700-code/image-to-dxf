@@ -445,6 +445,16 @@ router.post(
         console.warn("[faceDetectRoute] Failed to upload source image:", e);
       }
 
+      // Record preliminary action immediately so it always appears in history
+      void recordUserAction({
+        appUserId: appUser.userId,
+        actionType: "ai_generate",
+        description: `portrait/${style}`,
+        segmentCount: 0,
+        sourceImageUrl: uploadedSourceImageUrl,
+        feature: "portrait",
+      });
+
       // Create job and start background processing
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "face_detect");
