@@ -1,0 +1,9 @@
+{
+  "query": "\nUPDATE token_costs SET isEnabled = 0 WHERE action = 'convert';\n\nUPDATE token_costs \nSET labelHe = 'AI Outline', labelEn = 'AI Outline', \n    descriptionHe = 'המרת תמונה לעיצוב וקטורי DXF בעזרת AI', \n    descriptionEn = 'Convert a photo to a DXF vector design using AI'\nWHERE action = 'ai_trace';\n\nUPDATE token_costs \nSET labelHe = 'תיקון עיצוב עם AI', labelEn = 'AI Design Fix', \n    descriptionHe = 'תיקון ושיפור עיצוב קיים בעזרת בינה מלאכותית', \n    descriptionEn = 'Fix and improve an existing design using AI'\nWHERE action = 'ai_refine';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nUPDATE token_costs SET isEnabled = 0 WHERE action = 'convert';\n\nUPDATE token_costs \nSET labelHe = 'AI Outline', labelEn = 'AI Outline', \n    descriptionHe = 'המרת תמונה לעיצוב וקטורי DXF בעזרת AI', \n    descriptionEn = 'Convert a photo to a DXF vector design using AI'\nWHERE action = 'ai_trace';\n\nUPDATE token_costs \nSET labelHe = 'תיקון עיצוב עם AI', labelEn = 'AI Design Fix', \n    descriptionHe = 'תיקון ושיפור עיצוב קיים בעזרת בינה מלאכותית', \n    descriptionEn = 'Fix and improve an existing design using AI'\nWHERE action = 'ai_refine';\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2018
+}
