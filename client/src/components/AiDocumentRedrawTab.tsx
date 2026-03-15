@@ -19,6 +19,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
 import { ExportButtons } from "@/components/ExportButtons";
+import { useBugReport } from "@/hooks/useBugReport";
 import {
   Download,
   AlertCircle,
@@ -200,6 +201,7 @@ function CorrectionPanel({ imageUrl, objectDescription, onRefined, isRtl }: Corr
   const [instruction, setInstruction] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
+  const { reportBug } = useBugReport();
 
   const examples = isRtl
     ? ["הוסף מסגרת מסביב", "הפוך את הכתב לגדול יותר", "הסר את הרקע", "הוסף פרטים לציור"]
@@ -235,8 +237,10 @@ function CorrectionPanel({ imageUrl, objectDescription, onRefined, isRtl }: Corr
       setIsOpen(false);
       refetchTokens();
       onRefined(data.image as RedrawImage);
-    } catch {
-      toast.error(isRtl ? "שגיאה בתיקון" : "Refinement error");
+    } catch (err: unknown) {
+      const refineMsg = err instanceof Error ? err.message : (isRtl ? "שגיאה בתיקון" : "Refinement error");
+      toast.error(refineMsg);
+      reportBug({ errorType: "ai_failed", errorMessage: refineMsg, feature: "ai_document_refine" });
     } finally {
       setIsLoading(false);
     }
@@ -474,6 +478,7 @@ const LS_KEY_DOC_IMG = "doc_redraw_imagePreview";
 export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocumentRedrawTabProps) {
   const { isRtl } = useLanguage();
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
+  const { reportBug } = useBugReport();
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(() => localStorage.getItem(LS_KEY_DOC_IMG));
@@ -572,12 +577,14 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
         } else if (data.status === "error") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           stopScanAnimation();
+          const isTokenError = data.error === "INSUFFICIENT_TOKENS" || data.error === "QUOTA_EXCEEDED";
           const msg = data.message || (isRtl ? "שגיאה בעיבוד" : "Processing error");
           setErrorMsg(msg);
           setStatus("error");
           setJobIdPersisted(null);
           refetchTokens();
           toast.error(msg);
+          if (!isTokenError) reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "ai_document_redraw" });
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           stopScanAnimation();
@@ -699,6 +706,7 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
       setErrorMsg(msg);
       setStatus("error");
       toast.error(msg);
+      reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "ai_document_redraw" });
     }
   };
 

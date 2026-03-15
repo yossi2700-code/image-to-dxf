@@ -11,6 +11,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
 import { ExportButtons } from "@/components/ExportButtons";
+import { useBugReport } from "@/hooks/useBugReport";
 import {
   Download,
   AlertCircle,
@@ -254,6 +255,7 @@ const STYLE_OPTIONS: { value: PortraitStyle; labelHe: string; labelEn: string; d
 export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTabProps) {
   const { language } = useLanguage();
   const isRtl = language === "he";
+  const { reportBug } = useBugReport();
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(() => localStorage.getItem("face_detect_imagePreview"));
@@ -362,12 +364,14 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
         } else if (data.status === "error") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+          const isTokenError = data.error === "INSUFFICIENT_TOKENS" || data.error === "QUOTA_EXCEEDED";
           const msg = data.message || data.error || (isRtl ? "שגיאה בעיבוד" : "Processing error");
           setErrorMsg(msg);
           setStatus("error");
           setCurrentStep("");
           setJobIdPersisted(null);
           toast.error(msg);
+          if (!isTokenError) reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "face_detect" });
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           if (progressTimerRef.current) clearInterval(progressTimerRef.current);
@@ -489,6 +493,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : (isRtl ? "שגיאה בעיבוד" : "Processing error");
       setErrorMsg(msg); setStatus("error"); toast.error(msg);
+      reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "face_detect" });
     }
   };
 
