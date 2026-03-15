@@ -1,0 +1,130 @@
+{
+  "query": "SELECT id, actionType, feature, ipAnon FROM user_actions ORDER BY createdAt DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, actionType, feature, ipAnon FROM user_actions ORDER BY createdAt DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "3270142",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "87.70.111.x"
+    },
+    {
+      "id": "3270141",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "87.70.111.x"
+    },
+    {
+      "id": "3270143",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "87.70.111.x"
+    },
+    {
+      "id": "3270140",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "ipAnon": "NULL"
+    },
+    {
+      "id": "3270139",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "ipAnon": "NULL"
+    },
+    {
+      "id": "3270138",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "ipAnon": "NULL"
+    },
+    {
+      "id": "3270135",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "NULL"
+    },
+    {
+      "id": "3270137",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "NULL"
+    },
+    {
+      "id": "3270136",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "NULL"
+    },
+    {
+      "id": "3270132",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "NULL"
+    },
+    {
+      "id": "3270133",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "NULL"
+    },
+    {
+      "id": "3270131",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "NULL"
+    },
+    {
+      "id": "3270127",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "NULL"
+    },
+    {
+      "id": "3270129",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "NULL"
+    },
+    {
+      "id": "3270128",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "NULL"
+    },
+    {
+      "id": "3270125",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "ipAnon": "NULL"
+    },
+    {
+      "id": "3270122",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "NULL"
+    },
+    {
+      "id": "3270121",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "NULL"
+    },
+    {
+      "id": "3270120",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "NULL"
+    },
+    {
+      "id": "3270119",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "ipAnon": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tactionType\tfeature\tipAnon\n3270142\tai_generate\tai_generate\t87.70.111.x\n3270141\tai_generate\tai_generate\t87.70.111.x\n3270143\tai_generate\tai_generate\t87.70.111.x\n3270140\tai_generate\tai_trace\tNULL\n3270139\tai_generate\tai_trace\tNULL\n3270138\tai_generate\tai_trace\tNULL\n3270135\tai_generate\tai_generate\tNULL\n3270137\tai_generate\tai_generate\tNULL\n3270136\tai_generate\tai_generate\tNULL\n3270132\tai_generate\tai_generate\tNULL\n3270133\tai_generate\tai_generate\tNULL\n3270131\tai_generate\tai_generate\tNULL\n3270127\tai_generate\tai_generate\tNULL\n3270129\tai_generate\tai_generate\tNULL\n3270128\tai_generate\tai_generate\tNULL\n3270125\tai_generate\tai_trace\tNULL\n3270122\tai_generate\tai_generate\tNULL\n3270121\tai_generate\tai_generate\tNULL\n3270120\tai_generate\tai_generate\tNULL\n3270119\tai_generate\tai_trace\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1604
+}

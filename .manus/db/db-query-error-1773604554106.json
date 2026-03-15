@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, action_type, feature, ip_anon, created_at FROM user_actions ORDER BY created_at DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, action_type, feature, ip_anon, created_at FROM user_actions ORDER BY created_at DESC LIMIT 10;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'action_type' in 'field list'"
+  ]
+}

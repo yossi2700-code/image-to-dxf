@@ -376,23 +376,27 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
                         <span className="text-slate-500 w-20 shrink-0 text-xs pt-0.5">שעה</span>
                         <span className="text-slate-700">{timeStr}</span>
                       </div>
-                      {/* IP — hidden by default */}
-                      {ev.ipAnon && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-slate-500 w-20 shrink-0 text-xs">IP</span>
-                          {ipRevealed ? (
+                      {/* IP — always shown, hidden by default */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-500 w-20 shrink-0 text-xs">IP</span>
+                        {ev.ipAnon ? (
+                          ipRevealed ? (
                             <span className="font-mono text-xs text-slate-700">{ev.ipAnon}</span>
                           ) : (
                             <span className="font-mono text-xs text-slate-400 select-none">••••••••••</span>
-                          )}
+                          )
+                        ) : (
+                          <span className="text-xs text-slate-400">לא זמין (פעולה ישנה)</span>
+                        )}
+                        {ev.ipAnon && (
                           <button
                             onClick={(e) => toggleIp(ev.id, e)}
                             className="text-xs text-indigo-500 hover:text-indigo-700 underline ml-1"
                           >
                             {ipRevealed ? "הסתר" : "הצג"}
                           </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

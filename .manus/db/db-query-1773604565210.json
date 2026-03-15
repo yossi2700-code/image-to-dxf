@@ -1,0 +1,80 @@
+{
+  "query": "SELECT id, actionType, feature, ipAnon, createdAt FROM user_actions ORDER BY createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, actionType, feature, ipAnon, createdAt FROM user_actions ORDER BY createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "3270142",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "87.70.111.x",
+      "createdAt": "2026-03-15 19:55:56"
+    },
+    {
+      "id": "3270141",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "87.70.111.x",
+      "createdAt": "2026-03-15 19:55:56"
+    },
+    {
+      "id": "3270143",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "87.70.111.x",
+      "createdAt": "2026-03-15 19:55:56"
+    },
+    {
+      "id": "3270140",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "ipAnon": "NULL",
+      "createdAt": "2026-03-15 18:09:26"
+    },
+    {
+      "id": "3270139",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "ipAnon": "NULL",
+      "createdAt": "2026-03-15 17:58:16"
+    },
+    {
+      "id": "3270138",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "ipAnon": "NULL",
+      "createdAt": "2026-03-15 16:10:55"
+    },
+    {
+      "id": "3270136",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "NULL",
+      "createdAt": "2026-03-15 14:15:19"
+    },
+    {
+      "id": "3270135",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "NULL",
+      "createdAt": "2026-03-15 14:15:19"
+    },
+    {
+      "id": "3270137",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "NULL",
+      "createdAt": "2026-03-15 14:15:19"
+    },
+    {
+      "id": "3270131",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "ipAnon": "NULL",
+      "createdAt": "2026-03-15 14:13:49"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tactionType\tfeature\tipAnon\tcreatedAt\n3270142\tai_generate\tai_generate\t87.70.111.x\t2026-03-15 19:55:56\n3270141\tai_generate\tai_generate\t87.70.111.x\t2026-03-15 19:55:56\n3270143\tai_generate\tai_generate\t87.70.111.x\t2026-03-15 19:55:56\n3270140\tai_generate\tai_trace\tNULL\t2026-03-15 18:09:26\n3270139\tai_generate\tai_trace\tNULL\t2026-03-15 17:58:16\n3270138\tai_generate\tai_trace\tNULL\t2026-03-15 16:10:55\n3270136\tai_generate\tai_generate\tNULL\t2026-03-15 14:15:19\n3270135\tai_generate\tai_generate\tNULL\t2026-03-15 14:15:19\n3270137\tai_generate\tai_generate\tNULL\t2026-03-15 14:15:19\n3270131\tai_generate\tai_generate\tNULL\t2026-03-15 14:13:49\n",
+  "stderr": "",
+  "execution_time_ms": 1571
+}

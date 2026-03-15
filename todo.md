@@ -1751,3 +1751,7 @@
 
 - [x] חבר ipAnon לכל ה-routes (convert, AI trace, AI generate, AI refine, face detect, AI document redraw)
 - [x] ודא כפתור הצגה/הסתרה IP בכרטיסיית הפעילות
+
+## תיקון הצגת IP - מרץ 2026
+
+- [x] הצג שורת IP תמיד בפעילות אחרונה (גם כשריק) כדי שכפתור הצגה יהיה גלוי
