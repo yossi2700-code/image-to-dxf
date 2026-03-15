@@ -57,6 +57,7 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [fillMode, setFillMode] = useState<'fill' | 'outline'>('fill'); // default: black fill
   const panStart = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
   const lastPinchDist = useRef<number | null>(null);
   const clamp = (s: number) => Math.min(10, Math.max(0.3, s));
@@ -84,16 +85,37 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
     return 1;
   })();
 
-  const styledSvg = svgContent
-    .replace(/fill="[^"]*"/g, 'fill="none"')
-    .replace(/fill:[^;"']*(;|(?="))/g, 'fill:none$1')
-    .replace(/<path /g, '<path stroke="black" stroke-width="0.5" fill="none" ');
+  // Black fill mode: fill all paths with black, no stroke
+  // Outline mode: remove fill, add black stroke
+  const styledSvg = fillMode === 'fill'
+    ? svgContent
+        .replace(/fill="[^"]*"/g, 'fill="black"')
+        .replace(/fill:[^;"']*(;|(?="))/g, 'fill:black$1')
+        .replace(/stroke="[^"]*"/g, 'stroke="none"')
+        .replace(/<path /g, '<path fill="black" stroke="none" ')
+    : svgContent
+        .replace(/fill="[^"]*"/g, 'fill="none"')
+        .replace(/fill:[^;"']*(;|(?="))/g, 'fill:none$1')
+        .replace(/<path /g, '<path stroke="black" stroke-width="0.5" fill="none" ');
 
   const Toolbar = ({ onClose }: { onClose?: (e: React.MouseEvent) => void }) => (
     <div className="flex items-center gap-1 px-3 border-b bg-muted/30" style={{ minHeight: 44 }}>
       <Eye className="w-4 h-4 text-muted-foreground shrink-0" />
-      <span className="text-xs text-muted-foreground font-medium flex-1">Vector Preview</span>
-      <span className="text-xs text-muted-foreground/60 w-10 text-center">{Math.round(scale * 100)}%</span>
+      <span className="text-xs text-muted-foreground font-medium">Vector Preview</span>
+      {/* Fill / Outline toggle */}
+      <button
+        onClick={(e) => { e.stopPropagation(); setFillMode(m => m === 'fill' ? 'outline' : 'fill'); }}
+        className="mx-1 flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md transition-all"
+        style={{
+          background: fillMode === 'fill' ? '#1e1e1e' : '#f3f4f6',
+          color: fillMode === 'fill' ? 'white' : '#374151',
+          border: fillMode === 'fill' ? '1px solid #1e1e1e' : '1px solid #d1d5db',
+        }}
+        title={fillMode === 'fill' ? 'Switch to outline' : 'Switch to fill'}
+      >
+        {fillMode === 'fill' ? '◼ מילוי' : '◻ קווים'}
+      </button>
+      <span className="text-xs text-muted-foreground/60 w-10 text-center flex-1">{Math.round(scale * 100)}%</span>
       <button onClick={zoomOut} className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted"><ZoomOut className="w-5 h-5" /></button>
       <button onClick={zoomIn} className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted"><ZoomIn className="w-5 h-5" /></button>
       <button onClick={resetView} className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted text-xs font-bold text-muted-foreground">1:1</button>
@@ -103,12 +125,14 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
     </div>
   );
 
+  const fullscreenBg = fillMode === 'fill' ? 'bg-white' : 'bg-white';
+
   return (
     <>
       {fullscreen && (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+        <div className={`fixed inset-0 z-50 bg-black flex flex-col`}>
           <Toolbar onClose={(e) => { e.stopPropagation(); setFullscreen(false); setScale(1); setOffset({ x: 0, y: 0 }); }} />
-          <div className="flex-1 overflow-hidden bg-white" dangerouslySetInnerHTML={{ __html: styledSvg }} />
+          <div className={`flex-1 overflow-hidden ${fullscreenBg}`} dangerouslySetInnerHTML={{ __html: styledSvg }} />
         </div>
       )}
       <div className="border rounded-lg overflow-hidden bg-white">
@@ -144,17 +168,31 @@ function PortraitCard({ image, index, isRtl, onDownload, onZoom }: PortraitCardP
   const LABELS_HE = ["פשוט", "מפורט", "אמנותי"];
   const LABELS_EN = ["Simple", "Detailed", "Artistic"];
   const label = isRtl ? (LABELS_HE[index] ?? LABELS_HE[0]) : (LABELS_EN[index] ?? LABELS_EN[0]);
+  const isRecommended = index === 0;
 
   return (
     <div
       className="rounded-xl p-4"
-      style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+      style={{
+        background: '#ffffff',
+        border: isRecommended ? '2px solid #7c3aed' : '1px solid #e2e8f0',
+        boxShadow: isRecommended ? '0 2px 12px rgba(124,58,237,0.15)' : '0 1px 4px rgba(0,0,0,0.05)',
+        animation: `fadeSlideIn 0.4s ease both`,
+        animationDelay: `${index * 120}ms`,
+      }}
     >
-      {/* Header row: label + line count */}
+      {/* Header row: label + recommended badge + line count */}
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: '#f3e8ff', color: '#7c3aed', border: '1px solid #e9d5ff' }}>
-          {label}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: '#f3e8ff', color: '#7c3aed', border: '1px solid #e9d5ff' }}>
+            {label}
+          </span>
+          {isRecommended && (
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: '#f59e0b', color: 'white' }}>
+              {isRtl ? 'מומלץ' : 'Recommended'}
+            </span>
+          )}
+        </div>
         <span className="text-xs text-gray-400">{image.segmentCount.toLocaleString()} {isRtl ? 'קווים' : 'lines'}</span>
       </div>
 
