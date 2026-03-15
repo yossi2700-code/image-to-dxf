@@ -265,7 +265,7 @@ function getFeatureIcon(feature: string | null, actionType: string): React.React
 
 // ─── Group Card ───────────────────────────────────────────────────────────────
 function GroupCard({
-  group, onViewVariation, onDelete, onEditAgain, onDownload, onTryAgain,
+  group, onViewVariation, onDelete, onEditAgain, onDownload, onTryAgain, onPdf,
 }: {
   group: HistoryGroup;
   onViewVariation: (item: HistoryItem) => void;
@@ -273,6 +273,7 @@ function GroupCard({
   onEditAgain: (item: HistoryItem) => void;
   onDownload: (item: HistoryItem) => void;
   onTryAgain: (item: HistoryItem) => void;
+  onPdf: (item: HistoryItem) => void;
 }) {
   const { isRtl, language } = useLanguage();
   const [activeIdx, setActiveIdx] = useState(0);
@@ -384,7 +385,13 @@ function GroupCard({
           {activeItem?.dxfUrl && (
             <button onClick={() => onDownload(activeItem)} className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md bg-green-600 hover:bg-green-700 text-white text-xs font-semibold transition-colors">
               <Download className="w-3.5 h-3.5" />
-              {isRtl ? "הורד DXF" : "Download DXF"}
+              DXF
+            </button>
+          )}
+          {activeItem?.svgPreview && (
+            <button onClick={() => onPdf(activeItem)} className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors">
+              <Download className="w-3.5 h-3.5" />
+              PDF
             </button>
           )}
           <button onClick={() => onDelete(group)} className="w-8 h-8 flex items-center justify-center rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
@@ -478,6 +485,7 @@ function GroupGrid({
   onEditAgain,
   onDownload,
   onTryAgain,
+  onPdf,
   isRtl,
   emptyLabel,
 }: {
@@ -487,6 +495,7 @@ function GroupGrid({
   onEditAgain: (item: HistoryItem) => void;
   onDownload: (item: HistoryItem) => void;
   onTryAgain: (item: HistoryItem) => void;
+  onPdf: (item: HistoryItem) => void;
   isRtl: boolean;
   emptyLabel: string;
 }) {
@@ -509,6 +518,7 @@ function GroupGrid({
           onEditAgain={onEditAgain}
           onDownload={onDownload}
           onTryAgain={onTryAgain}
+          onPdf={onPdf}
         />
       ))}
     </div>
@@ -630,6 +640,36 @@ export default function History() {
     navigate("/");
   };
 
+  const handlePdf = async (item: HistoryItem) => {
+    if (!item.svgPreview) return;
+    try {
+      // Sanitize SVG before sending to server
+      let svg = item.svgPreview.trim();
+      if (!svg.startsWith("<")) return;
+      // Remove null bytes and non-printable chars
+      svg = svg.replace(/\x00/g, "").replace(/[\x01-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+      // Ensure proper XML declaration / namespace
+      if (!svg.includes("xmlns")) {
+        svg = svg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
+      const res = await fetch("/api/svg-to-png", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ svgContent: svg, scale: 3 }),
+      });
+      if (!res.ok) throw new Error("PDF generation failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${item.description ?? "design"}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("PDF export error:", e);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50" dir={isRtl ? "rtl" : "ltr"}>
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
@@ -742,6 +782,7 @@ export default function History() {
                       onEditAgain={handleEditAgain}
                       onDownload={handleDownload}
                       onTryAgain={handleTryAgain}
+                      onPdf={handlePdf}
                       isRtl={isRtl}
                       emptyLabel={isRtl ? "אין עיצובים בקטגוריה זו" : "No designs in this category"}
                     />

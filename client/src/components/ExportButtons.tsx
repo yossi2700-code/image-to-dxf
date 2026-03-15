@@ -80,10 +80,20 @@ export async function generateAndDownloadPdf(
   const renderW = Math.min(Math.round(pdfW * PX_PER_MM * 2), 3000);
   const renderH = Math.min(Math.round(pdfH * PX_PER_MM * 2), 3000);
 
+  // Sanitize SVG to fix corrupt header / XML parse errors
+  let sanitizedSvg = svgContent;
+  sanitizedSvg = sanitizedSvg.replace(/<path([^>]*?)(?<!\/|-)>/g, '<path$1/>');
+  sanitizedSvg = sanitizedSvg.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+  sanitizedSvg = sanitizedSvg.replace(/<foreignObject[^>]*>[\s\S]*?<\/foreignObject>/gi, '');
+  sanitizedSvg = sanitizedSvg.replace(/^[\s\S]*?(?=<(?:\?xml|svg))/i, '');
+  if (!sanitizedSvg.includes('xmlns=')) {
+    sanitizedSvg = sanitizedSvg.replace(/<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+  }
+
   const pngRes = await fetch("/api/svg-to-png", {
     method: "POST", credentials: "include",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ svgContent, widthPx: renderW, heightPx: renderH }),
+    body: JSON.stringify({ svgContent: sanitizedSvg, widthPx: renderW, heightPx: renderH }),
   });
   if (!pngRes.ok) throw new Error(`SVG-to-PNG failed: ${pngRes.status}`);
 

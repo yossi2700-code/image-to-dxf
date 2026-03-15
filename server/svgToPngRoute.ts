@@ -21,10 +21,11 @@ router.post("/api/svg-to-png", async (req, res) => {
   // The SVG content is sent by the client (already in their browser), so there is no
   // server-side data exposure risk.
 
-  const { svgContent, widthPx, heightPx } = req.body as {
+  const { svgContent, widthPx, heightPx, scale } = req.body as {
     svgContent?: string;
     widthPx?: number;
     heightPx?: number;
+    scale?: number;
   };
 
   if (!svgContent || typeof svgContent !== "string") {
@@ -33,11 +34,29 @@ router.post("/api/svg-to-png", async (req, res) => {
 
   const w = Math.min(Math.max(Math.round(widthPx ?? 1024), 100), 4000);
   const h = Math.min(Math.max(Math.round(heightPx ?? 1024), 100), 4000);
+  const outputScale = Math.min(Math.max(scale ?? 1, 1), 4);
 
   try {
+    // ── SVG sanitization to fix corrupt header errors ──────────────────────────
+    // Remove null bytes and control characters that break XML parsers
+    let svg = svgContent
+      .replace(/\x00/g, "")
+      .replace(/[\x01-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+
+    // Trim leading whitespace/BOM before the SVG tag
+    const svgStart = svg.indexOf("<svg");
+    if (svgStart > 0) svg = svg.slice(svgStart);
+
+    // Remove XML declaration if present (sharp doesn't need it)
+    svg = svg.replace(/<\?xml[^?]*\?>/gi, "").trim();
+
+    // Ensure xmlns attribute is present
+    if (!svg.includes("xmlns")) {
+      svg = svg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+    }
+
     // Ensure the SVG has explicit width/height so sharp knows the output size.
     // potrace SVGs often have only viewBox="0 0 W H" without width/height attributes.
-    let svg = svgContent;
 
     // Extract viewBox dimensions if present — use them as the natural SVG size
     const vbMatch = svg.match(/viewBox=["']([^"']+)["']/);

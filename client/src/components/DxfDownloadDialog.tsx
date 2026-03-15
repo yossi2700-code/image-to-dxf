@@ -83,11 +83,26 @@ async function generatePdfBlob(
   const widthPx = Math.min(Math.round(pdfW * PX_PER_MM * 2), 3000);
   const heightPx = Math.min(Math.round(pdfH * PX_PER_MM * 2), 3000);
 
+  // Sanitize SVG before sending to server — fix corrupt header / XML parse errors.
+  // potrace/AI SVGs sometimes have unclosed tags, stray attributes, or invalid XML.
+  let sanitizedSvg = svgContent;
+  // 1. Ensure self-closing <path ... /> (not <path ...>)
+  sanitizedSvg = sanitizedSvg.replace(/<path([^>]*?)(?<!\/)>/g, '<path$1/>');
+  // 2. Remove any <script> or <foreignObject> tags that break XML parsers
+  sanitizedSvg = sanitizedSvg.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+  sanitizedSvg = sanitizedSvg.replace(/<foreignObject[^>]*>[\s\S]*?<\/foreignObject>/gi, '');
+  // 3. Strip any BOM or non-printable chars before the <?xml or <svg tag
+  sanitizedSvg = sanitizedSvg.replace(/^[\s\S]*?(?=<(?:\?xml|svg))/i, '');
+  // 4. Ensure SVG namespace
+  if (!sanitizedSvg.includes('xmlns=')) {
+    sanitizedSvg = sanitizedSvg.replace(/<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+  }
+
   const pngRes = await fetch("/api/svg-to-png", {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ svgContent, widthPx, heightPx }),
+    body: JSON.stringify({ svgContent: sanitizedSvg, widthPx, heightPx }),
   });
   if (!pngRes.ok) {
     const err = await pngRes.json().catch(() => ({})) as Record<string, unknown>;

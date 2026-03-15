@@ -1,4 +1,4 @@
-import { bigint, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { bigint, int, mediumtext, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -95,8 +95,8 @@ export const userActions = mysqlTable("user_actions", {
   dxfUrl: text("dxfUrl"),
   /** URL of the source image or AI-generated image */
   imageUrl: text("imageUrl"),
-  /** SVG preview string for re-displaying the result */
-  svgPreview: text("svgPreview"),
+  /** SVG preview string for re-displaying the result (mediumtext = up to 16MB) */
+  svgPreview: mediumtext("svgPreview"),
   /** Unique token for public sharing (null = not shared) */
   shareToken: varchar("shareToken", { length: 64 }).unique(),
   /** User-facing prompt/title for the shared design */

@@ -1,0 +1,1 @@
+ALTER TABLE `user_actions` MODIFY COLUMN `svgPreview` mediumtext;
