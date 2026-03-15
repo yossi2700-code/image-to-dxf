@@ -463,18 +463,11 @@ async function runTraceJob(
       const blurAmount = isDetailedMode ? 3.6 : 3.0;
       const thresholdValue = isDetailedMode ? 148 : 160;
 
-      // Step 1: Strengthen black lines — high contrast so lines are bold and background is pure white
-      const contrastEnhanced = await sharp(rawBuffer)
+      // Strengthen black lines then convert to binary — single pipeline for speed
+      // linear(1.4, -20): moderate contrast boost, keeps thin detail lines, whitens grey background
+      const processedBuffer = await sharp(rawBuffer)
         .grayscale()
-        // linear(a, b): output = a * input + b  (values 0-255)
-        // a=1.8 boosts contrast strongly; b=-40 pushes mid-greys toward white
-        .linear(1.8, -40)
-        // Ensure pure white background and pure black lines
-        .normalise()
-        .png()
-        .toBuffer();
-
-      const processedBuffer = await sharp(contrastEnhanced)
+        .linear(1.4, -20)
         .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .blur(blurAmount)
