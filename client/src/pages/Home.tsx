@@ -12,6 +12,7 @@ import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
 import { AiRefinePanel, type RefineResult } from "@/components/AiRefinePanel";
 import { ExportButtons } from "@/components/ExportButtons";
 import { AiTraceTab } from "@/components/AiTraceTab";
+import { TokenPricingModal } from "@/components/TokenPricingModal";
 import { AiDocumentRedrawTab } from "@/components/AiDocumentRedrawTab";
 import { FaceDetectTab } from "@/components/FaceDetectTab";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -2139,6 +2140,7 @@ export default function Home() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [tokenHistoryOpen, setTokenHistoryOpen] = useState(false);
   const tokenHistoryRef = useRef<HTMLDivElement>(null);
+  const [pricingModalOpen, setPricingModalOpen] = useState(false);
   const [bonusAnimation, setBonusAnimation] = useState<{ tokens: number } | null>(null);
 
   // Track active background jobs across all AI tabs
@@ -2334,6 +2336,14 @@ export default function Home() {
 
           {/* Right side nav */}
           <div className="flex items-center gap-2 ms-auto">
+            {/* Pricing button — opens token pricing modal */}
+            <button
+              onClick={() => setPricingModalOpen(true)}
+              className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-80 shrink-0"
+              style={{ color: '#6366f1', background: '#eef2ff', border: '1px solid #c7d2fe', whiteSpace: 'nowrap' }}
+            >
+              {isRtl ? '💎 מחירון' : '💎 Pricing'}
+            </button>
 
             {appUser ? (
               <>
@@ -2915,6 +2925,9 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Token Pricing Modal */}
+      <TokenPricingModal open={pricingModalOpen} onClose={() => setPricingModalOpen(false)} />
     </div>
   );
 }
