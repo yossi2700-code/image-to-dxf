@@ -865,32 +865,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           </>
         ) : null}
 
-        {/* Chart */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-primary" />
-              פעילות 30 ימים אחרונים
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {dailyLoading ? (
-              <div className="h-48 bg-muted animate-pulse rounded-lg" />
-            ) : (
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                  <XAxis dataKey="date" tick={{ fontSize: 10 }} interval={4} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} allowDecimals={false} />
-                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e2e8f0" }} />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Bar dataKey="המרות" fill="#3b82f6" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="יצירות AI" fill="#a855f7" radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-
         {/* ── ADMIN TASKS WIDGET ── */}
         <Card className="overflow-hidden" style={{ borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
           <CardHeader className="pb-2" style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)' }}>

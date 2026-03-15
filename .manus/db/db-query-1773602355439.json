@@ -1,0 +1,15 @@
+{
+  "query": "SELECT COUNT(*) as total, COUNT(ipAnon) as with_ip, COUNT(*) - COUNT(ipAnon) as without_ip FROM user_actions;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT COUNT(*) as total, COUNT(ipAnon) as with_ip, COUNT(*) - COUNT(ipAnon) as without_ip FROM user_actions;",
+  "rows": [
+    {
+      "total": "1193",
+      "with_ip": "0",
+      "without_ip": "1193"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\twith_ip\twithout_ip\n1193\t0\t1193\n",
+  "stderr": "",
+  "execution_time_ms": 1642
+}
