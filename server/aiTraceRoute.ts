@@ -430,6 +430,19 @@ async function runTraceJob(
             `${variation.style} ` +
             `No text, no letters, no numbers anywhere.`
           )
+        : isAnimal
+        ? (
+            // Animal prompt — CRITICAL: preserve real animal proportions, NOT cartoon style
+            `Convert this animal photo to clean black and white line art suitable for laser engraving. ` +
+            `CRITICAL: Preserve the EXACT real appearance of this specific animal: ` +
+            `the actual face shape, real eye shape and size, true nose/muzzle proportions, real fur texture direction, exact body pose. ` +
+            `DO NOT simplify, stylize, cartoonify, or make it look like a children's drawing. ` +
+            `DO NOT make the eyes large and round like a cartoon — keep the real eye shape from the photo. ` +
+            `This must look like a realistic illustration of THIS specific animal, not a generic cute cartoon animal. ` +
+            `Use only pure black (#000000) lines on pure white (#FFFFFF) background. No shading, no grey tones, no gradients. ` +
+            `${variation.style} ` +
+            `No text, no letters, no numbers, no logos anywhere.`
+          )
         : (
             // General object prompt — gpt-image-1 edit
             `Convert this image to clean black and white line art suitable for CNC engraving or laser cutting. ` +
