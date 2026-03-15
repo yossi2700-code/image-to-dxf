@@ -1,0 +1,13 @@
+{
+  "query": "SELECT id FROM app_users WHERE email = 'liad118811@gmail.com'; SELECT id, appUserId, actionType, description, createdAt FROM user_actions WHERE appUserId = 840013 ORDER BY createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id FROM app_users WHERE email = 'liad118811@gmail.com'; SELECT id, appUserId, actionType, description, createdAt FROM user_actions WHERE appUserId = 840013 ORDER BY createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "840013"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\n840013\n",
+  "stderr": "",
+  "execution_time_ms": 1822
+}

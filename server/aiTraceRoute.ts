@@ -702,6 +702,19 @@ router.post(
         console.warn("[aiTraceRoute] Failed to upload source image:", e);
       }
 
+      // Record a preliminary action immediately after token deduction.
+      // This ensures the action always appears in history even if the job
+      // fails or the user closes the browser before the job finishes.
+      // The job's recordUserAction call will add the full details (dxf, svg, etc.).
+      void recordUserAction({
+        appUserId: appUser.userId,
+        actionType: "ai_generate",
+        description: (userDesc || focusText || "ai_trace").slice(0, 200),
+        segmentCount: 0,
+        sourceImageUrl: uploadedSourceImageUrl,
+        feature: "ai_trace",
+      });
+
       // Create job and start background processing
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "ai_trace");

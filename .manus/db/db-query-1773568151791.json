@@ -1,0 +1,25 @@
+{
+  "query": "SELECT id, email, tokenBalance FROM app_users WHERE email LIKE '%liad%'; SELECT id, appUserId, amount, reason, balanceAfter, createdAt FROM token_transactions WHERE createdAt > '2026-03-15 09:00:00' ORDER BY createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, email, tokenBalance FROM app_users WHERE email LIKE '%liad%'; SELECT id, appUserId, amount, reason, balanceAfter, createdAt FROM token_transactions WHERE createdAt > '2026-03-15 09:00:00' ORDER BY createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "840013",
+      "email": "liad118811@gmail.com",
+      "tokenBalance": "5"
+    }
+  ],
+  "messages": [
+    "id\tappUserId\tamount\treason\tbalanceAfter\tcreatedAt",
+    "3300154\t330002\t-3\tai_generate\t38\t2026-03-15 09:46:35",
+    "3300153\t840003\t-5\tai_trace\t701\t2026-03-15 09:39:07",
+    "3300152\t840003\t-5\tai_trace\t706\t2026-03-15 09:10:43",
+    "3300151\t840003\t-3\tai_generate\t711\t2026-03-15 09:08:29",
+    "3300150\t840003\t-5\tai_trace\t714\t2026-03-15 09:07:11",
+    "3300149\t840003\t-5\tai_trace\t719\t2026-03-15 09:05:57",
+    "3300148\t840003\t-5\tai_trace\t724\t2026-03-15 09:02:33",
+    "3300147\t600002\t30\tadmin_add\t46\t2026-03-15 09:00:45"
+  ],
+  "stdout": "id\temail\ttokenBalance\n840013\tliad118811@gmail.com\t5\nid\tappUserId\tamount\treason\tbalanceAfter\tcreatedAt\n3300154\t330002\t-3\tai_generate\t38\t2026-03-15 09:46:35\n3300153\t840003\t-5\tai_trace\t701\t2026-03-15 09:39:07\n3300152\t840003\t-5\tai_trace\t706\t2026-03-15 09:10:43\n3300151\t840003\t-3\tai_generate\t711\t2026-03-15 09:08:29\n3300150\t840003\t-5\tai_trace\t714\t2026-03-15 09:07:11\n3300149\t840003\t-5\tai_trace\t719\t2026-03-15 09:05:57\n3300148\t840003\t-5\tai_trace\t724\t2026-03-15 09:02:33\n3300147\t600002\t30\tadmin_add\t46\t2026-03-15 09:00:45\n",
+  "stderr": "",
+  "execution_time_ms": 1884
+}

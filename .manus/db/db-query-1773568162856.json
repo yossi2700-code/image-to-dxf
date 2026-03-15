@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, email, tokenBalance FROM app_users WHERE email = 'liad118811@gmail.com'; SELECT id, appUserId, amount, reason, balanceAfter, createdAt FROM token_transactions WHERE appUserId IN (SELECT id FROM app_users WHERE email = 'liad118811@gmail.com') ORDER BY createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, email, tokenBalance FROM app_users WHERE email = 'liad118811@gmail.com'; SELECT id, appUserId, amount, reason, balanceAfter, createdAt FROM token_transactions WHERE appUserId IN (SELECT id FROM app_users WHERE email = 'liad118811@gmail.com') ORDER BY createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "840013",
+      "email": "liad118811@gmail.com",
+      "tokenBalance": "5"
+    }
+  ],
+  "messages": [
+    "id\tappUserId\tamount\treason\tbalanceAfter\tcreatedAt",
+    "3300146\t840013\t-5\tai_trace\t5\t2026-03-15 08:26:13"
+  ],
+  "stdout": "id\temail\ttokenBalance\n840013\tliad118811@gmail.com\t5\nid\tappUserId\tamount\treason\tbalanceAfter\tcreatedAt\n3300146\t840013\t-5\tai_trace\t5\t2026-03-15 08:26:13\n",
+  "stderr": "",
+  "execution_time_ms": 1839
+}

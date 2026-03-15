@@ -1,0 +1,81 @@
+{
+  "query": "SELECT id, email, name, tokenBalance, createdAt FROM app_users WHERE email = 'liad118811@gmail.com'; SELECT id, appUserId, actionType, description, createdAt FROM user_actions ORDER BY createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, email, name, tokenBalance, createdAt FROM app_users WHERE email = 'liad118811@gmail.com'; SELECT id, appUserId, actionType, description, createdAt FROM user_actions ORDER BY createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "840013",
+      "email": "liad118811@gmail.com",
+      "name": "NULL",
+      "tokenBalance": "5",
+      "createdAt": "2026-03-15 08:25:55"
+    },
+    {
+      "id": "id",
+      "email": "appUserId",
+      "name": "actionType",
+      "tokenBalance": "description",
+      "createdAt": "createdAt"
+    },
+    {
+      "id": "3270122",
+      "email": "330002",
+      "name": "ai_generate",
+      "tokenBalance": "יהודי  מתפלל לפני התיבה עם טלית ותפילין",
+      "createdAt": "2026-03-15 09:47:01"
+    },
+    {
+      "id": "3270121",
+      "email": "330002",
+      "name": "ai_generate",
+      "tokenBalance": "יהודי  מתפלל לפני התיבה עם טלית ותפילין",
+      "createdAt": "2026-03-15 09:47:01"
+    },
+    {
+      "id": "3270120",
+      "email": "330002",
+      "name": "ai_generate",
+      "tokenBalance": "יהודי  מתפלל לפני התיבה עם טלית ותפילין",
+      "createdAt": "2026-03-15 09:47:00"
+    },
+    {
+      "id": "3270118",
+      "email": "840003",
+      "name": "ai_generate",
+      "tokenBalance": "אופנוע עם חתול נוהג עליו",
+      "createdAt": "2026-03-15 09:08:57"
+    },
+    {
+      "id": "3270117",
+      "email": "840003",
+      "name": "ai_generate",
+      "tokenBalance": "אופנוע עם חתול נוהג עליו",
+      "createdAt": "2026-03-15 09:08:57"
+    },
+    {
+      "id": "3270116",
+      "email": "840003",
+      "name": "ai_generate",
+      "tokenBalance": "אופנוע עם חתול נוהג עליו",
+      "createdAt": "2026-03-15 09:08:57"
+    },
+    {
+      "id": "3270115",
+      "email": "840003",
+      "name": "ai_generate",
+      "tokenBalance": "Camera angle: FRONT VIEW. The subject is an orange tabby cat, facing viewer, sitting upright with its front paws together and its tail curled around its body, not visible from this angle. It has large",
+      "createdAt": "2026-03-15 08:18:42"
+    }
+  ],
+  "messages": [
+    "3270119\t840003\tai_generate\tCamera angle: 3/4 FRONT-RIGHT.",
+    "The subject is a fluffy, light brown Pomeranian dog standing upright on all four paws. It is facing slightly left, with its head turned towards the viewer, mouth open an\t2026-03-15 09:11:26",
+    "3270114\t840003\tai_generate\tCamera angle: FRONT VIEW.",
+    "The subject is an orange tabby cat sitting upright, facing directly towards the viewer with its front paws together and visible. Its body is symmetrical, with a fluffy chest \t2026-03-15 08:10:23",
+    "3270113\t840003\tai_generate\tCamera angle: PURE SIDE PROFILE.",
+    "Facing direction: Facing left.",
+    "Body pose / position: The cordless drill is held horizontally, with the chuck pointing to the left and the battery pack extending downwa\t2026-03-15 08:08:55"
+  ],
+  "stdout": "id\temail\tname\ttokenBalance\tcreatedAt\n840013\tliad118811@gmail.com\tNULL\t5\t2026-03-15 08:25:55\nid\tappUserId\tactionType\tdescription\tcreatedAt\n3270122\t330002\tai_generate\tיהודי  מתפלל לפני התיבה עם טלית ותפילין\t2026-03-15 09:47:01\n3270121\t330002\tai_generate\tיהודי  מתפלל לפני התיבה עם טלית ותפילין\t2026-03-15 09:47:01\n3270120\t330002\tai_generate\tיהודי  מתפלל לפני התיבה עם טלית ותפילין\t2026-03-15 09:47:00\n3270119\t840003\tai_generate\tCamera angle: 3/4 FRONT-RIGHT.\nThe subject is a fluffy, light brown Pomeranian dog standing upright on all four paws. It is facing slightly left, with its head turned towards the viewer, mouth open an\t2026-03-15 09:11:26\n3270118\t840003\tai_generate\tאופנוע עם חתול נוהג עליו\t2026-03-15 09:08:57\n3270117\t840003\tai_generate\tאופנוע עם חתול נוהג עליו\t2026-03-15 09:08:57\n3270116\t840003\tai_generate\tאופנוע עם חתול נוהג עליו\t2026-03-15 09:08:57\n3270115\t840003\tai_generate\tCamera angle: FRONT VIEW. The subject is an orange tabby cat, facing viewer, sitting upright with its front paws together and its tail curled around its body, not visible from this angle. It has large\t2026-03-15 08:18:42\n3270114\t840003\tai_generate\tCamera angle: FRONT VIEW.\nThe subject is an orange tabby cat sitting upright, facing directly towards the viewer with its front paws together and visible. Its body is symmetrical, with a fluffy chest \t2026-03-15 08:10:23\n3270113\t840003\tai_generate\tCamera angle: PURE SIDE PROFILE.\nFacing direction: Facing left.\nBody pose / position: The cordless drill is held horizontally, with the chuck pointing to the left and the battery pack extending downwa\t2026-03-15 08:08:55\n",
+  "stderr": "",
+  "execution_time_ms": 1883
+}

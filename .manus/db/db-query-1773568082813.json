@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, email, name, tokenBalance FROM app_users WHERE email = 'liad118811@gmail.com';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, email, name, tokenBalance FROM app_users WHERE email = 'liad118811@gmail.com';",
+  "rows": [
+    {
+      "id": "840013",
+      "email": "liad118811@gmail.com",
+      "name": "NULL",
+      "tokenBalance": "5"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\ttokenBalance\n840013\tliad118811@gmail.com\tNULL\t5\n",
+  "stderr": "",
+  "execution_time_ms": 1588
+}

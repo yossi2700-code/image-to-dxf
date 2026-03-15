@@ -1,0 +1,24 @@
+{
+  "query": "SELECT id, email, tokenBalance FROM app_users WHERE email LIKE '%liad%'; SHOW COLUMNS FROM token_transactions;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, email, tokenBalance FROM app_users WHERE email LIKE '%liad%'; SHOW COLUMNS FROM token_transactions;",
+  "rows": [
+    {
+      "id": "840013",
+      "email": "liad118811@gmail.com",
+      "tokenBalance": "5"
+    }
+  ],
+  "messages": [
+    "Field\tType\tNull\tKey\tDefault\tExtra",
+    "id\tint\tNO\tPRI\tNULL\tauto_increment",
+    "appUserId\tint\tNO\t\tNULL\t",
+    "amount\tint\tNO\t\tNULL\t",
+    "reason\tvarchar(64)\tNO\t\tNULL\t",
+    "description\ttext\tYES\t\tNULL\t",
+    "balanceAfter\tint\tNO\t\tNULL\t",
+    "createdAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t"
+  ],
+  "stdout": "id\temail\ttokenBalance\n840013\tliad118811@gmail.com\t5\nField\tType\tNull\tKey\tDefault\tExtra\nid\tint\tNO\tPRI\tNULL\tauto_increment\nappUserId\tint\tNO\t\tNULL\t\namount\tint\tNO\t\tNULL\t\nreason\tvarchar(64)\tNO\t\tNULL\t\ndescription\ttext\tYES\t\tNULL\t\nbalanceAfter\tint\tNO\t\tNULL\t\ncreatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\n",
+  "stderr": "",
+  "execution_time_ms": 1795
+}

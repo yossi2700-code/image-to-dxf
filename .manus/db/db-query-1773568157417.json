@@ -1,0 +1,38 @@
+{
+  "query": "SELECT id, email, tokenBalance FROM app_users WHERE email LIKE '%liad%'; SELECT id, appUserId, amount, reason, balanceAfter, createdAt FROM token_transactions WHERE appUserId = 330002 ORDER BY createdAt DESC LIMIT 10; SELECT id, appUserId, actionType, description, createdAt FROM user_actions WHERE appUserId = 330002 ORDER BY createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, email, tokenBalance FROM app_users WHERE email LIKE '%liad%'; SELECT id, appUserId, amount, reason, balanceAfter, createdAt FROM token_transactions WHERE appUserId = 330002 ORDER BY createdAt DESC LIMIT 10; SELECT id, appUserId, actionType, description, createdAt FROM user_actions WHERE appUserId = 330002 ORDER BY createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "840013",
+      "email": "liad118811@gmail.com",
+      "tokenBalance": "5"
+    }
+  ],
+  "messages": [
+    "id\tappUserId\tamount\treason\tbalanceAfter\tcreatedAt",
+    "3300154\t330002\t-3\tai_generate\t38\t2026-03-15 09:46:35",
+    "3090020\t330002\t-3\tai_generate\t41\t2026-03-11 08:49:21",
+    "3090019\t330002\t-3\tai_generate\t44\t2026-03-11 08:46:31",
+    "3090018\t330002\t-3\tai_generate\t47\t2026-03-11 08:44:20",
+    "3090017\t330002\t-3\tai_generate\t50\t2026-03-11 08:42:41",
+    "3090016\t330002\t-3\tai_generate\t53\t2026-03-11 08:36:41",
+    "3090015\t330002\t-3\tai_generate\t56\t2026-03-11 08:34:51",
+    "3090014\t330002\t-3\tai_generate\t59\t2026-03-11 08:31:01",
+    "3090011\t330002\t50\tadmin_add\t62\t2026-03-11 08:05:31",
+    "3090009\t330002\t-3\tai_generate\t12\t2026-03-11 07:51:15",
+    "id\tappUserId\tactionType\tdescription\tcreatedAt",
+    "3270121\t330002\tai_generate\tיהודי  מתפלל לפני התיבה עם טלית ותפילין\t2026-03-15 09:47:01",
+    "3270122\t330002\tai_generate\tיהודי  מתפלל לפני התיבה עם טלית ותפילין\t2026-03-15 09:47:01",
+    "3270120\t330002\tai_generate\tיהודי  מתפלל לפני התיבה עם טלית ותפילין\t2026-03-15 09:47:00",
+    "3090022\t330002\tai_generate\tאשה צנועה עם כיסוי ראש יהודי\t2026-03-11 08:49:46",
+    "3090021\t330002\tai_generate\tאשה צנועה עם כיסוי ראש יהודי\t2026-03-11 08:49:46",
+    "3090020\t330002\tai_generate\tאשה צנועה עם כיסוי ראש יהודי\t2026-03-11 08:49:46",
+    "3090019\t330002\tai_generate\tמלאכים יוצאים מנבל מנגן\t2026-03-11 08:44:49",
+    "3090018\t330002\tai_generate\tמלאכים מעל הר הבית\t2026-03-11 08:43:16",
+    "3090017\t330002\tai_generate\tמלאכים מעל הר הבית\t2026-03-11 08:43:15",
+    "3090015\t330002\tai_generate\tמטוס מיראז' צרפתי על הקרקעכ עם סמלי טייסת ישראליים\t2026-03-11 08:37:11"
+  ],
+  "stdout": "id\temail\ttokenBalance\n840013\tliad118811@gmail.com\t5\nid\tappUserId\tamount\treason\tbalanceAfter\tcreatedAt\n3300154\t330002\t-3\tai_generate\t38\t2026-03-15 09:46:35\n3090020\t330002\t-3\tai_generate\t41\t2026-03-11 08:49:21\n3090019\t330002\t-3\tai_generate\t44\t2026-03-11 08:46:31\n3090018\t330002\t-3\tai_generate\t47\t2026-03-11 08:44:20\n3090017\t330002\t-3\tai_generate\t50\t2026-03-11 08:42:41\n3090016\t330002\t-3\tai_generate\t53\t2026-03-11 08:36:41\n3090015\t330002\t-3\tai_generate\t56\t2026-03-11 08:34:51\n3090014\t330002\t-3\tai_generate\t59\t2026-03-11 08:31:01\n3090011\t330002\t50\tadmin_add\t62\t2026-03-11 08:05:31\n3090009\t330002\t-3\tai_generate\t12\t2026-03-11 07:51:15\nid\tappUserId\tactionType\tdescription\tcreatedAt\n3270121\t330002\tai_generate\tיהודי  מתפלל לפני התיבה עם טלית ותפילין\t2026-03-15 09:47:01\n3270122\t330002\tai_generate\tיהודי  מתפלל לפני התיבה עם טלית ותפילין\t2026-03-15 09:47:01\n3270120\t330002\tai_generate\tיהודי  מתפלל לפני התיבה עם טלית ותפילין\t2026-03-15 09:47:00\n3090022\t330002\tai_generate\tאשה צנועה עם כיסוי ראש יהודי\t2026-03-11 08:49:46\n3090021\t330002\tai_generate\tאשה צנועה עם כיסוי ראש יהודי\t2026-03-11 08:49:46\n3090020\t330002\tai_generate\tאשה צנועה עם כיסוי ראש יהודי\t2026-03-11 08:49:46\n3090019\t330002\tai_generate\tמלאכים יוצאים מנבל מנגן\t2026-03-11 08:44:49\n3090018\t330002\tai_generate\tמלאכים מעל הר הבית\t2026-03-11 08:43:16\n3090017\t330002\tai_generate\tמלאכים מעל הר הבית\t2026-03-11 08:43:15\n3090015\t330002\tai_generate\tמטוס מיראז' צרפתי על הקרקעכ עם סמלי טייסת ישראליים\t2026-03-11 08:37:11\n",
+  "stderr": "",
+  "execution_time_ms": 2029
+}
