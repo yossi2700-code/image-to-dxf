@@ -272,8 +272,18 @@ export const tokenCosts = mysqlTable("token_costs", {
   action: varchar("action", { length: 32 }).notNull().unique(),
   /** Number of tokens this action costs */
   cost: int("cost").notNull().default(0),
-  /** Human-readable label */
+  /** Human-readable label (legacy) */
   label: varchar("label", { length: 64 }),
+  /** Hebrew label shown in pricing tab */
+  labelHe: varchar("labelHe", { length: 64 }),
+  /** English label shown in pricing tab */
+  labelEn: varchar("labelEn", { length: 64 }),
+  /** Hebrew description */
+  descriptionHe: varchar("descriptionHe", { length: 200 }),
+  /** English description */
+  descriptionEn: varchar("descriptionEn", { length: 200 }),
+  /** Sort order for display */
+  sortOrder: int("sortOrder").notNull().default(0),
   /** Whether this action is currently enabled */
   isEnabled: int("isEnabled").notNull().default(1),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

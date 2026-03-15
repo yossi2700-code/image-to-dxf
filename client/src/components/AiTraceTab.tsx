@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
+import { useBugReport } from "@/hooks/useBugReport";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
 import { ExportButtons } from "@/components/ExportButtons";
 import {
@@ -233,6 +234,7 @@ interface AiTraceTabProps { onOpenAuth: () => void; onInsufficientTokens?: () =>
 export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps) {
   const { t, isRtl, language } = useLanguage();
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
+  const { reportBug } = useBugReport();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(() => localStorage.getItem("ai_trace_imagePreview"));
   const [description, setDescription] = useState("");
@@ -357,6 +359,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
           setJobIdPersisted(null);
           if (!isTokenError) refetchTokens(); // Refresh balance to show refunded tokens
           toast.error(msg);
+          if (!isTokenError) reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "ai_trace" });
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
@@ -543,6 +546,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : (t("processingError"));
       setErrorMsg(msg); setStatus("error"); toast.error(msg);
+      reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "ai_trace" });
     }
   };
 
@@ -586,6 +590,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : (t("processingError"));
       setErrorMsg(msg); setStatus("error"); toast.error(msg);
+      reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "ai_trace" });
     }
   };
 

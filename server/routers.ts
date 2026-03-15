@@ -441,6 +441,11 @@ export const appRouter = router({
           action: z.string(),
           cost: z.number().int().min(0).max(100),
           label: z.string().optional(),
+          labelHe: z.string().max(64).optional(),
+          labelEn: z.string().max(64).optional(),
+          descriptionHe: z.string().max(200).optional(),
+          descriptionEn: z.string().max(200).optional(),
+          sortOrder: z.number().int().optional(),
           isEnabled: z.number().optional(),
         })
       )
@@ -452,6 +457,11 @@ export const appRouter = router({
           .set({
             cost: input.cost,
             ...(input.label !== undefined ? { label: input.label } : {}),
+            ...(input.labelHe !== undefined ? { labelHe: input.labelHe } : {}),
+            ...(input.labelEn !== undefined ? { labelEn: input.labelEn } : {}),
+            ...(input.descriptionHe !== undefined ? { descriptionHe: input.descriptionHe } : {}),
+            ...(input.descriptionEn !== undefined ? { descriptionEn: input.descriptionEn } : {}),
+            ...(input.sortOrder !== undefined ? { sortOrder: input.sortOrder } : {}),
             ...(input.isEnabled !== undefined ? { isEnabled: input.isEnabled } : {}),
           })
           .where(eq(tokenCosts.action, input.action));

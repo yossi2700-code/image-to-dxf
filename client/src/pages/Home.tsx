@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import { useBugReport } from "@/hooks/useBugReport";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -15,6 +16,7 @@ import { AiDocumentRedrawTab } from "@/components/AiDocumentRedrawTab";
 import { FaceDetectTab } from "@/components/FaceDetectTab";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InsufficientTokensBanner } from "@/components/InsufficientTokensBanner";
+import { TokenPricingModal } from "@/components/TokenPricingModal";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Upload,
@@ -743,6 +745,7 @@ interface UploadTabProps {
 
 function UploadTab({ onOpenAuth }: UploadTabProps) {
   const { t, isRtl } = useLanguage();
+  const { reportBug } = useBugReport();
   const [dragOver, setDragOver] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -850,9 +853,9 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
       setErrorMsg(msg);
       setStatus("error");
       toast.error(msg);
+      reportBug({ errorType: "convert_failed", errorMessage: msg, feature: "convert" });
     }
   };
-
   const reset = () => {
     setImageFile(null);
     setImagePreview(null);
@@ -1156,6 +1159,7 @@ if (!sessionStorage.getItem("page_session_active")) {
 function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () => void; onInsufficientTokens?: () => void }) {
   const { t, isRtl, language } = useLanguage();
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
+  const { reportBug } = useBugReport();
   const [prompt, setPrompt] = useState(() => localStorage.getItem("ai_generate_prompt") ?? "");
 
   const setPromptPersisted = useCallback((v: string) => {
@@ -1272,6 +1276,7 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
           setStatus("error");
           setJobIdPersisted(null);
           toast.error(msg);
+          reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "ai_generate" });
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           stopProgressSteps();
@@ -1400,9 +1405,9 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
       setErrorMsg(msg);
       setStatus("error");
       toast.error(msg);
+      reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "ai_generate" });
     }
   };
-
   const handleDownload = (img: AiImage) => {
     setDownloadImg(img);
     setDownloadOpen(true);
@@ -2135,6 +2140,7 @@ export default function Home() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [tokenHistoryOpen, setTokenHistoryOpen] = useState(false);
   const tokenHistoryRef = useRef<HTMLDivElement>(null);
+  const [pricingModalOpen, setPricingModalOpen] = useState(false);
   const [bonusAnimation, setBonusAnimation] = useState<{ tokens: number } | null>(null);
 
   // Track active background jobs across all AI tabs
@@ -2330,14 +2336,14 @@ export default function Home() {
 
           {/* Right side nav */}
           <div className="flex items-center gap-2 ms-auto">
-            {/* Pricing link — always visible */}
-            <a
-              href="/pricing"
+            {/* Pricing button — opens token pricing modal */}
+            <button
+              onClick={() => setPricingModalOpen(true)}
               className="hidden sm:flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-80 shrink-0"
-              style={{ color: '#6366f1', background: '#eef2ff', border: '1px solid #c7d2fe', textDecoration: 'none', whiteSpace: 'nowrap' }}
+              style={{ color: '#6366f1', background: '#eef2ff', border: '1px solid #c7d2fe', whiteSpace: 'nowrap' }}
             >
-              {isRtl ? '💎 מחירים' : '💎 Pricing'}
-            </a>
+              {isRtl ? '💎 מחירון' : '💎 Pricing'}
+            </button>
             {appUser ? (
               <>
                 {/* Token balance badge with history popup */}
@@ -2495,6 +2501,7 @@ export default function Home() {
         </div>
       </header>
 
+      <TokenPricingModal open={pricingModalOpen} onClose={() => setPricingModalOpen(false)} />
       <AuthDialog
         open={authOpen}
         onOpenChange={setAuthOpen}

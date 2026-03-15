@@ -547,6 +547,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   });
   const [editingCostAction, setEditingCostAction] = useState<string | null>(null);
   const [costEdits, setCostEdits] = useState<Record<string, number>>({});
+  const [labelEdits, setLabelEdits] = useState<Record<string, { labelHe: string; labelEn: string; descriptionHe: string; descriptionEn: string }>>({});
 
   // הה Settings state ההה
   const [settingsName, setSettingsName] = useState("");
@@ -1812,56 +1813,124 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 ) : !tokenCostsData || tokenCostsData.length === 0 ? (
                   <div className="text-center py-4 text-muted-foreground text-sm">אין נתוני עלויות</div>
                 ) : (
-                  <div className="space-y-2">
-                    {tokenCostsData.map((item) => (
-                      <div key={item.action} className="flex items-center justify-between p-3 border rounded-lg bg-muted/20">
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{item.label || item.action}</p>
-                          <p className="text-xs text-muted-foreground font-mono">{item.action}</p>
+                  <div className="space-y-3">
+                    {[...tokenCostsData].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)).map((item) => (
+                      <div key={item.action} className="border rounded-xl bg-muted/10 overflow-hidden">
+                        {/* Header row */}
+                        <div className="flex items-center justify-between p-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold">{item.labelHe || item.label || item.action}</p>
+                            <p className="text-xs text-muted-foreground font-mono">{item.action}</p>
+                            {item.descriptionHe && (
+                              <p className="text-xs text-muted-foreground mt-0.5 truncate">{item.descriptionHe}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                              item.cost === 0 ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                            }`}>
+                              {item.cost === 0 ? "חינם" : `${item.cost} טוקנים`}
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                if (editingCostAction === item.action) {
+                                  setEditingCostAction(null);
+                                } else {
+                                  setEditingCostAction(item.action);
+                                  setCostEdits(prev => ({ ...prev, [item.action]: item.cost }));
+                                  setLabelEdits(prev => ({
+                                    ...prev,
+                                    [item.action]: {
+                                      labelHe: item.labelHe || item.label || "",
+                                      labelEn: item.labelEn || "",
+                                      descriptionHe: item.descriptionHe || "",
+                                      descriptionEn: item.descriptionEn || "",
+                                    }
+                                  }));
+                                }
+                              }}
+                            >
+                              {editingCostAction === item.action ? "סגור" : "ערוך"}
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          {editingCostAction === item.action ? (
-                            <>
-                              <div className="flex items-center gap-1.5">
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  max={100}
-                                  className="h-7 w-20 text-sm text-center"
-                                  defaultValue={item.cost}
-                                  onChange={(e) => setCostEdits(prev => ({ ...prev, [item.action]: parseInt(e.target.value) || 0 }))}
-                                />
-                                <span className="text-xs text-muted-foreground">טוקנים</span>
-                              </div>
-                              <Button size="sm" variant="outline" onClick={() => setEditingCostAction(null)}>בטל</Button>
+                        {/* Expanded edit form */}
+                        {editingCostAction === item.action && (
+                          <div className="border-t bg-muted/20 p-4 space-y-3">
+                            {/* Cost */}
+                            <div className="flex items-center gap-2">
+                              <label className="text-xs font-medium w-28 shrink-0">עלות (טוקנים)</label>
+                              <Input
+                                type="number" min={0} max={100}
+                                className="h-7 w-24 text-sm text-center"
+                                value={costEdits[item.action] ?? item.cost}
+                                onChange={(e) => setCostEdits(prev => ({ ...prev, [item.action]: parseInt(e.target.value) || 0 }))}
+                              />
+                            </div>
+                            {/* Hebrew label */}
+                            <div className="flex items-center gap-2">
+                              <label className="text-xs font-medium w-28 shrink-0">שם עברית</label>
+                              <Input
+                                className="h-7 text-sm"
+                                value={labelEdits[item.action]?.labelHe ?? ""}
+                                onChange={(e) => setLabelEdits(prev => ({ ...prev, [item.action]: { ...prev[item.action], labelHe: e.target.value } }))}
+                                placeholder="שם הפעולה בעברית"
+                              />
+                            </div>
+                            {/* English label */}
+                            <div className="flex items-center gap-2">
+                              <label className="text-xs font-medium w-28 shrink-0">English name</label>
+                              <Input
+                                className="h-7 text-sm"
+                                dir="ltr"
+                                value={labelEdits[item.action]?.labelEn ?? ""}
+                                onChange={(e) => setLabelEdits(prev => ({ ...prev, [item.action]: { ...prev[item.action], labelEn: e.target.value } }))}
+                                placeholder="Feature name in English"
+                              />
+                            </div>
+                            {/* Hebrew description */}
+                            <div className="flex items-start gap-2">
+                              <label className="text-xs font-medium w-28 shrink-0 pt-1">תיאור עברית</label>
+                              <Input
+                                className="h-7 text-sm"
+                                value={labelEdits[item.action]?.descriptionHe ?? ""}
+                                onChange={(e) => setLabelEdits(prev => ({ ...prev, [item.action]: { ...prev[item.action], descriptionHe: e.target.value } }))}
+                                placeholder="תיאור קצר בעברית"
+                              />
+                            </div>
+                            {/* English description */}
+                            <div className="flex items-start gap-2">
+                              <label className="text-xs font-medium w-28 shrink-0 pt-1">English desc.</label>
+                              <Input
+                                className="h-7 text-sm"
+                                dir="ltr"
+                                value={labelEdits[item.action]?.descriptionEn ?? ""}
+                                onChange={(e) => setLabelEdits(prev => ({ ...prev, [item.action]: { ...prev[item.action], descriptionEn: e.target.value } }))}
+                                placeholder="Short description in English"
+                              />
+                            </div>
+                            {/* Save / Cancel */}
+                            <div className="flex gap-2 pt-1">
                               <Button
                                 size="sm"
                                 onClick={() => updateTokenCostMutation.mutate({
                                   action: item.action,
                                   cost: costEdits[item.action] ?? item.cost,
+                                  labelHe: labelEdits[item.action]?.labelHe,
+                                  labelEn: labelEdits[item.action]?.labelEn,
+                                  descriptionHe: labelEdits[item.action]?.descriptionHe,
+                                  descriptionEn: labelEdits[item.action]?.descriptionEn,
                                 })}
                                 disabled={updateTokenCostMutation.isPending}
                               >
-                                {updateTokenCostMutation.isPending ? "שומר..." : "שמור"}
+                                {updateTokenCostMutation.isPending ? "שומר..." : "שמור שינויים"}
                               </Button>
-                            </>
-                          ) : (
-                            <>
-                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
-                                item.cost === 0 ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
-                              }`}>
-                                {item.cost === 0 ? "חינם" : `${item.cost} טוקנים`}
-                              </span>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => { setEditingCostAction(item.action); setCostEdits(prev => ({ ...prev, [item.action]: item.cost })); }}
-                              >
-                                ערוך
-                              </Button>
-                            </>
-                          )}
-                        </div>
+                              <Button size="sm" variant="outline" onClick={() => setEditingCostAction(null)}>בטל</Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

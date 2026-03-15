@@ -1,0 +1,50 @@
+{
+  "query": "SELECT * FROM token_costs ORDER BY action;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT * FROM token_costs ORDER BY action;",
+  "rows": [
+    {
+      "id": "2",
+      "action": "ai_generate",
+      "cost": "3",
+      "label": "AI Generate (Text to DXF)",
+      "isEnabled": "1",
+      "updatedAt": "2026-03-10 17:40:27"
+    },
+    {
+      "id": "3",
+      "action": "ai_refine",
+      "cost": "2",
+      "label": "AI Refine (Edit DXF)",
+      "isEnabled": "1",
+      "updatedAt": "2026-03-10 17:40:33"
+    },
+    {
+      "id": "1",
+      "action": "ai_trace",
+      "cost": "5",
+      "label": "AI Trace (Image to DXF)",
+      "isEnabled": "1",
+      "updatedAt": "2026-03-10 15:51:42"
+    },
+    {
+      "id": "5",
+      "action": "convert",
+      "cost": "0",
+      "label": "Basic Convert (Free)",
+      "isEnabled": "1",
+      "updatedAt": "2026-03-10 15:51:42"
+    },
+    {
+      "id": "4",
+      "action": "face_detect",
+      "cost": "4",
+      "label": "Face/Portrait Detection",
+      "isEnabled": "1",
+      "updatedAt": "2026-03-10 15:51:42"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\taction\tcost\tlabel\tisEnabled\tupdatedAt\n2\tai_generate\t3\tAI Generate (Text to DXF)\t1\t2026-03-10 17:40:27\n3\tai_refine\t2\tAI Refine (Edit DXF)\t1\t2026-03-10 17:40:33\n1\tai_trace\t5\tAI Trace (Image to DXF)\t1\t2026-03-10 15:51:42\n5\tconvert\t0\tBasic Convert (Free)\t1\t2026-03-10 15:51:42\n4\tface_detect\t4\tFace/Portrait Detection\t1\t2026-03-10 15:51:42\n",
+  "stderr": "",
+  "execution_time_ms": 1568
+}
