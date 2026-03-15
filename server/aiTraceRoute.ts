@@ -456,20 +456,35 @@ async function runTraceJob(
       // Add white padding around the AI-generated image, then process at 3072px resolution
       // Higher resolution = more pixels for potrace → smoother curves, less jagged edges
       // Simple mode (idx=0): light blur, higher threshold → clean outlines, removes fine noise
-      // Detailed mode (idx=1): moderate blur merges double texture lines into single strokes,
-      //   lower threshold keeps detail, higher optTolerance gives smoother curves
+      // Detailed mode (idx=1): contrast boost first to make grey lines black, then moderate blur
       const isDetailedMode = idx === 1;
-      // Blur scaled up proportionally for 3072px (was 1.5/1.8 at 1536px → 3.0/3.6 at 3072px)
-      const blurAmount = isDetailedMode ? 3.6 : 3.0;
-      const thresholdValue = isDetailedMode ? 148 : 160;
-      const processedBuffer = await sharp(rawBuffer)
-        .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-        .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-        .grayscale()
-        .blur(blurAmount)
-        .threshold(thresholdValue)
-        .png()
-        .toBuffer();
+
+      let processedBuffer: Buffer;
+      if (isDetailedMode) {
+        // Detailed mode: AI often generates thin/grey lines.
+        // Step 1: contrast boost — linear(2.0, -60) pushes grey lines toward black, background toward white
+        // Step 2: light blur (2.0px) to smooth jagged edges without erasing thin lines
+        // Step 3: high threshold (180) converts everything to pure black/white
+        processedBuffer = await sharp(rawBuffer)
+          .grayscale()
+          .linear(2.0, -60)          // strong contrast: darken lines, whiten background
+          .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .blur(2.0)                  // gentle blur — smooth without erasing thin detail lines
+          .threshold(180)             // high threshold → only dark pixels survive → bold black lines
+          .png()
+          .toBuffer();
+      } else {
+        // Simple mode: standard pipeline
+        processedBuffer = await sharp(rawBuffer)
+          .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .grayscale()
+          .blur(3.0)
+          .threshold(160)
+          .png()
+          .toBuffer();
+      }
 
       // Simple: large turdSize removes small details; Detailed: small turdSize keeps texture/detail lines
       // turdSize scaled up for 3072px (4x area = ~4x turdSize)
