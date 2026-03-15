@@ -574,7 +574,7 @@ async function runTraceJob(
     const variationLabels = [allVariationLabels[variationIndex] ?? `v${variationIndex + 1}`];
     for (let i = 0; i < images.length; i++) {
       const img = images[i];
-      void recordUserAction({
+      await recordUserAction({
         appUserId,
         actionType: "ai_generate",
         description: objectDescription.slice(0, 200),

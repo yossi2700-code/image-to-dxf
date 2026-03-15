@@ -1,0 +1,245 @@
+{
+  "query": "SELECT au.name, au.email, COUNT(ua.id) as action_count FROM app_users au LEFT JOIN user_actions ua ON ua.appUserId = au.id GROUP BY au.id, au.name, au.email ORDER BY action_count DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT au.name, au.email, COUNT(ua.id) as action_count FROM app_users au LEFT JOIN user_actions ua ON ua.appUserId = au.id GROUP BY au.id, au.name, au.email ORDER BY action_count DESC;",
+  "rows": [
+    {
+      "name": "יוסי",
+      "email": "yossi2700@gmail.com",
+      "action_count": "113"
+    },
+    {
+      "name": "ארנה תורגמן",
+      "email": "sh74eren@gmail.com",
+      "action_count": "58"
+    },
+    {
+      "name": "מצבות קדימה",
+      "email": "matzevotkadima@gmail.com",
+      "action_count": "31"
+    },
+    {
+      "name": "ליאורה",
+      "email": "rbnlr1282@gmail.com",
+      "action_count": "28"
+    },
+    {
+      "name": "מצבות בורקין",
+      "email": "borkins@bezeqint.net",
+      "action_count": "22"
+    },
+    {
+      "name": "even veshaish",
+      "email": "cnc6474955@gmail.com",
+      "action_count": "22"
+    },
+    {
+      "name": "גל זברו",
+      "email": "cncgal001@gmail.com",
+      "action_count": "14"
+    },
+    {
+      "name": "Ran T",
+      "email": "ran.tid@outlook.com",
+      "action_count": "13"
+    },
+    {
+      "name": "ד\"ר אריה",
+      "email": "aryee07@gmail.com",
+      "action_count": "12"
+    },
+    {
+      "name": "משה",
+      "email": "uzielmoshe@gmail.com",
+      "action_count": "11"
+    },
+    {
+      "name": "טסט 2",
+      "email": "yossi2700apple@gmail.com",
+      "action_count": "10"
+    },
+    {
+      "name": "צבי",
+      "email": "zvizvi011@gmail.com",
+      "action_count": "9"
+    },
+    {
+      "name": "יוסי",
+      "email": "7142429@gmail.com",
+      "action_count": "9"
+    },
+    {
+      "name": "גלעד ביאזי",
+      "email": "bayazi@walla.com",
+      "action_count": "8"
+    },
+    {
+      "name": "Matan",
+      "email": "dahan2525@gmail.com",
+      "action_count": "8"
+    },
+    {
+      "name": "אודליה",
+      "email": "odelia650@gmail.com",
+      "action_count": "7"
+    },
+    {
+      "name": "יהודה ביאזי",
+      "email": "y0505357632@gmail.com",
+      "action_count": "6"
+    },
+    {
+      "name": "מאור",
+      "email": "maorbayazi@gmail.com",
+      "action_count": "6"
+    },
+    {
+      "name": "ארנה תורג'מן",
+      "email": "erenanegev@gmail.com",
+      "action_count": "6"
+    },
+    {
+      "name": "yan",
+      "email": "mizrhi88@gmail.com",
+      "action_count": "5"
+    },
+    {
+      "name": "עמוס עטיה",
+      "email": "amos2656@gmail.com",
+      "action_count": "5"
+    },
+    {
+      "name": "afia noam",
+      "email": "noamafia@gmail.com",
+      "action_count": "4"
+    },
+    {
+      "name": "אלון אילוז",
+      "email": "alony81@gmail.com",
+      "action_count": "4"
+    },
+    {
+      "name": "עדן תורגמן",
+      "email": "edenturgeman200@gmail.com",
+      "action_count": "4"
+    },
+    {
+      "name": "Yan",
+      "email": "mizrhi8@walla.com",
+      "action_count": "3"
+    },
+    {
+      "name": "גל",
+      "email": "cncgal001@gamil.com",
+      "action_count": "3"
+    },
+    {
+      "name": "אסף",
+      "email": "asafamar037979@gmail.com",
+      "action_count": "3"
+    },
+    {
+      "name": "מטי גניש",
+      "email": "genishmati@gmail.com",
+      "action_count": "3"
+    },
+    {
+      "name": "Koralg",
+      "email": "koralg28@gmail.com",
+      "action_count": "2"
+    },
+    {
+      "name": "NULL",
+      "email": "dima@t-print.co.il",
+      "action_count": "1"
+    },
+    {
+      "name": "איציק",
+      "email": "tatoici@gmail.com",
+      "action_count": "1"
+    },
+    {
+      "name": "Elad",
+      "email": "eladkb@gmail.com",
+      "action_count": "1"
+    },
+    {
+      "name": "טסט1",
+      "email": "yossi2700xl3@gmail.com",
+      "action_count": "0"
+    },
+    {
+      "name": "Kogan vova",
+      "email": "kogan.vova@mail.ru",
+      "action_count": "0"
+    },
+    {
+      "name": "Ronel peretz",
+      "email": "ronel037@gmail.com",
+      "action_count": "0"
+    },
+    {
+      "name": "Erez",
+      "email": "erez.biton@gmail.com",
+      "action_count": "0"
+    },
+    {
+      "name": "NULL",
+      "email": "liad118811@gmail.com",
+      "action_count": "0"
+    },
+    {
+      "name": "Test User",
+      "email": "test@example.com",
+      "action_count": "0"
+    },
+    {
+      "name": "YAK",
+      "email": "ladaatn@gmail.com",
+      "action_count": "0"
+    },
+    {
+      "name": "ליאל",
+      "email": "liel5558@gmail.com",
+      "action_count": "0"
+    },
+    {
+      "name": "דני",
+      "email": "dvaiksel9@gmail.com",
+      "action_count": "0"
+    },
+    {
+      "name": "יעקב עמור",
+      "email": "yaakov20026@gmail.com",
+      "action_count": "0"
+    },
+    {
+      "name": "יוסי אייזנבך",
+      "email": "yossi2700@icloud.com",
+      "action_count": "0"
+    },
+    {
+      "name": "אבן גל",
+      "email": "evengal@013net.net",
+      "action_count": "0"
+    },
+    {
+      "name": "אביבית קירשנר",
+      "email": "avivi2284@gmail.com",
+      "action_count": "0"
+    },
+    {
+      "name": "דני שמעונוב",
+      "email": "danishimon33@gmail.com",
+      "action_count": "0"
+    },
+    {
+      "name": "לירון אלגרבלי",
+      "email": "liron.photography@gmail.com",
+      "action_count": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "name\temail\taction_count\nיוסי\tyossi2700@gmail.com\t113\nארנה תורגמן\tsh74eren@gmail.com\t58\nמצבות קדימה\tmatzevotkadima@gmail.com\t31\nליאורה\trbnlr1282@gmail.com\t28\nמצבות בורקין\tborkins@bezeqint.net\t22\neven veshaish\tcnc6474955@gmail.com\t22\nגל זברו\tcncgal001@gmail.com\t14\nRan T\tran.tid@outlook.com\t13\nד\"ר אריה\taryee07@gmail.com\t12\nמשה\tuzielmoshe@gmail.com\t11\nטסט 2\tyossi2700apple@gmail.com\t10\nצבי\tzvizvi011@gmail.com\t9\nיוסי\t7142429@gmail.com\t9\nגלעד ביאזי\tbayazi@walla.com\t8\nMatan\tdahan2525@gmail.com\t8\nאודליה\todelia650@gmail.com\t7\nיהודה ביאזי\ty0505357632@gmail.com\t6\nמאור\tmaorbayazi@gmail.com\t6\nארנה תורג'מן\terenanegev@gmail.com\t6\nyan\tmizrhi88@gmail.com\t5\nעמוס עטיה\tamos2656@gmail.com\t5\nafia noam\tnoamafia@gmail.com\t4\nאלון אילוז\talony81@gmail.com\t4\nעדן תורגמן\tedenturgeman200@gmail.com\t4\nYan\tmizrhi8@walla.com\t3\nגל\tcncgal001@gamil.com\t3\nאסף\tasafamar037979@gmail.com\t3\nמטי גניש\tgenishmati@gmail.com\t3\nKoralg\tkoralg28@gmail.com\t2\nNULL\tdima@t-print.co.il\t1\nאיציק\ttatoici@gmail.com\t1\nElad\teladkb@gmail.com\t1\nטסט1\tyossi2700xl3@gmail.com\t0\nKogan vova\tkogan.vova@mail.ru\t0\nRonel peretz\tronel037@gmail.com\t0\nErez\terez.biton@gmail.com\t0\nNULL\tliad118811@gmail.com\t0\nTest User\ttest@example.com\t0\nYAK\tladaatn@gmail.com\t0\nליאל\tliel5558@gmail.com\t0\nדני\tdvaiksel9@gmail.com\t0\nיעקב עמור\tyaakov20026@gmail.com\t0\nיוסי אייזנבך\tyossi2700@icloud.com\t0\nאבן גל\tevengal@013net.net\t0\nאביבית קירשנר\tavivi2284@gmail.com\t0\nדני שמעונוב\tdanishimon33@gmail.com\t0\nלירון אלגרבלי\tliron.photography@gmail.com\t0\n",
+  "stderr": "",
+  "execution_time_ms": 1647
+}

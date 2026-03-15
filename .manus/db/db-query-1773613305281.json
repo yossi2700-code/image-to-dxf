@@ -1,0 +1,76 @@
+{
+  "query": "SELECT COUNT(*) as total FROM user_actions; SELECT ua.id, ua.appUserId, ua.actionType, ua.feature, ua.createdAt, au.name, au.email FROM user_actions ua LEFT JOIN app_users au ON ua.appUserId = au.id ORDER BY ua.createdAt DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT COUNT(*) as total FROM user_actions; SELECT ua.id, ua.appUserId, ua.actionType, ua.feature, ua.createdAt, au.name, au.email FROM user_actions ua LEFT JOIN app_users au ON ua.appUserId = au.id ORDER BY ua.createdAt DESC LIMIT 20;",
+  "rows": [
+    {
+      "total": "1206"
+    },
+    {
+      "total": "id\tappUserId\tactionType\tfeature\tcreatedAt\tname\temail"
+    },
+    {
+      "total": "3270153\t840003\tai_generate\tai_trace\t2026-03-15 21:54:07\tיוסי\tyossi2700@gmail.com"
+    },
+    {
+      "total": "3270152\t840003\tai_generate\tai_trace\t2026-03-15 21:48:38\tיוסי\tyossi2700@gmail.com"
+    },
+    {
+      "total": "3270150\t840003\tai_generate\tai_generate\t2026-03-15 21:39:58\tיוסי\tyossi2700@gmail.com"
+    },
+    {
+      "total": "3270151\t840003\tai_generate\tai_generate\t2026-03-15 21:39:58\tיוסי\tyossi2700@gmail.com"
+    },
+    {
+      "total": "3270149\t840003\tai_generate\tai_generate\t2026-03-15 21:39:58\tיוסי\tyossi2700@gmail.com"
+    },
+    {
+      "total": "3270148\t840003\tai_generate\tai_trace\t2026-03-15 21:36:57\tיוסי\tyossi2700@gmail.com"
+    },
+    {
+      "total": "3270147\t840003\tai_generate\tai_trace\t2026-03-15 21:18:38\tיוסי\tyossi2700@gmail.com"
+    },
+    {
+      "total": "3270145\t840003\tai_generate\tai_generate\t2026-03-15 20:06:13\tיוסי\tyossi2700@gmail.com"
+    },
+    {
+      "total": "3270144\t840003\tai_generate\tai_generate\t2026-03-15 20:06:13\tיוסי\tyossi2700@gmail.com"
+    },
+    {
+      "total": "3270146\t840003\tai_generate\tai_generate\t2026-03-15 20:06:13\tיוסי\tyossi2700@gmail.com"
+    },
+    {
+      "total": "3270143\t840003\tai_generate\tai_generate\t2026-03-15 19:55:56\tיוסי\tyossi2700@gmail.com"
+    },
+    {
+      "total": "3270141\t840003\tai_generate\tai_generate\t2026-03-15 19:55:56\tיוסי\tyossi2700@gmail.com"
+    },
+    {
+      "total": "3270142\t840003\tai_generate\tai_generate\t2026-03-15 19:55:56\tיוסי\tyossi2700@gmail.com"
+    },
+    {
+      "total": "3270140\t840003\tai_generate\tai_trace\t2026-03-15 18:09:26\tיוסי\tyossi2700@gmail.com"
+    },
+    {
+      "total": "3270139\t840015\tai_generate\tai_trace\t2026-03-15 17:58:16\tNULL\tdima@t-print.co.il"
+    },
+    {
+      "total": "3270138\t510004\tai_generate\tai_trace\t2026-03-15 16:10:55\tיהודה ביאזי\ty0505357632@gmail.com"
+    },
+    {
+      "total": "3270135\t840003\tai_generate\tai_generate\t2026-03-15 14:15:19\tיוסי\tyossi2700@gmail.com"
+    },
+    {
+      "total": "3270136\t840003\tai_generate\tai_generate\t2026-03-15 14:15:19\tיוסי\tyossi2700@gmail.com"
+    },
+    {
+      "total": "3270137\t840003\tai_generate\tai_generate\t2026-03-15 14:15:19\tיוסי\tyossi2700@gmail.com"
+    },
+    {
+      "total": "3270131\t840003\tai_generate\tai_generate\t2026-03-15 14:13:49\tיוסי\tyossi2700@gmail.com"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\n1206\nid\tappUserId\tactionType\tfeature\tcreatedAt\tname\temail\n3270153\t840003\tai_generate\tai_trace\t2026-03-15 21:54:07\tיוסי\tyossi2700@gmail.com\n3270152\t840003\tai_generate\tai_trace\t2026-03-15 21:48:38\tיוסי\tyossi2700@gmail.com\n3270150\t840003\tai_generate\tai_generate\t2026-03-15 21:39:58\tיוסי\tyossi2700@gmail.com\n3270151\t840003\tai_generate\tai_generate\t2026-03-15 21:39:58\tיוסי\tyossi2700@gmail.com\n3270149\t840003\tai_generate\tai_generate\t2026-03-15 21:39:58\tיוסי\tyossi2700@gmail.com\n3270148\t840003\tai_generate\tai_trace\t2026-03-15 21:36:57\tיוסי\tyossi2700@gmail.com\n3270147\t840003\tai_generate\tai_trace\t2026-03-15 21:18:38\tיוסי\tyossi2700@gmail.com\n3270145\t840003\tai_generate\tai_generate\t2026-03-15 20:06:13\tיוסי\tyossi2700@gmail.com\n3270144\t840003\tai_generate\tai_generate\t2026-03-15 20:06:13\tיוסי\tyossi2700@gmail.com\n3270146\t840003\tai_generate\tai_generate\t2026-03-15 20:06:13\tיוסי\tyossi2700@gmail.com\n3270143\t840003\tai_generate\tai_generate\t2026-03-15 19:55:56\tיוסי\tyossi2700@gmail.com\n3270141\t840003\tai_generate\tai_generate\t2026-03-15 19:55:56\tיוסי\tyossi2700@gmail.com\n3270142\t840003\tai_generate\tai_generate\t2026-03-15 19:55:56\tיוסי\tyossi2700@gmail.com\n3270140\t840003\tai_generate\tai_trace\t2026-03-15 18:09:26\tיוסי\tyossi2700@gmail.com\n3270139\t840015\tai_generate\tai_trace\t2026-03-15 17:58:16\tNULL\tdima@t-print.co.il\n3270138\t510004\tai_generate\tai_trace\t2026-03-15 16:10:55\tיהודה ביאזי\ty0505357632@gmail.com\n3270135\t840003\tai_generate\tai_generate\t2026-03-15 14:15:19\tיוסי\tyossi2700@gmail.com\n3270136\t840003\tai_generate\tai_generate\t2026-03-15 14:15:19\tיוסי\tyossi2700@gmail.com\n3270137\t840003\tai_generate\tai_generate\t2026-03-15 14:15:19\tיוסי\tyossi2700@gmail.com\n3270131\t840003\tai_generate\tai_generate\t2026-03-15 14:13:49\tיוסי\tyossi2700@gmail.com\n",
+  "stderr": "",
+  "execution_time_ms": 1869
+}

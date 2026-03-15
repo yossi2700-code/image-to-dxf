@@ -1,0 +1,8 @@
+{
+  "query": "SELECT au.name, au.email, COUNT(tt.id) as token_deductions, COUNT(ua.id) as action_count FROM app_users au LEFT JOIN token_transactions tt ON tt.userId = au.id AND tt.amount < 0 LEFT JOIN user_actions ua ON ua.appUserId = au.id GROUP BY au.id, au.name, au.email HAVING token_deductions > 0 ORDER BY token_deductions DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT au.name, au.email, COUNT(tt.id) as token_deductions, COUNT(ua.id) as action_count FROM app_users au LEFT JOIN token_transactions tt ON tt.userId = au.id AND tt.amount < 0 LEFT JOIN user_actions ua ON ua.appUserId = au.id GROUP BY au.id, au.name, au.email HAVING token_deductions > 0 ORDER BY token_deductions DESC LIMIT 20;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'tt.userid' in 'on clause'"
+  ]
+}

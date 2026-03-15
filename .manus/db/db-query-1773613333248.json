@@ -1,0 +1,130 @@
+{
+  "query": "SELECT au.name, au.email, COUNT(tt.id) as token_deductions, COUNT(ua.id) as action_count FROM app_users au LEFT JOIN token_transactions tt ON tt.appUserId = au.id AND tt.amount < 0 LEFT JOIN user_actions ua ON ua.appUserId = au.id GROUP BY au.id, au.name, au.email HAVING token_deductions > 0 ORDER BY token_deductions DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT au.name, au.email, COUNT(tt.id) as token_deductions, COUNT(ua.id) as action_count FROM app_users au LEFT JOIN token_transactions tt ON tt.appUserId = au.id AND tt.amount < 0 LEFT JOIN user_actions ua ON ua.appUserId = au.id GROUP BY au.id, au.name, au.email HAVING token_deductions > 0 ORDER BY token_deductions DESC LIMIT 20;",
+  "rows": [
+    {
+      "name": "יוסי",
+      "email": "yossi2700@gmail.com",
+      "token_deductions": "16611",
+      "action_count": "16611"
+    },
+    {
+      "name": "ארנה תורגמן",
+      "email": "sh74eren@gmail.com",
+      "token_deductions": "1276",
+      "action_count": "1276"
+    },
+    {
+      "name": "מצבות קדימה",
+      "email": "matzevotkadima@gmail.com",
+      "token_deductions": "558",
+      "action_count": "558"
+    },
+    {
+      "name": "ליאורה",
+      "email": "rbnlr1282@gmail.com",
+      "token_deductions": "308",
+      "action_count": "308"
+    },
+    {
+      "name": "מצבות בורקין",
+      "email": "borkins@bezeqint.net",
+      "token_deductions": "264",
+      "action_count": "264"
+    },
+    {
+      "name": "even veshaish",
+      "email": "cnc6474955@gmail.com",
+      "token_deductions": "220",
+      "action_count": "220"
+    },
+    {
+      "name": "יוסי",
+      "email": "7142429@gmail.com",
+      "token_deductions": "117",
+      "action_count": "117"
+    },
+    {
+      "name": "צבי",
+      "email": "zvizvi011@gmail.com",
+      "token_deductions": "108",
+      "action_count": "108"
+    },
+    {
+      "name": "Ran T",
+      "email": "ran.tid@outlook.com",
+      "token_deductions": "91",
+      "action_count": "91"
+    },
+    {
+      "name": "גל זברו",
+      "email": "cncgal001@gmail.com",
+      "token_deductions": "84",
+      "action_count": "84"
+    },
+    {
+      "name": "ד\"ר אריה",
+      "email": "aryee07@gmail.com",
+      "token_deductions": "84",
+      "action_count": "84"
+    },
+    {
+      "name": "טסט 2",
+      "email": "yossi2700apple@gmail.com",
+      "token_deductions": "80",
+      "action_count": "80"
+    },
+    {
+      "name": "משה",
+      "email": "uzielmoshe@gmail.com",
+      "token_deductions": "77",
+      "action_count": "77"
+    },
+    {
+      "name": "אלון אילוז",
+      "email": "alony81@gmail.com",
+      "token_deductions": "48",
+      "action_count": "48"
+    },
+    {
+      "name": "עמוס עטיה",
+      "email": "amos2656@gmail.com",
+      "token_deductions": "35",
+      "action_count": "35"
+    },
+    {
+      "name": "מאור",
+      "email": "maorbayazi@gmail.com",
+      "token_deductions": "24",
+      "action_count": "24"
+    },
+    {
+      "name": "גלעד ביאזי",
+      "email": "bayazi@walla.com",
+      "token_deductions": "24",
+      "action_count": "24"
+    },
+    {
+      "name": "יהודה ביאזי",
+      "email": "y0505357632@gmail.com",
+      "token_deductions": "24",
+      "action_count": "24"
+    },
+    {
+      "name": "Matan",
+      "email": "dahan2525@gmail.com",
+      "token_deductions": "24",
+      "action_count": "24"
+    },
+    {
+      "name": "אודליה",
+      "email": "odelia650@gmail.com",
+      "token_deductions": "21",
+      "action_count": "21"
+    }
+  ],
+  "messages": [],
+  "stdout": "name\temail\ttoken_deductions\taction_count\nיוסי\tyossi2700@gmail.com\t16611\t16611\nארנה תורגמן\tsh74eren@gmail.com\t1276\t1276\nמצבות קדימה\tmatzevotkadima@gmail.com\t558\t558\nליאורה\trbnlr1282@gmail.com\t308\t308\nמצבות בורקין\tborkins@bezeqint.net\t264\t264\neven veshaish\tcnc6474955@gmail.com\t220\t220\nיוסי\t7142429@gmail.com\t117\t117\nצבי\tzvizvi011@gmail.com\t108\t108\nRan T\tran.tid@outlook.com\t91\t91\nגל זברו\tcncgal001@gmail.com\t84\t84\nד\"ר אריה\taryee07@gmail.com\t84\t84\nטסט 2\tyossi2700apple@gmail.com\t80\t80\nמשה\tuzielmoshe@gmail.com\t77\t77\nאלון אילוז\talony81@gmail.com\t48\t48\nעמוס עטיה\tamos2656@gmail.com\t35\t35\nמאור\tmaorbayazi@gmail.com\t24\t24\nגלעד ביאזי\tbayazi@walla.com\t24\t24\nיהודה ביאזי\ty0505357632@gmail.com\t24\t24\nMatan\tdahan2525@gmail.com\t24\t24\nאודליה\todelia650@gmail.com\t21\t21\n",
+  "stderr": "",
+  "execution_time_ms": 1621
+}

@@ -1,0 +1,10 @@
+{
+  "query": "SELECT COUNT(*) as total FROM user_actions; SELECT ua.id, ua.app_user_id, ua.action_type, ua.feature, ua.created_at, au.name, au.email FROM user_actions ua LEFT JOIN app_users au ON ua.app_user_id = au.id ORDER BY ua.created_at DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT COUNT(*) as total FROM user_actions; SELECT ua.id, ua.app_user_id, ua.action_type, ua.feature, ua.created_at, au.name, au.email FROM user_actions ua LEFT JOIN app_users au ON ua.app_user_id = au.id ORDER BY ua.created_at DESC LIMIT 20;",
+  "returncode": 1,
+  "logs": [
+    "total",
+    "1206",
+    "ERROR 1054 (42S22) at line 1: Unknown column 'ua.app_user_id' in 'on clause'"
+  ]
+}

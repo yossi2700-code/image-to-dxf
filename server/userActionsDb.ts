@@ -50,6 +50,9 @@ export async function recordUserAction(params: RecordActionParams): Promise<void
     });
   } catch (err) {
     // Non-critical — don't fail the request if logging fails
-    console.error("[userActionsDb] Failed to record action:", err);
+    console.error(
+      `[userActionsDb] Failed to record action: appUserId=${params.appUserId} actionType=${params.actionType} feature=${params.feature ?? "unknown"}`,
+      err
+    );
   }
 }
