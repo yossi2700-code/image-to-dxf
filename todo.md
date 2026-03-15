@@ -1776,3 +1776,7 @@
 - [x] הוסף פרמטר `forceOpenPaths` ל-svgToDxf שמאלץ closed=false על כל הנתיבים
 - [x] הוסף פרמטר `openLinesMode` ל-aiTraceRoute שמופעל כשvariationIndex=1 (מפורט)
 - [x] שלח `openLinesMode=true` מ-AiTraceTab כשdetailLevel=1 (אין צורך בשינוי פרונטאנד — isDetailedMode מוגדר סרברית)
+
+## הוספת כפתור מצב מפורט מחדש
+
+- [x] הצג שני כפתורים (פשוט + מפורט) ב-AiTraceTab במקום כפתור אחד בלבד
