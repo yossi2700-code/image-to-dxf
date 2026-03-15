@@ -102,17 +102,21 @@ describe("segmentsToDxf", () => {
     const dxf = segmentsToDxf(segments, 100, 100);
     expect(dxf).toContain("SECTION");
     expect(dxf).toContain("ENTITIES");
-    expect(dxf).toContain("LINE");
+    // segmentsToDxf chains segments into LWPOLYLINE entities (not LINE)
+    expect(dxf).toContain("LWPOLYLINE");
     expect(dxf).toContain("EOF");
   });
 
-  it("should include correct number of LINE entities", () => {
+  it("should produce LWPOLYLINE entities (not separate LINE entities)", () => {
+    // segmentsToDxf chains collinear segments into polylines
     const segments = Array.from({ length: 5 }, (_, i) => ({
       x1: i, y1: 0, x2: i + 1, y2: 0,
     }));
     const dxf = segmentsToDxf(segments, 100, 100);
-    const lineCount = (dxf.match(/\n0\nLINE\n/g) ?? []).length;
-    expect(lineCount).toBe(5);
+    // All collinear segments chain into 1 LWPOLYLINE
+    expect(dxf).toContain("LWPOLYLINE");
+    // No separate LINE entities
+    expect(dxf).not.toContain("\n0\nLINE\n");
   });
 
   it("should flip Y axis correctly", () => {

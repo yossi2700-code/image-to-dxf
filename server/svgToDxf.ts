@@ -477,22 +477,75 @@ export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: nu
     ? svgMmToLwCode(lineweightMm)
     : hairline ? 0 : null;
 
-  // Build DXF R2000 (AC1015) — required for LWPOLYLINE support
+  // Build DXF R2000 (AC1015) — fully CorelDRAW-compatible structure
+  // Includes: HEADER, CLASSES, TABLES (LTYPE+LAYER+APPID), BLOCKS, ENTITIES
   const lines: string[] = [];
-  lines.push("0\nSECTION");
-  lines.push("2\nHEADER");
-  lines.push("9\n$ACADVER\n1\nAC1015");
+
+  // ─── HEADER ────────────────────────────────────────────────────────────────────────────
+  lines.push("0\nSECTION\n2\nHEADER");
+  lines.push("9\n$ACADVER\n1\nAC1015");   // R2000 — required for LWPOLYLINE
+  lines.push("9\n$INSBASE\n10\n0.0\n20\n0.0\n30\n0.0");
   lines.push(`9\n$EXTMIN\n10\n0.0\n20\n0.0\n30\n0.0`);
   lines.push(`9\n$EXTMAX\n10\n${outputWidth}\n20\n${outputHeight}\n30\n0.0`);
+  lines.push("9\n$LTSCALE\n40\n1.0");
+  lines.push("9\n$INSUNITS\n70\n4");       // 4 = millimetres
   lines.push("0\nENDSEC");
 
-  lines.push("0\nSECTION\n2\nTABLES");
-  lines.push("0\nTABLE\n2\nLAYER\n70\n1");
-  lines.push(lwCode !== null
-    ? `0\nLAYER\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS\n370\n${lwCode}`
-    : "0\nLAYER\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS");
-  lines.push("0\nENDTAB\n0\nENDSEC");
+  // ─── CLASSES (required by R2000 spec, CorelDRAW expects it) ───────────────────────────────
+  lines.push("0\nSECTION\n2\nCLASSES\n0\nENDSEC");
 
+  // ─── TABLES ──────────────────────────────────────────────────────────────────────────────
+  lines.push("0\nSECTION\n2\nTABLES");
+
+  // VPORT table (required by many CAD readers)
+  lines.push("0\nTABLE\n2\nVPORT\n5\n8\n100\nAcDbSymbolTable\n70\n0\n0\nENDTAB");
+
+  // LTYPE table (linetype — CONTINUOUS required)
+  lines.push("0\nTABLE\n2\nLTYPE\n5\n5\n100\nAcDbSymbolTable\n70\n1");
+  lines.push("0\nLTYPE\n5\n14\n100\nAcDbSymbolTableRecord\n100\nAcDbLinetypeTableRecord\n2\nCONTINUOUS\n70\n0\n3\nSolid line\n72\n65\n73\n0\n40\n0.0");
+  lines.push("0\nENDTAB");
+
+  // LAYER table
+  lines.push("0\nTABLE\n2\nLAYER\n5\n2\n100\nAcDbSymbolTable\n70\n1");
+  lines.push(lwCode !== null
+    ? `0\nLAYER\n5\n10\n100\nAcDbSymbolTableRecord\n100\nAcDbLayerTableRecord\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS\n370\n${lwCode}`
+    : "0\nLAYER\n5\n10\n100\nAcDbSymbolTableRecord\n100\nAcDbLayerTableRecord\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS");
+  lines.push("0\nENDTAB");
+
+  // STYLE table (text style — required)
+  lines.push("0\nTABLE\n2\nSTYLE\n5\n3\n100\nAcDbSymbolTable\n70\n0\n0\nENDTAB");
+
+  // VIEW table
+  lines.push("0\nTABLE\n2\nVIEW\n5\n6\n100\nAcDbSymbolTable\n70\n0\n0\nENDTAB");
+
+  // UCS table
+  lines.push("0\nTABLE\n2\nUCS\n5\n7\n100\nAcDbSymbolTable\n70\n0\n0\nENDTAB");
+
+  // APPID table (application IDs — ACAD required)
+  lines.push("0\nTABLE\n2\nAPPID\n5\n9\n100\nAcDbSymbolTable\n70\n1");
+  lines.push("0\nAPPID\n5\n12\n100\nAcDbSymbolTableRecord\n100\nAcDbRegAppTableRecord\n2\nACAD\n70\n0");
+  lines.push("0\nENDTAB");
+
+  // DIMSTYLE table
+  lines.push("0\nTABLE\n2\nDIMSTYLE\n5\nA\n100\nAcDbSymbolTable\n70\n0\n0\nENDTAB");
+
+  // BLOCK_RECORD table (required for R2000)
+  lines.push("0\nTABLE\n2\nBLOCK_RECORD\n5\n1\n100\nAcDbSymbolTable\n70\n0");
+  lines.push("0\nBLOCK_RECORD\n5\n1F\n100\nAcDbSymbolTableRecord\n100\nAcDbBlockTableRecord\n2\n*Model_Space");
+  lines.push("0\nBLOCK_RECORD\n5\n1B\n100\nAcDbSymbolTableRecord\n100\nAcDbBlockTableRecord\n2\n*Paper_Space");
+  lines.push("0\nENDTAB");
+
+  lines.push("0\nENDSEC");
+
+  // ─── BLOCKS (required by R2000 spec) ────────────────────────────────────────────────────────────────
+  lines.push("0\nSECTION\n2\nBLOCKS");
+  lines.push("0\nBLOCK\n5\n20\n100\nAcDbEntity\n8\n0\n100\nAcDbBlockBegin\n2\n*Model_Space\n70\n0\n10\n0.0\n20\n0.0\n30\n0.0\n3\n*Model_Space\n1\n");
+  lines.push("0\nENDBLK\n5\n21\n100\nAcDbEntity\n8\n0\n100\nAcDbBlockEnd");
+  lines.push("0\nBLOCK\n5\n1C\n100\nAcDbEntity\n8\n0\n100\nAcDbBlockBegin\n2\n*Paper_Space\n70\n0\n10\n0.0\n20\n0.0\n30\n0.0\n3\n*Paper_Space\n1\n");
+  lines.push("0\nENDBLK\n5\n1D\n100\nAcDbEntity\n8\n0\n100\nAcDbBlockEnd");
+  lines.push("0\nENDSEC");
+
+  // ─── ENTITIES ───────────────────────────────────────────────────────────────────────────────
   lines.push("0\nSECTION\n2\nENTITIES");
 
   for (const poly of outputPolylines) {
