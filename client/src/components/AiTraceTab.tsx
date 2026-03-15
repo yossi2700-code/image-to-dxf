@@ -771,9 +771,9 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
             </div>
             <input type="hidden" value={description} onChange={(e) => setDescription(e.target.value)} />
 
-            {/* Detail level selector: Simple only (detailed mode hidden) */}
+            {/* Detail level selector: Simple + Detailed */}
             <div className="flex gap-2 w-full">
-              {([0] as const).map((v) => {
+              {([0, 1] as const).map((v) => {
                 const labels = isRtl ? ["פשוט", "מפורט"] : ["Simple", "Detailed"];
                 const descs = isRtl
                   ? ["קווי מתאר נקיים ומהירים", "עשיר בפרטים, מדויק יותר"]
