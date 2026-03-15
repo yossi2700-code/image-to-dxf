@@ -159,6 +159,13 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
     if (mode === "forgot") return handleForgot(e);
     if (!email || !password) return;
 
+    // Require name for registration
+    if (mode === "register" && !name.trim()) {
+      setInlineError("שם הוא שדה חובה. אנא הכנס את שמך.");
+      setTimeout(() => document.getElementById("name")?.focus(), 50);
+      return;
+    }
+
     // Require terms acceptance for registration
     if (mode === "register" && !termsAccepted) {
       setTermsError(true);
@@ -247,7 +254,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
             <>
           {mode === "register" && (
             <div className="space-y-1.5">
-              <Label htmlFor="name">שם (אופציונלי)</Label>
+              <Label htmlFor="name">שם <span className="text-red-500">*</span></Label>
               <div className="relative">
                 <User className="absolute right-3 top-2.5 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -255,9 +262,10 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
                   type="text"
                   placeholder="השם שלך"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="pr-9"
+                  onChange={(e) => { setName(e.target.value); if (inlineError && e.target.value.trim()) setInlineError(null); }}
+                  className={`pr-9 ${inlineError && !name.trim() ? 'border-red-400 focus-visible:ring-red-400' : ''}`}
                   dir="rtl"
+                  autoFocus
                 />
               </div>
             </div>
