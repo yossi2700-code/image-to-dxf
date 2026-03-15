@@ -300,9 +300,19 @@ function GroupCard({
           </div>
         ) : activeItem?.imageUrl ? (
           <img src={activeItem.imageUrl} alt={shortDesc} className="w-full h-full object-contain cursor-pointer" onClick={() => onViewVariation(activeItem)} />
+        ) : activeItem?.sourceImageUrl ? (
+          // Show source image as fallback when no result (failed job)
+          <div className="relative w-full h-full cursor-pointer" onClick={() => onViewVariation(activeItem)}>
+            <img src={activeItem.sourceImageUrl} alt={shortDesc} className="w-full h-full object-contain opacity-40" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+              <ImageIcon className="w-8 h-8 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground font-medium">{isRtl ? 'לא הושלם' : 'Incomplete'}</span>
+            </div>
+          </div>
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-muted">
-            <ImageIcon className="w-10 h-10 text-muted-foreground" />
+          <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-muted cursor-pointer" onClick={() => onViewVariation(activeItem)}>
+            <ImageIcon className="w-8 h-8 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">{isRtl ? 'לא הושלם' : 'Incomplete'}</span>
           </div>
         )}
         <button onClick={() => onViewVariation(activeItem)} className="absolute bottom-2 left-2 w-7 h-7 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center transition-colors">

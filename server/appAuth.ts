@@ -352,9 +352,15 @@ router.post("/api/app-auth/forgot-password", async (req, res) => {
         // Use origin from client (window.location.origin) so the link works in production
         const safeOrigin = origin ?? (req.headers["x-forwarded-proto"] ? `${req.headers["x-forwarded-proto"]}://${req.headers["x-forwarded-host"]}` : `${req.protocol}://${req.get("host")}`);
         const resetUrl = `${safeOrigin}/reset-password?token=${resetToken}`;
-        void sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl });
+        try {
+          await sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl });
+          console.log(`[forgot-password] Email sent to ${user.email}`);
+        } catch (emailErr: unknown) {
+          const msg = emailErr instanceof Error ? emailErr.message : String(emailErr);
+          console.error(`[forgot-password] Failed to send email to ${user.email}: ${msg}`);
+        }
       } catch (e) {
-        console.warn("[forgot-password] Failed to send email:", e);
+        console.warn("[forgot-password] Failed to create reset token:", e);
       }
     }
 

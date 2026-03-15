@@ -1,0 +1,31 @@
+{
+  "query": "\nSELECT id, email, \n  CASE WHEN passwordHash IS NOT NULL THEN 'email_user' ELSE 'oauth_user' END as user_type,\n  createdAt, lastLoginAt\nFROM app_users \nWHERE email LIKE '%bayazi%' OR email LIKE '%walla%'\nLIMIT 5;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT id, email, \n  CASE WHEN passwordHash IS NOT NULL THEN 'email_user' ELSE 'oauth_user' END as user_type,\n  createdAt, lastLoginAt\nFROM app_users \nWHERE email LIKE '%bayazi%' OR email LIKE '%walla%'\nLIMIT 5;\n",
+  "rows": [
+    {
+      "id": "270002",
+      "email": "mizrhi8@walla.com",
+      "user_type": "email_user",
+      "createdAt": "2026-03-02 17:14:08",
+      "lastLoginAt": "2026-03-02 17:14:08"
+    },
+    {
+      "id": "510003",
+      "email": "bayazi@walla.com",
+      "user_type": "email_user",
+      "createdAt": "2026-03-08 11:51:10",
+      "lastLoginAt": "2026-03-08 11:51:10"
+    },
+    {
+      "id": "660001",
+      "email": "maorbayazi@gmail.com",
+      "user_type": "email_user",
+      "createdAt": "2026-03-11 12:29:46",
+      "lastLoginAt": "2026-03-11 13:05:10"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tuser_type\tcreatedAt\tlastLoginAt\n270002\tmizrhi8@walla.com\temail_user\t2026-03-02 17:14:08\t2026-03-02 17:14:08\n510003\tbayazi@walla.com\temail_user\t2026-03-08 11:51:10\t2026-03-08 11:51:10\n660001\tmaorbayazi@gmail.com\temail_user\t2026-03-11 12:29:46\t2026-03-11 13:05:10\n",
+  "stderr": "",
+  "execution_time_ms": 1588
+}

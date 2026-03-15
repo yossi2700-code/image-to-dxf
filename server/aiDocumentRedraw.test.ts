@@ -8,6 +8,16 @@ import request from "supertest";
 import cookieParser from "cookie-parser";
 
 // Mock dependencies before importing the route
+vi.mock("sharp", () => {
+  const sharpMock = vi.fn().mockReturnValue({
+    resize: vi.fn().mockReturnThis(),
+    jpeg: vi.fn().mockReturnThis(),
+    toBuffer: vi.fn().mockResolvedValue(Buffer.from("fake-processed-image")),
+    metadata: vi.fn().mockResolvedValue({ width: 100, height: 100 }),
+  });
+  return { default: sharpMock };
+});
+
 vi.mock("./appAuth", () => ({
   getAppUserFromCookie: vi.fn(),
 }));

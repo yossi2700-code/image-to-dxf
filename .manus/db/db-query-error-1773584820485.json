@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT id, email, \n  CASE WHEN passwordHash IS NOT NULL THEN 'email_user' ELSE 'oauth_user' END as user_type,\n  createdAt, lastLoginAt, isVerified\nFROM app_users \nWHERE email LIKE '%bayazi%' OR email LIKE '%walla%'\nLIMIT 5;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT id, email, \n  CASE WHEN passwordHash IS NOT NULL THEN 'email_user' ELSE 'oauth_user' END as user_type,\n  createdAt, lastLoginAt, isVerified\nFROM app_users \nWHERE email LIKE '%bayazi%' OR email LIKE '%walla%'\nLIMIT 5;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'isverified' in 'field list'"
+  ]
+}

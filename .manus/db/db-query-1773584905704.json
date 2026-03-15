@@ -1,0 +1,46 @@
+{
+  "query": "\nSELECT u.id, u.email, u.name,\n  pr.token IS NOT NULL as has_reset_token,\n  pr.createdAt as reset_requested_at,\n  pr.expiresAt as reset_expires_at,\n  pr.usedAt as reset_used_at\nFROM app_users u\nLEFT JOIN password_resets pr ON pr.appUserId = u.id\nWHERE u.email LIKE '%bayazi%' OR u.email LIKE '%walla%'\nORDER BY pr.createdAt DESC\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT u.id, u.email, u.name,\n  pr.token IS NOT NULL as has_reset_token,\n  pr.createdAt as reset_requested_at,\n  pr.expiresAt as reset_expires_at,\n  pr.usedAt as reset_used_at\nFROM app_users u\nLEFT JOIN password_resets pr ON pr.appUserId = u.id\nWHERE u.email LIKE '%bayazi%' OR u.email LIKE '%walla%'\nORDER BY pr.createdAt DESC\nLIMIT 10;\n",
+  "rows": [
+    {
+      "id": "510003",
+      "email": "bayazi@walla.com",
+      "name": "גלעד ביאזי",
+      "has_reset_token": "1",
+      "reset_requested_at": "2026-03-15 14:23:11",
+      "reset_expires_at": "2026-03-15 15:23:12",
+      "reset_used_at": "NULL"
+    },
+    {
+      "id": "510003",
+      "email": "bayazi@walla.com",
+      "name": "גלעד ביאזי",
+      "has_reset_token": "1",
+      "reset_requested_at": "2026-03-15 14:21:28",
+      "reset_expires_at": "2026-03-15 15:21:29",
+      "reset_used_at": "NULL"
+    },
+    {
+      "id": "270002",
+      "email": "mizrhi8@walla.com",
+      "name": "Yan",
+      "has_reset_token": "0",
+      "reset_requested_at": "NULL",
+      "reset_expires_at": "NULL",
+      "reset_used_at": "NULL"
+    },
+    {
+      "id": "660001",
+      "email": "maorbayazi@gmail.com",
+      "name": "מאור",
+      "has_reset_token": "0",
+      "reset_requested_at": "NULL",
+      "reset_expires_at": "NULL",
+      "reset_used_at": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\thas_reset_token\treset_requested_at\treset_expires_at\treset_used_at\n510003\tbayazi@walla.com\tגלעד ביאזי\t1\t2026-03-15 14:23:11\t2026-03-15 15:23:12\tNULL\n510003\tbayazi@walla.com\tגלעד ביאזי\t1\t2026-03-15 14:21:28\t2026-03-15 15:21:29\tNULL\n270002\tmizrhi8@walla.com\tYan\t0\tNULL\tNULL\tNULL\n660001\tmaorbayazi@gmail.com\tמאור\t0\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1561
+}

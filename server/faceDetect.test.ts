@@ -7,10 +7,15 @@
  * - Single-image result structure (no Vision step, no faceDescription)
  * - faceDetectRoute endpoints respond with UNAUTHORIZED when no cookie
  */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { TOKEN_COSTS } from "./tokenService";
 import { createJob, getJob, updateJob, cancelJob } from "./jobStore";
 import { nanoid } from "nanoid";
+import { getAppUserFromCookie } from "./appAuth";
+
+vi.mock("./appAuth", () => ({
+  getAppUserFromCookie: vi.fn().mockReturnValue(null),
+}));
 
 // ─── TOKEN_COSTS ──────────────────────────────────────────────────────────────
 describe("TOKEN_COSTS", () => {
@@ -119,9 +124,8 @@ describe("jobStore — face_detect lifecycle", () => {
 
 // ─── HTTP endpoints — unauthorized access ────────────────────────────────────
 describe("face-detect HTTP endpoints — unauthorized", () => {
-  it("GET /api/face-detect/job/:id returns 401 without cookie", async () => {
-    const { getAppUserFromCookie } = await import("./appAuth");
-    const result = getAppUserFromCookie({});
+  it("GET /api/face-detect/job/:id returns 401 without cookie", () => {
+    const result = getAppUserFromCookie({} as never);
     expect(result).toBeNull();
   });
 
