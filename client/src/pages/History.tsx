@@ -744,6 +744,7 @@ export default function History() {
         dxfUrl={downloadTarget?.dxfUrl ?? ""}
         defaultFilename={`${downloadTarget?.description ?? "design"}.dxf`}
         segmentCount={downloadTarget?.segmentCount ?? 0}
+        actionId={downloadTarget?.id}
       />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
