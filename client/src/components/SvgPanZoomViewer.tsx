@@ -14,8 +14,12 @@
  *
  * Touch handling:
  *   Uses native addEventListener with { passive: false } on the container
- *   element to correctly handle iOS Safari's touch events without pointer
- *   capture issues that cause freeze/lock when switching between drag and pinch.
+ *   element to correctly handle iOS Safari's touch events.
+ *   Single finger = pan only. Zoom via buttons or scroll wheel.
+ *
+ * Drag fix:
+ *   mouseDrag state is stored in a ref and updated directly (not via setVb)
+ *   to avoid stale closure issues with async state updates.
  */
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
@@ -48,13 +52,21 @@ function parseViewBox(svg: string): { x: number; y: number; w: number; h: number
   return { x, y, w, h };
 }
 
-/** Replace or insert viewBox in SVG string */
+/** Replace or insert viewBox in SVG string. Also ensure width/height=100% so SVG fills container. */
 function setViewBox(svg: string, vb: { x: number; y: number; w: number; h: number }): string {
   const vbStr = `${vb.x.toFixed(3)} ${vb.y.toFixed(3)} ${vb.w.toFixed(3)} ${vb.h.toFixed(3)}`;
-  if (/viewBox=/i.test(svg)) {
-    return svg.replace(/viewBox=["'][^"']*["']/i, `viewBox="${vbStr}"`);
+  let result = svg;
+  // Set viewBox
+  if (/viewBox=/i.test(result)) {
+    result = result.replace(/viewBox=["'][^"']*["']/i, `viewBox="${vbStr}"`);
+  } else {
+    result = result.replace(/<svg/i, `<svg viewBox="${vbStr}"`);
   }
-  return svg.replace(/<svg/i, `<svg viewBox="${vbStr}"`);
+  // Ensure width/height=100% so SVG fills the container div
+  result = result.replace(/(<svg[^>]*)\s+width=["'][^"']*["']/i, '$1');
+  result = result.replace(/(<svg[^>]*)\s+height=["'][^"']*["']/i, '$1');
+  result = result.replace(/<svg/i, '<svg width="100%" height="100%"');
+  return result;
 }
 
 export function SvgPanZoomViewer({
@@ -77,9 +89,15 @@ export function SvgPanZoomViewer({
   // Current viewBox state — this is what we manipulate for pan/zoom
   const [vb, setVb] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
 
+  // Also keep a ref to vb for use in event handlers (avoids stale closures)
+  const vbRef = useRef(vb);
+  useEffect(() => { vbRef.current = vb; }, [vb]);
+
   // Reset viewBox when SVG content changes
   useEffect(() => {
-    setVb(originalVb ? { ...originalVb } : null);
+    const newVb = originalVb ? { ...originalVb } : null;
+    setVb(newVb);
+    vbRef.current = newVb;
   }, [svgContent, originalVb]);
 
   // Derived zoom level (for display)
@@ -90,7 +108,14 @@ export function SvgPanZoomViewer({
 
   // The SVG to display — with current viewBox applied
   const displaySvg = useMemo(() => {
-    if (!vb) return svgContent;
+    if (!vb) {
+      // Even without a vb, ensure width/height=100%
+      let s = svgContent;
+      s = s.replace(/(<svg[^>]*)\s+width=["'][^"']*["']/i, '$1');
+      s = s.replace(/(<svg[^>]*)\s+height=["'][^"']*["']/i, '$1');
+      s = s.replace(/<svg/i, '<svg width="100%" height="100%"');
+      return s;
+    }
     return setViewBox(svgContent, vb);
   }, [svgContent, vb]);
 
@@ -101,33 +126,32 @@ export function SvgPanZoomViewer({
 
   /**
    * Zoom toward a point (cx, cy) in container coordinates.
-   * cx, cy are in [0, containerWidth] x [0, containerHeight].
    */
   const zoomAt = useCallback((factor: number, cx: number, cy: number) => {
-    if (!originalVb) return;
+    const origVb = originalVb;
+    if (!origVb) return;
     const container = containerRef.current;
     if (!container) return;
     const rect = container.getBoundingClientRect();
 
     setVb((prev) => {
-      const cur = prev ?? { ...originalVb };
-      // Clamp the zoom factor so we don't exceed limits
-      const newW = clamp(cur.w / factor, originalVb.w / MAX_ZOOM, originalVb.w / MIN_ZOOM);
-      const newH = clamp(cur.h / factor, originalVb.h / MAX_ZOOM, originalVb.h / MIN_ZOOM);
-      const actualFactor = cur.w / newW;
+      const cur = prev ?? { ...origVb };
+      const newW = clamp(cur.w / factor, origVb.w / MAX_ZOOM, origVb.w / MIN_ZOOM);
+      const newH = clamp(cur.h / factor, origVb.h / MAX_ZOOM, origVb.h / MIN_ZOOM);
 
       // Convert container pixel coords to SVG coords
       const svgX = cur.x + (cx / rect.width) * cur.w;
       const svgY = cur.y + (cy / rect.height) * cur.h;
 
       // Keep the SVG point under the cursor fixed
-      return {
+      const next = {
         x: svgX - (cx / rect.width) * newW,
         y: svgY - (cy / rect.height) * newH,
         w: newW,
         h: newH,
       };
-      void actualFactor;
+      vbRef.current = next;
+      return next;
     });
   }, [originalVb]);
 
@@ -145,7 +169,9 @@ export function SvgPanZoomViewer({
 
   const resetView = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setVb(originalVb ? { ...originalVb } : null);
+    const newVb = originalVb ? { ...originalVb } : null;
+    setVb(newVb);
+    vbRef.current = newVb;
   };
 
   // ── Wheel zoom ──────────────────────────────────────────────────────────────
@@ -160,22 +186,17 @@ export function SvgPanZoomViewer({
     zoomAt(factor, cx, cy);
   }, [zoomAt]);
 
-  // ── Touch/pointer handling (native, not React synthetic) ─────────────────────
-  // We use native touch events to avoid iOS pointer capture issues.
+  // ── Touch handling (native, not React synthetic) ─────────────────────────────
+  // Single finger = pan only. No pinch-to-zoom.
 
   const touchState = useRef<{
     touches: Map<number, { x: number; y: number }>;
-    lastDist: number | null;
-    lastMid: { x: number; y: number } | null;
-    // For single-finger pan: store SVG coords of the touch start point
     panStart: { touchX: number; touchY: number; vbX: number; vbY: number } | null;
     didMove: boolean;
     lastTapTime: number;
     lastTapPos: { x: number; y: number } | null;
   }>({
     touches: new Map(),
-    lastDist: null,
-    lastMid: null,
     panStart: null,
     didMove: false,
     lastTapTime: 0,
@@ -189,40 +210,34 @@ export function SvgPanZoomViewer({
     if (!container) return;
     const rect = container.getBoundingClientRect();
 
-    // Update touch map
     for (let i = 0; i < e.changedTouches.length; i++) {
       const t = e.changedTouches[i];
       ts.touches.set(t.identifier, { x: t.clientX, y: t.clientY });
     }
     ts.didMove = false;
 
-    // Always pan — use the FIRST touch finger regardless of how many fingers are down.
-    // Pinch-to-zoom is disabled; zoom is only via buttons or scroll wheel.
+    // Anchor pan to the first touch
     const [touch] = Array.from(ts.touches.values());
     const cx = touch.x - rect.left;
     const cy = touch.y - rect.top;
-    setVb((cur) => {
-      if (!cur) return cur;
+    const cur = vbRef.current;
+    if (cur) {
       ts.panStart = {
         touchX: cx,
         touchY: cy,
         vbX: cur.x + (cx / rect.width) * cur.w,
         vbY: cur.y + (cy / rect.height) * cur.h,
       };
-      return cur;
-    });
-    ts.lastDist = null;
-    ts.lastMid = null;
+    }
   }, []);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     e.preventDefault();
     const ts = touchState.current;
     const container = containerRef.current;
-    if (!container) return;
+    if (!container || !ts.panStart) return;
     const rect = container.getBoundingClientRect();
 
-    // Update touch map
     for (let i = 0; i < e.changedTouches.length; i++) {
       const t = e.changedTouches[i];
       if (ts.touches.has(t.identifier)) {
@@ -230,23 +245,23 @@ export function SvgPanZoomViewer({
       }
     }
 
-    // Pan only — use the first tracked finger, ignore multi-touch pinch
-    if (ts.panStart) {
-      const [touch] = Array.from(ts.touches.values());
-      const cx = touch.x - rect.left;
-      const cy = touch.y - rect.top;
-      const ps = ts.panStart;
-      if (Math.abs(cx - ps.touchX) > 2 || Math.abs(cy - ps.touchY) > 2) ts.didMove = true;
+    const [touch] = Array.from(ts.touches.values());
+    const cx = touch.x - rect.left;
+    const cy = touch.y - rect.top;
+    const ps = ts.panStart;
 
-      setVb((cur) => {
-        if (!cur) return cur;
-        return {
-          ...cur,
-          x: ps.vbX - (cx / rect.width) * cur.w,
-          y: ps.vbY - (cy / rect.height) * cur.h,
-        };
-      });
-    }
+    if (Math.abs(cx - ps.touchX) > 2 || Math.abs(cy - ps.touchY) > 2) ts.didMove = true;
+
+    setVb((cur) => {
+      if (!cur) return cur;
+      const next = {
+        ...cur,
+        x: ps.vbX - (cx / rect.width) * cur.w,
+        y: ps.vbY - (cy / rect.height) * cur.h,
+      };
+      vbRef.current = next;
+      return next;
+    });
   }, []);
 
   const handleTouchEnd = useCallback((e: TouchEvent) => {
@@ -259,7 +274,7 @@ export function SvgPanZoomViewer({
     }
 
     if (ts.touches.size === 0) {
-      // Double-tap detection (zoom in x2 or reset)
+      // Double-tap detection
       if (!ts.didMove) {
         const rect = container?.getBoundingClientRect();
         const t = e.changedTouches[0];
@@ -270,23 +285,27 @@ export function SvgPanZoomViewer({
         const posDiff = ts.lastTapPos ? Math.hypot(tapX - ts.lastTapPos.x, tapY - ts.lastTapPos.y) : 999;
 
         if (timeDiff < 350 && posDiff < 40) {
-          // Double tap — zoom in x2 or reset
           if (rect && originalVb) {
             setVb((cur) => {
               if (!cur) return cur;
               const isZoomed = cur.w < originalVb.w * 0.9;
-              if (isZoomed) return { ...originalVb };
+              if (isZoomed) {
+                vbRef.current = { ...originalVb };
+                return { ...originalVb };
+              }
               const factor = 2;
               const newW = clamp(cur.w / factor, originalVb.w / MAX_ZOOM, originalVb.w / MIN_ZOOM);
               const newH = clamp(cur.h / factor, originalVb.h / MAX_ZOOM, originalVb.h / MIN_ZOOM);
               const svgX = cur.x + (tapX / rect.width) * cur.w;
               const svgY = cur.y + (tapY / rect.height) * cur.h;
-              return {
+              const next = {
                 x: svgX - (tapX / rect.width) * newW,
                 y: svgY - (tapY / rect.height) * newH,
                 w: newW,
                 h: newH,
               };
+              vbRef.current = next;
+              return next;
             });
           }
           ts.lastTapTime = 0;
@@ -298,22 +317,21 @@ export function SvgPanZoomViewer({
       }
       ts.panStart = null;
     } else {
-      // Still have fingers down — re-anchor pan to remaining first finger
+      // Re-anchor pan to remaining first finger
       const [touch] = Array.from(ts.touches.values());
       const rect = container?.getBoundingClientRect();
       if (rect) {
         const cx = touch.x - rect.left;
         const cy = touch.y - rect.top;
-        setVb((cur) => {
-          if (!cur) return cur;
+        const cur = vbRef.current;
+        if (cur) {
           ts.panStart = {
             touchX: cx,
             touchY: cy,
             vbX: cur.x + (cx / rect.width) * cur.w,
             vbY: cur.y + (cy / rect.height) * cur.h,
           };
-          return cur;
-        });
+        }
       }
     }
   }, [originalVb]);
@@ -326,42 +344,46 @@ export function SvgPanZoomViewer({
     startY: number;
     vbX: number;
     vbY: number;
+    containerW: number;
+    containerH: number;
   } | null>(null);
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return;
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
+    const cur = vbRef.current;
+    if (!cur) return;
     const cx = e.clientX - rect.left;
     const cy = e.clientY - rect.top;
-    setVb((cur) => {
-      if (!cur) return cur;
-      mouseDrag.current = {
-        active: true,
-        startX: cx,
-        startY: cy,
-        vbX: cur.x + (cx / rect.width) * cur.w,
-        vbY: cur.y + (cy / rect.height) * cur.h,
-      };
-      return cur;
-    });
+    mouseDrag.current = {
+      active: true,
+      startX: cx,
+      startY: cy,
+      vbX: cur.x + (cx / rect.width) * cur.w,
+      vbY: cur.y + (cy / rect.height) * cur.h,
+      containerW: rect.width,
+      containerH: rect.height,
+    };
     e.preventDefault();
   }, []);
 
   const onMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!mouseDrag.current?.active) return;
+    const md = mouseDrag.current;
+    if (!md?.active) return;
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
     const cx = e.clientX - rect.left;
     const cy = e.clientY - rect.top;
-    const md = mouseDrag.current;
     setVb((cur) => {
       if (!cur) return cur;
-      return {
+      const next = {
         ...cur,
         x: md.vbX - (cx / rect.width) * cur.w,
         y: md.vbY - (cy / rect.height) * cur.h,
       };
+      vbRef.current = next;
+      return next;
     });
   }, []);
 
@@ -374,7 +396,6 @@ export function SvgPanZoomViewer({
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    // passive: false so we can call preventDefault() and block page scroll/zoom
     el.addEventListener('touchstart', handleTouchStart, { passive: false });
     el.addEventListener('touchmove', handleTouchMove, { passive: false });
     el.addEventListener('touchend', handleTouchEnd, { passive: false });
@@ -394,13 +415,17 @@ export function SvgPanZoomViewer({
   const openFullscreen = (e: React.MouseEvent) => {
     e.stopPropagation();
     setFullscreen(true);
-    setVb(originalVb ? { ...originalVb } : null);
+    const newVb = originalVb ? { ...originalVb } : null;
+    setVb(newVb);
+    vbRef.current = newVb;
   };
 
   const closeFullscreen = (e: React.MouseEvent) => {
     e.stopPropagation();
     setFullscreen(false);
-    setVb(originalVb ? { ...originalVb } : null);
+    const newVb = originalVb ? { ...originalVb } : null;
+    setVb(newVb);
+    vbRef.current = newVb;
   };
 
   useEffect(() => {
@@ -528,9 +553,7 @@ export function SvgPanZoomViewer({
 
   const Canvas = ({ canvasHeight, isFullscreen = false }: { canvasHeight: number | string; isFullscreen?: boolean }) => (
     <div
-      ref={(el) => {
-        (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-      }}
+      ref={containerRef}
       className={`relative overflow-hidden select-none ${svgViewerClass}`}
       style={{
         height: canvasHeight,
@@ -549,6 +572,7 @@ export function SvgPanZoomViewer({
       {/* The SVG fills the entire canvas — viewBox controls what's visible */}
       <div
         className="absolute inset-0 pointer-events-none"
+        style={{ width: '100%', height: '100%' }}
         dangerouslySetInnerHTML={{ __html: displaySvg }}
       />
 
@@ -564,7 +588,7 @@ export function SvgPanZoomViewer({
           }}
         >
           <span style={{ fontSize: 13 }}>👆</span>
-          <span>{isRtl ? 'גרור להזזה · צבט להגדלה' : 'Drag to pan · Pinch to zoom'}</span>
+          <span>{isRtl ? 'גרור להזזה' : 'Drag to pan'}</span>
         </div>
       )}
     </div>
