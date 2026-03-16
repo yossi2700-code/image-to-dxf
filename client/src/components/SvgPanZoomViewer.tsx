@@ -7,7 +7,7 @@
  * - Pointer Events API for unified mouse/touch handling
  * - Fill / Outline toggle
  * - Zoom in/out/reset toolbar buttons
- * - Fullscreen mode (covers entire screen on mobile — iOS-safe with 100dvh)
+ * - Fullscreen mode (covers entire screen on mobile)
  * - No style injection into SVG (uses scoped CSS classes in index.css)
  */
 
@@ -52,22 +52,24 @@ export function SvgPanZoomViewer({
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [fullscreen, setFullscreen] = useState(false);
-
-  // Separate refs for inline and fullscreen canvas elements
-  const inlineContainerRef = useRef<HTMLDivElement>(null);
-  const fullscreenContainerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Always-current offset ref — updated synchronously alongside state
+  // This avoids the React batching issue where setOffset callback may run late
   const offsetRef = useRef({ x: 0, y: 0 });
 
-  // Pointer tracking for pan
+  // Pointer tracking for pan + pinch
   const activePointers = useRef<Map<number, { x: number; y: number }>>(new Map());
   const lastPinchDist = useRef<number | null>(null);
   const lastPinchMid = useRef<{ x: number; y: number } | null>(null);
   const isDragging = useRef(false);
   const dragStart = useRef<{ px: number; py: number; ox: number; oy: number } | null>(null);
+  // Track if a significant drag happened (to suppress tap-as-click)
   const didDrag = useRef(false);
+  // Double-tap detection
+  const lastTapTime = useRef<number>(0);
+  const lastTapPos = useRef<{ x: number; y: number } | null>(null);
 
   // Helper: update offset state AND ref together
   const setOffsetSync = useCallback((val: { x: number; y: number } | ((prev: { x: number; y: number }) => { x: number; y: number })) => {
@@ -96,18 +98,13 @@ export function SvgPanZoomViewer({
     }
     return 1;
   })();
-  void svgAspect; // used for future auto-height
 
-  // Default height: 60vh on mobile (min 300px)
+  // Default height: 60vh on mobile (min 300px), or computed from aspect ratio
   const defaultHeight = height ?? "clamp(300px, 60vh, 680px)";
 
   const svgViewerClass = fillMode === 'fill' ? 'svg-viewer-fill' : 'svg-viewer-outline';
 
   // ── Zoom helpers ────────────────────────────────────────────────────────────
-
-  const getActiveContainer = useCallback(() => {
-    return fullscreen ? fullscreenContainerRef.current : inlineContainerRef.current;
-  }, [fullscreen]);
 
   /** Zoom toward a point (cx, cy) in container coordinates */
   const zoomAt = useCallback((factor: number, cx: number, cy: number) => {
@@ -124,8 +121,7 @@ export function SvgPanZoomViewer({
 
   const zoomIn = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const el = getActiveContainer();
-    const rect = el?.getBoundingClientRect();
+    const rect = containerRef.current?.getBoundingClientRect();
     const cx = rect ? rect.width / 2 : 0;
     const cy = rect ? rect.height / 2 : 0;
     zoomAt(1.5, cx, cy);
@@ -133,8 +129,7 @@ export function SvgPanZoomViewer({
 
   const zoomOut = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const el = getActiveContainer();
-    const rect = el?.getBoundingClientRect();
+    const rect = containerRef.current?.getBoundingClientRect();
     const cx = rect ? rect.width / 2 : 0;
     const cy = rect ? rect.height / 2 : 0;
     zoomAt(1 / 1.5, cx, cy);
@@ -150,43 +145,53 @@ export function SvgPanZoomViewer({
 
   const onWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
-    const el = getActiveContainer();
-    const rect = el?.getBoundingClientRect();
+    const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
     const cx = e.clientX - rect.left;
     const cy = e.clientY - rect.top;
     const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
     zoomAt(factor, cx, cy);
-  }, [zoomAt, getActiveContainer]);
+  }, [zoomAt]);
 
   // ── Pointer events (unified mouse + touch) ──────────────────────────────────
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
+    // Only primary button for mouse; all touch pointers
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     didDrag.current = false;
 
-    if (activePointers.current.size === 1) {
-      isDragging.current = true;
-      dragStart.current = { px: e.clientX, py: e.clientY, ox: offsetRef.current.x, oy: offsetRef.current.y };
+    if (activePointers.current.size >= 1) {
+      // Any number of fingers — pan only (no pinch zoom)
+      // Always use the FIRST pointer for drag reference
+      if (activePointers.current.size === 1) {
+        isDragging.current = true;
+        dragStart.current = { px: e.clientX, py: e.clientY, ox: offsetRef.current.x, oy: offsetRef.current.y };
+      }
+      // Ignore additional fingers (no pinch zoom)
+      lastPinchDist.current = null;
+      lastPinchMid.current = null;
     }
-    lastPinchDist.current = null;
-    lastPinchMid.current = null;
   }, []);
 
   const onPointerMove = useCallback((e: React.PointerEvent) => {
     if (!activePointers.current.has(e.pointerId)) return;
     activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
+    // Pan with any single pointer (first pointer captured)
     if (isDragging.current && dragStart.current) {
+      // Only track the first pointer (lowest pointerId in map)
       const firstId = Array.from(activePointers.current.keys())[0];
       if (e.pointerId === firstId) {
         const ds = dragStart.current;
         const dx = e.clientX - ds.px;
         const dy = e.clientY - ds.py;
         if (Math.abs(dx) > 3 || Math.abs(dy) > 3) didDrag.current = true;
-        setOffsetSync({ x: ds.ox + dx, y: ds.oy + dy });
+        setOffsetSync({
+          x: ds.ox + dx,
+          y: ds.oy + dy,
+        });
       }
     }
   }, [setOffsetSync]);
@@ -201,6 +206,7 @@ export function SvgPanZoomViewer({
       isDragging.current = false;
       dragStart.current = null;
     } else {
+      // Still have pointers — update drag reference to remaining first pointer
       isDragging.current = true;
       const [ptr] = Array.from(activePointers.current.values());
       dragStart.current = { px: ptr.x, py: ptr.y, ox: offsetRef.current.x, oy: offsetRef.current.y };
@@ -232,23 +238,22 @@ export function SvgPanZoomViewer({
   useEffect(() => {
     if (fullscreen) {
       document.body.style.overflow = 'hidden';
-      // iOS Safari: also prevent scroll on html element
-      document.documentElement.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
     }
-    return () => {
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-    };
+    return () => { document.body.style.overflow = ''; };
   }, [fullscreen]);
+
+  // Native touch ref — used to attach non-passive touch listeners
+  const nativeTouchRef = useRef<HTMLDivElement | null>(null);
 
   // Touch pan state (separate from pointer events — iOS-safe)
   const touchDragStart = useRef<{ tx: number; ty: number; ox: number; oy: number } | null>(null);
 
-  // Attach native touch listeners to a canvas element (non-passive to block scroll)
-  const attachTouchListeners = useCallback((el: HTMLDivElement | null) => {
+  // Attach native touch listeners: block browser scroll AND handle pan on iOS
+  const attachNativeListeners = useCallback((el: HTMLDivElement | null) => {
+    (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+    nativeTouchRef.current = el;
     if (!el) return;
 
     const onTouchStart = (e: TouchEvent) => {
@@ -261,25 +266,14 @@ export function SvgPanZoomViewer({
           ox: offsetRef.current.x,
           oy: offsetRef.current.y,
         };
-      } else if (e.touches.length === 2) {
-        // Pinch-to-zoom: record initial distance and midpoint
-        const t0 = e.touches[0];
-        const t1 = e.touches[1];
-        const dx = t1.clientX - t0.clientX;
-        const dy = t1.clientY - t0.clientY;
-        lastPinchDist.current = Math.sqrt(dx * dx + dy * dy);
-        lastPinchMid.current = {
-          x: (t0.clientX + t1.clientX) / 2,
-          y: (t0.clientY + t1.clientY) / 2,
-        };
-        touchDragStart.current = null;
       } else {
+        // Multi-touch: cancel drag
         touchDragStart.current = null;
       }
     };
 
     const onTouchMove = (e: TouchEvent) => {
-      e.preventDefault();
+      e.preventDefault(); // block browser scroll
       if (e.touches.length === 1 && touchDragStart.current) {
         const t = e.touches[0];
         const ds = touchDragStart.current;
@@ -287,25 +281,6 @@ export function SvgPanZoomViewer({
           x: ds.ox + (t.clientX - ds.tx),
           y: ds.oy + (t.clientY - ds.ty),
         });
-      } else if (e.touches.length === 2 && lastPinchDist.current !== null && lastPinchMid.current !== null) {
-        // Pinch-to-zoom
-        const t0 = e.touches[0];
-        const t1 = e.touches[1];
-        const dx = t1.clientX - t0.clientX;
-        const dy = t1.clientY - t0.clientY;
-        const newDist = Math.sqrt(dx * dx + dy * dy);
-        const factor = newDist / lastPinchDist.current;
-        const mid = lastPinchMid.current;
-        const rect = el.getBoundingClientRect();
-        const cx = mid.x - rect.left;
-        const cy = mid.y - rect.top;
-        zoomAt(factor, cx, cy);
-        lastPinchDist.current = newDist;
-        const newMid = {
-          x: (t0.clientX + t1.clientX) / 2,
-          y: (t0.clientY + t1.clientY) / 2,
-        };
-        lastPinchMid.current = newMid;
       }
     };
 
@@ -313,9 +288,8 @@ export function SvgPanZoomViewer({
       e.preventDefault();
       if (e.touches.length === 0) {
         touchDragStart.current = null;
-        lastPinchDist.current = null;
-        lastPinchMid.current = null;
       } else if (e.touches.length === 1) {
+        // Finger lifted but one remains — reset drag start
         const t = e.touches[0];
         touchDragStart.current = {
           tx: t.clientX,
@@ -323,8 +297,6 @@ export function SvgPanZoomViewer({
           ox: offsetRef.current.x,
           oy: offsetRef.current.y,
         };
-        lastPinchDist.current = null;
-        lastPinchMid.current = null;
       }
     };
 
@@ -332,29 +304,8 @@ export function SvgPanZoomViewer({
     el.addEventListener('touchmove', onTouchMove, { passive: false });
     el.addEventListener('touchend', onTouchEnd, { passive: false });
     el.addEventListener('touchcancel', onTouchEnd, { passive: false });
-
-    return () => {
-      el.removeEventListener('touchstart', onTouchStart);
-      el.removeEventListener('touchmove', onTouchMove);
-      el.removeEventListener('touchend', onTouchEnd);
-      el.removeEventListener('touchcancel', onTouchEnd);
-    };
-  }, [setOffsetSync, zoomAt]);
-
-  // Attach touch listeners to inline canvas
-  useEffect(() => {
-    const el = inlineContainerRef.current;
-    if (!el) return;
-    return attachTouchListeners(el);
-  }, [attachTouchListeners]);
-
-  // Attach touch listeners to fullscreen canvas when it opens
-  useEffect(() => {
-    if (!fullscreen) return;
-    const el = fullscreenContainerRef.current;
-    if (!el) return;
-    return attachTouchListeners(el);
-  }, [fullscreen, attachTouchListeners]);
+    // No cleanup needed — element unmounts with component
+  }, [setOffsetSync]);
 
   // ── Toolbar ─────────────────────────────────────────────────────────────────
 
@@ -367,7 +318,7 @@ export function SvgPanZoomViewer({
         borderBottom: isFullscreen ? '1px solid rgba(255,255,255,0.1)' : undefined,
       }}
     >
-      {/* Back button — only in fullscreen */}
+      {/* Back button — only in fullscreen, prominent and always visible */}
       {isFullscreen && (
         <button
           onClick={closeFullscreen}
@@ -484,17 +435,9 @@ export function SvgPanZoomViewer({
 
   // ── Canvas ───────────────────────────────────────────────────────────────────
 
-  const Canvas = ({
-    canvasHeight,
-    isFullscreen = false,
-    containerRef: cRef,
-  }: {
-    canvasHeight: number | string;
-    isFullscreen?: boolean;
-    containerRef: React.RefObject<HTMLDivElement | null>;
-  }) => (
+  const Canvas = ({ canvasHeight, isFullscreen = false }: { canvasHeight: number | string; isFullscreen?: boolean }) => (
     <div
-      ref={cRef}
+      ref={attachNativeListeners}
       className={`relative overflow-hidden select-none touch-none ${svgViewerClass}`}
       style={{
         height: canvasHeight,
@@ -517,8 +460,8 @@ export function SvgPanZoomViewer({
           left: '50%',
           transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`,
           transformOrigin: 'center center',
-          width: '95%',
-          height: '95%',
+          width: '90%',
+          height: '90%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -552,21 +495,11 @@ export function SvgPanZoomViewer({
       {fullscreen && (
         <div
           className="fixed inset-0 z-[9999] flex flex-col"
-          style={{
-            background: '#111',
-            touchAction: 'none',
-            // iOS Safari: use 100dvh (dynamic viewport height) to cover address bar area
-            // Falls back to 100vh for older browsers
-            height: '100dvh',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-          }}
+          style={{ background: '#111', touchAction: 'none' }}
         >
           <Toolbar isFullscreen />
-          <div className="flex-1 overflow-hidden" style={{ minHeight: 0 }}>
-            <Canvas canvasHeight="100%" isFullscreen containerRef={fullscreenContainerRef} />
+          <div className="flex-1 overflow-hidden">
+            <Canvas canvasHeight="100%" isFullscreen />
           </div>
         </div>
       )}
@@ -576,7 +509,7 @@ export function SvgPanZoomViewer({
         <div className="border-b bg-muted/30">
           <Toolbar />
         </div>
-        <Canvas canvasHeight={defaultHeight} containerRef={inlineContainerRef} />
+        <Canvas canvasHeight={defaultHeight} />
       </div>
     </>
   );

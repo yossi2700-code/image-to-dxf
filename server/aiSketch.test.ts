@@ -16,15 +16,8 @@ vi.mock("sharp", () => ({
     grayscale: vi.fn().mockReturnThis(),
     threshold: vi.fn().mockReturnThis(),
     png: vi.fn().mockReturnThis(),
-    flatten: vi.fn().mockReturnThis(),
-    normalise: vi.fn().mockReturnThis(),
-    modulate: vi.fn().mockReturnThis(),
-    linear: vi.fn().mockReturnThis(),
-    sharpen: vi.fn().mockReturnThis(),
-    extend: vi.fn().mockReturnThis(),
     toBuffer: vi.fn().mockResolvedValue(Buffer.from("fake-image-data")),
     metadata: vi.fn().mockResolvedValue({ width: 100, height: 100 }),
-    stats: vi.fn().mockResolvedValue({ channels: [{ mean: 200 }, { mean: 200 }, { mean: 200 }] }),
   }),
 }));
 
@@ -55,16 +48,7 @@ vi.mock("./storage", () => ({
   storagePut: vi.fn().mockResolvedValue({ url: "https://s3.example.com/test.png", key: "test.png" }),
 }));
 
-// Mock OpenAI for gpt-image-1 image editing
-vi.mock("openai", () => ({
-  default: vi.fn().mockImplementation(() => ({
-    images: {
-      edit: vi.fn().mockResolvedValue({
-        data: [{ b64_json: Buffer.from("fake-ai-image").toString("base64") }],
-      }),
-    },
-  })),
-}));
+// No LLM or OpenAI needed — new fast route uses only sharp+potrace
 
 vi.mock("potrace", () => ({
   default: {
