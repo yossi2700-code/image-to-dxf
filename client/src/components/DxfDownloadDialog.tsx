@@ -87,9 +87,15 @@ async function generatePdfBlob(
   // potrace/AI SVGs sometimes have unclosed tags, stray attributes, or invalid XML.
   // NOTE: No lookbehind assertions — must be Safari-compatible.
   let sanitizedSvg = svgContent;
-  // 1. Ensure self-closing <path ... /> (not <path ...>) — Safari-safe (no lookbehind)
+  // 1. Fix unclosed void elements (Safari-safe, no lookbehind)
   sanitizedSvg = sanitizedSvg.replace(/<path([^>]*[^/])>/g, '<path$1/>');
   sanitizedSvg = sanitizedSvg.replace(/<path>/g, '<path/>');
+  sanitizedSvg = sanitizedSvg.replace(/<circle([^>]*[^/])>/g, '<circle$1/>');
+  sanitizedSvg = sanitizedSvg.replace(/<rect([^>]*[^/])>/g, '<rect$1/>');
+  sanitizedSvg = sanitizedSvg.replace(/<ellipse([^>]*[^/])>/g, '<ellipse$1/>');
+  sanitizedSvg = sanitizedSvg.replace(/<line([^>]*[^/])>/g, '<line$1/>');
+  sanitizedSvg = sanitizedSvg.replace(/<polygon([^>]*[^/])>/g, '<polygon$1/>');
+  sanitizedSvg = sanitizedSvg.replace(/<polyline([^>]*[^/])>/g, '<polyline$1/>');
   // 2. Remove any <script> or <foreignObject> tags that break XML parsers
   sanitizedSvg = sanitizedSvg.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
   sanitizedSvg = sanitizedSvg.replace(/<foreignObject[^>]*>[\s\S]*?<\/foreignObject>/gi, '');

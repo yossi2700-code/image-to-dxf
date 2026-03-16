@@ -82,10 +82,22 @@ export async function generateAndDownloadPdf(
 
   // Sanitize SVG to fix corrupt header / XML parse errors
   let sanitizedSvg = svgContent;
-  sanitizedSvg = sanitizedSvg.replace(/<path([^>]*?)(?<!\/|-)>/g, '<path$1/>');
+  // Fix unclosed void elements (Safari-safe, no lookbehind)
+  sanitizedSvg = sanitizedSvg.replace(/<path([^>]*[^/])>/g, '<path$1/>');
+  sanitizedSvg = sanitizedSvg.replace(/<path>/g, '<path/>');
+  sanitizedSvg = sanitizedSvg.replace(/<circle([^>]*[^/])>/g, '<circle$1/>');
+  sanitizedSvg = sanitizedSvg.replace(/<rect([^>]*[^/])>/g, '<rect$1/>');
+  sanitizedSvg = sanitizedSvg.replace(/<ellipse([^>]*[^/])>/g, '<ellipse$1/>');
+  sanitizedSvg = sanitizedSvg.replace(/<line([^>]*[^/])>/g, '<line$1/>');
+  sanitizedSvg = sanitizedSvg.replace(/<polygon([^>]*[^/])>/g, '<polygon$1/>');
+  sanitizedSvg = sanitizedSvg.replace(/<polyline([^>]*[^/])>/g, '<polyline$1/>');
   sanitizedSvg = sanitizedSvg.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
   sanitizedSvg = sanitizedSvg.replace(/<foreignObject[^>]*>[\s\S]*?<\/foreignObject>/gi, '');
-  sanitizedSvg = sanitizedSvg.replace(/^[\s\S]*?(?=<(?:\?xml|svg))/i, '');
+  // Strip null bytes and control chars
+  sanitizedSvg = sanitizedSvg.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  // Strip anything before <?xml or <svg
+  const svgIdx = sanitizedSvg.search(/<(?:\?xml|svg)/i);
+  if (svgIdx > 0) sanitizedSvg = sanitizedSvg.slice(svgIdx);
   if (!sanitizedSvg.includes('xmlns=')) {
     sanitizedSvg = sanitizedSvg.replace(/<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
   }

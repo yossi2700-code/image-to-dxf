@@ -1867,3 +1867,9 @@
 
 - [x] צבע שחור בלבד (ללא בוחר צבעות)
 - [x] כפתור ◼ מילוי / ◻ קווים בכל 3 הטאבים (AI Outline, Portrait, AI Document Redraw)
+
+## תיקון PDF ומילוי שחור בהיסטוריה (מרץ 2026)
+
+- [x] תקן handlePdf בהיסטוריה — עכשיו משתמש ב-generateAndDownloadPdf (jsPDF) במקום לשמור PNG כ-PDF
+- [x] הוסף מילוי שחור לתצוגת SVG בכרטיסי ההיסטוריה (GroupCard + SvgViewer)
+- [x] תקן lookbehind regex ב-ExportButtons ו-DxfDownloadDialog להיות Safari-compatible

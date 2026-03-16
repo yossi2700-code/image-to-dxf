@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
+import { generateAndDownloadPdf } from "@/components/ExportButtons";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
@@ -141,7 +142,11 @@ function SvgViewer({ svg }: { svg: string }) {
     setTranslate({ x: 0, y: 0 });
   }, [svg]);
 
-  const styledSvg = svg.replace(/<svg /, '<svg style="width:100%;height:100%;display:block;" ');
+  // Inject black fill style for proper display
+  const styledSvg = svg
+    .replace(/<svg /, '<svg style="width:100%;height:100%;display:block;" ')
+    .replace(/<\/defs>/, '</defs><style>path,circle,rect,polygon,polyline,ellipse,line{fill:black;stroke:none}</style>')
+    .replace(/(<svg[^>]*>)(?!.*<defs)(?!.*<style)/, '$1<style>path,circle,rect,polygon,polyline,ellipse,line{fill:black;stroke:none}</style>');
 
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
@@ -297,7 +302,11 @@ function GroupCard({
           <img src={activeItem.sourceImageUrl!} alt="original" className="w-full h-full object-contain cursor-pointer" onClick={() => setShowSource(false)} />
         ) : activeItem?.svgPreview ? (
           <div className="w-full h-full cursor-pointer" onClick={() => onViewVariation(activeItem)}>
-            <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: activeItem.svgPreview.replace(/<svg /, '<svg style="width:100%;height:100%;display:block;" ') }} />
+            <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: (() => {
+              const s = activeItem.svgPreview.replace(/<svg /, '<svg style="width:100%;height:100%;display:block;" ');
+              if (s.includes('</defs>')) return s.replace(/<\/defs>/, '</defs><style>path,circle,rect,polygon,polyline,ellipse,line{fill:black;stroke:none}</style>');
+              return s.replace(/(<svg[^>]*>)/, '$1<style>path,circle,rect,polygon,polyline,ellipse,line{fill:black;stroke:none}</style>');
+            })() }} />
           </div>
         ) : activeItem?.imageUrl ? (
           <img src={activeItem.imageUrl} alt={shortDesc} className="w-full h-full object-contain cursor-pointer" onClick={() => onViewVariation(activeItem)} />
@@ -643,28 +652,14 @@ export default function History() {
   const handlePdf = async (item: HistoryItem) => {
     if (!item.svgPreview) return;
     try {
-      // Sanitize SVG before sending to server
-      let svg = item.svgPreview.trim();
-      if (!svg.startsWith("<")) return;
-      // Remove null bytes and non-printable chars
-      svg = svg.replace(/\x00/g, "").replace(/[\x01-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
-      // Ensure proper XML declaration / namespace
-      if (!svg.includes("xmlns")) {
-        svg = svg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
-      }
-      const res = await fetch("/api/svg-to-png", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ svgContent: svg, scale: 3 }),
-      });
-      if (!res.ok) throw new Error("PDF generation failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${item.description ?? "design"}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
+      await generateAndDownloadPdf(
+        item.svgPreview,
+        500, // default width px
+        500, // default height px
+        96,  // default DPI
+        item.description ?? "design",
+        isRtl
+      );
     } catch (e) {
       console.error("PDF export error:", e);
     }
