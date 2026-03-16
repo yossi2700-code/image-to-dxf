@@ -252,16 +252,16 @@ export function SvgPanZoomViewer({
 
     if (Math.abs(cx - ps.touchX) > 2 || Math.abs(cy - ps.touchY) > 2) ts.didMove = true;
 
-    setVb((cur) => {
-      if (!cur) return cur;
-      const next = {
-        ...cur,
-        x: ps.vbX - (cx / rect.width) * cur.w,
-        y: ps.vbY - (cy / rect.height) * cur.h,
-      };
-      vbRef.current = next;
-      return next;
-    });
+    // Read from vbRef directly (not functional setVb) to avoid stale state on iOS Safari
+    const cur = vbRef.current;
+    if (!cur) return;
+    const next = {
+      ...cur,
+      x: ps.vbX - (cx / rect.width) * cur.w,
+      y: ps.vbY - (cy / rect.height) * cur.h,
+    };
+    vbRef.current = next;
+    setVb(next);
   }, []);
 
   const handleTouchEnd = useCallback((e: TouchEvent) => {
