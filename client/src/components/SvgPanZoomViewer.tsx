@@ -1,53 +1,60 @@
 /**
- * SvgPanZoomViewer — Shared pan/zoom SVG viewer component.
+ * SvgPanZoomViewer — True vector pan/zoom SVG viewer.
  *
- * Features:
- * - Mouse: scroll to zoom (zoom-to-cursor), drag to pan
- * - Touch: pinch-to-zoom (zoom-to-midpoint), single-finger drag to pan
- * - Pointer Events API for unified mouse/touch handling
- * - Fill / Outline toggle
- * - Zoom in/out/reset toolbar buttons
- * - Fullscreen mode (covers entire screen on mobile)
- * - No style injection into SVG (uses scoped CSS classes in index.css)
+ * Rendering approach:
+ *   Instead of CSS transform: scale() (which can rasterize the SVG),
+ *   we manipulate the SVG's viewBox directly. This guarantees the browser
+ *   always renders the SVG as a true vector at the display resolution.
  *
- * Coordinate model:
- *   The content div is centered in the container via CSS (top:50%, left:50%, translate(-50%,-50%)).
- *   We then apply an additional screen-space translation (tx, ty) and a scale.
- *   transform = translate(-50% + tx, -50% + ty) scale(s)
+ *   viewBox = "x y w h" where:
+ *     - (x, y) is the top-left corner of the visible area in SVG coordinates
+ *     - (w, h) is the width/height of the visible area in SVG coordinates
+ *   Zooming in = smaller w/h (we see less of the SVG, magnified)
+ *   Panning = shift x, y
  *
- *   When dragging: delta in screen pixels maps 1:1 to (tx, ty) — no division by scale needed
- *   because the scale origin is the center of the content, not the container.
- *
- *   When zooming toward point (cx, cy) in container coords:
- *     new_tx = cx_from_center + (tx - cx_from_center) * factor
- *   where cx_from_center = cx - containerWidth/2
+ * Touch handling:
+ *   Uses native addEventListener with { passive: false } on the container
+ *   element to correctly handle iOS Safari's touch events without pointer
+ *   capture issues that cause freeze/lock when switching between drag and pinch.
  */
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { ZoomIn, ZoomOut, Maximize2, X, Minimize2 } from "lucide-react";
 
 interface Props {
   svgContent: string;
-  /** Fixed height in px or CSS string like "60vh", or "auto" to compute from SVG aspect ratio */
   height?: number | string;
-  /** Show fill/outline toggle (default: true) */
   showFillToggle?: boolean;
-  /** Show fullscreen button (default: true) */
   showFullscreen?: boolean;
-  /** Initial fill mode */
   initialFillMode?: 'fill' | 'outline';
-  /** Called when fill mode changes */
   onFillModeChange?: (mode: 'fill' | 'outline') => void;
-  /** Additional className for the outer wrapper */
   className?: string;
   isRtl?: boolean;
 }
 
-const MIN_SCALE = 0.1;
-const MAX_SCALE = 20;
+const MIN_ZOOM = 0.05;  // viewBox can be up to 20x the original
+const MAX_ZOOM = 40;    // viewBox can be 1/40 of the original
 
-function clampScale(s: number) {
-  return Math.min(MAX_SCALE, Math.max(MIN_SCALE, s));
+function clamp(v: number, lo: number, hi: number) {
+  return Math.min(hi, Math.max(lo, v));
+}
+
+/** Parse viewBox from SVG string. Returns null if not found. */
+function parseViewBox(svg: string): { x: number; y: number; w: number; h: number } | null {
+  const m = svg.match(/viewBox=["']\s*([-\d.e]+)\s+([-\d.e]+)\s+([-\d.e]+)\s+([-\d.e]+)\s*["']/i);
+  if (!m) return null;
+  const [, x, y, w, h] = m.map(Number);
+  if (w <= 0 || h <= 0) return null;
+  return { x, y, w, h };
+}
+
+/** Replace or insert viewBox in SVG string */
+function setViewBox(svg: string, vb: { x: number; y: number; w: number; h: number }): string {
+  const vbStr = `${vb.x.toFixed(3)} ${vb.y.toFixed(3)} ${vb.w.toFixed(3)} ${vb.h.toFixed(3)}`;
+  if (/viewBox=/i.test(svg)) {
+    return svg.replace(/viewBox=["'][^"']*["']/i, `viewBox="${vbStr}"`);
+  }
+  return svg.replace(/<svg/i, `<svg viewBox="${vbStr}"`);
 }
 
 export function SvgPanZoomViewer({
@@ -61,91 +68,89 @@ export function SvgPanZoomViewer({
   isRtl = false,
 }: Props) {
   const [fillMode, setFillMode] = useState<'fill' | 'outline'>(initialFillMode);
-  const [scale, setScale] = useState(1);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [fullscreen, setFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
 
-  // Keep a ref copy of scale/offset so pointer handlers always see latest values
-  // without needing them in their dependency arrays (avoids stale closures).
-  const scaleRef = useRef(1);
-  const offsetRef = useRef({ x: 0, y: 0 });
-  useEffect(() => { scaleRef.current = scale; }, [scale]);
-  useEffect(() => { offsetRef.current = offset; }, [offset]);
+  // The "original" viewBox from the SVG source — our reference for zoom level 1
+  const originalVb = useMemo(() => parseViewBox(svgContent), [svgContent]);
 
-  // Pointer tracking for pan + pinch
-  const activePointers = useRef<Map<number, { x: number; y: number }>>(new Map());
-  const lastPinchDist = useRef<number | null>(null);
-  const lastPinchMid = useRef<{ x: number; y: number } | null>(null);
-  const isDragging = useRef(false);
-  // dragStart stores the pointer start position and the offset at that moment
-  const dragStart = useRef<{ px: number; py: number; ox: number; oy: number } | null>(null);
-  // Track if a significant drag happened (to suppress tap-as-click)
-  const didDrag = useRef(false);
-  // Double-tap detection
-  const lastTapTime = useRef<number>(0);
-  const lastTapPos = useRef<{ x: number; y: number } | null>(null);
+  // Current viewBox state — this is what we manipulate for pan/zoom
+  const [vb, setVb] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
 
-  // Default height: 60vh on mobile (min 300px)
+  // Reset viewBox when SVG content changes
+  useEffect(() => {
+    setVb(originalVb ? { ...originalVb } : null);
+  }, [svgContent, originalVb]);
+
+  // Derived zoom level (for display)
+  const zoomLevel = useMemo(() => {
+    if (!vb || !originalVb) return 1;
+    return originalVb.w / vb.w;
+  }, [vb, originalVb]);
+
+  // The SVG to display — with current viewBox applied
+  const displaySvg = useMemo(() => {
+    if (!vb) return svgContent;
+    return setViewBox(svgContent, vb);
+  }, [svgContent, vb]);
+
   const defaultHeight = height ?? "clamp(300px, 60vh, 680px)";
-
   const svgViewerClass = fillMode === 'fill' ? 'svg-viewer-fill' : 'svg-viewer-outline';
 
-  // ── Zoom helpers ────────────────────────────────────────────────────────────
+  // ── ViewBox zoom helpers ─────────────────────────────────────────────────────
 
   /**
    * Zoom toward a point (cx, cy) in container coordinates.
-   * The offset is a screen-space translation applied on top of the CSS centering.
-   * To keep the point under the cursor fixed:
-   *   new_offset = zoom_point + (old_offset - zoom_point) * factor
-   * where zoom_point is measured from the container center.
+   * cx, cy are in [0, containerWidth] x [0, containerHeight].
    */
   const zoomAt = useCallback((factor: number, cx: number, cy: number) => {
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    // Convert container-relative coords to center-relative coords
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const zpx = cx - centerX; // zoom point relative to container center
-    const zpy = cy - centerY;
+    if (!originalVb) return;
+    const container = containerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
 
-    setScale((prevScale) => {
-      const newScale = clampScale(prevScale * factor);
-      const actualFactor = newScale / prevScale;
-      setOffset((prev) => ({
-        x: zpx + (prev.x - zpx) * actualFactor,
-        y: zpy + (prev.y - zpy) * actualFactor,
-      }));
-      return newScale;
+    setVb((prev) => {
+      const cur = prev ?? { ...originalVb };
+      // Clamp the zoom factor so we don't exceed limits
+      const newW = clamp(cur.w / factor, originalVb.w / MAX_ZOOM, originalVb.w / MIN_ZOOM);
+      const newH = clamp(cur.h / factor, originalVb.h / MAX_ZOOM, originalVb.h / MIN_ZOOM);
+      const actualFactor = cur.w / newW;
+
+      // Convert container pixel coords to SVG coords
+      const svgX = cur.x + (cx / rect.width) * cur.w;
+      const svgY = cur.y + (cy / rect.height) * cur.h;
+
+      // Keep the SVG point under the cursor fixed
+      return {
+        x: svgX - (cx / rect.width) * newW,
+        y: svgY - (cy / rect.height) * newH,
+        w: newW,
+        h: newH,
+      };
+      void actualFactor;
     });
-  }, []);
+  }, [originalVb]);
 
   const zoomIn = (e: React.MouseEvent) => {
     e.stopPropagation();
     const rect = containerRef.current?.getBoundingClientRect();
-    const cx = rect ? rect.width / 2 : 0;
-    const cy = rect ? rect.height / 2 : 0;
-    zoomAt(1.5, cx, cy);
+    zoomAt(1.5, rect ? rect.width / 2 : 0, rect ? rect.height / 2 : 0);
   };
 
   const zoomOut = (e: React.MouseEvent) => {
     e.stopPropagation();
     const rect = containerRef.current?.getBoundingClientRect();
-    const cx = rect ? rect.width / 2 : 0;
-    const cy = rect ? rect.height / 2 : 0;
-    zoomAt(1 / 1.5, cx, cy);
+    zoomAt(1 / 1.5, rect ? rect.width / 2 : 0, rect ? rect.height / 2 : 0);
   };
 
   const resetView = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setScale(1);
-    setOffset({ x: 0, y: 0 });
+    setVb(originalVb ? { ...originalVb } : null);
   };
 
   // ── Wheel zoom ──────────────────────────────────────────────────────────────
 
-  const onWheel = useCallback((e: React.WheelEvent) => {
+  const onWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -155,152 +160,313 @@ export function SvgPanZoomViewer({
     zoomAt(factor, cx, cy);
   }, [zoomAt]);
 
-  // ── Pointer events (unified mouse + touch) ──────────────────────────────────
+  // ── Touch/pointer handling (native, not React synthetic) ─────────────────────
+  // We use native touch events to avoid iOS pointer capture issues.
 
-  const onPointerDown = useCallback((e: React.PointerEvent) => {
-    // Only primary button for mouse; all touch pointers
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    didDrag.current = false;
+  const touchState = useRef<{
+    touches: Map<number, { x: number; y: number }>;
+    lastDist: number | null;
+    lastMid: { x: number; y: number } | null;
+    // For single-finger pan: store SVG coords of the touch start point
+    panStart: { touchX: number; touchY: number; vbX: number; vbY: number } | null;
+    didMove: boolean;
+    lastTapTime: number;
+    lastTapPos: { x: number; y: number } | null;
+  }>({
+    touches: new Map(),
+    lastDist: null,
+    lastMid: null,
+    panStart: null,
+    didMove: false,
+    lastTapTime: 0,
+    lastTapPos: null,
+  });
 
-    if (activePointers.current.size === 1) {
-      // Single pointer — start drag
-      isDragging.current = true;
-      // Capture current offset at drag start
-      dragStart.current = {
-        px: e.clientX,
-        py: e.clientY,
-        ox: offsetRef.current.x,
-        oy: offsetRef.current.y,
-      };
-      lastPinchDist.current = null;
-      lastPinchMid.current = null;
-    } else if (activePointers.current.size === 2) {
-      // Two pointers — start pinch; cancel any ongoing single-finger drag
-      isDragging.current = false;
-      dragStart.current = null;
-      const pts = Array.from(activePointers.current.values());
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    e.preventDefault();
+    const ts = touchState.current;
+    const container = containerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+
+    // Update touch map
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const t = e.changedTouches[i];
+      ts.touches.set(t.identifier, { x: t.clientX, y: t.clientY });
+    }
+    ts.didMove = false;
+
+    if (ts.touches.size === 1) {
+      // Single finger — start pan
+      const [touch] = Array.from(ts.touches.values());
+      const cx = touch.x - rect.left;
+      const cy = touch.y - rect.top;
+      // Store the SVG coordinate under the finger
+      setVb((cur) => {
+        if (!cur) return cur;
+        ts.panStart = {
+          touchX: cx,
+          touchY: cy,
+          vbX: cur.x + (cx / rect.width) * cur.w,
+          vbY: cur.y + (cy / rect.height) * cur.h,
+        };
+        return cur;
+      });
+      ts.lastDist = null;
+      ts.lastMid = null;
+    } else if (ts.touches.size === 2) {
+      // Two fingers — start pinch
+      ts.panStart = null;
+      const pts = Array.from(ts.touches.values());
       const dx = pts[0].x - pts[1].x;
       const dy = pts[0].y - pts[1].y;
-      lastPinchDist.current = Math.hypot(dx, dy);
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (rect) {
-        lastPinchMid.current = {
-          x: (pts[0].x + pts[1].x) / 2 - rect.left,
-          y: (pts[0].y + pts[1].y) / 2 - rect.top,
-        };
-      }
+      ts.lastDist = Math.hypot(dx, dy);
+      ts.lastMid = {
+        x: (pts[0].x + pts[1].x) / 2 - rect.left,
+        y: (pts[0].y + pts[1].y) / 2 - rect.top,
+      };
     }
   }, []);
 
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!activePointers.current.has(e.pointerId)) return;
-    activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    e.preventDefault();
+    const ts = touchState.current;
+    const container = containerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
 
-    if (activePointers.current.size === 1 && isDragging.current && dragStart.current) {
-      // Pan: delta in screen pixels maps directly to offset (no scale division needed)
-      const ds = dragStart.current;
-      const dx = e.clientX - ds.px;
-      const dy = e.clientY - ds.py;
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) didDrag.current = true;
-      setOffset({
-        x: ds.ox + dx,
-        y: ds.oy + dy,
+    // Update touch map
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const t = e.changedTouches[i];
+      if (ts.touches.has(t.identifier)) {
+        ts.touches.set(t.identifier, { x: t.clientX, y: t.clientY });
+      }
+    }
+
+    if (ts.touches.size === 1 && ts.panStart) {
+      // Single finger pan: keep the SVG point under the finger fixed
+      const [touch] = Array.from(ts.touches.values());
+      const cx = touch.x - rect.left;
+      const cy = touch.y - rect.top;
+      const ps = ts.panStart;
+      if (Math.abs(cx - ps.touchX) > 2 || Math.abs(cy - ps.touchY) > 2) ts.didMove = true;
+
+      setVb((cur) => {
+        if (!cur) return cur;
+        // The SVG point ps.vbX/vbY should be at container position cx/cy
+        // So: ps.vbX = newX + (cx / rect.width) * cur.w  → newX = ps.vbX - (cx/w)*cur.w
+        return {
+          ...cur,
+          x: ps.vbX - (cx / rect.width) * cur.w,
+          y: ps.vbY - (cy / rect.height) * cur.h,
+        };
       });
-    } else if (activePointers.current.size === 2 && lastPinchDist.current !== null) {
+    } else if (ts.touches.size === 2 && ts.lastDist !== null) {
       // Pinch zoom + pan
-      const pts = Array.from(activePointers.current.values());
+      const pts = Array.from(ts.touches.values());
       const dx = pts[0].x - pts[1].x;
       const dy = pts[0].y - pts[1].y;
       const dist = Math.hypot(dx, dy);
-      const factor = dist / lastPinchDist.current;
-      lastPinchDist.current = dist;
-      didDrag.current = true;
+      const factor = dist / ts.lastDist;
+      ts.lastDist = dist;
+      ts.didMove = true;
 
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (rect) {
-        const midX = (pts[0].x + pts[1].x) / 2 - rect.left;
-        const midY = (pts[0].y + pts[1].y) / 2 - rect.top;
+      const midX = (pts[0].x + pts[1].x) / 2 - rect.left;
+      const midY = (pts[0].y + pts[1].y) / 2 - rect.top;
 
-        // Zoom toward pinch midpoint
-        zoomAt(factor, midX, midY);
+      // Zoom toward pinch midpoint
+      if (originalVb) {
+        setVb((cur) => {
+          if (!cur) return cur;
+          const newW = clamp(cur.w / factor, originalVb.w / MAX_ZOOM, originalVb.w / MIN_ZOOM);
+          const newH = clamp(cur.h / factor, originalVb.h / MAX_ZOOM, originalVb.h / MIN_ZOOM);
+          // Keep midpoint fixed
+          const svgMidX = cur.x + (midX / rect.width) * cur.w;
+          const svgMidY = cur.y + (midY / rect.height) * cur.h;
+          let newX = svgMidX - (midX / rect.width) * newW;
+          let newY = svgMidY - (midY / rect.height) * newH;
 
-        // Also pan by midpoint movement
-        if (lastPinchMid.current) {
-          const dmx = midX - lastPinchMid.current.x;
-          const dmy = midY - lastPinchMid.current.y;
-          if (Math.abs(dmx) > 0.5 || Math.abs(dmy) > 0.5) {
-            setOffset((prev) => ({ x: prev.x + dmx, y: prev.y + dmy }));
+          // Also pan by midpoint movement
+          if (ts.lastMid) {
+            const prevSvgMidX = cur.x + (ts.lastMid.x / rect.width) * cur.w;
+            const prevSvgMidY = cur.y + (ts.lastMid.y / rect.height) * cur.h;
+            const curSvgMidX = cur.x + (midX / rect.width) * cur.w;
+            const curSvgMidY = cur.y + (midY / rect.height) * cur.h;
+            newX -= (curSvgMidX - prevSvgMidX);
+            newY -= (curSvgMidY - prevSvgMidY);
           }
-        }
-        lastPinchMid.current = { x: midX, y: midY };
+
+          return { x: newX, y: newY, w: newW, h: newH };
+        });
       }
+      ts.lastMid = { x: midX, y: midY };
     }
-  }, [zoomAt]);
+  }, [originalVb]);
 
-  const onPointerUp = useCallback((e: React.PointerEvent) => {
-    activePointers.current.delete(e.pointerId);
-    if (activePointers.current.size < 2) {
-      lastPinchDist.current = null;
-      lastPinchMid.current = null;
+  const handleTouchEnd = useCallback((e: TouchEvent) => {
+    e.preventDefault();
+    const ts = touchState.current;
+    const container = containerRef.current;
+
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      ts.touches.delete(e.changedTouches[i].identifier);
     }
-    if (activePointers.current.size === 0) {
-      isDragging.current = false;
-      dragStart.current = null;
 
-      // Double-tap detection: only for touch/pen, not mouse
-      if (!didDrag.current && e.pointerType !== 'mouse') {
+    if (ts.touches.size < 2) {
+      ts.lastDist = null;
+      ts.lastMid = null;
+    }
+
+    if (ts.touches.size === 0) {
+      // Double-tap detection
+      if (!ts.didMove) {
+        const rect = container?.getBoundingClientRect();
+        const t = e.changedTouches[0];
+        const tapX = rect ? t.clientX - rect.left : t.clientX;
+        const tapY = rect ? t.clientY - rect.top : t.clientY;
         const now = Date.now();
-        const rect = containerRef.current?.getBoundingClientRect();
-        const tapX = rect ? e.clientX - rect.left : e.clientX;
-        const tapY = rect ? e.clientY - rect.top : e.clientY;
-        const timeDiff = now - lastTapTime.current;
-        const lastPos = lastTapPos.current;
-        const posDiff = lastPos ? Math.hypot(tapX - lastPos.x, tapY - lastPos.y) : 999;
+        const timeDiff = now - ts.lastTapTime;
+        const posDiff = ts.lastTapPos ? Math.hypot(tapX - ts.lastTapPos.x, tapY - ts.lastTapPos.y) : 999;
 
         if (timeDiff < 350 && posDiff < 40) {
-          // Double tap! Toggle between zoom x2.5 and reset
-          setScale((prevScale) => {
-            if (prevScale > 1.5) {
-              // Already zoomed — reset
-              setOffset({ x: 0, y: 0 });
-              return 1;
-            } else {
-              // Zoom x2.5 toward tap point (relative to container center)
+          // Double tap — zoom in x2.5 or reset
+          if (rect && originalVb) {
+            setVb((cur) => {
+              if (!cur) return cur;
+              const isZoomed = cur.w < originalVb.w * 0.9;
+              if (isZoomed) return { ...originalVb };
               const factor = 2.5;
-              const rect2 = containerRef.current?.getBoundingClientRect();
-              const centerX = rect2 ? rect2.width / 2 : 0;
-              const centerY = rect2 ? rect2.height / 2 : 0;
-              const zpx = tapX - centerX;
-              const zpy = tapY - centerY;
-              setOffset((prev) => ({
-                x: zpx + (prev.x - zpx) * factor,
-                y: zpy + (prev.y - zpy) * factor,
-              }));
-              return clampScale(prevScale * factor);
-            }
-          });
-          lastTapTime.current = 0;
-          lastTapPos.current = null;
+              const newW = clamp(cur.w / factor, originalVb.w / MAX_ZOOM, originalVb.w / MIN_ZOOM);
+              const newH = clamp(cur.h / factor, originalVb.h / MAX_ZOOM, originalVb.h / MIN_ZOOM);
+              const svgX = cur.x + (tapX / rect.width) * cur.w;
+              const svgY = cur.y + (tapY / rect.height) * cur.h;
+              return {
+                x: svgX - (tapX / rect.width) * newW,
+                y: svgY - (tapY / rect.height) * newH,
+                w: newW,
+                h: newH,
+              };
+            });
+          }
+          ts.lastTapTime = 0;
+          ts.lastTapPos = null;
         } else {
-          lastTapTime.current = now;
-          lastTapPos.current = { x: tapX, y: tapY };
+          ts.lastTapTime = now;
+          ts.lastTapPos = { x: tapX, y: tapY };
         }
       }
-    } else if (activePointers.current.size === 1) {
-      // Transition from pinch back to single-finger drag
-      // Re-start drag from current finger position with current offset
-      isDragging.current = true;
-      const [ptr] = Array.from(activePointers.current.values());
-      dragStart.current = {
-        px: ptr.x,
-        py: ptr.y,
-        ox: offsetRef.current.x,
-        oy: offsetRef.current.y,
-      };
+      ts.panStart = null;
+    } else if (ts.touches.size === 1) {
+      // Transition from pinch back to single-finger pan
+      // Re-anchor the pan start to current finger position
+      const [touch] = Array.from(ts.touches.values());
+      const rect = container?.getBoundingClientRect();
+      if (rect) {
+        const cx = touch.x - rect.left;
+        const cy = touch.y - rect.top;
+        setVb((cur) => {
+          if (!cur) return cur;
+          ts.panStart = {
+            touchX: cx,
+            touchY: cy,
+            vbX: cur.x + (cx / rect.width) * cur.w,
+            vbY: cur.y + (cy / rect.height) * cur.h,
+          };
+          return cur;
+        });
+      }
     }
+  }, [originalVb]);
+
+  // ── Mouse drag (desktop) ─────────────────────────────────────────────────────
+
+  const mouseDrag = useRef<{
+    active: boolean;
+    startX: number;
+    startY: number;
+    vbX: number;
+    vbY: number;
+  } | null>(null);
+
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    setVb((cur) => {
+      if (!cur) return cur;
+      mouseDrag.current = {
+        active: true,
+        startX: cx,
+        startY: cy,
+        vbX: cur.x + (cx / rect.width) * cur.w,
+        vbY: cur.y + (cy / rect.height) * cur.h,
+      };
+      return cur;
+    });
+    e.preventDefault();
   }, []);
+
+  const onMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!mouseDrag.current?.active) return;
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    const md = mouseDrag.current;
+    setVb((cur) => {
+      if (!cur) return cur;
+      return {
+        ...cur,
+        x: md.vbX - (cx / rect.width) * cur.w,
+        y: md.vbY - (cy / rect.height) * cur.h,
+      };
+    });
+  }, []);
+
+  const onMouseUp = useCallback(() => {
+    if (mouseDrag.current) mouseDrag.current.active = false;
+  }, []);
+
+  // ── Attach native listeners ──────────────────────────────────────────────────
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    // passive: false so we can call preventDefault() and block page scroll/zoom
+    el.addEventListener('touchstart', handleTouchStart, { passive: false });
+    el.addEventListener('touchmove', handleTouchMove, { passive: false });
+    el.addEventListener('touchend', handleTouchEnd, { passive: false });
+    el.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      el.removeEventListener('touchstart', handleTouchStart);
+      el.removeEventListener('touchmove', handleTouchMove);
+      el.removeEventListener('touchend', handleTouchEnd);
+      el.removeEventListener('touchcancel', handleTouchEnd);
+      el.removeEventListener('wheel', onWheel);
+    };
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd, onWheel]);
+
+  // ── Fullscreen ───────────────────────────────────────────────────────────────
+
+  const openFullscreen = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFullscreen(true);
+    setVb(originalVb ? { ...originalVb } : null);
+  };
+
+  const closeFullscreen = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFullscreen(false);
+    setVb(originalVb ? { ...originalVb } : null);
+  };
+
+  useEffect(() => {
+    document.body.style.overflow = fullscreen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [fullscreen]);
 
   const handleFillToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -308,30 +474,6 @@ export function SvgPanZoomViewer({
     setFillMode(next);
     onFillModeChange?.(next);
   };
-
-  const openFullscreen = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setFullscreen(true);
-    setScale(1);
-    setOffset({ x: 0, y: 0 });
-  };
-
-  const closeFullscreen = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setFullscreen(false);
-    setScale(1);
-    setOffset({ x: 0, y: 0 });
-  };
-
-  // Lock body scroll when fullscreen is open
-  useEffect(() => {
-    if (fullscreen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [fullscreen]);
 
   // ── Toolbar ─────────────────────────────────────────────────────────────────
 
@@ -369,17 +511,15 @@ export function SvgPanZoomViewer({
 
       <span className="flex-1" />
 
-      {/* Zoom % */}
       <span
         className="text-xs w-10 text-center tabular-nums select-none"
         style={{ color: isFullscreen ? 'rgba(255,255,255,0.5)' : 'var(--muted-foreground)' }}
       >
-        {Math.round(scale * 100)}%
+        {Math.round(zoomLevel * 100)}%
       </span>
 
       <div className="w-px h-5 mx-0.5" style={{ background: isFullscreen ? 'rgba(255,255,255,0.15)' : 'var(--border)' }} />
 
-      {/* Zoom controls */}
       <div className="flex items-center gap-0.5">
         <button
           onClick={zoomOut}
@@ -444,54 +584,36 @@ export function SvgPanZoomViewer({
 
   // ── Canvas ───────────────────────────────────────────────────────────────────
 
+  const isAtReset = zoomLevel <= 1.02 && zoomLevel >= 0.98;
+
   const Canvas = ({ canvasHeight, isFullscreen = false }: { canvasHeight: number | string; isFullscreen?: boolean }) => (
     <div
       ref={(el) => {
         (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
       }}
-      className={`relative overflow-hidden select-none touch-none ${svgViewerClass}`}
+      className={`relative overflow-hidden select-none ${svgViewerClass}`}
       style={{
         height: canvasHeight,
         background: isFullscreen ? '#111' : 'white',
-        cursor: isDragging.current ? 'grabbing' : 'grab',
+        cursor: mouseDrag.current?.active ? 'grabbing' : 'grab',
         WebkitUserSelect: 'none',
         userSelect: 'none',
+        touchAction: 'none',
+        WebkitTouchCallout: 'none',
       }}
-      onWheel={onWheel}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
     >
+      {/* The SVG fills the entire canvas — viewBox controls what's visible */}
       <div
-        ref={contentRef}
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          /**
-           * Coordinate model:
-           * - CSS centers the div at (50%, 50%) of the container
-           * - We add (offset.x, offset.y) as a screen-space translation
-           * - Then scale from the content center
-           * - Dragging: delta px → delta offset (1:1, no scale division)
-           * - Zooming: offset adjusted so the zoom point stays fixed
-           */
-          transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`,
-          transformOrigin: 'center center',
-          width: '90%',
-          height: '90%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          pointerEvents: 'none',
-          willChange: 'transform',
-        }}
-        dangerouslySetInnerHTML={{ __html: svgContent }}
+        className="absolute inset-0 pointer-events-none"
+        dangerouslySetInnerHTML={{ __html: displaySvg }}
       />
 
-      {/* Hint overlay — shown only at scale=1, offset=0 */}
-      {scale === 1 && offset.x === 0 && offset.y === 0 && (
+      {/* Hint overlay */}
+      {isAtReset && (
         <div
           className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs pointer-events-none select-none"
           style={{
@@ -510,11 +632,10 @@ export function SvgPanZoomViewer({
 
   return (
     <>
-      {/* ── Fullscreen overlay ── */}
       {fullscreen && (
         <div
           className="fixed inset-0 z-[9999] flex flex-col"
-          style={{ background: '#111', touchAction: 'none' }}
+          style={{ background: '#111' }}
         >
           <Toolbar isFullscreen />
           <div className="flex-1 overflow-hidden">
@@ -523,7 +644,6 @@ export function SvgPanZoomViewer({
         </div>
       )}
 
-      {/* ── Inline viewer ── */}
       <div className={`border rounded-xl overflow-hidden bg-white ${className}`} style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
         <div className="border-b bg-muted/30">
           <Toolbar />
