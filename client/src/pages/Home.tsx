@@ -14,6 +14,7 @@ import { ExportButtons } from "@/components/ExportButtons";
 import { AiTraceTab } from "@/components/AiTraceTab";
 import { TokenPricingModal } from "@/components/TokenPricingModal";
 import { AiDocumentRedrawTab } from "@/components/AiDocumentRedrawTab";
+import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { FaceDetectTab } from "@/components/FaceDetectTab";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InsufficientTokensBanner } from "@/components/InsufficientTokensBanner";
@@ -30,7 +31,6 @@ import {
   Layers,
   Sparkles,
   RefreshCw,
-  Eye,
   ChevronLeft,
   ChevronRight,
   Wand2,
@@ -178,166 +178,14 @@ interface SvgZoomViewerProps {
   maxHeight?: number;
 }
 
-function SvgZoomViewer({ svgContent, label = "Preview", maxHeight = 450 }: SvgZoomViewerProps) {
-  const [scale, setScale] = useState(1);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = useState(false);
-  const [fullscreen, setFullscreen] = useState(false);
-  const panStart = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const lastPinchDist = useRef<number | null>(null);
 
-  const clampScale = (s: number) => Math.min(10, Math.max(0.3, s));
-  const zoomIn = (e: React.MouseEvent) => { e.stopPropagation(); setScale((s) => clampScale(parseFloat((s * 1.4).toFixed(2)))); };
-  const zoomOut = (e: React.MouseEvent) => { e.stopPropagation(); setScale((s) => clampScale(parseFloat((s / 1.4).toFixed(2)))); };
-  const resetView = (e: React.MouseEvent) => { e.stopPropagation(); setScale(1); setOffset({ x: 0, y: 0 }); };
-
-  const onWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
-    setScale((s) => clampScale(parseFloat((s * factor).toFixed(3))));
-  };
-  const onMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    e.preventDefault();
-    setIsPanning(true);
-    panStart.current = { x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y };
-  };
-  const onMouseMove = (e: React.MouseEvent) => {
-    if (!isPanning || !panStart.current) return;
-    setOffset({
-      x: panStart.current.ox + e.clientX - panStart.current.x,
-      y: panStart.current.oy + e.clientY - panStart.current.y,
-    });
-  };
-  const onMouseUp = () => { setIsPanning(false); panStart.current = null; };
-  const onTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      lastPinchDist.current = Math.hypot(dx, dy);
-    } else if (e.touches.length === 1) {
-      panStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, ox: offset.x, oy: offset.y };
-    }
-  };
-  const onTouchMove = (e: React.TouchEvent) => {
-    e.preventDefault();
-    if (e.touches.length === 2 && lastPinchDist.current !== null) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      const dist = Math.hypot(dx, dy);
-      const factor = dist / lastPinchDist.current;
-      lastPinchDist.current = dist;
-      setScale((s) => clampScale(parseFloat((s * factor).toFixed(3))));
-    } else if (e.touches.length === 1 && panStart.current) {
-      setOffset({
-        x: panStart.current.ox + e.touches[0].clientX - panStart.current.x,
-        y: panStart.current.oy + e.touches[0].clientY - panStart.current.y,
-      });
-    }
-  };
-  const onTouchEnd = () => { lastPinchDist.current = null; panStart.current = null; };
-
-  // Prepare SVG: ensure it has explicit width/height for proper rendering
-  const styledSvg = svgContent
-    .replace(/<svg([^>]*)>/, (match, attrs) => {
-      const hasWidthHeight = /width=/.test(attrs) && /height=/.test(attrs);
-      if (hasWidthHeight) return `<svg${attrs} style="display:block;max-width:100%;max-height:100%;">`;
-      return `<svg${attrs} style="display:block;width:100%;height:100%;">`;
-    });
-
-  const ViewerContent = ({ height }: { height: number | string }) => (
-    <div
-      ref={containerRef}
-      className="relative overflow-hidden bg-white select-none"
-      style={{ height, cursor: isPanning ? "grabbing" : "grab" }}
-      onWheel={onWheel}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-    >
-      <div
-        style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`,
-          transformOrigin: "center center",
-          width: "90%",
-          height: "90%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          pointerEvents: "none",
-        }}
-        dangerouslySetInnerHTML={{ __html: styledSvg }}
-      />
-    </div>
-  );
-
-  const Toolbar = ({ onClose }: { onClose?: (e: React.MouseEvent) => void }) => (
-    <div className="flex items-center gap-1 px-2 border-b bg-muted/30" style={{ minHeight: 48 }}>
-      <Eye className="w-4 h-4 text-muted-foreground shrink-0 ml-1" />
-      <span className="text-xs text-muted-foreground font-medium flex-1 truncate mx-1">{label}</span>
-
-      {/* Zoom % indicator */}
-      <span className="text-xs text-muted-foreground/60 w-9 text-center tabular-nums">{Math.round(scale * 100)}%</span>
-
-      {/* Divider */}
-      <div className="w-px h-5 bg-border mx-0.5" />
-
-      {/* Zoom controls — grouped */}
-      <div className="flex items-center gap-0.5">
-        <button onClick={zoomOut} className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors" title="Zoom out">
-          <ZoomOut className="w-5 h-5 text-foreground" />
-        </button>
-        <button onClick={zoomIn} className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors" title="Zoom in">
-          <ZoomIn className="w-5 h-5 text-foreground" />
-        </button>
-        <button onClick={resetView} className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors" title="Reset zoom">
-          <Maximize2 className="w-4 h-4 text-muted-foreground" />
-        </button>
-      </div>
-
-      {/* Divider */}
-      <div className="w-px h-5 bg-border mx-0.5" />
-
-      {/* Fullscreen / Close */}
-      {onClose ? (
-        <button onClick={onClose} className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors" title="Close">
-          <span className="text-base font-bold text-foreground">✕</span>
-        </button>
-      ) : (
-        <button
-          onClick={(e) => { e.stopPropagation(); setFullscreen(true); setScale(1); setOffset({ x: 0, y: 0 }); }}
-          className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors"
-          title="Fullscreen"
-        >
-          <Maximize2 className="w-5 h-5 text-primary" />
-        </button>
-      )}
-    </div>
-  );
-
+function SvgZoomViewer({ svgContent, maxHeight = 450 }: SvgZoomViewerProps) {
   return (
-    <>
-      {fullscreen && (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col">
-          <Toolbar onClose={(e) => { e.stopPropagation(); setFullscreen(false); setScale(1); setOffset({ x: 0, y: 0 }); }} />
-          <div className="flex-1 overflow-hidden">
-            <ViewerContent height="100%" />
-          </div>
-        </div>
-      )}
-      <div className="border rounded-lg overflow-hidden bg-white">
-        <Toolbar />
-        <ViewerContent height={maxHeight} />
-      </div>
-    </>
+    <SvgPanZoomViewer
+      svgContent={svgContent}
+      height={`clamp(300px, 60vh, ${maxHeight}px)`}
+      isRtl={true}
+    />
   );
 }
 

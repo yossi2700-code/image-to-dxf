@@ -7,16 +7,16 @@
  * - Pointer Events API for unified mouse/touch handling
  * - Fill / Outline toggle
  * - Zoom in/out/reset toolbar buttons
- * - Fullscreen mode
+ * - Fullscreen mode (covers entire screen on mobile)
  * - No style injection into SVG (uses scoped CSS classes in index.css)
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { ZoomIn, ZoomOut, Maximize2, X } from "lucide-react";
+import { ZoomIn, ZoomOut, Maximize2, X, Minimize2 } from "lucide-react";
 
 interface Props {
   svgContent: string;
-  /** Fixed height in px, or "auto" to compute from SVG aspect ratio */
+  /** Fixed height in px or CSS string like "60vh", or "auto" to compute from SVG aspect ratio */
   height?: number | string;
   /** Show fill/outline toggle (default: true) */
   showFillToggle?: boolean;
@@ -31,8 +31,8 @@ interface Props {
   isRtl?: boolean;
 }
 
-const MIN_SCALE = 0.15;
-const MAX_SCALE = 12;
+const MIN_SCALE = 0.1;
+const MAX_SCALE = 20;
 
 function clampScale(s: number) {
   return Math.min(MAX_SCALE, Math.max(MIN_SCALE, s));
@@ -55,12 +55,14 @@ export function SvgPanZoomViewer({
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Pointer tracking for pan
+  // Pointer tracking for pan + pinch
   const activePointers = useRef<Map<number, { x: number; y: number }>>(new Map());
   const lastPinchDist = useRef<number | null>(null);
   const lastPinchMid = useRef<{ x: number; y: number } | null>(null);
   const isDragging = useRef(false);
   const dragStart = useRef<{ px: number; py: number; ox: number; oy: number } | null>(null);
+  // Track if a significant drag happened (to suppress tap-as-click)
+  const didDrag = useRef(false);
 
   // Compute SVG aspect ratio from viewBox
   const svgAspect = (() => {
@@ -76,17 +78,8 @@ export function SvgPanZoomViewer({
     return 1;
   })();
 
-  // Compute container height from aspect ratio if not provided
-  const computedHeight = (() => {
-    if (height !== undefined) return height;
-    return "auto"; // will be set via ref
-  })();
-
-  const setContainerHeight = useCallback((el: HTMLDivElement | null) => {
-    if (!el || height !== undefined) return;
-    const w = el.getBoundingClientRect().width;
-    el.style.height = Math.min(Math.max(w * svgAspect, 180), 520) + 'px';
-  }, [svgAspect, height]);
+  // Default height: 60vh on mobile (min 300px), or computed from aspect ratio
+  const defaultHeight = height ?? "clamp(300px, 60vh, 680px)";
 
   const svgViewerClass = fillMode === 'fill' ? 'svg-viewer-fill' : 'svg-viewer-outline';
 
@@ -110,7 +103,7 @@ export function SvgPanZoomViewer({
     const rect = containerRef.current?.getBoundingClientRect();
     const cx = rect ? rect.width / 2 : 0;
     const cy = rect ? rect.height / 2 : 0;
-    zoomAt(1.4, cx, cy);
+    zoomAt(1.5, cx, cy);
   };
 
   const zoomOut = (e: React.MouseEvent) => {
@@ -118,7 +111,7 @@ export function SvgPanZoomViewer({
     const rect = containerRef.current?.getBoundingClientRect();
     const cx = rect ? rect.width / 2 : 0;
     const cy = rect ? rect.height / 2 : 0;
-    zoomAt(1 / 1.4, cx, cy);
+    zoomAt(1 / 1.5, cx, cy);
   };
 
   const resetView = (e: React.MouseEvent) => {
@@ -142,15 +135,16 @@ export function SvgPanZoomViewer({
   // ── Pointer events (unified mouse + touch) ──────────────────────────────────
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
-    if (e.button !== undefined && e.button !== 0) return; // only primary button
+    // Only primary button for mouse; all touch pointers
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    didDrag.current = false;
 
     if (activePointers.current.size === 1) {
       // Single pointer — start drag
       isDragging.current = true;
       dragStart.current = { px: e.clientX, py: e.clientY, ox: 0, oy: 0 };
-      // Capture current offset at drag start
       setOffset((prev) => {
         dragStart.current = { px: e.clientX, py: e.clientY, ox: prev.x, oy: prev.y };
         return prev;
@@ -182,9 +176,12 @@ export function SvgPanZoomViewer({
     if (activePointers.current.size === 1 && isDragging.current && dragStart.current) {
       // Pan
       const ds = dragStart.current;
+      const dx = e.clientX - ds.px;
+      const dy = e.clientY - ds.py;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) didDrag.current = true;
       setOffset({
-        x: ds.ox + e.clientX - ds.px,
-        y: ds.oy + e.clientY - ds.py,
+        x: ds.ox + dx,
+        y: ds.oy + dy,
       });
     } else if (activePointers.current.size === 2 && lastPinchDist.current !== null) {
       // Pinch zoom
@@ -194,6 +191,7 @@ export function SvgPanZoomViewer({
       const dist = Math.hypot(dx, dy);
       const factor = dist / lastPinchDist.current;
       lastPinchDist.current = dist;
+      didDrag.current = true;
 
       const rect = containerRef.current?.getBoundingClientRect();
       if (rect) {
@@ -241,19 +239,56 @@ export function SvgPanZoomViewer({
     onFillModeChange?.(next);
   };
 
+  const openFullscreen = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFullscreen(true);
+    setScale(1);
+    setOffset({ x: 0, y: 0 });
+  };
+
+  const closeFullscreen = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFullscreen(false);
+    setScale(1);
+    setOffset({ x: 0, y: 0 });
+  };
+
+  // Lock body scroll when fullscreen is open
+  useEffect(() => {
+    if (fullscreen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [fullscreen]);
+
   // ── Toolbar ─────────────────────────────────────────────────────────────────
 
-  const Toolbar = ({ onClose }: { onClose?: (e: React.MouseEvent) => void }) => (
-    <div className="flex items-center gap-1 px-2 border-b bg-muted/30 shrink-0" style={{ minHeight: 48 }}>
+  const Toolbar = ({ isFullscreen = false }: { isFullscreen?: boolean }) => (
+    <div
+      className="flex items-center gap-1 px-2 shrink-0"
+      style={{
+        minHeight: 52,
+        background: isFullscreen ? 'rgba(0,0,0,0.85)' : undefined,
+        borderBottom: isFullscreen ? '1px solid rgba(255,255,255,0.1)' : undefined,
+      }}
+    >
       {showFillToggle && (
         <button
           onClick={handleFillToggle}
-          className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold transition-all select-none shrink-0"
+          className="flex items-center gap-1.5 h-9 px-3 rounded-full text-xs font-semibold transition-all select-none shrink-0"
           style={{
-            background: fillMode === 'fill' ? '#1e1e1e' : '#f3f4f6',
-            color: fillMode === 'fill' ? 'white' : '#374151',
-            border: fillMode === 'fill' ? '1.5px solid #1e1e1e' : '1.5px solid #d1d5db',
-            minWidth: 72,
+            background: fillMode === 'fill'
+              ? (isFullscreen ? '#fff' : '#1e1e1e')
+              : (isFullscreen ? 'rgba(255,255,255,0.15)' : '#f3f4f6'),
+            color: fillMode === 'fill'
+              ? (isFullscreen ? '#1e1e1e' : 'white')
+              : (isFullscreen ? 'rgba(255,255,255,0.8)' : '#374151'),
+            border: fillMode === 'fill'
+              ? (isFullscreen ? '1.5px solid rgba(255,255,255,0.3)' : '1.5px solid #1e1e1e')
+              : (isFullscreen ? '1.5px solid rgba(255,255,255,0.2)' : '1.5px solid #d1d5db'),
+            minWidth: 76,
           }}
           title={fillMode === 'fill' ? 'Switch to outline' : 'Switch to fill'}
         >
@@ -265,35 +300,73 @@ export function SvgPanZoomViewer({
       <span className="flex-1" />
 
       {/* Zoom % */}
-      <span className="text-xs text-muted-foreground/60 w-9 text-center tabular-nums select-none">{Math.round(scale * 100)}%</span>
+      <span
+        className="text-xs w-10 text-center tabular-nums select-none"
+        style={{ color: isFullscreen ? 'rgba(255,255,255,0.5)' : 'var(--muted-foreground)' }}
+      >
+        {Math.round(scale * 100)}%
+      </span>
 
-      <div className="w-px h-5 bg-border mx-0.5" />
+      <div className="w-px h-5 mx-0.5" style={{ background: isFullscreen ? 'rgba(255,255,255,0.15)' : 'var(--border)' }} />
 
       {/* Zoom controls */}
       <div className="flex items-center gap-0.5">
-        <button onClick={zoomOut} className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors" title="Zoom out">
-          <ZoomOut className="w-5 h-5 text-foreground" />
+        <button
+          onClick={zoomOut}
+          className="w-11 h-11 rounded-xl flex items-center justify-center transition-colors active:scale-95"
+          style={{ color: isFullscreen ? 'white' : 'var(--foreground)' }}
+          onMouseEnter={e => (e.currentTarget.style.background = isFullscreen ? 'rgba(255,255,255,0.12)' : '')}
+          onMouseLeave={e => (e.currentTarget.style.background = '')}
+          title={isRtl ? 'הקטן' : 'Zoom out'}
+        >
+          <ZoomOut className="w-5 h-5" />
         </button>
-        <button onClick={zoomIn} className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors" title="Zoom in">
-          <ZoomIn className="w-5 h-5 text-foreground" />
+        <button
+          onClick={zoomIn}
+          className="w-11 h-11 rounded-xl flex items-center justify-center transition-colors active:scale-95"
+          style={{ color: isFullscreen ? 'white' : 'var(--foreground)' }}
+          onMouseEnter={e => (e.currentTarget.style.background = isFullscreen ? 'rgba(255,255,255,0.12)' : '')}
+          onMouseLeave={e => (e.currentTarget.style.background = '')}
+          title={isRtl ? 'הגדל' : 'Zoom in'}
+        >
+          <ZoomIn className="w-5 h-5" />
         </button>
-        <button onClick={resetView} className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors" title="Reset zoom">
-          <Maximize2 className="w-4 h-4 text-muted-foreground" />
+        <button
+          onClick={resetView}
+          className="w-11 h-11 rounded-xl flex items-center justify-center transition-colors active:scale-95"
+          style={{ color: isFullscreen ? 'rgba(255,255,255,0.6)' : 'var(--muted-foreground)' }}
+          onMouseEnter={e => (e.currentTarget.style.background = isFullscreen ? 'rgba(255,255,255,0.12)' : '')}
+          onMouseLeave={e => (e.currentTarget.style.background = '')}
+          title={isRtl ? 'אפס תצוגה' : 'Reset view'}
+        >
+          <Minimize2 className="w-4 h-4" />
         </button>
       </div>
 
       {showFullscreen && (
         <>
-          <div className="w-px h-5 bg-border mx-0.5" />
-          <button
-            onClick={onClose ?? ((e) => { e.stopPropagation(); setFullscreen(true); setScale(1); setOffset({ x: 0, y: 0 }); })}
-            className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors"
-            title={onClose ? 'Close' : 'Fullscreen'}
-          >
-            {onClose
-              ? <X className="w-5 h-5 text-foreground" />
-              : <Maximize2 className="w-5 h-5 text-primary" />}
-          </button>
+          <div className="w-px h-5 mx-0.5" style={{ background: isFullscreen ? 'rgba(255,255,255,0.15)' : 'var(--border)' }} />
+          {isFullscreen ? (
+            <button
+              onClick={closeFullscreen}
+              className="w-11 h-11 rounded-xl flex items-center justify-center transition-colors active:scale-95"
+              style={{ color: 'white' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
+              onMouseLeave={e => (e.currentTarget.style.background = '')}
+              title={isRtl ? 'סגור מסך מלא' : 'Close fullscreen'}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          ) : (
+            <button
+              onClick={openFullscreen}
+              className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors active:scale-95"
+              style={{ color: 'var(--primary)' }}
+              title={isRtl ? 'פתח מסך מלא' : 'Open fullscreen'}
+            >
+              <Maximize2 className="w-5 h-5" />
+            </button>
+          )}
         </>
       )}
     </div>
@@ -301,16 +374,18 @@ export function SvgPanZoomViewer({
 
   // ── Canvas ───────────────────────────────────────────────────────────────────
 
-  const Canvas = ({ canvasHeight }: { canvasHeight: number | string }) => (
+  const Canvas = ({ canvasHeight, isFullscreen = false }: { canvasHeight: number | string; isFullscreen?: boolean }) => (
     <div
       ref={(el) => {
         (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-        setContainerHeight(el);
       }}
-      className={`relative overflow-hidden bg-white select-none touch-none ${svgViewerClass}`}
+      className={`relative overflow-hidden select-none touch-none ${svgViewerClass}`}
       style={{
         height: canvasHeight,
-        cursor: isDragging.current ? "grabbing" : "grab",
+        background: isFullscreen ? '#111' : 'white',
+        cursor: isDragging.current ? 'grabbing' : 'grab',
+        WebkitUserSelect: 'none',
+        userSelect: 'none',
       }}
       onWheel={onWheel}
       onPointerDown={onPointerDown}
@@ -321,37 +396,61 @@ export function SvgPanZoomViewer({
       <div
         ref={contentRef}
         style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
           transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`,
-          transformOrigin: "center center",
-          width: "90%",
-          height: "90%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          pointerEvents: "none",
-          willChange: "transform",
+          transformOrigin: 'center center',
+          width: '90%',
+          height: '90%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+          willChange: 'transform',
         }}
         dangerouslySetInnerHTML={{ __html: svgContent }}
       />
+
+      {/* Hint overlay — shown only at scale=1, offset=0 */}
+      {scale === 1 && offset.x === 0 && offset.y === 0 && (
+        <div
+          className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs pointer-events-none select-none"
+          style={{
+            background: isFullscreen ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)',
+            color: isFullscreen ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.35)',
+            backdropFilter: 'blur(4px)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <span style={{ fontSize: 13 }}>👆</span>
+          <span>{isRtl ? 'גרור להזזה · צבט להגדלה' : 'Drag to pan · Pinch to zoom'}</span>
+        </div>
+      )}
     </div>
   );
 
   return (
     <>
+      {/* ── Fullscreen overlay ── */}
       {fullscreen && (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col" style={{ touchAction: 'none' }}>
-          <Toolbar onClose={(e) => { e.stopPropagation(); setFullscreen(false); setScale(1); setOffset({ x: 0, y: 0 }); }} />
+        <div
+          className="fixed inset-0 z-[9999] flex flex-col"
+          style={{ background: '#111', touchAction: 'none' }}
+        >
+          <Toolbar isFullscreen />
           <div className="flex-1 overflow-hidden">
-            <Canvas canvasHeight="100%" />
+            <Canvas canvasHeight="100%" isFullscreen />
           </div>
         </div>
       )}
-      <div className={`border rounded-lg overflow-hidden bg-white ${className}`}>
-        <Toolbar />
-        <Canvas canvasHeight={computedHeight} />
+
+      {/* ── Inline viewer ── */}
+      <div className={`border rounded-xl overflow-hidden bg-white ${className}`} style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+        <div className="border-b bg-muted/30">
+          <Toolbar />
+        </div>
+        <Canvas canvasHeight={defaultHeight} />
       </div>
     </>
   );
