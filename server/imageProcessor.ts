@@ -760,7 +760,7 @@ export function segmentsToSvg(
 ): string {
   const lines: string[] = [];
   lines.push(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" style="background:#fff">`
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" style="background:#fff">`
   );
   for (const seg of segments) {
     lines.push(
@@ -781,7 +781,7 @@ export function polylinesToSvg(
 ): string {
   const lines: string[] = [];
   lines.push(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" style="background:#fff">`
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" style="background:#fff">`
   );
   for (const poly of polylines) {
     if (poly.length < 2) continue;

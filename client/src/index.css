@@ -320,6 +320,17 @@
    They scope the fill/stroke rules to the SVG content only,
    preventing bleed onto Lucide icon buttons in the same toolbar.
 */
+/* Make the SVG element fill its container and render as true vector.
+   Without explicit width/height on the <svg> element, the browser needs
+   these rules to size it correctly inside the flex container. */
+.svg-viewer-fill svg,
+.svg-viewer-outline svg {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+}
 /* Fill mode: solid black shapes */
 .svg-viewer-fill svg path,
 .svg-viewer-fill svg circle,
