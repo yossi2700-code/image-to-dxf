@@ -9,6 +9,18 @@
  * - Zoom in/out/reset toolbar buttons
  * - Fullscreen mode (covers entire screen on mobile)
  * - No style injection into SVG (uses scoped CSS classes in index.css)
+ *
+ * Coordinate model:
+ *   The content div is centered in the container via CSS (top:50%, left:50%, translate(-50%,-50%)).
+ *   We then apply an additional screen-space translation (tx, ty) and a scale.
+ *   transform = translate(-50% + tx, -50% + ty) scale(s)
+ *
+ *   When dragging: delta in screen pixels maps 1:1 to (tx, ty) — no division by scale needed
+ *   because the scale origin is the center of the content, not the container.
+ *
+ *   When zooming toward point (cx, cy) in container coords:
+ *     new_tx = cx_from_center + (tx - cx_from_center) * factor
+ *   where cx_from_center = cx - containerWidth/2
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -55,11 +67,19 @@ export function SvgPanZoomViewer({
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
+  // Keep a ref copy of scale/offset so pointer handlers always see latest values
+  // without needing them in their dependency arrays (avoids stale closures).
+  const scaleRef = useRef(1);
+  const offsetRef = useRef({ x: 0, y: 0 });
+  useEffect(() => { scaleRef.current = scale; }, [scale]);
+  useEffect(() => { offsetRef.current = offset; }, [offset]);
+
   // Pointer tracking for pan + pinch
   const activePointers = useRef<Map<number, { x: number; y: number }>>(new Map());
   const lastPinchDist = useRef<number | null>(null);
   const lastPinchMid = useRef<{ x: number; y: number } | null>(null);
   const isDragging = useRef(false);
+  // dragStart stores the pointer start position and the offset at that moment
   const dragStart = useRef<{ px: number; py: number; ox: number; oy: number } | null>(null);
   // Track if a significant drag happened (to suppress tap-as-click)
   const didDrag = useRef(false);
@@ -67,35 +87,35 @@ export function SvgPanZoomViewer({
   const lastTapTime = useRef<number>(0);
   const lastTapPos = useRef<{ x: number; y: number } | null>(null);
 
-  // Compute SVG aspect ratio from viewBox
-  const svgAspect = (() => {
-    const m = svgContent.match(/viewBox=["']([^"']+)["']/);
-    if (m) {
-      const parts = m[1].trim().split(/[\s,]+/);
-      if (parts.length === 4) {
-        const w = parseFloat(parts[2]);
-        const h = parseFloat(parts[3]);
-        if (w > 0 && h > 0) return h / w;
-      }
-    }
-    return 1;
-  })();
-
-  // Default height: 60vh on mobile (min 300px), or computed from aspect ratio
+  // Default height: 60vh on mobile (min 300px)
   const defaultHeight = height ?? "clamp(300px, 60vh, 680px)";
 
   const svgViewerClass = fillMode === 'fill' ? 'svg-viewer-fill' : 'svg-viewer-outline';
 
   // ── Zoom helpers ────────────────────────────────────────────────────────────
 
-  /** Zoom toward a point (cx, cy) in container coordinates */
+  /**
+   * Zoom toward a point (cx, cy) in container coordinates.
+   * The offset is a screen-space translation applied on top of the CSS centering.
+   * To keep the point under the cursor fixed:
+   *   new_offset = zoom_point + (old_offset - zoom_point) * factor
+   * where zoom_point is measured from the container center.
+   */
   const zoomAt = useCallback((factor: number, cx: number, cy: number) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    // Convert container-relative coords to center-relative coords
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const zpx = cx - centerX; // zoom point relative to container center
+    const zpy = cy - centerY;
+
     setScale((prevScale) => {
       const newScale = clampScale(prevScale * factor);
       const actualFactor = newScale / prevScale;
       setOffset((prev) => ({
-        x: cx + (prev.x - cx) * actualFactor,
-        y: cy + (prev.y - cy) * actualFactor,
+        x: zpx + (prev.x - zpx) * actualFactor,
+        y: zpy + (prev.y - zpy) * actualFactor,
       }));
       return newScale;
     });
@@ -147,15 +167,17 @@ export function SvgPanZoomViewer({
     if (activePointers.current.size === 1) {
       // Single pointer — start drag
       isDragging.current = true;
-      dragStart.current = { px: e.clientX, py: e.clientY, ox: 0, oy: 0 };
-      setOffset((prev) => {
-        dragStart.current = { px: e.clientX, py: e.clientY, ox: prev.x, oy: prev.y };
-        return prev;
-      });
+      // Capture current offset at drag start
+      dragStart.current = {
+        px: e.clientX,
+        py: e.clientY,
+        ox: offsetRef.current.x,
+        oy: offsetRef.current.y,
+      };
       lastPinchDist.current = null;
       lastPinchMid.current = null;
     } else if (activePointers.current.size === 2) {
-      // Two pointers — start pinch
+      // Two pointers — start pinch; cancel any ongoing single-finger drag
       isDragging.current = false;
       dragStart.current = null;
       const pts = Array.from(activePointers.current.values());
@@ -177,7 +199,7 @@ export function SvgPanZoomViewer({
     activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
     if (activePointers.current.size === 1 && isDragging.current && dragStart.current) {
-      // Pan
+      // Pan: delta in screen pixels maps directly to offset (no scale division needed)
       const ds = dragStart.current;
       const dx = e.clientX - ds.px;
       const dy = e.clientY - ds.py;
@@ -187,7 +209,7 @@ export function SvgPanZoomViewer({
         y: ds.oy + dy,
       });
     } else if (activePointers.current.size === 2 && lastPinchDist.current !== null) {
-      // Pinch zoom
+      // Pinch zoom + pan
       const pts = Array.from(activePointers.current.values());
       const dx = pts[0].x - pts[1].x;
       const dy = pts[0].y - pts[1].y;
@@ -200,6 +222,8 @@ export function SvgPanZoomViewer({
       if (rect) {
         const midX = (pts[0].x + pts[1].x) / 2 - rect.left;
         const midY = (pts[0].y + pts[1].y) / 2 - rect.top;
+
+        // Zoom toward pinch midpoint
         zoomAt(factor, midX, midY);
 
         // Also pan by midpoint movement
@@ -209,8 +233,8 @@ export function SvgPanZoomViewer({
           if (Math.abs(dmx) > 0.5 || Math.abs(dmy) > 0.5) {
             setOffset((prev) => ({ x: prev.x + dmx, y: prev.y + dmy }));
           }
-          lastPinchMid.current = { x: midX, y: midY };
         }
+        lastPinchMid.current = { x: midX, y: midY };
       }
     }
   }, [zoomAt]);
@@ -243,16 +267,21 @@ export function SvgPanZoomViewer({
               setOffset({ x: 0, y: 0 });
               return 1;
             } else {
-              // Zoom x2.5 toward tap point
+              // Zoom x2.5 toward tap point (relative to container center)
               const factor = 2.5;
+              const rect2 = containerRef.current?.getBoundingClientRect();
+              const centerX = rect2 ? rect2.width / 2 : 0;
+              const centerY = rect2 ? rect2.height / 2 : 0;
+              const zpx = tapX - centerX;
+              const zpy = tapY - centerY;
               setOffset((prev) => ({
-                x: tapX + (prev.x - tapX) * factor,
-                y: tapY + (prev.y - tapY) * factor,
+                x: zpx + (prev.x - zpx) * factor,
+                y: zpy + (prev.y - zpy) * factor,
               }));
               return clampScale(prevScale * factor);
             }
           });
-          lastTapTime.current = 0; // Reset so triple-tap doesn't trigger again
+          lastTapTime.current = 0;
           lastTapPos.current = null;
         } else {
           lastTapTime.current = now;
@@ -261,12 +290,15 @@ export function SvgPanZoomViewer({
       }
     } else if (activePointers.current.size === 1) {
       // Transition from pinch back to single-finger drag
+      // Re-start drag from current finger position with current offset
       isDragging.current = true;
       const [ptr] = Array.from(activePointers.current.values());
-      setOffset((prev) => {
-        dragStart.current = { px: ptr.x, py: ptr.y, ox: prev.x, oy: prev.y };
-        return prev;
-      });
+      dragStart.current = {
+        px: ptr.x,
+        py: ptr.y,
+        ox: offsetRef.current.x,
+        oy: offsetRef.current.y,
+      };
     }
   }, []);
 
@@ -437,6 +469,14 @@ export function SvgPanZoomViewer({
           position: 'absolute',
           top: '50%',
           left: '50%',
+          /**
+           * Coordinate model:
+           * - CSS centers the div at (50%, 50%) of the container
+           * - We add (offset.x, offset.y) as a screen-space translation
+           * - Then scale from the content center
+           * - Dragging: delta px → delta offset (1:1, no scale division)
+           * - Zooming: offset adjusted so the zoom point stays fixed
+           */
           transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`,
           transformOrigin: 'center center',
           width: '90%',
