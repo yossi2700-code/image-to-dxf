@@ -40,6 +40,7 @@ import {
   FileText,
   Layers,
   ZoomIn,
+  PenLine,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -127,6 +128,14 @@ const FEATURE_TABS: FeatureTab[] = [
     icon: <FileText className="w-3.5 h-3.5" />,
     color: "text-teal-600",
   },
+  {
+    id: "ai_sketch",
+    labelHe: "AI סקיצה",
+    labelEn: "AI Sketch",
+    features: ["ai_sketch"],
+    icon: <PenLine className="w-3.5 h-3.5" />,
+    color: "text-amber-600",
+  },
 ];
 
 // ─── SVG Zoom Viewer ─────────────────────────────────────────────────────────
@@ -163,6 +172,7 @@ function getFeatureLabel(feature: string | null, actionType: string, isRtl: bool
     case "ai_generate": return isRtl ? "AI יצירה" : "AI Create";
     case "portrait": return isRtl ? "פורטרט" : "Portrait";
     case "document_redraw": return isRtl ? "מסמך" : "Document";
+    case "ai_sketch": return isRtl ? "AI סקיצה" : "AI Sketch";
     default: return actionType === "ai_generate" ? (isRtl ? "AI יצירה" : "AI Create") : (isRtl ? "המרה" : "Convert");
   }
 }
@@ -174,6 +184,7 @@ function getFeatureBadgeClass(feature: string | null, actionType: string): strin
     case "ai_generate": return "bg-amber-100 text-amber-700 border-amber-200";
     case "portrait": return "bg-rose-100 text-rose-700 border-rose-200";
     case "document_redraw": return "bg-teal-100 text-teal-700 border-teal-200";
+    case "ai_sketch": return "bg-amber-100 text-amber-700 border-amber-200";
     default: return actionType === "ai_generate" ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-blue-100 text-blue-700 border-blue-200";
   }
 }
@@ -185,6 +196,7 @@ function getFeatureIcon(feature: string | null, actionType: string): React.React
     case "ai_generate": return <Sparkles className="w-3.5 h-3.5 text-amber-500" />;
     case "portrait": return <ScanFace className="w-3.5 h-3.5 text-rose-500" />;
     case "document_redraw": return <FileText className="w-3.5 h-3.5 text-teal-500" />;
+    case "ai_sketch": return <PenLine className="w-3.5 h-3.5 text-amber-500" />;
     default:
       return actionType === "ai_generate"
         ? <Sparkles className="w-3.5 h-3.5 text-purple-500" />
@@ -207,7 +219,7 @@ function GroupCard({
   const { isRtl, language } = useLanguage();
   const [activeIdx, setActiveIdx] = useState(0);
   const [showSource, setShowSource] = useState(false);
-  const isAi = group.actionType === "ai_generate" || group.feature === "ai_trace" || group.feature === "ai_generate" || group.feature === "portrait" || group.feature === "document_redraw";
+  const isAi = group.actionType === "ai_generate" || group.feature === "ai_trace" || group.feature === "ai_generate" || group.feature === "portrait" || group.feature === "document_redraw" || group.feature === "ai_sketch";
   const isGroup = group.items.length > 1;
   const activeItem = group.items[activeIdx];
   const hasSource = !!activeItem?.sourceImageUrl;
@@ -344,7 +356,7 @@ function DetailDialog({
 }) {
   const { isRtl, language } = useLanguage();
   if (!item) return null;
-  const isAi = item.actionType === "ai_generate" || item.feature === "ai_trace" || item.feature === "portrait" || item.feature === "document_redraw";
+  const isAi = item.actionType === "ai_generate" || item.feature === "ai_trace" || item.feature === "portrait" || item.feature === "document_redraw" || item.feature === "ai_sketch";
   const date = new Date(item.createdAt).toLocaleString(language === "he" ? "he-IL" : "en-US", { dateStyle: "long", timeStyle: "short" });
   const displayDesc = cleanDesc(item.description, isRtl ? "עיצוב AI" : "AI Design");
 

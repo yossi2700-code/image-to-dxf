@@ -16,6 +16,7 @@ import aiRefineRoute from "../aiRefineRoute";
 import aiDocumentRedrawRoute from "../aiDocumentRedrawRoute";
 import svgToPngRoute from "../svgToPngRoute";
 import faceDetectRoute from "../faceDetectRoute";
+import aiSketchRoute from "../aiSketchRoute";
 import paypalRoute from "../paypalRoute";
 import {
   helmetMiddleware,
@@ -87,6 +88,7 @@ async function startServer() {
   app.use("/api/ai-refine", uploadLimiter);
   app.use("/api/face-detect", uploadLimiter);
   app.use("/api/ai-document-redraw", uploadLimiter);
+  app.use("/api/ai-sketch", uploadLimiter);
 
   // ── Routes ───────────────────────────────────────────────────────────────────
   // OAuth callback under /api/oauth/callback
@@ -107,6 +109,8 @@ async function startServer() {
   app.use(svgToPngRoute);
   // Face Detection route (photo → GPT-4o Vision → portrait line art → DXF)
   app.use(faceDetectRoute);
+  // AI Sketch route (photo → single clean outline → DXF)
+  app.use(aiSketchRoute);
   // PayPal payment routes
   app.use(paypalRoute);
 

@@ -16,6 +16,7 @@ import { TokenPricingModal } from "@/components/TokenPricingModal";
 import { AiDocumentRedrawTab } from "@/components/AiDocumentRedrawTab";
 import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { FaceDetectTab } from "@/components/FaceDetectTab";
+import { AiSketchTab } from "@/components/AiSketchTab";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InsufficientTokensBanner } from "@/components/InsufficientTokensBanner";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -48,6 +49,7 @@ import {
   ChevronDown,
   User,
   CreditCard,
+  PenLine,
 } from "lucide-react";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -1993,11 +1995,12 @@ export default function Home() {
   const [bonusAnimation, setBonusAnimation] = useState<{ tokens: number } | null>(null);
 
   // Track active background jobs across all AI tabs
-  const [activeJobs, setActiveJobs] = useState<{ generate: boolean; trace: boolean; doc: boolean; face: boolean }>(() => ({
+  const [activeJobs, setActiveJobs] = useState<{ generate: boolean; trace: boolean; doc: boolean; face: boolean; sketch: boolean }>(() => ({
     generate: !!localStorage.getItem("ai_generate_jobId"),
     trace: !!localStorage.getItem("ai_trace_jobId"),
     doc: !!localStorage.getItem("doc_redraw_jobId"),
     face: !!localStorage.getItem("face_detect_jobId"),
+    sketch: !!localStorage.getItem("ai_sketch_jobId"),
   }));
 
   // Remember active tab — auto-switch to tab with active job on page return
@@ -2019,6 +2022,7 @@ export default function Home() {
         trace: !!localStorage.getItem("ai_trace_jobId"),
         doc: !!localStorage.getItem("doc_redraw_jobId"),
         face: !!localStorage.getItem("face_detect_jobId"),
+        sketch: !!localStorage.getItem("ai_sketch_jobId"),
       });
     }, 2000);
     return () => clearInterval(interval);
@@ -2453,7 +2457,7 @@ export default function Home() {
               {[
                 { tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create', color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-v3-Xq8E28tKQT67AA2juXG9Ze.webp' },
                 { tab: 'trace', label: isRtl ? 'AI Outline' : 'AI Outline', color: '#0d9488', bg: 'linear-gradient(135deg, #0d9488, #06b6d4)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png' },
-                { tab: 'sketch', label: isRtl ? 'AI סקיצה' : 'AI Sketch', color: '#d97706', bg: 'linear-gradient(135deg, #d97706, #f59e0b)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-sketch-ai-text-v2-CcjuVZbxwbYguCvTLMwBo8.webp', comingSoon: true },
+                { tab: 'sketch', label: isRtl ? 'AI סקיצה' : 'AI Sketch', color: '#d97706', bg: 'linear-gradient(135deg, #d97706, #f59e0b)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-sketch-ai-text-v2-CcjuVZbxwbYguCvTLMwBo8.webp' },
                 { tab: 'face', label: isRtl ? 'פורטרט' : 'Portrait', color: '#7c3aed', bg: 'linear-gradient(135deg, #7c3aed, #a855f7)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_e956deb2.png' },
               ].map((f, i) => (
                 <button
@@ -2548,15 +2552,20 @@ export default function Home() {
               )}
             </TabsTrigger>
             <TabsTrigger
-              value="redraw"
-              disabled
-              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-300 opacity-50 cursor-not-allowed relative px-1"
+              value="sketch"
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
+              style={{
+                background: activeTab === 'sketch' ? 'linear-gradient(135deg, #d97706, #f59e0b)' : 'transparent',
+              }}
             >
-              <FileEdit className="w-4 h-4 shrink-0" />
+              <PenLine className="w-4 h-4 shrink-0" />
               <span className="truncate text-[11px]">{t("aiSketch")}</span>
-              <span className="absolute -top-1.5 -right-1 text-[9px] font-bold bg-orange-400 text-white px-1 rounded-full leading-4">
-                {t("maintenance")}
-              </span>
+              {activeJobs.sketch && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
+                </span>
+              )}
             </TabsTrigger>
             <TabsTrigger
               value="face"
@@ -2628,6 +2637,29 @@ export default function Home() {
               />
             </div>
             <AiTraceTab onOpenAuth={() => openAuthAs("unregistered")} onInsufficientTokens={() => setShowTokensBanner(true)} />
+          </TabsContent>
+
+          <TabsContent value="sketch">
+            {/* Demo banner — AI Sketch */}
+            <div
+              className="mb-4 rounded-xl overflow-hidden p-3"
+              style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{background: '#fffbeb'}}>
+                  <PenLine className="w-3 h-3 text-amber-600" />
+                </div>
+                <span className="text-xs font-semibold text-amber-700">
+                  {isRtl ? 'דוגמאות AI סקיצה' : 'AI Sketch Examples'}
+                </span>
+              </div>
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-sketch-ai-text-v2-CcjuVZbxwbYguCvTLMwBo8.webp"
+                alt="AI Sketch Example"
+                className="w-full max-h-40 object-contain rounded-lg bg-gray-50 border border-gray-100"
+              />
+            </div>
+            <AiSketchTab onOpenAuth={() => openAuthAs("unregistered")} onInsufficientTokens={() => setShowTokensBanner(true)} />
           </TabsContent>
 
           <TabsContent value="redraw">
