@@ -112,7 +112,8 @@ export function SvgPanZoomViewer({
   const defaultHeight = height ?? "clamp(300px, 60vh, 680px)";
 
   const svgViewerClass = fillMode === 'fill' ? 'svg-viewer-fill' : 'svg-viewer-outline';
-  const cleanedSvg = stripInlineStrokeWidth(svgContent);
+  // svgClean.ts already sets stroke-width="0.5" on all paths — no need to strip
+  const cleanedSvg = svgContent;
 
   // ── Zoom helpers ────────────────────────────────────────────────────────────
 
