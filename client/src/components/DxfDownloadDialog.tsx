@@ -33,8 +33,6 @@ export interface DxfDownloadDialogProps {
   svgWidth?: number;
   /** Original SVG height in px */
   svgHeight?: number;
-  /** Action ID for generating closed-path DXF (for fill/color tools) */
-  actionId?: number;
 }
 
 // ─── Scale DXF content ────────────────────────────────────────────────────────
@@ -189,7 +187,6 @@ export function DxfDownloadDialog({
   segmentCount,
   svgWidth = 500,
   svgHeight = 500,
-  actionId,
 }: DxfDownloadDialogProps) {
   const [filename, setFilename] = useState(defaultFilename.replace(/\.dxf$/i, "").slice(0, 30).trimEnd());
   const [scalePercent, setScalePercent] = useState(100);
@@ -300,7 +297,6 @@ export function DxfDownloadDialog({
   };
 
   const isLoading = isDxfLoading || isPdfLoading;
-
   const { t, isRtl } = useLanguage();
 
   return (

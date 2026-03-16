@@ -1388,31 +1388,6 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    /** Generate a new DXF with all paths forced closed — for use with fill/color tools in design software */
-    generateClosedDxf: publicProcedure
-      .input(z.object({ actionId: z.number() }))
-      .mutation(async ({ input, ctx }) => {
-        const appUser = getAppUserFromCookie((ctx.req as { cookies?: Record<string, string> }).cookies);
-        if (!appUser) throw new TRPCError({ code: "UNAUTHORIZED", message: "נדרשת התחברות" });
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-        const [action] = await db
-          .select({ id: userActions.id, appUserId: userActions.appUserId, svgPreview: userActions.svgPreview, description: userActions.description })
-          .from(userActions)
-          .where(and(eq(userActions.id, input.actionId), eq(userActions.appUserId, appUser.userId)))
-          .limit(1);
-        if (!action) throw new TRPCError({ code: "NOT_FOUND" });
-        if (!action.svgPreview) throw new TRPCError({ code: "BAD_REQUEST", message: "אין SVG זמין לפעולה זו" });
-        const { svgToDxf } = await import("./svgToDxf");
-        const { storagePut } = await import("./storage");
-        const { nanoid } = await import("nanoid");
-        const { dxf } = svgToDxf(action.svgPreview, false, undefined, 0, false, true);
-        const safeName = (action.description ?? "design").replace(/[^a-zA-Z0-9\u0590-\u05FF_-]/g, "_").slice(0, 40);
-        const dxfKey = `closed-dxf/${nanoid()}.dxf`;
-        const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
-        return { dxfUrl, filename: `${safeName}_closed.dxf` };
-      }),
-
     /** Get a shared design by token (public) */
     getByShareToken: publicProcedure
       .input(z.object({ token: z.string() }))

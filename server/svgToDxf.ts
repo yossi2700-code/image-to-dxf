@@ -349,14 +349,7 @@ function svgMmToLwCode(mm: number): number {
  * LWPOLYLINE is an R2000 entity that stores all vertices in one object —
  * this is what CAD software (AutoCAD, CorelDRAW, etc.) shows as a single
  * connected polyline instead of hundreds of separate LINE objects.
- *
- * CorelDRAW compatibility requirements:
- * - Must include 100/AcDbEntity subclass marker before 100/AcDbPolyline
- * - Must include 5/handle (unique per entity)
- * - Vertex group codes 10/20 must appear for each vertex
  */
-let _entityHandle = 100; // Global handle counter for entities
-
 function writeLwPolyline(
   lines: string[],
   points: Point[],
@@ -366,29 +359,24 @@ function writeLwPolyline(
 ): void {
   if (points.length < 2) return;
 
-  const handle = (_entityHandle++).toString(16).toUpperCase();
   const flags = closed ? 1 : 0;
-
   lines.push("0\nLWPOLYLINE");
-  lines.push(`5\n${handle}`);                  // unique entity handle (required by CorelDRAW)
-  lines.push("100\nAcDbEntity");               // subclass marker — required by CorelDRAW
-  lines.push("8\n0");                          // layer name
-  lines.push("100\nAcDbPolyline");             // subclass marker — required by CorelDRAW
+  lines.push("8\n0");                          // layer
+  if (lwCode !== null) lines.push(`370\n${lwCode}`);
   lines.push("90\n" + points.length);          // number of vertices
   lines.push("70\n" + flags);                  // 1 = closed, 0 = open
   lines.push("43\n0.0");                       // constant width = 0
-  if (lwCode !== null) lines.push(`370\n${lwCode}`); // lineweight
 
   for (const [px, py] of points) {
     const dxfY = outputHeight - py;            // flip Y for DXF coordinate system
-    lines.push(`10\n${px.toFixed(4)}`);
-    lines.push(`20\n${dxfY.toFixed(4)}`);
+    lines.push(`10\n${px.toFixed(3)}`);
+    lines.push(`20\n${dxfY.toFixed(3)}`);
   }
 }
 
 // ─── SVG → DXF main function ──────────────────────────────────────────────────
 
-export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: number, minGapMm = 0, forceOpenPaths = false, forceClosedPaths = true): DxfResult {
+export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: number, minGapMm = 0, forceOpenPaths = false): DxfResult {
   // Extract viewBox dimensions
   const vbMatch = svgContent.match(/viewBox="([^"]*)"/i);
   let width = 500, height = 500;
@@ -489,14 +477,11 @@ export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: nu
     ? svgMmToLwCode(lineweightMm)
     : hairline ? 0 : null;
 
-  // Reset handle counter for each DXF file (avoid handle collisions)
-  _entityHandle = 100;
-
   // Build DXF R2000 (AC1015) — fully CorelDRAW-compatible structure
-  // Includes: HEADER, CLASSES, TABLES (LTYPE+LAYER+APPID), BLOCKS, ENTITIES, OBJECTS
+  // Includes: HEADER, CLASSES, TABLES (LTYPE+LAYER+APPID), BLOCKS, ENTITIES
   const lines: string[] = [];
 
-  // ─── HEADER ──────────────────────────────────────────────────────────────────────────────────
+  // ─── HEADER ────────────────────────────────────────────────────────────────────────────
   lines.push("0\nSECTION\n2\nHEADER");
   lines.push("9\n$ACADVER\n1\nAC1015");   // R2000 — required for LWPOLYLINE
   lines.push("9\n$INSBASE\n10\n0.0\n20\n0.0\n30\n0.0");
@@ -504,8 +489,6 @@ export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: nu
   lines.push(`9\n$EXTMAX\n10\n${outputWidth}\n20\n${outputHeight}\n30\n0.0`);
   lines.push("9\n$LTSCALE\n40\n1.0");
   lines.push("9\n$INSUNITS\n70\n4");       // 4 = millimetres
-  lines.push("9\n$MEASUREMENT\n70\n1");   // 1 = metric — required by CorelDRAW
-  lines.push("9\n$HANDSEED\n5\nFFFF");    // handle seed for entity IDs
   lines.push("0\nENDSEC");
 
   // ─── CLASSES (required by R2000 spec, CorelDRAW expects it) ───────────────────────────────
@@ -567,20 +550,10 @@ export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: nu
 
   for (const poly of outputPolylines) {
     // forceOpenPaths: treat all paths as open (no closed loops) — used for detailed mode
-    // forceClosedPaths: treat all paths as closed — used for fill/color mode in design software
-    const isClosed = forceClosedPaths ? true : (forceOpenPaths ? false : poly.closed);
-    writeLwPolyline(lines, poly.points, isClosed, outputHeight, lwCode);
+    writeLwPolyline(lines, poly.points, forceOpenPaths ? false : poly.closed, outputHeight, lwCode);
   }
 
-  lines.push("0\nENDSEC");
-
-  // ─── OBJECTS (required by R2000 spec — CorelDRAW rejects files without it) ───
-  lines.push("0\nSECTION\n2\nOBJECTS");
-  // Minimal root dictionary — required by AutoCAD/CorelDRAW R2000 parser
-  lines.push("0\nDICTIONARY\n5\nC\n100\nAcDbDictionary\n281\n1");
-  lines.push("0\nENDSEC");
-
-  lines.push("0\nEOF");
+  lines.push("0\nENDSEC\n0\nEOF");
 
   return {
     dxf: lines.join("\n"),

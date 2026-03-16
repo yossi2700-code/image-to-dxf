@@ -287,16 +287,16 @@ async function runTraceJob(
           "CRITICAL: Describe ONLY the physical object itself — its shape, structure, camera angle, proportions. " +
           "DO NOT mention people holding it, playing it, or interacting with it unless the user specifically asked to include a person. " +
           "DO NOT mention musical notes, decorative backgrounds, or contextual elements unless they are physically part of the object."
-        : "Identify and describe the MAIN SUBJECT in this image for line art generation. " +
+        : "Identify and describe the MAIN PHYSICAL OBJECT in this image for line art generation. " +
           "CRITICAL RULES: " +
-          "(1) MUSIC SHEET / SCORE RULE: If the image shows sheet music, musical notation, staff lines, or a music score — describe it as 'sheet music with staff lines, musical notes, clefs, and notation marks'. Do NOT call it a laptop, keyboard, or any other object. " +
-          "(2) DOCUMENT / DIAGRAM RULE: If the image is primarily text, a diagram, blueprint, chart, or technical drawing — describe it as such (e.g. 'technical diagram with lines and labels', 'blueprint with geometric shapes'). " +
-          "(3) PHYSICAL OBJECT RULE: If the image shows a 3D physical object (bottle, shoe, bag, instrument, toy, animal, person) — describe the COMPLETE PHYSICAL OBJECT as a whole. " +
-          "(4) If the object has a label/sticker/print on it (e.g. a baby face on a bottle label), describe the WHOLE OBJECT including the label as part of it. Do NOT zoom in on the label character and ignore the object. " +
-          "(5) If the most prominent element is a LETTER, NUMBER, SYMBOL, LOGO, or ENGRAVED/CARVED SHAPE on any surface — describe THAT EXACT SHAPE as the subject. Do NOT invent a character or figure around it. " +
-          "(6) If the image shows a PERSON or FACE as the main subject (not printed on a product), describe THAT PERSON. " +
-          "(7) DO NOT mention background objects, secondary items, or anything behind the main subject. " +
-          "(8) Focus on the SINGLE most visually dominant subject. " +
+          "(1) ALWAYS describe the COMPLETE PHYSICAL OBJECT as a whole — the bottle, shoe, bag, instrument, toy, etc. " +
+          "(2) If the object has a label/sticker/print on it (e.g. a baby face on a bottle label), describe the WHOLE OBJECT including the label as part of it. Do NOT zoom in on the label character and ignore the object. " +
+          "(3) If the most prominent element is a LETTER, NUMBER, SYMBOL, LOGO, or ENGRAVED/CARVED SHAPE on any surface — describe THAT EXACT SHAPE as the subject. Do NOT invent a character or figure around it. " +
+          "(4) If the image shows an engraved, carved, stamped, or embossed letter/symbol on metal/wood/stone — describe the letter/symbol itself (e.g. 'The letter V in bold serif style, viewed from front'). " +
+          "(5) If the image shows a PERSON or FACE as the main subject (not printed on a product), describe THAT PERSON. " +
+          "(6) DO NOT mention background objects, secondary items, or anything behind the main subject. " +
+          "(7) DO NOT mention musical notes, staff lines, or any musical notation. " +
+          "(8) Focus on the SINGLE most visually dominant PHYSICAL OBJECT. " +
           "Focus on: exact camera angle/view, facing direction, shape, structure, key features, proportions.";
     }
 
@@ -308,14 +308,13 @@ async function runTraceJob(
             "You are a world-class expert at analyzing images for precise line art / engraving generation. " +
             "Your analysis will be used to generate line art that EXACTLY reproduces the OBJECT in the image. " +
             "CRITICAL CONSTRAINT: Identify and describe the MOST VISUALLY PROMINENT SUBJECT in the image. " +
-            "MUSIC SHEET RULE: If the image shows sheet music, musical notation, staff lines, clefs, or a music score — ALWAYS describe it as 'sheet music with staff lines, musical notes, clefs, and notation marks, viewed from above'. Do NOT call it a laptop, keyboard, piano, or any physical object. " +
-            "DOCUMENT RULE: If the image is primarily a flat document, diagram, blueprint, chart, or technical drawing — describe it as such. " +
-            "PHYSICAL OBJECT RULE: If the image shows a 3D physical object — describe the COMPLETE PHYSICAL OBJECT. " +
+            "The subject is the COMPLETE PHYSICAL OBJECT in the image — a bottle, shoe, bag, instrument, toy, person, animal, etc. " +
             "PACKAGING/LABEL RULE: If the object is a bottle, box, can, or container with a character/face printed on the label — describe the WHOLE OBJECT (e.g. 'A cylindrical baby cream bottle with a baby face illustration on the label, front view'). Do NOT describe only the label character and ignore the container. " +
             "LETTER/SYMBOL RULE: If the most prominent element is a LETTER, NUMBER, SYMBOL, LOGO, or ENGRAVED/CARVED/STAMPED SHAPE on any surface (metal, wood, stone, paper) — describe THAT EXACT LETTER OR SHAPE as the subject. Example: 'The letter V in bold serif style, front view, centered'. Do NOT invent a character, figure, or creature around a letter or symbol. " +
             "NEVER describe: (a) people holding/using the object unless they ARE the main subject, " +
-            "(b) background objects or secondary items. " +
-            "Focus on the SINGLE most visually dominant subject. " +
+            "(b) musical notes, staff lines, or musical notation, " +
+            "(c) background objects or secondary items. " +
+            "Focus on the SINGLE most visually dominant PHYSICAL OBJECT as a whole. " +
             "Accuracy is critical — any mistake in your description will cause the generated art to look wrong. " +
             "\n\nYou MUST describe ALL of the following with maximum precision:\n" +
             "(1) CAMERA ANGLE / VIEW TYPE — THE MOST CRITICAL DETAIL. State it first and be extremely specific:\n" +

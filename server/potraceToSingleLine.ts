@@ -258,7 +258,7 @@ function polylinesToSvgPreview(polylines: Polyline[], width: number, height: num
     .join(" ");
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">
-  <path d="${pathData}" fill="none" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="${pathData}" fill="none" stroke="black" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`;
 }
 

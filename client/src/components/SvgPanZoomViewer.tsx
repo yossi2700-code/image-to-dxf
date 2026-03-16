@@ -38,15 +38,6 @@ function clampScale(s: number) {
   return Math.min(MAX_SCALE, Math.max(MIN_SCALE, s));
 }
 
-/** Strip inline stroke-width from SVG so CSS can control line thickness for both new and historical files */
-function stripInlineStrokeWidth(svg: string): string {
-  return svg
-    // Remove stroke-width as attribute: stroke-width="..."
-    .replace(/\s+stroke-width="[^"]*"/g, '')
-    // Remove stroke-width in style attributes: style="...stroke-width:X..."
-    .replace(/stroke-width\s*:[^;"'\s]*(;|(?=["'\s]))/g, '');
-}
-
 export function SvgPanZoomViewer({
   svgContent,
   height,
@@ -64,10 +55,6 @@ export function SvgPanZoomViewer({
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Always-current offset ref — updated synchronously alongside state
-  // This avoids the React batching issue where setOffset callback may run late
-  const offsetRef = useRef({ x: 0, y: 0 });
-
   // Pointer tracking for pan + pinch
   const activePointers = useRef<Map<number, { x: number; y: number }>>(new Map());
   const lastPinchDist = useRef<number | null>(null);
@@ -79,20 +66,6 @@ export function SvgPanZoomViewer({
   // Double-tap detection
   const lastTapTime = useRef<number>(0);
   const lastTapPos = useRef<{ x: number; y: number } | null>(null);
-
-  // Helper: update offset state AND ref together
-  const setOffsetSync = useCallback((val: { x: number; y: number } | ((prev: { x: number; y: number }) => { x: number; y: number })) => {
-    if (typeof val === 'function') {
-      setOffset((prev) => {
-        const next = val(prev);
-        offsetRef.current = next;
-        return next;
-      });
-    } else {
-      offsetRef.current = val;
-      setOffset(val);
-    }
-  }, []);
 
   // Compute SVG aspect ratio from viewBox
   const svgAspect = (() => {
@@ -112,8 +85,6 @@ export function SvgPanZoomViewer({
   const defaultHeight = height ?? "clamp(300px, 60vh, 680px)";
 
   const svgViewerClass = fillMode === 'fill' ? 'svg-viewer-fill' : 'svg-viewer-outline';
-  // svgClean.ts already sets stroke-width="0.5" on all paths — no need to strip
-  const cleanedSvg = svgContent;
 
   // ── Zoom helpers ────────────────────────────────────────────────────────────
 
@@ -122,13 +93,13 @@ export function SvgPanZoomViewer({
     setScale((prevScale) => {
       const newScale = clampScale(prevScale * factor);
       const actualFactor = newScale / prevScale;
-      setOffsetSync((prev) => ({
+      setOffset((prev) => ({
         x: cx + (prev.x - cx) * actualFactor,
         y: cy + (prev.y - cy) * actualFactor,
       }));
       return newScale;
     });
-  }, [setOffsetSync]);
+  }, []);
 
   const zoomIn = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -149,7 +120,7 @@ export function SvgPanZoomViewer({
   const resetView = (e: React.MouseEvent) => {
     e.stopPropagation();
     setScale(1);
-    setOffsetSync({ x: 0, y: 0 });
+    setOffset({ x: 0, y: 0 });
   };
 
   // ── Wheel zoom ──────────────────────────────────────────────────────────────
@@ -173,16 +144,31 @@ export function SvgPanZoomViewer({
     activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     didDrag.current = false;
 
-    if (activePointers.current.size >= 1) {
-      // Any number of fingers — pan only (no pinch zoom)
-      // Always use the FIRST pointer for drag reference
-      if (activePointers.current.size === 1) {
-        isDragging.current = true;
-        dragStart.current = { px: e.clientX, py: e.clientY, ox: offsetRef.current.x, oy: offsetRef.current.y };
-      }
-      // Ignore additional fingers (no pinch zoom)
+    if (activePointers.current.size === 1) {
+      // Single pointer — start drag
+      isDragging.current = true;
+      dragStart.current = { px: e.clientX, py: e.clientY, ox: 0, oy: 0 };
+      setOffset((prev) => {
+        dragStart.current = { px: e.clientX, py: e.clientY, ox: prev.x, oy: prev.y };
+        return prev;
+      });
       lastPinchDist.current = null;
       lastPinchMid.current = null;
+    } else if (activePointers.current.size === 2) {
+      // Two pointers — start pinch
+      isDragging.current = false;
+      dragStart.current = null;
+      const pts = Array.from(activePointers.current.values());
+      const dx = pts[0].x - pts[1].x;
+      const dy = pts[0].y - pts[1].y;
+      lastPinchDist.current = Math.hypot(dx, dy);
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (rect) {
+        lastPinchMid.current = {
+          x: (pts[0].x + pts[1].x) / 2 - rect.left,
+          y: (pts[0].y + pts[1].y) / 2 - rect.top,
+        };
+      }
     }
   }, []);
 
@@ -190,22 +176,44 @@ export function SvgPanZoomViewer({
     if (!activePointers.current.has(e.pointerId)) return;
     activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-    // Pan with any single pointer (first pointer captured)
-    if (isDragging.current && dragStart.current) {
-      // Only track the first pointer (lowest pointerId in map)
-      const firstId = Array.from(activePointers.current.keys())[0];
-      if (e.pointerId === firstId) {
-        const ds = dragStart.current;
-        const dx = e.clientX - ds.px;
-        const dy = e.clientY - ds.py;
-        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) didDrag.current = true;
-        setOffsetSync({
-          x: ds.ox + dx,
-          y: ds.oy + dy,
-        });
+    if (activePointers.current.size === 1 && isDragging.current && dragStart.current) {
+      // Pan
+      const ds = dragStart.current;
+      const dx = e.clientX - ds.px;
+      const dy = e.clientY - ds.py;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) didDrag.current = true;
+      setOffset({
+        x: ds.ox + dx,
+        y: ds.oy + dy,
+      });
+    } else if (activePointers.current.size === 2 && lastPinchDist.current !== null) {
+      // Pinch zoom
+      const pts = Array.from(activePointers.current.values());
+      const dx = pts[0].x - pts[1].x;
+      const dy = pts[0].y - pts[1].y;
+      const dist = Math.hypot(dx, dy);
+      const factor = dist / lastPinchDist.current;
+      lastPinchDist.current = dist;
+      didDrag.current = true;
+
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (rect) {
+        const midX = (pts[0].x + pts[1].x) / 2 - rect.left;
+        const midY = (pts[0].y + pts[1].y) / 2 - rect.top;
+        zoomAt(factor, midX, midY);
+
+        // Also pan by midpoint movement
+        if (lastPinchMid.current) {
+          const dmx = midX - lastPinchMid.current.x;
+          const dmy = midY - lastPinchMid.current.y;
+          if (Math.abs(dmx) > 0.5 || Math.abs(dmy) > 0.5) {
+            setOffset((prev) => ({ x: prev.x + dmx, y: prev.y + dmy }));
+          }
+          lastPinchMid.current = { x: midX, y: midY };
+        }
       }
     }
-  }, [setOffsetSync]);
+  }, [zoomAt]);
 
   const onPointerUp = useCallback((e: React.PointerEvent) => {
     activePointers.current.delete(e.pointerId);
@@ -216,11 +224,49 @@ export function SvgPanZoomViewer({
     if (activePointers.current.size === 0) {
       isDragging.current = false;
       dragStart.current = null;
-    } else {
-      // Still have pointers — update drag reference to remaining first pointer
+
+      // Double-tap detection: only for touch/pen, not mouse
+      if (!didDrag.current && e.pointerType !== 'mouse') {
+        const now = Date.now();
+        const rect = containerRef.current?.getBoundingClientRect();
+        const tapX = rect ? e.clientX - rect.left : e.clientX;
+        const tapY = rect ? e.clientY - rect.top : e.clientY;
+        const timeDiff = now - lastTapTime.current;
+        const lastPos = lastTapPos.current;
+        const posDiff = lastPos ? Math.hypot(tapX - lastPos.x, tapY - lastPos.y) : 999;
+
+        if (timeDiff < 350 && posDiff < 40) {
+          // Double tap! Toggle between zoom x2.5 and reset
+          setScale((prevScale) => {
+            if (prevScale > 1.5) {
+              // Already zoomed — reset
+              setOffset({ x: 0, y: 0 });
+              return 1;
+            } else {
+              // Zoom x2.5 toward tap point
+              const factor = 2.5;
+              setOffset((prev) => ({
+                x: tapX + (prev.x - tapX) * factor,
+                y: tapY + (prev.y - tapY) * factor,
+              }));
+              return clampScale(prevScale * factor);
+            }
+          });
+          lastTapTime.current = 0; // Reset so triple-tap doesn't trigger again
+          lastTapPos.current = null;
+        } else {
+          lastTapTime.current = now;
+          lastTapPos.current = { x: tapX, y: tapY };
+        }
+      }
+    } else if (activePointers.current.size === 1) {
+      // Transition from pinch back to single-finger drag
       isDragging.current = true;
       const [ptr] = Array.from(activePointers.current.values());
-      dragStart.current = { px: ptr.x, py: ptr.y, ox: offsetRef.current.x, oy: offsetRef.current.y };
+      setOffset((prev) => {
+        dragStart.current = { px: ptr.x, py: ptr.y, ox: prev.x, oy: prev.y };
+        return prev;
+      });
     }
   }, []);
 
@@ -235,14 +281,14 @@ export function SvgPanZoomViewer({
     e.stopPropagation();
     setFullscreen(true);
     setScale(1);
-    setOffsetSync({ x: 0, y: 0 });
+    setOffset({ x: 0, y: 0 });
   };
 
   const closeFullscreen = (e: React.MouseEvent) => {
     e.stopPropagation();
     setFullscreen(false);
     setScale(1);
-    setOffsetSync({ x: 0, y: 0 });
+    setOffset({ x: 0, y: 0 });
   };
 
   // Lock body scroll when fullscreen is open
@@ -255,69 +301,6 @@ export function SvgPanZoomViewer({
     return () => { document.body.style.overflow = ''; };
   }, [fullscreen]);
 
-  // Native touch ref — used to attach non-passive touch listeners
-  const nativeTouchRef = useRef<HTMLDivElement | null>(null);
-
-  // Touch pan state (separate from pointer events — iOS-safe)
-  const touchDragStart = useRef<{ tx: number; ty: number; ox: number; oy: number } | null>(null);
-
-  // Attach native touch listeners: block browser scroll AND handle pan on iOS
-  const attachNativeListeners = useCallback((el: HTMLDivElement | null) => {
-    (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-    nativeTouchRef.current = el;
-    if (!el) return;
-
-    const onTouchStart = (e: TouchEvent) => {
-      e.preventDefault(); // block browser scroll & pinch-zoom
-      if (e.touches.length === 1) {
-        const t = e.touches[0];
-        touchDragStart.current = {
-          tx: t.clientX,
-          ty: t.clientY,
-          ox: offsetRef.current.x,
-          oy: offsetRef.current.y,
-        };
-      } else {
-        // Multi-touch: cancel drag
-        touchDragStart.current = null;
-      }
-    };
-
-    const onTouchMove = (e: TouchEvent) => {
-      e.preventDefault(); // block browser scroll
-      if (e.touches.length === 1 && touchDragStart.current) {
-        const t = e.touches[0];
-        const ds = touchDragStart.current;
-        setOffsetSync({
-          x: ds.ox + (t.clientX - ds.tx),
-          y: ds.oy + (t.clientY - ds.ty),
-        });
-      }
-    };
-
-    const onTouchEnd = (e: TouchEvent) => {
-      e.preventDefault();
-      if (e.touches.length === 0) {
-        touchDragStart.current = null;
-      } else if (e.touches.length === 1) {
-        // Finger lifted but one remains — reset drag start
-        const t = e.touches[0];
-        touchDragStart.current = {
-          tx: t.clientX,
-          ty: t.clientY,
-          ox: offsetRef.current.x,
-          oy: offsetRef.current.y,
-        };
-      }
-    };
-
-    el.addEventListener('touchstart', onTouchStart, { passive: false });
-    el.addEventListener('touchmove', onTouchMove, { passive: false });
-    el.addEventListener('touchend', onTouchEnd, { passive: false });
-    el.addEventListener('touchcancel', onTouchEnd, { passive: false });
-    // No cleanup needed — element unmounts with component
-  }, [setOffsetSync]);
-
   // ── Toolbar ─────────────────────────────────────────────────────────────────
 
   const Toolbar = ({ isFullscreen = false }: { isFullscreen?: boolean }) => (
@@ -329,23 +312,6 @@ export function SvgPanZoomViewer({
         borderBottom: isFullscreen ? '1px solid rgba(255,255,255,0.1)' : undefined,
       }}
     >
-      {/* Back button — only in fullscreen, prominent and always visible */}
-      {isFullscreen && (
-        <button
-          onClick={closeFullscreen}
-          className="flex items-center gap-1.5 h-9 px-3 rounded-full text-sm font-semibold transition-all active:scale-95 shrink-0"
-          style={{
-            background: 'rgba(255,255,255,0.15)',
-            color: 'white',
-            border: '1.5px solid rgba(255,255,255,0.25)',
-          }}
-          title={isRtl ? 'חזרה' : 'Back'}
-        >
-          <span style={{ fontSize: 16 }}>&#8592;</span>
-          <span>{isRtl ? 'חזרה' : 'Back'}</span>
-        </button>
-      )}
-
       {showFillToggle && (
         <button
           onClick={handleFillToggle}
@@ -448,7 +414,9 @@ export function SvgPanZoomViewer({
 
   const Canvas = ({ canvasHeight, isFullscreen = false }: { canvasHeight: number | string; isFullscreen?: boolean }) => (
     <div
-      ref={attachNativeListeners}
+      ref={(el) => {
+        (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+      }}
       className={`relative overflow-hidden select-none touch-none ${svgViewerClass}`}
       style={{
         height: canvasHeight,
@@ -479,7 +447,7 @@ export function SvgPanZoomViewer({
           pointerEvents: 'none',
           willChange: 'transform',
         }}
-        dangerouslySetInnerHTML={{ __html: cleanedSvg }}
+        dangerouslySetInnerHTML={{ __html: svgContent }}
       />
 
       {/* Hint overlay — shown only at scale=1, offset=0 */}
@@ -494,7 +462,7 @@ export function SvgPanZoomViewer({
           }}
         >
           <span style={{ fontSize: 13 }}>👆</span>
-          <span>{isRtl ? 'גרור להזזה · כפתורות זכוכית להגדלה' : 'Drag to pan · Use ＋/－ to zoom'}</span>
+          <span>{isRtl ? 'גרור להזזה · צבט להגדלה' : 'Drag to pan · Pinch to zoom'}</span>
         </div>
       )}
     </div>
