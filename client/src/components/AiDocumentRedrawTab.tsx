@@ -63,6 +63,7 @@ type Status = "idle" | "loading" | "success" | "error";
 
 // ─── SVG Viewer (inline, touch-friendly) ─────────────────────────────────────
 function SvgViewer({ svgContent }: { svgContent: string }) {
+  const [fillMode, setFillMode] = useState<'fill' | 'outline'>('fill');
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -70,9 +71,10 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
   const panStart = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
   const lastTouchDist = useRef<number | null>(null);
 
-  const styledSvg = svgContent
-    .replace(/fill="black"/g, 'fill="#1a1a2e"')
-    .replace(/stroke="black"/g, 'stroke="#1a1a2e"');
+  const styleTag = fillMode === 'fill'
+    ? '<style>path,polygon,polyline,rect:not([fill="white"]),circle,ellipse{fill:black!important;stroke:none!important}</style>'
+    : '<style>path,polygon,polyline,rect:not([fill="white"]),circle,ellipse{fill:none!important;stroke:black!important;stroke-width:0.5px!important}</style>';
+  const styledSvg = svgContent.replace(/(<svg[^>]*>)/, '$1' + styleTag);
 
   const svgMatch = svgContent.match(/viewBox="[^"]*"/);
   const viewBoxVals = svgMatch?.[0]?.match(/[\d.]+/g);
@@ -153,7 +155,18 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
   );
 
   const Toolbar = ({ onClose }: { onClose?: (e: React.MouseEvent) => void }) => (
-    <div className="flex items-center gap-1 p-1.5 bg-muted/50 border-b justify-end">
+    <div className="flex items-center gap-1 p-1.5 bg-muted/50 border-b">
+      <button
+        onClick={(e) => { e.stopPropagation(); setFillMode(m => m === 'fill' ? 'outline' : 'fill'); }}
+        className="h-7 px-2 rounded text-xs font-bold transition-all mr-auto"
+        style={{
+          background: fillMode === 'fill' ? '#1e1e1e' : 'transparent',
+          color: fillMode === 'fill' ? 'white' : '#374151',
+          border: fillMode === 'fill' ? '1px solid #1e1e1e' : '1px solid #d1d5db',
+        }}
+      >
+        {fillMode === 'fill' ? '◼ מילוי' : '◻ קווים'}
+      </button>
       <button onClick={zoomOut} className="w-8 h-8 rounded flex items-center justify-center hover:bg-muted"><ZoomOut className="w-4 h-4" /></button>
       <button onClick={zoomIn} className="w-8 h-8 rounded flex items-center justify-center hover:bg-muted"><ZoomIn className="w-4 h-4" /></button>
       <button onClick={onClose ?? (() => { setFullscreen(true); setScale(1); setOffset({ x: 0, y: 0 }); })} className="w-8 h-8 rounded flex items-center justify-center hover:bg-muted">

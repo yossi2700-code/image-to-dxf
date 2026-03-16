@@ -53,6 +53,7 @@ const VARIATION_LABELS = ["פשוט", "מפורט", "דקורטיבי"];
 const VARIATION_LABELS_EN = ["Simple", "Detailed", "Decorative"];
 
 function SvgViewer({ svgContent }: { svgContent: string }) {
+  const [fillMode, setFillMode] = useState<'fill' | 'outline'>('fill');
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -94,11 +95,11 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
     return 1;
   })();
 
-  const styledSvg = svgContent.replace(/<svg([^>]*)>/, (_m, attrs) =>
-    /width=/.test(attrs) && /height=/.test(attrs)
-      ? `<svg${attrs} style="display:block;max-width:100%;max-height:100%;">`
-      : `<svg${attrs} style="display:block;width:100%;height:100%;">`
-  );
+  const styleTag = fillMode === 'fill'
+    ? '<style>path,polygon,polyline,rect:not([fill="white"]),circle,ellipse{fill:black!important;stroke:none!important}</style>'
+    : '<style>path,polygon,polyline,rect:not([fill="white"]),circle,ellipse{fill:none!important;stroke:black!important;stroke-width:0.5px!important}</style>';
+
+  const styledSvg = svgContent.replace(/(<svg[^>]*>)/, '$1' + styleTag);
 
   const Viewer = ({ height }: { height: number | string }) => (
     <div className="relative overflow-hidden bg-white select-none" style={{ height, cursor: isPanning ? "grabbing" : "grab" }}
@@ -113,6 +114,18 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
     <div className="flex items-center gap-1 px-3 border-b bg-muted/30" style={{ minHeight: 44 }}>
       <Eye className="w-4 h-4 text-muted-foreground shrink-0" />
       <span className="text-xs text-muted-foreground font-medium flex-1">Vector Preview</span>
+      <button
+        onClick={(e) => { e.stopPropagation(); setFillMode(m => m === 'fill' ? 'outline' : 'fill'); }}
+        className="h-7 px-2 rounded text-xs font-bold transition-all"
+        style={{
+          background: fillMode === 'fill' ? '#1e1e1e' : 'transparent',
+          color: fillMode === 'fill' ? 'white' : '#374151',
+          border: fillMode === 'fill' ? '1px solid #1e1e1e' : '1px solid #d1d5db',
+        }}
+        title={fillMode === 'fill' ? 'Switch to outline' : 'Switch to fill'}
+      >
+        {fillMode === 'fill' ? '◼ מילוי' : '◻ קווים'}
+      </button>
       <span className="text-xs text-muted-foreground/60 w-10 text-center">{Math.round(scale * 100)}%</span>
       <button onClick={zoomOut} className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80"><ZoomOut className="w-5 h-5 text-foreground" /></button>
       <button onClick={zoomIn} className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80"><ZoomIn className="w-5 h-5 text-foreground" /></button>

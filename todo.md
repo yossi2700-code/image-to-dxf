@@ -1858,3 +1858,12 @@
 - [x] פורטרט: שיפור prompt לנאמנות גבוהה לפנים אמיתיות + quality medium
 - [x] שגיאת PDF ייצוא — תוקן: Safari-safe regex sanitization
 - [x] מילוי שחור בוקטור — תוקן: הזרקת CSS style tag במקום regex
+
+## תיקון PDF ייצוא — שגיאת XML corrupt header (מרץ 2026)
+
+- [x] תקן SVG sanitization בשרת — regex לתיקון תגיות לא סגורות + svgo לניקוי XML מלא
+
+## בוחר צבע מילוי ב-SVG viewer
+
+- [x] צבע שחור בלבד (ללא בוחר צבעות)
+- [x] כפתור ◼ מילוי / ◻ קווים בכל 3 הטאבים (AI Outline, Portrait, AI Document Redraw)
