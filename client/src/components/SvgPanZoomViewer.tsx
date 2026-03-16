@@ -63,6 +63,9 @@ export function SvgPanZoomViewer({
   const dragStart = useRef<{ px: number; py: number; ox: number; oy: number } | null>(null);
   // Track if a significant drag happened (to suppress tap-as-click)
   const didDrag = useRef(false);
+  // Double-tap detection
+  const lastTapTime = useRef<number>(0);
+  const lastTapPos = useRef<{ x: number; y: number } | null>(null);
 
   // Compute SVG aspect ratio from viewBox
   const svgAspect = (() => {
@@ -221,6 +224,41 @@ export function SvgPanZoomViewer({
     if (activePointers.current.size === 0) {
       isDragging.current = false;
       dragStart.current = null;
+
+      // Double-tap detection: only for touch/pen, not mouse
+      if (!didDrag.current && e.pointerType !== 'mouse') {
+        const now = Date.now();
+        const rect = containerRef.current?.getBoundingClientRect();
+        const tapX = rect ? e.clientX - rect.left : e.clientX;
+        const tapY = rect ? e.clientY - rect.top : e.clientY;
+        const timeDiff = now - lastTapTime.current;
+        const lastPos = lastTapPos.current;
+        const posDiff = lastPos ? Math.hypot(tapX - lastPos.x, tapY - lastPos.y) : 999;
+
+        if (timeDiff < 350 && posDiff < 40) {
+          // Double tap! Toggle between zoom x2.5 and reset
+          setScale((prevScale) => {
+            if (prevScale > 1.5) {
+              // Already zoomed — reset
+              setOffset({ x: 0, y: 0 });
+              return 1;
+            } else {
+              // Zoom x2.5 toward tap point
+              const factor = 2.5;
+              setOffset((prev) => ({
+                x: tapX + (prev.x - tapX) * factor,
+                y: tapY + (prev.y - tapY) * factor,
+              }));
+              return clampScale(prevScale * factor);
+            }
+          });
+          lastTapTime.current = 0; // Reset so triple-tap doesn't trigger again
+          lastTapPos.current = null;
+        } else {
+          lastTapTime.current = now;
+          lastTapPos.current = { x: tapX, y: tapY };
+        }
+      }
     } else if (activePointers.current.size === 1) {
       // Transition from pinch back to single-finger drag
       isDragging.current = true;

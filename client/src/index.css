@@ -320,6 +320,7 @@
    They scope the fill/stroke rules to the SVG content only,
    preventing bleed onto Lucide icon buttons in the same toolbar.
 */
+/* Fill mode: solid black shapes */
 .svg-viewer-fill svg path,
 .svg-viewer-fill svg circle,
 .svg-viewer-fill svg rect:not([fill="white"]),
@@ -327,10 +328,13 @@
 .svg-viewer-fill svg polyline,
 .svg-viewer-fill svg ellipse,
 .svg-viewer-fill svg line {
-  fill: black !important;
-  stroke: none !important;
+  fill: #111111 !important;
+  stroke: #111111 !important;
+  stroke-width: 0.3px !important;
+  opacity: 1 !important;
 }
 
+/* Outline mode: clear black strokes, no fill */
 .svg-viewer-outline svg path,
 .svg-viewer-outline svg circle,
 .svg-viewer-outline svg rect:not([fill="white"]),
@@ -339,6 +343,9 @@
 .svg-viewer-outline svg ellipse,
 .svg-viewer-outline svg line {
   fill: none !important;
-  stroke: black !important;
-  stroke-width: 0.5px !important;
+  stroke: #111111 !important;
+  stroke-width: 1.2px !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  opacity: 1 !important;
 }
