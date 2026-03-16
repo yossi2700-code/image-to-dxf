@@ -17,9 +17,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Download, X, FileCode2, FileText, Loader2, Share2, PaintBucket } from "lucide-react";
+import { Download, X, FileCode2, FileText, Loader2, Share2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { trpc } from "@/lib/trpc";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -196,10 +195,7 @@ export function DxfDownloadDialog({
   const [scalePercent, setScalePercent] = useState(100);
   const [isDxfLoading, setIsDxfLoading] = useState(false);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
-  const [isClosedDxfLoading, setIsClosedDxfLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const generateClosedDxfMutation = trpc.history.generateClosedDxf.useMutation();
 
   const isMobile = isMobileDevice();
   const supportsShare = canShareFiles();
@@ -303,43 +299,8 @@ export function DxfDownloadDialog({
     }
   };
 
-  const isLoading = isDxfLoading || isPdfLoading || isClosedDxfLoading;
+  const isLoading = isDxfLoading || isPdfLoading;
 
-  const handleClosedDxfAction = async () => {
-    if (!actionId) return;
-    setIsClosedDxfLoading(true);
-    setError(null);
-    try {
-      const result = await generateClosedDxfMutation.mutateAsync({ actionId });
-      const resp = await fetch(result.dxfUrl);
-      if (!resp.ok) throw new Error("Download error");
-      const dxfText = await resp.text();
-      const scaledDxf = scaleDxfContent(dxfText, scaleFactor);
-      const blob = new Blob([scaledDxf], { type: "application/octet-stream" });
-      const fname = result.filename.replace(/\.dxf$/i, "");
-      const file = new File([blob], `${fname}.dxf`, { type: "application/octet-stream" });
-      if (useShareSheet && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: fname });
-        onClose();
-        return;
-      }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${fname}.dxf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      onClose();
-    } catch (err: unknown) {
-      if (err instanceof Error && err.name === "AbortError") return;
-      console.error("Closed DXF error:", err);
-      setError(err instanceof Error ? err.message : "שגיאה בייצור DXF לצביעה");
-    } finally {
-      setIsClosedDxfLoading(false);
-    }
-  };
   const { t, isRtl } = useLanguage();
 
   return (
@@ -460,24 +421,6 @@ export function DxfDownloadDialog({
                   <FileText className="w-5 h-5 ml-2" />
                 )}
                 {isPdfLoading ? t("exportingPdf") : useShareSheet ? t("shareOrSavePdf") : t("downloadPdfBtn")}
-              </Button>
-            )}
-
-            {/* Closed DXF button — for fill/color tools */}
-            {actionId && (
-              <Button
-                size="lg"
-                className="w-full font-bold text-base h-12 text-white hover:opacity-90 transition-all"
-                style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', border: 'none', boxShadow: '0 3px 10px rgba(124,58,237,0.3)' } as React.CSSProperties}
-                onClick={handleClosedDxfAction}
-                disabled={isLoading}
-              >
-                {isClosedDxfLoading ? (
-                  <Loader2 className="w-5 h-5 ml-2 animate-spin" />
-                ) : (
-                  <PaintBucket className="w-5 h-5 ml-2" />
-                )}
-                {isClosedDxfLoading ? "מכין DXF לצביעה..." : "DXF לצביעה (קווים סגורים)"}
               </Button>
             )}
 
