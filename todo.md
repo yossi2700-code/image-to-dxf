@@ -1852,3 +1852,9 @@
 - [x] שגיאה בייצוא PDF — תוקן: SVG sanitization בשרת + בלקוח
 - [x] הוסף כפתורי DXF ו-PDF ברורים לכל פריט בהיסטוריה
 - [x] תקן שגיאת PDF export (SVG corrupt header) — sanitization בשרת ובלקוח
+
+## תיקונים - מרץ 2026 (3)
+
+- [x] פורטרט: שיפור prompt לנאמנות גבוהה לפנים אמיתיות + quality medium
+- [x] שגיאת PDF ייצוא — תוקן: Safari-safe regex sanitization
+- [x] מילוי שחור בוקטור — תוקן: הזרקת CSS style tag במקום regex

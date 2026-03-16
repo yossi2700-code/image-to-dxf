@@ -85,18 +85,15 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
     return 1;
   })();
 
-  // Black fill mode: fill all paths with black, no stroke
-  // Outline mode: remove fill, add black stroke
-  const styledSvg = fillMode === 'fill'
-    ? svgContent
-        .replace(/fill="[^"]*"/g, 'fill="black"')
-        .replace(/fill:[^;"']*(;|(?="))/g, 'fill:black$1')
-        .replace(/stroke="[^"]*"/g, 'stroke="none"')
-        .replace(/<path /g, '<path fill="black" stroke="none" ')
-    : svgContent
-        .replace(/fill="[^"]*"/g, 'fill="none"')
-        .replace(/fill:[^;"']*(;|(?="))/g, 'fill:none$1')
-        .replace(/<path /g, '<path stroke="black" stroke-width="0.5" fill="none" ');
+  // Apply fill/outline mode via a <style> injection — avoids regex duplication issues
+  // with potrace SVGs that already have fill attributes on paths.
+  const styledSvg = (() => {
+    const styleTag = fillMode === 'fill'
+      ? '<style>path,polygon,polyline,rect,circle,ellipse{fill:black!important;stroke:none!important}</style>'
+      : '<style>path,polygon,polyline,rect,circle,ellipse{fill:none!important;stroke:black!important;stroke-width:0.5px!important}</style>';
+    // Inject style tag right after <svg ...> opening tag
+    return svgContent.replace(/(<svg[^>]*>)/, '$1' + styleTag);
+  })();
 
   const Toolbar = ({ onClose }: { onClose?: (e: React.MouseEvent) => void }) => (
     <div className="flex items-center gap-1 px-3 border-b bg-muted/30" style={{ minHeight: 44 }}>

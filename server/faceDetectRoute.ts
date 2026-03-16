@@ -36,20 +36,24 @@ export type PortraitStyle = "simple" | "detailed";
 
 const PORTRAIT_STYLE_PROMPTS: Record<PortraitStyle, string> = {
   simple:
-    "Convert this face photo to clean black-and-white line art for laser engraving. " +
-    "CRITICAL: Preserve this exact person's identity — match their jawline, eye shape, nose, lips, brow shape, and hair silhouette precisely. " +
-    "Pure black lines on white background only. No shading, no fill, no grey. " +
-    "Draw only the head and face (no clothing/background). Face occupies 65-75% of image. Full head visible. " +
-    "Include: face outline, hairline, eyes with lashes, eyebrows, nose, lips, ears, neck. Beard/stubble if present. " +
-    "No text or watermarks.",
+    "Convert this face photo into a clean black-and-white line art portrait for laser engraving. " +
+    "CRITICAL IDENTITY REQUIREMENT: This must be a recognizable likeness of the SPECIFIC person in the photo. " +
+    "Carefully study and replicate: exact face shape (oval/round/square/heart), precise eye shape and spacing, nose width and length, lip shape, brow arch, ear shape, chin, and hair silhouette. " +
+    "The result must look like THIS person, not a generic face. " +
+    "Style: clean minimal lines, no shading, no grey tones, pure black strokes on white background. " +
+    "Composition: head and face only, no clothing or background. Face fills 65-75% of canvas. Full head visible. " +
+    "Include: face contour, hairline, eyes with lashes, eyebrows, nose, lips, ears, neck. Beard/stubble if present. " +
+    "No text, no watermarks, no decorative elements.",
 
   detailed:
-    "Convert this face photo to detailed black-and-white line art for laser engraving. " +
-    "CRITICAL: Preserve this exact person's identity — match their jawline, eye shape, nose, lips, brow shape, and hair silhouette precisely. " +
-    "Pure black lines on white background only. No shading, no fill, no grey. " +
-    "Draw only the head and face (no clothing/background). Face occupies 65-75% of image. Full head visible. " +
-    "Include: precise face outline, detailed hair strands, eyes with iris/lashes/eyelid folds, brow hairs, nose bridge/nostrils, lips with cupid's bow, ears with inner detail, neck. Beard/stubble if present with growth direction. " +
-    "Add cheekbone and jaw structure lines. No text or watermarks.",
+    "Convert this face photo into a detailed black-and-white line art portrait for laser engraving. " +
+    "CRITICAL IDENTITY REQUIREMENT: This must be a highly recognizable likeness of the SPECIFIC person in the photo. " +
+    "Carefully study and replicate: exact face proportions, precise eye shape (iris, eyelid folds, lash line), nose bridge and nostrils, lip shape with cupid's bow, brow hair direction, ear cartilage details, chin and jaw line, and hair texture/direction. " +
+    "The result must unmistakably look like THIS person. " +
+    "Style: detailed line art, no shading or grey — only black lines on white. Add fine lines for cheekbones, forehead, and jaw structure. " +
+    "Composition: head and face only, no clothing or background. Face fills 65-75% of canvas. Full head visible. " +
+    "Include: detailed hair strands, eyes with iris/lashes/eyelid folds, brow hairs, nose bridge/nostrils, lips, ears with inner detail, neck, beard/stubble with growth direction if present. " +
+    "No text, no watermarks.",
 };
 
 const STYLE_ORDER: PortraitStyle[] = ["simple", "detailed"];
@@ -102,14 +106,14 @@ async function generatePortraitVariation(
   const editFile = await toFile(editSourceBuffer, "face.png", { type: "image/png" });
   const editPrompt = PORTRAIT_STYLE_PROMPTS[style];
 
-  // gpt-image-1 with quality:low is the best balance of speed and line-art quality
+  // gpt-image-1 with quality:medium gives better face likeness (identity preservation)
   const response = await openai.images.edit({
     model: "gpt-image-1",
     image: editFile,
     prompt: editPrompt,
     n: 1,
     size: "1024x1024",
-    quality: "low",
+    quality: "medium",
   });
 
   const imageData = response.data?.[0];

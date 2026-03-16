@@ -85,15 +85,20 @@ async function generatePdfBlob(
 
   // Sanitize SVG before sending to server — fix corrupt header / XML parse errors.
   // potrace/AI SVGs sometimes have unclosed tags, stray attributes, or invalid XML.
+  // NOTE: No lookbehind assertions — must be Safari-compatible.
   let sanitizedSvg = svgContent;
-  // 1. Ensure self-closing <path ... /> (not <path ...>)
-  sanitizedSvg = sanitizedSvg.replace(/<path([^>]*?)(?<!\/)>/g, '<path$1/>');
+  // 1. Ensure self-closing <path ... /> (not <path ...>) — Safari-safe (no lookbehind)
+  sanitizedSvg = sanitizedSvg.replace(/<path([^>]*[^/])>/g, '<path$1/>');
+  sanitizedSvg = sanitizedSvg.replace(/<path>/g, '<path/>');
   // 2. Remove any <script> or <foreignObject> tags that break XML parsers
   sanitizedSvg = sanitizedSvg.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
   sanitizedSvg = sanitizedSvg.replace(/<foreignObject[^>]*>[\s\S]*?<\/foreignObject>/gi, '');
-  // 3. Strip any BOM or non-printable chars before the <?xml or <svg tag
-  sanitizedSvg = sanitizedSvg.replace(/^[\s\S]*?(?=<(?:\?xml|svg))/i, '');
-  // 4. Ensure SVG namespace
+  // 3. Strip null bytes and control characters that corrupt the XML header
+  sanitizedSvg = sanitizedSvg.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  // 4. Strip any BOM or non-SVG prefix before the <?xml or <svg tag
+  const svgStart = sanitizedSvg.search(/<(?:\?xml|svg)/i);
+  if (svgStart > 0) sanitizedSvg = sanitizedSvg.slice(svgStart);
+  // 5. Ensure SVG namespace
   if (!sanitizedSvg.includes('xmlns=')) {
     sanitizedSvg = sanitizedSvg.replace(/<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
   }
