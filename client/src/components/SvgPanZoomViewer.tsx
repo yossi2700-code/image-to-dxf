@@ -196,36 +196,23 @@ export function SvgPanZoomViewer({
     }
     ts.didMove = false;
 
-    if (ts.touches.size === 1) {
-      // Single finger — start pan
-      const [touch] = Array.from(ts.touches.values());
-      const cx = touch.x - rect.left;
-      const cy = touch.y - rect.top;
-      // Store the SVG coordinate under the finger
-      setVb((cur) => {
-        if (!cur) return cur;
-        ts.panStart = {
-          touchX: cx,
-          touchY: cy,
-          vbX: cur.x + (cx / rect.width) * cur.w,
-          vbY: cur.y + (cy / rect.height) * cur.h,
-        };
-        return cur;
-      });
-      ts.lastDist = null;
-      ts.lastMid = null;
-    } else if (ts.touches.size === 2) {
-      // Two fingers — start pinch
-      ts.panStart = null;
-      const pts = Array.from(ts.touches.values());
-      const dx = pts[0].x - pts[1].x;
-      const dy = pts[0].y - pts[1].y;
-      ts.lastDist = Math.hypot(dx, dy);
-      ts.lastMid = {
-        x: (pts[0].x + pts[1].x) / 2 - rect.left,
-        y: (pts[0].y + pts[1].y) / 2 - rect.top,
+    // Always pan — use the FIRST touch finger regardless of how many fingers are down.
+    // Pinch-to-zoom is disabled; zoom is only via buttons or scroll wheel.
+    const [touch] = Array.from(ts.touches.values());
+    const cx = touch.x - rect.left;
+    const cy = touch.y - rect.top;
+    setVb((cur) => {
+      if (!cur) return cur;
+      ts.panStart = {
+        touchX: cx,
+        touchY: cy,
+        vbX: cur.x + (cx / rect.width) * cur.w,
+        vbY: cur.y + (cy / rect.height) * cur.h,
       };
-    }
+      return cur;
+    });
+    ts.lastDist = null;
+    ts.lastMid = null;
   }, []);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
@@ -243,8 +230,8 @@ export function SvgPanZoomViewer({
       }
     }
 
-    if (ts.touches.size === 1 && ts.panStart) {
-      // Single finger pan: keep the SVG point under the finger fixed
+    // Pan only — use the first tracked finger, ignore multi-touch pinch
+    if (ts.panStart) {
       const [touch] = Array.from(ts.touches.values());
       const cx = touch.x - rect.left;
       const cy = touch.y - rect.top;
@@ -253,55 +240,14 @@ export function SvgPanZoomViewer({
 
       setVb((cur) => {
         if (!cur) return cur;
-        // The SVG point ps.vbX/vbY should be at container position cx/cy
-        // So: ps.vbX = newX + (cx / rect.width) * cur.w  → newX = ps.vbX - (cx/w)*cur.w
         return {
           ...cur,
           x: ps.vbX - (cx / rect.width) * cur.w,
           y: ps.vbY - (cy / rect.height) * cur.h,
         };
       });
-    } else if (ts.touches.size === 2 && ts.lastDist !== null) {
-      // Pinch zoom + pan
-      const pts = Array.from(ts.touches.values());
-      const dx = pts[0].x - pts[1].x;
-      const dy = pts[0].y - pts[1].y;
-      const dist = Math.hypot(dx, dy);
-      const factor = dist / ts.lastDist;
-      ts.lastDist = dist;
-      ts.didMove = true;
-
-      const midX = (pts[0].x + pts[1].x) / 2 - rect.left;
-      const midY = (pts[0].y + pts[1].y) / 2 - rect.top;
-
-      // Zoom toward pinch midpoint
-      if (originalVb) {
-        setVb((cur) => {
-          if (!cur) return cur;
-          const newW = clamp(cur.w / factor, originalVb.w / MAX_ZOOM, originalVb.w / MIN_ZOOM);
-          const newH = clamp(cur.h / factor, originalVb.h / MAX_ZOOM, originalVb.h / MIN_ZOOM);
-          // Keep midpoint fixed
-          const svgMidX = cur.x + (midX / rect.width) * cur.w;
-          const svgMidY = cur.y + (midY / rect.height) * cur.h;
-          let newX = svgMidX - (midX / rect.width) * newW;
-          let newY = svgMidY - (midY / rect.height) * newH;
-
-          // Also pan by midpoint movement
-          if (ts.lastMid) {
-            const prevSvgMidX = cur.x + (ts.lastMid.x / rect.width) * cur.w;
-            const prevSvgMidY = cur.y + (ts.lastMid.y / rect.height) * cur.h;
-            const curSvgMidX = cur.x + (midX / rect.width) * cur.w;
-            const curSvgMidY = cur.y + (midY / rect.height) * cur.h;
-            newX -= (curSvgMidX - prevSvgMidX);
-            newY -= (curSvgMidY - prevSvgMidY);
-          }
-
-          return { x: newX, y: newY, w: newW, h: newH };
-        });
-      }
-      ts.lastMid = { x: midX, y: midY };
     }
-  }, [originalVb]);
+  }, []);
 
   const handleTouchEnd = useCallback((e: TouchEvent) => {
     e.preventDefault();
@@ -312,13 +258,8 @@ export function SvgPanZoomViewer({
       ts.touches.delete(e.changedTouches[i].identifier);
     }
 
-    if (ts.touches.size < 2) {
-      ts.lastDist = null;
-      ts.lastMid = null;
-    }
-
     if (ts.touches.size === 0) {
-      // Double-tap detection
+      // Double-tap detection (zoom in x2 or reset)
       if (!ts.didMove) {
         const rect = container?.getBoundingClientRect();
         const t = e.changedTouches[0];
@@ -329,13 +270,13 @@ export function SvgPanZoomViewer({
         const posDiff = ts.lastTapPos ? Math.hypot(tapX - ts.lastTapPos.x, tapY - ts.lastTapPos.y) : 999;
 
         if (timeDiff < 350 && posDiff < 40) {
-          // Double tap — zoom in x2.5 or reset
+          // Double tap — zoom in x2 or reset
           if (rect && originalVb) {
             setVb((cur) => {
               if (!cur) return cur;
               const isZoomed = cur.w < originalVb.w * 0.9;
               if (isZoomed) return { ...originalVb };
-              const factor = 2.5;
+              const factor = 2;
               const newW = clamp(cur.w / factor, originalVb.w / MAX_ZOOM, originalVb.w / MIN_ZOOM);
               const newH = clamp(cur.h / factor, originalVb.h / MAX_ZOOM, originalVb.h / MIN_ZOOM);
               const svgX = cur.x + (tapX / rect.width) * cur.w;
@@ -356,9 +297,8 @@ export function SvgPanZoomViewer({
         }
       }
       ts.panStart = null;
-    } else if (ts.touches.size === 1) {
-      // Transition from pinch back to single-finger pan
-      // Re-anchor the pan start to current finger position
+    } else {
+      // Still have fingers down — re-anchor pan to remaining first finger
       const [touch] = Array.from(ts.touches.values());
       const rect = container?.getBoundingClientRect();
       if (rect) {
