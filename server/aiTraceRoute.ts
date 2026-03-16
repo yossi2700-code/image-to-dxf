@@ -306,6 +306,8 @@ async function runTraceJob(
           role: "system",
           content:
             "You are a world-class expert at analyzing images for precise line art / engraving generation. " +
+            "GOLDEN RULE: Describe ONLY what is LITERALLY VISIBLE in the image. DO NOT interpret, invent, imagine, or add anything that is not clearly shown. " +
+            "If the image is ambiguous, blurry, abstract, or you cannot clearly identify the main subject, respond with EXACTLY: UNCLEAR_IMAGE " +
             "Your analysis will be used to generate line art that EXACTLY reproduces the OBJECT in the image. " +
             "CRITICAL CONSTRAINT: Identify and describe the MOST VISUALLY PROMINENT SUBJECT in the image. " +
             "The subject is the COMPLETE PHYSICAL OBJECT in the image — a bottle, shoe, bag, instrument, toy, person, animal, etc. " +
@@ -329,7 +331,7 @@ async function runTraceJob(
             "(3) BODY POSE / POSITION: exact pose (standing upright, sitting, crouching, running, lying down, arms raised, etc.).\n" +
             "(4) KEY STRUCTURAL FEATURES: main body parts, proportions, distinctive features, decorative elements.\n" +
             "(5) STYLE NOTES: is it realistic, cartoon, stylized, ornamental, etc.?\n" +
-            "\nFormat: Start with 'Camera angle: [exact angle].' then describe the rest in 3-5 sentences. No preamble.",
+            "\nFormat: Start with 'Camera angle: [exact angle].' then describe the rest in 3-5 sentences. No preamble. If confused, respond ONLY with: UNCLEAR_IMAGE",
         },
         {
           role: "user",
@@ -344,12 +346,24 @@ async function runTraceJob(
     const jobAfterLlm = getJob(jobId);
     if (!jobAfterLlm || jobAfterLlm.status === "cancelled") return;
 
-    const objectDescription =
+    const rawDescription =
       (llmResponse as { choices?: Array<{ message?: { content?: string } }> })
         ?.choices?.[0]?.message?.content?.trim() ||
       userDesc ||
       "the object in the image";
 
+    // If AI couldn't identify the image, return an error asking for clarification
+    if (rawDescription === "UNCLEAR_IMAGE" || rawDescription.startsWith("UNCLEAR_IMAGE")) {
+      updateJob(jobId, {
+        status: "error",
+        error: isHe
+          ? "התמונה לא ברורה מספיק או שהאובייקט לא זוהה. אנא הסבר בכתב מה בדיוק לצייר או נסה תמונה בהירה יותר."
+          : "The image is unclear or the subject cannot be identified. Please describe in text what to draw, or try a clearer image.",
+      });
+      return;
+    }
+
+    const objectDescription = rawDescription;
     const baseFilename = buildFilename(userDesc || objectDescription);
 
     // Update step: generating image
@@ -515,8 +529,8 @@ async function runTraceJob(
       });
       const cleanSvg = cleanSvgForPreview(rawSvg);
 
-      // Detailed mode: force all paths open (no closed loops) — produces open strokes instead of filled contours
-      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, 0, isDetailedMode);
+      // All paths closed — CorelDRAW/Flexi need closed LWPOLYLINE for fill/cut operations.
+      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, 0, false);
       const imgKey = `ai-trace-generated/${nanoid()}.png`;
       const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
       const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
@@ -724,8 +738,27 @@ router.post(
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "ai_trace");
 
-      runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline, lineweightMm)
-        .catch((err) => console.error("[aiTraceRoute] Unhandled job error:", err));
+      // 5-minute hard timeout — if job takes longer, mark as error and stop
+      const MAX_JOB_MS = 5 * 60 * 1000;
+      const timeoutPromise = new Promise<void>((_, reject) =>
+        setTimeout(() => reject(new Error("Job timed out after 5 minutes")), MAX_JOB_MS)
+      );
+      Promise.race([
+        runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline, lineweightMm),
+        timeoutPromise,
+      ]).catch((err) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("[aiTraceRoute] Job error/timeout:", msg);
+        const job = getJob(jobId);
+        if (job && job.status !== "done" && job.status !== "cancelled") {
+          updateJob(jobId, {
+            status: "error",
+            error: msg.includes("timed out")
+              ? "העיבוד ארך יותר מדי. נסה שוב או נסה תמונה פשוטה יותר."
+              : msg,
+          });
+        }
+      });
 
       return res.json({ jobId });
 

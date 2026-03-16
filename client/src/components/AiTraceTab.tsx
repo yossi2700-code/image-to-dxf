@@ -181,8 +181,16 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
   const previewRef = useRef<string | null>(localStorage.getItem("ai_trace_imagePreview"));
 
   const setJobIdPersisted = useCallback((id: string | null) => {
-    if (id) localStorage.setItem("ai_trace_jobId", id);
-    else { localStorage.removeItem("ai_trace_jobId"); } // Keep imagePreview so before/after panel shows after job completes
+    if (id) {
+      localStorage.setItem("ai_trace_jobId", id);
+      // Save job start time so elapsed counter is accurate after browser close/reopen
+      if (!localStorage.getItem("ai_trace_jobStartMs")) {
+        localStorage.setItem("ai_trace_jobStartMs", String(Date.now()));
+      }
+    } else {
+      localStorage.removeItem("ai_trace_jobId");
+      localStorage.removeItem("ai_trace_jobStartMs");
+    }
     setJobId(id);
   }, []);
 
@@ -287,7 +295,10 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
     const savedId = localStorage.getItem("ai_trace_jobId");
     if (savedId) {
       setStatus("loading");
-      // Resume background timer so elapsed seconds keep counting after tab switch / reload
+      // Restore elapsed seconds from saved start time (survives browser close/reopen)
+      const savedStartMs = parseInt(localStorage.getItem("ai_trace_jobStartMs") ?? "0", 10);
+      const alreadyElapsed = savedStartMs > 0 ? Math.floor((Date.now() - savedStartMs) / 1000) : 0;
+      setElapsedSeconds(alreadyElapsed);
       if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
       startPolling(savedId);
@@ -433,6 +444,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
       }
       // Server returns jobId — start polling (background processing)
       if (data.jobId) {
+        // Reset start time for new job before calling setJobIdPersisted
+        localStorage.removeItem("ai_trace_jobStartMs");
         setJobIdPersisted(data.jobId);
         setElapsedSeconds(0);
         if (timerRef.current) clearInterval(timerRef.current);
