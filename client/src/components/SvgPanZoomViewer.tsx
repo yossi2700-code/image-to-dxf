@@ -244,19 +244,68 @@ export function SvgPanZoomViewer({
     return () => { document.body.style.overflow = ''; };
   }, [fullscreen]);
 
-  // Attach non-passive touch listeners to block browser scroll/pinch-zoom
-  // React synthetic events are passive by default, so we need native listeners.
+  // Native touch ref — used to attach non-passive touch listeners
+  const nativeTouchRef = useRef<HTMLDivElement | null>(null);
+
+  // Touch pan state (separate from pointer events — iOS-safe)
+  const touchDragStart = useRef<{ tx: number; ty: number; ox: number; oy: number } | null>(null);
+
+  // Attach native touch listeners: block browser scroll AND handle pan on iOS
   const attachNativeListeners = useCallback((el: HTMLDivElement | null) => {
     (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+    nativeTouchRef.current = el;
     if (!el) return;
-    const preventDefault = (e: TouchEvent) => {
-      // Block browser scroll and pinch-zoom when touching the viewer
-      if (e.touches.length >= 1) e.preventDefault();
+
+    const onTouchStart = (e: TouchEvent) => {
+      e.preventDefault(); // block browser scroll & pinch-zoom
+      if (e.touches.length === 1) {
+        const t = e.touches[0];
+        touchDragStart.current = {
+          tx: t.clientX,
+          ty: t.clientY,
+          ox: offsetRef.current.x,
+          oy: offsetRef.current.y,
+        };
+      } else {
+        // Multi-touch: cancel drag
+        touchDragStart.current = null;
+      }
     };
-    el.addEventListener('touchstart', preventDefault, { passive: false });
-    el.addEventListener('touchmove', preventDefault, { passive: false });
-    // Cleanup is handled by React unmounting the element
-  }, []);
+
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault(); // block browser scroll
+      if (e.touches.length === 1 && touchDragStart.current) {
+        const t = e.touches[0];
+        const ds = touchDragStart.current;
+        setOffsetSync({
+          x: ds.ox + (t.clientX - ds.tx),
+          y: ds.oy + (t.clientY - ds.ty),
+        });
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      e.preventDefault();
+      if (e.touches.length === 0) {
+        touchDragStart.current = null;
+      } else if (e.touches.length === 1) {
+        // Finger lifted but one remains — reset drag start
+        const t = e.touches[0];
+        touchDragStart.current = {
+          tx: t.clientX,
+          ty: t.clientY,
+          ox: offsetRef.current.x,
+          oy: offsetRef.current.y,
+        };
+      }
+    };
+
+    el.addEventListener('touchstart', onTouchStart, { passive: false });
+    el.addEventListener('touchmove', onTouchMove, { passive: false });
+    el.addEventListener('touchend', onTouchEnd, { passive: false });
+    el.addEventListener('touchcancel', onTouchEnd, { passive: false });
+    // No cleanup needed — element unmounts with component
+  }, [setOffsetSync]);
 
   // ── Toolbar ─────────────────────────────────────────────────────────────────
 
