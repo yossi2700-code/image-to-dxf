@@ -477,6 +477,65 @@ async function runTraceJob(
             `No text, no letters, no numbers, no logos, no watermarks anywhere.`
           );
 
+      // ── Sheet music / document: bypass gpt-image-1, process original image directly ──
+      if (isSheetMusic || isDocument) {
+        updateJob(jobId, {
+          step: isHe ? "מעבד תמונה ישירות..." : "Processing image directly...",
+          stepEn: "Processing image directly...",
+        });
+
+        // Process the original image with sharp — high contrast B&W, no AI interpretation
+        const sheetProcessed = await sharp(editSourceBuffer)
+          .grayscale()
+          .linear(2.0, -60)           // boost contrast: push black lines darker, bg to white
+          .extend({ top: 80, bottom: 80, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .sharpen({ sigma: 1.5, m1: 1.0, m2: 0.3, x1: 2, y2: 10, y3: 20 })
+          .threshold(140)             // lower threshold — catches thin staff lines and note stems
+          .png()
+          .toBuffer();
+
+        // Potrace with settings optimized for sheet music:
+        // - small turdSize: keep fine details (note heads, stems, flags)
+        // - low alphaMax: sharper corners for straight staff lines
+        // - low optTolerance: faithful to original, less smoothing
+        const sheetPotraceOptions = {
+          threshold: 128,
+          turdSize: 8,        // keep small note heads and stems
+          alphaMax: 0.3,      // sharp corners for straight lines
+          optCurve: true,
+          optTolerance: 0.2,  // faithful to original shape
+        };
+
+        const rawSvgSheet = await new Promise<string>((resolve, reject) => {
+          potrace.trace(sheetProcessed, sheetPotraceOptions, (err: Error | null, svg: string) => {
+            if (err) reject(err); else resolve(svg);
+          });
+        });
+        const cleanSvgSheet = cleanSvgForPreview(rawSvgSheet);
+        const { dxf: dxfSheet, segmentCount: scSheet, width: wSheet, height: hSheet, realWidth: rwSheet, realHeight: rhSheet } = svgToDxf(rawSvgSheet, hairline, lineweightMm, 0, true);
+
+        // Upload original image to S3
+        const imgKeySheet = `ai-trace-generated/${nanoid()}.png`;
+        const { url: imageUrlSheet } = await storagePut(imgKeySheet, editSourceBuffer, "image/png");
+        const dxfFilenameSheet = `${baseFilename}_${variation.label}.dxf`;
+        const dxfKeySheet = `ai-trace-dxf/${nanoid()}-${dxfFilenameSheet}`;
+        const { url: dxfUrlSheet } = await storagePut(dxfKeySheet, Buffer.from(dxfSheet, "utf-8"), "application/dxf");
+
+        const sheetResult = { imageUrl: imageUrlSheet, svgPreview: cleanSvgSheet, dxfUrl: dxfUrlSheet, dxfFilename: dxfFilenameSheet, segmentCount: scSheet, width: wSheet, height: hSheet, realWidth: rwSheet, realHeight: rhSheet };
+
+        const currentJobSheet = getJob(jobId);
+        if (currentJobSheet && currentJobSheet.status !== "cancelled") {
+          const partialImagesSheet = (currentJobSheet.partialImages as typeof sheetResult[] | undefined) ?? [];
+          updateJob(jobId, {
+            partialImages: [...partialImagesSheet, sheetResult],
+            step: isHe ? "ממיר ל-DXF..." : "Converting to DXF...",
+            stepEn: "Converting to DXF...",
+          });
+        }
+        return sheetResult;
+      }
+
       // Use gpt-image-1 edit API for high-quality line art generation
       const imageEditResponse = await openai.images.edit({
         model: "gpt-image-1",
