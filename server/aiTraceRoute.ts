@@ -286,18 +286,17 @@ async function runTraceJob(
         ? `Describe the main object for line art generation. Additional context from user: ${userDesc}. ` +
           "CRITICAL: Describe ONLY the physical object itself — its shape, structure, camera angle, proportions. " +
           "DO NOT mention people holding it, playing it, or interacting with it unless the user specifically asked to include a person. " +
-          "If the image contains sheet music, musical notation, or a document/diagram, describe it as such (e.g. 'Sheet music with staff lines, notes, and musical symbols')."
+          "DO NOT mention musical notes, decorative backgrounds, or contextual elements unless they are physically part of the object."
         : "Identify and describe the MOST VISUALLY PROMINENT SUBJECT in this image for line art generation. " +
           "CRITICAL RULES: " +
-          "(1) The subject can be: a physical object, a person, an animal, a letter/symbol/logo, an illustration/character printed on a product label, OR a document/diagram/sheet music. " +
-          "(2) If the image is SHEET MUSIC or MUSICAL NOTATION — describe it as 'Sheet music with staff lines, notes, clef symbols, and musical notation'. Do NOT ignore the musical content. " +
-          "(3) If the image is a DOCUMENT, DIAGRAM, CHART, MAP, or TECHNICAL DRAWING — describe it as such. " +
-          "(4) If the most prominent element is a LETTER, NUMBER, SYMBOL, LOGO, or ENGRAVED/CARVED SHAPE — describe THAT EXACT SHAPE as the subject. Do NOT invent a character or figure around it. " +
-          "(5) If the image shows an engraved, carved, stamped, or embossed letter/symbol on metal/wood/stone — describe the letter/symbol itself. " +
-          "(6) If the most eye-catching element is a baby face or character printed on a product label, describe THAT CHARACTER as the subject — not the package. " +
-          "(7) If the most prominent element is a physical object (shoe, instrument, bag), describe THAT OBJECT. " +
-          "(8) DO NOT mention background objects, secondary items, or anything behind the main subject. " +
-          "(9) Focus on the SINGLE most visually dominant subject only. " +
+          "(1) The subject can be: a physical object, a person, an animal, a letter/symbol/logo, OR an illustration/character printed on a product label/packaging. " +
+          "(2) If the most prominent element is a LETTER, NUMBER, SYMBOL, LOGO, or ENGRAVED/CARVED SHAPE — describe THAT EXACT SHAPE as the subject. Do NOT invent a character or figure around it. " +
+          "(3) If the image shows an engraved, carved, stamped, or embossed letter/symbol on metal/wood/stone — describe the letter/symbol itself (e.g. 'The letter V in bold serif style, viewed from front'). " +
+          "(4) If the most eye-catching element is a baby face or character printed on a product label, describe THAT CHARACTER as the subject — not the package. " +
+          "(5) If the most prominent element is a physical object (shoe, instrument, bag), describe THAT OBJECT. " +
+          "(6) DO NOT mention background objects, secondary items, or anything behind the main subject. " +
+          "(7) DO NOT mention musical notes, staff lines, or any musical notation. " +
+          "(8) Focus on the SINGLE most visually dominant subject only. " +
           "Focus on: exact camera angle/view, facing direction, shape, structure, key features, proportions.";
     }
 
@@ -312,10 +311,9 @@ async function runTraceJob(
             "The subject can be a physical object, a person, an animal, a letter/symbol/logo, OR a character/illustration printed on a product label. " +
             "LETTER/SYMBOL RULE: If the most prominent element is a LETTER, NUMBER, SYMBOL, LOGO, or ENGRAVED/CARVED/STAMPED SHAPE on any surface (metal, wood, stone, paper) — describe THAT EXACT LETTER OR SHAPE as the subject. Example: 'The letter V in bold serif style, front view, centered'. Do NOT invent a character, figure, or creature around a letter or symbol. " +
             "If the most eye-catching element is a baby face, character, or illustration printed on packaging, describe THAT as the subject — not the package shape. " +
-            "IMPORTANT: If the image contains SHEET MUSIC or MUSICAL NOTATION — describe it as 'Sheet music with staff lines, notes, clef symbols, and musical notation'. Do NOT ignore musical content. " +
-            "IMPORTANT: If the image is a DOCUMENT, DIAGRAM, CHART, or TECHNICAL DRAWING — describe it as such. " +
             "NEVER describe: (a) people holding/using the object unless they ARE the main subject, " +
-            "(b) background objects or secondary items. " +
+            "(b) musical notes, staff lines, or musical notation, " +
+            "(c) background objects or secondary items. " +
             "Focus on the SINGLE most visually dominant subject. " +
             "Accuracy is critical — any mistake in your description will cause the generated art to look wrong. " +
             "\n\nYou MUST describe ALL of the following with maximum precision:\n" +
@@ -410,30 +408,8 @@ async function runTraceJob(
       const isPortrait = !isAnimal && !isEngraving && /\b(face|portrait|person|man|woman|boy|girl|human|selfie|head|hair|eyes|nose|mouth|beard|cheek|forehead|chin|neck|ear)\b/i.test(objectDescription);
       // Detect if this is a toy, cartoon figure, or character figurine
       const isToyOrFigurine = /\b(toy|figurine|figure|doll|plush|stuffed|cartoon|character|action figure|miniature|statue|sculpture|puppet|mascot|anime|manga|bluey|lego|funko|pokemon|pikachu|sonic|mario|disney|pixar|robot|alien|monster|creature|animal figure)\b/i.test(objectDescription);
-      // Detect sheet music / musical notation / document
-      const isSheetMusic = /\b(sheet music|musical notation|staff lines|staff line|music score|notes|clef|treble clef|bass clef|time signature|measure|bar line|musical symbol|piano score|musical score|notation)\b/i.test(objectDescription);
-      const isDocument = /\b(document|diagram|chart|map|technical drawing|blueprint|schematic|floor plan|circuit|table|spreadsheet|form|invoice|receipt|certificate|label|poster|page|text|handwriting)\b/i.test(objectDescription) && !isSheetMusic;
       const editPrompt = landscapeMode
         ? buildFullImagePrompt(objectDescription, idx)
-        : isSheetMusic
-        ? (
-            // Sheet music / musical notation — preserve exactly as-is, just clean up
-            `Convert this sheet music image to clean black and white line art. ` +
-            `Preserve ALL musical notation EXACTLY: every staff line, every note, every clef symbol, every time signature, every bar line, every rest, every dynamic marking. ` +
-            `Keep the exact layout and proportions of the original score. ` +
-            `Use only pure black (#000000) lines and symbols on pure white (#FFFFFF) background. ` +
-            `Remove any color highlights (like pink/red backgrounds on measures). ` +
-            `No shading, no grey tones. Keep all text labels (title, composer, tempo markings) exactly as they appear. ` +
-            `This must look like a clean printed sheet music page, not a drawing of an object.`
-          )
-        : isDocument
-        ? (
-            // Document / diagram — preserve content faithfully
-            `Convert this document/diagram image to clean black and white line art. ` +
-            `Preserve ALL content EXACTLY as shown: every line, shape, text, symbol, and structure. ` +
-            `Use only pure black (#000000) on pure white (#FFFFFF) background. No shading, no grey tones. ` +
-            `Keep all text and labels exactly as they appear.`
-          )
         : (isPortrait && !isToyOrFigurine)
         ? (
             // Portrait prompt — preserve facial likeness
