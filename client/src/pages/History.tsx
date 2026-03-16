@@ -33,6 +33,8 @@ import {
   Wand2,
   X,
   ZoomIn,
+  ZoomOut,
+  Maximize2,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -133,6 +135,7 @@ function SvgViewer({ svg }: { svg: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
+  const [fillMode, setFillMode] = useState<'fill' | 'outline'>('fill');
   const [dragging, setDragging] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
   const lastPinchDistRef = useRef<number | null>(null);
@@ -142,11 +145,14 @@ function SvgViewer({ svg }: { svg: string }) {
     setTranslate({ x: 0, y: 0 });
   }, [svg]);
 
-  // Inject black fill style for proper display
+  // Inject fill/outline style for proper display
+  const fillStyle = fillMode === 'fill'
+    ? 'path,circle,rect,polygon,polyline,ellipse,line{fill:black!important;stroke:none!important}'
+    : 'path,circle,rect,polygon,polyline,ellipse,line{fill:none!important;stroke:black!important;stroke-width:0.5px!important}';
   const styledSvg = svg
     .replace(/<svg /, '<svg style="width:100%;height:100%;display:block;" ')
-    .replace(/<\/defs>/, '</defs><style>path,circle,rect,polygon,polyline,ellipse,line{fill:black;stroke:none}</style>')
-    .replace(/(<svg[^>]*>)(?!.*<defs)(?!.*<style)/, '$1<style>path,circle,rect,polygon,polyline,ellipse,line{fill:black;stroke:none}</style>');
+    .replace(/<\/defs>/, `</defs><style>${fillStyle}</style>`)
+    .replace(/(<svg[^>]*>)(?!.*<defs)(?!.*<style)/, `$1<style>${fillStyle}</style>`);
 
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
@@ -193,23 +199,55 @@ function SvgViewer({ svg }: { svg: string }) {
     }
   };
 
+  const zoomIn = (e: React.MouseEvent) => { e.stopPropagation(); setScale(s => Math.min(10, parseFloat((s * 1.4).toFixed(2)))); };
+  const zoomOut = (e: React.MouseEvent) => { e.stopPropagation(); setScale(s => Math.max(0.2, parseFloat((s / 1.4).toFixed(2)))); };
+  const resetView = (e: React.MouseEvent) => { e.stopPropagation(); setScale(1); setTranslate({ x: 0, y: 0 }); };
+
   return (
-    <div
-      ref={containerRef}
-      className="w-full h-full overflow-hidden cursor-grab active:cursor-grabbing select-none"
-      onWheel={handleWheel}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={() => setDragging(false)}
-      onMouseLeave={() => setDragging(false)}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={() => { setDragging(false); lastPinchDistRef.current = null; }}
-    >
+    <div className="flex flex-col h-full">
+      {/* Toolbar */}
+      <div className="flex items-center gap-1 px-2 border-b bg-muted/30 shrink-0" style={{ minHeight: 44 }}>
+        {/* Fill / Outline toggle */}
+        <button
+          onClick={(e) => { e.stopPropagation(); setFillMode(m => m === 'fill' ? 'outline' : 'fill'); }}
+          className="flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-semibold transition-all select-none shrink-0"
+          style={{
+            background: fillMode === 'fill' ? '#1e1e1e' : '#f3f4f6',
+            color: fillMode === 'fill' ? 'white' : '#374151',
+            border: fillMode === 'fill' ? '1.5px solid #1e1e1e' : '1.5px solid #d1d5db',
+            minWidth: 68,
+          }}
+        >
+          <span style={{ fontSize: 10 }}>{fillMode === 'fill' ? '◼' : '◻'}</span>
+          <span>{fillMode === 'fill' ? 'מילוי' : 'קווים'}</span>
+        </button>
+        <span className="flex-1" />
+        <span className="text-xs text-muted-foreground/60 w-9 text-center tabular-nums">{Math.round(scale * 100)}%</span>
+        <div className="w-px h-4 bg-border mx-0.5" />
+        <div className="flex items-center gap-0">
+          <button onClick={zoomOut} className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors" title="Zoom out"><ZoomOut className="w-4 h-4 text-foreground" /></button>
+          <button onClick={zoomIn} className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors" title="Zoom in"><ZoomIn className="w-4 h-4 text-foreground" /></button>
+          <button onClick={resetView} className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors" title="Reset"><Maximize2 className="w-3.5 h-3.5 text-muted-foreground" /></button>
+        </div>
+      </div>
+      {/* SVG Canvas */}
       <div
-        style={{ transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`, transformOrigin: "center center", width: "100%", height: "100%" }}
-        dangerouslySetInnerHTML={{ __html: styledSvg }}
-      />
+        ref={containerRef}
+        className="flex-1 overflow-hidden cursor-grab active:cursor-grabbing select-none"
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={() => setDragging(false)}
+        onMouseLeave={() => setDragging(false)}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={() => { setDragging(false); lastPinchDistRef.current = null; }}
+      >
+        <div
+          style={{ transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`, transformOrigin: "center center", width: "100%", height: "100%" }}
+          dangerouslySetInnerHTML={{ __html: styledSvg }}
+        />
+      </div>
     </div>
   );
 }
@@ -442,7 +480,7 @@ function DetailDialog({
         </DialogHeader>
         <div className="space-y-4">
           {item.svgPreview && (
-            <div className="h-72 rounded-lg overflow-hidden border bg-white">
+            <div className="h-80 rounded-lg overflow-hidden border bg-white">
               <SvgViewer svg={item.svgPreview} />
             </div>
           )}

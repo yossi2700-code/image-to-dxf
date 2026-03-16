@@ -1884,3 +1884,8 @@
 - [x] פתרון: פטור /api/svg-to-png מ-inputSanitizer (SVG יכול להיות 500k+ תווים)
 - [x] פתרון: state-machine parser לתיקון void elements לא סגורים (path, circle וכו')
 - [x] הסרת תלות ב-xmldom (גרמה לבעיות depth/self-closing)
+
+## תיקון כפתורי זום ומילוי ב-SVG Viewer
+- [x] הפרדת כפתורי זום ממתג המילוי — כרגע מתג המילוי צובע גם כפתורי זום
+- [x] עיצוב מחדש של כפתורי הזום ומילוי — נוח לאייפון (גדול יותר, ברור יותר)
+- [x] שיפור כל ה-SVG viewers בכל הפיצ'רים (Home, History, AiTraceTab, AiDocumentRedrawTab, FaceDetectTab)

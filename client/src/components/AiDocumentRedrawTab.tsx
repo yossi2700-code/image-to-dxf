@@ -155,24 +155,50 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
   );
 
   const Toolbar = ({ onClose }: { onClose?: (e: React.MouseEvent) => void }) => (
-    <div className="flex items-center gap-1 p-1.5 bg-muted/50 border-b">
+    <div className="flex items-center gap-1 px-2 border-b bg-muted/30" style={{ minHeight: 48 }}>
+      {/* Fill / Outline toggle — left side, pill shape */}
       <button
         onClick={(e) => { e.stopPropagation(); setFillMode(m => m === 'fill' ? 'outline' : 'fill'); }}
-        className="h-7 px-2 rounded text-xs font-bold transition-all mr-auto"
+        className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold transition-all select-none shrink-0"
         style={{
-          background: fillMode === 'fill' ? '#1e1e1e' : 'transparent',
+          background: fillMode === 'fill' ? '#1e1e1e' : '#f3f4f6',
           color: fillMode === 'fill' ? 'white' : '#374151',
-          border: fillMode === 'fill' ? '1px solid #1e1e1e' : '1px solid #d1d5db',
+          border: fillMode === 'fill' ? '1.5px solid #1e1e1e' : '1.5px solid #d1d5db',
+          minWidth: 72,
         }}
+        title={fillMode === 'fill' ? 'Switch to outline' : 'Switch to fill'}
       >
-        {fillMode === 'fill' ? '◼ מילוי' : '◻ קווים'}
+        <span style={{ fontSize: 11 }}>{fillMode === 'fill' ? '◼' : '◻'}</span>
+        <span>{fillMode === 'fill' ? 'מילוי' : 'קווים'}</span>
       </button>
-      <button onClick={zoomOut} className="w-8 h-8 rounded flex items-center justify-center hover:bg-muted"><ZoomOut className="w-4 h-4" /></button>
-      <button onClick={zoomIn} className="w-8 h-8 rounded flex items-center justify-center hover:bg-muted"><ZoomIn className="w-4 h-4" /></button>
-      <button onClick={onClose ?? (() => { setFullscreen(true); setScale(1); setOffset({ x: 0, y: 0 }); })} className="w-8 h-8 rounded flex items-center justify-center hover:bg-muted">
-        {onClose ? <span className="text-base font-bold">✕</span> : <Maximize2 className="w-4 h-4 text-primary" />}
+
+      {/* Spacer */}
+      <span className="flex-1" />
+
+      {/* Zoom % indicator */}
+      <span className="text-xs text-muted-foreground/60 w-9 text-center tabular-nums">{Math.round(scale * 100)}%</span>
+
+      {/* Divider */}
+      <div className="w-px h-5 bg-border mx-0.5" />
+
+      {/* Zoom controls */}
+      <div className="flex items-center gap-0.5">
+        <button onClick={zoomOut} className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors" title="Zoom out"><ZoomOut className="w-5 h-5 text-foreground" /></button>
+        <button onClick={zoomIn} className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors" title="Zoom in"><ZoomIn className="w-5 h-5 text-foreground" /></button>
+        <button onClick={resetView} className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors" title="Reset zoom"><RefreshCw className="w-4 h-4 text-muted-foreground" /></button>
+      </div>
+
+      {/* Divider */}
+      <div className="w-px h-5 bg-border mx-0.5" />
+
+      {/* Fullscreen / Close */}
+      <button
+        onClick={onClose ?? ((e) => { e.stopPropagation(); setFullscreen(true); setScale(1); setOffset({ x: 0, y: 0 }); })}
+        className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors"
+        title={onClose ? 'Close' : 'Fullscreen'}
+      >
+        {onClose ? <span className="text-base font-bold text-foreground">✕</span> : <Maximize2 className="w-5 h-5 text-primary" />}
       </button>
-      {!onClose && <button onClick={resetView} className="w-8 h-8 rounded flex items-center justify-center hover:bg-muted"><RefreshCw className="w-3.5 h-3.5 text-muted-foreground" /></button>}
     </div>
   );
 

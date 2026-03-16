@@ -280,40 +280,41 @@ function SvgZoomViewer({ svgContent, label = "Preview", maxHeight = 450 }: SvgZo
   );
 
   const Toolbar = ({ onClose }: { onClose?: (e: React.MouseEvent) => void }) => (
-    <div className="flex items-center gap-1 px-3 border-b bg-muted/30" style={{ minHeight: 44 }}>
-      <Eye className="w-4 h-4 text-muted-foreground shrink-0" />
-      <span className="text-xs text-muted-foreground font-medium flex-1 truncate">{label}</span>
-      <span className="text-xs text-muted-foreground/60 w-10 text-center">{Math.round(scale * 100)}%</span>
-      <button
-        onClick={zoomOut}
-        className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors"
-        title="Zoom out"
-      >
-        <ZoomOut className="w-5 h-5 text-foreground" />
-      </button>
-      <button
-        onClick={zoomIn}
-        className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors"
-        title="Zoom in"
-      >
-        <ZoomIn className="w-5 h-5 text-foreground" />
-      </button>
-      <button
-        onClick={resetView}
-        className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors"
-        title="Reset view"
-      >
-        <Maximize2 className="w-5 h-5 text-foreground" />
-      </button>
+    <div className="flex items-center gap-1 px-2 border-b bg-muted/30" style={{ minHeight: 48 }}>
+      <Eye className="w-4 h-4 text-muted-foreground shrink-0 ml-1" />
+      <span className="text-xs text-muted-foreground font-medium flex-1 truncate mx-1">{label}</span>
+
+      {/* Zoom % indicator */}
+      <span className="text-xs text-muted-foreground/60 w-9 text-center tabular-nums">{Math.round(scale * 100)}%</span>
+
+      {/* Divider */}
+      <div className="w-px h-5 bg-border mx-0.5" />
+
+      {/* Zoom controls — grouped */}
+      <div className="flex items-center gap-0.5">
+        <button onClick={zoomOut} className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors" title="Zoom out">
+          <ZoomOut className="w-5 h-5 text-foreground" />
+        </button>
+        <button onClick={zoomIn} className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors" title="Zoom in">
+          <ZoomIn className="w-5 h-5 text-foreground" />
+        </button>
+        <button onClick={resetView} className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors" title="Reset zoom">
+          <Maximize2 className="w-4 h-4 text-muted-foreground" />
+        </button>
+      </div>
+
+      {/* Divider */}
+      <div className="w-px h-5 bg-border mx-0.5" />
+
+      {/* Fullscreen / Close */}
       {onClose ? (
-        <button
-          onClick={onClose}
-          className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors text-lg font-bold"
-        >✕</button>
+        <button onClick={onClose} className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors" title="Close">
+          <span className="text-base font-bold text-foreground">✕</span>
+        </button>
       ) : (
         <button
           onClick={(e) => { e.stopPropagation(); setFullscreen(true); setScale(1); setOffset({ x: 0, y: 0 }); }}
-          className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors"
+          className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted active:bg-muted/80 transition-colors"
           title="Fullscreen"
         >
           <Maximize2 className="w-5 h-5 text-primary" />
