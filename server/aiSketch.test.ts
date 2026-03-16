@@ -48,26 +48,7 @@ vi.mock("./storage", () => ({
   storagePut: vi.fn().mockResolvedValue({ url: "https://s3.example.com/test.png", key: "test.png" }),
 }));
 
-vi.mock("./_core/llm", () => ({
-  invokeLLM: vi.fn().mockResolvedValue({
-    choices: [{ message: { content: "A clean outline of a bicycle with two wheels." } }],
-  }),
-}));
-
-vi.mock("openai", () => {
-  return {
-    default: vi.fn().mockImplementation(() => ({
-      images: {
-        generate: vi.fn().mockResolvedValue({
-          data: [{ b64_json: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" }],
-        }),
-        edit: vi.fn().mockResolvedValue({
-          data: [{ b64_json: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" }],
-        }),
-      },
-    })),
-  };
-});
+// No LLM or OpenAI needed — new fast route uses only sharp+potrace
 
 vi.mock("potrace", () => ({
   default: {
