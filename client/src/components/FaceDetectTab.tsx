@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
+import { AiProcessingAnimation } from "@/components/AiProcessingAnimation";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
 import { ExportButtons } from "@/components/ExportButtons";
 import { useBugReport } from "@/hooks/useBugReport";
@@ -598,105 +599,19 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
 
       {/* Loading state — simple scanning animation */}
       {status === "loading" && !result && (
-        <div
-          className="rounded-xl p-5 flex flex-col items-center gap-4 text-center"
-          style={{ background: '#faf5ff', border: '1px solid #e9d5ff' }}
-        >
-          {/* Scanning animation with preview */}
-          <div className="relative w-20 h-20">
-            {imagePreview ? (
-              <img src={imagePreview} alt="face" className="w-20 h-20 rounded-full object-cover" style={{ border: '3px solid #c084fc' }} />
-            ) : (
-              <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: '#f3e8ff' }}>
-                <UserCircle className="w-10 h-10 text-purple-400" />
-              </div>
-            )}
-            {/* Scan line */}
-            <div
-              className="absolute left-0 right-0 h-0.5 rounded-full"
-              style={{
-                background: 'linear-gradient(90deg, transparent, #7c3aed, transparent)',
-                animation: 'scanLine 1.8s ease-in-out infinite',
-                top: '50%',
-              }}
-            />
-          </div>
-
-          {/* Step indicators */}
-          <div className="w-full max-w-xs space-y-2">
-            {[
-              { stepKey: 'prepare', labelHe: 'מכין תמונה', labelEn: 'Preparing image', pct: 10 },
-              { stepKey: 'draw',    labelHe: 'ה-AI מצייר פורטרט', labelEn: 'AI drawing portrait', pct: 75 },
-              { stepKey: 'convert', labelHe: 'ממיר ל-DXF', labelEn: 'Converting to DXF', pct: 90 },
-              { stepKey: 'finish',  labelHe: 'מסיים', labelEn: 'Finishing up', pct: 100 },
-            ].map(({ stepKey, labelHe, labelEn, pct }) => {
-              const isDone = progressPct >= pct;
-              const isActive = !isDone && progressPct >= pct - 30;
-              return (
-                <div key={stepKey} className="flex items-center gap-2.5">
-                  <div
-                    className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold transition-all"
-                    style={{
-                      background: isDone ? '#7c3aed' : isActive ? '#e9d5ff' : '#f3f4f6',
-                      color: isDone ? 'white' : isActive ? '#7c3aed' : '#9ca3af',
-                      border: isActive ? '2px solid #7c3aed' : 'none',
-                    }}
-                  >
-                    {isDone ? '✓' : ''}
-                  </div>
-                  <span
-                    className="text-xs font-medium transition-all"
-                    style={{ color: isDone ? '#7c3aed' : isActive ? '#374151' : '#9ca3af' }}
-                  >
-                    {isRtl ? labelHe : labelEn}
-                    {isActive && <span style={{ animation: 'pulse 1s infinite' }}>…</span>}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Progress bar with shimmer */}
-          <div className="w-full max-w-xs">
-            <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden mb-1.5 relative">
-              <div
-                className="absolute inset-0 rounded-full"
-                style={{
-                  background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
-                  animation: 'shimmer 1.8s ease-in-out infinite',
-                }}
-              />
-              <div
-                className="h-full rounded-full"
-                style={{
-                  background: 'linear-gradient(90deg, #7c3aed, #c084fc, #7c3aed)',
-                  backgroundSize: '200% 100%',
-                  animation: 'gradientMove 2s linear infinite',
-                  width: `${progressPct}%`,
-                  transition: 'width 1.5s ease-in-out',
-                }}
-              />
-            </div>
-            <p className="text-xs text-gray-500">
-              {currentStep || (isRtl ? 'מעבד תמונה...' : 'Processing image...')}
-            </p>
-          </div>
-
-          {/* Cancel */}
-          {jobId && (
-            <button
-              onClick={handleCancel}
-              className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg transition-all"
-              style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}
-            >
-              <X className="w-4 h-4" />
-              {isRtl ? 'בטל והחזר אסימונים' : 'Cancel & Refund Tokens'}
-            </button>
-          )}
-        </div>
+        <AiProcessingAnimation
+          elapsedSeconds={Math.round(progressPct * 3)}
+          currentStep={currentStep}
+          imagePreview={imagePreview}
+          jobId={jobId}
+          onCancel={handleCancel}
+          isRtl={isRtl}
+          accentColor="#7c3aed"
+          accentGradient="linear-gradient(135deg, #7c3aed, #c084fc)"
+          featureLabel={isRtl ? "AI פורטרט" : "AI Portrait"}
+        />
       )}
-
-      {/* Error state */}
+            {/* Error state */}
       {status === "error" && !result && (
         <div className="rounded-xl p-6 flex flex-col items-center gap-3 text-center" style={{ background: '#fff5f5', border: '1px solid #fecaca' }}>
           <AlertCircle className="w-10 h-10 text-red-400" />

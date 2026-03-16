@@ -14,6 +14,7 @@ import { trpc } from "@/lib/trpc";
 import { useBugReport } from "@/hooks/useBugReport";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
 import { ExportButtons } from "@/components/ExportButtons";
+import { AiProcessingAnimation } from "@/components/AiProcessingAnimation";
 import {
   Download,
   AlertCircle,
@@ -886,133 +887,17 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
 
         {/* Loading */}
         {status === "loading" && (
-          <div
-            className="rounded-xl overflow-hidden"
-            style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
-          >
-            {/* Image preview with scanning animation */}
-            {imagePreview && (
-              <div className="relative overflow-hidden" style={{ maxHeight: 280 }}>
-                <img
-                  src={imagePreview}
-                  alt="Processing"
-                  className="w-full object-contain block"
-                  style={{ maxHeight: 280, filter: 'brightness(0.85)' }}
-                />
-                {/* Scanning line */}
-                <div
-                  className="absolute left-0 right-0 pointer-events-none"
-                  style={{
-                    top: 0,
-                    height: '3px',
-                    background: 'linear-gradient(90deg, transparent, #0d9488, #5eead4, #0d9488, transparent)',
-                    boxShadow: '0 0 12px 4px rgba(13,148,136,0.6)',
-                    animation: 'scanLine 2s ease-in-out infinite',
-                  }}
-                />
-                {/* Scanning glow overlay */}
-                <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{
-                    background: 'linear-gradient(180deg, rgba(13,148,136,0.08) 0%, transparent 40%, transparent 60%, rgba(13,148,136,0.08) 100%)',
-                    animation: 'scanGlow 2s ease-in-out infinite',
-                  }}
-                />
-                {/* AI badge overlay */}
-                <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold" style={{background: 'rgba(13,148,136,0.9)', color: 'white'}}>
-                  <div className="w-3 h-3 rounded-full border-2 border-white/40 border-t-white" style={{animation: 'spin 0.8s linear infinite'}} />
-                  {isRtl ? 'AI מנתח...' : 'AI analyzing...'}
-                </div>
-              </div>
-            )}
-            <div className="p-5 flex flex-col items-center gap-3 text-center">
-              {!imagePreview && (
-                <div className="relative w-14 h-14">
-                  <div className="absolute inset-0 rounded-full" style={{border: '3px solid #ccfbf1', borderTopColor: '#0d9488', animation: 'spin 1s linear infinite'}} />
-                  <Wand2 className="absolute inset-0 m-auto w-5 h-5 text-teal-600" />
-                </div>
-              )}
-              {/* Countdown progress bar — fills over ~40 seconds */}
-              <div className="w-full max-w-xs">
-                {/* Animated progress bar */}
-                <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden mb-2 relative">
-                  {/* Background shimmer */}
-                  <div
-                    className="absolute inset-0 rounded-full"
-                    style={{
-                      background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
-                      animation: 'shimmer 1.8s ease-in-out infinite',
-                      backgroundSize: '200% 100%',
-                    }}
-                  />
-                  {/* Fill bar — smoothly grows to ~95% over 40s, then stays */}
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      background: 'linear-gradient(90deg, #0d9488, #5eead4, #0d9488)',
-                      backgroundSize: '200% 100%',
-                      animation: 'gradientMove 2s linear infinite',
-                      width: `${Math.min(95, Math.round((elapsedSeconds / 40) * 95))}%`,
-                      transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)',
-                    }}
-                  />
-                </div>
-                {/* Current step text */}
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-teal-400 shrink-0" style={{animation: 'pulse 1.5s ease-in-out infinite'}} />
-                  <p className="font-semibold text-sm text-gray-700 text-start">
-                    {currentStep || (t("analyzingWithAi"))}
-                  </p>
-                </div>
-              </div>
-              {/* Wave animation + elapsed timer + phase messages */}
-              <div className="flex flex-col items-center gap-2">
-                <div className="flex items-center gap-1">
-                  {[0,1,2,3,4].map((i) => (
-                    <div
-                      key={i}
-                      className="rounded-full"
-                      style={{
-                        width: 8,
-                        height: 8,
-                        background: `hsl(${168 + i * 8}, 80%, ${45 + i * 5}%)`,
-                        animation: `wave 1.4s ease-in-out infinite`,
-                        animationDelay: `${i * 0.12}s`,
-                      }}
-                    />
-                  ))}
-                </div>
-                <p className="text-xs font-medium" style={{ color: '#0d9488', minHeight: 18 }}>
-                  {elapsedSeconds < 10
-                    ? (isRtl ? '🧠 AI מנתח את התמונה...' : '🧠 AI analyzing image...')
-                    : elapsedSeconds < 40
-                    ? (isRtl ? '✏️ מצייר קווים וקטוריים...' : '✏️ Drawing vector lines...')
-                    : elapsedSeconds < 80
-                    ? (isRtl ? '✨ משפר פרטים דקים...' : '✨ Refining fine details...')
-                    : (isRtl ? '💫 כמעט מוכן...' : '💫 Almost ready...')
-                  }
-                </p>
-                <p className="text-xs text-gray-400">
-                  {Math.floor(elapsedSeconds / 60).toString().padStart(2,'0')}:{(elapsedSeconds % 60).toString().padStart(2,'0')}
-                </p>
-              </div>
-              {jobId && (
-                <p className="text-xs text-gray-400">
-                  {t("backgroundProcessing")}
-                </p>
-              )}
-              {jobId && (
-                <button
-                  onClick={handleCancel}
-                  className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg transition-all"
-                  style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}
-                >
-                  <X className="w-4 h-4" />
-                  {t("cancelRefund")}
-                </button>
-              )}
-            </div>
-          </div>
+          <AiProcessingAnimation
+            elapsedSeconds={elapsedSeconds}
+            currentStep={currentStep}
+            imagePreview={imagePreview}
+            jobId={jobId}
+            onCancel={handleCancel}
+            isRtl={isRtl}
+            accentColor="#0d9488"
+            accentGradient="linear-gradient(135deg, #0d9488, #5eead4)"
+            featureLabel="AI Trace"
+          />
         )}
 
         {/* Error */}

@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
+import { AiProcessingAnimation } from "@/components/AiProcessingAnimation";
 import { ExportButtons } from "@/components/ExportButtons";
 import { useBugReport } from "@/hooks/useBugReport";
 import {
@@ -795,61 +796,21 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
         </button>
       )}
 
-      {/* Processing state — full loading card with step messages */}
+      {/* Processing state */}
       {status === "loading" && (
-        <div
-          className="rounded-2xl overflow-hidden"
-          style={{ background: '#ffffff', border: '1px solid rgba(251,191,36,0.25)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
-        >
-          {/* Image with scanning animation (if no preview, show spinner) */}
-          {!imagePreview && (
-            <div className="p-8 flex flex-col items-center gap-3 text-center">
-              <div className="relative w-16 h-16">
-                <div className="absolute inset-0 rounded-full" style={{border: '3px solid rgba(251,191,36,0.15)', borderTopColor: '#fbbf24', animation: 'spin 1s linear infinite'}} />
-                <Wand2 className="absolute inset-0 m-auto w-6 h-6" style={{color: '#fbbf24'}} />
-              </div>
-            </div>
-          )}
-          {/* Step progress */}
-          <div className="p-4 flex flex-col items-center gap-3 text-center">
-            <div className="w-full max-w-xs">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 rounded-full" style={{background: '#fbbf24', animation: 'pulse 1.5s ease-in-out infinite'}} />
-                <p className="font-semibold text-sm text-gray-700 text-start">
-                  {currentStep || (isRtl ? "מנתח תמונה עם AI..." : "Analyzing image with AI...")}
-                </p>
-              </div>
-              {/* Countdown progress bar */}
-              <div className="w-full rounded-full h-3 overflow-hidden relative" style={{background: 'rgba(251,191,36,0.15)'}}>
-                <div
-                  className="absolute inset-0 rounded-full"
-                  style={{
-                    background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
-                    animation: 'shimmer 1.8s ease-in-out infinite',
-                  }}
-                />
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    background: 'linear-gradient(90deg, #d97706, #fbbf24, #d97706)',
-                    backgroundSize: '200% 100%',
-                    animation: 'gradientMove 2s linear infinite',
-                    width: `${Math.min(95, Math.round((elapsedSeconds / 40) * 95))}%`,
-                    transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)',
-                  }}
-                />
-              </div>
-            </div>
-            <div className="flex gap-1.5">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="w-1.5 h-1.5 rounded-full" style={{background: '#fbbf24', animation: `bounce 1s infinite ${i * 0.15}s`}} />
-              ))}
-            </div>
-          </div>
-        </div>
+        <AiProcessingAnimation
+          elapsedSeconds={elapsedSeconds}
+          currentStep={currentStep}
+          imagePreview={imagePreview}
+          jobId={jobId}
+          onCancel={handleCancel}
+          isRtl={isRtl}
+          accentColor="#d97706"
+          accentGradient="linear-gradient(135deg, #d97706, #fbbf24)"
+          featureLabel="AI Redraw"
+        />
       )}
-
-      {/* Error state */}
+            {/* Error state */}
       {status === "error" && errorMsg && (
         <div
           className="flex items-start gap-2 p-3 rounded-xl text-sm"

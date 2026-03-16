@@ -42,7 +42,44 @@ export function truncateFilename(name: string, maxLen = 30): string {
   return base.slice(0, maxLen).trimEnd();
 }
 
-// ─── PDF generation helper (shared logic) ────────────────────────────────────
+// ─── Shared download helper ─────────────────────────────────────────────────
+async function downloadBlob(blob: Blob, filename: string): Promise<void> {
+  const pdfFile = new File([blob], filename, { type: "application/pdf" });
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (isIOS && navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+    try { await navigator.share({ files: [pdfFile], title: filename }); return; }
+    catch (e: unknown) { if (e instanceof Error && e.name === "AbortError") return; }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ─── SVG sanitizer ──────────────────────────────────────────────────────────
+function sanitizeSvg(svgContent: string): string {
+  let s = svgContent;
+  s = s.replace(/<path([^>]*[^/])>/g, '<path$1/>');
+  s = s.replace(/<path>/g, '<path/>');
+  s = s.replace(/<circle([^>]*[^/])>/g, '<circle$1/>');
+  s = s.replace(/<rect([^>]*[^/])>/g, '<rect$1/>');
+  s = s.replace(/<ellipse([^>]*[^/])>/g, '<ellipse$1/>');
+  s = s.replace(/<line([^>]*[^/])>/g, '<line$1/>');
+  s = s.replace(/<polygon([^>]*[^/])>/g, '<polygon$1/>');
+  s = s.replace(/<polyline([^>]*[^/])>/g, '<polyline$1/>');
+  s = s.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+  s = s.replace(/<foreignObject[^>]*>[\s\S]*?<\/foreignObject>/gi, '');
+  s = s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  const svgIdx = s.search(/<(?:\?xml|svg)/i);
+  if (svgIdx > 0) s = s.slice(svgIdx);
+  if (!s.includes('xmlns=')) {
+    s = s.replace(/<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+  }
+  return s;
+}
+
+// ─── PDF generation helper — TRUE VECTOR PDF using svg2pdf.js ───────────────
 export async function generateAndDownloadPdf(
   svgContent: string,
   widthPx: number,
@@ -51,23 +88,22 @@ export async function generateAndDownloadPdf(
   filename: string,
   isRtl: boolean
 ): Promise<void> {
-  // Convert px at given DPI to mm
-  const pxToMm = 25.4 / dpi;
-
   // Extract actual SVG aspect ratio from viewBox (most reliable)
   const vbMatch = svgContent.match(/viewBox=["']([^"']+)["']/);
   let svgAspect = heightPx > 0 && widthPx > 0 ? heightPx / widthPx : 1;
+  let vbW = 0, vbH = 0;
   if (vbMatch) {
     const parts = vbMatch[1].trim().split(/[\s,]+/);
     if (parts.length === 4) {
-      const vbW = parseFloat(parts[2]);
-      const vbH = parseFloat(parts[3]);
+      vbW = parseFloat(parts[2]);
+      vbH = parseFloat(parts[3]);
       if (vbW > 0 && vbH > 0) svgAspect = vbH / vbW;
     }
   }
 
   // Cap to A4 (210×297 mm) preserving aspect ratio
   const A4_W = 210, A4_H = 297;
+  const pxToMm = 25.4 / dpi;
   let rawW = widthPx * pxToMm;
   if (rawW <= 0 || !isFinite(rawW)) rawW = A4_W;
   let pdfW = Math.min(rawW, A4_W);
@@ -76,69 +112,64 @@ export async function generateAndDownloadPdf(
   if (pdfW < 10) pdfW = 10;
   if (pdfH < 10) pdfH = 10;
 
-  const PX_PER_MM = 96 / 25.4;
-  const renderW = Math.min(Math.round(pdfW * PX_PER_MM * 2), 3000);
-  const renderH = Math.min(Math.round(pdfH * PX_PER_MM * 2), 3000);
+  let sanitizedSvg = sanitizeSvg(svgContent);
 
-  // Sanitize SVG to fix corrupt header / XML parse errors
-  let sanitizedSvg = svgContent;
-  // Fix unclosed void elements (Safari-safe, no lookbehind)
-  sanitizedSvg = sanitizedSvg.replace(/<path([^>]*[^/])>/g, '<path$1/>');
-  sanitizedSvg = sanitizedSvg.replace(/<path>/g, '<path/>');
-  sanitizedSvg = sanitizedSvg.replace(/<circle([^>]*[^/])>/g, '<circle$1/>');
-  sanitizedSvg = sanitizedSvg.replace(/<rect([^>]*[^/])>/g, '<rect$1/>');
-  sanitizedSvg = sanitizedSvg.replace(/<ellipse([^>]*[^/])>/g, '<ellipse$1/>');
-  sanitizedSvg = sanitizedSvg.replace(/<line([^>]*[^/])>/g, '<line$1/>');
-  sanitizedSvg = sanitizedSvg.replace(/<polygon([^>]*[^/])>/g, '<polygon$1/>');
-  sanitizedSvg = sanitizedSvg.replace(/<polyline([^>]*[^/])>/g, '<polyline$1/>');
-  sanitizedSvg = sanitizedSvg.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-  sanitizedSvg = sanitizedSvg.replace(/<foreignObject[^>]*>[\s\S]*?<\/foreignObject>/gi, '');
-  // Strip null bytes and control chars
-  sanitizedSvg = sanitizedSvg.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-  // Strip anything before <?xml or <svg
-  const svgIdx = sanitizedSvg.search(/<(?:\?xml|svg)/i);
-  if (svgIdx > 0) sanitizedSvg = sanitizedSvg.slice(svgIdx);
-  if (!sanitizedSvg.includes('xmlns=')) {
-    sanitizedSvg = sanitizedSvg.replace(/<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+  // Set explicit mm dimensions so svg2pdf renders at correct size
+  if (vbW > 0 && vbH > 0) {
+    sanitizedSvg = sanitizedSvg
+      .replace(/(<svg[^>]*)\swidth="[^"]*"/g, '$1')
+      .replace(/(<svg[^>]*)\sheight="[^"]*"/g, '$1')
+      .replace(/<svg/, `<svg width="${pdfW}mm" height="${pdfH}mm"`);
   }
 
-  const pngRes = await fetch("/api/svg-to-png", {
-    method: "POST", credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ svgContent: sanitizedSvg, widthPx: renderW, heightPx: renderH }),
-  });
-  if (!pngRes.ok) throw new Error(`SVG-to-PNG failed: ${pngRes.status}`);
-
-  const pngBlob = await pngRes.blob();
-  const imgData = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(pngBlob);
-  });
-
-  const { jsPDF } = await import("jspdf");
-  const pdf = new jsPDF({
-    orientation: pdfW >= pdfH ? "landscape" : "portrait",
-    unit: "mm",
-    format: [pdfW, pdfH],
-  });
-  pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
-  const pdfBytes = pdf.output("arraybuffer") as ArrayBuffer;
-  const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
   const baseName = truncateFilename(filename.replace(/\.dxf$/i, ""));
-  const pdfFile = new File([pdfBlob], `${baseName}.pdf`, { type: "application/pdf" });
 
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  if (isIOS && navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-    try { await navigator.share({ files: [pdfFile], title: baseName }); return; }
-    catch (e: unknown) { if (e instanceof Error && e.name === "AbortError") return; }
+  try {
+    // ── TRUE VECTOR path: svg2pdf.js renders SVG paths directly into PDF ──
+    const { jsPDF } = await import("jspdf");
+    const { svg2pdf } = await import("svg2pdf.js");
+    const pdf = new jsPDF({
+      orientation: pdfW >= pdfH ? "landscape" : "portrait",
+      unit: "mm",
+      format: [pdfW, pdfH],
+    });
+    const parser = new DOMParser();
+    const svgDoc = parser.parseFromString(sanitizedSvg, "image/svg+xml");
+    const svgEl = svgDoc.documentElement as unknown as SVGSVGElement;
+    await svg2pdf(svgEl, pdf, { x: 0, y: 0, width: pdfW, height: pdfH });
+    const pdfBytes = pdf.output("arraybuffer") as ArrayBuffer;
+    const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
+    await downloadBlob(pdfBlob, `${baseName}.pdf`);
+  } catch (vectorErr) {
+    // ── FALLBACK: rasterized PNG-in-PDF if svg2pdf fails ──
+    console.warn("[PDF] svg2pdf failed, falling back to raster:", vectorErr);
+    const PX_PER_MM = 96 / 25.4;
+    const renderW = Math.min(Math.round(pdfW * PX_PER_MM * 2), 3000);
+    const renderH = Math.min(Math.round(pdfH * PX_PER_MM * 2), 3000);
+    const pngRes = await fetch("/api/svg-to-png", {
+      method: "POST", credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ svgContent: sanitizedSvg, widthPx: renderW, heightPx: renderH }),
+    });
+    if (!pngRes.ok) throw new Error(`SVG-to-PNG failed: ${pngRes.status}`);
+    const pngBlob = await pngRes.blob();
+    const imgData = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(pngBlob);
+    });
+    const { jsPDF } = await import("jspdf");
+    const pdf = new jsPDF({
+      orientation: pdfW >= pdfH ? "landscape" : "portrait",
+      unit: "mm",
+      format: [pdfW, pdfH],
+    });
+    pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
+    const pdfBytes = pdf.output("arraybuffer") as ArrayBuffer;
+    const pdfBlob2 = new Blob([pdfBytes], { type: "application/pdf" });
+    await downloadBlob(pdfBlob2, `${baseName}.pdf`);
   }
-  const url = URL.createObjectURL(pdfBlob);
-  const a = document.createElement("a");
-  a.href = url; a.download = `${baseName}.pdf`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -157,7 +188,6 @@ export function ExportButtons({
 }: ExportButtonsProps) {
   const [isDxfLoading, setIsDxfLoading] = useState(false);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
-
   const handleDxf = async () => {
     if (isDxfLoading) return;
     setIsDxfLoading(true);
@@ -189,7 +219,6 @@ export function ExportButtons({
       setIsDxfLoading(false);
     }
   };
-
   const handlePdf = async () => {
     if (isPdfLoading || !svgContent) return;
     setIsPdfLoading(true);
@@ -209,7 +238,6 @@ export function ExportButtons({
       setIsPdfLoading(false);
     }
   };
-
   if (layout === "inline") {
     // Compact horizontal layout for portrait cards
     return (
@@ -253,7 +281,6 @@ export function ExportButtons({
       </div>
     );
   }
-
   // Default: 3-col grid + more options row (used by AI Trace, AI Redraw, AI Generate)
   return (
     <div className="flex flex-col gap-2">
