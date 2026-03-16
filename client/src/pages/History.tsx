@@ -145,14 +145,9 @@ function SvgViewer({ svg }: { svg: string }) {
     setTranslate({ x: 0, y: 0 });
   }, [svg]);
 
-  // Inject fill/outline style for proper display
-  const fillStyle = fillMode === 'fill'
-    ? 'path,circle,rect,polygon,polyline,ellipse,line{fill:black!important;stroke:none!important}'
-    : 'path,circle,rect,polygon,polyline,ellipse,line{fill:none!important;stroke:black!important;stroke-width:0.5px!important}';
-  const styledSvg = svg
-    .replace(/<svg /, '<svg style="width:100%;height:100%;display:block;" ')
-    .replace(/<\/defs>/, `</defs><style>${fillStyle}</style>`)
-    .replace(/(<svg[^>]*>)(?!.*<defs)(?!.*<style)/, `$1<style>${fillStyle}</style>`);
+  // Use scoped CSS class on wrapper div — avoids bleeding fill:black onto Lucide icon buttons
+  const svgViewerClass = fillMode === 'fill' ? 'svg-viewer-fill' : 'svg-viewer-outline';
+  const cleanSvg = svg.replace(/<svg /, '<svg style="width:100%;height:100%;display:block;" ');
 
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
@@ -233,7 +228,7 @@ function SvgViewer({ svg }: { svg: string }) {
       {/* SVG Canvas */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-hidden cursor-grab active:cursor-grabbing select-none"
+        className={`flex-1 overflow-hidden cursor-grab active:cursor-grabbing select-none ${svgViewerClass}`}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -245,7 +240,7 @@ function SvgViewer({ svg }: { svg: string }) {
       >
         <div
           style={{ transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`, transformOrigin: "center center", width: "100%", height: "100%" }}
-          dangerouslySetInnerHTML={{ __html: styledSvg }}
+          dangerouslySetInnerHTML={{ __html: cleanSvg }}
         />
       </div>
     </div>
@@ -339,12 +334,8 @@ function GroupCard({
         {showSource && hasSource ? (
           <img src={activeItem.sourceImageUrl!} alt="original" className="w-full h-full object-contain cursor-pointer" onClick={() => setShowSource(false)} />
         ) : activeItem?.svgPreview ? (
-          <div className="w-full h-full cursor-pointer" onClick={() => onViewVariation(activeItem)}>
-            <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: (() => {
-              const s = activeItem.svgPreview.replace(/<svg /, '<svg style="width:100%;height:100%;display:block;" ');
-              if (s.includes('</defs>')) return s.replace(/<\/defs>/, '</defs><style>path,circle,rect,polygon,polyline,ellipse,line{fill:black;stroke:none}</style>');
-              return s.replace(/(<svg[^>]*>)/, '$1<style>path,circle,rect,polygon,polyline,ellipse,line{fill:black;stroke:none}</style>');
-            })() }} />
+          <div className="w-full h-full cursor-pointer svg-viewer-fill" onClick={() => onViewVariation(activeItem)}>
+            <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: activeItem.svgPreview.replace(/<svg /, '<svg style="width:100%;height:100%;display:block;" ') }} />
           </div>
         ) : activeItem?.imageUrl ? (
           <img src={activeItem.imageUrl} alt={shortDesc} className="w-full h-full object-contain cursor-pointer" onClick={() => onViewVariation(activeItem)} />

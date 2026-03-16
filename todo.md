@@ -1889,3 +1889,7 @@
 - [x] הפרדת כפתורי זום ממתג המילוי — כרגע מתג המילוי צובע גם כפתורי זום
 - [x] עיצוב מחדש של כפתורי הזום ומילוי — נוח לאייפון (גדול יותר, ברור יותר)
 - [x] שיפור כל ה-SVG viewers בכל הפיצ'רים (Home, History, AiTraceTab, AiDocumentRedrawTab, FaceDetectTab)
+
+## תיקון CSS bleeding - כפתורי זום נצבעים שחור
+- [x] CSS fill:black מחיל על כל ה-paths בדף כולל Lucide icons
+- [x] פתרון: scoped CSS classes (svg-viewer-fill / svg-viewer-outline) ב-index.css - חל רק על SVG בתוך wrapper div

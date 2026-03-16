@@ -85,15 +85,9 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
     return 1;
   })();
 
-  // Apply fill/outline mode via a <style> injection — avoids regex duplication issues
-  // with potrace SVGs that already have fill attributes on paths.
-  const styledSvg = (() => {
-    const styleTag = fillMode === 'fill'
-      ? '<style>path,polygon,polyline,rect,circle,ellipse{fill:black!important;stroke:none!important}</style>'
-      : '<style>path,polygon,polyline,rect,circle,ellipse{fill:none!important;stroke:black!important;stroke-width:0.5px!important}</style>';
-    // Inject style tag right after <svg ...> opening tag
-    return svgContent.replace(/(<svg[^>]*>)/, '$1' + styleTag);
-  })();
+  // Use scoped CSS class on wrapper div — avoids bleeding fill:black onto Lucide icon buttons
+  const svgViewerClass = fillMode === 'fill' ? 'svg-viewer-fill' : 'svg-viewer-outline';
+  const cleanSvg = svgContent; // no style injection needed
 
   const Toolbar = ({ onClose }: { onClose?: (e: React.MouseEvent) => void }) => (
     <div className="flex items-center gap-1 px-2 border-b bg-muted/30" style={{ minHeight: 48 }}>
@@ -143,14 +137,12 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
     </div>
   );
 
-  const fullscreenBg = fillMode === 'fill' ? 'bg-white' : 'bg-white';
-
   return (
     <>
       {fullscreen && (
-        <div className={`fixed inset-0 z-50 bg-black flex flex-col`}>
+        <div className="fixed inset-0 z-50 bg-black flex flex-col">
           <Toolbar onClose={(e) => { e.stopPropagation(); setFullscreen(false); setScale(1); setOffset({ x: 0, y: 0 }); }} />
-          <div className={`flex-1 overflow-hidden ${fullscreenBg}`} dangerouslySetInnerHTML={{ __html: styledSvg }} />
+          <div className={`flex-1 overflow-hidden bg-white ${svgViewerClass}`} dangerouslySetInnerHTML={{ __html: cleanSvg }} />
         </div>
       )}
       <div className="border rounded-lg overflow-hidden bg-white">
@@ -159,13 +151,13 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
           ref={(el) => {
             if (el) { const w = el.getBoundingClientRect().width; el.style.height = Math.min(Math.max(w * svgAspect, 180), 500) + 'px'; }
           }}
-          className="relative overflow-hidden bg-white select-none"
+          className={`relative overflow-hidden bg-white select-none ${svgViewerClass}`}
           style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
           onWheel={onWheel} onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
           onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
         >
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`, transformOrigin: 'center center', width: '90%', height: '90%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}
-            dangerouslySetInnerHTML={{ __html: styledSvg }} />
+            dangerouslySetInnerHTML={{ __html: cleanSvg }} />
         </div>
       </div>
     </>

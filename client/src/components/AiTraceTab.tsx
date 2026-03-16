@@ -95,18 +95,16 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
     return 1;
   })();
 
-  const styleTag = fillMode === 'fill'
-    ? '<style>path,polygon,polyline,rect:not([fill="white"]),circle,ellipse{fill:black!important;stroke:none!important}</style>'
-    : '<style>path,polygon,polyline,rect:not([fill="white"]),circle,ellipse{fill:none!important;stroke:black!important;stroke-width:0.5px!important}</style>';
-
-  const styledSvg = svgContent.replace(/(<svg[^>]*>)/, '$1' + styleTag);
+  // Use scoped CSS class on wrapper div — avoids bleeding fill:black onto Lucide icon buttons
+  const svgViewerClass = fillMode === 'fill' ? 'svg-viewer-fill' : 'svg-viewer-outline';
+  const cleanSvg = svgContent; // no style injection needed
 
   const Viewer = ({ height }: { height: number | string }) => (
-    <div className="relative overflow-hidden bg-white select-none" style={{ height, cursor: isPanning ? "grabbing" : "grab" }}
+    <div className={`relative overflow-hidden bg-white select-none ${svgViewerClass}`} style={{ height, cursor: isPanning ? "grabbing" : "grab" }}
       onWheel={onWheel} onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
       onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
       <div style={{ position: "absolute", top: "50%", left: "50%", transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`, transformOrigin: "center center", width: "90%", height: "90%", display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}
-        dangerouslySetInnerHTML={{ __html: styledSvg }} />
+        dangerouslySetInnerHTML={{ __html: cleanSvg }} />
     </div>
   );
 
@@ -173,11 +171,11 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
             const w = el.getBoundingClientRect().width;
             el.style.height = Math.min(Math.max(w * svgAspect, 180), 500) + 'px';
           }
-        }} className="relative overflow-hidden bg-white select-none" style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
+        }} className={`relative overflow-hidden bg-white select-none ${svgViewerClass}`} style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
           onWheel={onWheel} onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
           onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`, transformOrigin: 'center center', width: '90%', height: '90%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}
-            dangerouslySetInnerHTML={{ __html: styledSvg }} />
+            dangerouslySetInnerHTML={{ __html: cleanSvg }} />
         </div>
       </div>
     </>

@@ -71,10 +71,9 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
   const panStart = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
   const lastTouchDist = useRef<number | null>(null);
 
-  const styleTag = fillMode === 'fill'
-    ? '<style>path,polygon,polyline,rect:not([fill="white"]),circle,ellipse{fill:black!important;stroke:none!important}</style>'
-    : '<style>path,polygon,polyline,rect:not([fill="white"]),circle,ellipse{fill:none!important;stroke:black!important;stroke-width:0.5px!important}</style>';
-  const styledSvg = svgContent.replace(/(<svg[^>]*>)/, '$1' + styleTag);
+  // Use scoped CSS class on wrapper div — avoids bleeding fill:black onto Lucide icon buttons
+  const svgViewerClass = fillMode === 'fill' ? 'svg-viewer-fill' : 'svg-viewer-outline';
+  const cleanSvg = svgContent; // no style injection needed
 
   const svgMatch = svgContent.match(/viewBox="[^"]*"/);
   const viewBoxVals = svgMatch?.[0]?.match(/[\d.]+/g);
@@ -133,7 +132,7 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
-      className="select-none"
+      className={`select-none ${svgViewerClass}`}
     >
       <div
         style={{
@@ -149,7 +148,7 @@ function SvgViewer({ svgContent }: { svgContent: string }) {
           justifyContent: "center",
           pointerEvents: "none",
         }}
-        dangerouslySetInnerHTML={{ __html: styledSvg }}
+        dangerouslySetInnerHTML={{ __html: cleanSvg }}
       />
     </div>
   );
