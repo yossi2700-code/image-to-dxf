@@ -356,6 +356,7 @@ async function runTraceJob(
     if (rawDescription === "UNCLEAR_IMAGE" || rawDescription.startsWith("UNCLEAR_IMAGE")) {
       updateJob(jobId, {
         status: "error",
+        errorCode: "UNCLEAR_IMAGE",
         error: isHe
           ? "התמונה לא ברורה מספיק או שהאובייקט לא זוהה. אנא הסבר בכתב מה בדיוק לצייר או נסה תמונה בהירה יותר."
           : "The image is unclear or the subject cannot be identified. Please describe in text what to draw, or try a clearer image.",
@@ -793,7 +794,7 @@ router.get("/api/ai-trace/job/:jobId", (req, res) => {
   if (job.status === "done") {
     return res.json({ status: "done", result: job.result });
   } else if (job.status === "error") {
-    return res.json({ status: "error", error: job.error, message: `שגיאה: ${job.error}` });
+    return res.json({ status: "error", error: job.error, errorCode: job.errorCode, message: `שגיאה: ${job.error}` });
   } else if (job.status === "cancelled") {
     return res.json({ status: "cancelled" });
   } else {

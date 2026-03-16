@@ -16,6 +16,7 @@ export interface Job {
   updatedAt: number;
   result?: unknown;
   error?: string;
+  errorCode?: string;  // e.g. "UNCLEAR_IMAGE" for special UI handling
   tokenAction?: string; // e.g. "ai_trace" — used for refund on cancel
   step?: string;        // Human-readable current step message (he/en)
   stepEn?: string;      // English step message

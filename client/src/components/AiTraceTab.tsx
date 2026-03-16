@@ -163,6 +163,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
     return null;
   });
   const [errorMsg, setErrorMsg] = useState("");
+  const [isUnclearImage, setIsUnclearImage] = useState(false);
+  const [unclearDescription, setUnclearDescription] = useState("");
   const [downloadTarget, setDownloadTarget] = useState<GeneratedImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   // Detail level: 0 = simple (default), 1 = detailed
@@ -263,18 +265,22 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
         } else if (data.status === "error") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           const isTokenError = data.error === "INSUFFICIENT_TOKENS" || data.error === "QUOTA_EXCEEDED";
+          const isUnclear = data.errorCode === "UNCLEAR_IMAGE";
           const msg = isTokenError
             ? (data.message || t("processingError"))
-            : t("jobErrorRetry");
+            : isUnclear
+              ? (data.error || (isRtl ? "התמונה לא ברורה" : "Image unclear"))
+              : t("jobErrorRetry");
           setErrorMsg(msg);
+          setIsUnclearImage(isUnclear);
           setStatus("error");
           setCurrentStep("");
           setElapsedSeconds(0);
           if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
           setJobIdPersisted(null);
           if (!isTokenError) refetchTokens(); // Refresh balance to show refunded tokens
-          toast.error(msg);
-          if (!isTokenError) reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "ai_trace" });
+          if (!isUnclear) toast.error(msg);
+          if (!isTokenError && !isUnclear) reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "ai_trace" });
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
@@ -518,6 +524,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     setImageFile(null); setImagePreviewPersisted(null); setResult(null);
     setStatus("idle"); setErrorMsg(""); setFocusText(""); setCustomImprovement("");
+    setIsUnclearImage(false); setUnclearDescription("");
     setJobIdPersisted(null); setTryAgainUrl(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -900,8 +907,69 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
           />
         )}
 
-        {/* Error */}
-        {status === "error" && (
+        {/* UNCLEAR_IMAGE — special dialog with text input */}
+        {status === "error" && isUnclearImage && (
+          <div
+            className="rounded-xl overflow-hidden"
+            style={{ border: '1px solid #fbbf24', boxShadow: '0 4px 24px rgba(251,191,36,0.15)' }}
+          >
+            {/* Header */}
+            <div className="px-5 py-4" style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)' }}>
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-2xl" style={{ background: '#fde68a' }}>
+                  ?
+                </div>
+                <div>
+                  <p className="font-bold text-amber-800 text-base">{isRtl ? "התמונה לא ברורה לי" : "I couldn't identify the image"}</p>
+                  <p className="text-xs text-amber-600">{isRtl ? "צייר רק מה שרואים, לא מפרש" : "I draw only what I see, not interpret"}</p>
+                </div>
+              </div>
+            </div>
+            {/* Body */}
+            <div className="px-5 py-4 bg-white">
+              <p className="text-sm text-gray-600 mb-3">
+                {isRtl
+                  ? "בבקשה רשום בכתב מה בדיוק לצייר (למשל: כלב יושב מצד, מנורה עגולה פשוטה):"
+                  : "Please describe what to draw (e.g. a sitting dog, a simple round lamp):"}
+              </p>
+              <textarea
+                className="w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-amber-300"
+                rows={3}
+                placeholder={isRtl ? "למשל: כלב לבן יושב מצד, מנורה עגולה עם שלשה רגליים..." : "e.g. a white dog sitting sideways, a round lamp with three legs..."}
+                value={unclearDescription}
+                onChange={(e) => setUnclearDescription(e.target.value)}
+                dir={isRtl ? "rtl" : "ltr"}
+                autoFocus
+              />
+              <div className="flex gap-2 mt-3 flex-wrap">
+                <button
+                  className="flex-1 text-sm px-4 py-2.5 rounded-lg font-semibold text-white transition-all"
+                  style={{ background: unclearDescription.trim() ? '#0d9488' : '#9ca3af', cursor: unclearDescription.trim() ? 'pointer' : 'not-allowed' }}
+                  disabled={!unclearDescription.trim()}
+                  onClick={() => {
+                    const desc = unclearDescription.trim();
+                    if (!desc) return;
+                    setIsUnclearImage(false);
+                    setDescription(desc);
+                    setStatus("idle");
+                    setTimeout(() => handleTrace(desc), 50);
+                  }}
+                >
+                  {isRtl ? "צייר עכשיו" : "Draw now"} &rarr;
+                </button>
+                <button
+                  className="text-sm px-4 py-2.5 rounded-lg font-medium bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-200"
+                  onClick={reset}
+                >
+                  {isRtl ? "בחר תמונה אחרת" : "Choose another image"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Regular Error */}
+        {status === "error" && !isUnclearImage && (
           <div
             className="rounded-xl p-6 flex flex-col items-center gap-3 text-center"
             style={{ background: '#fff5f5', border: '1px solid #fecaca' }}
