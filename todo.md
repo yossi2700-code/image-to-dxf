@@ -1873,3 +1873,14 @@
 - [x] תקן handlePdf בהיסטוריה — עכשיו משתמש ב-generateAndDownloadPdf (jsPDF) במקום לשמור PNG כ-PDF
 - [x] הוסף מילוי שחור לתצוגת SVG בכרטיסי ההיסטוריה (GroupCard + SvgViewer)
 - [x] תקן lookbehind regex ב-ExportButtons ו-DxfDownloadDialog להיות Safari-compatible
+
+## תיקון PDF - שגיאת XML parse "Couldn't find end of Start Tag path" (מרץ 2026)
+
+- [ ] תקן סניטיזציה בשרת - הרגקס הנוכחי לא תופס את כל המקרים של path לא סגור
+- [ ] השתמש ב-DOMParser/xmldom בשרת לתיקון XML אמיתי במקום regex
+
+## תיקון PDF - שגיאת XML parse (root cause נמצא)
+- [x] גילוי: inputSanitizer חותך strings ל-10,000 תווים — SVG של 420k תווים נחתך
+- [x] פתרון: פטור /api/svg-to-png מ-inputSanitizer (SVG יכול להיות 500k+ תווים)
+- [x] פתרון: state-machine parser לתיקון void elements לא סגורים (path, circle וכו')
+- [x] הסרת תלות ב-xmldom (גרמה לבעיות depth/self-closing)

@@ -143,6 +143,10 @@ function sanitizeValue(value: unknown, depth = 0): unknown {
 }
 
 export function inputSanitizer(req: Request, _res: Response, next: NextFunction): void {
+  // Exempt SVG-to-PNG route — SVG content can be 100k–500k chars and must not be truncated
+  if (req.path === "/api/svg-to-png") {
+    return next();
+  }
   if (req.body && typeof req.body === "object") {
     req.body = sanitizeValue(req.body) as Record<string, unknown>;
   }
