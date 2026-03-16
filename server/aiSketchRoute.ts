@@ -97,33 +97,22 @@ async function preprocessForSketch(imageBuffer: Buffer): Promise<{ processed: Bu
     if (!response.ok) throw new Error(`Failed to download lineart: ${response.status}`);
     const lineartRaw = Buffer.from(await response.arrayBuffer());
 
-    // Step 5: Scale up the lineart to 2048px for higher resolution output
-    // fal.ai returns 1024px — upscale 2x for sharper DXF
-    const lineartMeta = await sharp(lineartRaw).metadata();
-    const upW = (lineartMeta.width ?? falW) * 2;
-    const upH = (lineartMeta.height ?? falH) * 2;
-
-    const lineartUpscaled = await sharp(lineartRaw)
-      .resize(upW, upH, { fit: "fill", kernel: "lanczos3" })
-      .toBuffer();
-
-    // Step 6: fal.ai lineart returns WHITE lines on BLACK background
+    // Step 5: fal.ai lineart returns WHITE lines on BLACK background
     // Invert to get BLACK lines on WHITE (required for potrace)
-    // Use a soft threshold to keep thin lines visible
-    const processed = await sharp(lineartUpscaled)
+    // Do NOT upscale — it causes artifacts with thin lines
+    const processed = await sharp(lineartRaw)
       .negate()                           // invert: white lines → black lines on white
       .grayscale()
-      .linear(1.5, -30)                   // boost contrast slightly
-      .extend({ top: 80, bottom: 80, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-      .threshold(160)                     // threshold: keep thin lines (lower = more lines kept)
+      .extend({ top: 40, bottom: 40, left: 40, right: 40, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .threshold(100)                     // low threshold: keep thin lines (music notes, staff lines)
       .png({ compressionLevel: 3 })
       .toBuffer();
 
     // Preview = white background with black lines (same as processed but without threshold)
-    const preview = await sharp(lineartUpscaled)
+    const preview = await sharp(lineartRaw)
       .negate()                           // white lines on black → black lines on white
       .grayscale()
-      .extend({ top: 80, bottom: 80, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .extend({ top: 40, bottom: 40, left: 40, right: 40, background: { r: 255, g: 255, b: 255, alpha: 1 } })
       .png({ compressionLevel: 6 })
       .toBuffer();
 
@@ -207,10 +196,10 @@ async function runSketchJob(
     const rawSvg = await new Promise<string>((resolve, reject) => {
       potrace.trace(processedBuffer, {
         threshold: 128,
-        turdSize: 20,         // lower turdSize at high resolution = keep fine detail
-        alphaMax: 1.0,
+        turdSize: 2,          // very low: keep fine details like music notes, staff lines
+        alphaMax: 0.5,        // smoother curves
         optCurve: true,
-        optTolerance: 0.2,
+        optTolerance: 0.1,    // tighter tolerance for accurate lines
       }, (err: Error | null, svg: string) => {
         if (err) reject(err); else resolve(svg);
       });
