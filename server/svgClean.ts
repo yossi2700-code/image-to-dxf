@@ -31,6 +31,6 @@ export function cleanSvgForPreview(rawSvg: string): string {
     .replace(/stroke:[^;"'\s]*(;|(?=["'\s]))/g, '')
     // Remove stroke-width in style attributes
     .replace(/stroke-width:[^;"'\s]*(;|(?=["'\s]))/g, '')
-    // Now add clean stroke attributes to all path elements
-    .replace(/<path /g, '<path stroke="black" stroke-width="0.5" fill="none" ');
+    // Now add clean stroke attributes to all path elements (no stroke-width — let CSS control it)
+    .replace(/<path /g, '<path stroke="black" fill="none" ');
 }
