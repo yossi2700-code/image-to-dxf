@@ -301,6 +301,20 @@ export function SvgPanZoomViewer({
     return () => { document.body.style.overflow = ''; };
   }, [fullscreen]);
 
+  // Attach non-passive touch listeners to block browser scroll/pinch-zoom
+  // React synthetic events are passive by default, so we need native listeners.
+  const attachNativeListeners = useCallback((el: HTMLDivElement | null) => {
+    (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+    if (!el) return;
+    const preventDefault = (e: TouchEvent) => {
+      // Block browser scroll and pinch-zoom when touching the viewer
+      if (e.touches.length >= 1) e.preventDefault();
+    };
+    el.addEventListener('touchstart', preventDefault, { passive: false });
+    el.addEventListener('touchmove', preventDefault, { passive: false });
+    // Cleanup is handled by React unmounting the element
+  }, []);
+
   // ── Toolbar ─────────────────────────────────────────────────────────────────
 
   const Toolbar = ({ isFullscreen = false }: { isFullscreen?: boolean }) => (
@@ -414,9 +428,7 @@ export function SvgPanZoomViewer({
 
   const Canvas = ({ canvasHeight, isFullscreen = false }: { canvasHeight: number | string; isFullscreen?: boolean }) => (
     <div
-      ref={(el) => {
-        (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-      }}
+      ref={attachNativeListeners}
       className={`relative overflow-hidden select-none touch-none ${svgViewerClass}`}
       style={{
         height: canvasHeight,
