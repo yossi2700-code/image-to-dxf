@@ -55,6 +55,10 @@ export function SvgPanZoomViewer({
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
+  // Always-current offset ref — updated synchronously alongside state
+  // This avoids the React batching issue where setOffset callback may run late
+  const offsetRef = useRef({ x: 0, y: 0 });
+
   // Pointer tracking for pan + pinch
   const activePointers = useRef<Map<number, { x: number; y: number }>>(new Map());
   const lastPinchDist = useRef<number | null>(null);
@@ -66,6 +70,20 @@ export function SvgPanZoomViewer({
   // Double-tap detection
   const lastTapTime = useRef<number>(0);
   const lastTapPos = useRef<{ x: number; y: number } | null>(null);
+
+  // Helper: update offset state AND ref together
+  const setOffsetSync = useCallback((val: { x: number; y: number } | ((prev: { x: number; y: number }) => { x: number; y: number })) => {
+    if (typeof val === 'function') {
+      setOffset((prev) => {
+        const next = val(prev);
+        offsetRef.current = next;
+        return next;
+      });
+    } else {
+      offsetRef.current = val;
+      setOffset(val);
+    }
+  }, []);
 
   // Compute SVG aspect ratio from viewBox
   const svgAspect = (() => {
@@ -93,13 +111,13 @@ export function SvgPanZoomViewer({
     setScale((prevScale) => {
       const newScale = clampScale(prevScale * factor);
       const actualFactor = newScale / prevScale;
-      setOffset((prev) => ({
+      setOffsetSync((prev) => ({
         x: cx + (prev.x - cx) * actualFactor,
         y: cy + (prev.y - cy) * actualFactor,
       }));
       return newScale;
     });
-  }, []);
+  }, [setOffsetSync]);
 
   const zoomIn = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -120,7 +138,7 @@ export function SvgPanZoomViewer({
   const resetView = (e: React.MouseEvent) => {
     e.stopPropagation();
     setScale(1);
-    setOffset({ x: 0, y: 0 });
+    setOffsetSync({ x: 0, y: 0 });
   };
 
   // ── Wheel zoom ──────────────────────────────────────────────────────────────
@@ -146,12 +164,9 @@ export function SvgPanZoomViewer({
 
     if (activePointers.current.size === 1) {
       // Single pointer — start drag
+      // Use offsetRef (always current) instead of setOffset callback to avoid batching race
       isDragging.current = true;
-      dragStart.current = { px: e.clientX, py: e.clientY, ox: 0, oy: 0 };
-      setOffset((prev) => {
-        dragStart.current = { px: e.clientX, py: e.clientY, ox: prev.x, oy: prev.y };
-        return prev;
-      });
+      dragStart.current = { px: e.clientX, py: e.clientY, ox: offsetRef.current.x, oy: offsetRef.current.y };
       lastPinchDist.current = null;
       lastPinchMid.current = null;
     } else if (activePointers.current.size === 2) {
@@ -182,7 +197,7 @@ export function SvgPanZoomViewer({
       const dx = e.clientX - ds.px;
       const dy = e.clientY - ds.py;
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) didDrag.current = true;
-      setOffset({
+      setOffsetSync({
         x: ds.ox + dx,
         y: ds.oy + dy,
       });
@@ -207,7 +222,7 @@ export function SvgPanZoomViewer({
           const dmx = midX - lastPinchMid.current.x;
           const dmy = midY - lastPinchMid.current.y;
           if (Math.abs(dmx) > 0.5 || Math.abs(dmy) > 0.5) {
-            setOffset((prev) => ({ x: prev.x + dmx, y: prev.y + dmy }));
+            setOffsetSync((prev) => ({ x: prev.x + dmx, y: prev.y + dmy }));
           }
           lastPinchMid.current = { x: midX, y: midY };
         }
@@ -240,12 +255,12 @@ export function SvgPanZoomViewer({
           setScale((prevScale) => {
             if (prevScale > 1.5) {
               // Already zoomed — reset
-              setOffset({ x: 0, y: 0 });
+              setOffsetSync({ x: 0, y: 0 });
               return 1;
             } else {
               // Zoom x2.5 toward tap point
               const factor = 2.5;
-              setOffset((prev) => ({
+              setOffsetSync((prev) => ({
                 x: tapX + (prev.x - tapX) * factor,
                 y: tapY + (prev.y - tapY) * factor,
               }));
@@ -261,12 +276,10 @@ export function SvgPanZoomViewer({
       }
     } else if (activePointers.current.size === 1) {
       // Transition from pinch back to single-finger drag
+      // Use offsetRef so dragStart is set synchronously
       isDragging.current = true;
       const [ptr] = Array.from(activePointers.current.values());
-      setOffset((prev) => {
-        dragStart.current = { px: ptr.x, py: ptr.y, ox: prev.x, oy: prev.y };
-        return prev;
-      });
+      dragStart.current = { px: ptr.x, py: ptr.y, ox: offsetRef.current.x, oy: offsetRef.current.y };
     }
   }, []);
 
@@ -281,14 +294,14 @@ export function SvgPanZoomViewer({
     e.stopPropagation();
     setFullscreen(true);
     setScale(1);
-    setOffset({ x: 0, y: 0 });
+    setOffsetSync({ x: 0, y: 0 });
   };
 
   const closeFullscreen = (e: React.MouseEvent) => {
     e.stopPropagation();
     setFullscreen(false);
     setScale(1);
-    setOffset({ x: 0, y: 0 });
+    setOffsetSync({ x: 0, y: 0 });
   };
 
   // Lock body scroll when fullscreen is open
