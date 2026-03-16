@@ -25,6 +25,7 @@ import { deductTokens, addTokens, TOKEN_COSTS, TokenAction } from "./tokenServic
 import { createJob, getJob, updateJob, cancelJob, heartbeatJob } from "./jobStore";
 import { svgToDxf } from "./svgToDxf";
 import { cleanSvgForPreview } from "./svgClean";
+import { potraceToSingleLine } from "./potraceToSingleLine";
 import potrace from "potrace";
 
 const router = Router();
@@ -48,7 +49,7 @@ function buildFilename(description: string): string {
 
 /**
  * Preprocess image for clean single-outline potrace:
- * 1. Resize to 1500px max (keeps detail without being too large)
+ * 1. Resize to 3000px max for high resolution output
  * 2. Add white padding (so outline doesn't touch edges)
  * 3. Grayscale
  * 4. High contrast linear stretch
@@ -61,7 +62,7 @@ async function preprocessForSketch(imageBuffer: Buffer): Promise<{ processed: Bu
   const meta = await sharp(rotated).metadata();
   const w = meta.width ?? 800;
   const h = meta.height ?? 800;
-  const maxDim = 1500;
+  const maxDim = 3000;  // High resolution for sharp output
   const scale = Math.min(1, maxDim / Math.max(w, h));
   const newW = Math.round(w * scale);
   const newH = Math.round(h * scale);
@@ -79,15 +80,15 @@ async function preprocessForSketch(imageBuffer: Buffer): Promise<{ processed: Bu
 
   const processed = await sharp(rotated)
     .resize(newW, newH, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-    .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+    .extend({ top: 80, bottom: 80, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
     .grayscale()
-    .linear(2.5, -(meanBrightness * 0.8))  // stretch contrast toward black
-    .blur(1.2)                              // merge thin double lines into one
+    .linear(2.8, -(meanBrightness * 0.9))  // stronger contrast stretch
+    .blur(0.8)                              // minimal blur — preserve fine detail
     .threshold(thresholdValue)
     .png({ compressionLevel: 3 })
     .toBuffer();
 
-  // Preview = the processed black/white image (what user sees as "before potrace")
+  // Preview = the processed black/white image
   const preview = await sharp(processed)
     .png({ compressionLevel: 6 })
     .toBuffer();
@@ -131,7 +132,7 @@ async function runSketchJob(
     const jobAfterPrep = getJob(jobId);
     if (!jobAfterPrep || jobAfterPrep.status === "cancelled") return;
 
-    // ── Step B: potrace — single outline ─────────────────────────────────────
+    // ── Step B: potrace → centerline tracing (eliminates double lines) ────────
     updateJob(jobId, {
       step: isHe ? "ממיר לוקטור..." : "Converting to vector...",
       stepEn: "Converting to vector...",
@@ -140,17 +141,27 @@ async function runSketchJob(
     const rawSvg = await new Promise<string>((resolve, reject) => {
       potrace.trace(processedBuffer, {
         threshold: 128,
-        turdSize: 40,         // remove small noise/speckles
+        turdSize: 20,         // lower turdSize at high resolution = keep fine detail
         alphaMax: 1.0,
         optCurve: true,
-        optTolerance: 0.3,
+        optTolerance: 0.2,
       }, (err: Error | null, svg: string) => {
         if (err) reject(err); else resolve(svg);
       });
     });
 
-    const cleanSvg = cleanSvgForPreview(rawSvg);
-    const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, false, undefined, 0, false);
+    // Use potraceToSingleLine to extract CENTERLINE — eliminates double lines
+    // This converts each filled outline path into a single center stroke
+    const singleLineResult = potraceToSingleLine(rawSvg, 1.0, 200);
+    const cleanSvg = singleLineResult.svgPreview;
+    const { dxf, segmentCount, width, height, realWidth, realHeight } = {
+      dxf: singleLineResult.dxf,
+      segmentCount: singleLineResult.segmentCount,
+      width: singleLineResult.width,
+      height: singleLineResult.height,
+      realWidth: singleLineResult.realWidth,
+      realHeight: singleLineResult.realHeight,
+    };
 
     const jobAfterTrace = getJob(jobId);
     if (!jobAfterTrace || jobAfterTrace.status === "cancelled") return;
