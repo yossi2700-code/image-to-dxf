@@ -330,8 +330,7 @@
 .svg-viewer-fill svg line {
   fill: #111111 !important;
   stroke: #111111 !important;
-  stroke-width: 0.5px !important;
-  vector-effect: non-scaling-stroke !important;
+  stroke-width: 0.3px !important;
   opacity: 1 !important;
 }
 
@@ -345,9 +344,8 @@
 .svg-viewer-outline svg line {
   fill: none !important;
   stroke: #111111 !important;
-  stroke-width: 1px !important;
+  stroke-width: 1.2px !important;
   stroke-linecap: round !important;
   stroke-linejoin: round !important;
-  vector-effect: non-scaling-stroke !important;
   opacity: 1 !important;
 }
