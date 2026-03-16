@@ -64,25 +64,25 @@ async function preprocessForSketch(imageBuffer: Buffer): Promise<{ processed: Bu
   // Auto-rotate based on EXIF
   const rotated = await sharp(imageBuffer).rotate().toBuffer();
 
-  // Step 1: Resize to 1024px max for fal.ai (it works best at this resolution)
+  // Step 1: Resize to 1024px for fal.ai input (optimal for lineart model)
   const meta = await sharp(rotated).metadata();
   const w = meta.width ?? 800;
   const h = meta.height ?? 800;
-  const maxDim = 1024;
-  const scale = Math.min(1, maxDim / Math.max(w, h));
-  const newW = Math.round(w * scale);
-  const newH = Math.round(h * scale);
+  const falMaxDim = 1024;
+  const falScale = Math.min(1, falMaxDim / Math.max(w, h));
+  const falW = Math.round(w * falScale);
+  const falH = Math.round(h * falScale);
 
-  const resizedBuffer = await sharp(rotated)
-    .resize(newW, newH, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+  const resizedForFal = await sharp(rotated)
+    .resize(falW, falH, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
     .flatten({ background: { r: 255, g: 255, b: 255 } })
-    .jpeg({ quality: 90 })
+    .jpeg({ quality: 92 })
     .toBuffer();
 
   try {
     // Step 2: Upload to S3 so fal.ai can access it via URL
     const uploadKey = `ai-sketch-input/${nanoid()}.jpg`;
-    const { url: inputUrl } = await storagePut(uploadKey, resizedBuffer, "image/jpeg");
+    const { url: inputUrl } = await storagePut(uploadKey, resizedForFal, "image/jpeg");
 
     // Step 3: Call fal.ai lineart preprocessor
     const falResult = await fal.subscribe("fal-ai/image-preprocessors/lineart", {
@@ -95,21 +95,35 @@ async function preprocessForSketch(imageBuffer: Buffer): Promise<{ processed: Bu
     // Step 4: Download the lineart image
     const response = await fetch(lineartUrl);
     if (!response.ok) throw new Error(`Failed to download lineart: ${response.status}`);
-    const lineartBuffer = Buffer.from(await response.arrayBuffer());
+    const lineartRaw = Buffer.from(await response.arrayBuffer());
 
-    // Step 5: fal.ai lineart returns WHITE lines on BLACK background
+    // Step 5: Scale up the lineart to 2048px for higher resolution output
+    // fal.ai returns 1024px — upscale 2x for sharper DXF
+    const lineartMeta = await sharp(lineartRaw).metadata();
+    const upW = (lineartMeta.width ?? falW) * 2;
+    const upH = (lineartMeta.height ?? falH) * 2;
+
+    const lineartUpscaled = await sharp(lineartRaw)
+      .resize(upW, upH, { fit: "fill", kernel: "lanczos3" })
+      .toBuffer();
+
+    // Step 6: fal.ai lineart returns WHITE lines on BLACK background
     // Invert to get BLACK lines on WHITE (required for potrace)
-    // Then add padding and threshold for clean potrace input
-    const processed = await sharp(lineartBuffer)
-      .negate()                           // invert: white lines → black lines
-      .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-      .threshold(128)                     // clean B&W for potrace
+    // Use a soft threshold to keep thin lines visible
+    const processed = await sharp(lineartUpscaled)
+      .negate()                           // invert: white lines → black lines on white
+      .grayscale()
+      .linear(1.5, -30)                   // boost contrast slightly
+      .extend({ top: 80, bottom: 80, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .threshold(160)                     // threshold: keep thin lines (lower = more lines kept)
       .png({ compressionLevel: 3 })
       .toBuffer();
 
-    // Preview = the lineart image (before inversion — white lines on black looks nice)
-    const preview = await sharp(lineartBuffer)
-      .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 0, g: 0, b: 0, alpha: 1 } })
+    // Preview = white background with black lines (same as processed but without threshold)
+    const preview = await sharp(lineartUpscaled)
+      .negate()                           // white lines on black → black lines on white
+      .grayscale()
+      .extend({ top: 80, bottom: 80, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
       .png({ compressionLevel: 6 })
       .toBuffer();
 
@@ -118,12 +132,24 @@ async function preprocessForSketch(imageBuffer: Buffer): Promise<{ processed: Bu
     // Fallback: use sharp-only preprocessing if fal.ai fails
     console.error("[AI Sketch] fal.ai lineart failed, falling back to sharp:", falError);
 
-    const { channels } = await sharp(resizedBuffer).grayscale().toBuffer().then(buf => sharp(buf).stats());
+    // Use higher resolution for fallback too (2048px)
+    const fbMaxDim = 2048;
+    const fbScale = Math.min(1, fbMaxDim / Math.max(w, h));
+    const fbW = Math.round(w * fbScale);
+    const fbH = Math.round(h * fbScale);
+
+    const resizedFallback = await sharp(rotated)
+      .resize(fbW, fbH, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .flatten({ background: { r: 255, g: 255, b: 255 } })
+      .jpeg({ quality: 90 })
+      .toBuffer();
+
+    const { channels } = await sharp(resizedFallback).grayscale().toBuffer().then(buf => sharp(buf).stats());
     const meanBrightness = channels[0].mean;
     const thresholdValue = meanBrightness < 100 ? 100 : meanBrightness < 160 ? 130 : 150;
 
-    const processed = await sharp(resizedBuffer)
-      .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+    const processed = await sharp(resizedFallback)
+      .extend({ top: 80, bottom: 80, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
       .grayscale()
       .linear(2.8, -(meanBrightness * 0.9))
       .blur(0.8)
