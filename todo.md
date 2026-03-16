@@ -1893,3 +1893,8 @@
 ## תיקון CSS bleeding - כפתורי זום נצבעים שחור
 - [x] CSS fill:black מחיל על כל ה-paths בדף כולל Lucide icons
 - [x] פתרון: scoped CSS classes (svg-viewer-fill / svg-viewer-outline) ב-index.css - חל רק על SVG בתוך wrapper div
+
+## תיקון זום + גרירה ב-SVG Viewers
+- [ ] תיקון גרירה בזמן זום — כרגע אי אפשר להזיז אובייקט בזמן זום
+- [ ] שיפור חוויית הזום — pinch-to-zoom + drag נוח ב-iOS
+- [ ] מחקר שיפור מהירות OpenAI API
