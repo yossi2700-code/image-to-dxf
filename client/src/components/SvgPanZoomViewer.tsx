@@ -38,6 +38,15 @@ function clampScale(s: number) {
   return Math.min(MAX_SCALE, Math.max(MIN_SCALE, s));
 }
 
+/** Strip inline stroke-width from SVG so CSS can control line thickness for both new and historical files */
+function stripInlineStrokeWidth(svg: string): string {
+  return svg
+    // Remove stroke-width as attribute: stroke-width="..."
+    .replace(/\s+stroke-width="[^"]*"/g, '')
+    // Remove stroke-width in style attributes: style="...stroke-width:X..."
+    .replace(/stroke-width\s*:[^;"'\s]*(;|(?=["'\s]))/g, '');
+}
+
 export function SvgPanZoomViewer({
   svgContent,
   height,
@@ -103,6 +112,7 @@ export function SvgPanZoomViewer({
   const defaultHeight = height ?? "clamp(300px, 60vh, 680px)";
 
   const svgViewerClass = fillMode === 'fill' ? 'svg-viewer-fill' : 'svg-viewer-outline';
+  const cleanedSvg = stripInlineStrokeWidth(svgContent);
 
   // ── Zoom helpers ────────────────────────────────────────────────────────────
 
@@ -468,7 +478,7 @@ export function SvgPanZoomViewer({
           pointerEvents: 'none',
           willChange: 'transform',
         }}
-        dangerouslySetInnerHTML={{ __html: svgContent }}
+        dangerouslySetInnerHTML={{ __html: cleanedSvg }}
       />
 
       {/* Hint overlay — shown only at scale=1, offset=0 */}
