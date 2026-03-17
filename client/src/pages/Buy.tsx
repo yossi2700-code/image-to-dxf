@@ -265,97 +265,33 @@ export default function Buy() {
     }
   }, [manusUser]);
 
-  // PayPal Smart Buttons — load SDK and render card-only button
-  useEffect(() => {
-    if (!paypalClientId || paymentMethod !== "card" || !termsAccepted) return;
-    // Reset state
-    setSmartButtonsReady(false);
+  // Card payment handler — creates order with useCard=true and redirects to PayPal card checkout
+  async function handleCardPurchase() {
+    if (!termsAccepted) { setCardError("יש לאשר את תנאי הרכישה"); return; }
+    const loggedIn = isLoggedIn || !!manusUser;
+    if (!loggedIn) { setCardError(t("buyLoginRequired")); return; }
+    setCardLoading(true);
     setCardError(null);
-    setCardSuccess(false);
-    // Remove old script if any
-    const oldScript = document.getElementById("paypal-sdk-card");
-    if (oldScript) oldScript.remove();
-    // Clear the container
-    if (smartButtonsRef.current) smartButtonsRef.current.innerHTML = "";
-    const script = document.createElement("script");
-    script.id = "paypal-sdk-card";
-    // Load buttons component — disable PayPal wallet, show only card
-    script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&components=buttons&currency=${currency}&intent=capture&disable-funding=paypal,paylater,venmo,sepa,bancontact,eps,giropay,ideal,mybank,p24,sofort`;
-    script.setAttribute("data-namespace", "paypalSDKCard");
-    script.onload = async () => {
-      const paypal = (window as unknown as Record<string, unknown>).paypalSDKCard as {
-        Buttons: (config: Record<string, unknown>) => {
-          render: (el: HTMLElement) => Promise<void>;
-          isEligible: () => boolean;
-        };
-        FUNDING: { CARD: string };
-      } | undefined;
-      if (!paypal || !smartButtonsRef.current) return;
-      try {
-        const buttons = paypal.Buttons({
-          fundingSource: paypal.FUNDING?.CARD ?? "card",
-          style: {
-            layout: "vertical",
-            color: "black",
-            shape: "rect",
-            label: "pay",
-            height: 50,
-          },
-          createOrder: async () => {
-            const data = await createOrderMutation.mutateAsync({
-              packageId: selectedPackage,
-              currency,
-              termsAccepted: true,
-              origin: window.location.origin,
-            });
-            if (!data.orderId) throw new Error("שגיאה ביצירת הזמנה");
-            return data.orderId;
-          },
-          onApprove: async (approveData: { orderID: string }) => {
-            setCardLoading(true);
-            setCardError(null);
-            try {
-              const captureData = await captureOrderMutation.mutateAsync({ orderId: approveData.orderID });
-              if (captureData.success) {
-                setCardSuccess(true);
-                setTimeout(() => { window.location.href = "/buy/success?orderId=" + approveData.orderID; }, 800);
-              } else {
-                setCardError("שגיאה בתשלום");
-              }
-            } catch (e) {
-              setCardError(e instanceof Error ? e.message : "שגיאה בתשלום");
-            } finally {
-              setCardLoading(false);
-            }
-          },
-          onError: (err: unknown) => {
-            console.error("PayPal error:", err);
-            setCardError("שגיאה בתשלום — נסה שוב");
-          },
-          onCancel: () => {
-            setCardError(null);
-          },
-        });
-        // Try to render regardless — isEligible can be false even when guest checkout is enabled
-        // due to PayPal's risk assessment. We attempt render and catch any error.
-        try {
-          await buttons.render(smartButtonsRef.current!);
-          setSmartButtonsReady(true);
-        } catch {
-          // If render fails, it means card is truly not eligible
-          setCardError("תשלום בכרטיס אשראי אינו זמין כרגע. נסה דרך PayPal או פנה לתמיכה.");
-        }
-      } catch (e) {
-        setCardError(e instanceof Error ? e.message : "שגיאה בטעינת PayPal");
+    try {
+      const data = await createOrderMutation.mutateAsync({
+        packageId: selectedPackage,
+        currency,
+        termsAccepted: true,
+        origin: window.location.origin,
+        useCard: true,
+      });
+      if (!data.approvalUrl) {
+        setCardError("שגיאה ביצירת הזמנה — נסה שוב");
+        return;
       }
-    };
-    script.onerror = () => setCardError("שגיאה בטעינת PayPal");
-    document.head.appendChild(script);
-    return () => {
-      setSmartButtonsReady(false);
-      if (smartButtonsRef.current) smartButtonsRef.current.innerHTML = "";
-    };
-  }, [paypalClientId, paymentMethod, termsAccepted, selectedPackage, currency]);
+      window.location.href = data.approvalUrl;
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "שגיאה ביצירת הזמנה";
+      setCardError(msg);
+    } finally {
+      setCardLoading(false);
+    }
+  }
 
   // בניית חבילות מה-DB או מה-fallback
   const packages = dbPrices && dbPrices.length > 0
@@ -675,28 +611,33 @@ export default function Buy() {
                     {cardError}
                   </div>
                 )}
-
-                {/* Loading: waiting for Smart Buttons to render */}
-                {!smartButtonsReady && !cardError && (
-                  <div className="text-center py-6 text-blue-300 text-sm flex items-center justify-center gap-2">
-                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    טוען אפשרויות תשלום...
-                  </div>
-                )}
-                {/* PayPal Smart Buttons container — card button rendered here */}
-                {cardLoading && (
-                  <div className="text-center py-4 text-blue-300 text-sm flex items-center justify-center gap-2">
-                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    מעבד תשלום...
-                  </div>
-                )}
-                <div ref={smartButtonsRef} className={`min-h-[50px] ${cardLoading ? "opacity-50 pointer-events-none" : ""}`} />
+                <button
+                  onClick={handleCardPurchase}
+                  disabled={cardLoading || paypalConfigured === false}
+                  className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-200 flex items-center justify-center gap-3 ${
+                    cardLoading || paypalConfigured === false
+                      ? "bg-gray-600/60 text-gray-400 cursor-not-allowed"
+                      : "bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-xl shadow-emerald-900/40 hover:shadow-emerald-700/50 hover:scale-[1.02]"
+                  }`}
+                >
+                  {cardLoading ? (
+                    <>
+                      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      מעבד...
+                    </>
+                  ) : (
+                    <>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                        <line x1="1" y1="10" x2="23" y2="10"/>
+                      </svg>
+                      תשלם בכרטיס אשראי — {symbol}{price}
+                    </>
+                  )}
+                </button>
                 <p className="text-center text-xs text-blue-400/70 mt-3">
                   🔒 מאובטח על ידי PayPal — פרטי הכרטיס לא נשמרים
                 </p>

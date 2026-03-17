@@ -54,6 +54,7 @@ export interface CreateOrderParams {
   userId: number;
   returnUrl: string;
   cancelUrl: string;
+  useCard?: boolean; // if true, use card payment source instead of PayPal wallet
 }
 
 export interface PayPalOrderResponse {
@@ -78,21 +79,34 @@ export async function createPayPalOrder(params: CreateOrderParams): Promise<PayP
         custom_id: String(params.userId),
       },
     ],
-    // Use the new payment_source.paypal.experience_context (application_context is deprecated)
-    payment_source: {
-      paypal: {
-        experience_context: {
-          brand_name: "DXF AI",
-          locale: "en-US",
-          landing_page: "GUEST_CHECKOUT",
-          user_action: "PAY_NOW",
-          return_url: params.returnUrl,
-          cancel_url: params.cancelUrl,
-          payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
-          shipping_preference: "NO_SHIPPING",
+    // Use card or PayPal wallet based on useCard flag
+    payment_source: params.useCard
+      ? {
+          card: {
+            experience_context: {
+              brand_name: "DXF AI",
+              locale: "en-US",
+              return_url: params.returnUrl,
+              cancel_url: params.cancelUrl,
+              shipping_preference: "NO_SHIPPING",
+              payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
+            },
+          },
+        }
+      : {
+          paypal: {
+            experience_context: {
+              brand_name: "DXF AI",
+              locale: "en-US",
+              landing_page: "GUEST_CHECKOUT",
+              user_action: "PAY_NOW",
+              return_url: params.returnUrl,
+              cancel_url: params.cancelUrl,
+              payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
+              shipping_preference: "NO_SHIPPING",
+            },
+          },
         },
-      },
-    },
   };
 
   const res = await fetch(`${BASE_URL}/v2/checkout/orders`, {
