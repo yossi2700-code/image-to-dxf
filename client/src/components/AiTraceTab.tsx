@@ -15,6 +15,7 @@ import { useBugReport } from "@/hooks/useBugReport";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
 import { ExportButtons } from "@/components/ExportButtons";
 import { AiProcessingAnimation } from "@/components/AiProcessingAnimation";
+import { SuccessOverlay } from "@/components/SuccessConfetti";
 import {
   Download,
   AlertCircle,
@@ -177,6 +178,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
   const [currentStep, setCurrentStep] = useState<string>("");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [processingTime, setProcessingTime] = useState<number | null>(null); // seconds taken for last job
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -229,6 +231,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
           setResult(traceResult);
           saveResultToCache(traceResult);
           setStatus("success");
+          setShowSuccessOverlay(true);
           setCurrentStep("");
           setProcessingTime(elapsedSeconds > 0 ? elapsedSeconds : null);
           setElapsedSeconds(0);
@@ -905,6 +908,16 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
             accentGradient="linear-gradient(135deg, #0d9488, #5eead4)"
             featureLabel="AI Trace"
           />
+        )}
+        {/* Success overlay — brief celebration when job completes */}
+        {showSuccessOverlay && (
+          <div className="relative rounded-2xl overflow-hidden" style={{ minHeight: 200 }}>
+            <SuccessOverlay
+              accentColor="#0d9488"
+              label={isRtl ? "העיצוב מוכן! 🎉" : "Design Ready! 🎉"}
+              onDone={() => setShowSuccessOverlay(false)}
+            />
+          </div>
         )}
 
         {/* UNCLEAR_IMAGE — special dialog with text input */}

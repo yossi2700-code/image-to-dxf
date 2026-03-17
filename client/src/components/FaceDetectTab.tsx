@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
 import { AiProcessingAnimation } from "@/components/AiProcessingAnimation";
+import { SuccessOverlay } from "@/components/SuccessConfetti";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
 import { ExportButtons } from "@/components/ExportButtons";
 import { useBugReport } from "@/hooks/useBugReport";
@@ -190,6 +191,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
   const [currentStep, setCurrentStep] = useState<string>("");
   const [progressPct, setProgressPct] = useState(5);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const elapsedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -272,6 +274,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
           setResult(faceResult);
           localStorage.setItem("face_detect_result", JSON.stringify(faceResult));
           setStatus("success");
+          setShowSuccessOverlay(true);
           setCurrentStep("");
           setProgressPct(100);
           setJobIdPersisted(null);
@@ -626,6 +629,16 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
           accentGradient="linear-gradient(135deg, #7c3aed, #c084fc)"
           featureLabel={isRtl ? "AI פורטרט" : "AI Portrait"}
         />
+      )}
+      {/* Success overlay */}
+      {showSuccessOverlay && (
+        <div className="relative rounded-2xl overflow-hidden" style={{ minHeight: 200 }}>
+          <SuccessOverlay
+            accentColor="#7c3aed"
+            label={isRtl ? "הפורטרט מוכן! 🎉" : "Portrait Ready! 🎉"}
+            onDone={() => setShowSuccessOverlay(false)}
+          />
+        </div>
       )}
             {/* Error state */}
       {status === "error" && !result && (

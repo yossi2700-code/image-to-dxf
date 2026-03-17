@@ -8,7 +8,7 @@
  * v2: wider progress bar, synced seconds display, unique step icons per feature.
  */
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
@@ -301,7 +301,7 @@ function ElegantSpinner({ accent, size = 120 }: { accent: string; size?: number 
 function ImageWithScan({ src, accent }: { src: string; accent: string }) {
   return (
     <div className="relative rounded-xl overflow-hidden" style={{
-      width: 88, height: 88,
+      width: 60, height: 60,
       border: `2px solid ${accent}30`,
       boxShadow: `0 4px 20px ${accent}20`,
       background: "#f8f9fa",
@@ -364,6 +364,13 @@ export function AiProcessingAnimation({
   const activeStep = stepIndex === -1 ? steps.length - 1 : stepIndex;
   const feature = detectFeature(featureLabel);
 
+  // Entrance animation
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 30);
+    return () => clearTimeout(t);
+  }, []);
+
   // Progress: use provided pct or derive from elapsed
   const progress = progressPctProp !== undefined
     ? Math.min(99, progressPctProp)
@@ -398,6 +405,9 @@ export function AiProcessingAnimation({
         minHeight: 340,
         border: `1.5px solid ${accentColor}22`,
         boxShadow: `0 8px 40px ${accentColor}12, 0 2px 8px rgba(0,0,0,0.06)`,
+        opacity: mounted ? 1 : 0,
+        transform: mounted ? "translateY(0) scale(1)" : "translateY(24px) scale(0.97)",
+        transition: "opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1), transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)",
       }}
     >
       {/* Subtle background accent glow */}
@@ -422,7 +432,9 @@ export function AiProcessingAnimation({
         <div className="relative flex items-center justify-center" style={{ width: 120, height: 120 }}>
           <ElegantSpinner accent={accentColor} size={120}/>
           {imagePreview && (
-            <div className="absolute" style={{ width: 56, height: 56 }}>
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+            >
               <ImageWithScan src={imagePreview} accent={accentColor}/>
             </div>
           )}

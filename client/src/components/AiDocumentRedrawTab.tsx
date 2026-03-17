@@ -19,6 +19,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
 import { DxfDownloadDialog } from "@/components/DxfDownloadDialog";
 import { AiProcessingAnimation } from "@/components/AiProcessingAnimation";
+import { SuccessOverlay } from "@/components/SuccessConfetti";
 import { ExportButtons } from "@/components/ExportButtons";
 import { useBugReport } from "@/hooks/useBugReport";
 import {
@@ -374,6 +375,7 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
   const [scanLine, setScanLine] = useState(0); // 0-100 percent for scanning animation
   const [currentStep, setCurrentStep] = useState<string>("");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Restore cached result on mount if no active job
   const [result, setResult] = useState<RedrawResult | null>(() => {
@@ -439,6 +441,7 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
           // Cache result so it survives page reload
           try { localStorage.setItem("doc_redraw_result", JSON.stringify(redrawResult)); } catch (_) { /* quota */ }
           setStatus("success");
+          setShowSuccessOverlay(true);
           setCurrentStep("");
           setJobIdPersisted(null);
           refetchTokens();
@@ -809,6 +812,16 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
           accentGradient="linear-gradient(135deg, #d97706, #fbbf24)"
           featureLabel="AI Redraw"
         />
+      )}
+      {/* Success overlay */}
+      {showSuccessOverlay && (
+        <div className="relative rounded-2xl overflow-hidden" style={{ minHeight: 200 }}>
+          <SuccessOverlay
+            accentColor="#d97706"
+            label={isRtl ? "הציור הושלם! 🎉" : "Redraw Complete! 🎉"}
+            onDone={() => setShowSuccessOverlay(false)}
+          />
+        </div>
       )}
             {/* Error state */}
       {status === "error" && errorMsg && (
