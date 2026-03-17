@@ -185,6 +185,7 @@ export default function Pricing() {
         popular: p.packageId === "tokens_1",
         label: p.label,
         badge: p.badge ?? null,
+        discountPercent: p.discountPercent ?? 0,
         prices: { ILS: p.priceILS } as Record<string, string>,
       }))
     : FALLBACK_PACKAGES;
@@ -273,6 +274,15 @@ export default function Pricing() {
         {packages.map((pkg) => {
           const price = pkg.prices[CURRENCY] ?? "—";
           const perToken = price !== "—" ? (parseFloat(price) / pkg.tokens).toFixed(2) : "—";
+          const discount = (pkg as { discountPercent?: number }).discountPercent ?? 0;
+          const badge = (pkg as { badge?: string | null }).badge ?? null;
+          const discountedPrice = discount > 0 && price !== "—" ? (parseFloat(price) * (1 - discount / 100)).toFixed(2) : null;
+          const badgeCfg: Record<string, { text: string; bg: string; shadow: string }> = {
+            recommended: { text: isRtl ? "★ מומלץ" : "★ Recommended", bg: "linear-gradient(135deg, #3b82f6, #2563eb)", shadow: "0 4px 16px rgba(59,130,246,0.5)" },
+            best_value: { text: isRtl ? "💰 הכי משתלם" : "💰 Best value", bg: "linear-gradient(135deg, #10b981, #059669)", shadow: "0 4px 16px rgba(16,185,129,0.5)" },
+            sale: { text: isRtl ? "🔥 במבצע" : "🔥 Sale", bg: "linear-gradient(135deg, #ef4444, #ec4899)", shadow: "0 4px 16px rgba(239,68,68,0.5)" },
+            trial: { text: isRtl ? "🌟 התנסות" : "🌟 Trial", bg: "linear-gradient(135deg, #8b5cf6, #7c3aed)", shadow: "0 4px 16px rgba(139,92,246,0.5)" },
+          };
 
           return (
             <div
@@ -288,7 +298,20 @@ export default function Pricing() {
                 transform: pkg.popular ? "scale(1.02)" : "none",
               }}
             >
-              {pkg.popular && (
+              {/* Badge from admin (centered top) */}
+              {badge && badgeCfg[badge] && (
+                <div style={{
+                  position: "absolute", top: -16, left: "50%", transform: "translateX(-50%)",
+                  background: badgeCfg[badge].bg, color: "#fff",
+                  fontSize: 12, fontWeight: 800, padding: "6px 20px", borderRadius: 100,
+                  boxShadow: badgeCfg[badge].shadow, whiteSpace: "nowrap",
+                  display: "flex", alignItems: "center", gap: 5, letterSpacing: "0.02em",
+                }}>
+                  {badgeCfg[badge].text}
+                </div>
+              )}
+              {/* Fallback popular badge when no badge set */}
+              {!badge && pkg.popular && (
                 <div style={{
                   position: "absolute", top: -16, left: "50%", transform: "translateX(-50%)",
                   background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff",
@@ -298,6 +321,17 @@ export default function Pricing() {
                 }}>
                   <Star size={11} fill="white" />
                   {isRtl ? "הכי פופולרי" : "Most popular"}
+                </div>
+              )}
+              {/* Discount pill (right side) */}
+              {discount > 0 && (
+                <div style={{
+                  position: "absolute", top: -16, right: 16,
+                  background: "linear-gradient(135deg, #ef4444, #ec4899)", color: "#fff",
+                  fontSize: 11, fontWeight: 800, padding: "5px 12px", borderRadius: 100,
+                  boxShadow: "0 4px 12px rgba(239,68,68,0.5)", whiteSpace: "nowrap",
+                }}>
+                  -{discount}% {isRtl ? "הנחה!" : "OFF!"}
                 </div>
               )}
 
@@ -311,9 +345,20 @@ export default function Pricing() {
               </div>
 
               <div style={{ marginBottom: 4 }}>
-                <span style={{ fontSize: 40, fontWeight: 900, color: pkg.popular ? "#fff" : "#111827" }}>
-                  {symbol}{price}
-                </span>
+                {discountedPrice ? (
+                  <>
+                    <span style={{ fontSize: 24, fontWeight: 700, color: pkg.popular ? "rgba(255,255,255,0.5)" : "#9ca3af", textDecoration: "line-through", marginInlineEnd: 8 }}>
+                      {symbol}{price}
+                    </span>
+                    <span style={{ fontSize: 40, fontWeight: 900, color: pkg.popular ? "#fff" : "#111827" }}>
+                      {symbol}{discountedPrice}
+                    </span>
+                  </>
+                ) : (
+                  <span style={{ fontSize: 40, fontWeight: 900, color: pkg.popular ? "#fff" : "#111827" }}>
+                    {symbol}{price}
+                  </span>
+                )}
               </div>
 
               <p style={{ fontSize: 13, color: pkg.popular ? "rgba(255,255,255,0.55)" : "#9ca3af", marginBottom: 28 }}>

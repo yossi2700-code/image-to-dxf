@@ -478,16 +478,19 @@ export default function Buy() {
                   : "border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10"
               }`}
             >
-              {discount > 0 && !badge && (
-                <div className="absolute -top-3.5 right-4 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-black px-3 py-1 rounded-full shadow-lg">
-                  -{discount}% הנחה!
-                </div>
-              )}
+              {/* Badge (centered top) — always shown when set */}
               {badge && badgeConfig[badge] && (
                 <div className={`absolute -top-3.5 left-1/2 -translate-x-1/2 text-xs font-black px-5 py-1 rounded-full shadow-lg ${badgeConfig[badge].className}`}>
                   {badgeConfig[badge].text}
                 </div>
               )}
+              {/* Discount pill (right side) — shown whenever discount > 0, even alongside badge */}
+              {discount > 0 && (
+                <div className="absolute -top-3.5 right-4 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-black px-3 py-1 rounded-full shadow-lg">
+                  -{discount}% הנחה!
+                </div>
+              )}
+              {/* Fallback popular badge when no badge and no discount */}
               {!badge && p.popular && !discount && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 to-orange-400 text-black text-xs font-black px-5 py-1 rounded-full shadow-lg">
                   ⭐ {t("buyBestValue")}
