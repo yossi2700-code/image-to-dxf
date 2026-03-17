@@ -189,7 +189,9 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("face_detect_jobId"));
   const [currentStep, setCurrentStep] = useState<string>("");
   const [progressPct, setProgressPct] = useState(5);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const elapsedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<string | null>(localStorage.getItem("face_detect_imagePreview"));
 
@@ -211,6 +213,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
   const reset = useCallback(() => {
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+    if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
     setImageFile(null);
     setImagePreviewPersisted(null);
     setStatus("idle");
@@ -218,6 +221,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
     setErrorMsg("");
     setCurrentStep("");
     setProgressPct(5);
+    setElapsedSeconds(0);
     setJobIdPersisted(null);
     localStorage.removeItem("face_detect_result");
   }, [setImagePreviewPersisted, setJobIdPersisted]);
@@ -226,12 +230,18 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
   const startProgressTimer = useCallback(() => {
     // Smoothly advance progress bar from 5% to 85% over ~60 seconds
     if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+    if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
     const startTime = Date.now();
     const TOTAL_MS = 60_000; // expected ~60s
+    setElapsedSeconds(0);
     progressTimerRef.current = setInterval(() => {
       const elapsed = Date.now() - startTime;
       const pct = Math.min(85, 5 + (elapsed / TOTAL_MS) * 80);
       setProgressPct(Math.round(pct));
+    }, 1000);
+    // Separate elapsed seconds counter — independent of percentage
+    elapsedTimerRef.current = setInterval(() => {
+      setElapsedSeconds(s => s + 1);
     }, 1000);
   }, []);
 
@@ -254,6 +264,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
         if (data.status === "done" && data.result?.images) {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+          if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
           const faceResult: FaceResult = {
             images: data.result.images,
             faceDescription: data.result.faceDescription ?? "",
@@ -275,6 +286,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
         } else if (data.status === "error") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+          if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
           const isTokenError = data.error === "INSUFFICIENT_TOKENS" || data.error === "QUOTA_EXCEEDED";
           const msg = data.message || data.error || (isRtl ? "שגיאה בעיבוד" : "Processing error");
           setErrorMsg(msg);
@@ -286,9 +298,11 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+          if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
           setStatus("idle");
           setCurrentStep("");
           setProgressPct(5);
+          setElapsedSeconds(0);
           setJobIdPersisted(null);
         } else {
           // Update step label from server
@@ -311,6 +325,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
     if (!jobId) return;
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+    if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
     try {
       const res = await fetch(`/api/face-detect/cancel/${jobId}`, { method: "POST", credentials: "include" });
       const data = await res.json();
@@ -321,6 +336,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
     } catch { /* ignore */ }
     setStatus("idle");
     setProgressPct(5);
+    setElapsedSeconds(0);
     setJobIdPersisted(null);
   }, [jobId, isRtl, refetchTokens, setJobIdPersisted]);
 
@@ -600,7 +616,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
       {/* Loading state — simple scanning animation */}
       {status === "loading" && !result && (
         <AiProcessingAnimation
-          elapsedSeconds={Math.round(progressPct * 3)}
+          elapsedSeconds={elapsedSeconds}
           currentStep={currentStep}
           imagePreview={imagePreview}
           jobId={jobId}
