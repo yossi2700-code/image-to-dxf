@@ -1,0 +1,45 @@
+{
+  "query": "\nSELECT au.id, au.name, au.email, au.tokenBalance,\n       ua.actionType, ua.feature, ua.description, ua.createdAt as actionDate\nFROM app_users au\nLEFT JOIN user_actions ua ON ua.appUserId = au.id\nWHERE au.createdAt >= '2026-03-17'\nORDER BY ua.createdAt DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT au.id, au.name, au.email, au.tokenBalance,\n       ua.actionType, ua.feature, ua.description, ua.createdAt as actionDate\nFROM app_users au\nLEFT JOIN user_actions ua ON ua.appUserId = au.id\nWHERE au.createdAt >= '2026-03-17'\nORDER BY ua.createdAt DESC;\n",
+  "rows": [
+    {
+      "id": "930001",
+      "name": "גולן חסון",
+      "email": "hassong15@gmail.com",
+      "tokenBalance": "10",
+      "actionType": "NULL",
+      "feature": "NULL",
+      "description": "NULL",
+      "actionDate": "NULL"
+    },
+    {
+      "id": "960001",
+      "name": "Snail",
+      "email": "snail@txgm.com",
+      "tokenBalance": "310",
+      "actionType": "NULL",
+      "feature": "NULL",
+      "description": "NULL",
+      "actionDate": "NULL"
+    },
+    {
+      "id": "960002",
+      "name": "Linas Vidmantas",
+      "email": "linasvidmantas@gmail.com",
+      "tokenBalance": "15",
+      "actionType": "NULL",
+      "feature": "NULL",
+      "description": "NULL",
+      "actionDate": "NULL"
+    }
+  ],
+  "messages": [
+    "900001\tמשה אייזנבך\tm0547300456@gmail.com\t5\tai_generate\tai_trace\tCamera angle: Front view.",
+    "A white puppy with fluffy fur is depicted from the chest up, facing directly towards the viewer. Its head is slightly tilted to the right, and its dark, round eyes are open a\t2026-03-17 08:16:04",
+    "870001\tנבל\tn1979ss@gmail.com\t13\tai_generate\tai_trace\tCamera angle: FRONT VIEW.",
+    "The image depicts a repeating pattern of stylized, translucent flower blossoms, each rendered with fine, delicate golden line art forming the petals and a central, denser gol\t2026-03-17 02:52:28"
+  ],
+  "stdout": "id\tname\temail\ttokenBalance\tactionType\tfeature\tdescription\tactionDate\n900001\tמשה אייזנבך\tm0547300456@gmail.com\t5\tai_generate\tai_trace\tCamera angle: Front view.\nA white puppy with fluffy fur is depicted from the chest up, facing directly towards the viewer. Its head is slightly tilted to the right, and its dark, round eyes are open a\t2026-03-17 08:16:04\n870001\tנבל\tn1979ss@gmail.com\t13\tai_generate\tai_trace\tCamera angle: FRONT VIEW.\nThe image depicts a repeating pattern of stylized, translucent flower blossoms, each rendered with fine, delicate golden line art forming the petals and a central, denser gol\t2026-03-17 02:52:28\n930001\tגולן חסון\thassong15@gmail.com\t10\tNULL\tNULL\tNULL\tNULL\n960001\tSnail\tsnail@txgm.com\t310\tNULL\tNULL\tNULL\tNULL\n960002\tLinas Vidmantas\tlinasvidmantas@gmail.com\t15\tNULL\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1602
+}

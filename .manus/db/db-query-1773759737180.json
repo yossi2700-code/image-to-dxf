@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, appUserId, amount, reason, balanceAfter, createdAt FROM token_transactions ORDER BY createdAt DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, appUserId, amount, reason, balanceAfter, createdAt FROM token_transactions ORDER BY createdAt DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "3630003",
+      "appUserId": "960002",
+      "amount": "5",
+      "reason": "refund",
+      "balanceAfter": "15",
+      "createdAt": "2026-03-17 13:58:03"
+    },
+    {
+      "id": "3630002",
+      "appUserId": "840003",
+      "amount": "-5",
+      "reason": "ai_trace",
+      "balanceAfter": "602",
+      "createdAt": "2026-03-17 13:14:51"
+    },
+    {
+      "id": "3630001",
+      "appUserId": "960001",
+      "amount": "300",
+      "reason": "admin_add",
+      "balanceAfter": "310",
+      "createdAt": "2026-03-17 13:02:20"
+    },
+    {
+      "id": "3600024",
+      "appUserId": "840003",
+      "amount": "-5",
+      "reason": "ai_trace",
+      "balanceAfter": "607",
+      "createdAt": "2026-03-17 09:37:44"
+    },
+    {
+      "id": "3600023",
+      "appUserId": "840003",
+      "amount": "-5",
+      "reason": "ai_trace",
+      "balanceAfter": "612",
+      "createdAt": "2026-03-17 09:36:29"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tappUserId\tamount\treason\tbalanceAfter\tcreatedAt\n3630003\t960002\t5\trefund\t15\t2026-03-17 13:58:03\n3630002\t840003\t-5\tai_trace\t602\t2026-03-17 13:14:51\n3630001\t960001\t300\tadmin_add\t310\t2026-03-17 13:02:20\n3600024\t840003\t-5\tai_trace\t607\t2026-03-17 09:37:44\n3600023\t840003\t-5\tai_trace\t612\t2026-03-17 09:36:29\n",
+  "stderr": "",
+  "execution_time_ms": 1573
+}

@@ -1018,6 +1018,33 @@ export const appRouter = router({
       return getRecentFailedJobs(100);
     }),
 
+    /** Get recent failed/cancelled user actions for the bugs tab */
+    getFailedActions: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      const rows = await db
+        .select({
+          id: userActions.id,
+          appUserId: userActions.appUserId,
+          actionType: userActions.actionType,
+          feature: userActions.feature,
+          description: userActions.description,
+          durationMs: userActions.durationMs,
+          errorMessage: userActions.errorMessage,
+          status: userActions.status,
+          sourceImageUrl: userActions.sourceImageUrl,
+          createdAt: userActions.createdAt,
+          userName: appUsers.name,
+          userEmail: appUsers.email,
+        })
+        .from(userActions)
+        .leftJoin(appUsers, eq(userActions.appUserId, appUsers.id))
+        .where(sql`${userActions.status} IN ('failed', 'cancelled')`)
+        .orderBy(desc(userActions.createdAt))
+        .limit(100);
+      return rows;
+    }),
+
     /** Permanently delete a user and all their data */
     deleteUser: adminProcedure
       .input(z.object({ userId: z.number() }))

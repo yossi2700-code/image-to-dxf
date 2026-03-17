@@ -1,0 +1,50 @@
+{
+  "query": "\nSELECT id, name, email, tokenBalance, createdAt, lastLoginAt\nFROM app_users\nWHERE createdAt >= '2026-03-17'\nORDER BY createdAt DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT id, name, email, tokenBalance, createdAt, lastLoginAt\nFROM app_users\nWHERE createdAt >= '2026-03-17'\nORDER BY createdAt DESC\nLIMIT 20;\n",
+  "rows": [
+    {
+      "id": "960002",
+      "name": "Linas Vidmantas",
+      "email": "linasvidmantas@gmail.com",
+      "tokenBalance": "15",
+      "createdAt": "2026-03-17 13:55:55",
+      "lastLoginAt": "2026-03-17 13:55:55"
+    },
+    {
+      "id": "960001",
+      "name": "Snail",
+      "email": "snail@txgm.com",
+      "tokenBalance": "310",
+      "createdAt": "2026-03-17 13:00:19",
+      "lastLoginAt": "2026-03-17 13:26:57"
+    },
+    {
+      "id": "930001",
+      "name": "גולן חסון",
+      "email": "hassong15@gmail.com",
+      "tokenBalance": "10",
+      "createdAt": "2026-03-17 11:33:44",
+      "lastLoginAt": "2026-03-17 11:35:44"
+    },
+    {
+      "id": "900001",
+      "name": "משה אייזנבך",
+      "email": "m0547300456@gmail.com",
+      "tokenBalance": "5",
+      "createdAt": "2026-03-17 08:12:35",
+      "lastLoginAt": "2026-03-17 08:12:35"
+    },
+    {
+      "id": "870001",
+      "name": "נבל",
+      "email": "n1979ss@gmail.com",
+      "tokenBalance": "13",
+      "createdAt": "2026-03-17 02:37:24",
+      "lastLoginAt": "2026-03-17 02:37:24"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\ttokenBalance\tcreatedAt\tlastLoginAt\n960002\tLinas Vidmantas\tlinasvidmantas@gmail.com\t15\t2026-03-17 13:55:55\t2026-03-17 13:55:55\n960001\tSnail\tsnail@txgm.com\t310\t2026-03-17 13:00:19\t2026-03-17 13:26:57\n930001\tגולן חסון\thassong15@gmail.com\t10\t2026-03-17 11:33:44\t2026-03-17 11:35:44\n900001\tמשה אייזנבך\tm0547300456@gmail.com\t5\t2026-03-17 08:12:35\t2026-03-17 08:12:35\n870001\tנבל\tn1979ss@gmail.com\t13\t2026-03-17 02:37:24\t2026-03-17 02:37:24\n",
+  "stderr": "",
+  "execution_time_ms": 1637
+}

@@ -1,0 +1,16 @@
+{
+  "query": "SELECT au.id, au.name, au.email, au.tokenBalance FROM app_users au WHERE au.name LIKE '%Linas%' OR au.name LIKE '%Vidmantas%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT au.id, au.name, au.email, au.tokenBalance FROM app_users au WHERE au.name LIKE '%Linas%' OR au.name LIKE '%Vidmantas%';",
+  "rows": [
+    {
+      "id": "960002",
+      "name": "Linas Vidmantas",
+      "email": "linasvidmantas@gmail.com",
+      "tokenBalance": "15"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\ttokenBalance\n960002\tLinas Vidmantas\tlinasvidmantas@gmail.com\t15\n",
+  "stderr": "",
+  "execution_time_ms": 1651
+}

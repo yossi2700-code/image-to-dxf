@@ -113,6 +113,10 @@ export const userActions = mysqlTable("user_actions", {
   durationMs: int("durationMs"),
   /** Anonymized IP address (last octet removed) */
   ipAnon: varchar("ipAnon", { length: 20 }),
+  /** Status of the action: success | failed | cancelled */
+  status: mysqlEnum("status", ["success", "failed", "cancelled"]).default("success"),
+  /** Error message if status is failed or cancelled */
+  errorMessage: varchar("errorMessage", { length: 500 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type UserAction = typeof userActions.$inferSelect;

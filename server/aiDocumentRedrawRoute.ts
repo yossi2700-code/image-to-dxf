@@ -259,6 +259,7 @@ async function runDocumentRedrawJob(
 
     // Deduct tokens NOW — only after successful job completion
     await deductTokens(appUserId, "ai_trace");
+    updateJob(jobId, { tokenDeducted: true });
 
     const groupId = `doc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     await recordUserAction({
@@ -286,6 +287,17 @@ async function runDocumentRedrawJob(
     const message = err instanceof Error ? err.message : "Unknown error";
     updateJob(jobId, { status: "error", error: message });
     // No refund needed — tokens are only deducted after success
+    // Record failed action in user history
+    void recordUserAction({
+      appUserId,
+      actionType: "ai_generate",
+      description: "document_redraw — נכשל",
+      feature: "document_redraw",
+      durationMs: Date.now() - jobStartTime,
+      status: "failed",
+      errorMessage: message.slice(0, 500),
+      sourceImageUrl: sourceImageUrl ?? undefined,
+    });
     // Log the failed job for admin debugging
     try {
       const { recordFailedJob } = await import("./failedJobsDb");

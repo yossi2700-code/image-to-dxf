@@ -1,0 +1,230 @@
+{
+  "query": "\nSELECT tt.id, tt.appUserId, tt.amount, tt.reason, tt.description, tt.balanceAfter, tt.createdAt, au.name, au.email\nFROM token_transactions tt\nJOIN app_users au ON tt.appUserId = au.id\nWHERE tt.createdAt >= '2026-03-17'\nORDER BY tt.createdAt DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT tt.id, tt.appUserId, tt.amount, tt.reason, tt.description, tt.balanceAfter, tt.createdAt, au.name, au.email\nFROM token_transactions tt\nJOIN app_users au ON tt.appUserId = au.id\nWHERE tt.createdAt >= '2026-03-17'\nORDER BY tt.createdAt DESC\nLIMIT 20;\n",
+  "rows": [
+    {
+      "id": "3630003",
+      "appUserId": "960002",
+      "amount": "5",
+      "reason": "refund",
+      "description": "Job cancelled — tokens refunded",
+      "balanceAfter": "15",
+      "createdAt": "2026-03-17 13:58:03",
+      "name": "Linas Vidmantas",
+      "email": "linasvidmantas@gmail.com"
+    },
+    {
+      "id": "3630002",
+      "appUserId": "840003",
+      "amount": "-5",
+      "reason": "ai_trace",
+      "description": "NULL",
+      "balanceAfter": "602",
+      "createdAt": "2026-03-17 13:14:51",
+      "name": "יוסי",
+      "email": "yossi2700@gmail.com"
+    },
+    {
+      "id": "3630001",
+      "appUserId": "960001",
+      "amount": "300",
+      "reason": "admin_add",
+      "description": "Admin added 300 tokens",
+      "balanceAfter": "310",
+      "createdAt": "2026-03-17 13:02:20",
+      "name": "Snail",
+      "email": "snail@txgm.com"
+    },
+    {
+      "id": "3600024",
+      "appUserId": "840003",
+      "amount": "-5",
+      "reason": "ai_trace",
+      "description": "NULL",
+      "balanceAfter": "607",
+      "createdAt": "2026-03-17 09:37:44",
+      "name": "יוסי",
+      "email": "yossi2700@gmail.com"
+    },
+    {
+      "id": "3600023",
+      "appUserId": "840003",
+      "amount": "-5",
+      "reason": "ai_trace",
+      "description": "NULL",
+      "balanceAfter": "612",
+      "createdAt": "2026-03-17 09:36:29",
+      "name": "יוסי",
+      "email": "yossi2700@gmail.com"
+    },
+    {
+      "id": "3600022",
+      "appUserId": "840003",
+      "amount": "-5",
+      "reason": "ai_trace",
+      "description": "NULL",
+      "balanceAfter": "617",
+      "createdAt": "2026-03-17 09:35:12",
+      "name": "יוסי",
+      "email": "yossi2700@gmail.com"
+    },
+    {
+      "id": "3600021",
+      "appUserId": "840003",
+      "amount": "-5",
+      "reason": "ai_trace",
+      "description": "NULL",
+      "balanceAfter": "622",
+      "createdAt": "2026-03-17 09:33:20",
+      "name": "יוסי",
+      "email": "yossi2700@gmail.com"
+    },
+    {
+      "id": "3600020",
+      "appUserId": "840003",
+      "amount": "-5",
+      "reason": "ai_trace",
+      "description": "NULL",
+      "balanceAfter": "627",
+      "createdAt": "2026-03-17 09:19:11",
+      "name": "יוסי",
+      "email": "yossi2700@gmail.com"
+    },
+    {
+      "id": "3600019",
+      "appUserId": "840003",
+      "amount": "500",
+      "reason": "admin_add",
+      "description": "Admin added 500 tokens",
+      "balanceAfter": "632",
+      "createdAt": "2026-03-17 08:40:52",
+      "name": "יוסי",
+      "email": "yossi2700@gmail.com"
+    },
+    {
+      "id": "3600018",
+      "appUserId": "210001",
+      "amount": "200",
+      "reason": "admin_add",
+      "description": "Admin added 200 tokens",
+      "balanceAfter": "216",
+      "createdAt": "2026-03-17 08:39:54",
+      "name": "צבי",
+      "email": "zvizvi011@gmail.com"
+    },
+    {
+      "id": "3600017",
+      "appUserId": "600002",
+      "amount": "50",
+      "reason": "admin_add",
+      "description": "Admin added 50 tokens",
+      "balanceAfter": "79",
+      "createdAt": "2026-03-17 08:39:38",
+      "name": "Ran T",
+      "email": "ran.tid@outlook.com"
+    },
+    {
+      "id": "3600016",
+      "appUserId": "210001",
+      "amount": "-2",
+      "reason": "ai_refine",
+      "description": "תקצר קצת את הבסיס ושהזרועות של האות ש יצאו מהבסיס ולא מאמצע האות",
+      "balanceAfter": "16",
+      "createdAt": "2026-03-17 08:32:59",
+      "name": "צבי",
+      "email": "zvizvi011@gmail.com"
+    },
+    {
+      "id": "3600015",
+      "appUserId": "210001",
+      "amount": "-2",
+      "reason": "ai_refine",
+      "description": "יופי, עכשיו שכל האות ממתחיל מהבסיס הזה ולא מהאמתע כמו עכשיו",
+      "balanceAfter": "18",
+      "createdAt": "2026-03-17 08:32:14",
+      "name": "צבי",
+      "email": "zvizvi011@gmail.com"
+    },
+    {
+      "id": "3600014",
+      "appUserId": "210001",
+      "amount": "-2",
+      "reason": "ai_refine",
+      "description": "תידה לי את הבסיס של האות יותר משולש ושפיץ",
+      "balanceAfter": "20",
+      "createdAt": "2026-03-17 08:31:25",
+      "name": "צבי",
+      "email": "zvizvi011@gmail.com"
+    },
+    {
+      "id": "3600013",
+      "appUserId": "840003",
+      "amount": "-5",
+      "reason": "ai_trace",
+      "description": "NULL",
+      "balanceAfter": "132",
+      "createdAt": "2026-03-17 08:31:03",
+      "name": "יוסי",
+      "email": "yossi2700@gmail.com"
+    },
+    {
+      "id": "3600012",
+      "appUserId": "210001",
+      "amount": "-2",
+      "reason": "ai_refine",
+      "description": "תעשה את הבסיס של האות יותר שפיץ",
+      "balanceAfter": "22",
+      "createdAt": "2026-03-17 08:30:42",
+      "name": "צבי",
+      "email": "zvizvi011@gmail.com"
+    },
+    {
+      "id": "3600011",
+      "appUserId": "210001",
+      "amount": "-3",
+      "reason": "ai_generate",
+      "description": "NULL",
+      "balanceAfter": "24",
+      "createdAt": "2026-03-17 08:29:50",
+      "name": "צבי",
+      "email": "zvizvi011@gmail.com"
+    },
+    {
+      "id": "3600010",
+      "appUserId": "210001",
+      "amount": "-3",
+      "reason": "ai_generate",
+      "description": "NULL",
+      "balanceAfter": "27",
+      "createdAt": "2026-03-17 08:28:48",
+      "name": "צבי",
+      "email": "zvizvi011@gmail.com"
+    },
+    {
+      "id": "3600009",
+      "appUserId": "840003",
+      "amount": "-5",
+      "reason": "ai_trace",
+      "description": "NULL",
+      "balanceAfter": "137",
+      "createdAt": "2026-03-17 08:28:02",
+      "name": "יוסי",
+      "email": "yossi2700@gmail.com"
+    },
+    {
+      "id": "3600008",
+      "appUserId": "600002",
+      "amount": "-3",
+      "reason": "ai_generate",
+      "description": "NULL",
+      "balanceAfter": "29",
+      "createdAt": "2026-03-17 08:23:18",
+      "name": "Ran T",
+      "email": "ran.tid@outlook.com"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tappUserId\tamount\treason\tdescription\tbalanceAfter\tcreatedAt\tname\temail\n3630003\t960002\t5\trefund\tJob cancelled — tokens refunded\t15\t2026-03-17 13:58:03\tLinas Vidmantas\tlinasvidmantas@gmail.com\n3630002\t840003\t-5\tai_trace\tNULL\t602\t2026-03-17 13:14:51\tיוסי\tyossi2700@gmail.com\n3630001\t960001\t300\tadmin_add\tAdmin added 300 tokens\t310\t2026-03-17 13:02:20\tSnail\tsnail@txgm.com\n3600024\t840003\t-5\tai_trace\tNULL\t607\t2026-03-17 09:37:44\tיוסי\tyossi2700@gmail.com\n3600023\t840003\t-5\tai_trace\tNULL\t612\t2026-03-17 09:36:29\tיוסי\tyossi2700@gmail.com\n3600022\t840003\t-5\tai_trace\tNULL\t617\t2026-03-17 09:35:12\tיוסי\tyossi2700@gmail.com\n3600021\t840003\t-5\tai_trace\tNULL\t622\t2026-03-17 09:33:20\tיוסי\tyossi2700@gmail.com\n3600020\t840003\t-5\tai_trace\tNULL\t627\t2026-03-17 09:19:11\tיוסי\tyossi2700@gmail.com\n3600019\t840003\t500\tadmin_add\tAdmin added 500 tokens\t632\t2026-03-17 08:40:52\tיוסי\tyossi2700@gmail.com\n3600018\t210001\t200\tadmin_add\tAdmin added 200 tokens\t216\t2026-03-17 08:39:54\tצבי\tzvizvi011@gmail.com\n3600017\t600002\t50\tadmin_add\tAdmin added 50 tokens\t79\t2026-03-17 08:39:38\tRan T\tran.tid@outlook.com\n3600016\t210001\t-2\tai_refine\tתקצר קצת את הבסיס ושהזרועות של האות ש יצאו מהבסיס ולא מאמצע האות\t16\t2026-03-17 08:32:59\tצבי\tzvizvi011@gmail.com\n3600015\t210001\t-2\tai_refine\tיופי, עכשיו שכל האות ממתחיל מהבסיס הזה ולא מהאמתע כמו עכשיו\t18\t2026-03-17 08:32:14\tצבי\tzvizvi011@gmail.com\n3600014\t210001\t-2\tai_refine\tתידה לי את הבסיס של האות יותר משולש ושפיץ\t20\t2026-03-17 08:31:25\tצבי\tzvizvi011@gmail.com\n3600013\t840003\t-5\tai_trace\tNULL\t132\t2026-03-17 08:31:03\tיוסי\tyossi2700@gmail.com\n3600012\t210001\t-2\tai_refine\tתעשה את הבסיס של האות יותר שפיץ\t22\t2026-03-17 08:30:42\tצבי\tzvizvi011@gmail.com\n3600011\t210001\t-3\tai_generate\tNULL\t24\t2026-03-17 08:29:50\tצבי\tzvizvi011@gmail.com\n3600010\t210001\t-3\tai_generate\tNULL\t27\t2026-03-17 08:28:48\tצבי\tzvizvi011@gmail.com\n3600009\t840003\t-5\tai_trace\tNULL\t137\t2026-03-17 08:28:02\tיוסי\tyossi2700@gmail.com\n3600008\t600002\t-3\tai_generate\tNULL\t29\t2026-03-17 08:23:18\tRan T\tran.tid@outlook.com\n",
+  "stderr": "",
+  "execution_time_ms": 1633
+}

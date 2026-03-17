@@ -27,6 +27,10 @@ export interface RecordActionParams {
   durationMs?: number;
   /** Anonymized IP address (last octet zeroed, e.g. 1.2.3.0) */
   ipAnon?: string;
+  /** Status of the action — defaults to 'success' */
+  status?: "success" | "failed" | "cancelled";
+  /** Error message if status is failed or cancelled */
+  errorMessage?: string;
 }
 
 export async function recordUserAction(params: RecordActionParams): Promise<void> {
@@ -47,6 +51,8 @@ export async function recordUserAction(params: RecordActionParams): Promise<void
       feature: params.feature ?? null,
       durationMs: params.durationMs ?? null,
       ipAnon: params.ipAnon ?? null,
+      status: params.status ?? "success",
+      errorMessage: params.errorMessage ?? null,
     });
   } catch (err) {
     // Non-critical — don't fail the request if logging fails

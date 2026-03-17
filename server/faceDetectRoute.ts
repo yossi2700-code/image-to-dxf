@@ -331,6 +331,7 @@ async function runFaceDetectJob(
 
     // Deduct tokens NOW — only after successful job completion
     await deductTokens(appUserId, "face_detect");
+    updateJob(jobId, { tokenDeducted: true });
 
     const groupId = nanoid(12);
     for (const img of images) {
@@ -359,7 +360,19 @@ async function runFaceDetectJob(
     if (heartbeatInterval) clearInterval(heartbeatInterval);
     console.error("[faceDetectRoute] Job error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
+    updateJob(jobId, { status: "error", error: message });
     // No refund needed — tokens are only deducted after success
+    // Record failed action in user history
+    void recordUserAction({
+      appUserId,
+      actionType: "ai_generate",
+      description: "portrait — נכשל",
+      feature: "portrait",
+      durationMs: Date.now() - jobStartTime,
+      status: "failed",
+      errorMessage: message.slice(0, 500),
+      sourceImageUrl: sourceImageUrl ?? undefined,
+    });
     // Log the failed job for admin debugging
     try {
       const { recordFailedJob } = await import("./failedJobsDb");
@@ -371,7 +384,6 @@ async function runFaceDetectJob(
         sourceImageUrl: sourceImageUrl ?? undefined,
       });
     } catch (_) { /* ignore logging errors */ }
-    updateJob(jobId, { status: "error", error: message });
   }
 }
 
@@ -514,11 +526,22 @@ router.post("/api/face-detect/cancel/:jobId", async (req, res) => {
   }
   const wasCancelled = cancelJob(req.params.jobId);
   if (wasCancelled) {
-    try {
-      await addTokens(appUser.userId, TOKEN_COSTS[(job.tokenAction as TokenAction) || "face_detect"], "refund", "Job cancelled — tokens refunded");
-    } catch (refundErr) {
-      console.error("[faceDetectRoute] Refund error:", refundErr);
+    // Only refund if tokens were actually deducted (prevents phantom refunds)
+    if (job.tokenDeducted) {
+      try {
+        await addTokens(appUser.userId, TOKEN_COSTS[(job.tokenAction as TokenAction) || "face_detect"], "refund", "Job cancelled — tokens refunded");
+      } catch (refundErr) {
+        console.error("[faceDetectRoute] Refund error:", refundErr);
+      }
     }
+    // Record cancelled action in user history
+    void recordUserAction({
+      appUserId: appUser.userId,
+      actionType: "ai_generate",
+      description: "portrait — בוטל",
+      feature: "portrait",
+      status: "cancelled",
+    });
     return res.json({ cancelled: true });
   }
   return res.json({ cancelled: false, reason: "Job already finished" });

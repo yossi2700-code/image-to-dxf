@@ -1,0 +1,70 @@
+{
+  "query": "\nSELECT au.id, au.name, au.email, au.tokenBalance,\n       tt.amount, tt.reason, tt.balanceAfter, tt.createdAt as txDate\nFROM app_users au\nJOIN token_transactions tt ON tt.appUserId = au.id\nWHERE au.createdAt >= '2026-03-17'\nORDER BY tt.createdAt DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT au.id, au.name, au.email, au.tokenBalance,\n       tt.amount, tt.reason, tt.balanceAfter, tt.createdAt as txDate\nFROM app_users au\nJOIN token_transactions tt ON tt.appUserId = au.id\nWHERE au.createdAt >= '2026-03-17'\nORDER BY tt.createdAt DESC;\n",
+  "rows": [
+    {
+      "id": "960002",
+      "name": "Linas Vidmantas",
+      "email": "linasvidmantas@gmail.com",
+      "tokenBalance": "15",
+      "amount": "5",
+      "reason": "refund",
+      "balanceAfter": "15",
+      "txDate": "2026-03-17 13:58:03"
+    },
+    {
+      "id": "960001",
+      "name": "Snail",
+      "email": "snail@txgm.com",
+      "tokenBalance": "310",
+      "amount": "300",
+      "reason": "admin_add",
+      "balanceAfter": "310",
+      "txDate": "2026-03-17 13:02:20"
+    },
+    {
+      "id": "900001",
+      "name": "משה אייזנבך",
+      "email": "m0547300456@gmail.com",
+      "tokenBalance": "5",
+      "amount": "-5",
+      "reason": "ai_trace",
+      "balanceAfter": "5",
+      "txDate": "2026-03-17 08:16:03"
+    },
+    {
+      "id": "870001",
+      "name": "נבל",
+      "email": "n1979ss@gmail.com",
+      "tokenBalance": "13",
+      "amount": "-5",
+      "reason": "ai_trace",
+      "balanceAfter": "13",
+      "txDate": "2026-03-17 02:52:28"
+    },
+    {
+      "id": "870001",
+      "name": "נבל",
+      "email": "n1979ss@gmail.com",
+      "tokenBalance": "13",
+      "amount": "4",
+      "reason": "refund",
+      "balanceAfter": "18",
+      "txDate": "2026-03-17 02:50:17"
+    },
+    {
+      "id": "870001",
+      "name": "נבל",
+      "email": "n1979ss@gmail.com",
+      "tokenBalance": "13",
+      "amount": "4",
+      "reason": "refund",
+      "balanceAfter": "14",
+      "txDate": "2026-03-17 02:49:52"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\ttokenBalance\tamount\treason\tbalanceAfter\ttxDate\n960002\tLinas Vidmantas\tlinasvidmantas@gmail.com\t15\t5\trefund\t15\t2026-03-17 13:58:03\n960001\tSnail\tsnail@txgm.com\t310\t300\tadmin_add\t310\t2026-03-17 13:02:20\n900001\tמשה אייזנבך\tm0547300456@gmail.com\t5\t-5\tai_trace\t5\t2026-03-17 08:16:03\n870001\tנבל\tn1979ss@gmail.com\t13\t-5\tai_trace\t13\t2026-03-17 02:52:28\n870001\tנבל\tn1979ss@gmail.com\t13\t4\trefund\t18\t2026-03-17 02:50:17\n870001\tנבל\tn1979ss@gmail.com\t13\t4\trefund\t14\t2026-03-17 02:49:52\n",
+  "stderr": "",
+  "execution_time_ms": 1580
+}

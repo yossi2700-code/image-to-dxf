@@ -535,6 +535,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     { status: bugStatusFilter === "all" ? undefined : bugStatusFilter },
     { enabled: activeSection === "bugs" }
   );
+  const { data: failedActionsData, isLoading: failedActionsLoading, refetch: refetchFailedActions } = trpc.admin.getFailedActions.useQuery(
+    undefined, { enabled: activeSection === "bugs" }
+  );
   const updateBugMutation = trpc.admin.updateBugStatus.useMutation({
     onSuccess: () => { toast.success("סטטוס עודכן"); refetchBugs(); },
     onError: (e) => toast.error(e.message),
@@ -1277,19 +1280,39 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                   </thead>
                                   <tbody>
                                     {userActs.map((a) => (
-                                      <tr key={a.id} className="border-b last:border-0 hover:bg-white/60">
+                                      <tr key={a.id} className={`border-b last:border-0 ${
+                                        (a as {status?: string}).status === 'failed' ? 'bg-red-50 hover:bg-red-100/60' :
+                                        (a as {status?: string}).status === 'cancelled' ? 'bg-amber-50 hover:bg-amber-100/60' :
+                                        'hover:bg-white/60'
+                                      }`}>
                                         <td className="py-1.5 pr-2">
-                                          <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                                            a.actionType === "ai_generate"
-                                              ? "bg-purple-100 text-purple-700"
-                                              : a.actionType === "convert"
-                                              ? "bg-blue-100 text-blue-700"
-                                              : "bg-green-100 text-green-700"
-                                          }`}>
-                                            {a.actionType === "ai_generate" ? "יצירת AI" : a.actionType === "convert" ? "המרה" : "הורדה"}
-                                          </span>
+                                          <div className="flex flex-col gap-0.5">
+                                            <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                                              a.actionType === "ai_generate"
+                                                ? "bg-purple-100 text-purple-700"
+                                                : a.actionType === "convert"
+                                                ? "bg-blue-100 text-blue-700"
+                                                : "bg-green-100 text-green-700"
+                                            }`}>
+                                              {a.actionType === "ai_generate" ? "יצירת AI" : a.actionType === "convert" ? "המרה" : "הורדה"}
+                                            </span>
+                                            {(a as {status?: string}).status && (a as {status?: string}).status !== 'success' && (
+                                              <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${
+                                                (a as {status?: string}).status === 'failed' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                                              }`}>
+                                                {(a as {status?: string}).status === 'failed' ? 'נכשל' : 'בוטל'}
+                                              </span>
+                                            )}
+                                          </div>
                                         </td>
-                                        <td className="py-1.5 pr-2 text-muted-foreground max-w-[120px] truncate">{a.description ?? "—"}</td>
+                                        <td className="py-1.5 pr-2 text-muted-foreground max-w-[120px]">
+                                          <div className="truncate">{a.description ?? "—"}</div>
+                                          {(a as {errorMessage?: string}).errorMessage && (
+                                            <div className="text-xs text-red-600 font-mono truncate mt-0.5" title={(a as {errorMessage?: string}).errorMessage ?? ''}>
+                                              {((a as {errorMessage?: string}).errorMessage ?? '').slice(0, 60)}{((a as {errorMessage?: string}).errorMessage ?? '').length > 60 ? '...' : ''}
+                                            </div>
+                                          )}
+                                        </td>
                                         <td className="py-1.5 font-mono text-xs">
                                           {a.durationMs != null ? (
                                             <span className={`font-semibold ${
@@ -1469,6 +1492,94 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                               </button>
                             )}
                           </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Failed/Cancelled Actions Panel */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-orange-500" />
+                    פעולות כושלות / מבוטלות
+                    {failedActionsData && (
+                      <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
+                        {failedActionsData.length}
+                      </span>
+                    )}
+                  </CardTitle>
+                  <Button variant="outline" size="sm" onClick={() => refetchFailedActions()} className="gap-1">
+                    <RefreshCw className="w-3.5 h-3.5" />רענן
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">פעולות שנכשלו או בוטלו על ידי המשתמש — מאופסנים אוטומטית.</p>
+              </CardHeader>
+              <CardContent>
+                {failedActionsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : !failedActionsData || failedActionsData.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CheckCircle className="w-10 h-10 text-green-400 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">אין כשלונות רשומים.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {failedActionsData.map((action) => (
+                      <div key={action.id} className={`border rounded-lg p-3 ${
+                        action.status === 'failed' ? 'bg-red-50/50 border-red-200' : 'bg-amber-50/50 border-amber-200'
+                      }`}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                action.status === 'failed' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                              }`}>
+                                {action.status === 'failed' ? 'נכשל' : 'בוטל'}
+                              </span>
+                              <span className="text-xs font-semibold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                                {action.feature ?? action.actionType}
+                              </span>
+                              {action.durationMs != null && (
+                                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Timer className="w-3 h-3" />
+                                  {action.durationMs < 1000 ? `${action.durationMs}ms` : `${(action.durationMs / 1000).toFixed(1)}ש"`}
+                                </span>
+                              )}
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(action.createdAt).toLocaleString('he-IL')}
+                              </span>
+                            </div>
+                            <div className="text-xs text-slate-600 mb-1">
+                              <span className="font-medium">משתמש:</span>{' '}
+                              {action.userEmail ? (
+                                <span>{action.userName || 'ללא שם'} ({action.userEmail})</span>
+                              ) : (
+                                <span className="text-muted-foreground">אנונימי</span>
+                              )}
+                            </div>
+                            {action.errorMessage && (
+                              <div className="text-xs bg-red-50 border border-red-200 rounded p-2 font-mono text-red-700 break-all">
+                                {action.errorMessage.slice(0, 300)}{action.errorMessage.length > 300 ? '...' : ''}
+                              </div>
+                            )}
+                          </div>
+                          {action.sourceImageUrl && (
+                            <a href={action.sourceImageUrl} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                              <img
+                                src={action.sourceImageUrl}
+                                alt="תמונת מקור"
+                                className="w-16 h-16 object-cover rounded-lg border hover:opacity-80 transition-opacity"
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                              />
+                            </a>
+                          )}
                         </div>
                       </div>
                     ))}

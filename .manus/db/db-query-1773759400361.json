@@ -1,0 +1,20 @@
+{
+  "query": "\nSELECT tt.id, tt.amount, tt.reason, tt.balanceAfter, tt.createdAt, au.name, au.email, au.id as userId\nFROM token_transactions tt\nJOIN app_users au ON tt.appUserId = au.id\nWHERE au.name LIKE '%Linas%' OR au.email LIKE '%linas%'\nORDER BY tt.createdAt DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT tt.id, tt.amount, tt.reason, tt.balanceAfter, tt.createdAt, au.name, au.email, au.id as userId\nFROM token_transactions tt\nJOIN app_users au ON tt.appUserId = au.id\nWHERE au.name LIKE '%Linas%' OR au.email LIKE '%linas%'\nORDER BY tt.createdAt DESC\nLIMIT 20;\n",
+  "rows": [
+    {
+      "id": "3630003",
+      "amount": "5",
+      "reason": "refund",
+      "balanceAfter": "15",
+      "createdAt": "2026-03-17 13:58:03",
+      "name": "Linas Vidmantas",
+      "email": "linasvidmantas@gmail.com",
+      "userId": "960002"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tamount\treason\tbalanceAfter\tcreatedAt\tname\temail\tuserId\n3630003\t5\trefund\t15\t2026-03-17 13:58:03\tLinas Vidmantas\tlinasvidmantas@gmail.com\t960002\n",
+  "stderr": "",
+  "execution_time_ms": 1586
+}

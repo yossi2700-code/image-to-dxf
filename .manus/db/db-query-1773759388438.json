@@ -1,0 +1,9 @@
+{
+  "query": "\nSELECT ua.id, ua.actionType, ua.feature, ua.description, ua.createdAt, ua.durationMs, au.name, au.email\nFROM user_actions ua\nJOIN app_users au ON ua.appUserId = au.id\nWHERE au.name LIKE '%Linas%' OR au.email LIKE '%linas%'\nORDER BY ua.createdAt DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT ua.id, ua.actionType, ua.feature, ua.description, ua.createdAt, ua.durationMs, au.name, au.email\nFROM user_actions ua\nJOIN app_users au ON ua.appUserId = au.id\nWHERE au.name LIKE '%Linas%' OR au.email LIKE '%linas%'\nORDER BY ua.createdAt DESC\nLIMIT 20;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1616
+}

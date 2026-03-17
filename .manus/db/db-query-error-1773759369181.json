@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT ua.id, ua.action_type, ua.feature, ua.description, ua.created_at, ua.duration_ms, au.name, au.email\nFROM user_actions ua\nJOIN app_users au ON ua.app_user_id = au.id\nWHERE au.email LIKE '%linas%' OR au.name LIKE '%Linas%'\nORDER BY ua.created_at DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT ua.id, ua.action_type, ua.feature, ua.description, ua.created_at, ua.duration_ms, au.name, au.email\nFROM user_actions ua\nJOIN app_users au ON ua.app_user_id = au.id\nWHERE au.email LIKE '%linas%' OR au.name LIKE '%Linas%'\nORDER BY ua.created_at DESC\nLIMIT 20;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'ua.app_user_id' in 'on clause'"
+  ]
+}

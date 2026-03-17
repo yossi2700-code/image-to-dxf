@@ -1,0 +1,123 @@
+{
+  "query": "\nSELECT ua.id, ua.appUserId, ua.actionType, ua.feature, ua.description, ua.createdAt, au.name, au.email\nFROM user_actions ua\nLEFT JOIN app_users au ON ua.appUserId = au.id\nORDER BY ua.createdAt DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT ua.id, ua.appUserId, ua.actionType, ua.feature, ua.description, ua.createdAt, au.name, au.email\nFROM user_actions ua\nLEFT JOIN app_users au ON ua.appUserId = au.id\nORDER BY ua.createdAt DESC\nLIMIT 20;\n",
+  "rows": [
+    {
+      "id": "3570030",
+      "appUserId": "210001",
+      "actionType": "ai_generate",
+      "feature": "ai_refine",
+      "description": "תקצר קצת את הבסיס ושהזרועות של האות ש יצאו מהבסיס ולא מאמצע האות",
+      "createdAt": "2026-03-17 08:32:59",
+      "name": "צבי",
+      "email": "zvizvi011@gmail.com"
+    },
+    {
+      "id": "3570029",
+      "appUserId": "210001",
+      "actionType": "ai_generate",
+      "feature": "ai_refine",
+      "description": "יופי, עכשיו שכל האות ממתחיל מהבסיס הזה ולא מהאמתע כמו עכשיו",
+      "createdAt": "2026-03-17 08:32:14",
+      "name": "צבי",
+      "email": "zvizvi011@gmail.com"
+    },
+    {
+      "id": "3570028",
+      "appUserId": "210001",
+      "actionType": "ai_generate",
+      "feature": "ai_refine",
+      "description": "תידה לי את הבסיס של האות יותר משולש ושפיץ",
+      "createdAt": "2026-03-17 08:31:25",
+      "name": "צבי",
+      "email": "zvizvi011@gmail.com"
+    },
+    {
+      "id": "3570026",
+      "appUserId": "210001",
+      "actionType": "ai_generate",
+      "feature": "ai_refine",
+      "description": "תעשה את הבסיס של האות יותר שפיץ",
+      "createdAt": "2026-03-17 08:30:42",
+      "name": "צבי",
+      "email": "zvizvi011@gmail.com"
+    },
+    {
+      "id": "3570022",
+      "appUserId": "210001",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "תסרטט לי ש של תפילין ראש ספרדי",
+      "createdAt": "2026-03-17 08:28:48",
+      "name": "צבי",
+      "email": "zvizvi011@gmail.com"
+    },
+    {
+      "id": "3570020",
+      "appUserId": "210001",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "תסרטט לי ש של תפילין ראש ספרדי",
+      "createdAt": "2026-03-17 08:28:48",
+      "name": "צבי",
+      "email": "zvizvi011@gmail.com"
+    },
+    {
+      "id": "3570021",
+      "appUserId": "210001",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "תסרטט לי ש של תפילין ראש ספרדי",
+      "createdAt": "2026-03-17 08:28:48",
+      "name": "צבי",
+      "email": "zvizvi011@gmail.com"
+    },
+    {
+      "id": "3570018",
+      "appUserId": "600002",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "מטוס סילון",
+      "createdAt": "2026-03-17 08:23:20",
+      "name": "Ran T",
+      "email": "ran.tid@outlook.com"
+    },
+    {
+      "id": "3570016",
+      "appUserId": "600002",
+      "actionType": "ai_generate",
+      "feature": "ai_generate",
+      "description": "מטוס סילון",
+      "createdAt": "2026-03-17 08:23:19",
+      "name": "Ran T",
+      "email": "ran.tid@outlook.com"
+    }
+  ],
+  "messages": [
+    "3600001\t840003\tai_generate\tai_trace\tCamera angle: FRONT VIEW.",
+    "The subject is a stylized embroidered patch shaped like an eye, facing the viewer. It features a white sclera, a prominent light blue iris, and a black pupil at the center. T\t2026-03-17 13:14:51\tיוסי\tyossi2700@gmail.com",
+    "3570035\t840003\tai_generate\tai_trace\tCamera angle: Front view.",
+    "The subject is a segment of musical notation, featuring two staves (treble and bass clef) connected by a brace on the left. The treble clef staff contains various notes, rest\t2026-03-17 09:37:44\tיוסי\tyossi2700@gmail.com",
+    "3570034\t840003\tai_generate\tai_trace\tCamera angle: Front view.",
+    "The subject is a segment of musical notation, featuring two staves (treble and bass clef) connected by a brace on the left, with key signatures of four sharps for both staves\t2026-03-17 09:36:29\tיוסי\tyossi2700@gmail.com",
+    "3570033\t840003\tai_generate\tai_trace\tCamera angle: Front view.",
+    "The subject is a segment of musical notation, consisting of two staves (treble clef and bass clef) connected by a brace on the left. The treble clef staff contains a G clef, \t2026-03-17 09:35:12\tיוסי\tyossi2700@gmail.com",
+    "3570032\t840003\tai_generate\tai_trace\tCamera angle: Front view.",
+    "The subject is a segment of musical notation, featuring two staves (treble and bass clef) connected by a brace on the left. The treble clef staff contains a key signature of \t2026-03-17 09:33:20\tיוסי\tyossi2700@gmail.com",
+    "3570031\t840003\tai_generate\tai_trace\tCamera angle: 3/4 FRONT-LEFT.",
+    "A stylized grand piano is depicted with its lid open, facing slightly right and angled towards the viewer. The piano has a detailed keyboard with individual keys visible,\t2026-03-17 09:19:12\tיוסי\tyossi2700@gmail.com",
+    "3570027\t840003\tai_generate\tai_trace\tCamera angle: Front view.",
+    "The subject is a small, solid black, circular shape representing a pupil, centered within a larger blue circle that represents the iris. It is perfectly symmetrical and flat,\t2026-03-17 08:31:03\tיוסי\tyossi2700@gmail.com",
+    "3570024\t210001\tai_generate\tai_generate\tתסרטט לי ש של תפילין ראש ",
+    "אני רותה את האות ש בלבד ללא תפילין בכלל\t2026-03-17 08:29:50\tצבי\tzvizvi011@gmail.com",
+    "3570025\t210001\tai_generate\tai_generate\tתסרטט לי ש של תפילין ראש ",
+    "אני רותה את האות ש בלבד ללא תפילין בכלל\t2026-03-17 08:29:50\tצבי\tzvizvi011@gmail.com",
+    "3570023\t210001\tai_generate\tai_generate\tתסרטט לי ש של תפילין ראש ",
+    "אני רותה את האות ש בלבד ללא תפילין בכלל\t2026-03-17 08:29:50\tצבי\tzvizvi011@gmail.com",
+    "3570019\t840003\tai_generate\tai_trace\tCamera angle: FRONT VIEW.",
+    "The subject is a stylized embroidered patch shaped like an eye, facing directly toward the viewer. It features a white sclera with a large circular turquoise iris and a small\t2026-03-17 08:28:02\tיוסי\tyossi2700@gmail.com"
+  ],
+  "stdout": "id\tappUserId\tactionType\tfeature\tdescription\tcreatedAt\tname\temail\n3600001\t840003\tai_generate\tai_trace\tCamera angle: FRONT VIEW.\nThe subject is a stylized embroidered patch shaped like an eye, facing the viewer. It features a white sclera, a prominent light blue iris, and a black pupil at the center. T\t2026-03-17 13:14:51\tיוסי\tyossi2700@gmail.com\n3570035\t840003\tai_generate\tai_trace\tCamera angle: Front view.\nThe subject is a segment of musical notation, featuring two staves (treble and bass clef) connected by a brace on the left. The treble clef staff contains various notes, rest\t2026-03-17 09:37:44\tיוסי\tyossi2700@gmail.com\n3570034\t840003\tai_generate\tai_trace\tCamera angle: Front view.\nThe subject is a segment of musical notation, featuring two staves (treble and bass clef) connected by a brace on the left, with key signatures of four sharps for both staves\t2026-03-17 09:36:29\tיוסי\tyossi2700@gmail.com\n3570033\t840003\tai_generate\tai_trace\tCamera angle: Front view.\nThe subject is a segment of musical notation, consisting of two staves (treble clef and bass clef) connected by a brace on the left. The treble clef staff contains a G clef, \t2026-03-17 09:35:12\tיוסי\tyossi2700@gmail.com\n3570032\t840003\tai_generate\tai_trace\tCamera angle: Front view.\nThe subject is a segment of musical notation, featuring two staves (treble and bass clef) connected by a brace on the left. The treble clef staff contains a key signature of \t2026-03-17 09:33:20\tיוסי\tyossi2700@gmail.com\n3570031\t840003\tai_generate\tai_trace\tCamera angle: 3/4 FRONT-LEFT.\nA stylized grand piano is depicted with its lid open, facing slightly right and angled towards the viewer. The piano has a detailed keyboard with individual keys visible,\t2026-03-17 09:19:12\tיוסי\tyossi2700@gmail.com\n3570030\t210001\tai_generate\tai_refine\tתקצר קצת את הבסיס ושהזרועות של האות ש יצאו מהבסיס ולא מאמצע האות\t2026-03-17 08:32:59\tצבי\tzvizvi011@gmail.com\n3570029\t210001\tai_generate\tai_refine\tיופי, עכשיו שכל האות ממתחיל מהבסיס הזה ולא מהאמתע כמו עכשיו\t2026-03-17 08:32:14\tצבי\tzvizvi011@gmail.com\n3570028\t210001\tai_generate\tai_refine\tתידה לי את הבסיס של האות יותר משולש ושפיץ\t2026-03-17 08:31:25\tצבי\tzvizvi011@gmail.com\n3570027\t840003\tai_generate\tai_trace\tCamera angle: Front view.\nThe subject is a small, solid black, circular shape representing a pupil, centered within a larger blue circle that represents the iris. It is perfectly symmetrical and flat,\t2026-03-17 08:31:03\tיוסי\tyossi2700@gmail.com\n3570026\t210001\tai_generate\tai_refine\tתעשה את הבסיס של האות יותר שפיץ\t2026-03-17 08:30:42\tצבי\tzvizvi011@gmail.com\n3570024\t210001\tai_generate\tai_generate\tתסרטט לי ש של תפילין ראש \nאני רותה את האות ש בלבד ללא תפילין בכלל\t2026-03-17 08:29:50\tצבי\tzvizvi011@gmail.com\n3570025\t210001\tai_generate\tai_generate\tתסרטט לי ש של תפילין ראש \nאני רותה את האות ש בלבד ללא תפילין בכלל\t2026-03-17 08:29:50\tצבי\tzvizvi011@gmail.com\n3570023\t210001\tai_generate\tai_generate\tתסרטט לי ש של תפילין ראש \nאני רותה את האות ש בלבד ללא תפילין בכלל\t2026-03-17 08:29:50\tצבי\tzvizvi011@gmail.com\n3570022\t210001\tai_generate\tai_generate\tתסרטט לי ש של תפילין ראש ספרדי\t2026-03-17 08:28:48\tצבי\tzvizvi011@gmail.com\n3570020\t210001\tai_generate\tai_generate\tתסרטט לי ש של תפילין ראש ספרדי\t2026-03-17 08:28:48\tצבי\tzvizvi011@gmail.com\n3570021\t210001\tai_generate\tai_generate\tתסרטט לי ש של תפילין ראש ספרדי\t2026-03-17 08:28:48\tצבי\tzvizvi011@gmail.com\n3570019\t840003\tai_generate\tai_trace\tCamera angle: FRONT VIEW.\nThe subject is a stylized embroidered patch shaped like an eye, facing directly toward the viewer. It features a white sclera with a large circular turquoise iris and a small\t2026-03-17 08:28:02\tיוסי\tyossi2700@gmail.com\n3570018\t600002\tai_generate\tai_generate\tמטוס סילון\t2026-03-17 08:23:20\tRan T\tran.tid@outlook.com\n3570016\t600002\tai_generate\tai_generate\tמטוס סילון\t2026-03-17 08:23:19\tRan T\tran.tid@outlook.com\n",
+  "stderr": "",
+  "execution_time_ms": 1571
+}

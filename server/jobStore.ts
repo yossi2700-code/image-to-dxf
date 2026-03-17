@@ -18,6 +18,7 @@ export interface Job {
   error?: string;
   errorCode?: string;  // e.g. "UNCLEAR_IMAGE" for special UI handling
   tokenAction?: string; // e.g. "ai_trace" — used for refund on cancel
+  tokenDeducted?: boolean; // true once tokens have been deducted — prevents phantom refunds
   step?: string;        // Human-readable current step message (he/en)
   stepEn?: string;      // English step message
   partialImages?: unknown[]; // Partial results streamed as each image completes

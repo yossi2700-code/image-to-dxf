@@ -1,0 +1,22 @@
+{
+  "query": "\nSELECT tt.*, au.name, au.email, au.tokenBalance\nFROM token_transactions tt\nJOIN app_users au ON tt.appUserId = au.id\nWHERE au.name LIKE '%Linas%' OR au.email LIKE '%linas%';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT tt.*, au.name, au.email, au.tokenBalance\nFROM token_transactions tt\nJOIN app_users au ON tt.appUserId = au.id\nWHERE au.name LIKE '%Linas%' OR au.email LIKE '%linas%';\n",
+  "rows": [
+    {
+      "id": "3630003",
+      "appUserId": "960002",
+      "amount": "5",
+      "reason": "refund",
+      "description": "Job cancelled — tokens refunded",
+      "balanceAfter": "15",
+      "createdAt": "2026-03-17 13:58:03",
+      "name": "Linas Vidmantas",
+      "email": "linasvidmantas@gmail.com",
+      "tokenBalance": "15"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tappUserId\tamount\treason\tdescription\tbalanceAfter\tcreatedAt\tname\temail\ttokenBalance\n3630003\t960002\t5\trefund\tJob cancelled — tokens refunded\t15\t2026-03-17 13:58:03\tLinas Vidmantas\tlinasvidmantas@gmail.com\t15\n",
+  "stderr": "",
+  "execution_time_ms": 1549
+}

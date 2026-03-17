@@ -270,7 +270,7 @@ router.get("/api/app-auth/me", async (req: import("express").Request, res: impor
       await db.insert(appUsers).values({
         email: manusUser.email,
         name: manusUser.name ?? null,
-        tokenBalance: 20,
+        tokenBalance: 10,
         emailVerified: 1,
       });
       const [newUser] = await db
@@ -508,7 +508,7 @@ export async function getAppUserFromRequest(
       await db.insert(appUsers).values({
         email: manusUser.email,
         name: manusUser.name ?? null,
-        tokenBalance: 20,
+        tokenBalance: 10,
         emailVerified: 1,
       });
       const [newUser] = await db

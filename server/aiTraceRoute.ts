@@ -582,6 +582,7 @@ async function runTraceJob(
 
     // Deduct tokens NOW — only after successful job completion
     await deductTokens(appUserId, "ai_trace");
+    updateJob(jobId, { tokenDeducted: true });
 
     // Record user actions
     const groupId = nanoid(12);
@@ -614,6 +615,17 @@ async function runTraceJob(
     const message = err instanceof Error ? err.message : "Unknown error";
     updateJob(jobId, { status: "error", error: message });
     // No token refund needed — tokens are only deducted after success
+    // Record failed action in user history
+    void recordUserAction({
+      appUserId,
+      actionType: "ai_generate",
+      description: "ai_trace — נכשל",
+      feature: "ai_trace",
+      durationMs: Date.now() - jobStartTime,
+      status: "failed",
+      errorMessage: message.slice(0, 500),
+      sourceImageUrl: sourceImageUrl ?? undefined,
+    });
     // Log the failed job for admin debugging
     try {
       const { recordFailedJob } = await import("./failedJobsDb");
@@ -823,11 +835,22 @@ router.post("/api/ai-trace/cancel/:jobId", async (req, res) => {
 
   const wasCancelled = cancelJob(req.params.jobId);
   if (wasCancelled) {
-    try {
-      await addTokens(appUser.userId, TOKEN_COSTS[(job.tokenAction as TokenAction) || "ai_trace"], "refund", "Job cancelled — tokens refunded");
-    } catch (refundErr) {
-      console.error("[aiTraceRoute] Refund error:", refundErr);
+    // Only refund if tokens were actually deducted (prevents phantom refunds)
+    if (job.tokenDeducted) {
+      try {
+        await addTokens(appUser.userId, TOKEN_COSTS[(job.tokenAction as TokenAction) || "ai_trace"], "refund", "Job cancelled — tokens refunded");
+      } catch (refundErr) {
+        console.error("[aiTraceRoute] Refund error:", refundErr);
+      }
     }
+    // Record cancelled action in user history
+    void recordUserAction({
+      appUserId: appUser.userId,
+      actionType: "ai_generate",
+      description: "ai_trace — בוטל",
+      feature: "ai_trace",
+      status: "cancelled",
+    });
     return res.json({ cancelled: true });
   }
 

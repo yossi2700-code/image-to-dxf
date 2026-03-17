@@ -286,6 +286,7 @@ async function runGenerateJob(
 
     // Deduct tokens NOW — only after all 3 images generated successfully
     await deductTokens(appUserId, "ai_generate");
+    updateJob(jobId, { tokenDeducted: true });
 
     // Log usage
     const totalSegments = images.reduce((s, img) => s + img.segmentCount, 0);
@@ -330,6 +331,16 @@ async function runGenerateJob(
     const message = err instanceof Error ? err.message : "Unknown error";
     updateJob(jobId, { status: "error", error: message });
     // No refund needed — tokens were not deducted yet (deduction happens only on success)
+    // Record failed action in user history
+    void recordUserAction({
+      appUserId,
+      actionType: "ai_generate",
+      description: "ai_generate — נכשל",
+      feature: "ai_generate",
+      durationMs: Date.now() - jobStartTime,
+      status: "failed",
+      errorMessage: message.slice(0, 500),
+    });
     // Alert admin if billing/quota issue
     const isBillingError = message.toLowerCase().includes("quota") ||
       message.toLowerCase().includes("billing") ||
@@ -454,6 +465,14 @@ router.post("/api/generate-images/cancel/:jobId", async (req, res) => {
   const wasCancelled = cancelJob(req.params.jobId);
   if (wasCancelled) {
     // No refund needed — tokens are only deducted after successful completion
+    // Record cancelled action in user history
+    void recordUserAction({
+      appUserId: appUser.userId,
+      actionType: "ai_generate",
+      description: "ai_generate — בוטל",
+      feature: "ai_generate",
+      status: "cancelled",
+    });
     return res.json({ cancelled: true });
   }
 

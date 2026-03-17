@@ -1,0 +1,80 @@
+{
+  "query": "\nSELECT au.id, au.name, au.email, au.tokenBalance, au.createdAt as regDate\nFROM app_users au\nORDER BY au.createdAt DESC\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT au.id, au.name, au.email, au.tokenBalance, au.createdAt as regDate\nFROM app_users au\nORDER BY au.createdAt DESC\nLIMIT 10;\n",
+  "rows": [
+    {
+      "id": "960002",
+      "name": "Linas Vidmantas",
+      "email": "linasvidmantas@gmail.com",
+      "tokenBalance": "15",
+      "regDate": "2026-03-17 13:55:55"
+    },
+    {
+      "id": "960001",
+      "name": "Snail",
+      "email": "snail@txgm.com",
+      "tokenBalance": "310",
+      "regDate": "2026-03-17 13:00:19"
+    },
+    {
+      "id": "930001",
+      "name": "גולן חסון",
+      "email": "hassong15@gmail.com",
+      "tokenBalance": "10",
+      "regDate": "2026-03-17 11:33:44"
+    },
+    {
+      "id": "900001",
+      "name": "משה אייזנבך",
+      "email": "m0547300456@gmail.com",
+      "tokenBalance": "5",
+      "regDate": "2026-03-17 08:12:35"
+    },
+    {
+      "id": "870001",
+      "name": "נבל",
+      "email": "n1979ss@gmail.com",
+      "tokenBalance": "13",
+      "regDate": "2026-03-17 02:37:24"
+    },
+    {
+      "id": "840017",
+      "name": "Eksun 3D",
+      "email": "sunnybajare@gmail.com",
+      "tokenBalance": "5",
+      "regDate": "2026-03-16 10:39:45"
+    },
+    {
+      "id": "840016",
+      "name": "דני שמעונוב",
+      "email": "danishimon33@gmail.com",
+      "tokenBalance": "10",
+      "regDate": "2026-03-15 21:31:21"
+    },
+    {
+      "id": "840015",
+      "name": "NULL",
+      "email": "dima@t-print.co.il",
+      "tokenBalance": "5",
+      "regDate": "2026-03-15 17:48:59"
+    },
+    {
+      "id": "840014",
+      "name": "אבן גל",
+      "email": "evengal@013net.net",
+      "tokenBalance": "10",
+      "regDate": "2026-03-15 12:19:51"
+    },
+    {
+      "id": "840013",
+      "name": "NULL",
+      "email": "liad118811@gmail.com",
+      "tokenBalance": "15",
+      "regDate": "2026-03-15 08:25:55"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\ttokenBalance\tregDate\n960002\tLinas Vidmantas\tlinasvidmantas@gmail.com\t15\t2026-03-17 13:55:55\n960001\tSnail\tsnail@txgm.com\t310\t2026-03-17 13:00:19\n930001\tגולן חסון\thassong15@gmail.com\t10\t2026-03-17 11:33:44\n900001\tמשה אייזנבך\tm0547300456@gmail.com\t5\t2026-03-17 08:12:35\n870001\tנבל\tn1979ss@gmail.com\t13\t2026-03-17 02:37:24\n840017\tEksun 3D\tsunnybajare@gmail.com\t5\t2026-03-16 10:39:45\n840016\tדני שמעונוב\tdanishimon33@gmail.com\t10\t2026-03-15 21:31:21\n840015\tNULL\tdima@t-print.co.il\t5\t2026-03-15 17:48:59\n840014\tאבן גל\tevengal@013net.net\t10\t2026-03-15 12:19:51\n840013\tNULL\tliad118811@gmail.com\t15\t2026-03-15 08:25:55\n",
+  "stderr": "",
+  "execution_time_ms": 1579
+}
