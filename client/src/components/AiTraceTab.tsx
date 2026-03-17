@@ -423,7 +423,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
       });
     }
 
-    setStatus("loading"); setResult(null); setErrorMsg(""); setCurrentStep("");
+    setShowSuccessOverlay(false); setStatus("loading"); setResult(null); setErrorMsg(""); setCurrentStep("");
     try {
       const formData = new FormData();
       if (imageFile) {
@@ -481,7 +481,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
 
   // Handle Try Again from history — fetch source image URL and re-submit
   const handleTraceFromUrl = async (sourceUrl: string) => {
-    setStatus("loading"); setResult(null); setErrorMsg("");
+    setShowSuccessOverlay(false); setStatus("loading"); setResult(null); setErrorMsg("");
     try {
       // Fetch the image as a blob from S3
       const resp = await fetch(sourceUrl);
@@ -529,6 +529,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
     setStatus("idle"); setErrorMsg(""); setFocusText(""); setCustomImprovement("");
     setIsUnclearImage(false); setUnclearDescription("");
     setJobIdPersisted(null); setTryAgainUrl(null);
+    setShowSuccessOverlay(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 

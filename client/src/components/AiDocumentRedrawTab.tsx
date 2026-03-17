@@ -518,6 +518,7 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
 
   const handleRedraw = async () => {
     if (!imageFile && !imagePreview) return;
+    setShowSuccessOverlay(false);
     setStatus("loading");
     setResult(null);
     setErrorMsg("");
@@ -618,6 +619,7 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
     setErrorMsg("");
     setDescription("");
     setJobIdPersisted(null);
+    setShowSuccessOverlay(false);
   };
 
   return (

@@ -225,6 +225,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
     setProgressPct(5);
     setElapsedSeconds(0);
     setJobIdPersisted(null);
+    setShowSuccessOverlay(false);
     localStorage.removeItem("face_detect_result");
   }, [setImagePreviewPersisted, setJobIdPersisted]);
 
@@ -387,7 +388,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
         reader.readAsDataURL(imageFile);
       });
     }
-    setStatus("loading"); setResult(null); setErrorMsg(""); setCurrentStep(""); setProgressPct(5);
+    setShowSuccessOverlay(false); setStatus("loading"); setResult(null); setErrorMsg(""); setCurrentStep(""); setProgressPct(5);
     try {
       const formData = new FormData();
       if (imageFile) {
