@@ -2404,6 +2404,8 @@ export default function Home() {
             </button>
           </div>
         )}
+        {/* ── Sale Banner ── */}
+        <SaleBanner />
         {/* ── Announcement Banner ── */}
         <AnnouncementBanner />
         {/* ── News Widget ── */}
