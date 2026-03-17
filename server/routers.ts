@@ -7,7 +7,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks, emailVerifications, failedJobs } from "../drizzle/schema";
+import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks, emailVerifications, failedJobs, visitorEvents } from "../drizzle/schema";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "./emailService";
 import { desc, eq, and, sql } from "drizzle-orm";
@@ -467,6 +467,46 @@ export const appRouter = router({
             ...(input.isEnabled !== undefined ? { isEnabled: input.isEnabled } : {}),
           })
           .where(eq(tokenCosts.action, input.action));
+        invalidateTokenCostsCache();
+        return { success: true };
+      }),
+
+    /** Delete a token cost action */
+    deleteTokenCost: adminProcedure
+      .input(z.object({ action: z.string() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db.delete(tokenCosts).where(eq(tokenCosts.action, input.action));
+        invalidateTokenCostsCache();
+        return { success: true };
+      }),
+
+    /** Add a new token cost action */
+    addTokenCost: adminProcedure
+      .input(z.object({
+        action: z.string().min(1).max(32),
+        cost: z.number().int().min(0).max(100),
+        labelHe: z.string().max(64).optional(),
+        labelEn: z.string().max(64).optional(),
+        descriptionHe: z.string().max(200).optional(),
+        descriptionEn: z.string().max(200).optional(),
+        sortOrder: z.number().int().optional(),
+        isEnabled: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db.insert(tokenCosts).values({
+          action: input.action,
+          cost: input.cost,
+          labelHe: input.labelHe ?? null,
+          labelEn: input.labelEn ?? null,
+          descriptionHe: input.descriptionHe ?? null,
+          descriptionEn: input.descriptionEn ?? null,
+          sortOrder: input.sortOrder ?? 0,
+          isEnabled: input.isEnabled ?? 1,
+        });
         invalidateTokenCostsCache();
         return { success: true };
       }),
@@ -1592,5 +1632,83 @@ export const appRouter = router({
       }),
   }),
 
+  /** Visitor analytics */
+  visitors: router({
+    /** Track a page visit (public, fire-and-forget) */
+    track: publicProcedure
+      .input(z.object({
+        sessionId: z.string().max(64),
+        page: z.string().max(256).default("/"),
+        referrer: z.string().max(512).optional(),
+        userAgent: z.string().max(256).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const db = await getDb();
+          if (!db) return { ok: true };
+          // Get app user if logged in
+          const appUserCookie = getAppUserFromCookie((ctx.req as { cookies?: Record<string, string> }).cookies);
+          // Anonymize IP (keep first 3 octets)
+          const rawIp = getClientIp(ctx.req as Parameters<typeof getClientIp>[0]);
+          const ipParts = rawIp.split(".");
+          const ipAnon = ipParts.length >= 3 ? ipParts.slice(0, 3).join(".") : rawIp.substring(0, 15);
+          // Detect country from IP using a simple lookup (best-effort)
+          let country: string | null = null;
+          try {
+            const cfCountry = (ctx.req.headers as Record<string, string | string[] | undefined>)["cf-ipcountry"];
+            if (cfCountry && typeof cfCountry === "string" && cfCountry.length === 2) {
+              country = cfCountry.toUpperCase();
+            }
+          } catch { /* ignore */ }
+          await db.insert(visitorEvents).values({
+            sessionId: input.sessionId,
+            appUserId: appUserCookie?.userId ?? null,
+            page: input.page,
+            country,
+            ipAnon,
+            referrer: input.referrer ?? null,
+            userAgent: input.userAgent?.substring(0, 256) ?? null,
+          });
+        } catch { /* fire-and-forget, never throw */ }
+        return { ok: true };
+      }),
+    /** Get visitor analytics (admin only) */
+    stats: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return { total: 0, today: 0, byCountry: [], byPage: [], recentSessions: 0 };
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const [totalRow] = await db.select({ count: sql<number>`COUNT(*)` }).from(visitorEvents);
+      const [todayRow] = await db.select({ count: sql<number>`COUNT(*)` }).from(visitorEvents)
+        .where(sql`${visitorEvents.createdAt} >= ${todayStart}`);
+      const byCountry = await db.select({
+        country: visitorEvents.country,
+        count: sql<number>`COUNT(*)`,
+      }).from(visitorEvents)
+        .where(sql`${visitorEvents.createdAt} >= ${weekStart}`)
+        .groupBy(visitorEvents.country)
+        .orderBy(sql`COUNT(*) DESC`)
+        .limit(20);
+      const byPage = await db.select({
+        page: visitorEvents.page,
+        count: sql<number>`COUNT(*)`,
+      }).from(visitorEvents)
+        .where(sql`${visitorEvents.createdAt} >= ${weekStart}`)
+        .groupBy(visitorEvents.page)
+        .orderBy(sql`COUNT(*) DESC`)
+        .limit(20);
+      const [uniqueSessionsRow] = await db.select({ count: sql<number>`COUNT(DISTINCT ${visitorEvents.sessionId})` })
+        .from(visitorEvents)
+        .where(sql`${visitorEvents.createdAt} >= ${weekStart}`);
+      return {
+        total: Number(totalRow?.count ?? 0),
+        today: Number(todayRow?.count ?? 0),
+        byCountry: byCountry.map(r => ({ country: r.country ?? "Unknown", count: Number(r.count) })),
+        byPage: byPage.map(r => ({ page: r.page, count: Number(r.count) })),
+        recentSessions: Number(uniqueSessionsRow?.count ?? 0),
+      };
+    }),
+  }),
 });
 export type AppRouter = typeof appRouter;

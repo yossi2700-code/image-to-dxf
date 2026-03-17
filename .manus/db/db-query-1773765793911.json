@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `visitor_events` (\n  `id` int AUTO_INCREMENT PRIMARY KEY,\n  `sessionId` varchar(64) NOT NULL,\n  `appUserId` int,\n  `page` varchar(256) NOT NULL DEFAULT '/',\n  `country` varchar(4),\n  `ipAnon` varchar(20),\n  `referrer` varchar(512),\n  `userAgent` varchar(256),\n  `createdAt` timestamp NOT NULL DEFAULT (now())\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute CREATE TABLE IF NOT EXISTS `visitor_events` (\n  `id` int AUTO_INCREMENT PRIMARY KEY,\n  `sessionId` varchar(64) NOT NULL,\n  `appUserId` int,\n  `page` varchar(256) NOT NULL DEFAULT '/',\n  `country` varchar(4),\n  `ipAnon` varchar(20),\n  `referrer` varchar(512),\n  `userAgent` varchar(256),\n  `createdAt` timestamp NOT NULL DEFAULT (now())\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1990
+}

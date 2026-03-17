@@ -61,6 +61,15 @@ export function invalidateTokenCostsCache() {
 }
 
 /**
+ * Get the current token cost for an action from DB (respects admin overrides).
+ * Falls back to TOKEN_COSTS_DEFAULT if DB is unavailable.
+ */
+export async function getTokenCostForAction(action: string): Promise<number> {
+  const costs = await getTokenCostsFromDb();
+  return costs[action] ?? TOKEN_COSTS_DEFAULT[action as TokenAction] ?? 0;
+}
+
+/**
  * Get current token balance for a user.
  * Returns 0 if user not found.
  */

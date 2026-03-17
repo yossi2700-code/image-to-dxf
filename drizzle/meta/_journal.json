@@ -274,6 +274,13 @@
       "when": 1773761370568,
       "tag": "0038_volatile_caretaker",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "5",
+      "when": 1773765754599,
+      "tag": "0039_solid_makkari",
+      "breakpoints": true
     }
   ]
 }

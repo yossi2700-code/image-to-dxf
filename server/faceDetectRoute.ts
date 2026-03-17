@@ -19,7 +19,7 @@ import { nanoid } from "nanoid";
 import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
-import { deductTokens, addTokens, TOKEN_COSTS, TokenAction } from "./tokenService";
+import { deductTokens, addTokens, TOKEN_COSTS, TokenAction, getTokenCostForAction } from "./tokenService";
 import { createJob, getJob, updateJob, cancelJob, heartbeatJob } from "./jobStore";
 import { svgToDxf } from "./svgToDxf";
 import { cleanSvgForPreview } from "./svgClean";
@@ -286,7 +286,8 @@ async function runFaceDetectJob(
     if (!hasFace) {
       // Refund tokens — no face found
       try {
-        await addTokens(appUserId, TOKEN_COSTS["face_detect"], "refund", "No face detected — tokens refunded");
+        const noFaceRefundCost = await getTokenCostForAction("face_detect");
+        await addTokens(appUserId, noFaceRefundCost, "refund", "No face detected — tokens refunded");
       } catch { /* ignore */ }
       const errorMsg = isHe
         ? "לא זוהו פנים בתמונה. אנא נסה שוב עם תמונה ברורה יותר של פנים."
@@ -529,7 +530,8 @@ router.post("/api/face-detect/cancel/:jobId", async (req, res) => {
     // Only refund if tokens were actually deducted (prevents phantom refunds)
     if (job.tokenDeducted) {
       try {
-        await addTokens(appUser.userId, TOKEN_COSTS[(job.tokenAction as TokenAction) || "face_detect"], "refund", "Job cancelled — tokens refunded");
+        const cancelRefundCost = await getTokenCostForAction((job.tokenAction as string) || "face_detect");
+        await addTokens(appUser.userId, cancelRefundCost, "refund", "Job cancelled — tokens refunded");
       } catch (refundErr) {
         console.error("[faceDetectRoute] Refund error:", refundErr);
       }

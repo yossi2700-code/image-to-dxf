@@ -59,6 +59,7 @@ import {
   AlertTriangle,
   Timer,
   ImageIcon,
+  Globe,
 } from "lucide-react";
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
@@ -421,6 +422,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const { data: stats, isLoading: statsLoading } = trpc.admin.stats.useQuery();
   const { data: daily, isLoading: dailyLoading } = trpc.admin.dailyActivity.useQuery();
   const { data: recent, isLoading: recentLoading } = trpc.admin.recentEvents.useQuery();
+  const { data: visitorStats } = trpc.visitors.stats.useQuery();
   const { data: registeredUsers, isLoading: usersLoading, refetch: refetchUsers } = trpc.admin.usersWithTokens.useQuery();
   const { data: userActionsData, isLoading: actionsLoading } = trpc.admin.userActions.useQuery();
   const [expandedUser, setExpandedUser] = useState<number | null>(null);
@@ -654,9 +656,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     onSuccess: () => { toast.success("עלות עודכנה בהצלחה!"); refetchTokenCosts(); setEditingCostAction(null); },
     onError: (e) => toast.error("שגיאה: " + e.message),
   });
+  const deleteTokenCostMutation = trpc.admin.deleteTokenCost.useMutation({
+    onSuccess: () => { toast.success("פעולה נמחקה!"); refetchTokenCosts(); },
+    onError: (e) => toast.error("שגיאה: " + e.message),
+  });
+  const addTokenCostMutation = trpc.admin.addTokenCost.useMutation({
+    onSuccess: () => { toast.success("פעולה נוספה!"); refetchTokenCosts(); setShowAddAction(false); setNewAction({ action: "", cost: 0, labelHe: "", labelEn: "", descriptionHe: "", descriptionEn: "" }); },
+    onError: (e) => toast.error("שגיאה: " + e.message),
+  });
   const [editingCostAction, setEditingCostAction] = useState<string | null>(null);
   const [costEdits, setCostEdits] = useState<Record<string, number>>({});
-  const [labelEdits, setLabelEdits] = useState<Record<string, { labelHe: string; labelEn: string; descriptionHe: string; descriptionEn: string }>>({});
+  const [labelEdits, setLabelEdits] = useState<Record<string, { labelHe: string; labelEn: string; descriptionHe: string; descriptionEn: string }>>({}); 
+  const [showAddAction, setShowAddAction] = useState(false);
+  const [newAction, setNewAction] = useState({ action: "", cost: 0, labelHe: "", labelEn: "", descriptionHe: "", descriptionEn: "" });
 
   // הה Settings state ההה
   const [settingsName, setSettingsName] = useState("");
@@ -876,6 +888,64 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           </>
         ) : null}
+
+        {/* ── VISITOR ANALYTICS WIDGET ── */}
+        {visitorStats && (
+          <Card className="overflow-hidden" style={{ borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+            <CardHeader className="pb-2" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)' }}>
+              <CardTitle className="text-base font-semibold flex items-center justify-between">
+                <span className="flex items-center gap-2 text-white">
+                  <Globe className="w-4 h-4" />
+                  אנליטיקת מבקרים
+                </span>
+                <span className="text-xs font-normal" style={{ color: 'rgba(147,197,253,0.8)' }}>
+                  סה"כ: {visitorStats.total.toLocaleString()} ביקורים
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="text-center p-3 bg-blue-50 rounded-xl">
+                  <div className="text-2xl font-bold text-blue-700">{visitorStats.today}</div>
+                  <div className="text-xs text-blue-600 mt-0.5">היום</div>
+                </div>
+                <div className="text-center p-3 bg-indigo-50 rounded-xl">
+                  <div className="text-2xl font-bold text-indigo-700">{visitorStats.recentSessions}</div>
+                  <div className="text-xs text-indigo-600 mt-0.5">סשנות ייחודיות (7י)</div>
+                </div>
+                <div className="text-center p-3 bg-slate-50 rounded-xl">
+                  <div className="text-2xl font-bold text-slate-700">{visitorStats.total}</div>
+                  <div className="text-xs text-slate-600 mt-0.5">סה"כ</div>
+                </div>
+              </div>
+              {visitorStats.byCountry.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">לפי מדינה (7 ימים)</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {visitorStats.byCountry.slice(0, 10).map(c => (
+                      <span key={c.country} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-medium">
+                        {c.country} <span className="font-bold">{c.count}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {visitorStats.byPage.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">עמודים פופולריים (7 ימים)</p>
+                  <div className="space-y-1">
+                    {visitorStats.byPage.slice(0, 5).map(p => (
+                      <div key={p.page} className="flex items-center justify-between text-xs">
+                        <span className="font-mono text-slate-600 truncate max-w-[180px]">{p.page || "/"}</span>
+                        <span className="font-bold text-slate-800">{p.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* ── ADMIN TASKS WIDGET ── */}
         <Card className="overflow-hidden" style={{ borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
@@ -1994,6 +2064,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             </span>
                             <Button
                               size="sm"
+                              variant="ghost"
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 px-2"
+                              onClick={() => {
+                                if (confirm(`למחוק את הפעולה "${item.labelHe || item.action}"?`)) {
+                                  deleteTokenCostMutation.mutate({ action: item.action });
+                                }
+                              }}
+                              disabled={deleteTokenCostMutation.isPending}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              size="sm"
                               variant="outline"
                               onClick={() => {
                                 if (editingCostAction === item.action) {
@@ -2094,6 +2177,39 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                         )}
                       </div>
                     ))}
+                    {/* Add new action button */}
+                    <Button size="sm" variant="outline" className="w-full gap-1.5 text-xs mt-1" onClick={() => setShowAddAction(v => !v)}>
+                      <Plus className="w-3.5 h-3.5" /> הוסף פעולה חדשה
+                    </Button>
+                    {showAddAction && (
+                      <div className="border rounded-xl bg-muted/10 p-4 space-y-3">
+                        <p className="text-sm font-semibold">פעולה חדשה</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-xs text-muted-foreground">מזהה פעולה (action)</label>
+                            <Input className="h-7 text-xs mt-0.5" placeholder="my_action" value={newAction.action} onChange={e => setNewAction(p => ({ ...p, action: e.target.value }))} />
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground">עלות (טוקנים)</label>
+                            <Input className="h-7 text-xs mt-0.5" type="number" min={0} max={100} placeholder="5" value={newAction.cost} onChange={e => setNewAction(p => ({ ...p, cost: parseInt(e.target.value) || 0 }))} />
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground">שם עברית</label>
+                            <Input className="h-7 text-xs mt-0.5" placeholder="שם הפעולה" value={newAction.labelHe} onChange={e => setNewAction(p => ({ ...p, labelHe: e.target.value }))} />
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground">English name</label>
+                            <Input className="h-7 text-xs mt-0.5" placeholder="Action name" value={newAction.labelEn} onChange={e => setNewAction(p => ({ ...p, labelEn: e.target.value }))} />
+                          </div>
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                          <Button size="sm" variant="outline" onClick={() => setShowAddAction(false)}>בטל</Button>
+                          <Button size="sm" onClick={() => addTokenCostMutation.mutate(newAction)} disabled={!newAction.action || addTokenCostMutation.isPending}>
+                            {addTokenCostMutation.isPending ? "מוסיף..." : "הוסף פעולה"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -2230,8 +2346,28 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       <div key={pkg.packageId} className="border rounded-lg p-4">
                         <div className="flex items-center justify-between mb-3">
                           <div>
-                            <span className="font-semibold text-sm">{pkg.label || pkg.packageId}</span>
-                            <span className="text-xs text-muted-foreground mr-2">({pkg.tokenAmount} אסימונים)</span>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold text-sm">{pkg.label || pkg.packageId}</span>
+                              <span className="text-xs text-muted-foreground">({pkg.tokenAmount} אסימונים)</span>
+                              {pkg.badge && (
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                                  pkg.badge === 'recommended' ? 'bg-blue-100 text-blue-700' :
+                                  pkg.badge === 'best_value' ? 'bg-green-100 text-green-700' :
+                                  pkg.badge === 'trial' ? 'bg-purple-100 text-purple-700' :
+                                  'bg-orange-100 text-orange-700'
+                                }`}>
+                                  {pkg.badge === 'recommended' ? 'מומלץ' : pkg.badge === 'best_value' ? 'הכי משתלם' : pkg.badge === 'trial' ? 'ניסיון' : 'מבצע'}
+                                </span>
+                              )}
+                              {(pkg.discountPercent ?? 0) > 0 && (
+                                <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-red-100 text-red-700">
+                                  הנחה {pkg.discountPercent}%
+                                </span>
+                              )}
+                              {pkg.imageUrl && (
+                                <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-slate-100 text-slate-600">🖼️ תמונה</span>
+                              )}
+                            </div>
                           </div>
                           {editingPriceId === pkg.packageId ? (
                             <div className="flex gap-2">

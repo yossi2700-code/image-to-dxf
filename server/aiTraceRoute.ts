@@ -21,7 +21,7 @@ import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { checkUsageLimit } from "./usageLimits";
-import { deductTokens, addTokens, TOKEN_COSTS, TokenAction } from "./tokenService";
+import { deductTokens, addTokens, TOKEN_COSTS, TokenAction, getTokenCostForAction } from "./tokenService";
 import { invokeLLM } from "./_core/llm";
 import { createJob, getJob, updateJob, cancelJob, heartbeatJob } from "./jobStore";
 import { svgToDxf } from "./svgToDxf";
@@ -838,7 +838,8 @@ router.post("/api/ai-trace/cancel/:jobId", async (req, res) => {
     // Only refund if tokens were actually deducted (prevents phantom refunds)
     if (job.tokenDeducted) {
       try {
-        await addTokens(appUser.userId, TOKEN_COSTS[(job.tokenAction as TokenAction) || "ai_trace"], "refund", "Job cancelled — tokens refunded");
+        const refundCost = await getTokenCostForAction((job.tokenAction as string) || "ai_trace");
+        await addTokens(appUser.userId, refundCost, "refund", "Job cancelled — tokens refunded");
       } catch (refundErr) {
         console.error("[aiTraceRoute] Refund error:", refundErr);
       }

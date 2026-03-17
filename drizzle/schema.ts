@@ -448,3 +448,25 @@ export const failedJobs = mysqlTable("failed_jobs", {
 });
 export type FailedJob = typeof failedJobs.$inferSelect;
 export type InsertFailedJob = typeof failedJobs.$inferInsert;
+
+// Visitor analytics — tracks page visits by non-registered and registered users
+export const visitorEvents = mysqlTable("visitor_events", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Session ID (random UUID, stored in localStorage) */
+  sessionId: varchar("sessionId", { length: 64 }).notNull(),
+  /** Logged-in user ID (null for anonymous visitors) */
+  appUserId: int("appUserId"),
+  /** Page path visited, e.g. "/" or "/landing" */
+  page: varchar("page", { length: 256 }).notNull().default("/"),
+  /** Country code (ISO 3166-1 alpha-2), e.g. "IL", "US" — detected from IP */
+  country: varchar("country", { length: 4 }),
+  /** Anonymized IP (first 3 octets only, e.g. "1.2.3") */
+  ipAnon: varchar("ipAnon", { length: 20 }),
+  /** Referrer URL (truncated) */
+  referrer: varchar("referrer", { length: 512 }),
+  /** User-agent string (truncated) */
+  userAgent: varchar("userAgent", { length: 256 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type VisitorEvent = typeof visitorEvents.$inferSelect;
+export type InsertVisitorEvent = typeof visitorEvents.$inferInsert;

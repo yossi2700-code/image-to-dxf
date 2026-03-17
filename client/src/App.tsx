@@ -24,6 +24,43 @@ import VerifyEmail from "./pages/VerifyEmail";
 import Pricing from "./pages/Pricing";
 import Landing from "./pages/Landing";
 import { trpc } from "./lib/trpc";
+import { useEffect, useRef } from "react";
+
+/** Generates or retrieves a persistent session ID from localStorage */
+function getOrCreateSessionId(): string {
+  const key = "_vsid";
+  let id = localStorage.getItem(key);
+  if (!id) {
+    id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
+
+/** Tracks page visits for analytics — renders nothing */
+function VisitorTracker() {
+  const [location] = useLocation();
+  const trackMutation = trpc.visitors.track.useMutation();
+  const lastTracked = useRef("");
+
+  useEffect(() => {
+    // Don't track admin pages
+    if (location.startsWith("/admin")) return;
+    // Debounce: don't track same page twice in a row
+    if (lastTracked.current === location) return;
+    lastTracked.current = location;
+    const sessionId = getOrCreateSessionId();
+    trackMutation.mutate({
+      sessionId,
+      page: location,
+      referrer: document.referrer ? document.referrer.substring(0, 512) : undefined,
+      userAgent: navigator.userAgent.substring(0, 256),
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location]);
+
+  return null;
+}
 
 /** Wraps all routes — shows maintenance page when enabled, except for /admin routes */
 function MaintenanceGuard({ children }: { children: React.ReactNode }) {
@@ -47,6 +84,7 @@ function MaintenanceGuard({ children }: { children: React.ReactNode }) {
 function Router() {
   return (
     <MaintenanceGuard>
+      <VisitorTracker />
       <Switch>
         <Route path={"/"} component={Home} />
         <Route path={"/admin"} component={Admin} />
