@@ -487,6 +487,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     { enabled: tokenHistoryUser !== null }
   );
 
+  const { data: expandedUserActions, isLoading: expandedUserActionsLoading } = trpc.admin.userActionsByUser.useQuery(
+    { userId: expandedUser ?? 0 },
+    { enabled: expandedUser !== null }
+  );
+
   const logoutMutation = trpc.admin.logout.useMutation({
     onSuccess: () => {
       utils.admin.check.invalidate();
@@ -1100,8 +1105,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             )}
                           </div>
                           <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground mt-0.5">
-                            <span>נרשם: {new Date(u.createdAt).toLocaleDateString("he-IL")}</span>
-                            {u.lastLoginAt && <span>כניסה: {new Date(u.lastLoginAt).toLocaleDateString("he-IL")}</span>}
+                            <span>נרשם: {new Date(u.createdAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}</span>
+                            {u.lastLoginAt && <span>כניסה: {new Date(u.lastLoginAt).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" })}</span>}
                             {lastAction && (
                               <span className="text-slate-500">
                                 פעולה אחרונה: <span className="font-medium text-slate-700">{actionLabel}</span> {(() => {
@@ -1221,7 +1226,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       </button>
                       {/* Expanded panel with tabs: Actions + Token History */}
                       {isExpanded && (() => {
-                        const userActs = userActionsData?.filter((a) => a.appUserId === u.id) ?? [];
+                        const userActs = expandedUserActions ?? userActionsData?.filter((a) => a.appUserId === u.id) ?? [];
+                        const userActsLoading = expandedUserActionsLoading;
                         const activeUserTab = tokenHistoryUser === u.id ? "tokens" : "actions";
                         return (
                         <div className="border-t bg-muted/20">
@@ -1254,7 +1260,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                           {/* Actions tab */}
                           {activeUserTab === "actions" && (
                             <div className="px-3 py-2 max-h-64 overflow-y-auto">
-                              {actionsLoading ? (
+                              {userActsLoading ? (
                                 <div className="h-8 bg-muted animate-pulse rounded" />
                               ) : userActs.length === 0 ? (
                                 <p className="text-xs text-muted-foreground py-2">אין פעולות עדיין.</p>
