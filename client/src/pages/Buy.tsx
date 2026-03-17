@@ -267,7 +267,7 @@ export default function Buy() {
 
   // PayPal Smart Buttons — load SDK and render card-only button
   useEffect(() => {
-    if (!paypalClientId || paymentMethod !== "card" || !termsAccepted || !isLoggedIn) return;
+    if (!paypalClientId || paymentMethod !== "card" || !termsAccepted) return;
     // Reset state
     setSmartButtonsReady(false);
     setCardError(null);
@@ -336,11 +336,14 @@ export default function Buy() {
             setCardError(null);
           },
         });
-        if (buttons.isEligible()) {
+        // Try to render regardless — isEligible can be false even when guest checkout is enabled
+        // due to PayPal's risk assessment. We attempt render and catch any error.
+        try {
           await buttons.render(smartButtonsRef.current!);
           setSmartButtonsReady(true);
-        } else {
-          setCardError("תשלום בכרטיס אשראי אינו זמין כרגע — נסה שוב מאוחר יותר");
+        } catch {
+          // If render fails, it means card is truly not eligible
+          setCardError("תשלום בכרטיס אשראי אינו זמין כרגע. נסה דרך PayPal או פנה לתמיכה.");
         }
       } catch (e) {
         setCardError(e instanceof Error ? e.message : "שגיאה בטעינת PayPal");
@@ -352,7 +355,7 @@ export default function Buy() {
       setSmartButtonsReady(false);
       if (smartButtonsRef.current) smartButtonsRef.current.innerHTML = "";
     };
-  }, [paypalClientId, paymentMethod, termsAccepted, selectedPackage, currency, isLoggedIn]);
+  }, [paypalClientId, paymentMethod, termsAccepted, selectedPackage, currency]);
 
   // בניית חבילות מה-DB או מה-fallback
   const packages = dbPrices && dbPrices.length > 0
@@ -650,6 +653,10 @@ export default function Buy() {
             {!termsAccepted ? (
               <div className="text-center py-4 text-amber-300 text-sm">
                 יש לאשר את תנאי הרכישה כדי להמשיך
+              </div>
+            ) : isLoggedIn === false ? (
+              <div className="text-center py-4 text-amber-300 text-sm">
+                {t("buyLoginRequired")}
               </div>
             ) : cardSuccess ? (
               <div className="text-center py-6">
