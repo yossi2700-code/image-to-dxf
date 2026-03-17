@@ -1,14 +1,9 @@
 /**
- * AiProcessingAnimation — Stunning animated processing screen.
+ * AiProcessingAnimation — Clean light-theme AI processing screen.
  *
- * Features:
- * - Dark background with animated glowing particles (canvas)
- * - SVG path that draws itself progressively
- * - Timed progress bar scaled to ~41 seconds
- * - Step list that updates in real time (7 steps)
- * - Subtle ambient music via Web Audio API (no external files)
- * - Per-feature color themes: teal (trace), amber (redraw), purple (portrait)
- * - Cancel button
+ * Design: white/light-gray background, accent color per feature,
+ * scan beam over image preview, elegant multi-ring spinner,
+ * 4 progress steps, cancel+refund button, pleasant tones (off by default).
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -27,68 +22,53 @@ interface AiProcessingAnimationProps {
   featureLabel?: string;
 }
 
-// ── Theme helpers ─────────────────────────────────────────────────────────────
-
-function hexToRgb(hex: string): [number, number, number] {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return [r, g, b];
-}
-
-// ── Step messages ─────────────────────────────────────────────────────────────
+// ── 4 Progress steps ──────────────────────────────────────────────────────────
 
 const STEPS_HE = [
-  { until: 6,   icon: "🧠", text: "AI מנתח את התמונה..." },
-  { until: 12,  icon: "🔍", text: "מזהה קווים ואובייקטים..." },
-  { until: 20,  icon: "✏️", text: "מצייר קווים וקטוריים..." },
-  { until: 28,  icon: "⚡", text: "ממטב נתיבים..." },
-  { until: 35,  icon: "✨", text: "משפר פרטים דקים..." },
-  { until: 41,  icon: "🎯", text: "ממיר ל-DXF..." },
-  { until: Infinity, icon: "💫", text: "כמעט מוכן..." },
+  { until: 10,       icon: "🔍", label: "ניתוח תמונה",      desc: "AI סורק ומנתח את התמונה" },
+  { until: 22,       icon: "✏️", label: "זיהוי קווים",      desc: "מזהה קווים, צורות ואובייקטים" },
+  { until: 34,       icon: "⚡", label: "יצירת וקטור",      desc: "ממיר לנתיבים וקטוריים חדים" },
+  { until: Infinity, icon: "🎯", label: "ייצוא DXF",        desc: "מכין את הקובץ להורדה" },
 ];
 const STEPS_EN = [
-  { until: 6,   icon: "🧠", text: "AI analyzing image..." },
-  { until: 12,  icon: "🔍", text: "Detecting lines & shapes..." },
-  { until: 20,  icon: "✏️", text: "Drawing vector paths..." },
-  { until: 28,  icon: "⚡", text: "Optimizing paths..." },
-  { until: 35,  icon: "✨", text: "Refining fine details..." },
-  { until: 41,  icon: "🎯", text: "Converting to DXF..." },
-  { until: Infinity, icon: "💫", text: "Almost ready..." },
+  { until: 10,       icon: "🔍", label: "Analyzing",        desc: "AI scanning the image" },
+  { until: 22,       icon: "✏️", label: "Detecting",        desc: "Finding lines, shapes & objects" },
+  { until: 34,       icon: "⚡", label: "Vectorizing",      desc: "Converting to crisp vector paths" },
+  { until: Infinity, icon: "🎯", label: "Exporting DXF",    desc: "Preparing your file for download" },
 ];
 
-// Total expected seconds for progress bar scale
 const TOTAL_SECONDS = 41;
 
-// ── Ambient music via Web Audio API ──────────────────────────────────────────
+// ── Pleasant ambient tones (Web Audio API) ────────────────────────────────────
 
-function startAmbientMusic(primaryHex: string): () => void {
+function startAmbientTones(accentHex: string): () => void {
   try {
     const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ctx = new AudioCtx();
     const master = ctx.createGain();
     master.gain.setValueAtTime(0, ctx.currentTime);
-    master.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 2);
+    master.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 1.5);
     master.connect(ctx.destination);
 
-    // Choose base frequency from color
-    const [r] = hexToRgb(primaryHex);
-    const baseFreq = 180 + (r % 80); // 180–260 Hz
+    // Derive a pleasant base note from accent color
+    const r = parseInt(accentHex.slice(1, 3), 16);
+    const noteFreqs = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88]; // C4–B4
+    const baseFreq = noteFreqs[r % noteFreqs.length];
 
     const oscs: OscillatorNode[] = [];
 
-    // Soft pad: 4 harmonics
-    [1, 1.25, 1.5, 2].forEach((ratio, i) => {
+    // Soft pad: root + major third + fifth
+    [1, 1.25, 1.5].forEach((ratio, i) => {
       const osc = ctx.createOscillator();
       const g = ctx.createGain();
-      osc.type = i % 2 === 0 ? "sine" : "triangle";
+      osc.type = "sine";
       osc.frequency.value = baseFreq * ratio;
-      g.gain.value = 0.12 / 4;
-      // Gentle vibrato
+      g.gain.value = 0.04;
+      // Slow vibrato
       const lfo = ctx.createOscillator();
       const lfoG = ctx.createGain();
-      lfo.frequency.value = 0.25 + i * 0.07;
-      lfoG.gain.value = baseFreq * ratio * 0.003;
+      lfo.frequency.value = 0.2 + i * 0.05;
+      lfoG.gain.value = baseFreq * ratio * 0.002;
       lfo.connect(lfoG);
       lfoG.connect(osc.frequency);
       lfo.start();
@@ -98,219 +78,163 @@ function startAmbientMusic(primaryHex: string): () => void {
       oscs.push(osc, lfo);
     });
 
-    // Slow rhythmic pulse every 4 s
-    const pulseTimer = setInterval(() => {
+    // Gentle bell-like ping every 6 s
+    const pingTimer = setInterval(() => {
       if (ctx.state === "closed") return;
       const p = ctx.createOscillator();
       const pg = ctx.createGain();
       p.type = "sine";
-      p.frequency.value = baseFreq * 0.5;
+      p.frequency.value = baseFreq * 2;
       pg.gain.setValueAtTime(0, ctx.currentTime);
-      pg.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.4);
-      pg.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.8);
+      pg.gain.linearRampToValueAtTime(0.045, ctx.currentTime + 0.02);
+      pg.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.6);
       p.connect(pg);
       pg.connect(master);
       p.start();
-      p.stop(ctx.currentTime + 1.8);
-    }, 4000);
+      p.stop(ctx.currentTime + 1.6);
+    }, 6000);
 
     return () => {
-      clearInterval(pulseTimer);
-      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 1);
+      clearInterval(pingTimer);
+      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
       setTimeout(() => {
         oscs.forEach(o => { try { o.stop(); } catch (_) {} });
         try { ctx.close(); } catch (_) {}
-      }, 1200);
+      }, 1000);
     };
   } catch (_) {
     return () => {};
   }
 }
 
-// ── Canvas particle system ────────────────────────────────────────────────────
+// ── Elegant multi-ring spinner ────────────────────────────────────────────────
 
-interface Particle {
-  x: number; y: number;
-  vx: number; vy: number;
-  r: number; alpha: number;
-  color: string;
-  life: number; maxLife: number;
-}
-
-function mkParticle(w: number, h: number, color: string): Particle {
-  return {
-    x: Math.random() * w,
-    y: Math.random() * h,
-    vx: (Math.random() - 0.5) * 0.5,
-    vy: -(Math.random() * 0.6 + 0.15),
-    r: Math.random() * 2.5 + 0.5,
-    alpha: Math.random() * 0.55 + 0.15,
-    color,
-    life: 0,
-    maxLife: Math.random() * 180 + 80,
-  };
-}
-
-function useParticleCanvas(
-  canvasRef: React.RefObject<HTMLCanvasElement | null>,
-  primaryColor: string,
-  secondaryColor: string
-) {
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let running = true;
-    let frame = 0;
-    const particles: Particle[] = [];
-
-    const resize = () => {
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = canvas.offsetWidth * dpr;
-      canvas.height = canvas.offsetHeight * dpr;
-      ctx.scale(dpr, dpr);
-    };
-    resize();
-    const ro = new ResizeObserver(resize);
-    ro.observe(canvas);
-
-    // Seed initial particles
-    for (let i = 0; i < 35; i++) {
-      particles.push(mkParticle(canvas.offsetWidth, canvas.offsetHeight, primaryColor));
-    }
-
-    const tick = () => {
-      if (!running) return;
-      frame++;
-      const W = canvas.offsetWidth, H = canvas.offsetHeight;
-      ctx.clearRect(0, 0, W, H);
-
-      // Spawn
-      if (frame % 7 === 0) particles.push(mkParticle(W, H, primaryColor));
-      if (frame % 21 === 0) particles.push(mkParticle(W, H, secondaryColor));
-
-      // Update & draw
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.x += p.vx; p.y += p.vy; p.life++;
-        if (p.life >= p.maxLife) { particles.splice(i, 1); continue; }
-        const fade = 1 - p.life / p.maxLife;
-        const a = Math.round(p.alpha * fade * 255).toString(16).padStart(2, "0");
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = p.color + a;
-        ctx.fill();
-        if (p.r > 1.5) {
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.r * 3, 0, Math.PI * 2);
-          const ga = Math.round(p.alpha * fade * 0.25 * 255).toString(16).padStart(2, "0");
-          ctx.fillStyle = p.color + ga;
-          ctx.fill();
-        }
-      }
-
-      // Scanning line
-      const scanY = ((frame * 1.3) % (H + 60)) - 30;
-      const sg = ctx.createLinearGradient(0, scanY - 10, 0, scanY + 10);
-      sg.addColorStop(0, "transparent");
-      sg.addColorStop(0.5, primaryColor + "35");
-      sg.addColorStop(1, "transparent");
-      ctx.fillStyle = sg;
-      ctx.fillRect(0, scanY - 10, W, 20);
-
-      requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-
-    return () => {
-      running = false;
-      ro.disconnect();
-    };
-  }, [canvasRef, primaryColor, secondaryColor]);
-}
-
-// ── SVG demo paths ────────────────────────────────────────────────────────────
-
-const DEMO_PATHS = [
-  "M 20 80 C 40 20, 80 20, 100 80 S 160 140, 180 80",
-  "M 30 60 L 60 30 L 90 60 L 120 30 L 150 60 L 180 30",
-  "M 20 100 Q 60 20 100 100 Q 140 180 180 100",
-  "M 100 20 L 140 80 L 80 80 Z M 100 80 L 140 140 L 60 140 Z",
-];
-
-function AnimatedSvgPath({ color, elapsed }: { color: string; elapsed: number }) {
-  const pathRef = useRef<SVGPathElement>(null);
-  const [pathIndex, setPathIndex] = useState(0);
-  const [pathLength, setPathLength] = useState(300);
-
-  useEffect(() => {
-    setPathIndex(Math.floor(elapsed / 5) % DEMO_PATHS.length);
-  }, [elapsed]);
-
-  useEffect(() => {
-    if (pathRef.current) setPathLength(pathRef.current.getTotalLength() || 300);
-  }, [pathIndex]);
-
-  const progress = Math.min(1, ((elapsed % 5) / 5) * 1.1);
-  const drawn = pathLength * progress;
+function ElegantSpinner({ accent, size = 120 }: { accent: string; size?: number }) {
+  const c = size / 2;
+  const r1 = c - 8;   // outer ring
+  const r2 = c - 20;  // middle ring
+  const r3 = c - 32;  // inner ring
 
   return (
-    <svg viewBox="0 0 200 160" className="w-full h-full" style={{ overflow: "visible" }}>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ overflow: "visible" }}>
       <defs>
-        <filter id="glow-path">
-          <feGaussianBlur stdDeviation="2.5" result="blur"/>
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        <linearGradient id="sg1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={accent} stopOpacity="0.9"/>
+          <stop offset="100%" stopColor={accent} stopOpacity="0.1"/>
+        </linearGradient>
+        <linearGradient id="sg2" x1="100%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={accent} stopOpacity="0.6"/>
+          <stop offset="100%" stopColor={accent} stopOpacity="0.05"/>
+        </linearGradient>
+        <filter id="sf">
+          <feGaussianBlur stdDeviation="1.5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
       </defs>
-      {/* Ghost */}
-      <path d={DEMO_PATHS[pathIndex]} fill="none" stroke={color} strokeWidth="1.5" strokeOpacity="0.1" strokeLinecap="round"/>
-      {/* Drawing */}
-      <path
-        ref={pathRef}
-        d={DEMO_PATHS[pathIndex]}
+
+      {/* Track rings */}
+      <circle cx={c} cy={c} r={r1} fill="none" stroke={accent} strokeWidth="2" strokeOpacity="0.08"/>
+      <circle cx={c} cy={c} r={r2} fill="none" stroke={accent} strokeWidth="1.5" strokeOpacity="0.06"/>
+      <circle cx={c} cy={c} r={r3} fill="none" stroke={accent} strokeWidth="1" strokeOpacity="0.06"/>
+
+      {/* Spinning arc 1 — outer, fast */}
+      <circle
+        cx={c} cy={c} r={r1}
         fill="none"
-        stroke={color}
+        stroke="url(#sg1)"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeDasharray={`${r1 * 1.4} ${r1 * 5}`}
+        filter="url(#sf)"
+        style={{ animation: "spinCW 1.6s linear infinite", transformOrigin: `${c}px ${c}px` }}
+      />
+
+      {/* Spinning arc 2 — middle, medium, reverse */}
+      <circle
+        cx={c} cy={c} r={r2}
+        fill="none"
+        stroke="url(#sg2)"
         strokeWidth="2.5"
         strokeLinecap="round"
-        strokeLinejoin="round"
-        filter="url(#glow-path)"
-        style={{
-          strokeDasharray: pathLength,
-          strokeDashoffset: pathLength - drawn,
-          transition: "stroke-dashoffset 0.25s linear",
-        }}
+        strokeDasharray={`${r2 * 1.0} ${r2 * 5}`}
+        filter="url(#sf)"
+        style={{ animation: "spinCCW 2.4s linear infinite", transformOrigin: `${c}px ${c}px` }}
       />
-      {/* Moving dot */}
-      {progress < 0.98 && (
-        <circle r="5" fill={color} filter="url(#glow-path)" opacity="0.9">
-          <animateMotion dur="5s" repeatCount="indefinite" path={DEMO_PATHS[pathIndex]}/>
-        </circle>
-      )}
+
+      {/* Spinning arc 3 — inner, slow */}
+      <circle
+        cx={c} cy={c} r={r3}
+        fill="none"
+        stroke={accent}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeDasharray={`${r3 * 0.7} ${r3 * 5}`}
+        strokeOpacity="0.5"
+        style={{ animation: "spinCW 3.6s linear infinite", transformOrigin: `${c}px ${c}px` }}
+      />
+
+      {/* Center dot */}
+      <circle cx={c} cy={c} r="5" fill={accent} opacity="0.85"
+        style={{ animation: "pulseDot 2s ease-in-out infinite", transformOrigin: `${c}px ${c}px` }}
+      />
+      <circle cx={c} cy={c} r="10" fill={accent} opacity="0.12"
+        style={{ animation: "pulseDot 2s ease-in-out infinite 0.3s", transformOrigin: `${c}px ${c}px` }}
+      />
     </svg>
   );
 }
 
-// ── Music bars indicator ──────────────────────────────────────────────────────
+// ── Scan beam over image ──────────────────────────────────────────────────────
+
+function ImageWithScan({ src, accent }: { src: string; accent: string }) {
+  return (
+    <div
+      className="relative rounded-xl overflow-hidden"
+      style={{
+        width: 88, height: 88,
+        border: `2px solid ${accent}30`,
+        boxShadow: `0 4px 20px ${accent}20`,
+        background: "#f8f9fa",
+      }}
+    >
+      <img src={src} alt="" className="w-full h-full object-cover" style={{ opacity: 0.85 }}/>
+      {/* Scan beam */}
+      <div
+        className="absolute left-0 right-0 pointer-events-none"
+        style={{
+          height: 3,
+          background: `linear-gradient(90deg, transparent 0%, ${accent}cc 40%, ${accent} 50%, ${accent}cc 60%, transparent 100%)`,
+          boxShadow: `0 0 8px ${accent}80, 0 0 16px ${accent}40`,
+          animation: "scanBeam 1.8s ease-in-out infinite",
+        }}
+      />
+      {/* Corner brackets */}
+      {[
+        { top: 4, left: 4, borderTop: `2px solid ${accent}`, borderLeft: `2px solid ${accent}` },
+        { top: 4, right: 4, borderTop: `2px solid ${accent}`, borderRight: `2px solid ${accent}` },
+        { bottom: 4, left: 4, borderBottom: `2px solid ${accent}`, borderLeft: `2px solid ${accent}` },
+        { bottom: 4, right: 4, borderBottom: `2px solid ${accent}`, borderRight: `2px solid ${accent}` },
+      ].map((s, i) => (
+        <div key={i} className="absolute" style={{ ...s, width: 10, height: 10 }}/>
+      ))}
+    </div>
+  );
+}
+
+// ── Music bars ────────────────────────────────────────────────────────────────
 
 function MusicBars({ color }: { color: string }) {
   return (
     <span className="flex items-end gap-0.5" style={{ height: 12 }}>
       {[1, 2, 3, 4].map((i) => (
-        <span
-          key={i}
-          style={{
-            display: "inline-block",
-            width: 3,
-            background: color,
-            borderRadius: 2,
-            transformOrigin: "bottom",
-            animation: `musicBar ${0.38 + i * 0.09}s ease-in-out infinite`,
-            animationDelay: `${i * 0.07}s`,
-            height: "100%",
-          }}
-        />
+        <span key={i} style={{
+          display: "inline-block", width: 3,
+          background: color, borderRadius: 2,
+          transformOrigin: "bottom",
+          animation: `musicBar ${0.38 + i * 0.09}s ease-in-out infinite`,
+          animationDelay: `${i * 0.07}s`,
+          height: "100%",
+        }}/>
       ))}
     </span>
   );
@@ -329,25 +253,13 @@ export function AiProcessingAnimation({
   accentGradient = "linear-gradient(135deg, #0d9488, #5eead4)",
   featureLabel = "AI",
 }: AiProcessingAnimationProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Derive secondary color from gradient (take last color or lighten)
-  const secondaryColor = accentGradient.includes(",")
-    ? accentGradient.split(",").pop()?.trim().replace(")", "").trim() ?? accentColor
-    : accentColor;
-
-  useParticleCanvas(canvasRef, accentColor, secondaryColor);
-
-  // Steps
   const steps = isRtl ? STEPS_HE : STEPS_EN;
-  const autoStep = steps.find((s) => elapsedSeconds < s.until) ?? steps[steps.length - 1];
-  const displayStep = currentStep || `${autoStep.icon} ${autoStep.text}`;
-  const stepIndex = steps.indexOf(autoStep);
+  const stepIndex = steps.findIndex(s => elapsedSeconds < s.until);
+  const activeStep = stepIndex === -1 ? steps.length - 1 : stepIndex;
 
-  // Progress: 0–95% over TOTAL_SECONDS, then stays at 95%
+  // Progress: 0–95% over TOTAL_SECONDS
   const progress = Math.min(95, Math.round((elapsedSeconds / TOTAL_SECONDS) * 95));
-
-  // Timer
   const mm = Math.floor(elapsedSeconds / 60).toString().padStart(2, "0");
   const ss = (elapsedSeconds % 60).toString().padStart(2, "0");
 
@@ -361,169 +273,178 @@ export function AiProcessingAnimation({
       stopMusicRef.current = null;
       setMusicOn(false);
     } else {
-      stopMusicRef.current = startAmbientMusic(accentColor);
+      stopMusicRef.current = startAmbientTones(accentColor);
       setMusicOn(true);
     }
   }, [musicOn, accentColor]);
 
   useEffect(() => () => { stopMusicRef.current?.(); }, []);
 
-  // Derive dark bg from accent
-  const [r, g, b] = hexToRgb(accentColor);
-  const bg1 = `rgb(${Math.round(r * 0.06)}, ${Math.round(g * 0.06)}, ${Math.round(b * 0.06)})`;
-  const bg2 = `rgb(${Math.round(r * 0.04)}, ${Math.round(g * 0.08)}, ${Math.round(b * 0.04)})`;
-
   return (
     <div
       className="relative overflow-hidden rounded-2xl flex flex-col"
       style={{
-        background: `linear-gradient(135deg, ${bg1} 0%, ${bg2} 100%)`,
-        minHeight: 320,
-        border: `1px solid ${accentColor}30`,
-        boxShadow: `0 0 40px ${accentColor}22, inset 0 0 60px rgba(0,0,0,0.5)`,
+        background: "linear-gradient(145deg, #ffffff 0%, #f8faff 50%, #f0f4ff 100%)",
+        minHeight: 340,
+        border: `1.5px solid ${accentColor}22`,
+        boxShadow: `0 8px 40px ${accentColor}12, 0 2px 8px rgba(0,0,0,0.06)`,
       }}
     >
-      {/* Particle canvas */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full pointer-events-none"
-        style={{ opacity: 0.65 }}
+      {/* Subtle background accent glow */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(ellipse 60% 40% at 50% 0%, ${accentColor}08 0%, transparent 70%)`,
+        }}
       />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center px-5 pt-6 pb-5 gap-4">
+      <div className="relative z-10 flex flex-col items-center px-6 pt-7 pb-6 gap-5">
 
         {/* Feature badge */}
         <div
-          className="text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full"
+          className="text-xs font-bold tracking-widest uppercase px-3.5 py-1 rounded-full"
           style={{
             color: accentColor,
-            background: accentColor + "20",
-            border: `1px solid ${accentColor}40`,
-            letterSpacing: "0.14em",
+            background: `${accentColor}12`,
+            border: `1px solid ${accentColor}30`,
+            letterSpacing: "0.12em",
           }}
         >
           ✦ {featureLabel} ✦
         </div>
 
-        {/* Central visual */}
-        <div className="relative flex items-center justify-center" style={{ width: 130, height: 130 }}>
-          {/* Outer spinning dashed ring */}
-          <svg
-            width="130" height="130"
-            className="absolute inset-0"
-            style={{ animation: "spinCW 4s linear infinite" }}
-          >
-            <circle cx="65" cy="65" r="60" fill="none" stroke={accentColor} strokeWidth="1.5"
-              strokeDasharray="18 9" opacity="0.35"/>
-          </svg>
-          {/* Inner counter-spinning ring */}
-          <svg
-            width="108" height="108"
-            className="absolute"
-            style={{ animation: "spinCCW 6s linear infinite" }}
-          >
-            <circle cx="54" cy="54" r="48" fill="none" stroke={secondaryColor} strokeWidth="1"
-              strokeDasharray="7 14" opacity="0.25"/>
-          </svg>
-          {/* Glow pulse */}
-          <div
-            className="absolute rounded-full"
-            style={{
-              width: 80, height: 80,
-              background: `radial-gradient(circle, ${accentColor}20 0%, transparent 70%)`,
-              animation: "glowPulse 2.2s ease-in-out infinite",
-            }}
-          />
-          {/* Image preview or animated SVG */}
-          {imagePreview ? (
-            <div className="relative w-16 h-16 rounded-xl overflow-hidden" style={{ border: `1.5px solid ${accentColor}50` }}>
-              <img src={imagePreview} alt="" className="w-full h-full object-cover" style={{ opacity: 0.5 }}/>
-              {/* Scan overlay */}
-              <div
-                className="absolute left-0 right-0 h-0.5 pointer-events-none"
-                style={{
-                  background: `linear-gradient(90deg, transparent, ${accentColor}, transparent)`,
-                  animation: "scanLine 1.8s ease-in-out infinite",
-                  boxShadow: `0 0 6px ${accentColor}`,
-                }}
-              />
-            </div>
-          ) : (
-            <div className="w-20 h-16 relative z-10">
-              <AnimatedSvgPath color={accentColor} elapsed={elapsedSeconds}/>
+        {/* Central visual: spinner + image preview */}
+        <div className="relative flex items-center justify-center" style={{ width: 120, height: 120 }}>
+          <ElegantSpinner accent={accentColor} size={120}/>
+          {imagePreview && (
+            <div className="absolute" style={{ width: 56, height: 56 }}>
+              <ImageWithScan src={imagePreview} accent={accentColor}/>
             </div>
           )}
         </div>
 
-        {/* Step message */}
-        <p
-          className="text-sm font-semibold text-center"
-          style={{
-            color: accentColor,
-            textShadow: `0 0 14px ${accentColor}70`,
-            minHeight: 22,
-          }}
-        >
-          {displayStep}
-        </p>
-
-        {/* Step dots */}
-        <div className="flex items-center gap-1.5">
-          {steps.map((_, i) => (
-            <div
-              key={i}
-              className="rounded-full transition-all duration-500"
-              style={{
-                width: i === stepIndex ? 18 : 5,
-                height: 5,
-                background: i <= stepIndex ? accentColor : accentColor + "28",
-                boxShadow: i === stepIndex ? `0 0 7px ${accentColor}` : "none",
-              }}
-            />
-          ))}
+        {/* Current step label */}
+        <div className="text-center">
+          <p
+            className="text-base font-bold"
+            style={{ color: accentColor }}
+          >
+            {currentStep || `${steps[activeStep].icon} ${steps[activeStep].label}`}
+          </p>
+          <p className="text-xs mt-0.5" style={{ color: "#6b7280" }}>
+            {steps[activeStep].desc}
+          </p>
         </div>
 
-        {/* Progress bar */}
+        {/* 4-step progress track */}
+        <div className="w-full" style={{ maxWidth: 340 }}>
+          <div className="flex items-center gap-0">
+            {steps.map((step, i) => {
+              const isDone = i < activeStep;
+              const isActive = i === activeStep;
+              return (
+                <div key={i} className="flex items-center" style={{ flex: i < steps.length - 1 ? 1 : "none" }}>
+                  {/* Step node */}
+                  <div className="flex flex-col items-center" style={{ minWidth: 44 }}>
+                    <div
+                      className="flex items-center justify-center rounded-full transition-all duration-500"
+                      style={{
+                        width: isActive ? 36 : 28,
+                        height: isActive ? 36 : 28,
+                        background: isDone
+                          ? accentColor
+                          : isActive
+                            ? `${accentColor}18`
+                            : "#f3f4f6",
+                        border: isActive
+                          ? `2px solid ${accentColor}`
+                          : isDone
+                            ? "none"
+                            : "2px solid #e5e7eb",
+                        boxShadow: isActive ? `0 0 14px ${accentColor}40` : "none",
+                        fontSize: isActive ? 16 : 13,
+                      }}
+                    >
+                      {isDone ? (
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                          <path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      ) : (
+                        <span style={{ fontSize: isActive ? 16 : 12 }}>{step.icon}</span>
+                      )}
+                    </div>
+                    <span
+                      className="text-xs mt-1 text-center font-medium transition-all duration-500"
+                      style={{
+                        color: isActive ? accentColor : isDone ? "#9ca3af" : "#d1d5db",
+                        fontSize: 10,
+                        maxWidth: 48,
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {step.label}
+                    </span>
+                  </div>
+                  {/* Connector line */}
+                  {i < steps.length - 1 && (
+                    <div
+                      className="flex-1 transition-all duration-700"
+                      style={{
+                        height: 2,
+                        marginBottom: 18,
+                        background: isDone ? accentColor : "#e5e7eb",
+                        borderRadius: 1,
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Progress bar + timer */}
         <div className="w-full" style={{ maxWidth: 340 }}>
           <div
             className="w-full rounded-full overflow-hidden"
-            style={{ height: 7, background: accentColor + "18" }}
+            style={{ height: 6, background: "#e5e7eb" }}
           >
             <div
-              className="h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden"
+              className="h-full rounded-full relative overflow-hidden transition-all duration-1000 ease-out"
               style={{
                 width: `${progress}%`,
                 background: accentGradient,
-                boxShadow: `0 0 10px ${accentColor}80`,
+                boxShadow: `0 0 8px ${accentColor}50`,
               }}
             >
               {/* Shimmer */}
               <div
                 className="absolute inset-0"
                 style={{
-                  background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%)",
+                  background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.5) 50%, transparent 100%)",
                   backgroundSize: "200% 100%",
-                  animation: "shimmer 1.8s ease-in-out infinite",
+                  animation: "shimmer 1.6s ease-in-out infinite",
                 }}
               />
             </div>
           </div>
-          <div className="flex justify-between mt-1">
-            <span className="text-xs" style={{ color: accentColor + "70" }}>{progress}%</span>
-            <span className="text-xs tabular-nums font-mono" style={{ color: accentColor + "70" }}>{mm}:{ss}</span>
+          <div className="flex justify-between mt-1.5">
+            <span className="text-xs font-medium" style={{ color: accentColor }}>{progress}%</span>
+            <span className="text-xs tabular-nums font-mono" style={{ color: "#9ca3af" }}>{mm}:{ss}</span>
           </div>
         </div>
 
         {/* Bottom row: music + cancel */}
-        <div className="flex items-center gap-2.5 mt-0.5">
+        <div className="flex items-center gap-2.5">
+          {/* Music toggle */}
           <button
             onClick={toggleMusic}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
             style={{
-              background: musicOn ? accentColor + "22" : "rgba(255,255,255,0.05)",
-              border: `1px solid ${musicOn ? accentColor + "55" : "rgba(255,255,255,0.1)"}`,
-              color: musicOn ? accentColor : "rgba(255,255,255,0.35)",
+              background: musicOn ? `${accentColor}15` : "#f3f4f6",
+              border: `1px solid ${musicOn ? accentColor + "40" : "#e5e7eb"}`,
+              color: musicOn ? accentColor : "#9ca3af",
             }}
           >
             {musicOn ? (
@@ -533,29 +454,31 @@ export function AiProcessingAnimation({
             )}
           </button>
 
+          {/* Cancel + refund */}
           {jobId && onCancel && (
             <button
               onClick={onCancel}
-              className="px-4 py-1.5 rounded-full text-xs font-medium transition-all"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition-all"
               style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "rgba(255,255,255,0.38)",
+                background: "#fef2f2",
+                border: "1px solid #fecaca",
+                color: "#ef4444",
               }}
               onMouseEnter={e => {
                 const el = e.currentTarget as HTMLButtonElement;
-                el.style.background = "rgba(239,68,68,0.15)";
-                el.style.color = "#f87171";
-                el.style.borderColor = "rgba(239,68,68,0.3)";
+                el.style.background = "#fee2e2";
+                el.style.borderColor = "#f87171";
               }}
               onMouseLeave={e => {
                 const el = e.currentTarget as HTMLButtonElement;
-                el.style.background = "rgba(255,255,255,0.04)";
-                el.style.color = "rgba(255,255,255,0.38)";
-                el.style.borderColor = "rgba(255,255,255,0.1)";
+                el.style.background = "#fef2f2";
+                el.style.borderColor = "#fecaca";
               }}
             >
-              {isRtl ? "ביטול" : "Cancel"}
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              <span>{isRtl ? "בטל והחזר אסימונים" : "Cancel & refund"}</span>
             </button>
           )}
         </div>
@@ -565,14 +488,15 @@ export function AiProcessingAnimation({
       <style>{`
         @keyframes spinCW  { from { transform: rotate(0deg); }   to { transform: rotate(360deg); } }
         @keyframes spinCCW { from { transform: rotate(0deg); }   to { transform: rotate(-360deg); } }
-        @keyframes glowPulse {
-          0%, 100% { transform: scale(1);    opacity: 0.7; }
-          50%       { transform: scale(1.12); opacity: 1;   }
+        @keyframes pulseDot {
+          0%, 100% { transform: scale(1);   opacity: 0.85; }
+          50%       { transform: scale(1.3); opacity: 1;    }
         }
-        @keyframes scanLine {
-          0%   { top: 0%;   }
-          50%  { top: 100%; }
-          100% { top: 0%;   }
+        @keyframes scanBeam {
+          0%   { top: -3px;   opacity: 0; }
+          10%  { opacity: 1; }
+          90%  { opacity: 1; }
+          100% { top: calc(100% + 3px); opacity: 0; }
         }
         @keyframes shimmer {
           0%   { background-position: -200% 0; }
