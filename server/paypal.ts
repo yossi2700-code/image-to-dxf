@@ -80,33 +80,21 @@ export async function createPayPalOrder(params: CreateOrderParams): Promise<PayP
       },
     ],
     // Use card or PayPal wallet based on useCard flag
-    payment_source: params.useCard
-      ? {
-          card: {
-            experience_context: {
-              brand_name: "DXF AI",
-              locale: "en-US",
-              return_url: params.returnUrl,
-              cancel_url: params.cancelUrl,
-              shipping_preference: "NO_SHIPPING",
-              payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
-            },
-          },
-        }
-      : {
-          paypal: {
-            experience_context: {
-              brand_name: "DXF AI",
-              locale: "en-US",
-              landing_page: "GUEST_CHECKOUT",
-              user_action: "PAY_NOW",
-              return_url: params.returnUrl,
-              cancel_url: params.cancelUrl,
-              payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
-              shipping_preference: "NO_SHIPPING",
-            },
-          },
+    // For card: use BILLING landing_page which skips PayPal login and goes straight to card entry
+    payment_source: {
+      paypal: {
+        experience_context: {
+          brand_name: "DXF AI",
+          locale: "en-US",
+          landing_page: params.useCard ? "BILLING" : "GUEST_CHECKOUT",
+          user_action: "PAY_NOW",
+          return_url: params.returnUrl,
+          cancel_url: params.cancelUrl,
+          payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
+          shipping_preference: "NO_SHIPPING",
         },
+      },
+    },
   };
 
   const res = await fetch(`${BASE_URL}/v2/checkout/orders`, {
