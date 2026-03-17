@@ -81,4 +81,40 @@ describe("svgToDxf — LWPOLYLINE output", () => {
     expect(width).toBe(100);
     expect(height).toBe(100);
   });
+
+  // CorelDRAW compatibility tests
+  it("should include entity handle (group code 5) on each LWPOLYLINE", () => {
+    const { dxf } = svgToDxf(SIMPLE_SVG);
+    // After each LWPOLYLINE there must be a handle line (5\n<hex>)
+    const matches = dxf.match(/0\nLWPOLYLINE\n5\n[0-9A-F]+/g);
+    expect(matches).not.toBeNull();
+    expect(matches!.length).toBe(2); // 1 path + 1 circle
+  });
+
+  it("should include owner handle 330\n1F on each LWPOLYLINE", () => {
+    const { dxf } = svgToDxf(SIMPLE_SVG);
+    const count = (dxf.match(/330\n1F/g) || []).length;
+    expect(count).toBe(2); // one per entity
+  });
+
+  it("should include AcDbEntity subclass marker on each LWPOLYLINE", () => {
+    const { dxf } = svgToDxf(SIMPLE_SVG);
+    // Each LWPOLYLINE entity should have AcDbEntity immediately after its handle/owner
+    const matches = dxf.match(/0\nLWPOLYLINE\n5\n[0-9A-F]+\n330\n1F\n100\nAcDbEntity/g);
+    expect(matches).not.toBeNull();
+    expect(matches!.length).toBe(2);
+  });
+
+  it("should include AcDbPolyline subclass marker on each LWPOLYLINE", () => {
+    const { dxf } = svgToDxf(SIMPLE_SVG);
+    const count = (dxf.match(/100\nAcDbPolyline/g) || []).length;
+    expect(count).toBe(2);
+  });
+
+  it("should assign unique handles to each entity", () => {
+    const { dxf } = svgToDxf(SIMPLE_SVG);
+    const handles = [...dxf.matchAll(/0\nLWPOLYLINE\n5\n([0-9A-F]+)/g)].map(m => m[1]);
+    const unique = new Set(handles);
+    expect(unique.size).toBe(handles.length);
+  });
 });

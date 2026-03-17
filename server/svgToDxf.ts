@@ -350,6 +350,12 @@ function svgMmToLwCode(mm: number): number {
  * this is what CAD software (AutoCAD, CorelDRAW, etc.) shows as a single
  * connected polyline instead of hundreds of separate LINE objects.
  */
+let _entityHandle = 0x100; // start entity handles at 256 (0x100), well above table handles
+function nextHandle(): string {
+  return (_entityHandle++).toString(16).toUpperCase();
+}
+function resetHandles() { _entityHandle = 0x100; }
+
 function writeLwPolyline(
   lines: string[],
   points: Point[],
@@ -361,14 +367,18 @@ function writeLwPolyline(
 
   const flags = closed ? 1 : 0;
   lines.push("0\nLWPOLYLINE");
-  lines.push("8\n0");                          // layer
+  lines.push(`5\n${nextHandle()}`);             // unique entity handle (required by CorelDRAW)
+  lines.push("330\n1F");                        // owner = *Model_Space block record handle
+  lines.push("100\nAcDbEntity");                // subclass marker 1 (required)
+  lines.push("8\n0");                           // layer
+  lines.push("100\nAcDbPolyline");              // subclass marker 2 (required for LWPOLYLINE)
+  lines.push("90\n" + points.length);           // number of vertices
+  lines.push("70\n" + flags);                   // 1 = closed, 0 = open
+  lines.push("43\n0.0");                        // constant width = 0
   if (lwCode !== null) lines.push(`370\n${lwCode}`);
-  lines.push("90\n" + points.length);          // number of vertices
-  lines.push("70\n" + flags);                  // 1 = closed, 0 = open
-  lines.push("43\n0.0");                       // constant width = 0
 
   for (const [px, py] of points) {
-    const dxfY = outputHeight - py;            // flip Y for DXF coordinate system
+    const dxfY = outputHeight - py;             // flip Y for DXF coordinate system
     lines.push(`10\n${px.toFixed(3)}`);
     lines.push(`20\n${dxfY.toFixed(3)}`);
   }
@@ -377,6 +387,7 @@ function writeLwPolyline(
 // ─── SVG → DXF main function ──────────────────────────────────────────────────
 
 export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: number, minGapMm = 0, forceOpenPaths = false): DxfResult {
+  resetHandles(); // reset entity handle counter for each DXF export
   // Extract viewBox dimensions
   const vbMatch = svgContent.match(/viewBox="([^"]*)"/i);
   let width = 500, height = 500;
