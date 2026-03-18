@@ -261,13 +261,13 @@ async function runFaceDetectJob(
       messages: [
         {
           role: "system",
-          content: "You are a face detection system. Analyze the image and determine if it contains a human face. Respond with JSON only: {\"hasFace\": true/false, \"confidence\": \"high\"/\"medium\"/\"low\"}",
+          content: "You are a precise face detection system. Analyze the image and count the number of clearly visible human faces. Respond with JSON only.",
         },
         {
           role: "user",
           content: [
-            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "low" } },
-            { type: "text", text: "Does this image contain a human face? Respond with JSON only." },
+            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "high" } },
+            { type: "text", text: "Count the number of clearly visible human faces in this image. Respond with JSON only: {\"faceCount\": <number 0-10>, \"confidence\": \"high\"/\"medium\"/\"low\"}" },
           ],
         },
       ],
@@ -279,10 +279,10 @@ async function runFaceDetectJob(
           schema: {
             type: "object",
             properties: {
-              hasFace: { type: "boolean" },
+              faceCount: { type: "number" },
               confidence: { type: "string", enum: ["high", "medium", "low"] },
             },
-            required: ["hasFace", "confidence"],
+            required: ["faceCount", "confidence"],
             additionalProperties: false,
           },
         },
@@ -290,20 +290,21 @@ async function runFaceDetectJob(
     });
     const faceCheckContent = (faceCheckResponse as { choices?: Array<{ message?: { content?: string } }> })
       ?.choices?.[0]?.message?.content ?? "{}";
-    let hasFace = true;
+    let faceCount = 1;
     try {
       const parsed = JSON.parse(faceCheckContent);
-      hasFace = parsed.hasFace === true;
-    } catch { hasFace = true; } // default to true on parse error
-    if (!hasFace) {
+      faceCount = typeof parsed.faceCount === "number" ? Math.max(0, Math.round(parsed.faceCount)) : 1;
+    } catch { faceCount = 1; } // default to 1 on parse error
+    
+    if (faceCount === 0) {
       // Refund tokens — no face found
       try {
         const noFaceRefundCost = await getTokenCostForAction("face_detect");
         await addTokens(appUserId, noFaceRefundCost, "refund", "No face detected — tokens refunded");
       } catch { /* ignore */ }
       const errorMsg = isHe
-        ? "לא זוהו פנים בתמונה. אנא נסה שוב עם תמונה ברורה יותר של פנים."
-        : "No face detected in the image. Please try again with a clearer photo of a face.";
+        ? "לא זויינו פנים בתמונה זו. אנא העלה תמונה ברורה של פנים אחד או יותר."
+        : "No face detected in this image. Please upload a clear photo with at least one visible face.";
       updateJob(jobId, { status: "error", error: errorMsg });
       return;
     }
@@ -312,18 +313,81 @@ async function runFaceDetectJob(
     if (!jobAfterFaceCheck || jobAfterFaceCheck.status === "cancelled") return;
 
     // ── Step B: Prepare source image ────────────────────────────────────────────────
-    // 256px input is sufficient for gpt-image-1 low quality and processes faster
+    // Use 512px for better face accuracy
     const editSourceBuffer = await sharp(imageBuffer)
-      .resize(256, 256, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
       .png({ compressionLevel: 3 })
       .toBuffer();
 
-    // ── Step C: Generate portrait + AI suggestions in parallel ───────────────
+    // ── Step C: Generate portrait(s) + AI suggestions in parallel ───────────────
     heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
 
-    // Run portrait generation and AI suggestions in parallel to save time
-    const [portraitResult, suggestions] = await Promise.all([
-      generatePortraitVariation(editSourceBuffer, style, hairline, lineweightMm, minGapMm),
+    // If multiple faces detected (up to 2), generate a portrait for each
+    const numPortraits = Math.min(faceCount, 2);
+    
+    if (numPortraits > 1) {
+      updateJob(jobId, {
+        step: isHe ? `זוהו ${numPortraits} פנים — מצייר ${numPortraits} פורטרטים...` : `Detected ${numPortraits} faces — drawing ${numPortraits} portraits...`,
+        stepEn: `Detected ${numPortraits} faces — drawing ${numPortraits} portraits...`,
+      });
+    }
+
+    // Build prompts for multi-face: focus on each face separately
+    const buildMultiFacePrompt = (faceIndex: number, totalFaces: number, basePrompt: string): string => {
+      if (totalFaces <= 1) return basePrompt;
+      return basePrompt + ` IMPORTANT: This image contains ${totalFaces} faces. Draw ONLY the ${faceIndex === 0 ? "first/left" : "second/right"} face (person ${faceIndex + 1}). Focus exclusively on that individual's face. Ignore the other person(s).`;
+    };
+
+    // Override generatePortraitVariation for multi-face with custom prompt
+    const generateWithCustomPrompt = async (faceIdx: number): Promise<PortraitResult> => {
+      if (numPortraits <= 1) return generatePortraitVariation(editSourceBuffer, style, hairline, lineweightMm, minGapMm);
+      const { toFile } = await import("openai");
+      const editFile = await toFile(editSourceBuffer, "face.png", { type: "image/png" });
+      const basePrompt = PORTRAIT_STYLE_PROMPTS[style];
+      const editPrompt = buildMultiFacePrompt(faceIdx, numPortraits, basePrompt);
+      const response = await openai.images.edit({
+        model: "gpt-image-1",
+        image: editFile,
+        prompt: editPrompt,
+        n: 1,
+        size: "1024x1024",
+        quality: "medium",
+      });
+      const imageData = response.data?.[0];
+      if (!imageData) throw new Error("Failed to generate portrait for face " + (faceIdx + 1));
+      let rawBuffer: Buffer;
+      if (imageData.b64_json) {
+        rawBuffer = Buffer.from(imageData.b64_json, "base64");
+      } else if (imageData.url) {
+        const imgRes = await fetch(imageData.url);
+        if (!imgRes.ok) throw new Error("Failed to download generated image");
+        rawBuffer = Buffer.from(await imgRes.arrayBuffer());
+      } else throw new Error("No image returned from AI");
+      const processedBuffer = await sharp(rawBuffer)
+        .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .grayscale().threshold(200).png().toBuffer();
+      const rawSvg = await pngToSvg(processedBuffer);
+      const cleanSvg = cleanSvgForPreview(rawSvg);
+      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, minGapMm);
+      const imgKey = `face-detect-generated/${nanoid()}.png`;
+      const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
+      const dxfFilename = `face_portrait_${style}_face${faceIdx + 1}.dxf`;
+      const dxfKey = `face-detect-dxf/${nanoid()}-${dxfFilename}`;
+      const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
+      const faceLabel = numPortraits > 1 ? (isHe ? ` (פנים ${faceIdx + 1})` : ` (Face ${faceIdx + 1})`) : "";
+      return {
+        imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight,
+        style,
+        styleLabel: STYLE_LABELS[style].he + faceLabel,
+        styleLabelEn: STYLE_LABELS[style].en + (numPortraits > 1 ? ` (Face ${faceIdx + 1})` : ""),
+      };
+    };
+
+    // Generate all portraits + suggestions in parallel
+    const portraitPromises = Array.from({ length: numPortraits }, (_, i) => generateWithCustomPrompt(i));
+    const [portraitResults, suggestions] = await Promise.all([
+      Promise.all(portraitPromises),
       generateAiSuggestions(style, lang),
     ]);
 
@@ -332,7 +396,7 @@ async function runFaceDetectJob(
     const jobAfterGen = getJob(jobId);
     if (!jobAfterGen || jobAfterGen.status === "cancelled") return;
 
-    const images = [portraitResult];
+    const images = portraitResults;
 
     // ── Step D: Log & finish ──────────────────────────────────────────────────
     void logUsageEvent({

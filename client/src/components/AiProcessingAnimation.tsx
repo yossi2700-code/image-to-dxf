@@ -191,193 +191,108 @@ const TOTAL_SECONDS = 41;
 
 // ── Per-feature music (Web Audio API) ────────────────────────────────────────
 
-/** Trace: Calm ambient pads — soft sine chords, slow LFO */
-function startTraceMusic(): () => void {
+/**
+ * Shared drum engine: warm kick + snare + hi-hat loop, no sharp tones.
+ * bpm: tempo, bassFreq: warm bass note under kick, pattern: 16-step array
+ * pattern bits: 1=kick, 2=snare, 4=hihat (combinable)
+ */
+function startDrumLoop(bpm: number, bassFreq: number, pattern: number[]): () => void {
   try {
     const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ctx = new AudioCtx();
     const master = ctx.createGain();
     master.gain.setValueAtTime(0, ctx.currentTime);
-    master.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 3);
+    master.gain.linearRampToValueAtTime(0.7, ctx.currentTime + 1.5); // master at 0.7
     master.connect(ctx.destination);
-    const oscs: OscillatorNode[] = [];
-    // Soft Gmaj: G3 B3 D4 — very gentle sine waves, low octave
-    [196.00, 246.94, 293.66].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const g = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = freq;
-      g.gain.value = 0.02;
-      const lfo = ctx.createOscillator();
-      const lfoG = ctx.createGain();
-      lfo.frequency.value = 0.1 + i * 0.025;
-      lfoG.gain.value = freq * 0.003;
-      lfo.connect(lfoG); lfoG.connect(osc.frequency); lfo.start();
-      osc.connect(g); g.connect(master); osc.start();
-      oscs.push(osc, lfo);
-    });
-    // Soft chime every 7s
-    const pingTimer = setInterval(() => {
+
+    const stepSec = 60 / bpm / 4; // 16th note
+    let step = 0;
+
+    // Warm sub-bass pad (sine, very low)
+    const bass = ctx.createOscillator();
+    const bassG = ctx.createGain();
+    bass.type = "sine"; bass.frequency.value = bassFreq;
+    bassG.gain.value = 0.08;
+    bass.connect(bassG); bassG.connect(master); bass.start();
+
+    const scheduleStep = () => {
       if (ctx.state === "closed") return;
-      const chimeNotes = [392.00, 493.88, 587.33, 783.99];
-      const freq = chimeNotes[Math.floor(Math.random() * chimeNotes.length)];
-      const p = ctx.createOscillator(); const pg = ctx.createGain();
-      p.type = "sine"; p.frequency.value = freq;
-      pg.gain.setValueAtTime(0, ctx.currentTime);
-      pg.gain.linearRampToValueAtTime(0.022, ctx.currentTime + 0.04);
-      pg.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 4);
-      p.connect(pg); pg.connect(master); p.start(); p.stop(ctx.currentTime + 4);
-    }, 7000);
+      const t = ctx.currentTime;
+      const bit = pattern[step % pattern.length];
+
+      // KICK — deep sine sweep, no click
+      if (bit & 1) {
+        const k = ctx.createOscillator(); const kg = ctx.createGain();
+        k.type = "sine";
+        k.frequency.setValueAtTime(90, t);
+        k.frequency.exponentialRampToValueAtTime(38, t + 0.18);
+        kg.gain.setValueAtTime(0, t);
+        kg.gain.linearRampToValueAtTime(0.55, t + 0.005); // soft attack
+        kg.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+        k.connect(kg); kg.connect(master); k.start(t); k.stop(t + 0.35);
+      }
+
+      // SNARE — filtered noise burst, warm not sharp
+      if (bit & 2) {
+        const bufLen = Math.floor(ctx.sampleRate * 0.12);
+        const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < bufLen; i++) d[i] = (Math.random() * 2 - 1);
+        const src = ctx.createBufferSource();
+        const filter = ctx.createBiquadFilter();
+        const sg = ctx.createGain();
+        src.buffer = buf;
+        filter.type = "bandpass"; filter.frequency.value = 220; filter.Q.value = 0.8; // warm bandpass
+        sg.gain.setValueAtTime(0, t);
+        sg.gain.linearRampToValueAtTime(0.22, t + 0.006);
+        sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+        src.connect(filter); filter.connect(sg); sg.connect(master); src.start(t);
+      }
+
+      // HI-HAT — very short filtered noise, quiet
+      if (bit & 4) {
+        const bufLen = Math.floor(ctx.sampleRate * 0.03);
+        const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < bufLen; i++) d[i] = (Math.random() * 2 - 1);
+        const src = ctx.createBufferSource();
+        const filter = ctx.createBiquadFilter();
+        const hg = ctx.createGain();
+        src.buffer = buf;
+        filter.type = "highpass"; filter.frequency.value = 6000;
+        hg.gain.setValueAtTime(0, t);
+        hg.gain.linearRampToValueAtTime(0.07, t + 0.002);
+        hg.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+        src.connect(filter); filter.connect(hg); hg.connect(master); src.start(t);
+      }
+
+      step++;
+    };
+
+    // Schedule ahead using setInterval
+    scheduleStep(); // immediate first beat
+    const timer = setInterval(scheduleStep, stepSec * 1000);
+
     return () => {
-      clearInterval(pingTimer);
-      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
-      setTimeout(() => { oscs.forEach(o => { try { o.stop(); } catch (_) {} }); try { ctx.close(); } catch (_) {} }, 2500);
+      clearInterval(timer);
+      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.6);
+      setTimeout(() => { try { bass.stop(); } catch (_) {} try { ctx.close(); } catch (_) {} }, 900);
     };
   } catch (_) { return () => {}; }
 }
 
-/** Portrait: Soft dreamy — gentle sine pads, slow breathing chord */
-function startPortraitMusic(): () => void {
-  try {
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const ctx = new AudioCtx();
-    const master = ctx.createGain();
-    master.gain.setValueAtTime(0, ctx.currentTime);
-    master.gain.linearRampToValueAtTime(0.045, ctx.currentTime + 3);
-    master.connect(ctx.destination);
-    const oscs: OscillatorNode[] = [];
-    // Soft Cmaj7 chord: C3 E3 G3 B3 — very low volume, sine waves only
-    [130.81, 164.81, 196.00, 246.94].forEach((freq, i) => {
-      const osc = ctx.createOscillator(); const g = ctx.createGain();
-      osc.type = "sine"; osc.frequency.value = freq; g.gain.value = 0.022;
-      // Very slow breathing LFO
-      const lfo = ctx.createOscillator(); const lfoG = ctx.createGain();
-      lfo.frequency.value = 0.08 + i * 0.02; lfoG.gain.value = freq * 0.004;
-      lfo.connect(lfoG); lfoG.connect(osc.frequency); lfo.start();
-      osc.connect(g); g.connect(master); osc.start();
-      oscs.push(osc, lfo);
-    });
-    // Gentle soft bell every 6s
-    const bellTimer = setInterval(() => {
-      if (ctx.state === "closed") return;
-      const bellNotes = [523.25, 659.25, 783.99, 1046.5];
-      const freq = bellNotes[Math.floor(Math.random() * bellNotes.length)];
-      const p = ctx.createOscillator(); const pg = ctx.createGain();
-      p.type = "sine"; p.frequency.value = freq;
-      pg.gain.setValueAtTime(0, ctx.currentTime);
-      pg.gain.linearRampToValueAtTime(0.025, ctx.currentTime + 0.05);
-      pg.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 3.5);
-      p.connect(pg); pg.connect(master); p.start(); p.stop(ctx.currentTime + 3.5);
-    }, 6000);
-    return () => {
-      clearInterval(bellTimer);
-      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
-      setTimeout(() => { oscs.forEach(o => { try { o.stop(); } catch (_) {} }); try { ctx.close(); } catch (_) {} }, 2500);
-    };
-  } catch (_) { return () => {}; }
-}
+// 16-step patterns (bits: 1=kick 2=snare 4=hihat)
+// Trace: steady 4-on-floor kick, snare on 2&4, light hihat
+const TRACE_PATTERN  = [5,4,4,4, 6,4,4,4, 5,4,4,4, 6,4,4,4]; // kick+hat, hat, hat, hat, snare+hat...
+// Portrait: half-time feel, relaxed
+const PORTRAIT_PATTERN = [5,4,0,4, 0,4,6,4, 5,4,0,4, 0,6,0,4];
+// Redraw: busier groove
+const REDRAW_PATTERN = [5,4,4,6, 4,4,6,4, 5,4,4,6, 4,6,4,4];
 
-/** Redraw: Calm focus — soft pulsing pad with gentle harmonic movement */
-function startRedrawMusic(): () => void {
-  try {
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const ctx = new AudioCtx();
-    const master = ctx.createGain();
-    master.gain.setValueAtTime(0, ctx.currentTime);
-    master.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 2.5);
-    master.connect(ctx.destination);
-    const oscs: OscillatorNode[] = [];
-    // Soft Fmaj chord: F3 A3 C4 — triangle waves for warmth
-    [174.61, 220.00, 261.63].forEach((freq, i) => {
-      const osc = ctx.createOscillator(); const g = ctx.createGain();
-      osc.type = "triangle"; osc.frequency.value = freq; g.gain.value = 0.02;
-      const lfo = ctx.createOscillator(); const lfoG = ctx.createGain();
-      lfo.frequency.value = 0.12 + i * 0.03; lfoG.gain.value = freq * 0.003;
-      lfo.connect(lfoG); lfoG.connect(osc.frequency); lfo.start();
-      osc.connect(g); g.connect(master); osc.start();
-      oscs.push(osc, lfo);
-    });
-    // Soft high note every 5s
-    const noteTimer = setInterval(() => {
-      if (ctx.state === "closed") return;
-      const notes = [523.25, 587.33, 659.25, 698.46];
-      const freq = notes[Math.floor(Math.random() * notes.length)];
-      const p = ctx.createOscillator(); const pg = ctx.createGain();
-      p.type = "sine"; p.frequency.value = freq;
-      pg.gain.setValueAtTime(0, ctx.currentTime);
-      pg.gain.linearRampToValueAtTime(0.018, ctx.currentTime + 0.1);
-      pg.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 4);
-      p.connect(pg); pg.connect(master); p.start(); p.stop(ctx.currentTime + 4);
-    }, 5000);
-    return () => {
-      clearInterval(noteTimer);
-      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
-      setTimeout(() => { oscs.forEach(o => { try { o.stop(); } catch (_) {} }); try { ctx.close(); } catch (_) {} }, 2500);
-    };
-  } catch (_) { return () => {}; }
-}
-
-/** Default: Original ambient tones */
-function startAmbientTones(accentHex: string): () => void {
-  try {
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const ctx = new AudioCtx();
-    const master = ctx.createGain();
-    master.gain.setValueAtTime(0, ctx.currentTime);
-    master.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 1.5);
-    master.connect(ctx.destination);
-
-    const r = parseInt(accentHex.slice(1, 3), 16);
-    const noteFreqs = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88];
-    const baseFreq = noteFreqs[r % noteFreqs.length];
-
-    const oscs: OscillatorNode[] = [];
-    [1, 1.25, 1.5].forEach((ratio, i) => {
-      const osc = ctx.createOscillator();
-      const g = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = baseFreq * ratio;
-      g.gain.value = 0.04;
-      const lfo = ctx.createOscillator();
-      const lfoG = ctx.createGain();
-      lfo.frequency.value = 0.2 + i * 0.05;
-      lfoG.gain.value = baseFreq * ratio * 0.002;
-      lfo.connect(lfoG);
-      lfoG.connect(osc.frequency);
-      lfo.start();
-      osc.connect(g);
-      g.connect(master);
-      osc.start();
-      oscs.push(osc, lfo);
-    });
-
-    const pingTimer = setInterval(() => {
-      if (ctx.state === "closed") return;
-      const p = ctx.createOscillator();
-      const pg = ctx.createGain();
-      p.type = "sine";
-      p.frequency.value = baseFreq * 2;
-      pg.gain.setValueAtTime(0, ctx.currentTime);
-      pg.gain.linearRampToValueAtTime(0.045, ctx.currentTime + 0.02);
-      pg.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.6);
-      p.connect(pg);
-      pg.connect(master);
-      p.start();
-      p.stop(ctx.currentTime + 1.6);
-    }, 6000);
-
-    return () => {
-      clearInterval(pingTimer);
-      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
-      setTimeout(() => {
-        oscs.forEach(o => { try { o.stop(); } catch (_) {} });
-        try { ctx.close(); } catch (_) {}
-      }, 1000);
-    };
-  } catch (_) {
-    return () => {};
-  }
-}
+function startTraceMusic(): () => void   { return startDrumLoop(88, 55, TRACE_PATTERN); }
+function startPortraitMusic(): () => void { return startDrumLoop(76, 49, PORTRAIT_PATTERN); }
+function startRedrawMusic(): () => void  { return startDrumLoop(96, 58, REDRAW_PATTERN); }
+function startAmbientTones(_accentHex: string): () => void { return startDrumLoop(88, 55, TRACE_PATTERN); }
 
 // ── Elegant multi-ring spinner ────────────────────────────────────────────────
 

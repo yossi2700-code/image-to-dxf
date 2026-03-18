@@ -597,7 +597,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
 
             {imagePreview ? (
               <div
-                className="flex items-center gap-3 mb-3 p-3 rounded-xl"
+                className="flex items-center gap-3 mb-3 p-3 rounded-xl relative"
                 style={{background: '#f0fdf9', border: '1px solid #99f6e4'}}
               >
                 <img src={imagePreview} alt="Preview" className="w-16 h-16 object-contain rounded-lg shrink-0 border border-gray-200 bg-white" />
@@ -611,6 +611,15 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                     {t("imageSelected")}
                   </label>
                 </div>
+                {/* Clear image button */}
+                <button
+                  onClick={() => { setImageFile(null); setImagePreviewPersisted(null); setResult(null); setStatus("idle"); setErrorMsg(""); }}
+                  className="absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-100 transition-colors"
+                  style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444' }}
+                  title={isRtl ? 'נקה תמונה' : 'Clear image'}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
             ) : (
               <div className="mb-3 space-y-2">
