@@ -36,35 +36,34 @@ export type PortraitStyle = "simple" | "detailed";
 
 const PORTRAIT_STYLE_PROMPTS: Record<PortraitStyle, string> = {
   simple:
-    "Convert this face photo into a clean black-and-white line art portrait for laser engraving. " +
-    "CRITICAL IDENTITY REQUIREMENT: This must be a recognizable likeness of the SPECIFIC person in the photo. " +
-    "FACIAL ACCURACY IS THE TOP PRIORITY — study the photo carefully before drawing: " +
-    "(1) FACE SHAPE: measure and replicate the exact outline — oval/round/square/heart/diamond. Draw the precise jawline curve, chin width, and cheekbone width. " +
-    "(2) NOSE: this is the most identity-defining feature. Replicate the exact nose shape — bridge width, tip shape (round/pointed/flat/upturned), nostril size and flare, nose length relative to face. " +
-    "(3) EYES: exact eye shape (almond/round/hooded/deep-set), precise spacing between eyes, eyelid fold style, brow arch height and thickness. " +
-    "(4) MOUTH: lip thickness ratio (thin/full), cupid's bow shape, corner position, philtrum depth. " +
-    "(5) EXPRESSION: preserve the exact expression from the photo — neutral/smile/serious/relaxed. " +
-    "(6) PROPORTIONS: maintain exact distances — eye-to-nose, nose-to-mouth, mouth-to-chin. " +
-    "The result must look like THIS specific person, not a generic face. " +
-    "Style: clean minimal lines, no shading, no grey tones, pure black strokes on white background. " +
-    "Composition: head and face only, no clothing or background. Face fills 65-75% of canvas. Full head visible. " +
-    "Include: face contour, hairline, eyes with lashes, eyebrows, nose with nostrils, lips, ears, neck. Beard/stubble if present. " +
-    "No text, no watermarks, no decorative elements.",
+    "TASK: Trace this face photo as clean black-and-white line art. DO NOT invent or imagine any features — only draw what is literally visible in the photo. " +
+    "ABSOLUTE RULE: Every line you draw must correspond to something actually visible in this photo. If you cannot see it clearly, do not draw it. " +
+    "IDENTITY FIDELITY — trace these features EXACTLY as they appear: " +
+    "(1) FACE OUTLINE: trace the exact silhouette of the face, jaw, chin, and forehead as seen in the photo. " +
+    "(2) EYES: trace the actual eye shape, eyelids, and brows exactly as positioned in the photo — do not make them larger or more symmetrical than they are. " +
+    "(3) NOSE: trace the actual nose shape visible in the photo — bridge, tip, nostrils exactly as they are. " +
+    "(4) MOUTH: trace the actual lips and any objects in or near the mouth (pacifier, food, etc.) exactly as visible. " +
+    "(5) HAIR: trace the actual hair shape and direction visible in the photo. " +
+    "(6) ANY OBJECTS ON FACE: if there is a pacifier, glasses, hat, or any other object visible — INCLUDE IT exactly as shown. " +
+    "FORBIDDEN: Do not smooth features, do not make the face more attractive, do not add features not visible, do not remove visible objects. " +
+    "Style: clean minimal line art, pure black strokes on white background, no shading, no grey tones. " +
+    "Composition: head and face fills 65-75% of canvas. No clothing, no background. " +
+    "No text, no watermarks.",
 
   detailed:
-    "Convert this face photo into a detailed black-and-white line art portrait for laser engraving. " +
-    "CRITICAL IDENTITY REQUIREMENT: This must be an unmistakably recognizable likeness of the SPECIFIC person in the photo. " +
-    "MAXIMUM FACIAL ACCURACY — analyze every feature before drawing: " +
-    "(1) FACE SHAPE: precise outer contour — exact jawline curve, chin shape (pointed/round/square/cleft), cheekbone prominence, temple width, forehead height. " +
-    "(2) NOSE — THE MOST IDENTITY-CRITICAL FEATURE: replicate with maximum precision — nose bridge width and straightness/curve, tip shape and size, nostril shape (circular/oval/flared/narrow), columella angle, nose length and projection from face. " +
-    "(3) EYES: exact iris size, precise eyelid shape (single/double fold, hooded, deep-set), lash line curve, inner/outer corner angles, exact brow shape with individual hair direction. " +
-    "(4) MOUTH: exact lip shape — upper lip cupid's bow depth, lower lip fullness, lip corner position, philtrum ridges, vermillion border. " +
-    "(5) EXPRESSION: capture the exact emotional expression — every subtle muscle tension around eyes, mouth corners, brow position. " +
-    "(6) PROPORTIONS: exact measurements — eye width, inter-pupillary distance, nose width vs mouth width ratio, all facial thirds. " +
-    "(7) SKIN STRUCTURE: fine lines for cheekbone shadows, nasolabial folds if present, forehead lines, under-eye area. " +
-    "Style: detailed line art, no shading or grey — only black lines on white. " +
-    "Composition: head and face only, no clothing or background. Face fills 65-75% of canvas. Full head visible. " +
-    "Include: detailed hair strands, eyes with iris/lashes/eyelid folds, brow hairs, nose bridge/nostrils/tip, lips with philtrum, ears with inner cartilage detail, neck, beard/stubble with growth direction if present. " +
+    "TASK: Trace this face photo as detailed black-and-white line art. DO NOT invent or imagine any features — only draw what is literally visible in the photo. " +
+    "ABSOLUTE RULE: Every line must correspond to something actually visible in this specific photo. Trace, do not create. " +
+    "MAXIMUM IDENTITY FIDELITY — trace every visible detail: " +
+    "(1) FACE OUTLINE: exact silhouette of the face, jaw, chin, forehead, cheekbones as visible in the photo. " +
+    "(2) EYES: exact shape of eyelids, iris, lashes, brows — trace their actual position and size, not idealized versions. " +
+    "(3) NOSE: trace every visible detail — bridge, tip shape, nostrils, columella — exactly as they appear. " +
+    "(4) MOUTH: trace the actual lips, philtrum, and any object in/near the mouth (pacifier, food, etc.) exactly as visible. " +
+    "(5) HAIR: trace individual hair strands and the overall hair shape as visible in the photo. " +
+    "(6) ANY OBJECTS ON FACE: if there is a pacifier, glasses, hat, or any other object visible — INCLUDE IT with full detail. " +
+    "(7) SKIN TEXTURE: fine lines for visible wrinkles, folds, dimples only where actually visible. " +
+    "FORBIDDEN: Do not smooth features, do not idealize, do not add features not visible, do not remove visible objects. " +
+    "Style: detailed line art, pure black lines on white, no shading, no grey. " +
+    "Composition: head and face fills 65-75% of canvas. No clothing, no background. " +
     "No text, no watermarks.",
 };
 
