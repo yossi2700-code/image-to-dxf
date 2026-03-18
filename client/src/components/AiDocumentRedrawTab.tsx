@@ -534,6 +534,7 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
         formData.append("image", blob, "image.jpg");
       }
       if (description.trim()) formData.append("description", description.trim());
+      formData.append("lang", isRtl ? "he" : "en");
 
       const res = await fetch("/api/ai-document-redraw", {
         method: "POST",

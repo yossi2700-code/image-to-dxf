@@ -154,8 +154,10 @@ async function runDocumentRedrawJob(
   appUserId: number,
   ipAnon: string,
   originalAspect: number,
-  sourceImageUrl?: string
+  sourceImageUrl?: string,
+  lang: "he" | "en" = "en"
 ) {
+  const isHe = lang === "he";
   let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
   const jobStartTime = Date.now();
   try {
@@ -189,7 +191,8 @@ async function runDocumentRedrawJob(
             "(3) The exact body pose and position (standing, sitting, crouching, arms raised, walking, etc.). " +
             "(4) Key structural features, proportions, decorative elements, and distinctive details. " +
             "(5) Any text or inscriptions present (describe their position but note they should be removed from the line art). " +
-            "Start your description with the camera angle/view type. Output ONLY the description (3-6 sentences), no preamble.",
+            "Start your description with the camera angle/view type. Output ONLY the description (3-6 sentences), no preamble." +
+            (isHe ? "\n\nIMPORTANT: Respond in HEBREW (עברית). All descriptions must be written in Hebrew." : ""),
         },
         {
           role: "user",
@@ -380,6 +383,7 @@ router.post(
       } catch (_) { /* use default 1:1 */ }
 
       const userDesc = (req.body?.description || "").trim();
+      const lang = (req.body?.lang === "he" ? "he" : "en") as "he" | "en";
       const ipAnon = anonymizeIp(
         ((req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
         req.socket.remoteAddress ||
@@ -403,7 +407,7 @@ router.post(
       createJob(jobId, appUser.userId, "ai_trace");
 
       // Fire-and-forget — does NOT await
-      runDocumentRedrawJob(jobId, imageBuffer, userDesc, appUser.userId, ipAnon ?? "", originalAspect, sourceImageUrl)
+      runDocumentRedrawJob(jobId, imageBuffer, userDesc, appUser.userId, ipAnon ?? "", originalAspect, sourceImageUrl, lang)
         .catch((err) => console.error("[aiDocumentRedraw] Unhandled job error:", err));
 
       // Return job ID immediately

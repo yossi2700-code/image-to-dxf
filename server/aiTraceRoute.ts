@@ -331,7 +331,8 @@ async function runTraceJob(
             "(3) BODY POSE / POSITION: exact pose (standing upright, sitting, crouching, running, lying down, arms raised, etc.).\n" +
             "(4) KEY STRUCTURAL FEATURES: main body parts, proportions, distinctive features, decorative elements.\n" +
             "(5) STYLE NOTES: is it realistic, cartoon, stylized, ornamental, etc.?\n" +
-            "\nFormat: Start with 'Camera angle: [exact angle].' then describe the rest in 3-5 sentences. No preamble. If confused, respond ONLY with: UNCLEAR_IMAGE",
+              `Format: Start with 'Camera angle: [exact angle].' then describe the rest in 3-5 sentences. No preamble. If confused, respond ONLY with: UNCLEAR_IMAGE` +
+            (isHe ? "\n\nIMPORTANT: Respond in HEBREW (עברית). All descriptions must be written in Hebrew." : ""),
         },
         {
           role: "user",
