@@ -38,21 +38,33 @@ const PORTRAIT_STYLE_PROMPTS: Record<PortraitStyle, string> = {
   simple:
     "Convert this face photo into a clean black-and-white line art portrait for laser engraving. " +
     "CRITICAL IDENTITY REQUIREMENT: This must be a recognizable likeness of the SPECIFIC person in the photo. " +
-    "Carefully study and replicate: exact face shape (oval/round/square/heart), precise eye shape and spacing, nose width and length, lip shape, brow arch, ear shape, chin, and hair silhouette. " +
-    "The result must look like THIS person, not a generic face. " +
+    "FACIAL ACCURACY IS THE TOP PRIORITY — study the photo carefully before drawing: " +
+    "(1) FACE SHAPE: measure and replicate the exact outline — oval/round/square/heart/diamond. Draw the precise jawline curve, chin width, and cheekbone width. " +
+    "(2) NOSE: this is the most identity-defining feature. Replicate the exact nose shape — bridge width, tip shape (round/pointed/flat/upturned), nostril size and flare, nose length relative to face. " +
+    "(3) EYES: exact eye shape (almond/round/hooded/deep-set), precise spacing between eyes, eyelid fold style, brow arch height and thickness. " +
+    "(4) MOUTH: lip thickness ratio (thin/full), cupid's bow shape, corner position, philtrum depth. " +
+    "(5) EXPRESSION: preserve the exact expression from the photo — neutral/smile/serious/relaxed. " +
+    "(6) PROPORTIONS: maintain exact distances — eye-to-nose, nose-to-mouth, mouth-to-chin. " +
+    "The result must look like THIS specific person, not a generic face. " +
     "Style: clean minimal lines, no shading, no grey tones, pure black strokes on white background. " +
     "Composition: head and face only, no clothing or background. Face fills 65-75% of canvas. Full head visible. " +
-    "Include: face contour, hairline, eyes with lashes, eyebrows, nose, lips, ears, neck. Beard/stubble if present. " +
+    "Include: face contour, hairline, eyes with lashes, eyebrows, nose with nostrils, lips, ears, neck. Beard/stubble if present. " +
     "No text, no watermarks, no decorative elements.",
 
   detailed:
     "Convert this face photo into a detailed black-and-white line art portrait for laser engraving. " +
-    "CRITICAL IDENTITY REQUIREMENT: This must be a highly recognizable likeness of the SPECIFIC person in the photo. " +
-    "Carefully study and replicate: exact face proportions, precise eye shape (iris, eyelid folds, lash line), nose bridge and nostrils, lip shape with cupid's bow, brow hair direction, ear cartilage details, chin and jaw line, and hair texture/direction. " +
-    "The result must unmistakably look like THIS person. " +
-    "Style: detailed line art, no shading or grey — only black lines on white. Add fine lines for cheekbones, forehead, and jaw structure. " +
+    "CRITICAL IDENTITY REQUIREMENT: This must be an unmistakably recognizable likeness of the SPECIFIC person in the photo. " +
+    "MAXIMUM FACIAL ACCURACY — analyze every feature before drawing: " +
+    "(1) FACE SHAPE: precise outer contour — exact jawline curve, chin shape (pointed/round/square/cleft), cheekbone prominence, temple width, forehead height. " +
+    "(2) NOSE — THE MOST IDENTITY-CRITICAL FEATURE: replicate with maximum precision — nose bridge width and straightness/curve, tip shape and size, nostril shape (circular/oval/flared/narrow), columella angle, nose length and projection from face. " +
+    "(3) EYES: exact iris size, precise eyelid shape (single/double fold, hooded, deep-set), lash line curve, inner/outer corner angles, exact brow shape with individual hair direction. " +
+    "(4) MOUTH: exact lip shape — upper lip cupid's bow depth, lower lip fullness, lip corner position, philtrum ridges, vermillion border. " +
+    "(5) EXPRESSION: capture the exact emotional expression — every subtle muscle tension around eyes, mouth corners, brow position. " +
+    "(6) PROPORTIONS: exact measurements — eye width, inter-pupillary distance, nose width vs mouth width ratio, all facial thirds. " +
+    "(7) SKIN STRUCTURE: fine lines for cheekbone shadows, nasolabial folds if present, forehead lines, under-eye area. " +
+    "Style: detailed line art, no shading or grey — only black lines on white. " +
     "Composition: head and face only, no clothing or background. Face fills 65-75% of canvas. Full head visible. " +
-    "Include: detailed hair strands, eyes with iris/lashes/eyelid folds, brow hairs, nose bridge/nostrils, lips, ears with inner detail, neck, beard/stubble with growth direction if present. " +
+    "Include: detailed hair strands, eyes with iris/lashes/eyelid folds, brow hairs, nose bridge/nostrils/tip, lips with philtrum, ears with inner cartilage detail, neck, beard/stubble with growth direction if present. " +
     "No text, no watermarks.",
 };
 
