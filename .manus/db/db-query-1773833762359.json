@@ -1,0 +1,268 @@
+{
+  "query": "SELECT u.id, u.email, u.name, u.language FROM app_users u WHERE u.email IS NOT NULL AND u.email != '' AND u.id NOT IN (SELECT DISTINCT appUserId FROM campaign_redemptions) ORDER BY u.createdAt ASC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT u.id, u.email, u.name, u.language FROM app_users u WHERE u.email IS NOT NULL AND u.email != '' AND u.id NOT IN (SELECT DISTINCT appUserId FROM campaign_redemptions) ORDER BY u.createdAt ASC;",
+  "rows": [
+    {
+      "id": "1",
+      "email": "test@example.com",
+      "name": "Test User",
+      "language": "he"
+    },
+    {
+      "id": "120001",
+      "email": "uzielmoshe@gmail.com",
+      "name": "משה",
+      "language": "he"
+    },
+    {
+      "id": "150001",
+      "email": "cncgal001@gmail.com",
+      "name": "גל זברו",
+      "language": "he"
+    },
+    {
+      "id": "240001",
+      "email": "alony81@gmail.com",
+      "name": "אלון אילוז",
+      "language": "he"
+    },
+    {
+      "id": "270001",
+      "email": "erenanegev@gmail.com",
+      "name": "ארנה תורג'מן",
+      "language": "he"
+    },
+    {
+      "id": "270002",
+      "email": "mizrhi8@walla.com",
+      "name": "Yan",
+      "language": "he"
+    },
+    {
+      "id": "270003",
+      "email": "7142429@gmail.com",
+      "name": "יוסי",
+      "language": "he"
+    },
+    {
+      "id": "300001",
+      "email": "cncgal001@gamil.com",
+      "name": "גל",
+      "language": "he"
+    },
+    {
+      "id": "330001",
+      "email": "sh74eren@gmail.com",
+      "name": "ארנה תורגמן",
+      "language": "he"
+    },
+    {
+      "id": "330002",
+      "email": "cnc6474955@gmail.com",
+      "name": "even veshaish",
+      "language": "he"
+    },
+    {
+      "id": "360001",
+      "email": "liel5558@gmail.com",
+      "name": "ליאל",
+      "language": "he"
+    },
+    {
+      "id": "390001",
+      "email": "mizrhi88@gmail.com",
+      "name": "yan",
+      "language": "he"
+    },
+    {
+      "id": "390002",
+      "email": "borkins@bezeqint.net",
+      "name": "מצבות בורקין",
+      "language": "he"
+    },
+    {
+      "id": "420001",
+      "email": "matzevotkadima@gmail.com",
+      "name": "מצבות קדימה",
+      "language": "he"
+    },
+    {
+      "id": "480001",
+      "email": "odelia650@gmail.com",
+      "name": "אודליה",
+      "language": "he"
+    },
+    {
+      "id": "480002",
+      "email": "koralg28@gmail.com",
+      "name": "Koralg",
+      "language": "he"
+    },
+    {
+      "id": "510001",
+      "email": "noamafia@gmail.com",
+      "name": "afia noam",
+      "language": "he"
+    },
+    {
+      "id": "510002",
+      "email": "amos2656@gmail.com",
+      "name": "עמוס עטיה",
+      "language": "he"
+    },
+    {
+      "id": "510003",
+      "email": "bayazi@walla.com",
+      "name": "גלעד ביאזי",
+      "language": "he"
+    },
+    {
+      "id": "510004",
+      "email": "y0505357632@gmail.com",
+      "name": "יהודה ביאזי",
+      "language": "he"
+    },
+    {
+      "id": "510005",
+      "email": "tatoici@gmail.com",
+      "name": "איציק",
+      "language": "he"
+    },
+    {
+      "id": "540001",
+      "email": "asafamar037979@gmail.com",
+      "name": "אסף",
+      "language": "he"
+    },
+    {
+      "id": "570001",
+      "email": "edenturgeman200@gmail.com",
+      "name": "עדן תורגמן",
+      "language": "he"
+    },
+    {
+      "id": "600001",
+      "email": "genishmati@gmail.com",
+      "name": "מטי גניש",
+      "language": "he"
+    },
+    {
+      "id": "600002",
+      "email": "ran.tid@outlook.com",
+      "name": "Ran T",
+      "language": "he"
+    },
+    {
+      "id": "660001",
+      "email": "maorbayazi@gmail.com",
+      "name": "מאור",
+      "language": "he"
+    },
+    {
+      "id": "690001",
+      "email": "yaakov20026@gmail.com",
+      "name": "יעקב עמור",
+      "language": "he"
+    },
+    {
+      "id": "720001",
+      "email": "ronel037@gmail.com",
+      "name": "Ronel peretz",
+      "language": "he"
+    },
+    {
+      "id": "810001",
+      "email": "erez.biton@gmail.com",
+      "name": "Erez",
+      "language": "he"
+    },
+    {
+      "id": "810002",
+      "email": "liron.photography@gmail.com",
+      "name": "לירון אלגרבלי",
+      "language": "he"
+    },
+    {
+      "id": "840004",
+      "email": "yossi2700@icloud.com",
+      "name": "יוסי אייזנבך",
+      "language": "he"
+    },
+    {
+      "id": "840010",
+      "email": "dvaiksel9@gmail.com",
+      "name": "דני",
+      "language": "he"
+    },
+    {
+      "id": "840011",
+      "email": "yossi2700xl3@gmail.com",
+      "name": "טסט1",
+      "language": "he"
+    },
+    {
+      "id": "840013",
+      "email": "liad118811@gmail.com",
+      "name": "NULL",
+      "language": "he"
+    },
+    {
+      "id": "840014",
+      "email": "evengal@013net.net",
+      "name": "אבן גל",
+      "language": "he"
+    },
+    {
+      "id": "840015",
+      "email": "dima@t-print.co.il",
+      "name": "NULL",
+      "language": "he"
+    },
+    {
+      "id": "840016",
+      "email": "danishimon33@gmail.com",
+      "name": "דני שמעונוב",
+      "language": "he"
+    },
+    {
+      "id": "840017",
+      "email": "sunnybajare@gmail.com",
+      "name": "Eksun 3D",
+      "language": "he"
+    },
+    {
+      "id": "870001",
+      "email": "n1979ss@gmail.com",
+      "name": "נבל",
+      "language": "he"
+    },
+    {
+      "id": "900001",
+      "email": "m0547300456@gmail.com",
+      "name": "משה אייזנבך",
+      "language": "he"
+    },
+    {
+      "id": "930001",
+      "email": "hassong15@gmail.com",
+      "name": "גולן חסון",
+      "language": "he"
+    },
+    {
+      "id": "960001",
+      "email": "snail@txgm.com",
+      "name": "Snail",
+      "language": "he"
+    },
+    {
+      "id": "960002",
+      "email": "linasvidmantas@gmail.com",
+      "name": "Linas Vidmantas",
+      "language": "he"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\tlanguage\n1\ttest@example.com\tTest User\the\n120001\tuzielmoshe@gmail.com\tמשה\the\n150001\tcncgal001@gmail.com\tגל זברו\the\n240001\talony81@gmail.com\tאלון אילוז\the\n270001\terenanegev@gmail.com\tארנה תורג'מן\the\n270002\tmizrhi8@walla.com\tYan\the\n270003\t7142429@gmail.com\tיוסי\the\n300001\tcncgal001@gamil.com\tגל\the\n330001\tsh74eren@gmail.com\tארנה תורגמן\the\n330002\tcnc6474955@gmail.com\teven veshaish\the\n360001\tliel5558@gmail.com\tליאל\the\n390001\tmizrhi88@gmail.com\tyan\the\n390002\tborkins@bezeqint.net\tמצבות בורקין\the\n420001\tmatzevotkadima@gmail.com\tמצבות קדימה\the\n480001\todelia650@gmail.com\tאודליה\the\n480002\tkoralg28@gmail.com\tKoralg\the\n510001\tnoamafia@gmail.com\tafia noam\the\n510002\tamos2656@gmail.com\tעמוס עטיה\the\n510003\tbayazi@walla.com\tגלעד ביאזי\the\n510004\ty0505357632@gmail.com\tיהודה ביאזי\the\n510005\ttatoici@gmail.com\tאיציק\the\n540001\tasafamar037979@gmail.com\tאסף\the\n570001\tedenturgeman200@gmail.com\tעדן תורגמן\the\n600001\tgenishmati@gmail.com\tמטי גניש\the\n600002\tran.tid@outlook.com\tRan T\the\n660001\tmaorbayazi@gmail.com\tמאור\the\n690001\tyaakov20026@gmail.com\tיעקב עמור\the\n720001\tronel037@gmail.com\tRonel peretz\the\n810001\terez.biton@gmail.com\tErez\the\n810002\tliron.photography@gmail.com\tלירון אלגרבלי\the\n840004\tyossi2700@icloud.com\tיוסי אייזנבך\the\n840010\tdvaiksel9@gmail.com\tדני\the\n840011\tyossi2700xl3@gmail.com\tטסט1\the\n840013\tliad118811@gmail.com\tNULL\the\n840014\tevengal@013net.net\tאבן גל\the\n840015\tdima@t-print.co.il\tNULL\the\n840016\tdanishimon33@gmail.com\tדני שמעונוב\the\n840017\tsunnybajare@gmail.com\tEksun 3D\the\n870001\tn1979ss@gmail.com\tנבל\the\n900001\tm0547300456@gmail.com\tמשה אייזנבך\the\n930001\thassong15@gmail.com\tגולן חסון\the\n960001\tsnail@txgm.com\tSnail\the\n960002\tlinasvidmantas@gmail.com\tLinas Vidmantas\the\n",
+  "stderr": "",
+  "execution_time_ms": 1590
+}

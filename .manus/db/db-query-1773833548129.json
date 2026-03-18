@@ -1,0 +1,118 @@
+{
+  "query": "SELECT id, email, name, tokenBalance, reminderSentAt, createdAt, language FROM app_users WHERE email IS NOT NULL AND email != '' AND tokenBalance <= 10 ORDER BY createdAt DESC LIMIT 200;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, email, name, tokenBalance, reminderSentAt, createdAt, language FROM app_users WHERE email IS NOT NULL AND email != '' AND tokenBalance <= 10 ORDER BY createdAt DESC LIMIT 200;",
+  "rows": [
+    {
+      "id": "990001",
+      "email": "shimond148@gmail.com",
+      "name": "שמעון",
+      "tokenBalance": "8",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-18 09:38:03",
+      "language": "he"
+    },
+    {
+      "id": "930001",
+      "email": "hassong15@gmail.com",
+      "name": "גולן חסון",
+      "tokenBalance": "10",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-17 11:33:44",
+      "language": "he"
+    },
+    {
+      "id": "900001",
+      "email": "m0547300456@gmail.com",
+      "name": "משה אייזנבך",
+      "tokenBalance": "5",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-17 08:12:35",
+      "language": "he"
+    },
+    {
+      "id": "840017",
+      "email": "sunnybajare@gmail.com",
+      "name": "Eksun 3D",
+      "tokenBalance": "5",
+      "reminderSentAt": "1773832429542",
+      "createdAt": "2026-03-16 10:39:45",
+      "language": "he"
+    },
+    {
+      "id": "840016",
+      "email": "danishimon33@gmail.com",
+      "name": "דני שמעונוב",
+      "tokenBalance": "10",
+      "reminderSentAt": "1773786309317",
+      "createdAt": "2026-03-15 21:31:21",
+      "language": "he"
+    },
+    {
+      "id": "840015",
+      "email": "dima@t-print.co.il",
+      "name": "NULL",
+      "tokenBalance": "5",
+      "reminderSentAt": "1773771523301",
+      "createdAt": "2026-03-15 17:48:59",
+      "language": "he"
+    },
+    {
+      "id": "840014",
+      "email": "evengal@013net.net",
+      "name": "אבן גל",
+      "tokenBalance": "10",
+      "reminderSentAt": "1773750978217",
+      "createdAt": "2026-03-15 12:19:51",
+      "language": "he"
+    },
+    {
+      "id": "840012",
+      "email": "yossi2700apple@gmail.com",
+      "name": "טסט 2",
+      "tokenBalance": "1",
+      "reminderSentAt": "1773648169712",
+      "createdAt": "2026-03-14 07:47:41",
+      "language": "he"
+    },
+    {
+      "id": "840011",
+      "email": "yossi2700xl3@gmail.com",
+      "name": "טסט1",
+      "tokenBalance": "10",
+      "reminderSentAt": "1773645082845",
+      "createdAt": "2026-03-14 07:07:32",
+      "language": "he"
+    },
+    {
+      "id": "840010",
+      "email": "dvaiksel9@gmail.com",
+      "name": "דני",
+      "tokenBalance": "10",
+      "reminderSentAt": "1773620059929",
+      "createdAt": "2026-03-14 00:05:58",
+      "language": "he"
+    },
+    {
+      "id": "510004",
+      "email": "y0505357632@gmail.com",
+      "name": "יהודה ביאזי",
+      "tokenBalance": "10",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-08 12:59:08",
+      "language": "he"
+    },
+    {
+      "id": "480001",
+      "email": "odelia650@gmail.com",
+      "name": "אודליה",
+      "tokenBalance": "10",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-08 08:32:06",
+      "language": "he"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\ttokenBalance\treminderSentAt\tcreatedAt\tlanguage\n990001\tshimond148@gmail.com\tשמעון\t8\tNULL\t2026-03-18 09:38:03\the\n930001\thassong15@gmail.com\tגולן חסון\t10\tNULL\t2026-03-17 11:33:44\the\n900001\tm0547300456@gmail.com\tמשה אייזנבך\t5\tNULL\t2026-03-17 08:12:35\the\n840017\tsunnybajare@gmail.com\tEksun 3D\t5\t1773832429542\t2026-03-16 10:39:45\the\n840016\tdanishimon33@gmail.com\tדני שמעונוב\t10\t1773786309317\t2026-03-15 21:31:21\the\n840015\tdima@t-print.co.il\tNULL\t5\t1773771523301\t2026-03-15 17:48:59\the\n840014\tevengal@013net.net\tאבן גל\t10\t1773750978217\t2026-03-15 12:19:51\the\n840012\tyossi2700apple@gmail.com\tטסט 2\t1\t1773648169712\t2026-03-14 07:47:41\the\n840011\tyossi2700xl3@gmail.com\tטסט1\t10\t1773645082845\t2026-03-14 07:07:32\the\n840010\tdvaiksel9@gmail.com\tדני\t10\t1773620059929\t2026-03-14 00:05:58\the\n510004\ty0505357632@gmail.com\tיהודה ביאזי\t10\tNULL\t2026-03-08 12:59:08\the\n480001\todelia650@gmail.com\tאודליה\t10\tNULL\t2026-03-08 08:32:06\the\n",
+  "stderr": "",
+  "execution_time_ms": 1538
+}

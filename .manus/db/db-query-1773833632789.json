@@ -1,0 +1,458 @@
+{
+  "query": "SELECT id, email, name, tokenBalance, reminderSentAt, createdAt FROM app_users WHERE email IS NOT NULL AND email != '' ORDER BY createdAt DESC LIMIT 200;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, email, name, tokenBalance, reminderSentAt, createdAt FROM app_users WHERE email IS NOT NULL AND email != '' ORDER BY createdAt DESC LIMIT 200;",
+  "rows": [
+    {
+      "id": "1050001",
+      "email": "n0556672751@gmail.com",
+      "name": "נחמן מזרחי",
+      "tokenBalance": "30",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-18 10:59:01"
+    },
+    {
+      "id": "1020001",
+      "email": "abnisoam@gmail.com",
+      "name": "בני",
+      "tokenBalance": "27",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-18 10:14:49"
+    },
+    {
+      "id": "990001",
+      "email": "shimond148@gmail.com",
+      "name": "שמעון",
+      "tokenBalance": "8",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-18 09:38:03"
+    },
+    {
+      "id": "960002",
+      "email": "linasvidmantas@gmail.com",
+      "name": "Linas Vidmantas",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-17 13:55:55"
+    },
+    {
+      "id": "960001",
+      "email": "snail@txgm.com",
+      "name": "Snail",
+      "tokenBalance": "310",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-17 13:00:19"
+    },
+    {
+      "id": "930001",
+      "email": "hassong15@gmail.com",
+      "name": "גולן חסון",
+      "tokenBalance": "10",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-17 11:33:44"
+    },
+    {
+      "id": "900001",
+      "email": "m0547300456@gmail.com",
+      "name": "משה אייזנבך",
+      "tokenBalance": "5",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-17 08:12:35"
+    },
+    {
+      "id": "870001",
+      "email": "n1979ss@gmail.com",
+      "name": "נבל",
+      "tokenBalance": "13",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-17 02:37:24"
+    },
+    {
+      "id": "840017",
+      "email": "sunnybajare@gmail.com",
+      "name": "Eksun 3D",
+      "tokenBalance": "5",
+      "reminderSentAt": "1773832429542",
+      "createdAt": "2026-03-16 10:39:45"
+    },
+    {
+      "id": "840016",
+      "email": "danishimon33@gmail.com",
+      "name": "דני שמעונוב",
+      "tokenBalance": "10",
+      "reminderSentAt": "1773786309317",
+      "createdAt": "2026-03-15 21:31:21"
+    },
+    {
+      "id": "840015",
+      "email": "dima@t-print.co.il",
+      "name": "NULL",
+      "tokenBalance": "5",
+      "reminderSentAt": "1773771523301",
+      "createdAt": "2026-03-15 17:48:59"
+    },
+    {
+      "id": "840014",
+      "email": "evengal@013net.net",
+      "name": "אבן גל",
+      "tokenBalance": "10",
+      "reminderSentAt": "1773750978217",
+      "createdAt": "2026-03-15 12:19:51"
+    },
+    {
+      "id": "840013",
+      "email": "liad118811@gmail.com",
+      "name": "NULL",
+      "tokenBalance": "15",
+      "reminderSentAt": "1773736578212",
+      "createdAt": "2026-03-15 08:25:55"
+    },
+    {
+      "id": "840012",
+      "email": "yossi2700apple@gmail.com",
+      "name": "טסט 2",
+      "tokenBalance": "1",
+      "reminderSentAt": "1773648169712",
+      "createdAt": "2026-03-14 07:47:41"
+    },
+    {
+      "id": "840011",
+      "email": "yossi2700xl3@gmail.com",
+      "name": "טסט1",
+      "tokenBalance": "10",
+      "reminderSentAt": "1773645082845",
+      "createdAt": "2026-03-14 07:07:32"
+    },
+    {
+      "id": "840010",
+      "email": "dvaiksel9@gmail.com",
+      "name": "דני",
+      "tokenBalance": "10",
+      "reminderSentAt": "1773620059929",
+      "createdAt": "2026-03-14 00:05:58"
+    },
+    {
+      "id": "840007",
+      "email": "ladaatn@gmail.com",
+      "name": "YAK",
+      "tokenBalance": "22",
+      "reminderSentAt": "1773593301574",
+      "createdAt": "2026-03-13 16:32:15"
+    },
+    {
+      "id": "840004",
+      "email": "yossi2700@icloud.com",
+      "name": "יוסי אייזנבך",
+      "tokenBalance": "20",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-13 13:38:33"
+    },
+    {
+      "id": "840003",
+      "email": "yossi2700@gmail.com",
+      "name": "יוסי",
+      "tokenBalance": "522",
+      "reminderSentAt": "1773581891837",
+      "createdAt": "2026-03-13 13:33:17"
+    },
+    {
+      "id": "810002",
+      "email": "liron.photography@gmail.com",
+      "name": "לירון אלגרבלי",
+      "tokenBalance": "20",
+      "reminderSentAt": "1773477623619",
+      "createdAt": "2026-03-12 08:24:47"
+    },
+    {
+      "id": "810001",
+      "email": "erez.biton@gmail.com",
+      "name": "Erez",
+      "tokenBalance": "20",
+      "reminderSentAt": "1773476571967",
+      "createdAt": "2026-03-12 07:44:55"
+    },
+    {
+      "id": "780001",
+      "email": "eladkb@gmail.com",
+      "name": "Elad",
+      "tokenBalance": "30",
+      "reminderSentAt": "1773470341555",
+      "createdAt": "2026-03-12 06:04:55"
+    },
+    {
+      "id": "750001",
+      "email": "avivi2284@gmail.com",
+      "name": "אביבית קירשנר",
+      "tokenBalance": "27",
+      "reminderSentAt": "1773470341555",
+      "createdAt": "2026-03-12 05:42:31"
+    },
+    {
+      "id": "720001",
+      "email": "ronel037@gmail.com",
+      "name": "Ronel peretz",
+      "tokenBalance": "20",
+      "reminderSentAt": "1773438962264",
+      "createdAt": "2026-03-11 20:52:48"
+    },
+    {
+      "id": "690001",
+      "email": "yaakov20026@gmail.com",
+      "name": "יעקב עמור",
+      "tokenBalance": "20",
+      "reminderSentAt": "1773438597237",
+      "createdAt": "2026-03-11 16:35:38"
+    },
+    {
+      "id": "660001",
+      "email": "maorbayazi@gmail.com",
+      "name": "מאור",
+      "tokenBalance": "20",
+      "reminderSentAt": "1773438597237",
+      "createdAt": "2026-03-11 12:29:46"
+    },
+    {
+      "id": "600002",
+      "email": "ran.tid@outlook.com",
+      "name": "Ran T",
+      "tokenBalance": "67",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-10 17:31:36"
+    },
+    {
+      "id": "600001",
+      "email": "genishmati@gmail.com",
+      "name": "מטי גניש",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-10 09:59:25"
+    },
+    {
+      "id": "570001",
+      "email": "edenturgeman200@gmail.com",
+      "name": "עדן תורגמן",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-09 10:26:43"
+    },
+    {
+      "id": "540001",
+      "email": "asafamar037979@gmail.com",
+      "name": "אסף",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-09 07:44:28"
+    },
+    {
+      "id": "510005",
+      "email": "tatoici@gmail.com",
+      "name": "איציק",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-08 13:16:57"
+    },
+    {
+      "id": "510004",
+      "email": "y0505357632@gmail.com",
+      "name": "יהודה ביאזי",
+      "tokenBalance": "10",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-08 12:59:08"
+    },
+    {
+      "id": "510003",
+      "email": "bayazi@walla.com",
+      "name": "גלעד ביאזי",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-08 11:51:10"
+    },
+    {
+      "id": "510002",
+      "email": "amos2656@gmail.com",
+      "name": "עמוס עטיה",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-08 11:13:30"
+    },
+    {
+      "id": "510001",
+      "email": "noamafia@gmail.com",
+      "name": "afia noam",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-08 11:01:57"
+    },
+    {
+      "id": "480002",
+      "email": "koralg28@gmail.com",
+      "name": "Koralg",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-08 08:55:32"
+    },
+    {
+      "id": "480001",
+      "email": "odelia650@gmail.com",
+      "name": "אודליה",
+      "tokenBalance": "10",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-08 08:32:06"
+    },
+    {
+      "id": "450001",
+      "email": "kogan.vova@mail.ru",
+      "name": "Kogan vova",
+      "tokenBalance": "16",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-06 13:23:54"
+    },
+    {
+      "id": "420001",
+      "email": "matzevotkadima@gmail.com",
+      "name": "מצבות קדימה",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-05 13:52:34"
+    },
+    {
+      "id": "390002",
+      "email": "borkins@bezeqint.net",
+      "name": "מצבות בורקין",
+      "tokenBalance": "53",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-05 10:58:22"
+    },
+    {
+      "id": "390001",
+      "email": "mizrhi88@gmail.com",
+      "name": "yan",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-05 09:31:29"
+    },
+    {
+      "id": "360001",
+      "email": "liel5558@gmail.com",
+      "name": "ליאל",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-05 08:52:08"
+    },
+    {
+      "id": "330002",
+      "email": "cnc6474955@gmail.com",
+      "name": "even veshaish",
+      "tokenBalance": "50",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-04 09:02:32"
+    },
+    {
+      "id": "330001",
+      "email": "sh74eren@gmail.com",
+      "name": "ארנה תורגמן",
+      "tokenBalance": "100",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-04 08:36:44"
+    },
+    {
+      "id": "300001",
+      "email": "cncgal001@gamil.com",
+      "name": "גל",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-03 11:33:37"
+    },
+    {
+      "id": "270003",
+      "email": "7142429@gmail.com",
+      "name": "יוסי",
+      "tokenBalance": "17",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-03 00:28:06"
+    },
+    {
+      "id": "270002",
+      "email": "mizrhi8@walla.com",
+      "name": "Yan",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-02 17:14:08"
+    },
+    {
+      "id": "270001",
+      "email": "erenanegev@gmail.com",
+      "name": "ארנה תורג'מן",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-02 12:55:37"
+    },
+    {
+      "id": "240001",
+      "email": "alony81@gmail.com",
+      "name": "אלון אילוז",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-02 12:09:44"
+    },
+    {
+      "id": "210001",
+      "email": "zvizvi011@gmail.com",
+      "name": "צבי",
+      "tokenBalance": "216",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-02 08:17:06"
+    },
+    {
+      "id": "180001",
+      "email": "aryee07@gmail.com",
+      "name": "ד\"ר אריה",
+      "tokenBalance": "470",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-01 14:23:59"
+    },
+    {
+      "id": "150001",
+      "email": "cncgal001@gmail.com",
+      "name": "גל זברו",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-01 12:10:25"
+    },
+    {
+      "id": "120001",
+      "email": "uzielmoshe@gmail.com",
+      "name": "משה",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-03-01 09:17:13"
+    },
+    {
+      "id": "90001",
+      "email": "dahan2525@gmail.com",
+      "name": "Matan",
+      "tokenBalance": "31",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-02-28 21:07:53"
+    },
+    {
+      "id": "60001",
+      "email": "rbnlr1282@gmail.com",
+      "name": "ליאורה",
+      "tokenBalance": "20",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-02-27 15:18:56"
+    },
+    {
+      "id": "1",
+      "email": "test@example.com",
+      "name": "Test User",
+      "tokenBalance": "15",
+      "reminderSentAt": "NULL",
+      "createdAt": "2026-02-26 03:58:14"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\ttokenBalance\treminderSentAt\tcreatedAt\n1050001\tn0556672751@gmail.com\tנחמן מזרחי\t30\tNULL\t2026-03-18 10:59:01\n1020001\tabnisoam@gmail.com\tבני\t27\tNULL\t2026-03-18 10:14:49\n990001\tshimond148@gmail.com\tשמעון\t8\tNULL\t2026-03-18 09:38:03\n960002\tlinasvidmantas@gmail.com\tLinas Vidmantas\t15\tNULL\t2026-03-17 13:55:55\n960001\tsnail@txgm.com\tSnail\t310\tNULL\t2026-03-17 13:00:19\n930001\thassong15@gmail.com\tגולן חסון\t10\tNULL\t2026-03-17 11:33:44\n900001\tm0547300456@gmail.com\tמשה אייזנבך\t5\tNULL\t2026-03-17 08:12:35\n870001\tn1979ss@gmail.com\tנבל\t13\tNULL\t2026-03-17 02:37:24\n840017\tsunnybajare@gmail.com\tEksun 3D\t5\t1773832429542\t2026-03-16 10:39:45\n840016\tdanishimon33@gmail.com\tדני שמעונוב\t10\t1773786309317\t2026-03-15 21:31:21\n840015\tdima@t-print.co.il\tNULL\t5\t1773771523301\t2026-03-15 17:48:59\n840014\tevengal@013net.net\tאבן גל\t10\t1773750978217\t2026-03-15 12:19:51\n840013\tliad118811@gmail.com\tNULL\t15\t1773736578212\t2026-03-15 08:25:55\n840012\tyossi2700apple@gmail.com\tטסט 2\t1\t1773648169712\t2026-03-14 07:47:41\n840011\tyossi2700xl3@gmail.com\tטסט1\t10\t1773645082845\t2026-03-14 07:07:32\n840010\tdvaiksel9@gmail.com\tדני\t10\t1773620059929\t2026-03-14 00:05:58\n840007\tladaatn@gmail.com\tYAK\t22\t1773593301574\t2026-03-13 16:32:15\n840004\tyossi2700@icloud.com\tיוסי אייזנבך\t20\tNULL\t2026-03-13 13:38:33\n840003\tyossi2700@gmail.com\tיוסי\t522\t1773581891837\t2026-03-13 13:33:17\n810002\tliron.photography@gmail.com\tלירון אלגרבלי\t20\t1773477623619\t2026-03-12 08:24:47\n810001\terez.biton@gmail.com\tErez\t20\t1773476571967\t2026-03-12 07:44:55\n780001\teladkb@gmail.com\tElad\t30\t1773470341555\t2026-03-12 06:04:55\n750001\tavivi2284@gmail.com\tאביבית קירשנר\t27\t1773470341555\t2026-03-12 05:42:31\n720001\tronel037@gmail.com\tRonel peretz\t20\t1773438962264\t2026-03-11 20:52:48\n690001\tyaakov20026@gmail.com\tיעקב עמור\t20\t1773438597237\t2026-03-11 16:35:38\n660001\tmaorbayazi@gmail.com\tמאור\t20\t1773438597237\t2026-03-11 12:29:46\n600002\tran.tid@outlook.com\tRan T\t67\tNULL\t2026-03-10 17:31:36\n600001\tgenishmati@gmail.com\tמטי גניש\t15\tNULL\t2026-03-10 09:59:25\n570001\tedenturgeman200@gmail.com\tעדן תורגמן\t15\tNULL\t2026-03-09 10:26:43\n540001\tasafamar037979@gmail.com\tאסף\t15\tNULL\t2026-03-09 07:44:28\n510005\ttatoici@gmail.com\tאיציק\t15\tNULL\t2026-03-08 13:16:57\n510004\ty0505357632@gmail.com\tיהודה ביאזי\t10\tNULL\t2026-03-08 12:59:08\n510003\tbayazi@walla.com\tגלעד ביאזי\t15\tNULL\t2026-03-08 11:51:10\n510002\tamos2656@gmail.com\tעמוס עטיה\t15\tNULL\t2026-03-08 11:13:30\n510001\tnoamafia@gmail.com\tafia noam\t15\tNULL\t2026-03-08 11:01:57\n480002\tkoralg28@gmail.com\tKoralg\t15\tNULL\t2026-03-08 08:55:32\n480001\todelia650@gmail.com\tאודליה\t10\tNULL\t2026-03-08 08:32:06\n450001\tkogan.vova@mail.ru\tKogan vova\t16\tNULL\t2026-03-06 13:23:54\n420001\tmatzevotkadima@gmail.com\tמצבות קדימה\t15\tNULL\t2026-03-05 13:52:34\n390002\tborkins@bezeqint.net\tמצבות בורקין\t53\tNULL\t2026-03-05 10:58:22\n390001\tmizrhi88@gmail.com\tyan\t15\tNULL\t2026-03-05 09:31:29\n360001\tliel5558@gmail.com\tליאל\t15\tNULL\t2026-03-05 08:52:08\n330002\tcnc6474955@gmail.com\teven veshaish\t50\tNULL\t2026-03-04 09:02:32\n330001\tsh74eren@gmail.com\tארנה תורגמן\t100\tNULL\t2026-03-04 08:36:44\n300001\tcncgal001@gamil.com\tגל\t15\tNULL\t2026-03-03 11:33:37\n270003\t7142429@gmail.com\tיוסי\t17\tNULL\t2026-03-03 00:28:06\n270002\tmizrhi8@walla.com\tYan\t15\tNULL\t2026-03-02 17:14:08\n270001\terenanegev@gmail.com\tארנה תורג'מן\t15\tNULL\t2026-03-02 12:55:37\n240001\talony81@gmail.com\tאלון אילוז\t15\tNULL\t2026-03-02 12:09:44\n210001\tzvizvi011@gmail.com\tצבי\t216\tNULL\t2026-03-02 08:17:06\n180001\taryee07@gmail.com\tד\"ר אריה\t470\tNULL\t2026-03-01 14:23:59\n150001\tcncgal001@gmail.com\tגל זברו\t15\tNULL\t2026-03-01 12:10:25\n120001\tuzielmoshe@gmail.com\tמשה\t15\tNULL\t2026-03-01 09:17:13\n90001\tdahan2525@gmail.com\tMatan\t31\tNULL\t2026-02-28 21:07:53\n60001\trbnlr1282@gmail.com\tליאורה\t20\tNULL\t2026-02-27 15:18:56\n1\ttest@example.com\tTest User\t15\tNULL\t2026-02-26 03:58:14\n",
+  "stderr": "",
+  "execution_time_ms": 1611
+}

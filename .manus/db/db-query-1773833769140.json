@@ -1,0 +1,148 @@
+{
+  "query": "SELECT u.id, u.email, u.name, u.language FROM app_users u WHERE u.email IS NOT NULL AND u.email != '' AND u.id NOT IN (SELECT DISTINCT appUserId FROM campaign_redemptions) AND u.id > 510004 ORDER BY u.createdAt ASC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT u.id, u.email, u.name, u.language FROM app_users u WHERE u.email IS NOT NULL AND u.email != '' AND u.id NOT IN (SELECT DISTINCT appUserId FROM campaign_redemptions) AND u.id > 510004 ORDER BY u.createdAt ASC;",
+  "rows": [
+    {
+      "id": "510005",
+      "email": "tatoici@gmail.com",
+      "name": "איציק",
+      "language": "he"
+    },
+    {
+      "id": "540001",
+      "email": "asafamar037979@gmail.com",
+      "name": "אסף",
+      "language": "he"
+    },
+    {
+      "id": "570001",
+      "email": "edenturgeman200@gmail.com",
+      "name": "עדן תורגמן",
+      "language": "he"
+    },
+    {
+      "id": "600001",
+      "email": "genishmati@gmail.com",
+      "name": "מטי גניש",
+      "language": "he"
+    },
+    {
+      "id": "600002",
+      "email": "ran.tid@outlook.com",
+      "name": "Ran T",
+      "language": "he"
+    },
+    {
+      "id": "660001",
+      "email": "maorbayazi@gmail.com",
+      "name": "מאור",
+      "language": "he"
+    },
+    {
+      "id": "690001",
+      "email": "yaakov20026@gmail.com",
+      "name": "יעקב עמור",
+      "language": "he"
+    },
+    {
+      "id": "720001",
+      "email": "ronel037@gmail.com",
+      "name": "Ronel peretz",
+      "language": "he"
+    },
+    {
+      "id": "810001",
+      "email": "erez.biton@gmail.com",
+      "name": "Erez",
+      "language": "he"
+    },
+    {
+      "id": "810002",
+      "email": "liron.photography@gmail.com",
+      "name": "לירון אלגרבלי",
+      "language": "he"
+    },
+    {
+      "id": "840004",
+      "email": "yossi2700@icloud.com",
+      "name": "יוסי אייזנבך",
+      "language": "he"
+    },
+    {
+      "id": "840010",
+      "email": "dvaiksel9@gmail.com",
+      "name": "דני",
+      "language": "he"
+    },
+    {
+      "id": "840011",
+      "email": "yossi2700xl3@gmail.com",
+      "name": "טסט1",
+      "language": "he"
+    },
+    {
+      "id": "840013",
+      "email": "liad118811@gmail.com",
+      "name": "NULL",
+      "language": "he"
+    },
+    {
+      "id": "840014",
+      "email": "evengal@013net.net",
+      "name": "אבן גל",
+      "language": "he"
+    },
+    {
+      "id": "840015",
+      "email": "dima@t-print.co.il",
+      "name": "NULL",
+      "language": "he"
+    },
+    {
+      "id": "840016",
+      "email": "danishimon33@gmail.com",
+      "name": "דני שמעונוב",
+      "language": "he"
+    },
+    {
+      "id": "840017",
+      "email": "sunnybajare@gmail.com",
+      "name": "Eksun 3D",
+      "language": "he"
+    },
+    {
+      "id": "870001",
+      "email": "n1979ss@gmail.com",
+      "name": "נבל",
+      "language": "he"
+    },
+    {
+      "id": "900001",
+      "email": "m0547300456@gmail.com",
+      "name": "משה אייזנבך",
+      "language": "he"
+    },
+    {
+      "id": "930001",
+      "email": "hassong15@gmail.com",
+      "name": "גולן חסון",
+      "language": "he"
+    },
+    {
+      "id": "960001",
+      "email": "snail@txgm.com",
+      "name": "Snail",
+      "language": "he"
+    },
+    {
+      "id": "960002",
+      "email": "linasvidmantas@gmail.com",
+      "name": "Linas Vidmantas",
+      "language": "he"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\tlanguage\n510005\ttatoici@gmail.com\tאיציק\the\n540001\tasafamar037979@gmail.com\tאסף\the\n570001\tedenturgeman200@gmail.com\tעדן תורגמן\the\n600001\tgenishmati@gmail.com\tמטי גניש\the\n600002\tran.tid@outlook.com\tRan T\the\n660001\tmaorbayazi@gmail.com\tמאור\the\n690001\tyaakov20026@gmail.com\tיעקב עמור\the\n720001\tronel037@gmail.com\tRonel peretz\the\n810001\terez.biton@gmail.com\tErez\the\n810002\tliron.photography@gmail.com\tלירון אלגרבלי\the\n840004\tyossi2700@icloud.com\tיוסי אייזנבך\the\n840010\tdvaiksel9@gmail.com\tדני\the\n840011\tyossi2700xl3@gmail.com\tטסט1\the\n840013\tliad118811@gmail.com\tNULL\the\n840014\tevengal@013net.net\tאבן גל\the\n840015\tdima@t-print.co.il\tNULL\the\n840016\tdanishimon33@gmail.com\tדני שמעונוב\the\n840017\tsunnybajare@gmail.com\tEksun 3D\the\n870001\tn1979ss@gmail.com\tנבל\the\n900001\tm0547300456@gmail.com\tמשה אייזנבך\the\n930001\thassong15@gmail.com\tגולן חסון\the\n960001\tsnail@txgm.com\tSnail\the\n960002\tlinasvidmantas@gmail.com\tLinas Vidmantas\the\n",
+  "stderr": "",
+  "execution_time_ms": 1615
+}

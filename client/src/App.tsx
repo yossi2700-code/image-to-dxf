@@ -23,6 +23,7 @@ import MaintenancePage from "./pages/Maintenance";
 import VerifyEmail from "./pages/VerifyEmail";
 import Pricing from "./pages/Pricing";
 import Landing from "./pages/Landing";
+import Promo from "./pages/Promo";
 import { trpc } from "./lib/trpc";
 import { useEffect, useRef } from "react";
 
@@ -103,6 +104,7 @@ function Router() {
         <Route path={"/verify-email"} component={VerifyEmail} />
         <Route path={"/pricing"} component={Pricing} />
         <Route path={"/landing"} component={Landing} />
+        <Route path={"/promo"} component={Promo} />
         <Route path={"/404"} component={NotFound} />
         {/* Final fallback route */}
         <Route component={NotFound} />

@@ -1,0 +1,28 @@
+{
+  "query": "SELECT u.id, u.email, u.name, u.language FROM app_users u WHERE u.email IS NOT NULL AND u.email != '' AND u.id NOT IN (SELECT DISTINCT appUserId FROM campaign_redemptions) AND u.id > 900001 ORDER BY u.createdAt ASC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT u.id, u.email, u.name, u.language FROM app_users u WHERE u.email IS NOT NULL AND u.email != '' AND u.id NOT IN (SELECT DISTINCT appUserId FROM campaign_redemptions) AND u.id > 900001 ORDER BY u.createdAt ASC;",
+  "rows": [
+    {
+      "id": "930001",
+      "email": "hassong15@gmail.com",
+      "name": "גולן חסון",
+      "language": "he"
+    },
+    {
+      "id": "960001",
+      "email": "snail@txgm.com",
+      "name": "Snail",
+      "language": "he"
+    },
+    {
+      "id": "960002",
+      "email": "linasvidmantas@gmail.com",
+      "name": "Linas Vidmantas",
+      "language": "he"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\tlanguage\n930001\thassong15@gmail.com\tגולן חסון\the\n960001\tsnail@txgm.com\tSnail\the\n960002\tlinasvidmantas@gmail.com\tLinas Vidmantas\the\n",
+  "stderr": "",
+  "execution_time_ms": 1556
+}

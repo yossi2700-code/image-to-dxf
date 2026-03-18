@@ -1,0 +1,115 @@
+{
+  "query": "SELECT * FROM campaign_redemptions ORDER BY redeemedAt DESC LIMIT 100;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT * FROM campaign_redemptions ORDER BY redeemedAt DESC LIMIT 100;",
+  "rows": [
+    {
+      "id": "120001",
+      "campaignCode": "welcome_bonus_2026",
+      "appUserId": "1050001",
+      "tokensAwarded": "20",
+      "redeemedAt": "2026-03-18 11:00:10"
+    },
+    {
+      "id": "90001",
+      "campaignCode": "welcome_bonus_2026",
+      "appUserId": "1020001",
+      "tokensAwarded": "20",
+      "redeemedAt": "2026-03-18 10:16:49"
+    },
+    {
+      "id": "60001",
+      "campaignCode": "welcome_bonus_2026",
+      "appUserId": "990001",
+      "tokensAwarded": "20",
+      "redeemedAt": "2026-03-18 09:39:41"
+    },
+    {
+      "id": "30010",
+      "campaignCode": "email_bonus_2026_03",
+      "appUserId": "450001",
+      "tokensAwarded": "20",
+      "redeemedAt": "2026-03-16 14:16:05"
+    },
+    {
+      "id": "30009",
+      "campaignCode": "welcome_bonus_2026",
+      "appUserId": "840007",
+      "tokensAwarded": "20",
+      "redeemedAt": "2026-03-15 18:03:51"
+    },
+    {
+      "id": "30008",
+      "campaignCode": "email_bonus_2026_03",
+      "appUserId": "840003",
+      "tokensAwarded": "20",
+      "redeemedAt": "2026-03-15 08:02:44"
+    },
+    {
+      "id": "30007",
+      "campaignCode": "welcome_bonus_2026",
+      "appUserId": "780001",
+      "tokensAwarded": "20",
+      "redeemedAt": "2026-03-14 21:22:08"
+    },
+    {
+      "id": "30006",
+      "campaignCode": "welcome_bonus_2026",
+      "appUserId": "840012",
+      "tokensAwarded": "20",
+      "redeemedAt": "2026-03-14 07:48:44"
+    },
+    {
+      "id": "30005",
+      "campaignCode": "welcome_bonus_2026",
+      "appUserId": "840003",
+      "tokensAwarded": "20",
+      "redeemedAt": "2026-03-14 07:09:00"
+    },
+    {
+      "id": "6",
+      "campaignCode": "email_bonus_2026_03",
+      "appUserId": "90001",
+      "tokensAwarded": "15",
+      "redeemedAt": "2026-03-12 21:09:05"
+    },
+    {
+      "id": "5",
+      "campaignCode": "email_bonus_2026_03",
+      "appUserId": "180001",
+      "tokensAwarded": "15",
+      "redeemedAt": "2026-03-12 19:08:55"
+    },
+    {
+      "id": "4",
+      "campaignCode": "email_bonus_2026_03",
+      "appUserId": "210001",
+      "tokensAwarded": "15",
+      "redeemedAt": "2026-03-12 12:57:51"
+    },
+    {
+      "id": "3",
+      "campaignCode": "email_bonus_2026_03",
+      "appUserId": "30001",
+      "tokensAwarded": "15",
+      "redeemedAt": "2026-03-12 11:17:42"
+    },
+    {
+      "id": "2",
+      "campaignCode": "email_bonus_2026_03",
+      "appUserId": "750001",
+      "tokensAwarded": "15",
+      "redeemedAt": "2026-03-12 11:16:06"
+    },
+    {
+      "id": "1",
+      "campaignCode": "email_bonus_2026_03",
+      "appUserId": "60001",
+      "tokensAwarded": "15",
+      "redeemedAt": "2026-03-12 11:13:01"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcampaignCode\tappUserId\ttokensAwarded\tredeemedAt\n120001\twelcome_bonus_2026\t1050001\t20\t2026-03-18 11:00:10\n90001\twelcome_bonus_2026\t1020001\t20\t2026-03-18 10:16:49\n60001\twelcome_bonus_2026\t990001\t20\t2026-03-18 09:39:41\n30010\temail_bonus_2026_03\t450001\t20\t2026-03-16 14:16:05\n30009\twelcome_bonus_2026\t840007\t20\t2026-03-15 18:03:51\n30008\temail_bonus_2026_03\t840003\t20\t2026-03-15 08:02:44\n30007\twelcome_bonus_2026\t780001\t20\t2026-03-14 21:22:08\n30006\twelcome_bonus_2026\t840012\t20\t2026-03-14 07:48:44\n30005\twelcome_bonus_2026\t840003\t20\t2026-03-14 07:09:00\n6\temail_bonus_2026_03\t90001\t15\t2026-03-12 21:09:05\n5\temail_bonus_2026_03\t180001\t15\t2026-03-12 19:08:55\n4\temail_bonus_2026_03\t210001\t15\t2026-03-12 12:57:51\n3\temail_bonus_2026_03\t30001\t15\t2026-03-12 11:17:42\n2\temail_bonus_2026_03\t750001\t15\t2026-03-12 11:16:06\n1\temail_bonus_2026_03\t60001\t15\t2026-03-12 11:13:01\n",
+  "stderr": "",
+  "execution_time_ms": 1601
+}
