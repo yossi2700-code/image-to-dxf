@@ -2242,7 +2242,7 @@ export default function Home() {
                     >
                       {(appUser.name || appUser.email || '?').charAt(0).toUpperCase()}
                     </div>
-                    <span className="text-sm font-bold max-w-[90px] truncate">
+                    <span className="text-sm font-bold max-w-[60px] truncate hidden sm:inline">
                       {appUser.name || appUser.email.split('@')[0]}
                     </span>
                     <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
