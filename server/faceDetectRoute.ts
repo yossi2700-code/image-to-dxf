@@ -319,42 +319,53 @@ async function runFaceDetectJob(
       .png({ compressionLevel: 3 })
       .toBuffer();
 
-    // ── Step C: Generate portrait(s) + AI suggestions in parallel ───────────────
+    // ── Step C: Generate portrait + AI suggestions in parallel ───────────────
     heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
 
-    // If multiple faces detected (up to 2), generate a portrait for each
-    const numPortraits = Math.min(faceCount, 2);
-    
-    if (numPortraits > 1) {
+    const isMultiFace = faceCount >= 2;
+
+    if (isMultiFace) {
       updateJob(jobId, {
-        step: isHe ? `זוהו ${numPortraits} פנים — מצייר ${numPortraits} פורטרטים...` : `Detected ${numPortraits} faces — drawing ${numPortraits} portraits...`,
-        stepEn: `Detected ${numPortraits} faces — drawing ${numPortraits} portraits...`,
+        step: isHe ? `זוהו ${faceCount} פנים — מצייר פורטרט זוגי...` : `Detected ${faceCount} faces — drawing couple portrait...`,
+        stepEn: `Detected ${faceCount} faces — drawing couple portrait...`,
       });
     }
 
-    // Build prompts for multi-face: focus on each face separately
-    const buildMultiFacePrompt = (faceIndex: number, totalFaces: number, basePrompt: string): string => {
+    // Build prompt: single face or multi-face (both people in one image)
+    const buildPortraitPrompt = (basePrompt: string, totalFaces: number): string => {
       if (totalFaces <= 1) return basePrompt;
-      return basePrompt + ` IMPORTANT: This image contains ${totalFaces} faces. Draw ONLY the ${faceIndex === 0 ? "first/left" : "second/right"} face (person ${faceIndex + 1}). Focus exclusively on that individual's face. Ignore the other person(s).`;
+      // Multi-face: draw ALL people together in one image side by side
+      const multiPrefix = totalFaces === 2
+        ? "Convert this photo of TWO people into a single black-and-white line art portrait for laser engraving. " +
+          "CRITICAL: Draw BOTH people together in ONE image, side by side, exactly as they appear in the photo. " +
+          "Preserve each person's unique facial features, expression, and likeness. " +
+          "The two faces should be positioned naturally next to each other, filling the canvas together. "
+        : `Convert this photo of ${totalFaces} people into a single black-and-white line art portrait for laser engraving. ` +
+          `Draw ALL ${totalFaces} people together in ONE image as they appear in the photo. `;
+      // Replace the opening sentence of the base prompt with the multi-face prefix
+      const baseWithoutOpening = basePrompt.replace(
+        /^Convert this face photo into a [^.]+\. /,
+        ""
+      );
+      return multiPrefix + baseWithoutOpening;
     };
 
-    // Override generatePortraitVariation for multi-face with custom prompt
-    const generateWithCustomPrompt = async (faceIdx: number): Promise<PortraitResult> => {
-      if (numPortraits <= 1) return generatePortraitVariation(editSourceBuffer, style, hairline, lineweightMm, minGapMm);
+    const portraitPrompt = buildPortraitPrompt(PORTRAIT_STYLE_PROMPTS[style], faceCount);
+
+    // Generate portrait (single or couple) + AI suggestions in parallel
+    const generateCombinedPortrait = async (): Promise<PortraitResult> => {
       const { toFile } = await import("openai");
       const editFile = await toFile(editSourceBuffer, "face.png", { type: "image/png" });
-      const basePrompt = PORTRAIT_STYLE_PROMPTS[style];
-      const editPrompt = buildMultiFacePrompt(faceIdx, numPortraits, basePrompt);
       const response = await openai.images.edit({
         model: "gpt-image-1",
         image: editFile,
-        prompt: editPrompt,
+        prompt: portraitPrompt,
         n: 1,
         size: "1024x1024",
         quality: "medium",
       });
       const imageData = response.data?.[0];
-      if (!imageData) throw new Error("Failed to generate portrait for face " + (faceIdx + 1));
+      if (!imageData) throw new Error("Failed to generate portrait");
       let rawBuffer: Buffer;
       if (imageData.b64_json) {
         rawBuffer = Buffer.from(imageData.b64_json, "base64");
@@ -372,22 +383,20 @@ async function runFaceDetectJob(
       const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, minGapMm);
       const imgKey = `face-detect-generated/${nanoid()}.png`;
       const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
-      const dxfFilename = `face_portrait_${style}_face${faceIdx + 1}.dxf`;
+      const coupleLabel = isMultiFace ? (isHe ? " (זוגי)" : " (Couple)") : "";
+      const dxfFilename = `face_portrait_${style}${isMultiFace ? "_couple" : ""}.dxf`;
       const dxfKey = `face-detect-dxf/${nanoid()}-${dxfFilename}`;
       const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
-      const faceLabel = numPortraits > 1 ? (isHe ? ` (פנים ${faceIdx + 1})` : ` (Face ${faceIdx + 1})`) : "";
       return {
         imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight,
         style,
-        styleLabel: STYLE_LABELS[style].he + faceLabel,
-        styleLabelEn: STYLE_LABELS[style].en + (numPortraits > 1 ? ` (Face ${faceIdx + 1})` : ""),
+        styleLabel: STYLE_LABELS[style].he + coupleLabel,
+        styleLabelEn: STYLE_LABELS[style].en + (isMultiFace ? " (Couple)" : ""),
       };
     };
 
-    // Generate all portraits + suggestions in parallel
-    const portraitPromises = Array.from({ length: numPortraits }, (_, i) => generateWithCustomPrompt(i));
-    const [portraitResults, suggestions] = await Promise.all([
-      Promise.all(portraitPromises),
+    const [portraitResult, suggestions] = await Promise.all([
+      generateCombinedPortrait(),
       generateAiSuggestions(style, lang),
     ]);
 
@@ -396,7 +405,7 @@ async function runFaceDetectJob(
     const jobAfterGen = getJob(jobId);
     if (!jobAfterGen || jobAfterGen.status === "cancelled") return;
 
-    const images = portraitResults;
+    const images = [portraitResult];
 
     // ── Step D: Log & finish ──────────────────────────────────────────────────
     void logUsageEvent({

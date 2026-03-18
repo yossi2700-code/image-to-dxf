@@ -766,12 +766,12 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
                 </span>
               </div>
               <button
-                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg shrink-0"
-                style={{ background: '#7c3aed', color: 'white', border: 'none' }}
+                className="flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl shrink-0 transition-all active:scale-95"
+                style={{ background: '#ef4444', color: 'white', border: 'none', boxShadow: '0 2px 8px rgba(239,68,68,0.35)' }}
                 onClick={reset}
               >
-                <UserCircle className="w-3.5 h-3.5" />
-                {isRtl ? 'תמונה חדשה' : 'New photo'}
+                <X className="w-4 h-4" />
+                {isRtl ? 'נקה תמונה' : 'Clear image'}
               </button>
             </div>
             {result.faceDescription && (
