@@ -521,20 +521,51 @@ export function AiProcessingAnimation({
   const stopMusicRef = useRef<(() => void) | null>(null);
   const [musicOn, setMusicOn] = useState(false);
 
+  const startFeatureMusic = useCallback(() => {
+    if (feature === "trace") return startTraceMusic();
+    if (feature === "portrait") return startPortraitMusic();
+    if (feature === "redraw") return startRedrawMusic();
+    return startAmbientTones(accentColor);
+  }, [feature, accentColor]);
+
+  // Auto-start music on first user interaction after component mounts
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      if (!stopMusicRef.current) {
+        stopMusicRef.current = startFeatureMusic();
+        setMusicOn(true);
+      }
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+    };
+    // Try to auto-start immediately (works if user already interacted with page)
+    try {
+      stopMusicRef.current = startFeatureMusic();
+      setMusicOn(true);
+    } catch (_) {
+      // Browser blocked autoplay — wait for interaction
+      window.addEventListener('click', handleFirstInteraction);
+      window.addEventListener('keydown', handleFirstInteraction);
+      window.addEventListener('touchstart', handleFirstInteraction);
+    }
+    return () => {
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+    };
+  }, [startFeatureMusic]);
+
   const toggleMusic = useCallback(() => {
     if (musicOn) {
       stopMusicRef.current?.();
       stopMusicRef.current = null;
       setMusicOn(false);
     } else {
-      // Pick music based on feature
-      if (feature === "trace") stopMusicRef.current = startTraceMusic();
-      else if (feature === "portrait") stopMusicRef.current = startPortraitMusic();
-      else if (feature === "redraw") stopMusicRef.current = startRedrawMusic();
-      else stopMusicRef.current = startAmbientTones(accentColor);
+      stopMusicRef.current = startFeatureMusic();
       setMusicOn(true);
     }
-  }, [musicOn, accentColor, feature]);
+  }, [musicOn, startFeatureMusic]);
 
   useEffect(() => () => { stopMusicRef.current?.(); }, []);
 

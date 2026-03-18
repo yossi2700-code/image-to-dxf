@@ -159,6 +159,8 @@ interface FaceDetectTabProps {
   onInsufficientTokens?: () => void;
 }
 
+const PORTRAIT_DEMO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-simple-demo_00723f32.png";
+
 const STYLE_OPTIONS: { value: PortraitStyle; labelHe: string; labelEn: string; descHe: string; descEn: string; illustration: React.ReactNode }[] = [
   {
     value: "simple",
@@ -606,16 +608,27 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
                         border: '2px solid #e2e8f0',
                       }}
                     >
-                      {/* Illustration */}
+                      {/* Illustration — crop left half for simple, right half for detailed */}
                       <div
-                        className="rounded-lg flex items-center justify-center mb-1"
+                        className="rounded-lg overflow-hidden mb-1"
                         style={{
                           width: 72, height: 72,
-                          background: isSelected ? 'rgba(255,255,255,0.15)' : '#f3e8ff',
-                          color: isSelected ? 'white' : '#7c3aed',
+                          border: isSelected ? '2px solid rgba(255,255,255,0.5)' : '2px solid #e9d5ff',
+                          background: '#f8fafc',
                         }}
                       >
-                        {opt.illustration}
+                        <img
+                          src={PORTRAIT_DEMO_URL}
+                          alt={opt.value}
+                          style={{
+                            width: 144,
+                            height: 72,
+                            objectFit: 'cover',
+                            objectPosition: opt.value === 'simple' ? 'left center' : 'right center',
+                            marginLeft: opt.value === 'simple' ? 0 : -72,
+                            display: 'block',
+                          }}
+                        />
                       </div>
                       <p className="text-xs font-bold">
                         {isRtl ? opt.labelHe : opt.labelEn}
