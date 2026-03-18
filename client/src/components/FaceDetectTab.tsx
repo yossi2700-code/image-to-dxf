@@ -159,7 +159,7 @@ interface FaceDetectTabProps {
   onInsufficientTokens?: () => void;
 }
 
-const PORTRAIT_DEMO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-style-comparison-CFAskTsszFvwAbgoiirtVj.webp";
+const PORTRAIT_DEMO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-comparison-v2-V3XEx63MMyZxexy2zzChhD.webp";
 
 const STYLE_OPTIONS: { value: PortraitStyle; labelHe: string; labelEn: string; descHe: string; descEn: string; illustration: React.ReactNode }[] = [
   {
