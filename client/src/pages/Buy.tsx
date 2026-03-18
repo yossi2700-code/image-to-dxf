@@ -210,6 +210,7 @@ export default function Buy() {
   const [cardSuccess, setCardSuccess] = useState(false);
   const [cardFieldsReady, setCardFieldsReady] = useState(false);
   const [cardFieldsMounted, setCardFieldsMounted] = useState(false);
+  const [cardFieldsFallback, setCardFieldsFallback] = useState(false);
   const cardFormRef = useRef<HTMLDivElement>(null);
   const cardFieldsInstanceRef = useRef<{ submit: (data: Record<string, unknown>) => Promise<unknown> } | null>(null);
   const createOrderForCardFieldsMutation = trpc.paypal.createOrderForCardFields.useMutation();
@@ -309,7 +310,11 @@ export default function Buy() {
       });
 
       if (!cardFields.isEligible()) {
-        setCardFieldsReady(false);
+        // Card Fields not eligible — fall back to PayPal guest checkout
+        setCardFieldsFallback(true);
+        setCardFieldsReady(true); // allow submit button to be clickable
+        cardFieldsInstanceRef.current = null; // signal fallback mode
+        setCardFieldsMounted(true);
         return;
       }
 
@@ -348,18 +353,33 @@ export default function Buy() {
   useEffect(() => {
     setCardFieldsMounted(false);
     setCardFieldsReady(false);
+    setCardFieldsFallback(false);
     cardFieldsInstanceRef.current = null;
   }, [selectedPackage, currency]);
 
   async function handleCardSubmit() {
-    if (!cardFieldsInstanceRef.current) { setCardError("שדות הכרטיס לא מוכנים — נסה שוב"); return; }
     setCardLoading(true);
     setCardError(null);
     try {
+      // Fallback mode: Card Fields not eligible, redirect to PayPal with guest checkout
+      if (!cardFieldsInstanceRef.current) {
+        const data = await createOrderMutation.mutateAsync({
+          packageId: selectedPackage,
+          currency,
+          termsAccepted: true,
+          useCard: false,
+        });
+        if (data.approvalUrl) {
+          window.location.href = data.approvalUrl;
+        }
+        return;
+      }
       await cardFieldsInstanceRef.current.submit({});
     } catch (e: unknown) {
       setCardError(e instanceof Error ? e.message : "שגיאה בתשלום — בדוק פרטי כרטיס");
       setCardLoading(false);
+    } finally {
+      if (cardFieldsInstanceRef.current) setCardLoading(false);
     }
   }
 
@@ -682,46 +702,65 @@ export default function Buy() {
                   </div>
                 )}
 
-                {/* Card Fields form */}
-                <div className="space-y-3 mb-4">
-                  {/* Card Number */}
-                  <div>
-                    <label className="block text-xs text-blue-300 mb-1 font-medium">מספר כרטיס</label>
-                    <div
-                      id="card-number-field"
-                      className="w-full h-12 bg-white/10 border border-white/20 rounded-xl px-3 flex items-center"
-                      style={{ minHeight: "48px" }}
-                    />
-                  </div>
-                  {/* Expiry + CVV */}
-                  <div className="grid grid-cols-2 gap-3">
+                {/* Card Fields form — only show if card fields are eligible (not fallback mode) */}
+                {cardFieldsMounted && !cardFieldsFallback && (
+                  <div className="space-y-3 mb-4">
+                    {/* Card Number */}
                     <div>
-                      <label className="block text-xs text-blue-300 mb-1 font-medium">תוקף (MM/YY)</label>
+                      <label className="block text-xs text-blue-300 mb-1 font-medium">מספר כרטיס</label>
                       <div
-                        id="card-expiry-field"
+                        id="card-number-field"
                         className="w-full h-12 bg-white/10 border border-white/20 rounded-xl px-3 flex items-center"
                         style={{ minHeight: "48px" }}
                       />
                     </div>
-                    <div>
-                      <label className="block text-xs text-blue-300 mb-1 font-medium">CVV</label>
-                      <div
-                        id="card-cvv-field"
-                        className="w-full h-12 bg-white/10 border border-white/20 rounded-xl px-3 flex items-center"
-                        style={{ minHeight: "48px" }}
-                      />
+                    {/* Expiry + CVV */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-blue-300 mb-1 font-medium">תוקף (MM/YY)</label>
+                        <div
+                          id="card-expiry-field"
+                          className="w-full h-12 bg-white/10 border border-white/20 rounded-xl px-3 flex items-center"
+                          style={{ minHeight: "48px" }}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-blue-300 mb-1 font-medium">CVV</label>
+                        <div
+                          id="card-cvv-field"
+                          className="w-full h-12 bg-white/10 border border-white/20 rounded-xl px-3 flex items-center"
+                          style={{ minHeight: "48px" }}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
+
+                {/* Always render hidden card field containers so PayPal SDK can find them */}
+                {!cardFieldsMounted && (
+                  <div style={{ display: 'none' }}>
+                    <div id="card-number-field" />
+                    <div id="card-expiry-field" />
+                    <div id="card-cvv-field" />
+                  </div>
+                )}
 
                 {/* Loading indicator while card fields initialize */}
                 {!cardFieldsReady && (
-                  <div className="text-center py-2 text-blue-300 text-xs flex items-center justify-center gap-2">
+                  <div className="text-center py-4 text-blue-300 text-sm flex items-center justify-center gap-2">
                     <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
-                    טוען שדות כרטיס...
+                    מתחבר ל-PayPal...
+                  </div>
+                )}
+
+                {/* Fallback mode info */}
+                {cardFieldsFallback && (
+                  <div className="mb-4 p-4 bg-blue-500/10 border border-blue-400/30 rounded-xl text-center">
+                    <p className="text-blue-200 text-sm font-medium mb-1">תשלום בכרטיס אשראי</p>
+                    <p className="text-blue-300/80 text-xs">לחץ על הכפתור ובדף PayPal שייפתח — לחץ על <strong className="text-white">"Pay with Debit or Credit Card"</strong></p>
                   </div>
                 )}
 
