@@ -351,7 +351,7 @@ async function runFaceDetectJob(
       return sharp(imageBuffer)
         .extract({ left, top, width: Math.min(cropW, origW - left), height: Math.min(cropH, origH - top) })
         .resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-        .png({ compressionLevel: 3 })
+        .png({ compressionLevel: 1 })  // faster compression
         .toBuffer();
     };
 
@@ -364,7 +364,7 @@ async function runFaceDetectJob(
         image: editFile,
         prompt: PORTRAIT_STYLE_PROMPTS[style],
         n: 1,
-        size: "1024x1024",
+        size: isMultiFace ? "512x512" : "1024x1024",  // faster for multi-face
         quality: "medium",
       });
       const imageData = response.data?.[0];
@@ -417,10 +417,20 @@ async function runFaceDetectJob(
       ? sortedFaces.map((_, i) => isHe ? `אדם ${i + 1}` : `Person ${i + 1}`)
       : [""];
 
+    // Pre-crop all faces first (fast), then fire all AI calls simultaneously
+    const cropBuffers = await Promise.all(sortedFaces.map(box => cropFace(box)));
+
     const [portraitResults, suggestions] = await Promise.all([
       Promise.all(
-        sortedFaces.map(async (box, i) => {
-          const cropBuffer = await cropFace(box);
+        cropBuffers.map(async (cropBuffer, i) => {
+          if (isMultiFace) {
+            updateJob(jobId, {
+              step: isHe
+                ? `מצייר פורטרט ${i + 1} מתוך ${sortedFaces.length}...`
+                : `Drawing portrait ${i + 1} of ${sortedFaces.length}...`,
+              stepEn: `Drawing portrait ${i + 1} of ${sortedFaces.length}...`,
+            });
+          }
           return generatePortraitFromCrop(cropBuffer, faceLabels[i] ?? "");
         })
       ),
