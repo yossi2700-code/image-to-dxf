@@ -159,9 +159,80 @@ interface FaceDetectTabProps {
   onInsufficientTokens?: () => void;
 }
 
-const STYLE_OPTIONS: { value: PortraitStyle; labelHe: string; labelEn: string; descHe: string; descEn: string }[] = [
-  { value: "simple",   labelHe: "פשוט",   labelEn: "Simple",   descHe: "קו נקי, דומה מקסימלית לפנים", descEn: "Clean line, maximally faithful to face" },
-  { value: "detailed", labelHe: "מפורט",  labelEn: "Detailed", descHe: "פרטים עשירים, דומה לפנים",   descEn: "Rich detail, faithful to face" },
+const STYLE_OPTIONS: { value: PortraitStyle; labelHe: string; labelEn: string; descHe: string; descEn: string; illustration: React.ReactNode }[] = [
+  {
+    value: "simple",
+    labelHe: "פשוט",
+    labelEn: "Simple",
+    descHe: "קו נקי, דומה מקסימלית לפנים",
+    descEn: "Clean line, maximally faithful to face",
+    illustration: (
+      <svg viewBox="0 0 80 80" width="64" height="64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* Simple portrait: minimal clean lines */}
+        <ellipse cx="40" cy="32" rx="18" ry="22" stroke="currentColor" strokeWidth="2" fill="none"/>
+        {/* Eyes */}
+        <ellipse cx="33" cy="28" rx="3" ry="2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        <ellipse cx="47" cy="28" rx="3" ry="2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        {/* Nose — simple triangle */}
+        <path d="M40 32 L37 40 L43 40" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" fill="none"/>
+        {/* Mouth */}
+        <path d="M34 45 Q40 49 46 45" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+        {/* Chin/jaw */}
+        <path d="M22 38 Q22 58 40 62 Q58 58 58 38" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        {/* Neck */}
+        <path d="M34 54 L34 68" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M46 54 L46 68" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+  {
+    value: "detailed",
+    labelHe: "מפורט",
+    labelEn: "Detailed",
+    descHe: "פרטים עשירים, דומה לפנים",
+    descEn: "Rich detail, faithful to face",
+    illustration: (
+      <svg viewBox="0 0 80 80" width="64" height="64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* Detailed portrait: rich hatching and detail lines */}
+        <ellipse cx="40" cy="32" rx="18" ry="22" stroke="currentColor" strokeWidth="2" fill="none"/>
+        {/* Forehead lines */}
+        <path d="M30 18 Q40 15 50 18" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round" fill="none" opacity="0.5"/>
+        {/* Detailed eyes with lids */}
+        <ellipse cx="33" cy="28" rx="4" ry="2.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        <path d="M29 27 Q33 24 37 27" stroke="currentColor" strokeWidth="1" strokeLinecap="round" fill="none"/>
+        <circle cx="33" cy="28" r="1.2" fill="currentColor" opacity="0.7"/>
+        <ellipse cx="47" cy="28" rx="4" ry="2.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        <path d="M43 27 Q47 24 51 27" stroke="currentColor" strokeWidth="1" strokeLinecap="round" fill="none"/>
+        <circle cx="47" cy="28" r="1.2" fill="currentColor" opacity="0.7"/>
+        {/* Eyebrows */}
+        <path d="M29 24 Q33 22 37 23" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+        <path d="M43 23 Q47 22 51 24" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+        {/* Nose with bridge and nostrils */}
+        <path d="M40 30 L40 40" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+        <path d="M40 40 Q37 42 35 41 Q34 39 36 38" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+        <path d="M40 40 Q43 42 45 41 Q46 39 44 38" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+        {/* Mouth with detail */}
+        <path d="M33 45 Q40 50 47 45" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+        <path d="M35 45 Q40 47 45 45" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round" fill="none" opacity="0.5"/>
+        {/* Cheek lines */}
+        <path d="M24 35 Q23 40 25 45" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round" fill="none" opacity="0.4"/>
+        <path d="M56 35 Q57 40 55 45" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round" fill="none" opacity="0.4"/>
+        {/* Jaw */}
+        <path d="M22 38 Q22 58 40 62 Q58 58 58 38" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        {/* Ear details */}
+        <path d="M22 30 Q19 34 20 38 Q21 42 22 42" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+        <path d="M58 30 Q61 34 60 38 Q59 42 58 42" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+        {/* Hair lines */}
+        <path d="M24 22 Q28 12 40 10 Q52 12 56 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+        <path d="M26 20 Q30 14 40 12" stroke="currentColor" strokeWidth="0.7" strokeLinecap="round" fill="none" opacity="0.4"/>
+        <path d="M54 20 Q50 14 40 12" stroke="currentColor" strokeWidth="0.7" strokeLinecap="round" fill="none" opacity="0.4"/>
+        {/* Neck */}
+        <path d="M34 54 L34 68" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M46 54 L46 68" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M36 60 Q40 62 44 60" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round" fill="none" opacity="0.4"/>
+      </svg>
+    ),
+  },
 ];
 
 export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTabProps) {
@@ -522,7 +593,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
                     <button
                       key={opt.value}
                       onClick={() => setPortraitStyle(opt.value)}
-                      className="rounded-xl p-2.5 text-center transition-all hover:scale-105 active:scale-95"
+                      className="rounded-xl p-2.5 text-center transition-all hover:scale-105 active:scale-95 flex flex-col items-center gap-1"
                       style={isSelected ? {
                         background: gradients[idx % gradients.length],
                         color: 'white',
@@ -535,6 +606,17 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
                         border: '2px solid #e2e8f0',
                       }}
                     >
+                      {/* Illustration */}
+                      <div
+                        className="rounded-lg flex items-center justify-center mb-1"
+                        style={{
+                          width: 72, height: 72,
+                          background: isSelected ? 'rgba(255,255,255,0.15)' : '#f3e8ff',
+                          color: isSelected ? 'white' : '#7c3aed',
+                        }}
+                      >
+                        {opt.illustration}
+                      </div>
                       <p className="text-xs font-bold">
                         {isRtl ? opt.labelHe : opt.labelEn}
                       </p>
@@ -771,6 +853,33 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
                 >
                   {isRtl ? opt.labelHe : opt.labelEn}
                   <span className="block text-xs font-normal opacity-75">{isRtl ? opt.descHe : opt.descEn}</span>
+                </button>
+              ))}
+            </div>
+            {/* Quick AI refinement suggestion chips */}
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {[
+                { he: 'חדד קווי פנים', en: 'Sharpen face lines' },
+                { he: 'יותר פרטים באף', en: 'More nose detail' },
+                { he: 'חזק עיניים', en: 'Stronger eyes' },
+                { he: 'הבראה טבעית יותר', en: 'More natural expression' },
+                { he: 'הוסף פרטי שיער', en: 'Add hair detail' },
+                { he: 'קווי לסת', en: 'Cleaner jaw line' },
+                { he: 'הברא פנים יותר', en: 'Brighter face' },
+              ].map((chip) => (
+                <button
+                  key={chip.en}
+                  onClick={() => {
+                    const input = document.getElementById('portrait-custom-request') as HTMLInputElement;
+                    if (input) {
+                      input.value = isRtl ? chip.he : chip.en;
+                      input.focus();
+                    }
+                  }}
+                  className="text-xs px-2.5 py-1 rounded-full transition-all hover:scale-105"
+                  style={{ background: '#ede9fe', color: '#6d28d9', border: '1px solid #c4b5fd' }}
+                >
+                  {isRtl ? chip.he : chip.en}
                 </button>
               ))}
             </div>
