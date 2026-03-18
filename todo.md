@@ -2003,3 +2003,7 @@
 - [x] Backend: procedure לרישום ביקורים (trackVisit) עם זיהוי מדינה מ-Cloudflare header
 - [x] Frontend: VisitorTracker component ב-App.tsx שמרשם כל ניווט
 - [x] Admin: כרטיס "אנליטיקת מבקרים" בסקירה הכללית — ביקורים היום, סשנות ייחודיות, לפי מדינה, לפי עמוד
+
+## תיקון קישור בונוס ממייל
+
+- [x] כשמגיעים לאתר עם ?campaign=welcome_bonus_2026 ולא מחוברים — לפתוח אוטומטית חלון כניסה

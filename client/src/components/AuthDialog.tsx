@@ -9,7 +9,7 @@ import { Loader2, Mail, Lock, User, Sparkles, Zap, Gift, AlertCircle } from "luc
 import { useLanguage } from "@/contexts/LanguageContext";
 
 /** Why the dialog was opened — controls the header message shown to the user */
-export type AuthReason = "unregistered" | "limit" | "generic";
+export type AuthReason = "unregistered" | "limit" | "generic" | "campaign_bonus";
 
 interface AuthDialogProps {
   open: boolean;
@@ -18,6 +18,8 @@ interface AuthDialogProps {
   limitReached?: boolean;
   /** Reason for opening — determines the header copy */
   authReason?: AuthReason;
+  /** Which mode to open in: 'login' or 'register'. Defaults to 'register'. */
+  initialMode?: "login" | "register";
   onSuccess: (user: { id: number; email: string; name: string | null }, isNewRegistration?: boolean) => void;
 }
 
@@ -73,6 +75,25 @@ function ReasonHeader({ reason }: { reason: AuthReason }) {
     );
   }
 
+  if (reason === "campaign_bonus") {
+    return (
+      <>
+        <div className="flex items-center justify-center mb-3">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #fef3c7, #fde68a)', border: '1px solid #fbbf24' }}>
+            <Gift className="w-8 h-8 text-amber-500" />
+          </div>
+        </div>
+        <DialogTitle className="text-center text-xl font-bold">
+          🎁 20 אסימונים מחכים לך!
+        </DialogTitle>
+        <DialogDescription className="text-center text-sm mt-1">
+          כנס לחשבונך כדי לקבל את 20 האסימונים הבונוס שלך
+        </DialogDescription>
+      </>
+    );
+  }
+
   // generic
   return (
     <>
@@ -86,7 +107,7 @@ function ReasonHeader({ reason }: { reason: AuthReason }) {
   );
 }
 
-export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuccess }: AuthDialogProps) {
+export function AuthDialog({ open, onOpenChange, limitReached, authReason, initialMode, onSuccess }: AuthDialogProps) {
   const { t, isRtl } = useLanguage();
   const [mode, setMode] = useState<Mode>("register");
   const [name, setName] = useState("");
@@ -104,10 +125,10 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, onSuc
   // Resolve effective reason (support legacy limitReached prop)
   const reason: AuthReason = authReason ?? (limitReached ? "limit" : "generic");
 
-  // Always reset to register mode when dialog opens
+  // Reset to initialMode (or register) when dialog opens
   useEffect(() => {
     if (open) {
-      setMode("register");
+      setMode(initialMode ?? "register");
       setName("");
       setEmail("");
       setPassword("");

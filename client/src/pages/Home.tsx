@@ -2046,6 +2046,7 @@ export default function Home() {
   const [authOpen, setAuthOpen] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
   const [authReason, setAuthReason] = useState<AuthReason>("generic");
+  const [authInitialMode, setAuthInitialMode] = useState<"login" | "register">("register");
   const [showTokensBanner, setShowTokensBanner] = useState(false);
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
   const [bonusBannerDismissed, setBonusBannerDismissed] = useState(() => localStorage.getItem('bonus_banner_dismissed') === '1');
@@ -2113,10 +2114,12 @@ export default function Home() {
           localStorage.removeItem("ai_trace_jobId");
           localStorage.removeItem("doc_redraw_jobId");
           localStorage.removeItem("active_tab");
-          // If URL has ?campaign= and user is NOT logged in → open login dialog immediately
+          // If URL has ?campaign= and user is NOT logged in → open LOGIN dialog immediately
+          // (user already registered, they just need to log in to claim the bonus)
           if (campaignCode) {
             setTimeout(() => {
-              setAuthReason("generic");
+              setAuthReason("campaign_bonus");
+              setAuthInitialMode("login");
               setAuthOpen(true);
             }, 400); // small delay so page renders first
           }
@@ -2356,11 +2359,13 @@ export default function Home() {
         onOpenChange={setAuthOpen}
         limitReached={limitReached}
         authReason={authReason}
+        initialMode={authInitialMode}
         onSuccess={(user, isNewRegistration) => {
           localStorage.setItem("app_user_logged_in", "1");
           setAppUser(user);
           setLimitReached(false);
           setAuthReason("generic");
+          setAuthInitialMode("register"); // reset for next open
           // Show welcome banner only for brand-new registrations
           if (isNewRegistration) {
             setShowWelcomeBanner(true);
