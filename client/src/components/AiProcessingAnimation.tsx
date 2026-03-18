@@ -198,131 +198,121 @@ function startTraceMusic(): () => void {
     const ctx = new AudioCtx();
     const master = ctx.createGain();
     master.gain.setValueAtTime(0, ctx.currentTime);
-    master.gain.linearRampToValueAtTime(0.055, ctx.currentTime + 2);
+    master.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 3);
     master.connect(ctx.destination);
     const oscs: OscillatorNode[] = [];
-    // Chord: C4 E4 G4 B4
-    [261.63, 329.63, 392.00, 493.88].forEach((freq, i) => {
+    // Soft Gmaj: G3 B3 D4 — very gentle sine waves, low octave
+    [196.00, 246.94, 293.66].forEach((freq, i) => {
       const osc = ctx.createOscillator();
       const g = ctx.createGain();
       osc.type = "sine";
       osc.frequency.value = freq;
-      g.gain.value = 0.03;
+      g.gain.value = 0.02;
       const lfo = ctx.createOscillator();
       const lfoG = ctx.createGain();
-      lfo.frequency.value = 0.15 + i * 0.04;
-      lfoG.gain.value = freq * 0.0015;
+      lfo.frequency.value = 0.1 + i * 0.025;
+      lfoG.gain.value = freq * 0.003;
       lfo.connect(lfoG); lfoG.connect(osc.frequency); lfo.start();
       osc.connect(g); g.connect(master); osc.start();
       oscs.push(osc, lfo);
     });
-    // Slow ping every 8s
+    // Soft chime every 7s
     const pingTimer = setInterval(() => {
       if (ctx.state === "closed") return;
+      const chimeNotes = [392.00, 493.88, 587.33, 783.99];
+      const freq = chimeNotes[Math.floor(Math.random() * chimeNotes.length)];
       const p = ctx.createOscillator(); const pg = ctx.createGain();
-      p.type = "sine"; p.frequency.value = 523.25;
+      p.type = "sine"; p.frequency.value = freq;
       pg.gain.setValueAtTime(0, ctx.currentTime);
-      pg.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 0.03);
-      pg.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 2.5);
-      p.connect(pg); pg.connect(master); p.start(); p.stop(ctx.currentTime + 2.5);
-    }, 8000);
+      pg.gain.linearRampToValueAtTime(0.022, ctx.currentTime + 0.04);
+      pg.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 4);
+      p.connect(pg); pg.connect(master); p.start(); p.stop(ctx.currentTime + 4);
+    }, 7000);
     return () => {
       clearInterval(pingTimer);
-      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
-      setTimeout(() => { oscs.forEach(o => { try { o.stop(); } catch (_) {} }); try { ctx.close(); } catch (_) {} }, 1000);
+      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
+      setTimeout(() => { oscs.forEach(o => { try { o.stop(); } catch (_) {} }); try { ctx.close(); } catch (_) {} }, 2500);
     };
   } catch (_) { return () => {}; }
 }
 
-/** Portrait: Warm melodic — triangle waves, gentle arpeggios */
+/** Portrait: Soft dreamy — gentle sine pads, slow breathing chord */
 function startPortraitMusic(): () => void {
   try {
     const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ctx = new AudioCtx();
     const master = ctx.createGain();
     master.gain.setValueAtTime(0, ctx.currentTime);
-    master.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 1.5);
+    master.gain.linearRampToValueAtTime(0.045, ctx.currentTime + 3);
     master.connect(ctx.destination);
     const oscs: OscillatorNode[] = [];
-    // Warm pad: A3 C#4 E4
-    [220, 277.18, 329.63].forEach((freq, i) => {
+    // Soft Cmaj7 chord: C3 E3 G3 B3 — very low volume, sine waves only
+    [130.81, 164.81, 196.00, 246.94].forEach((freq, i) => {
       const osc = ctx.createOscillator(); const g = ctx.createGain();
-      osc.type = "triangle"; osc.frequency.value = freq; g.gain.value = 0.035;
+      osc.type = "sine"; osc.frequency.value = freq; g.gain.value = 0.022;
+      // Very slow breathing LFO
       const lfo = ctx.createOscillator(); const lfoG = ctx.createGain();
-      lfo.frequency.value = 0.25 + i * 0.06; lfoG.gain.value = freq * 0.003;
+      lfo.frequency.value = 0.08 + i * 0.02; lfoG.gain.value = freq * 0.004;
       lfo.connect(lfoG); lfoG.connect(osc.frequency); lfo.start();
       osc.connect(g); g.connect(master); osc.start();
       oscs.push(osc, lfo);
     });
-    // Arpeggio notes
-    const arpNotes = [440, 523.25, 659.25, 783.99];
-    let arpIdx = 0;
-    const arpTimer = setInterval(() => {
+    // Gentle soft bell every 6s
+    const bellTimer = setInterval(() => {
       if (ctx.state === "closed") return;
+      const bellNotes = [523.25, 659.25, 783.99, 1046.5];
+      const freq = bellNotes[Math.floor(Math.random() * bellNotes.length)];
       const p = ctx.createOscillator(); const pg = ctx.createGain();
-      p.type = "triangle"; p.frequency.value = arpNotes[arpIdx % arpNotes.length]; arpIdx++;
+      p.type = "sine"; p.frequency.value = freq;
       pg.gain.setValueAtTime(0, ctx.currentTime);
-      pg.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 0.02);
-      pg.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
-      p.connect(pg); pg.connect(master); p.start(); p.stop(ctx.currentTime + 0.6);
-    }, 500);
+      pg.gain.linearRampToValueAtTime(0.025, ctx.currentTime + 0.05);
+      pg.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 3.5);
+      p.connect(pg); pg.connect(master); p.start(); p.stop(ctx.currentTime + 3.5);
+    }, 6000);
     return () => {
-      clearInterval(arpTimer);
-      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
-      setTimeout(() => { oscs.forEach(o => { try { o.stop(); } catch (_) {} }); try { ctx.close(); } catch (_) {} }, 1000);
+      clearInterval(bellTimer);
+      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
+      setTimeout(() => { oscs.forEach(o => { try { o.stop(); } catch (_) {} }); try { ctx.close(); } catch (_) {} }, 2500);
     };
   } catch (_) { return () => {}; }
 }
 
-/** Redraw: Electronic rhythmic — square wave bass + drum-like kicks */
+/** Redraw: Calm focus — soft pulsing pad with gentle harmonic movement */
 function startRedrawMusic(): () => void {
   try {
     const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ctx = new AudioCtx();
     const master = ctx.createGain();
     master.gain.setValueAtTime(0, ctx.currentTime);
-    master.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 0.5);
+    master.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 2.5);
     master.connect(ctx.destination);
     const oscs: OscillatorNode[] = [];
-    // Bass line: sawtooth
-    const bass = ctx.createOscillator(); const bassG = ctx.createGain();
-    bass.type = "sawtooth"; bass.frequency.value = 110; bassG.gain.value = 0.025;
-    bass.connect(bassG); bassG.connect(master); bass.start();
-    oscs.push(bass);
-    // Hi synth
-    const synth = ctx.createOscillator(); const synthG = ctx.createGain();
-    synth.type = "square"; synth.frequency.value = 440; synthG.gain.value = 0.015;
-    const lfo = ctx.createOscillator(); const lfoG = ctx.createGain();
-    lfo.frequency.value = 4; lfoG.gain.value = 20;
-    lfo.connect(lfoG); lfoG.connect(synth.frequency); lfo.start();
-    synth.connect(synthG); synthG.connect(master); synth.start();
-    oscs.push(synth, lfo);
-    // Kick drum simulation every 500ms
-    let beat = 0;
-    const kickTimer = setInterval(() => {
+    // Soft Fmaj chord: F3 A3 C4 — triangle waves for warmth
+    [174.61, 220.00, 261.63].forEach((freq, i) => {
+      const osc = ctx.createOscillator(); const g = ctx.createGain();
+      osc.type = "triangle"; osc.frequency.value = freq; g.gain.value = 0.02;
+      const lfo = ctx.createOscillator(); const lfoG = ctx.createGain();
+      lfo.frequency.value = 0.12 + i * 0.03; lfoG.gain.value = freq * 0.003;
+      lfo.connect(lfoG); lfoG.connect(osc.frequency); lfo.start();
+      osc.connect(g); g.connect(master); osc.start();
+      oscs.push(osc, lfo);
+    });
+    // Soft high note every 5s
+    const noteTimer = setInterval(() => {
       if (ctx.state === "closed") return;
-      beat++;
-      // Kick on beats 1 and 3
-      if (beat % 2 === 1) {
-        const k = ctx.createOscillator(); const kg = ctx.createGain();
-        k.type = "sine"; k.frequency.setValueAtTime(150, ctx.currentTime);
-        k.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.15);
-        kg.gain.setValueAtTime(0.12, ctx.currentTime);
-        kg.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.2);
-        k.connect(kg); kg.connect(master); k.start(); k.stop(ctx.currentTime + 0.2);
-      }
-      // Hi-hat on all beats
-      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.05, ctx.sampleRate);
-      const data = buf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
-      const src = ctx.createBufferSource(); const hg = ctx.createGain();
-      src.buffer = buf; hg.gain.value = beat % 4 === 0 ? 0.06 : 0.03;
-      src.connect(hg); hg.connect(master); src.start();
-    }, 250);
+      const notes = [523.25, 587.33, 659.25, 698.46];
+      const freq = notes[Math.floor(Math.random() * notes.length)];
+      const p = ctx.createOscillator(); const pg = ctx.createGain();
+      p.type = "sine"; p.frequency.value = freq;
+      pg.gain.setValueAtTime(0, ctx.currentTime);
+      pg.gain.linearRampToValueAtTime(0.018, ctx.currentTime + 0.1);
+      pg.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 4);
+      p.connect(pg); pg.connect(master); p.start(); p.stop(ctx.currentTime + 4);
+    }, 5000);
     return () => {
-      clearInterval(kickTimer);
-      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
-      setTimeout(() => { oscs.forEach(o => { try { o.stop(); } catch (_) {} }); try { ctx.close(); } catch (_) {} }, 800);
+      clearInterval(noteTimer);
+      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
+      setTimeout(() => { oscs.forEach(o => { try { o.stop(); } catch (_) {} }); try { ctx.close(); } catch (_) {} }, 2500);
     };
   } catch (_) { return () => {}; }
 }
