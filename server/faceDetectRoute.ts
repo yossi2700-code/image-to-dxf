@@ -257,17 +257,18 @@ async function runFaceDetectJob(
       stepEn: "Detecting face in image...",
     });
     const imageBase64 = imageBuffer.toString("base64");
+    // Detect faces with bounding boxes (normalized 0-1 coordinates)
     const faceCheckResponse = await invokeLLM({
       messages: [
         {
           role: "system",
-          content: "You are a precise face detection system. Analyze the image and count the number of clearly visible human faces. Respond with JSON only.",
+          content: "You are a precise face detection system. Detect all clearly visible human faces in the image and return their bounding boxes as normalized coordinates (0.0 to 1.0). x_min/y_min is top-left, x_max/y_max is bottom-right. Respond with JSON only.",
         },
         {
           role: "user",
           content: [
             { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "high" } },
-            { type: "text", text: "Count the number of clearly visible human faces in this image. Respond with JSON only: {\"faceCount\": <number 0-10>, \"confidence\": \"high\"/\"medium\"/\"low\"}" },
+            { type: "text", text: 'Detect all human faces. Return JSON: {"faces": [{"x_min": 0.1, "y_min": 0.05, "x_max": 0.45, "y_max": 0.6}, ...]}. Use normalized 0-1 coordinates. Include head/hair area with 15% padding around each face.' },
           ],
         },
       ],
@@ -279,10 +280,22 @@ async function runFaceDetectJob(
           schema: {
             type: "object",
             properties: {
-              faceCount: { type: "number" },
-              confidence: { type: "string", enum: ["high", "medium", "low"] },
+              faces: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    x_min: { type: "number" },
+                    y_min: { type: "number" },
+                    x_max: { type: "number" },
+                    y_max: { type: "number" },
+                  },
+                  required: ["x_min", "y_min", "x_max", "y_max"],
+                  additionalProperties: false,
+                },
+              },
             },
-            required: ["faceCount", "confidence"],
+            required: ["faces"],
             additionalProperties: false,
           },
         },
@@ -290,11 +303,15 @@ async function runFaceDetectJob(
     });
     const faceCheckContent = (faceCheckResponse as { choices?: Array<{ message?: { content?: string } }> })
       ?.choices?.[0]?.message?.content ?? "{}";
-    let faceCount = 1;
+    
+    type FaceBox = { x_min: number; y_min: number; x_max: number; y_max: number };
+    let detectedFaces: FaceBox[] = [];
     try {
-      const parsed = JSON.parse(faceCheckContent);
-      faceCount = typeof parsed.faceCount === "number" ? Math.max(0, Math.round(parsed.faceCount)) : 1;
-    } catch { faceCount = 1; } // default to 1 on parse error
+      const parsed = JSON.parse(faceCheckContent) as { faces?: FaceBox[] };
+      detectedFaces = Array.isArray(parsed.faces) ? parsed.faces.slice(0, 4) : [];
+    } catch { detectedFaces = []; }
+    
+    const faceCount = detectedFaces.length;
     
     if (faceCount === 0) {
       // Refund tokens — no face found
@@ -312,54 +329,40 @@ async function runFaceDetectJob(
     const jobAfterFaceCheck = getJob(jobId);
     if (!jobAfterFaceCheck || jobAfterFaceCheck.status === "cancelled") return;
 
-    // ── Step B: Prepare source image ────────────────────────────────────────────────
-    // Use 512px for better face accuracy
-    const editSourceBuffer = await sharp(imageBuffer)
-      .resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-      .png({ compressionLevel: 3 })
-      .toBuffer();
+    // ── Step B: Get original image dimensions for cropping ────────────────────────────────────────────────
+    const origMeta = await sharp(imageBuffer).metadata();
+    const origW = origMeta.width ?? 512;
+    const origH = origMeta.height ?? 512;
 
-    // ── Step C: Generate portrait + AI suggestions in parallel ───────────────
-    heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
-
-    const isMultiFace = faceCount >= 2;
-
-    if (isMultiFace) {
-      updateJob(jobId, {
-        step: isHe ? `זוהו ${faceCount} פנים — מצייר פורטרט זוגי...` : `Detected ${faceCount} faces — drawing couple portrait...`,
-        stepEn: `Detected ${faceCount} faces — drawing couple portrait...`,
-      });
-    }
-
-    // Build prompt: single face or multi-face (both people in one image)
-    const buildPortraitPrompt = (basePrompt: string, totalFaces: number): string => {
-      if (totalFaces <= 1) return basePrompt;
-      // Multi-face: draw ALL people together in one image side by side
-      const multiPrefix = totalFaces === 2
-        ? "Convert this photo of TWO people into a single black-and-white line art portrait for laser engraving. " +
-          "CRITICAL: Draw BOTH people together in ONE image, side by side, exactly as they appear in the photo. " +
-          "Preserve each person's unique facial features, expression, and likeness. " +
-          "The two faces should be positioned naturally next to each other, filling the canvas together. "
-        : `Convert this photo of ${totalFaces} people into a single black-and-white line art portrait for laser engraving. ` +
-          `Draw ALL ${totalFaces} people together in ONE image as they appear in the photo. `;
-      // Replace the opening sentence of the base prompt with the multi-face prefix
-      const baseWithoutOpening = basePrompt.replace(
-        /^Convert this face photo into a [^.]+\. /,
-        ""
-      );
-      return multiPrefix + baseWithoutOpening;
+    // Helper: crop a face from the original image using normalized bbox
+    const cropFace = async (box: { x_min: number; y_min: number; x_max: number; y_max: number }): Promise<Buffer> => {
+      // Add 20% padding around the detected face box
+      const pad = 0.20;
+      const bw = box.x_max - box.x_min;
+      const bh = box.y_max - box.y_min;
+      const x0 = Math.max(0, box.x_min - bw * pad);
+      const y0 = Math.max(0, box.y_min - bh * pad);
+      const x1 = Math.min(1, box.x_max + bw * pad);
+      const y1 = Math.min(1, box.y_max + bh * pad);
+      const left = Math.round(x0 * origW);
+      const top = Math.round(y0 * origH);
+      const cropW = Math.max(64, Math.round((x1 - x0) * origW));
+      const cropH = Math.max(64, Math.round((y1 - y0) * origH));
+      return sharp(imageBuffer)
+        .extract({ left, top, width: Math.min(cropW, origW - left), height: Math.min(cropH, origH - top) })
+        .resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .png({ compressionLevel: 3 })
+        .toBuffer();
     };
 
-    const portraitPrompt = buildPortraitPrompt(PORTRAIT_STYLE_PROMPTS[style], faceCount);
-
-    // Generate portrait (single or couple) + AI suggestions in parallel
-    const generateCombinedPortrait = async (): Promise<PortraitResult> => {
+    // Helper: generate portrait from a cropped face buffer
+    const generatePortraitFromCrop = async (cropBuffer: Buffer, faceLabel: string): Promise<PortraitResult> => {
       const { toFile } = await import("openai");
-      const editFile = await toFile(editSourceBuffer, "face.png", { type: "image/png" });
+      const editFile = await toFile(cropBuffer, "face.png", { type: "image/png" });
       const response = await openai.images.edit({
         model: "gpt-image-1",
         image: editFile,
-        prompt: portraitPrompt,
+        prompt: PORTRAIT_STYLE_PROMPTS[style],
         n: 1,
         size: "1024x1024",
         quality: "medium",
@@ -383,20 +386,44 @@ async function runFaceDetectJob(
       const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, minGapMm);
       const imgKey = `face-detect-generated/${nanoid()}.png`;
       const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
-      const coupleLabel = isMultiFace ? (isHe ? " (זוגי)" : " (Couple)") : "";
-      const dxfFilename = `face_portrait_${style}${isMultiFace ? "_couple" : ""}.dxf`;
+      const dxfFilename = `face_portrait_${style}${faceLabel ? `_${faceLabel}` : ""}.dxf`;
       const dxfKey = `face-detect-dxf/${nanoid()}-${dxfFilename}`;
       const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
       return {
         imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight,
         style,
-        styleLabel: STYLE_LABELS[style].he + coupleLabel,
-        styleLabelEn: STYLE_LABELS[style].en + (isMultiFace ? " (Couple)" : ""),
+        styleLabel: STYLE_LABELS[style].he + (faceLabel ? ` (${faceLabel})` : ""),
+        styleLabelEn: STYLE_LABELS[style].en + (faceLabel ? ` (${faceLabel})` : ""),
       };
     };
 
-    const [portraitResult, suggestions] = await Promise.all([
-      generateCombinedPortrait(),
+    // ── Step C: Crop each face & generate portraits in parallel ───────────────
+    heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
+
+    const isMultiFace = faceCount >= 2;
+
+    if (isMultiFace) {
+      updateJob(jobId, {
+        step: isHe ? `זוהו ${faceCount} פנים — מצייר פורטרט לכל אחד...` : `Detected ${faceCount} faces — drawing portrait for each...`,
+        stepEn: `Detected ${faceCount} faces — drawing portrait for each...`,
+      });
+    }
+
+    // Sort faces left-to-right by x_min so ordering is consistent
+    const sortedFaces = [...detectedFaces].sort((a, b) => a.x_min - b.x_min);
+
+    // Crop and generate portrait for each face in parallel
+    const faceLabels = isMultiFace
+      ? sortedFaces.map((_, i) => isHe ? `אדם ${i + 1}` : `Person ${i + 1}`)
+      : [""];
+
+    const [portraitResults, suggestions] = await Promise.all([
+      Promise.all(
+        sortedFaces.map(async (box, i) => {
+          const cropBuffer = await cropFace(box);
+          return generatePortraitFromCrop(cropBuffer, faceLabels[i] ?? "");
+        })
+      ),
       generateAiSuggestions(style, lang),
     ]);
 
@@ -405,7 +432,7 @@ async function runFaceDetectJob(
     const jobAfterGen = getJob(jobId);
     if (!jobAfterGen || jobAfterGen.status === "cancelled") return;
 
-    const images = [portraitResult];
+    const images = portraitResults;
 
     // ── Step D: Log & finish ──────────────────────────────────────────────────
     void logUsageEvent({
