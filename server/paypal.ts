@@ -54,7 +54,7 @@ export interface CreateOrderParams {
   userId: number;
   returnUrl: string;
   cancelUrl: string;
-  useCard?: boolean; // if true, use card payment source instead of PayPal wallet
+  useCard?: boolean; // if true, show card-first landing page (BILLING) via PayPal guest checkout
 }
 
 export interface PayPalOrderResponse {
@@ -66,6 +66,10 @@ export interface PayPalOrderResponse {
 export async function createPayPalOrder(params: CreateOrderParams): Promise<PayPalOrderResponse> {
   const token = await getAccessToken();
 
+  // Both PayPal and card buttons use payment_source.paypal with GUEST_CHECKOUT.
+  // When useCard=true we set landing_page=NO_PREFERENCE which shows the card option
+  // prominently on the PayPal page (since "PayPal Account Optional" is enabled in the account).
+  // When useCard=false we use GUEST_CHECKOUT which also allows card payments.
   const body = {
     intent: "CAPTURE",
     purchase_units: [
@@ -79,14 +83,14 @@ export async function createPayPalOrder(params: CreateOrderParams): Promise<PayP
         custom_id: String(params.userId),
       },
     ],
-    // Use card or PayPal wallet based on useCard flag
-    // For card: use BILLING landing_page which skips PayPal login and goes straight to card entry
     payment_source: {
       paypal: {
         experience_context: {
           brand_name: "DXF AI",
           locale: "en-US",
-          landing_page: params.useCard ? "BILLING" : "GUEST_CHECKOUT",
+          // GUEST_CHECKOUT: shows "Pay with Debit or Credit Card" option prominently
+          // when "PayPal Account Optional" is enabled in the merchant account.
+          landing_page: "GUEST_CHECKOUT",
           user_action: "PAY_NOW",
           return_url: params.returnUrl,
           cancel_url: params.cancelUrl,

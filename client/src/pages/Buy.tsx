@@ -583,7 +583,7 @@ export default function Buy() {
           </>
         )}
 
-        {/* Credit Card via PayPal Hosted Fields */}
+        {/* Credit Card via PayPal Guest Checkout */}
         {paymentMethod === "card" && (
           <div ref={cardFormRef}>
             {!termsAccepted ? (
@@ -606,6 +606,15 @@ export default function Buy() {
               </div>
             ) : (
               <>
+                {/* Instruction box */}
+                <div className="mb-4 p-3 bg-blue-900/40 border border-blue-500/30 rounded-xl">
+                  <p className="text-blue-200 text-xs leading-relaxed text-center">
+                    <span className="font-bold text-white">איך לשלם בכרטיס:</span>
+                    {" "}לחץ על הכפתור הירוק ← בדף PayPal שייפתח, לחץ על{" "}
+                    <span className="font-bold text-yellow-300">"Pay with Debit or Credit Card"</span>
+                    {" "}← הזן פרטי כרטיס ← סיים תשלום
+                  </p>
+                </div>
                 {cardError && (
                   <div className="mb-3 p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-300 text-sm text-center">
                     {cardError}

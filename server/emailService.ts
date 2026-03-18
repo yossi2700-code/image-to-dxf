@@ -83,8 +83,8 @@ export async function sendWelcomeEmail(opts: {
   const isHe = (opts.language ?? "he") === "he";
   const displayName = opts.name ?? (isHe ? "משתמש יקר" : "there");
   const subject = isHe
-    ? `ברוכים הבאים ל-DXF AI ✨ — ${opts.tokens} אסימונים מחכים לך!`
-    : `Welcome to DXF AI ✨ — Your ${opts.tokens} free tokens are ready!`;
+    ? `ברוכים הבאים ל-DXF AI — ${opts.tokens} אסימונים זמינים בחשבונך`
+    : `Welcome to DXF AI — Your ${opts.tokens} tokens are ready to use`;
 
   const bonusUrl = `${opts.siteUrl}/?campaign=welcome_bonus_2026`;
 
@@ -273,11 +273,16 @@ export async function sendWelcomeEmail(opts: {
     </div>
   `;
 
+  const plainText = isHe
+    ? `שלום ${displayName},\n\nברוכים הבאים ל-DXF AI!\n${opts.tokens} אסימונים זמינים בחשבונך.\n\nכניסה לאתר: ${opts.siteUrl}\n\nצוות DXF AI`
+    : `Hi ${displayName},\n\nWelcome to DXF AI!\nYour ${opts.tokens} tokens are ready to use.\n\nGet started: ${opts.siteUrl}\n\nDXF AI Team`;
+
   await resend.emails.send({
     from: FROM_ADDRESS,
     to: opts.to,
     subject,
     html: isHe ? heHtml : enHtml,
+    text: plainText,
   });
 }
 
@@ -498,7 +503,6 @@ export async function sendBulkEmail(opts: {
     headers: {
       'List-Unsubscribe': `<mailto:noreply@dxfai.net?subject=unsubscribe>, <https://dxfai.net/unsubscribe>`,
       'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-      'Precedence': 'bulk',
     },
   });
 }
@@ -519,8 +523,8 @@ export async function sendReminderEmail(opts: {
   const bonusUrl = `${opts.siteUrl}/?campaign=welcome_bonus_2026`;
 
   const subject = isHe
-    ? "⏰ עוד לא קיבלת את 20 האסימונים שלך — הם מחכים לך!"
-    : "⏰ Your 20 bonus tokens are still waiting for you!";
+    ? "תזכורת: 20 אסימונים מחכים לך ב-DXF AI"
+    : "Reminder: Your 20 bonus tokens at DXF AI";
 
   const heHtml = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -603,11 +607,16 @@ export async function sendReminderEmail(opts: {
 </td></tr></table>
 </body></html>`;
 
+  const reminderPlainText = isHe
+    ? `שלום ${displayName},\n\nנרשמת ל-DXF AI אבל עוד לא קיבלת את 20 האסימונים הבונוס שלך.\n\nלחץ כאן לקבלתם: ${bonusUrl}\n\nצוות DXF AI\ndxfai.net\n\nלהסרה: noreply@dxfai.net`
+    : `Hi ${displayName},\n\nYou signed up for DXF AI but haven't claimed your 20 bonus tokens yet.\n\nClaim them here: ${bonusUrl}\n\nDXF AI Team\ndxfai.net\n\nUnsubscribe: noreply@dxfai.net`;
+
   await resend.emails.send({
-    from: "DXF AI <noreply@dxfai.net>",
+    from: FROM_ADDRESS,
     to: opts.to,
     subject,
     html: isHe ? heHtml : enHtml,
+    text: reminderPlainText,
     headers: {
       'List-Unsubscribe': `<mailto:noreply@dxfai.net?subject=unsubscribe>, <https://dxfai.net/unsubscribe>`,
       'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
