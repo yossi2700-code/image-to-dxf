@@ -152,6 +152,47 @@ export async function capturePayPalOrder(orderId: string): Promise<CaptureResult
   return res.json() as Promise<CaptureResult>;
 }
 
+/**
+ * Creates a PayPal order without payment_source — for use with JS SDK Card Fields.
+ * The JS SDK will attach the card details client-side and capture via the SDK.
+ */
+export async function createPayPalOrderForCardFields(params: Omit<CreateOrderParams, 'returnUrl' | 'cancelUrl' | 'useCard'>): Promise<PayPalOrderResponse> {
+  const token = await getAccessToken();
+
+  const body = {
+    intent: "CAPTURE",
+    purchase_units: [
+      {
+        reference_id: `${params.packageId}_${params.userId}`,
+        description: `${params.tokens} Design Tokens — dxfai.net`,
+        amount: {
+          currency_code: params.currency,
+          value: params.amount,
+        },
+        custom_id: String(params.userId),
+      },
+    ],
+    // No payment_source — JS SDK Card Fields handles this client-side
+  };
+
+  const res = await fetch(`${BASE_URL}/v2/checkout/orders`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      "PayPal-Request-Id": `card-fields-${params.userId}-${Date.now()}`,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`PayPal createOrderForCardFields failed: ${res.status} ${text}`);
+  }
+
+  return res.json() as Promise<PayPalOrderResponse>;
+}
+
 export async function getPayPalOrder(orderId: string): Promise<{ id: string; status: string }> {
   const token = await getAccessToken();
 

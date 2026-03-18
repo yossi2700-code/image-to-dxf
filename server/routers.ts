@@ -13,7 +13,7 @@ import { sendPasswordResetEmail } from "./emailService";
 import { desc, eq, and, sql } from "drizzle-orm";
 import { getAppUserFromCookie } from "./appAuth";
 import { getTokenBalance, addTokens, getTokenTransactions, invalidateTokenCostsCache } from "./tokenService";
-import { createPayPalOrder, capturePayPalOrder } from "./paypal";
+import { createPayPalOrder, capturePayPalOrder, createPayPalOrderForCardFields } from "./paypal";
 import { getPackageById, getPriceForCurrency } from "./products";
 import { sendPurchaseConfirmationEmail, sendBulkEmail } from "./emailService";
 import { notifyOwner } from "./_core/notification";
@@ -1305,6 +1305,71 @@ export const appRouter = router({
         });
         const approvalLink = paypalOrder.links.find((l) => l.rel === "approve" || l.rel === "payer-action");
         return { orderId: paypalOrder.id, approvalUrl: approvalLink?.href };
+      }),
+
+    /** Create order specifically for JS SDK Card Fields (no payment_source) */
+    createOrderForCardFields: publicProcedure
+      .input(z.object({
+        packageId: z.string(),
+        currency: z.string().default("USD"),
+        termsAccepted: z.boolean(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (!input.termsAccepted) throw new TRPCError({ code: "BAD_REQUEST", message: "יש לאשר את תנאי הרכישה" });
+        let appUserId: number;
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "שגיאת מסד נתונים" });
+        if (ctx.user?.email) {
+          let [existingAppUser] = await db.select({ id: appUsers.id }).from(appUsers).where(eq(appUsers.email, ctx.user.email));
+          if (!existingAppUser) {
+            await db.insert(appUsers).values({ email: ctx.user.email, name: ctx.user.name ?? null, tokenBalance: 20, emailVerified: 1 });
+            [existingAppUser] = await db.select({ id: appUsers.id }).from(appUsers).where(eq(appUsers.email, ctx.user.email!));
+          }
+          if (!existingAppUser) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+          appUserId = existingAppUser.id;
+        } else {
+          const cookieUser = getAppUserFromCookie((ctx.req as { cookies?: Record<string, string> }).cookies ?? {});
+          if (!cookieUser) throw new TRPCError({ code: "UNAUTHORIZED", message: "התחבר כדי לרכוש אסימונים" });
+          appUserId = cookieUser.userId;
+        }
+        // Resolve package price
+        let resolvedAmount: string;
+        let resolvedCurrency: string;
+        let resolvedTokens: number;
+        const [dbPkg] = await db.select().from(packagePrices).where(eq(packagePrices.packageId, input.packageId));
+        if (dbPkg) {
+          resolvedTokens = dbPkg.tokenAmount;
+          const currencyMap: Record<string, string> = { USD: dbPkg.priceUSD, EUR: dbPkg.priceEUR, ILS: dbPkg.priceILS, GBP: dbPkg.priceGBP, AUD: dbPkg.priceAUD, CAD: dbPkg.priceCAD, JPY: dbPkg.priceJPY };
+          resolvedAmount = currencyMap[input.currency] ?? dbPkg.priceUSD;
+          resolvedCurrency = currencyMap[input.currency] ? input.currency : "USD";
+        } else {
+          const pkg = getPackageById(input.packageId);
+          if (!pkg) throw new TRPCError({ code: "BAD_REQUEST", message: "חבילה לא קיימת" });
+          const price = getPriceForCurrency(pkg, input.currency);
+          resolvedAmount = price.amount;
+          resolvedCurrency = price.currency;
+          resolvedTokens = pkg.tokens;
+        }
+        const paypalOrder = await createPayPalOrderForCardFields({
+          packageId: input.packageId,
+          tokens: resolvedTokens,
+          amount: resolvedAmount,
+          currency: resolvedCurrency,
+          userId: appUserId,
+        });
+        await db.insert(paypalOrders).values({
+          appUserId,
+          paypalOrderId: paypalOrder.id,
+          packageId: input.packageId,
+          tokenAmount: resolvedTokens,
+          priceAmount: resolvedAmount,
+          currency: resolvedCurrency,
+          status: "pending",
+          tokensCredited: 0,
+          termsAccepted: 1,
+          ipAnon: "",
+        });
+        return { orderId: paypalOrder.id };
       }),
 
     captureOrder: publicProcedure
