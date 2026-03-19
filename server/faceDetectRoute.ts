@@ -597,8 +597,19 @@ router.post(
       // Token deduction happens INSIDE the job after successful completion.
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "face_detect");
-      runFaceDetectJob(jobId, imageBuffer, lang, appUser.userId, ipAnon ?? "", style, uploadedSourceImageUrl, hairline, lineweightMm, minGapMm)
-        .catch((err) => console.error("[faceDetectRoute] Unhandled job error:", err));
+      // 5-minute hard timeout
+      const MAX_FACE_JOB_MS = 5 * 60 * 1000;
+      const faceTimeoutPromise = new Promise<void>((_, reject) =>
+        setTimeout(() => reject(new Error("Job timed out after 5 minutes")), MAX_FACE_JOB_MS)
+      );
+      Promise.race([
+        runFaceDetectJob(jobId, imageBuffer, lang, appUser.userId, ipAnon ?? "", style, uploadedSourceImageUrl, hairline, lineweightMm, minGapMm),
+        faceTimeoutPromise,
+      ]).catch((err) => {
+        const msg = err instanceof Error ? err.message : "Unknown error";
+        console.error("[faceDetectRoute] Job error/timeout:", msg);
+        updateJob(jobId, { status: "error", error: msg });
+      });
 
       return res.json({ jobId });
     } catch (err: unknown) {

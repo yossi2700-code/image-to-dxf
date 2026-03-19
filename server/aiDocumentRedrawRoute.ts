@@ -406,9 +406,19 @@ router.post(
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "ai_trace");
 
-      // Fire-and-forget — does NOT await
-      runDocumentRedrawJob(jobId, imageBuffer, userDesc, appUser.userId, ipAnon ?? "", originalAspect, sourceImageUrl, lang)
-        .catch((err) => console.error("[aiDocumentRedraw] Unhandled job error:", err));
+      // Fire-and-forget with 5-minute hard timeout
+      const MAX_DOC_JOB_MS = 5 * 60 * 1000;
+      const docTimeoutPromise = new Promise<void>((_, reject) =>
+        setTimeout(() => reject(new Error("Job timed out after 5 minutes")), MAX_DOC_JOB_MS)
+      );
+      Promise.race([
+        runDocumentRedrawJob(jobId, imageBuffer, userDesc, appUser.userId, ipAnon ?? "", originalAspect, sourceImageUrl, lang),
+        docTimeoutPromise,
+      ]).catch((err) => {
+        const msg = err instanceof Error ? err.message : "Unknown error";
+        console.error("[aiDocumentRedraw] Job error/timeout:", msg);
+        updateJob(jobId, { status: "error", error: msg });
+      });
 
       // Return job ID immediately
       return res.json({ jobId });

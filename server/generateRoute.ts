@@ -414,8 +414,19 @@ router.post("/api/generate-images", async (req, res) => {
     const jobGroupId = nanoid(12); // pre-generate groupId so all 3 variations share it
     createJob(jobId, appUser.userId, "ai_generate");
 
-    runGenerateJob(jobId, prompt.trim(), modifications, !!landscapeMode, appUser.userId, ipAnon ?? "", !!hairline, lineweightMmGen, minGapMmGen, jobGroupId)
-      .catch((err) => console.error("[generateRoute] Unhandled job error:", err));
+    // 5-minute hard timeout
+    const MAX_GEN_JOB_MS = 5 * 60 * 1000;
+    const genTimeoutPromise = new Promise<void>((_, reject) =>
+      setTimeout(() => reject(new Error("Job timed out after 5 minutes")), MAX_GEN_JOB_MS)
+    );
+    Promise.race([
+      runGenerateJob(jobId, prompt.trim(), modifications, !!landscapeMode, appUser.userId, ipAnon ?? "", !!hairline, lineweightMmGen, minGapMmGen, jobGroupId),
+      genTimeoutPromise,
+    ]).catch((err) => {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      console.error("[generateRoute] Job error/timeout:", msg);
+      updateJob(jobId, { status: "error", error: msg });
+    });
 
     return res.json({ jobId });
 
