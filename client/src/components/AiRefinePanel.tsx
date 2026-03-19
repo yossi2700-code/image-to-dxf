@@ -102,8 +102,11 @@ export function AiRefinePanel({ imageUrl, originalPrompt, onRefined }: AiRefineP
             action: { label: isRtl ? "רכוש אסימונים" : "Buy Tokens", onClick: () => { window.location.href = "/tokens"; } },
             duration: 6000,
           });
+        } else if (data.error === "INVALID_REFINE_INSTRUCTION") {
+          const msg = isRtl ? (data.message || t("refineError")) : (data.messageEn || data.message || t("refineError"));
+          toast.error(msg, { duration: 6000 });
         } else {
-          toast.error(data.error || t("refineError"));
+          toast.error(data.message || data.error || t("refineError"));
         }
         return;
       }

@@ -88,6 +88,44 @@ router.post("/api/ai-refine", async (req, res) => {
       }
     }
 
+    // ── Pre-flight: validate instruction is a modification, not a new creation ──
+    // Use a fast LLM call to detect if the user is trying to generate a completely
+    // different object instead of refining the existing one. No tokens deducted here.
+    if (originalPrompt) {
+      try {
+        const validationResp = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are a strict validator. Answer ONLY with YES or NO. " +
+                "YES = the instruction is a valid modification/refinement of the existing design (e.g. make it thinner, add details, change style, simplify, add shadow, rotate, resize, etc.). " +
+                "NO = the instruction asks to draw/create a completely different object or subject that has nothing to do with the original (e.g. original is a table, instruction says 'draw a bicycle'). " +
+                "If in doubt, answer YES.",
+            },
+            {
+              role: "user",
+              content: `Original design: "${originalPrompt}". Instruction: "${instruction}". Is this a valid modification of the original design?`,
+            },
+          ],
+        });
+        const validationResult = (
+          (validationResp as { choices?: Array<{ message?: { content?: string } }> })
+            ?.choices?.[0]?.message?.content?.trim() || "YES"
+        ).toUpperCase();
+        if (validationResult.startsWith("NO")) {
+          return res.status(400).json({
+            error: "INVALID_REFINE_INSTRUCTION",
+            message: `התיקון חייב להתייחס לעיצוב הנוכחי (${originalPrompt}). לא ניתן ליצור אובייקט חדש לגמרי בתיקון — יש להשתמש ב"צור חדש" במקום.`,
+            messageEn: `The refinement must relate to the current design (${originalPrompt}). You cannot create a completely new object via refinement — please use "Create new" instead.`,
+          });
+        }
+      } catch (validationErr) {
+        // If validation fails, allow the request to proceed (fail open)
+        console.warn("[aiRefineRoute] Instruction validation failed, proceeding:", validationErr);
+      }
+    }
+
     // Token check only — deduction happens after successful AI processing
     const tokenResult = await deductTokens(appUser.userId, "ai_refine", { checkOnly: true });
     if (!tokenResult.success) {
