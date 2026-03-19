@@ -202,69 +202,85 @@ const PORTRAIT_EXAMPLES = [
     label_en: "Woman",
     desc_he: "פורטרט אישה — קווי פנים עדינים, שיער",
     desc_en: "Woman portrait — delicate facial lines, hair",
-    img: `${CDN}/demo-portrait-woman_e956deb2.png`,
+    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-before-woman-MimsfZ4Kt8ejMuUeovqZ27.webp",
+    after:  `${CDN}/demo-portrait-woman_e956deb2.png`,
   },
   {
     label_he: "גבר",
     label_en: "Man",
     desc_he: "פורטרט גבר — זקן, ביטוי, מבנה פנים",
     desc_en: "Man portrait — beard, expression, face structure",
-    img: `${CDN}/demo-portrait-man_1c4399d3.png`,
+    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-before-man-UD4javTj6pqZiu9DBnKKJ5.webp",
+    after:  `${CDN}/demo-portrait-man_1c4399d3.png`,
   },
   {
     label_he: "ילד",
     label_en: "Child",
     desc_he: "פורטרט ילד — קווים נקיים, ביטוי תמים",
     desc_en: "Child portrait — clean lines, innocent expression",
-    img: `${CDN}/demo-portrait-child_d468e82c.png`,
+    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-before-child-MiWQRQgQRWGzhaLcqLYhpg.webp",
+    after:  `${CDN}/demo-portrait-child_d468e82c.png`,
   },
   {
     label_he: "קשיש",
     label_en: "Elder",
     desc_he: "פורטרט קשיש עם משקפיים — קמטים, אופי",
     desc_en: "Elder with glasses — wrinkles, character, depth",
-    img: `${CDN}/demo-portrait-elder-man-iYXPcDc7tcx49xVqpBFbyP.webp`,
+    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-before-elder-UZG5ozD6kLxkgxtW4XAQSv.webp",
+    after:  `${CDN}/demo-portrait-elder-man-iYXPcDc7tcx49xVqpBFbyP.webp`,
   },
 ];
 
-// ─── Portrait Card ────────────────────────────────────────────────────────────
+// ─── Portrait Card (Before/After toggle) ─────────────────────────────────────
 function PortraitCard({ item, isRtl }: { item: typeof PORTRAIT_EXAMPLES[0]; isRtl: boolean }) {
+  const [showAfter, setShowAfter] = useState(false);
   return (
-    <div style={{
-      borderRadius: 16, overflow: "hidden", background: "#fff",
-      boxShadow: "0 4px 20px rgba(124,58,237,0.12)", border: "1px solid #ede9fe",
-      transition: "transform 0.2s, box-shadow 0.2s",
-    }}
+    <div
+      style={{
+        borderRadius: 16, overflow: "hidden", background: "#fff",
+        boxShadow: "0 4px 20px rgba(124,58,237,0.12)", border: "1px solid #ede9fe",
+        cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s",
+      }}
+      onClick={() => setShowAfter(v => !v)}
       onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(-4px)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 10px 32px rgba(124,58,237,0.22)"; }}
       onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = "none"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 20px rgba(124,58,237,0.12)"; }}
     >
-      <div style={{ position: "relative", width: "100%", paddingBottom: "100%", background: "#f8f6ff" }}>
+      <div style={{ position: "relative", width: "100%", paddingBottom: "100%", background: "#f8f6ff", overflow: "hidden" }}>
         <img
-          src={item.img}
+          src={showAfter ? item.after : item.before}
           alt={isRtl ? item.label_he : item.label_en}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "opacity 0.35s" }}
         />
-        {/* DXF badge */}
-        <div style={{
-          position: "absolute", top: 10, right: 10,
-          background: "linear-gradient(135deg,#7c3aed,#a855f7)",
-          color: "#fff", borderRadius: 8, padding: "3px 10px", fontSize: 11, fontWeight: 800,
-          boxShadow: "0 2px 8px rgba(124,58,237,0.4)",
-        }}>DXF</div>
-        {/* Portrait badge */}
+        {/* DXF badge — shown when displaying DXF */}
+        {showAfter && (
+          <div style={{
+            position: "absolute", top: 10, right: 10,
+            background: "linear-gradient(135deg,#7c3aed,#a855f7)",
+            color: "#fff", borderRadius: 8, padding: "3px 10px", fontSize: 11, fontWeight: 800,
+            boxShadow: "0 2px 8px rgba(124,58,237,0.4)",
+          }}>DXF</div>
+        )}
+        {/* Toggle button */}
         <div style={{
           position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)",
-          background: "rgba(124,58,237,0.88)",
-          color: "#fff", borderRadius: 20, padding: "4px 14px", fontSize: 12, fontWeight: 700,
+          background: showAfter
+            ? "linear-gradient(135deg,rgba(99,102,241,0.95),rgba(139,92,246,0.95))"
+            : "linear-gradient(135deg,rgba(16,185,129,0.92),rgba(5,150,105,0.92))",
+          color: "#fff", borderRadius: 20, padding: "6px 16px", fontSize: 12, fontWeight: 700,
           backdropFilter: "blur(4px)", whiteSpace: "nowrap",
+          boxShadow: showAfter ? "0 3px 12px rgba(99,102,241,0.5)" : "0 3px 12px rgba(16,185,129,0.5)",
         }}>
-          {isRtl ? "✦ פורטרט AI" : "✦ AI Portrait"}
+          {showAfter
+            ? (isRtl ? "← חזור לתמונה" : "← Back to photo")
+            : (isRtl ? "👁 הצג DXF" : "👁 Show DXF")}
         </div>
       </div>
       <div style={{ padding: "12px 14px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
           <span style={{ fontWeight: 700, fontSize: 14, color: "#1e1b4b" }}>{isRtl ? item.label_he : item.label_en}</span>
-          <span style={{ fontSize: 11, color: "#7c3aed", fontWeight: 600, background: "#f5f3ff", borderRadius: 6, padding: "2px 7px" }}>Portrait</span>
+          <span style={{ fontSize: 11, color: "#7c3aed", fontWeight: 600, background: "#f5f3ff", borderRadius: 6, padding: "2px 7px" }}>
+            {showAfter ? "DXF" : (isRtl ? "מקור" : "Original")}
+          </span>
         </div>
         <div style={{ fontSize: 11, color: "#6b7280", lineHeight: 1.4 }}>
           {isRtl ? item.desc_he : item.desc_en}
