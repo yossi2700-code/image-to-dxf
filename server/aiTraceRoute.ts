@@ -276,11 +276,17 @@ async function runTraceJob(
           "Include ALL visible elements: sky, horizon, background (mountains/buildings), midground (trees/structures), foreground (ground/plants). " +
           "Describe the full panoramic composition with exact positions. Output ONLY the description (3-5 sentences), no preamble.";
     } else if (focusText) {
-      analysisInstruction =
-        `The user wants to draw: "${focusText}". ` +
-        "Describe ONLY that specific element from the image in detail for line art generation. " +
-        "Focus on: exact camera angle/view, facing direction, body pose, shape, structure, key features, proportions. " +
-        "Output ONLY the description (2-4 sentences), no preamble.";
+      const isCroppedSelection = focusText === "CROPPED_SELECTION";
+      analysisInstruction = isCroppedSelection
+        ? "This image has already been cropped to show a specific object selected by the user. " +
+          "Describe the MAIN OBJECT visible in this cropped image for line art generation. " +
+          "CRITICAL: Describe ONLY what is in this cropped image — ignore nothing, add nothing. " +
+          "Focus on: exact camera angle/view, facing direction, shape, structure, key features, proportions. " +
+          "Output ONLY the description (2-4 sentences), no preamble."
+        : `The user wants to draw: "${focusText}". ` +
+          "Describe ONLY that specific element from the image in detail for line art generation. " +
+          "Focus on: exact camera angle/view, facing direction, body pose, shape, structure, key features, proportions. " +
+          "Output ONLY the description (2-4 sentences), no preamble.";
     } else {
       analysisInstruction = userDesc
         ? `Describe the main object for line art generation. Additional context from user: ${userDesc}. ` +

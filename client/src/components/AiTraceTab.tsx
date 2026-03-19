@@ -1224,7 +1224,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
               setImagePreviewPersisted(croppedDataUrl);
               // Pass forcePreview=true so handleTrace uses previewRef (the crop)
               // even if imageFile state hasn't updated yet (React state is async)
-              setTimeout(() => handleTrace(isRtl ? "האובייקט הנבחר" : "the selected object", undefined, true), 50);
+              // Use CROPPED_SELECTION marker so server knows this is a pre-cropped image
+              setTimeout(() => handleTrace("CROPPED_SELECTION", undefined, true), 50);
             }}
             onDrawDescription={(desc: string) => {
               setIsUnclearImage(false);
