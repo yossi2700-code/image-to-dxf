@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
@@ -367,6 +367,105 @@ function AiExampleCard({ item, isRtl }: { item: typeof AI_EXAMPLES[0]; isRtl: bo
   );
 }
 
+// ─── Demo Video Section ─────────────────────────────────────────────────────
+function DemoVideoSection({ isRtl }: { isRtl: boolean }) {
+  const [muted, setMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !muted;
+      if (!muted === false) {
+        videoRef.current.play();
+      }
+      setMuted(!muted);
+    }
+  };
+
+  return (
+    <section style={{
+      padding: "80px 0",
+      background: "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)",
+      position: "relative",
+      overflow: "hidden",
+    }}>
+      {/* Background glow orbs */}
+      <div style={{ position: "absolute", top: -80, left: "20%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", bottom: -60, right: "15%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(167,139,250,0.20) 0%, transparent 70%)", pointerEvents: "none" }} />
+
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 24px", textAlign: "center", position: "relative", zIndex: 1 }}>
+        {/* Badge */}
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 24, padding: "6px 16px", marginBottom: 20, backdropFilter: "blur(8px)" }}>
+          <span style={{ fontSize: 16 }}>🎬</span>
+          <span style={{ color: "#c4b5fd", fontSize: 13, fontWeight: 600, letterSpacing: 0.5 }}>
+            {isRtl ? "צפה בדמו — כל הפיצ'רים" : "Watch Demo — All Features"}
+          </span>
+        </div>
+
+        {/* Title */}
+        <h2 style={{ fontSize: "clamp(1.6rem,3.5vw,2.4rem)", fontWeight: 900, color: "#fff", marginBottom: 8, lineHeight: 1.2 }}>
+          {isRtl ? "ראה איך זה עובד בפועל" : "See it in action"}
+        </h2>
+        <p style={{ color: "rgba(196,181,253,0.85)", fontSize: 16, marginBottom: 36, maxWidth: 500, margin: "0 auto 36px" }}>
+          {isRtl ? "AI Outline, AI Portrait, AI Create — הכל בסרטון אחד" : "AI Outline, AI Portrait, AI Create — all in one demo"}
+        </p>
+
+        {/* Video wrapper */}
+        <div style={{ position: "relative", borderRadius: 24, overflow: "hidden", boxShadow: "0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08)", background: "#000", maxWidth: "100%" }}>
+          {/* Top bar chrome */}
+          <div style={{ background: "rgba(255,255,255,0.06)", padding: "10px 16px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#ff5f57" }} />
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#febc2e" }} />
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#28c840" }} />
+            <span style={{ marginLeft: 8, color: "rgba(255,255,255,0.4)", fontSize: 12, fontFamily: "monospace" }}>dxfai.ai — Live Demo</span>
+          </div>
+
+          <video
+            ref={videoRef}
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai_dxf_demo_12a02ec1.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            style={{ width: "100%", display: "block", maxHeight: 520 }}
+          />
+
+          {/* Mute/Unmute button overlay */}
+          <button
+            onClick={toggleMute}
+            style={{
+              position: "absolute",
+              bottom: 16,
+              right: 16,
+              background: muted ? "rgba(0,0,0,0.65)" : "rgba(99,102,241,0.85)",
+              border: "1px solid rgba(255,255,255,0.25)",
+              borderRadius: 12,
+              padding: "8px 14px",
+              color: "#fff",
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              backdropFilter: "blur(8px)",
+              transition: "all 0.2s",
+            }}
+          >
+            <span style={{ fontSize: 16 }}>{muted ? "🔇" : "🔊"}</span>
+            <span>{muted ? (isRtl ? "הפעל שמע" : "Unmute") : (isRtl ? "השתק" : "Mute")}</span>
+          </button>
+        </div>
+
+        {/* CTA below video */}
+        <p style={{ color: "rgba(196,181,253,0.6)", fontSize: 13, marginTop: 20 }}>
+          {isRtl ? "לחץ על 🔇 להפעלת השמע" : "Tap 🔇 to enable audio"}
+        </p>
+      </div>
+    </section>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function Landing() {
   const { isRtl, language, setLanguage } = useLanguage();
@@ -501,27 +600,7 @@ export default function Landing() {
       </section>
 
       {/* ── DEMO VIDEO ── */}
-      <section style={{ padding: "56px 24px", background: "#fff" }}>
-        <div style={{ maxWidth: 480, margin: "0 auto", textAlign: "center" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(99,102,241,0.10)", border: "1px solid rgba(99,102,241,0.22)", borderRadius: 20, padding: "5px 14px", marginBottom: 16 }}>
-            <span style={{ fontSize: 14 }}>🎬</span>
-            <span style={{ color: "#6366f1", fontSize: 13, fontWeight: 600 }}>{isRtl ? "צפה בדמו — כל הפיצ'רים" : "Watch Demo — All Features"}</span>
-          </div>
-          <h2 style={{ fontSize: "clamp(1.3rem,2.5vw,1.8rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 24 }}>
-            {isRtl ? "ראה איך זה עובד בפועל" : "See it in action"}
-          </h2>
-          <div style={{ borderRadius: 20, overflow: "hidden", boxShadow: "0 8px 40px rgba(99,102,241,0.18)", border: "2px solid rgba(99,102,241,0.15)", maxWidth: 320, margin: "0 auto" }}>
-            <video
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai_dxf_demo_12a02ec1.mp4"
-              autoPlay
-              muted
-              loop
-              playsInline
-              style={{ width: "100%", display: "block" }}
-            />
-          </div>
-        </div>
-      </section>
+      <DemoVideoSection isRtl={isRtl} />
       {/* ── BEFORE / AFTER GALLERY ── */}
       <section style={{ padding: "72px 24px", background: "#fff" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
