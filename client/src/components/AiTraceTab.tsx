@@ -207,7 +207,8 @@ function MultiObjectDialog({
     const srcImg = new Image();
     srcImg.onload = () => {
       ctx.drawImage(srcImg, rx * scaleX, ry * scaleY, rw * scaleX, rh * scaleY, 0, 0, offscreen.width, offscreen.height);
-      onDrawCrop(offscreen.toDataURL('image/jpeg', 0.9));
+      // Use PNG for lossless quality — important for AI tracing accuracy
+      onDrawCrop(offscreen.toDataURL('image/png'));
     };
     srcImg.src = imagePreview;
   };
@@ -668,14 +669,16 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
     const file = e.dataTransfer.files[0]; if (file) handleFile(file);
   }, [handleFile]);
 
-  const handleTrace = async (overrideFocusText?: string, forceLandscape?: boolean) => {
+  const handleTrace = async (overrideFocusText?: string, forceLandscape?: boolean, forcePreview?: boolean) => {
     if (!imageFile && !previewRef.current) return;
 
     // Use previewRef (not imagePreview state) to read the current preview URL.
     // Reading from state inside an async function can cause stale closures and
     // calling setImagePreviewPersisted here would trigger re-renders causing loops.
     let previewUrl = previewRef.current;
-    if (imageFile && !previewUrl) {
+    // forcePreview=true means the caller already set previewRef to the cropped image;
+    // skip imageFile so we don't accidentally send the original file.
+    if (!forcePreview && imageFile && !previewUrl) {
       // FileReader is async — wait for it before proceeding
       previewUrl = await new Promise<string>((resolve) => {
         const reader = new FileReader();
@@ -691,13 +694,14 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
     setShowSuccessOverlay(false); setStatus("loading"); setResult(null); setErrorMsg(""); setCurrentStep("");
     try {
       const formData = new FormData();
-      if (imageFile) {
+      // When forcePreview is set, always use previewRef (the cropped image) even if imageFile exists
+      if (!forcePreview && imageFile) {
         formData.append("image", imageFile);
       } else if (previewUrl) {
-        // Convert base64/URL preview to blob
+        // Convert base64/URL preview to blob (high quality PNG to preserve crop details)
         const resp = await fetch(previewUrl);
         const blob = await resp.blob();
-        formData.append("image", blob, "image.jpg");
+        formData.append("image", blob, "image.png");
       }
       if (description.trim()) formData.append("description", description.trim());
       const effectiveFocusText = overrideFocusText !== undefined ? overrideFocusText : focusText;
@@ -1215,12 +1219,12 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
               setIsUnclearImage(false);
               setStatus("idle");
               setFullImageMode(false);
-              // Store cropped image as new preview
+              // Store cropped image as new preview — MUST happen before handleTrace
               previewRef.current = croppedDataUrl;
               setImagePreviewPersisted(croppedDataUrl);
-              setImageFile(null); // use preview URL path
-              // Pass a focusText to bypass UNCLEAR_IMAGE check on the server
-              setTimeout(() => handleTrace(isRtl ? "האובייקט הנבחר" : "the selected object"), 50);
+              // Pass forcePreview=true so handleTrace uses previewRef (the crop)
+              // even if imageFile state hasn't updated yet (React state is async)
+              setTimeout(() => handleTrace(isRtl ? "האובייקט הנבחר" : "the selected object", undefined, true), 50);
             }}
             onDrawDescription={(desc: string) => {
               setIsUnclearImage(false);
