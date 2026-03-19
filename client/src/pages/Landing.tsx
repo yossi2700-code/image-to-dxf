@@ -203,7 +203,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט נערה — שיער מתולתל, קווים עדינים",
     desc_en: "Teen girl portrait — curly hair, delicate lines",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-teen_0eb0544e.png",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-teen-girl-8ML89NLBGeeV7mW6L3tgB2.png",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-teen-v2-hHr34s8FR4ExSA3Z8murAn.png",
   },
   {
     label_he: "אישה",
@@ -211,7 +211,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט אישה — שיער קצר, ביטחון",
     desc_en: "Woman portrait — short hair, confidence",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-midwoman_b9ea3bb5.png",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-woman-boxF6Db5tFokZcU4ymgKTy.png",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-woman-v2-AUCXwWEDMSj6JuvGH7hC9f.png",
   },
   {
     label_he: "גבר",
@@ -219,7 +219,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט גבר — זקן, מבנה פנים חזק",
     desc_en: "Man portrait — beard, strong face structure",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-beardman_579be4a0.png",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-man-57WxKfdsGX6jqgKJM453ix.png",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-man-v2-PAN4bhB8dHqs6JCFcRXDph.png",
   },
   {
     label_he: "קשישה",
@@ -227,7 +227,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט קשישה — קמטים, אופי, עומק",
     desc_en: "Elder woman — wrinkles, character, depth",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-eldwoman_5659b216.png",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-elder-woman-b6tczyZoKsmuAcN6aQw2fm.png",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-elder-v2-HnsjKFzUtoB8tbddUtvLmd.png",
   },
 ];
 
