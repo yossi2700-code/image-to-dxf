@@ -2370,20 +2370,7 @@ export default function Home() {
           <div className="shrink-0">
             <LanguageSwitcher />
           </div>
-          {/* Landing page link button */}
-          <a
-            href="/landing"
-            className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:opacity-85 hover:scale-105"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 2px 10px rgba(99,102,241,0.4)' }}
-            title={isRtl ? 'דף פרסום' : 'Marketing page'}
-          >
-            <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-              <path d="M4 16 Q7 7 10 10 Q13 13 16 4" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
-              <circle cx="4" cy="16" r="1.8" fill="#06b6d4"/>
-              <circle cx="10" cy="10" r="1.8" fill="white"/>
-              <circle cx="16" cy="4" r="1.8" fill="#06b6d4"/>
-            </svg>
-          </a>
+
         </div>
       </header>
 
