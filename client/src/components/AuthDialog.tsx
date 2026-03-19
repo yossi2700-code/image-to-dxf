@@ -25,7 +25,8 @@ interface AuthDialogProps {
 
 type Mode = "login" | "register" | "forgot";
 
-function ReasonHeader({ reason }: { reason: AuthReason }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function ReasonHeader({ reason, t }: { reason: AuthReason; t: (key: any) => string }) {
   if (reason === "unregistered") {
     return (
       <>
@@ -36,22 +37,21 @@ function ReasonHeader({ reason }: { reason: AuthReason }) {
           </div>
         </div>
         <DialogTitle className="text-center text-xl font-bold text-gray-800">
-          הרשמה חינמית — 30 שניות בלבד
+          {t("authUnregisteredTitle")}
         </DialogTitle>
         <DialogDescription className="text-center text-sm mt-1">
-          כדי להשתמש ב-AI יש צורך בחשבון חינמי.
+          {t("authUnregisteredDesc")}
         </DialogDescription>
-        {/* Benefits list */}
         <div className="mt-3 space-y-2">
           {[
-            { icon: "✨", text: "AI Outline — המר תמונה לקווי חריטה" },
-            { icon: "🎨", text: "AI יצירה — צור עיצוב מטקסט" },
-            { icon: "📄", text: "AI סקיצה — חלץ ציורים ממסמכים" },
-            { icon: "💾", text: "הורדת DXF / PDF / Vector" },
-          ].map(({ icon, text }, i) => (
+            { icon: "✨", key: "authBenefitOutline" },
+            { icon: "🎨", key: "authBenefitCreate" },
+            { icon: "📄", key: "authBenefitSketch" },
+            { icon: "💾", key: "authBenefitDownload" },
+          ].map(({ icon, key }, i) => (
             <div key={i} className="flex items-center gap-2 text-sm text-gray-600">
               <span className="text-base shrink-0">{icon}</span>
-              <span>{text}</span>
+              <span>{t(key)}</span>
             </div>
           ))}
         </div>
@@ -67,9 +67,9 @@ function ReasonHeader({ reason }: { reason: AuthReason }) {
             <Zap className="w-7 h-7 text-orange-500" />
           </div>
         </div>
-        <DialogTitle className="text-center text-xl">הגעת למגבלת האסימונים</DialogTitle>
+        <DialogTitle className="text-center text-xl">{t("authLimitTitle")}</DialogTitle>
         <DialogDescription className="text-center">
-          הירשם בחינם וקבל <strong>אסימונים נוספים</strong> לשימוש ב-AI!
+          {t("authLimitDesc")}
         </DialogDescription>
       </>
     );
@@ -85,10 +85,10 @@ function ReasonHeader({ reason }: { reason: AuthReason }) {
           </div>
         </div>
         <DialogTitle className="text-center text-xl font-bold">
-          🎁 20 אסימונים מחכים לך!
+          {t("authCampaignTitle")}
         </DialogTitle>
         <DialogDescription className="text-center text-sm mt-1">
-          כנס לחשבונך כדי לקבל את 20 האסימונים הבונוס שלך
+          {t("authCampaignDesc")}
         </DialogDescription>
       </>
     );
@@ -98,10 +98,10 @@ function ReasonHeader({ reason }: { reason: AuthReason }) {
   return (
     <>
       <DialogTitle className="text-center text-xl">
-        הרשמה / כניסה
+        {t("authRegisterTitle")}
       </DialogTitle>
       <DialogDescription className="text-center">
-        צור חשבון חינמי או כנס לחשבון קיים
+        {t("authRegisterDesc")}
       </DialogDescription>
     </>
   );
@@ -164,7 +164,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, initi
       });
       const data = await res.json();
       if (!res.ok) {
-        setInlineError(data.error ?? "שגיאה. נסה שוב.");
+        setInlineError(data.error ?? t("authErrorGeneric"));
       } else {
         setForgotSent(true);
       }
@@ -216,7 +216,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, initi
       const data = await res.json();
 
       if (!res.ok) {
-        setInlineError(data.error ?? "שגיאה. נסה שוב.");
+        setInlineError(data.error ?? t("authErrorGeneric"));
         setLoading(false);
         return;
       }
@@ -240,18 +240,17 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, initi
     <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
       <DialogContent className="sm:max-w-md" dir="rtl">
         <DialogHeader>
-          {/* Show reason-specific header only when NOT in login mode */}
           {mode === "register" ? (
-            <ReasonHeader reason={reason} />
+            <ReasonHeader reason={reason} t={t} />
           ) : mode === "forgot" ? (
             <>
-              <DialogTitle className="text-center text-xl">שכחתי סיסמא</DialogTitle>
-              <DialogDescription className="text-center">הכנס את האימייל שלך ונשלח לך קישור לאיפוס סיסמא</DialogDescription>
+              <DialogTitle className="text-center text-xl">{t("authForgotTitle")}</DialogTitle>
+              <DialogDescription className="text-center">{t("authForgotDesc")}</DialogDescription>
             </>
           ) : (
             <>
-              <DialogTitle className="text-center text-xl">כניסה לחשבון</DialogTitle>
-              <DialogDescription className="text-center">כנס לחשבון שלך</DialogDescription>
+              <DialogTitle className="text-center text-xl">{t("authLoginTitle")}</DialogTitle>
+              <DialogDescription className="text-center">{t("authLoginDesc")}</DialogDescription>
             </>
           )}
         </DialogHeader>
@@ -267,21 +266,21 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, initi
           {forgotSent ? (
             <div className="text-center py-4 space-y-2">
               <div className="text-4xl">📧</div>
-              <p className="font-semibold text-gray-800">מייל נשלח!</p>
-              <p className="text-sm text-muted-foreground">בדוק את התיבת הדואר שלך ולחץ על הקישור לאיפוס סיסמא.</p>
-              <button type="button" className="text-primary underline text-sm" onClick={() => { setMode("login"); reset(); }}>חזור לכניסה</button>
+              <p className="font-semibold text-gray-800">{t("authEmailSent")}</p>
+              <p className="text-sm text-muted-foreground">{t("authEmailSentDesc")}</p>
+              <button type="button" className="text-primary underline text-sm" onClick={() => { setMode("login"); reset(); }}>{t("authBackToLogin")}</button>
             </div>
           ) : (
             <>
           {mode === "register" && (
             <div className="space-y-1.5">
-              <Label htmlFor="name">שם <span className="text-red-500">*</span></Label>
+              <Label htmlFor="name">{t("authNameLabel")} <span className="text-red-500">*</span></Label>
               <div className="relative">
                 <User className="absolute right-3 top-2.5 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="name"
                   type="text"
-                  placeholder="השם שלך"
+                  placeholder={t("authNamePlaceholder")}
                   value={name}
                   onChange={(e) => { setName(e.target.value); if (inlineError && e.target.value.trim()) setInlineError(null); }}
                   className={`pr-9 ${inlineError && !name.trim() ? 'border-red-400 focus-visible:ring-red-400' : ''}`}
@@ -293,7 +292,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, initi
           )}
 
           <div className="space-y-1.5">
-            <Label htmlFor="email">אימייל</Label>
+            <Label htmlFor="email">{t("authEmailLabel")}</Label>
             <div className="relative">
               <Mail className="absolute right-3 top-2.5 w-4 h-4 text-muted-foreground" />
               <Input
@@ -311,13 +310,13 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, initi
 
           {mode !== "forgot" && (
           <div className="space-y-1.5">
-            <Label htmlFor="password">סיסמה</Label>
+            <Label htmlFor="password">{t("authPasswordLabel")}</Label>
             <div className="relative">
               <Lock className="absolute right-3 top-2.5 w-4 h-4 text-muted-foreground" />
               <Input
                 id="password"
                 type="password"
-                placeholder={mode === "register" ? "לפחות 6 תווים" : "הסיסמה שלך"}
+                placeholder={mode === "register" ? t("authPasswordPlaceholderRegister") : t("authPasswordPlaceholderLogin")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -341,7 +340,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, initi
                   htmlFor="rememberMe"
                   className="text-sm text-muted-foreground cursor-pointer select-none"
                 >
-                  זכור אותי
+                  {t("authRememberMe")}
                 </label>
               </div>
               <button type="button" className="text-xs text-muted-foreground underline hover:text-primary" onClick={() => { setMode("forgot"); reset(); }}>{t("authForgotPassword")}</button>
@@ -420,35 +419,35 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, initi
         <div className="text-center text-sm text-muted-foreground mt-2">
           {mode === "register" ? (
             <>
-              כבר יש לך חשבון?{" "}
+              {t("authAlreadyHaveAccount")}{" "}
               <button
                 type="button"
                 className="text-primary underline hover:no-underline font-medium"
                 onClick={() => { setMode("login"); reset(); }}
               >
-                כנס כאן
+                {t("authEnterHere")}
               </button>
             </>
           ) : mode === "forgot" ? (
             <>
-              זכרת את הסיסמא?{" "}
+              {t("authRememberedPassword")}{" "}
               <button
                 type="button"
                 className="text-primary underline hover:no-underline font-medium"
                 onClick={() => { setMode("login"); reset(); }}
               >
-                חזור לכניסה
+                {t("authBackToLogin")}
               </button>
             </>
           ) : (
             <>
-              אין לך חשבון?{" "}
+              {t("authNoAccount")}{" "}
               <button
                 type="button"
                 className="text-primary underline hover:no-underline font-medium"
                 onClick={() => { setMode("register"); reset(); }}
               >
-                הרשם חינם
+                {t("authRegisterFreeShort")}
               </button>
             </>
           )}
