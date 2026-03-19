@@ -62,6 +62,24 @@ async function startServer() {
     return next();
   });
 
+  // ── Primary domain redirect (dxfai.ai) ────────────────────────────────────────
+  // All other domains redirect to dxfai.ai with 301 (SEO-safe permanent redirect)
+  const PRIMARY_DOMAIN = "dxfai.ai";
+  const REDIRECT_DOMAINS = new Set([
+    "dxfai.net", "www.dxfai.net",
+    "dxfai.org", "www.dxfai.org",
+    "www.dxfai.ai",
+    "imagetodxf-hndfdlkz.manus.space",
+  ]);
+  app.use((req, res, next) => {
+    if (process.env.NODE_ENV !== "production") return next();
+    const host = (req.headers.host || "").split(":")[0].toLowerCase();
+    if (REDIRECT_DOMAINS.has(host)) {
+      return res.redirect(301, `https://${PRIMARY_DOMAIN}${req.originalUrl}`);
+    }
+    return next();
+  });
+
   // ── Body parsers ─────────────────────────────────────────────────────────────
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
