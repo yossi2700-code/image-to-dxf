@@ -137,6 +137,261 @@ function ImageCard({ image, index, isRtl, onDownload, onZoom, processingTime }: 
   );
 }
 
+// ─── MultiObjectDialog ────────────────────────────────────────────────────────
+interface MultiObjectDialogProps {
+  isRtl: boolean;
+  imagePreview: string | null;
+  unclearDescription: string;
+  setUnclearDescription: (v: string) => void;
+  onDrawAll: () => void;
+  onDrawCrop: (croppedDataUrl: string) => void;
+  onDrawDescription: (desc: string) => void;
+  onReset: () => void;
+}
+
+function MultiObjectDialog({
+  isRtl, imagePreview, unclearDescription, setUnclearDescription,
+  onDrawAll, onDrawCrop, onDrawDescription, onReset
+}: MultiObjectDialogProps) {
+  const [mode, setMode] = useState<'choose' | 'crop' | 'describe'>('choose');
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+  const [cropStart, setCropStart] = useState<{x:number;y:number} | null>(null);
+  const [cropRect, setCropRect] = useState<{x:number;y:number;w:number;h:number} | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Draw image + crop overlay on canvas
+  const drawCanvas = useCallback((rect?: {x:number;y:number;w:number;h:number} | null) => {
+    const canvas = canvasRef.current;
+    const img = imgRef.current;
+    if (!canvas || !img) return;
+    const ctx = canvas.getContext('2d')!;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    if (rect && (Math.abs(rect.w) > 5 || Math.abs(rect.h) > 5)) {
+      // Darken outside crop
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const rx = rect.w < 0 ? rect.x + rect.w : rect.x;
+      const ry = rect.h < 0 ? rect.y + rect.h : rect.y;
+      const rw = Math.abs(rect.w);
+      const rh = Math.abs(rect.h);
+      ctx.clearRect(rx, ry, rw, rh);
+      ctx.drawImage(img, rx, ry, rw, rh, rx, ry, rw, rh);
+      // Border
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 3]);
+      ctx.strokeRect(rx, ry, rw, rh);
+      ctx.setLineDash([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (mode !== 'crop' || !imagePreview) return;
+    const img = new Image();
+    img.onload = () => {
+      imgRef.current = img;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      // Fit canvas to container width
+      const maxW = Math.min(img.width, 600);
+      const scale = maxW / img.width;
+      canvas.width = maxW;
+      canvas.height = Math.round(img.height * scale);
+      drawCanvas(null);
+    };
+    img.src = imagePreview;
+  }, [mode, imagePreview, drawCanvas]);
+
+  const getPos = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const pos = getPos(e);
+    setCropStart(pos);
+    setCropRect(null);
+    setIsDragging(true);
+  };
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDragging || !cropStart) return;
+    const pos = getPos(e);
+    const r = { x: cropStart.x, y: cropStart.y, w: pos.x - cropStart.x, h: pos.y - cropStart.y };
+    setCropRect(r);
+    drawCanvas(r);
+  };
+  const handleMouseUp = () => { setIsDragging(false); };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const pos = getPos(e);
+    setCropStart(pos); setCropRect(null); setIsDragging(true);
+  };
+  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    if (!isDragging || !cropStart) return;
+    const pos = getPos(e);
+    const r = { x: cropStart.x, y: cropStart.y, w: pos.x - cropStart.x, h: pos.y - cropStart.y };
+    setCropRect(r); drawCanvas(r);
+  };
+  const handleTouchEnd = () => { setIsDragging(false); };
+
+  const handleConfirmCrop = () => {
+    if (!cropRect || !imgRef.current || !canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const img = imgRef.current;
+    const scaleX = img.width / canvas.width;
+    const scaleY = img.height / canvas.height;
+    const rx = (cropRect.w < 0 ? cropRect.x + cropRect.w : cropRect.x) * scaleX;
+    const ry = (cropRect.h < 0 ? cropRect.y + cropRect.h : cropRect.y) * scaleY;
+    const rw = Math.abs(cropRect.w) * scaleX;
+    const rh = Math.abs(cropRect.h) * scaleY;
+    if (rw < 10 || rh < 10) return;
+    const offscreen = document.createElement('canvas');
+    offscreen.width = rw; offscreen.height = rh;
+    const ctx = offscreen.getContext('2d')!;
+    ctx.drawImage(img, rx, ry, rw, rh, 0, 0, rw, rh);
+    onDrawCrop(offscreen.toDataURL('image/jpeg', 0.9));
+  };
+
+  if (mode === 'crop') {
+    return (
+      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #6366f1', boxShadow: '0 4px 24px rgba(99,102,241,0.15)' }}>
+        <div className="px-5 py-3" style={{ background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)' }}>
+          <div className="flex items-center justify-between">
+            <p className="font-bold text-indigo-800 text-sm">{isRtl ? 'גרור לבחור אובייקט' : 'Drag to select an object'}</p>
+            <button onClick={() => setMode('choose')} className="text-indigo-400 hover:text-indigo-600 text-lg">✕</button>
+          </div>
+        </div>
+        <div className="bg-white p-3">
+          <canvas
+            ref={canvasRef}
+            className="w-full rounded-lg cursor-crosshair touch-none"
+            style={{ maxHeight: 400, objectFit: 'contain' }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          />
+          <div className="flex gap-2 mt-3">
+            <button
+              className="flex-1 text-sm px-4 py-2.5 rounded-lg font-semibold text-white transition-all"
+              style={{ background: cropRect && (Math.abs(cropRect.w) > 10 && Math.abs(cropRect.h) > 10) ? '#6366f1' : '#9ca3af', cursor: cropRect ? 'pointer' : 'not-allowed' }}
+              disabled={!cropRect || Math.abs(cropRect.w) < 10 || Math.abs(cropRect.h) < 10}
+              onClick={handleConfirmCrop}
+            >
+              {isRtl ? 'צייר את הנבחר ✓' : 'Draw selected ✓'}
+            </button>
+            <button className="text-sm px-4 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600" onClick={() => setMode('choose')}>
+              {isRtl ? 'חזור' : 'Back'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === 'describe') {
+    return (
+      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #fbbf24', boxShadow: '0 4px 24px rgba(251,191,36,0.15)' }}>
+        <div className="px-5 py-4" style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)' }}>
+          <div className="flex items-center justify-between">
+            <p className="font-bold text-amber-800 text-base">{isRtl ? 'תאר מה לצייר' : 'Describe what to draw'}</p>
+            <button onClick={() => setMode('choose')} className="text-amber-400 hover:text-amber-600 text-lg">✕</button>
+          </div>
+        </div>
+        <div className="px-5 py-4 bg-white">
+          <textarea
+            className="w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-amber-300"
+            rows={3}
+            placeholder={isRtl ? 'למשל: כלב לבן יושב מצד, מנורה עגולה...' : 'e.g. a white dog sitting sideways, a round lamp...'}
+            value={unclearDescription}
+            onChange={(e) => setUnclearDescription(e.target.value)}
+            dir={isRtl ? 'rtl' : 'ltr'}
+            autoFocus
+          />
+          <div className="flex gap-2 mt-3">
+            <button
+              className="flex-1 text-sm px-4 py-2.5 rounded-lg font-semibold text-white"
+              style={{ background: unclearDescription.trim() ? '#0d9488' : '#9ca3af', cursor: unclearDescription.trim() ? 'pointer' : 'not-allowed' }}
+              disabled={!unclearDescription.trim()}
+              onClick={() => onDrawDescription(unclearDescription.trim())}
+            >
+              {isRtl ? 'צייר עכשיו →' : 'Draw now →'}
+            </button>
+            <button className="text-sm px-4 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600" onClick={() => setMode('choose')}>
+              {isRtl ? 'חזור' : 'Back'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Default: choose mode
+  return (
+    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #fbbf24', boxShadow: '0 4px 24px rgba(251,191,36,0.15)' }}>
+      <div className="px-5 py-4" style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)' }}>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl" style={{ background: '#fde68a' }}>🔍</div>
+          <div>
+            <p className="font-bold text-amber-800 text-base">{isRtl ? 'זיהיתי מספר אובייקטים' : 'Multiple objects detected'}</p>
+            <p className="text-xs text-amber-600">{isRtl ? 'בחר כיצד להמשיך' : 'Choose how to proceed'}</p>
+          </div>
+        </div>
+      </div>
+      <div className="px-5 py-4 bg-white flex flex-col gap-3">
+        {/* Option 1: Crop */}
+        <button
+          className="flex items-center gap-3 w-full text-right rounded-xl px-4 py-3 border-2 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50 transition-all"
+          onClick={() => setMode('crop')}
+        >
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0" style={{ background: '#e0e7ff' }}>✂️</div>
+          <div className={isRtl ? 'text-right' : 'text-left'}>
+            <p className="font-semibold text-indigo-800 text-sm">{isRtl ? 'גזור אובייקט ספציפי' : 'Crop a specific object'}</p>
+            <p className="text-xs text-gray-500">{isRtl ? 'גרור לבחור חלק מהתמונה' : 'Drag to select part of the image'}</p>
+          </div>
+        </button>
+        {/* Option 2: Draw all */}
+        <button
+          className="flex items-center gap-3 w-full text-right rounded-xl px-4 py-3 border-2 border-teal-200 hover:border-teal-400 hover:bg-teal-50 transition-all"
+          onClick={onDrawAll}
+        >
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0" style={{ background: '#ccfbf1' }}>🖼️</div>
+          <div className={isRtl ? 'text-right' : 'text-left'}>
+            <p className="font-semibold text-teal-800 text-sm">{isRtl ? 'צייר את כל האובייקטים' : 'Draw all objects'}</p>
+            <p className="text-xs text-gray-500">{isRtl ? 'המר את כל התמונה לווקטור' : 'Convert the entire image to vector'}</p>
+          </div>
+        </button>
+        {/* Option 3: Describe */}
+        <button
+          className="flex items-center gap-3 w-full text-right rounded-xl px-4 py-3 border-2 border-amber-200 hover:border-amber-400 hover:bg-amber-50 transition-all"
+          onClick={() => setMode('describe')}
+        >
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0" style={{ background: '#fde68a' }}>✏️</div>
+          <div className={isRtl ? 'text-right' : 'text-left'}>
+            <p className="font-semibold text-amber-800 text-sm">{isRtl ? 'תאר מה לצייר' : 'Describe what to draw'}</p>
+            <p className="text-xs text-gray-500">{isRtl ? 'הנחה את ה-AI בטקסט' : 'Guide the AI with text'}</p>
+          </div>
+        </button>
+        <button className="text-xs text-gray-400 hover:text-gray-600 mt-1" onClick={onReset}>
+          {isRtl ? 'בחר תמונה אחרת' : 'Choose another image'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 interface AiTraceTabProps { onOpenAuth: () => void; onInsufficientTokens?: () => void; }
 
 export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps) {
@@ -939,63 +1194,36 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
 
         {/* UNCLEAR_IMAGE — special dialog with text input */}
         {status === "error" && isUnclearImage && (
-          <div
-            className="rounded-xl overflow-hidden"
-            style={{ border: '1px solid #fbbf24', boxShadow: '0 4px 24px rgba(251,191,36,0.15)' }}
-          >
-            {/* Header */}
-            <div className="px-5 py-4" style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)' }}>
-              <div className="flex items-center gap-3 mb-1">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-2xl" style={{ background: '#fde68a' }}>
-                  ?
-                </div>
-                <div>
-                  <p className="font-bold text-amber-800 text-base">{isRtl ? "התמונה לא ברורה לי" : "I couldn't identify the image"}</p>
-                  <p className="text-xs text-amber-600">{isRtl ? "צייר רק מה שרואים, לא מפרש" : "I draw only what I see, not interpret"}</p>
-                </div>
-              </div>
-            </div>
-            {/* Body */}
-            <div className="px-5 py-4 bg-white">
-              <p className="text-sm text-gray-600 mb-3">
-                {isRtl
-                  ? "בבקשה רשום בכתב מה בדיוק לצייר (למשל: כלב יושב מצד, מנורה עגולה פשוטה):"
-                  : "Please describe what to draw (e.g. a sitting dog, a simple round lamp):"}
-              </p>
-              <textarea
-                className="w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-amber-300"
-                rows={3}
-                placeholder={isRtl ? "למשל: כלב לבן יושב מצד, מנורה עגולה עם שלשה רגליים..." : "e.g. a white dog sitting sideways, a round lamp with three legs..."}
-                value={unclearDescription}
-                onChange={(e) => setUnclearDescription(e.target.value)}
-                dir={isRtl ? "rtl" : "ltr"}
-                autoFocus
-              />
-              <div className="flex gap-2 mt-3 flex-wrap">
-                <button
-                  className="flex-1 text-sm px-4 py-2.5 rounded-lg font-semibold text-white transition-all"
-                  style={{ background: unclearDescription.trim() ? '#0d9488' : '#9ca3af', cursor: unclearDescription.trim() ? 'pointer' : 'not-allowed' }}
-                  disabled={!unclearDescription.trim()}
-                  onClick={() => {
-                    const desc = unclearDescription.trim();
-                    if (!desc) return;
-                    setIsUnclearImage(false);
-                    setDescription(desc);
-                    setStatus("idle");
-                    setTimeout(() => handleTrace(desc), 50);
-                  }}
-                >
-                  {isRtl ? "צייר עכשיו" : "Draw now"} &rarr;
-                </button>
-                <button
-                  className="text-sm px-4 py-2.5 rounded-lg font-medium bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-200"
-                  onClick={reset}
-                >
-                  {isRtl ? "בחר תמונה אחרת" : "Choose another image"}
-                </button>
-              </div>
-            </div>
-          </div>
+          <MultiObjectDialog
+            isRtl={isRtl}
+            imagePreview={imagePreview}
+            unclearDescription={unclearDescription}
+            setUnclearDescription={setUnclearDescription}
+            onDrawAll={() => {
+              setIsUnclearImage(false);
+              setStatus("idle");
+              setFullImageMode(true);
+              setTimeout(() => handleTrace(undefined, true), 50);
+            }}
+            onDrawCrop={(croppedDataUrl: string) => {
+              // Replace the current image with the cropped version and retrace
+              setIsUnclearImage(false);
+              setStatus("idle");
+              setFullImageMode(false);
+              // Store cropped image as new preview
+              previewRef.current = croppedDataUrl;
+              setImagePreviewPersisted(croppedDataUrl);
+              setImageFile(null); // use preview URL path
+              setTimeout(() => handleTrace(), 50);
+            }}
+            onDrawDescription={(desc: string) => {
+              setIsUnclearImage(false);
+              setDescription(desc);
+              setStatus("idle");
+              setTimeout(() => handleTrace(desc), 50);
+            }}
+            onReset={reset}
+          />
         )}
 
         {/* SCENE_DETECTED — ask user to continue in landscape mode or cancel */}

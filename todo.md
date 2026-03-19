@@ -2015,3 +2015,8 @@
 - [x] Upload new portrait images to CDN and update Landing.tsx URLs
 - [x] Create new demo video: 2 examples per feature, iPhone typing sounds, magic sound, pleasant modern music
 - [x] Upload new video to CDN and update landing page video reference
+
+## Session 5 - Multi-object handling
+- [ ] Replace "unclear image" dialog with multi-object flow: crop tool + "Draw all" button
+- [ ] Built-in crop tool: user drags rectangle to select specific object, then traces only that crop
+- [ ] "Draw all" button: traces the full image with all objects (fullImageMode)
