@@ -155,6 +155,7 @@ function MultiObjectDialog({
 }: MultiObjectDialogProps) {
   const [mode, setMode] = useState<'choose' | 'crop' | 'describe'>('choose');
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const [cropStart, setCropStart] = useState<{x:number;y:number} | null>(null);
   const [cropRect, setCropRect] = useState<{x:number;y:number;w:number;h:number} | null>(null);
@@ -187,22 +188,32 @@ function MultiObjectDialog({
     }
   }, []);
 
+  // Resize canvas to fit container while preserving aspect ratio
+  const resizeCanvas = useCallback((img: HTMLImageElement) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const containerW = canvasContainerRef.current?.clientWidth || Math.min(img.width, 600);
+    const maxH = 400;
+    const scaleByW = containerW / img.width;
+    const scaleByH = maxH / img.height;
+    const scale = Math.min(scaleByW, scaleByH, 1); // never upscale
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+    // Reset any inline CSS so canvas displays at its natural pixel size
+    canvas.style.width = '';
+    canvas.style.height = '';
+    drawCanvas(null);
+  }, [drawCanvas]);
+
   useEffect(() => {
     if (mode !== 'crop' || !imagePreview) return;
     const img = new Image();
     img.onload = () => {
       imgRef.current = img;
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      // Fit canvas to container width
-      const maxW = Math.min(img.width, 600);
-      const scale = maxW / img.width;
-      canvas.width = maxW;
-      canvas.height = Math.round(img.height * scale);
-      drawCanvas(null);
+      resizeCanvas(img);
     };
     img.src = imagePreview;
-  }, [mode, imagePreview, drawCanvas]);
+  }, [mode, imagePreview, resizeCanvas]);
 
   const getPos = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current!;
@@ -270,11 +281,11 @@ function MultiObjectDialog({
             <button onClick={() => setMode('choose')} className="text-indigo-400 hover:text-indigo-600 text-lg">✕</button>
           </div>
         </div>
-        <div className="bg-white p-3">
+        <div className="bg-white p-3" ref={canvasContainerRef}>
           <canvas
             ref={canvasRef}
-            className="w-full rounded-lg cursor-crosshair touch-none"
-            style={{ maxHeight: 400, objectFit: 'contain' }}
+            className="rounded-lg cursor-crosshair touch-none block mx-auto"
+            style={{ maxWidth: '100%' }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}

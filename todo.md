@@ -2020,3 +2020,7 @@
 - [ ] Replace "unclear image" dialog with multi-object flow: crop tool + "Draw all" button
 - [ ] Built-in crop tool: user drags rectangle to select specific object, then traces only that crop
 - [ ] "Draw all" button: traces the full image with all objects (fullImageMode)
+
+## תיקון כלי חיתוך - מרץ 2026
+
+- [x] תיקון באג: מלבן הבחירה מופיע במקום הלא נכון בכלי הגרירה (MultiObjectDialog)
