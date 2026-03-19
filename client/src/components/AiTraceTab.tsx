@@ -408,7 +408,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
     const file = e.dataTransfer.files[0]; if (file) handleFile(file);
   }, [handleFile]);
 
-  const handleTrace = async (overrideFocusText?: string) => {
+  const handleTrace = async (overrideFocusText?: string, forceLandscape?: boolean) => {
     if (!imageFile && !previewRef.current) return;
 
     // Use previewRef (not imagePreview state) to read the current preview URL.
@@ -443,7 +443,9 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
       const effectiveFocusText = overrideFocusText !== undefined ? overrideFocusText : focusText;
       if (effectiveFocusText.trim()) formData.append("focusText", effectiveFocusText.trim());
       formData.append("lang", language);
-      formData.append("landscapeMode", fullImageMode ? "true" : "false");
+      // Use forceLandscape override to avoid stale React state closure (double-confirmation bug fix)
+      const effectiveLandscapeMode = forceLandscape !== undefined ? forceLandscape : fullImageMode;
+      formData.append("landscapeMode", effectiveLandscapeMode ? "true" : "false");
       formData.append("variationIndex", String(detailLevel));
       const lwVal = parseFloat(lineweightMm);
       if (!isNaN(lwVal) && lwVal >= 0) formData.append("lineweightMm", String(lwVal));
@@ -1033,7 +1035,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                     setIsSceneDetected(false);
                     setStatus("idle");
                     setFullImageMode(true);
-                    setTimeout(() => handleTrace(), 50);
+                    // Pass forceLandscape=true directly to avoid stale React state (double-confirmation bug fix)
+                    setTimeout(() => handleTrace(undefined, true), 50);
                   }}
                 >
                   {isRtl ? "✓ כן, צייר את כל הנוף" : "✓ Yes, draw the full scene"}
