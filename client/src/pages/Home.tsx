@@ -2140,11 +2140,30 @@ export default function Home() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [userMenuOpen]);
 
+  const clearAllResultCaches = () => {
+    localStorage.removeItem("app_user_logged_in");
+    localStorage.removeItem("ai_generate_result");
+    localStorage.removeItem("ai_generate_prompt");
+    localStorage.removeItem("ai_generate_jobId");
+    localStorage.removeItem("ai_trace_result");
+    localStorage.removeItem("ai_trace_imagePreview");
+    localStorage.removeItem("ai_trace_jobId");
+    localStorage.removeItem("doc_redraw_result");
+    localStorage.removeItem("doc_redraw_imagePreview");
+    localStorage.removeItem("doc_redraw_jobId");
+    localStorage.removeItem("face_detect_result");
+    localStorage.removeItem("face_detect_imagePreview");
+    localStorage.removeItem("face_detect_jobId");
+    localStorage.removeItem("active_tab");
+  };
+
   const handleLogout = async () => {
     await fetch("/api/app-auth/logout", { method: "POST", credentials: "include" });
-    localStorage.removeItem("app_user_logged_in");
+    clearAllResultCaches();
     setAppUser(null);
     toast.success(t("loggedOutSuccess"));
+    // Reload to clear all React state (tab results, images, etc.)
+    window.location.reload();
   };
 
   return (
