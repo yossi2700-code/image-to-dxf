@@ -202,61 +202,75 @@ const PORTRAIT_EXAMPLES = [
     label_en: "Teen Girl",
     desc_he: "פורטרט נערה — שיער מתולתל, קווים עדינים",
     desc_en: "Teen girl portrait — curly hair, delicate lines",
-    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-comparison-teen_89f988fd.png",
+    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-teen-Hx5cBJBHjbVyLGXAMpMGLG.webp",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait3-dxf-teen-AnsUf2pD3g7cRrBGE29vPT.webp",
   },
   {
     label_he: "אישה",
     label_en: "Woman",
     desc_he: "פורטרט אישה — שיער קצר, ביטחון",
     desc_en: "Woman portrait — short hair, confidence",
-    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-comparison-midwoman_4c674f13.png",
+    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-midwoman-vFGaGPCCqmNJZJFkLJPNpb.webp",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait3-dxf-midwoman-Jr8BSfTp2D6DDEeJAfegNF.webp",
   },
   {
     label_he: "גבר",
     label_en: "Man",
     desc_he: "פורטרט גבר — זקן, מבנה פנים חזק",
     desc_en: "Man portrait — beard, strong face structure",
-    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-comparison-beardman_d3e14fb0.png",
+    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-beardman-Vj8XQXEMnCkXBhLBMJdmGF.webp",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait3-dxf-beardman-6i44kHnZcBrtaSdDkujwUV.webp",
   },
   {
     label_he: "קשישה",
     label_en: "Elder Woman",
     desc_he: "פורטרט קשישה — קמטים, אופי, עומק",
     desc_en: "Elder woman — wrinkles, character, depth",
-    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-comparison-eldwoman_bea8df72.png",
+    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-eldwoman-CtBbPJFJkTBLrKLJRpqLHa.webp",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait3-dxf-eldwoman-aVoouxojfWJQ3MBkqbbv87.webp",
   },
 ];
 
-// ─── Portrait Card (single comparison image) ─────────────────────────────────
+// ─── Portrait Card (before/after toggle) ─────────────────────────────────────
 function PortraitCard({ item, isRtl }: { item: typeof PORTRAIT_EXAMPLES[0]; isRtl: boolean }) {
+  const [showAfter, setShowAfter] = useState(false);
   return (
     <div
       style={{
-        borderRadius: 16, overflow: "hidden", background: "#fff",
-        boxShadow: "0 4px 20px rgba(124,58,237,0.12)", border: "1px solid #ede9fe",
+        borderRadius: 16, overflow: "hidden", boxShadow: "0 4px 20px rgba(124,58,237,0.12)",
+        cursor: "pointer", position: "relative", background: "#fff",
         transition: "transform 0.2s, box-shadow 0.2s",
       }}
       onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(-4px)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 10px 32px rgba(124,58,237,0.22)"; }}
       onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = "none"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 20px rgba(124,58,237,0.12)"; }}
+      onClick={() => setShowAfter(v => !v)}
     >
-      <div style={{ position: "relative", width: "100%", paddingBottom: "66.7%", background: "#f8f6ff", overflow: "hidden" }}>
+      <div style={{ position: "relative", width: "100%", paddingBottom: "100%", background: "#f8f8f8" }}>
         <img
-          src={item.image}
+          src={showAfter ? item.after : item.before}
           alt={isRtl ? item.label_he : item.label_en}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", transition: "opacity 0.3s" }}
         />
-        {/* DXF badge */}
+        {/* Toggle button */}
         <div style={{
-          position: "absolute", top: 10, right: 10,
-          background: "linear-gradient(135deg,#7c3aed,#a855f7)",
-          color: "#fff", borderRadius: 8, padding: "3px 10px", fontSize: 11, fontWeight: 800,
-          boxShadow: "0 2px 8px rgba(124,58,237,0.4)",
-        }}>DXF</div>
+          position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)",
+          background: showAfter
+            ? "linear-gradient(135deg,rgba(99,102,241,0.95),rgba(139,92,246,0.95))"
+            : "linear-gradient(135deg,rgba(16,185,129,0.92),rgba(5,150,105,0.92))",
+          color: "#fff", borderRadius: 20, padding: "6px 16px", fontSize: 12, fontWeight: 700,
+          backdropFilter: "blur(4px)", whiteSpace: "nowrap",
+          boxShadow: showAfter ? "0 3px 12px rgba(99,102,241,0.5)" : "0 3px 12px rgba(16,185,129,0.5)",
+          letterSpacing: "0.01em",
+        }}>
+          {showAfter ? (isRtl ? "← לחץ לחזור למקור" : "← Back to original") : (isRtl ? "👁 הצג DXF" : "👁 Show DXF")}
+        </div>
       </div>
-      <div style={{ padding: "12px 14px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+      <div style={{ padding: "10px 14px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
           <span style={{ fontWeight: 700, fontSize: 14, color: "#1e1b4b" }}>{isRtl ? item.label_he : item.label_en}</span>
-          <span style={{ fontSize: 11, color: "#7c3aed", fontWeight: 600, background: "#f5f3ff", borderRadius: 6, padding: "2px 7px" }}>AI Portrait</span>
+          <span style={{ fontSize: 11, color: showAfter ? "#6366f1" : "#9ca3af", fontWeight: 600 }}>
+            {showAfter ? "DXF" : (isRtl ? "מקור" : "Original")}
+          </span>
         </div>
         <div style={{ fontSize: 11, color: "#6b7280", lineHeight: 1.4 }}>
           {isRtl ? item.desc_he : item.desc_en}
