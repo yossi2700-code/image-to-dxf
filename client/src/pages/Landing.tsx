@@ -195,6 +195,85 @@ const AI_EXAMPLES = [
 ];
 
 
+// ─── Portrait Examples ───────────────────────────────────────────────────────
+const PORTRAIT_EXAMPLES = [
+  {
+    label_he: "אישה",
+    label_en: "Woman",
+    desc_he: "פורטרט אישה — קווי פנים עדינים, שיער",
+    desc_en: "Woman portrait — delicate facial lines, hair",
+    img: `${CDN}/demo-portrait-woman_e956deb2.png`,
+  },
+  {
+    label_he: "גבר",
+    label_en: "Man",
+    desc_he: "פורטרט גבר — זקן, ביטוי, מבנה פנים",
+    desc_en: "Man portrait — beard, expression, face structure",
+    img: `${CDN}/demo-portrait-man_1c4399d3.png`,
+  },
+  {
+    label_he: "ילד",
+    label_en: "Child",
+    desc_he: "פורטרט ילד — קווים נקיים, ביטוי תמים",
+    desc_en: "Child portrait — clean lines, innocent expression",
+    img: `${CDN}/demo-portrait-child_d468e82c.png`,
+  },
+  {
+    label_he: "קשיש",
+    label_en: "Elder",
+    desc_he: "פורטרט קשיש עם משקפיים — קמטים, אופי",
+    desc_en: "Elder with glasses — wrinkles, character, depth",
+    img: `${CDN}/demo-portrait-elder-man-iYXPcDc7tcx49xVqpBFbyP.webp`,
+  },
+];
+
+// ─── Portrait Card ────────────────────────────────────────────────────────────
+function PortraitCard({ item, isRtl }: { item: typeof PORTRAIT_EXAMPLES[0]; isRtl: boolean }) {
+  return (
+    <div style={{
+      borderRadius: 16, overflow: "hidden", background: "#fff",
+      boxShadow: "0 4px 20px rgba(124,58,237,0.12)", border: "1px solid #ede9fe",
+      transition: "transform 0.2s, box-shadow 0.2s",
+    }}
+      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(-4px)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 10px 32px rgba(124,58,237,0.22)"; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = "none"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 20px rgba(124,58,237,0.12)"; }}
+    >
+      <div style={{ position: "relative", width: "100%", paddingBottom: "100%", background: "#f8f6ff" }}>
+        <img
+          src={item.img}
+          alt={isRtl ? item.label_he : item.label_en}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+        />
+        {/* DXF badge */}
+        <div style={{
+          position: "absolute", top: 10, right: 10,
+          background: "linear-gradient(135deg,#7c3aed,#a855f7)",
+          color: "#fff", borderRadius: 8, padding: "3px 10px", fontSize: 11, fontWeight: 800,
+          boxShadow: "0 2px 8px rgba(124,58,237,0.4)",
+        }}>DXF</div>
+        {/* Portrait badge */}
+        <div style={{
+          position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)",
+          background: "rgba(124,58,237,0.88)",
+          color: "#fff", borderRadius: 20, padding: "4px 14px", fontSize: 12, fontWeight: 700,
+          backdropFilter: "blur(4px)", whiteSpace: "nowrap",
+        }}>
+          {isRtl ? "✦ פורטרט AI" : "✦ AI Portrait"}
+        </div>
+      </div>
+      <div style={{ padding: "12px 14px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+          <span style={{ fontWeight: 700, fontSize: 14, color: "#1e1b4b" }}>{isRtl ? item.label_he : item.label_en}</span>
+          <span style={{ fontSize: 11, color: "#7c3aed", fontWeight: 600, background: "#f5f3ff", borderRadius: 6, padding: "2px 7px" }}>Portrait</span>
+        </div>
+        <div style={{ fontSize: 11, color: "#6b7280", lineHeight: 1.4 }}>
+          {isRtl ? item.desc_he : item.desc_en}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Before/After Card ────────────────────────────────────────────────────────
 function BeforeAfterCard({ item, isRtl }: { item: typeof BEFORE_AFTER[0]; isRtl: boolean }) {
   const [showAfter, setShowAfter] = useState(false);
@@ -217,11 +296,15 @@ function BeforeAfterCard({ item, isRtl }: { item: typeof BEFORE_AFTER[0]; isRtl:
         />
         <div style={{
           position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)",
-          background: showAfter ? "rgba(99,102,241,0.92)" : "rgba(0,0,0,0.55)",
-          color: "#fff", borderRadius: 20, padding: "4px 14px", fontSize: 12, fontWeight: 600,
+          background: showAfter
+            ? "linear-gradient(135deg,rgba(99,102,241,0.95),rgba(139,92,246,0.95))"
+            : "linear-gradient(135deg,rgba(16,185,129,0.92),rgba(5,150,105,0.92))",
+          color: "#fff", borderRadius: 20, padding: "6px 16px", fontSize: 12, fontWeight: 700,
           backdropFilter: "blur(4px)", whiteSpace: "nowrap",
+          boxShadow: showAfter ? "0 3px 12px rgba(99,102,241,0.5)" : "0 3px 12px rgba(16,185,129,0.5)",
+          letterSpacing: "0.01em",
         }}>
-          {showAfter ? (isRtl ? "אחרי ← לפני" : "After ← Before") : (isRtl ? "לחץ לראות DXF" : "Click to see DXF")}
+          {showAfter ? (isRtl ? "← לחץ לחזור למקור" : "← Back to original") : (isRtl ? "👁 הצג DXF" : "👁 Show DXF")}
         </div>
       </div>
       <div style={{ padding: "10px 14px" }}>
@@ -424,6 +507,41 @@ export default function Landing() {
             ))}
           </div>
           <p style={{ textAlign: "center", color: "#9ca3af", fontSize: 13, marginTop: 16 }}>{t.galleryHint}</p>
+        </div>
+      </section>
+
+      {/* ── PORTRAIT EXAMPLES ── */}
+      <section style={{ padding: "72px 24px", background: "linear-gradient(160deg,#faf5ff 0%,#f3e8ff 100%)" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 48 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.25)", borderRadius: 20, padding: "5px 14px", marginBottom: 16 }}>
+              <span style={{ fontSize: 14 }}>🎨</span>
+              <span style={{ color: "#7c3aed", fontSize: 13, fontWeight: 600 }}>{isRtl ? "AI Portrait — פורטרט מתמונה" : "AI Portrait — from photo"}</span>
+            </div>
+            <h2 style={{ fontSize: "clamp(1.5rem,3vw,2.2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 12 }}>
+              {isRtl ? "הפוך תמונה לפורטרט DXF מדהים" : "Turn any photo into a stunning DXF portrait"}
+            </h2>
+            <p style={{ color: "#6b7280", fontSize: 16, maxWidth: 580, margin: "0 auto" }}>
+              {isRtl
+                ? "ה-AI מזהה פנים ומצייר 3 גרסאות לינארט — מוכנות לחריטה על עץ, מתכת, זכוכית ועוד"
+                : "AI detects faces and draws 3 line art variations — ready for engraving on wood, metal, glass and more"}
+            </p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 24 }}>
+            {PORTRAIT_EXAMPLES.map((item, i) => (
+              <PortraitCard key={i} item={item} isRtl={isRtl} />
+            ))}
+          </div>
+          <div style={{ textAlign: "center", marginTop: 36 }}>
+            <button
+              onClick={() => navigate("/")}
+              style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff", border: "none", borderRadius: 12, padding: "13px 32px", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 16px rgba(124,58,237,0.35)" }}
+              onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.04)")}
+              onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+            >
+              {isRtl ? "נסה AI Portrait עכשיו" : "Try AI Portrait Now"}
+            </button>
+          </div>
         </div>
       </section>
 
