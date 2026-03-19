@@ -403,7 +403,8 @@ async function runTraceJob(
       "the object in the image";
 
     // If AI couldn't identify the image, return an error asking for clarification
-    if (rawDescription === "UNCLEAR_IMAGE" || rawDescription.startsWith("UNCLEAR_IMAGE")) {
+    // Skip this check if focusText is provided (user already chose crop/describe — bypass UNCLEAR_IMAGE)
+    if (!focusText && (rawDescription === "UNCLEAR_IMAGE" || rawDescription.startsWith("UNCLEAR_IMAGE"))) {
       updateJob(jobId, {
         status: "error",
         errorCode: "UNCLEAR_IMAGE",
