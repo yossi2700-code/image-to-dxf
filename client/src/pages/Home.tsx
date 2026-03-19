@@ -2190,7 +2190,7 @@ export default function Home() {
       >
         <div className="px-3 py-2 flex items-center gap-2 max-w-7xl mx-auto">
           {/* AiDXF Logo */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <a href="/landing" className="flex items-center gap-1.5 shrink-0 cursor-pointer" style={{ textDecoration: 'none' }}>
             <div
               className="w-7 h-7 rounded-lg shrink-0 flex items-center justify-center"
               style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}
@@ -2203,7 +2203,7 @@ export default function Home() {
               </svg>
             </div>
             <span className="hidden sm:inline text-base font-black tracking-tight" style={{ color: '#6366f1', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>Ai</span><span className="hidden sm:inline text-base font-black tracking-tight" style={{ color: '#111827', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>DXF</span>
-          </div>
+          </a>
 
           {/* Right side nav */}
           <div className="flex items-center gap-2 ms-auto">
