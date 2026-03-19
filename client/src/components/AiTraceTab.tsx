@@ -318,11 +318,11 @@ function MultiObjectDialog({
             <div className="w-8" />
           </div>
           {/* Canvas area */}
-          <div ref={canvasWrapRef} className="bg-gray-50 flex items-center justify-center p-2 overflow-hidden" style={{ flex: '1 1 auto', minHeight: 0 }}>
+          <div ref={canvasWrapRef} className="bg-gray-50 flex items-center justify-center overflow-hidden" style={{ flex: '1 1 auto', minHeight: 0 }}>
             <canvas
               ref={canvasRef}
               className="rounded-lg cursor-crosshair touch-none block"
-              style={{ display: 'block', maxWidth: '100%', maxHeight: '100%' }}
+              style={{ display: 'block' }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
