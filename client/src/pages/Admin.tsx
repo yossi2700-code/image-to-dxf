@@ -1151,7 +1151,16 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   const lastAction = u.lastAction;
                   const lastPurchase = (u as { lastPurchase?: { packageId: string; priceAmount: number; currency: string } }).lastPurchase;
                   const subscription = (u as { subscription?: { planId: string; periodEnd: Date | string } | null }).subscription;
-                  const actionLabel = lastAction?.actionType === "ai_generate" ? "יצירת AI" : lastAction?.actionType === "convert" ? "המרה" : lastAction?.actionType === "download" ? "הורדה" : null;
+                  const getFeatureLabel = (actionType: string, feature?: string | null) => {
+                    if (actionType === "convert") return "המרה";
+                    if (actionType === "download") return "הורדה";
+                    if (feature === "ai_trace") return "AI Outline";
+                    if (feature === "portrait") return "פורטרט AI";
+                    if (feature === "document_redraw") return "AI Sketch";
+                    if (feature === "ai_generate") return "AI Create";
+                    return "יצירת AI";
+                  };
+                  const actionLabel = lastAction ? getFeatureLabel(lastAction.actionType, (lastAction as {feature?: string}).feature) : null;
                   // Activity dot: blue = new user (registered <48h), green = active last 24h, yellow = active last 7d, gray = inactive
                   const isNewUser = (Date.now() - new Date(u.createdAt).getTime()) < 172800000; // 48h
                   const lastActivityMs = lastAction ? Date.now() - new Date(lastAction.createdAt).getTime() : Infinity;
@@ -1358,13 +1367,26 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                         <td className="py-1.5 pr-2">
                                           <div className="flex flex-col gap-0.5">
                                             <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                                              a.actionType === "ai_generate"
-                                                ? "bg-purple-100 text-purple-700"
-                                                : a.actionType === "convert"
-                                                ? "bg-blue-100 text-blue-700"
-                                                : "bg-green-100 text-green-700"
+                              (() => {
+                                                const f = (a as {feature?: string}).feature;
+                                                if (a.actionType === "convert") return "bg-blue-100 text-blue-700";
+                                                if (a.actionType === "download") return "bg-green-100 text-green-700";
+                                                if (f === "ai_trace") return "bg-teal-100 text-teal-700";
+                                                if (f === "portrait") return "bg-pink-100 text-pink-700";
+                                                if (f === "document_redraw") return "bg-orange-100 text-orange-700";
+                                                return "bg-purple-100 text-purple-700";
+                                              })()
                                             }`}>
-                                              {a.actionType === "ai_generate" ? "יצירת AI" : a.actionType === "convert" ? "המרה" : "הורדה"}
+                                              {(() => {
+                                                const f = (a as {feature?: string}).feature;
+                                                if (a.actionType === "convert") return "המרה";
+                                                if (a.actionType === "download") return "הורדה";
+                                                if (f === "ai_trace") return "AI Outline";
+                                                if (f === "portrait") return "פורטרט AI";
+                                                if (f === "document_redraw") return "AI Sketch";
+                                                if (f === "ai_generate") return "AI Create";
+                                                return "יצירת AI";
+                                              })()}
                                             </span>
                                             {(a as {status?: string}).status && (a as {status?: string}).status !== 'success' && (
                                               <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${
