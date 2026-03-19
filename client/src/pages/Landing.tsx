@@ -203,7 +203,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט אישה — קווי פנים עדינים, שיער",
     desc_en: "Woman portrait — delicate facial lines, hair",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-before-woman-MimsfZ4Kt8ejMuUeovqZ27.webp",
-    after:  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-woman-v3-fmTh29j4DdzhvezACrD6dN.png",
+    after:  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-woman-v3_ce9bf248.png",
   },
   {
     label_he: "גבר",
@@ -211,7 +211,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט גבר — זקן, ביטוי, מבנה פנים",
     desc_en: "Man portrait — beard, expression, face structure",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-before-man-UD4javTj6pqZiu9DBnKKJ5.webp",
-    after:  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-man-v3-hBpmreZas2AHmCxiCuREji.png",
+    after:  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-man-v3_0366da3d.png",
   },
   {
     label_he: "ילד",
@@ -219,7 +219,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט ילד — קווים נקיים, ביטוי תמים",
     desc_en: "Child portrait — clean lines, innocent expression",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-before-child-MiWQRQgQRWGzhaLcqLYhpg.webp",
-    after:  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-child-v3-agkkJVGqS3PwZkdtc53Xou.png",
+    after:  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-child-v3_3c267e80.png",
   },
   {
     label_he: "קשיש",
@@ -227,7 +227,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט קשיש עם משקפיים — קמטים, אופי",
     desc_en: "Elder with glasses — wrinkles, character, depth",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-before-elder-UZG5ozD6kLxkgxtW4XAQSv.webp",
-    after:  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-elder-v3-AjgVThw5PtQucv7tU9FWjv.png",
+    after:  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-elder-v3_18aff84d.png",
   },
 ];
 
