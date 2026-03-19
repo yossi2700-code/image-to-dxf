@@ -116,10 +116,14 @@ router.post("/api/ai-refine", async (req, res) => {
 
     const refinePrompt =
       `${baseDescription} ` +
-      `Apply the following specific changes: ${instruction}. ` +
+      "CRITICAL RULE: You MUST keep the SAME MAIN SUBJECT/OBJECT from the original image. " +
+      "Do NOT replace, swap, or remove the main subject. Only apply modifications TO the existing subject. " +
+      "If the instruction asks to draw a completely different object (e.g. 'draw a bicycle' when the original is a table), " +
+      "IGNORE that and instead apply the instruction as a style/detail modification to the existing subject. " +
+      `Apply the following specific changes to the existing design: ${instruction}. ` +
       "Keep the same overall style: clean black and white line art, bold outlines, no fill, no shading, no gradients. " +
       "Pure white background. Only black lines on white. " +
-      "Maintain the same general composition but apply the requested modifications precisely. " +
+      "Maintain the same general composition and main subject but apply the requested modifications precisely. " +
       "The result must be suitable for laser cutting or CNC engraving.";
 
     // Use GPT-image-1 with image editing (inpainting/variation with instruction)
