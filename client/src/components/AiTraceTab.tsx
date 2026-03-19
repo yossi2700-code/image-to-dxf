@@ -154,157 +154,72 @@ function MultiObjectDialog({
   onDrawAll, onDrawCrop, onDrawDescription, onReset
 }: MultiObjectDialogProps) {
   const [mode, setMode] = useState<'choose' | 'crop' | 'describe'>('choose');
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const canvasWrapRef = useRef<HTMLDivElement>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
-  const cropStartRef = useRef<{x:number;y:number} | null>(null);
-  const [cropRect, setCropRect] = useState<{x:number;y:number;w:number;h:number} | null>(null);
+  // CSS-pixel selection rect (relative to the img element)
+  const imgElRef = useRef<HTMLImageElement>(null);
+  const dragStartRef = useRef<{x:number;y:number} | null>(null);
   const isDraggingRef = useRef(false);
+  // selection in CSS pixels relative to img element
+  const [sel, setSel] = useState<{x:number;y:number;w:number;h:number} | null>(null);
 
-  // Draw image + selection overlay directly on canvas (in canvas pixel coords)
-  const drawCanvas = useCallback((rect?: {x:number;y:number;w:number;h:number} | null) => {
-    const canvas = canvasRef.current;
-    const img = imgRef.current;
-    if (!canvas || !img) return;
-    const ctx = canvas.getContext('2d')!;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    if (rect && (Math.abs(rect.w) > 5 || Math.abs(rect.h) > 5)) {
-      ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      const rx = rect.w < 0 ? rect.x + rect.w : rect.x;
-      const ry = rect.h < 0 ? rect.y + rect.h : rect.y;
-      const rw = Math.abs(rect.w);
-      const rh = Math.abs(rect.h);
-      ctx.clearRect(rx, ry, rw, rh);
-      ctx.drawImage(img, rx, ry, rw, rh, rx, ry, rw, rh);
-      ctx.strokeStyle = '#6366f1';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([6, 3]);
-      ctx.strokeRect(rx, ry, rw, rh);
-      ctx.setLineDash([]);
-    }
-  }, []);
-
-  // Fit canvas to wrapper using ResizeObserver — fires only after the wrapper has its final size
-  const fitCanvas = useCallback((wrapW: number) => {
-    const img = imgRef.current;
-    const canvas = canvasRef.current;
-    if (!img || !canvas || wrapW <= 0) return;
-    const maxH = Math.min(window.innerHeight * 0.45, 380);
-    const scale = Math.min(wrapW / img.width, maxH / img.height, 1);
-    const w = Math.round(img.width * scale);
-    const h = Math.round(img.height * scale);
-    if (canvas.width === w && canvas.height === h) return; // already correct
-    canvas.width = w;
-    canvas.height = h;
-    // CRITICAL: CSS size must equal internal pixel size to avoid coordinate offset
-    canvas.style.width = w + 'px';
-    canvas.style.height = h + 'px';
-    setCropRect(null);
-    cropStartRef.current = null;
-    drawCanvas(null);
-  }, [drawCanvas]);
-
-  // Load image when entering crop mode
-  useEffect(() => {
-    if (mode !== 'crop' || !imagePreview) return;
-    const img = new Image();
-    img.onload = () => {
-      imgRef.current = img;
-      // Trigger fitCanvas if wrapper already has a size
-      const wrap = canvasWrapRef.current;
-      if (wrap) {
-        const w = wrap.getBoundingClientRect().width || wrap.clientWidth;
-        fitCanvas(w);
-      }
-    };
-    img.src = imagePreview;
-  }, [mode, imagePreview, fitCanvas]);
-
-  // ResizeObserver: re-fit canvas whenever the wrapper changes size (handles modal animation)
-  useEffect(() => {
-    if (mode !== 'crop') return;
-    const wrap = canvasWrapRef.current;
-    if (!wrap) return;
-    const ro = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
-      const wrapW = entry.contentRect.width;
-      fitCanvas(wrapW);
-    });
-    ro.observe(wrap);
-    return () => ro.disconnect();
-  }, [mode, fitCanvas]);
-
-  // Convert pointer event to canvas pixel coordinates (handles devicePixelRatio)
-  const getCanvasPos = (clientX: number, clientY: number) => {
-    const canvas = canvasRef.current!;
-    const rect = canvas.getBoundingClientRect();
-    // canvas.width/height are the internal pixel dimensions
-    // rect.width/height are the CSS display dimensions
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
+  // Get position relative to img element in CSS pixels
+  const getPos = (clientX: number, clientY: number) => {
+    const img = imgElRef.current;
+    if (!img) return { x: 0, y: 0 };
+    const rect = img.getBoundingClientRect();
     return {
-      x: (clientX - rect.left) * scaleX,
-      y: (clientY - rect.top) * scaleY,
+      x: Math.max(0, Math.min(clientX - rect.left, rect.width)),
+      y: Math.max(0, Math.min(clientY - rect.top, rect.height)),
     };
   };
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
-    cropStartRef.current = getCanvasPos(e.clientX, e.clientY);
-    setCropRect(null);
+    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+    dragStartRef.current = getPos(e.clientX, e.clientY);
+    setSel(null);
     isDraggingRef.current = true;
   };
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDraggingRef.current || !cropStartRef.current) return;
-    const pos = getCanvasPos(e.clientX, e.clientY);
-    const r = { x: cropStartRef.current.x, y: cropStartRef.current.y, w: pos.x - cropStartRef.current.x, h: pos.y - cropStartRef.current.y };
-    setCropRect(r);
-    drawCanvas(r);
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current || !dragStartRef.current) return;
+    const pos = getPos(e.clientX, e.clientY);
+    setSel({ x: dragStartRef.current.x, y: dragStartRef.current.y, w: pos.x - dragStartRef.current.x, h: pos.y - dragStartRef.current.y });
   };
-  const handleMouseUp = () => { isDraggingRef.current = false; };
-
-  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    const t = e.touches[0];
-    cropStartRef.current = getCanvasPos(t.clientX, t.clientY);
-    setCropRect(null);
-    isDraggingRef.current = true;
-  };
-  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    if (!isDraggingRef.current || !cropStartRef.current) return;
-    const t = e.touches[0];
-    const pos = getCanvasPos(t.clientX, t.clientY);
-    const r = { x: cropStartRef.current.x, y: cropStartRef.current.y, w: pos.x - cropStartRef.current.x, h: pos.y - cropStartRef.current.y };
-    setCropRect(r);
-    drawCanvas(r);
-  };
-  const handleTouchEnd = () => { isDraggingRef.current = false; };
+  const onPointerUp = () => { isDraggingRef.current = false; };
 
   const handleConfirmCrop = () => {
-    if (!cropRect || !imgRef.current || !canvasRef.current) return;
-    const canvas = canvasRef.current;
-    const img = imgRef.current;
-    // Scale from canvas pixels back to original image pixels
-    const scaleX = img.width / canvas.width;
-    const scaleY = img.height / canvas.height;
-    const rx = (cropRect.w < 0 ? cropRect.x + cropRect.w : cropRect.x) * scaleX;
-    const ry = (cropRect.h < 0 ? cropRect.y + cropRect.h : cropRect.y) * scaleY;
-    const rw = Math.abs(cropRect.w) * scaleX;
-    const rh = Math.abs(cropRect.h) * scaleY;
+    if (!sel || !imgElRef.current || !imagePreview) return;
+    const imgEl = imgElRef.current;
+    const displayW = imgEl.getBoundingClientRect().width;
+    const displayH = imgEl.getBoundingClientRect().height;
+    // Normalize selection
+    const rx = sel.w < 0 ? sel.x + sel.w : sel.x;
+    const ry = sel.h < 0 ? sel.y + sel.h : sel.y;
+    const rw = Math.abs(sel.w);
+    const rh = Math.abs(sel.h);
     if (rw < 10 || rh < 10) return;
+    // Scale to natural image pixels
+    const scaleX = imgEl.naturalWidth / displayW;
+    const scaleY = imgEl.naturalHeight / displayH;
     const offscreen = document.createElement('canvas');
-    offscreen.width = Math.round(rw);
-    offscreen.height = Math.round(rh);
+    offscreen.width = Math.round(rw * scaleX);
+    offscreen.height = Math.round(rh * scaleY);
     const ctx = offscreen.getContext('2d')!;
-    ctx.drawImage(img, rx, ry, rw, rh, 0, 0, rw, rh);
-    onDrawCrop(offscreen.toDataURL('image/jpeg', 0.9));
+    const srcImg = new Image();
+    srcImg.onload = () => {
+      ctx.drawImage(srcImg, rx * scaleX, ry * scaleY, rw * scaleX, rh * scaleY, 0, 0, offscreen.width, offscreen.height);
+      onDrawCrop(offscreen.toDataURL('image/jpeg', 0.9));
+    };
+    srcImg.src = imagePreview;
   };
 
-  const hasSelection = cropRect && Math.abs(cropRect.w) > 10 && Math.abs(cropRect.h) > 10;
+  const hasSel = sel && Math.abs(sel.w) > 10 && Math.abs(sel.h) > 10;
+  // Normalized selection rect for CSS positioning
+  const selNorm = sel ? {
+    left: sel.w < 0 ? sel.x + sel.w : sel.x,
+    top: sel.h < 0 ? sel.y + sel.h : sel.y,
+    width: Math.abs(sel.w),
+    height: Math.abs(sel.h),
+  } : null;
 
   // ─── MODAL WRAPPER ────────────────────────────────────────────────────────────
   const modalContent = (() => {
@@ -317,27 +232,45 @@ function MultiObjectDialog({
             <p className="font-bold text-indigo-800 text-sm">{isRtl ? 'גרור לבחור אובייקט' : 'Drag to select an object'}</p>
             <div className="w-8" />
           </div>
-          {/* Canvas area */}
-          <div ref={canvasWrapRef} className="bg-gray-50 flex items-center justify-center overflow-hidden" style={{ flex: '1 1 auto', minHeight: 0 }}>
-            <canvas
-              ref={canvasRef}
-              className="rounded-lg cursor-crosshair touch-none block"
-              style={{ display: 'block' }}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
+          {/* Image + overlay area */}
+          <div
+            className="relative bg-gray-50 overflow-hidden select-none"
+            style={{ flex: '1 1 auto', minHeight: 0, cursor: 'crosshair', touchAction: 'none' }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerLeave={onPointerUp}
+          >
+            <img
+              ref={imgElRef}
+              src={imagePreview || ''}
+              alt="crop"
+              className="block w-full h-full"
+              style={{ objectFit: 'contain', pointerEvents: 'none', userSelect: 'none', maxHeight: '55vh' }}
+              draggable={false}
             />
+            {/* Dark overlay */}
+            {selNorm && (
+              <>
+                {/* top */}
+                <div className="absolute inset-x-0 top-0 bg-black/50" style={{ height: selNorm.top }} />
+                {/* bottom */}
+                <div className="absolute inset-x-0 bottom-0 bg-black/50" style={{ top: selNorm.top + selNorm.height }} />
+                {/* left */}
+                <div className="absolute bg-black/50" style={{ top: selNorm.top, left: 0, width: selNorm.left, height: selNorm.height }} />
+                {/* right */}
+                <div className="absolute bg-black/50" style={{ top: selNorm.top, left: selNorm.left + selNorm.width, right: 0, height: selNorm.height }} />
+                {/* selection border */}
+                <div className="absolute" style={{ top: selNorm.top, left: selNorm.left, width: selNorm.width, height: selNorm.height, border: '2px dashed #6366f1', boxSizing: 'border-box' }} />
+              </>
+            )}
           </div>
           {/* Footer */}
           <div className="px-4 py-3 flex gap-2 shrink-0" style={{ borderTop: '1px solid #e0e7ff', background: '#fff' }}>
             <button
               className="flex-1 text-sm px-4 py-2.5 rounded-xl font-semibold text-white transition-all"
-              style={{ background: hasSelection ? '#6366f1' : '#9ca3af', cursor: hasSelection ? 'pointer' : 'not-allowed', boxShadow: hasSelection ? '0 2px 8px rgba(99,102,241,0.35)' : 'none' }}
-              disabled={!hasSelection}
+              style={{ background: hasSel ? '#6366f1' : '#9ca3af', cursor: hasSel ? 'pointer' : 'not-allowed', boxShadow: hasSel ? '0 2px 8px rgba(99,102,241,0.35)' : 'none' }}
+              disabled={!hasSel}
               onClick={handleConfirmCrop}
             >
               {isRtl ? '✓ צייר את הנבחר' : '✓ Draw selected'}
