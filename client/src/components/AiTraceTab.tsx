@@ -165,6 +165,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
   });
   const [errorMsg, setErrorMsg] = useState("");
   const [isUnclearImage, setIsUnclearImage] = useState(false);
+  const [isSceneDetected, setIsSceneDetected] = useState(false);
   const [unclearDescription, setUnclearDescription] = useState("");
   const [downloadTarget, setDownloadTarget] = useState<GeneratedImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
@@ -269,21 +270,25 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           const isTokenError = data.error === "INSUFFICIENT_TOKENS" || data.error === "QUOTA_EXCEEDED";
           const isUnclear = data.errorCode === "UNCLEAR_IMAGE";
+          const isScene = data.errorCode === "SCENE_DETECTED";
           const msg = isTokenError
             ? (data.message || t("processingError"))
             : isUnclear
               ? (data.error || (isRtl ? "התמונה לא ברורה" : "Image unclear"))
-              : t("jobErrorRetry");
+              : isScene
+                ? (data.error || (isRtl ? "זיהינו תמונת נוף" : "Scene detected"))
+                : t("jobErrorRetry");
           setErrorMsg(msg);
           setIsUnclearImage(isUnclear);
+          setIsSceneDetected(isScene);
           setStatus("error");
           setCurrentStep("");
           setElapsedSeconds(0);
           if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
           setJobIdPersisted(null);
           if (!isTokenError) refetchTokens(); // Refresh balance to show refunded tokens
-          if (!isUnclear) toast.error(msg);
-          if (!isTokenError && !isUnclear) reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "ai_trace" });
+          if (!isUnclear && !isScene) toast.error(msg);
+          if (!isTokenError && !isUnclear && !isScene) reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "ai_trace" });
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
@@ -527,7 +532,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     setImageFile(null); setImagePreviewPersisted(null); setResult(null);
     setStatus("idle"); setErrorMsg(""); setFocusText(""); setCustomImprovement("");
-    setIsUnclearImage(false); setUnclearDescription("");
+    setIsUnclearImage(false); setIsSceneDetected(false); setUnclearDescription("");
     setJobIdPersisted(null); setTryAgainUrl(null);
     setShowSuccessOverlay(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -991,8 +996,61 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
           </div>
         )}
 
+        {/* SCENE_DETECTED — ask user to continue in landscape mode or cancel */}
+        {status === "error" && isSceneDetected && (
+          <div
+            className="rounded-xl overflow-hidden"
+            style={{ border: '1px solid #6ee7b7', boxShadow: '0 4px 24px rgba(16,185,129,0.15)' }}
+          >
+            {/* Header */}
+            <div className="px-5 py-4" style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)' }}>
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-2xl" style={{ background: '#6ee7b7' }}>
+                  🌄
+                </div>
+                <div>
+                  <p className="font-bold text-emerald-800 text-base">
+                    {isRtl ? "זיהינו תמונת נוף או סצנה" : "Landscape / scene detected"}
+                  </p>
+                  <p className="text-xs text-emerald-600">
+                    {isRtl ? "האם לצייר את כל הנוף כקווים?" : "Should we draw the full scene as line art?"}
+                  </p>
+                </div>
+              </div>
+            </div>
+            {/* Body */}
+            <div className="px-5 py-4 bg-white">
+              <p className="text-sm text-gray-600 mb-4">
+                {isRtl
+                  ? "התמונה שהעלית היא נוף, רחוב, חדר או סצנה. במצב נוף ה-AI מצייר את כל התמונה כולה — כל העצים, הבתים, השמים — כקווים שחורים."
+                  : "The image you uploaded is a landscape, street, room, or scene. In landscape mode, the AI draws the entire image — all trees, buildings, sky — as black lines."}
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  className="flex-1 text-sm px-4 py-2.5 rounded-lg font-semibold text-white transition-all"
+                  style={{ background: 'linear-gradient(135deg, #059669, #10b981)', boxShadow: '0 2px 8px rgba(5,150,105,0.35)' }}
+                  onClick={() => {
+                    setIsSceneDetected(false);
+                    setStatus("idle");
+                    setFullImageMode(true);
+                    setTimeout(() => handleTrace(), 50);
+                  }}
+                >
+                  {isRtl ? "✓ כן, צייר את כל הנוף" : "✓ Yes, draw the full scene"}
+                </button>
+                <button
+                  className="text-sm px-4 py-2.5 rounded-lg font-medium bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-200"
+                  onClick={reset}
+                >
+                  {isRtl ? "בטל" : "Cancel"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Regular Error */}
-        {status === "error" && !isUnclearImage && (
+        {status === "error" && !isUnclearImage && !isSceneDetected && (
           <div
             className="rounded-xl p-6 flex flex-col items-center gap-3 text-center"
             style={{ background: '#fff5f5', border: '1px solid #fecaca' }}

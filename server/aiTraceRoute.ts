@@ -300,11 +300,60 @@ async function runTraceJob(
           "Focus on: exact camera angle/view, facing direction, shape, structure, key features, proportions.";
     }
 
+    // For non-landscape mode, do a quick scene-type detection pass.
+    // If it's a scene/landscape, return SCENE_DETECTED so the frontend can ask the user.
+    const effectiveLandscapeMode = landscapeMode;
+    if (!landscapeMode && !focusText) {
+      try {
+        const sceneCheckResp = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are an image classifier. Look at the image and respond with EXACTLY one word: " +
+                "'SCENE' if the image is a landscape, cityscape, street, nature scene, environment, room interior, architecture, or any image where NO single isolated object dominates the frame. " +
+                "'OBJECT' if the image shows a single clear isolated object, person, animal, or product as the main subject. " +
+                "Respond ONLY with SCENE or OBJECT, nothing else.",
+            },
+            {
+              role: "user",
+              content: [
+                { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "low" } },
+                { type: "text", text: "Is this a scene/landscape/environment or a single isolated object?" },
+              ],
+            },
+          ],
+        });
+        const sceneCheckResult = ((sceneCheckResp as { choices?: Array<{ message?: { content?: string } }> })
+          ?.choices?.[0]?.message?.content?.trim() || "").toUpperCase();
+        if (sceneCheckResult.startsWith("SCENE")) {
+          console.log(`[aiTraceRoute] Detected SCENE for job ${jobId} — asking user to confirm landscape mode`);
+          updateJob(jobId, {
+            status: "error",
+            errorCode: "SCENE_DETECTED",
+            error: isHe
+              ? "זיהינו שזו תמונת נוף או סצנה. האם להמשיך במצב נוף (ציור כל הנוף)?"
+              : "We detected this is a landscape or scene image. Continue in landscape mode (draw the full scene)?",
+          });
+          return;
+        }
+      } catch (e) {
+        console.warn("[aiTraceRoute] Scene detection failed, continuing with object mode:", e);
+      }
+    }
+
     const llmResponse = await invokeLLM({
       messages: [
         {
           role: "system",
-          content:
+          content: effectiveLandscapeMode
+            ? "You are a world-class expert at analyzing images for precise line art / engraving generation. " +
+              "GOLDEN RULE: Describe ONLY what is LITERALLY VISIBLE in the image. " +
+              "Your task is to describe the FULL SCENE/LANDSCAPE for line art generation. " +
+              "Include ALL layers: sky, background, midground, foreground. Describe every visible element, its position, and its relative size. " +
+              "Output ONLY the description (3-5 sentences), no preamble." +
+              (isHe ? "\n\nIMPORTANT: Respond in HEBREW (עברית). All descriptions must be written in Hebrew." : "")
+            :
             "You are a world-class expert at analyzing images for precise line art / engraving generation. " +
             "GOLDEN RULE: Describe ONLY what is LITERALLY VISIBLE in the image. DO NOT interpret, invent, imagine, or add anything that is not clearly shown. " +
             "If the image is ambiguous, blurry, abstract, or you cannot clearly identify the main subject, respond with EXACTLY: UNCLEAR_IMAGE " +
@@ -424,7 +473,7 @@ async function runTraceJob(
       const isPortrait = !isAnimal && !isEngraving && /\b(face|portrait|person|man|woman|boy|girl|human|selfie|head|hair|eyes|nose|mouth|beard|cheek|forehead|chin|neck|ear)\b/i.test(objectDescription);
       // Detect if this is a toy, cartoon figure, or character figurine
       const isToyOrFigurine = /\b(toy|figurine|figure|doll|plush|stuffed|cartoon|character|action figure|miniature|statue|sculpture|puppet|mascot|anime|manga|bluey|lego|funko|pokemon|pikachu|sonic|mario|disney|pixar|robot|alien|monster|creature|animal figure)\b/i.test(objectDescription);
-      const editPrompt = landscapeMode
+      const editPrompt = effectiveLandscapeMode
         ? buildFullImagePrompt(objectDescription, idx)
         : (isPortrait && !isToyOrFigurine)
         ? (
