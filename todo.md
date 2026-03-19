@@ -2007,3 +2007,11 @@
 ## תיקון קישור בונוס ממייל
 
 - [x] כשמגיעים לאתר עם ?campaign=welcome_bonus_2026 ולא מחוברים — לפתוח אוטומטית חלון כניסה
+
+## Session 3 - Portrait & Video Fixes
+
+- [x] Generate 4 new DXF portrait line art images in correct style (thin lines, face+shoulders, white bg, like IMG_3911 example)
+- [x] Fix portrait card image proportions to match drill card format (square crop, consistent aspect ratio)
+- [x] Upload new portrait images to CDN and update Landing.tsx URLs
+- [x] Create new demo video: 2 examples per feature, iPhone typing sounds, magic sound, pleasant modern music
+- [x] Upload new video to CDN and update landing page video reference

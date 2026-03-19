@@ -203,7 +203,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט נערה — שיער מתולתל, קווים עדינים",
     desc_en: "Teen girl portrait — curly hair, delicate lines",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-teen_0eb0544e.png",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait3-dxf-teen_1df3ce23.png",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-teen-girl-8ML89NLBGeeV7mW6L3tgB2.png",
   },
   {
     label_he: "אישה",
@@ -211,7 +211,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט אישה — שיער קצר, ביטחון",
     desc_en: "Woman portrait — short hair, confidence",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-midwoman_b9ea3bb5.png",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait3-dxf-midwoman_92975579.png",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-woman-boxF6Db5tFokZcU4ymgKTy.png",
   },
   {
     label_he: "גבר",
@@ -219,7 +219,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט גבר — זקן, מבנה פנים חזק",
     desc_en: "Man portrait — beard, strong face structure",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-beardman_579be4a0.png",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait3-dxf-beardman_fbc9a161.png",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-man-57WxKfdsGX6jqgKJM453ix.png",
   },
   {
     label_he: "קשישה",
@@ -227,7 +227,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט קשישה — קמטים, אופי, עומק",
     desc_en: "Elder woman — wrinkles, character, depth",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-eldwoman_5659b216.png",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait3-dxf-eldwoman_5719e5ee.png",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-elder-woman-b6tczyZoKsmuAcN6aQw2fm.png",
   },
 ];
 
@@ -500,6 +500,28 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── DEMO VIDEO ── */}
+      <section style={{ padding: "56px 24px", background: "#fff" }}>
+        <div style={{ maxWidth: 480, margin: "0 auto", textAlign: "center" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(99,102,241,0.10)", border: "1px solid rgba(99,102,241,0.22)", borderRadius: 20, padding: "5px 14px", marginBottom: 16 }}>
+            <span style={{ fontSize: 14 }}>🎬</span>
+            <span style={{ color: "#6366f1", fontSize: 13, fontWeight: 600 }}>{isRtl ? "צפה בדמו — כל הפיצ'רים" : "Watch Demo — All Features"}</span>
+          </div>
+          <h2 style={{ fontSize: "clamp(1.3rem,2.5vw,1.8rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 24 }}>
+            {isRtl ? "ראה איך זה עובד בפועל" : "See it in action"}
+          </h2>
+          <div style={{ borderRadius: 20, overflow: "hidden", boxShadow: "0 8px 40px rgba(99,102,241,0.18)", border: "2px solid rgba(99,102,241,0.15)", maxWidth: 320, margin: "0 auto" }}>
+            <video
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai_dxf_demo_12a02ec1.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              style={{ width: "100%", display: "block" }}
+            />
+          </div>
+        </div>
+      </section>
       {/* ── BEFORE / AFTER GALLERY ── */}
       <section style={{ padding: "72px 24px", background: "#fff" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
@@ -533,7 +555,7 @@ export default function Landing() {
                 : "AI detects faces and draws 3 line art variations — ready for engraving on wood, metal, glass and more"}
             </p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 20, maxWidth: 700, margin: "0 auto" }}>
             {PORTRAIT_EXAMPLES.map((item, i) => (
               <PortraitCard key={i} item={item} isRtl={isRtl} />
             ))}
