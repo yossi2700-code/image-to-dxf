@@ -280,7 +280,7 @@ function AiExampleCard({ item, isRtl }: { item: typeof AI_EXAMPLES[0]; isRtl: bo
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function Landing() {
-  const { isRtl } = useLanguage();
+  const { isRtl, language, setLanguage } = useLanguage();
   const [, navigate] = useLocation();
 
   const { data: contactInfo } = trpc.contact.info.useQuery();
@@ -314,6 +314,33 @@ export default function Landing() {
             <span style={{ fontWeight: 900, fontSize: 18, color: "#111827", letterSpacing: "-0.02em" }}>DXF</span>
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            {/* Language toggle He / En */}
+            <div style={{ display: "flex", alignItems: "center", background: "#f3f4f6", borderRadius: 10, padding: 3, gap: 2 }}>
+              <button
+                onClick={() => setLanguage("he")}
+                style={{
+                  padding: "5px 12px", borderRadius: 8, border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer",
+                  background: language === "he" ? "linear-gradient(135deg,#6366f1,#8b5cf6)" : "transparent",
+                  color: language === "he" ? "#fff" : "#6b7280",
+                  transition: "all 0.18s",
+                  boxShadow: language === "he" ? "0 2px 8px rgba(99,102,241,0.3)" : "none",
+                }}
+              >
+                עב
+              </button>
+              <button
+                onClick={() => setLanguage("en")}
+                style={{
+                  padding: "5px 12px", borderRadius: 8, border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer",
+                  background: language === "en" ? "linear-gradient(135deg,#6366f1,#8b5cf6)" : "transparent",
+                  color: language === "en" ? "#fff" : "#6b7280",
+                  transition: "all 0.18s",
+                  boxShadow: language === "en" ? "0 2px 8px rgba(99,102,241,0.3)" : "none",
+                }}
+              >
+                EN
+              </button>
+            </div>
             {whatsappUrl && (
               <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
                 style={{ display: "flex", alignItems: "center", gap: 6, background: "#25d366", color: "#fff", border: "none", borderRadius: 10, padding: "8px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer", textDecoration: "none" }}>
