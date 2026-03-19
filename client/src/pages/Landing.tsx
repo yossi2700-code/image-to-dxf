@@ -203,7 +203,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט אישה — קווי פנים עדינים, שיער",
     desc_en: "Woman portrait — delicate facial lines, hair",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-before-woman-MimsfZ4Kt8ejMuUeovqZ27.webp",
-    after:  `${CDN}/demo-portrait-woman_e956deb2.png`,
+    after:  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-woman-v3-fmTh29j4DdzhvezACrD6dN.png",
   },
   {
     label_he: "גבר",
@@ -211,7 +211,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט גבר — זקן, ביטוי, מבנה פנים",
     desc_en: "Man portrait — beard, expression, face structure",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-before-man-UD4javTj6pqZiu9DBnKKJ5.webp",
-    after:  `${CDN}/demo-portrait-man_1c4399d3.png`,
+    after:  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-man-v3-hBpmreZas2AHmCxiCuREji.png",
   },
   {
     label_he: "ילד",
@@ -219,7 +219,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט ילד — קווים נקיים, ביטוי תמים",
     desc_en: "Child portrait — clean lines, innocent expression",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-before-child-MiWQRQgQRWGzhaLcqLYhpg.webp",
-    after:  `${CDN}/demo-portrait-child_d468e82c.png`,
+    after:  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-child-v3-agkkJVGqS3PwZkdtc53Xou.png",
   },
   {
     label_he: "קשיש",
@@ -227,7 +227,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט קשיש עם משקפיים — קמטים, אופי",
     desc_en: "Elder with glasses — wrinkles, character, depth",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-before-elder-UZG5ozD6kLxkgxtW4XAQSv.webp",
-    after:  `${CDN}/demo-portrait-elder-man-iYXPcDc7tcx49xVqpBFbyP.webp`,
+    after:  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-elder-v3-AjgVThw5PtQucv7tU9FWjv.png",
   },
 ];
 
@@ -269,9 +269,10 @@ function PortraitCard({ item, isRtl }: { item: typeof PORTRAIT_EXAMPLES[0]; isRt
           color: "#fff", borderRadius: 20, padding: "6px 16px", fontSize: 12, fontWeight: 700,
           backdropFilter: "blur(4px)", whiteSpace: "nowrap",
           boxShadow: showAfter ? "0 3px 12px rgba(99,102,241,0.5)" : "0 3px 12px rgba(16,185,129,0.5)",
+          letterSpacing: "0.01em",
         }}>
           {showAfter
-            ? (isRtl ? "← חזור לתמונה" : "← Back to photo")
+            ? (isRtl ? "← לחץ לחזור למקור" : "← Back to original")
             : (isRtl ? "👁 הצג DXF" : "👁 Show DXF")}
         </div>
       </div>
