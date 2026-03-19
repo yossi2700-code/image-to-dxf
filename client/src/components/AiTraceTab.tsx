@@ -5,7 +5,7 @@
  *  No two-step process needed — results arrive in one shot.
  */
 
-import { useState, useRef, useCallback, useEffect, useLayoutEffect } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -186,34 +186,56 @@ function MultiObjectDialog({
     }
   }, []);
 
-  // Initialize canvas once the image loads AND the wrapper is in the DOM
-  useLayoutEffect(() => {
+  // Fit canvas to wrapper using ResizeObserver — fires only after the wrapper has its final size
+  const fitCanvas = useCallback((wrapW: number) => {
+    const img = imgRef.current;
+    const canvas = canvasRef.current;
+    if (!img || !canvas || wrapW <= 0) return;
+    const maxH = Math.min(window.innerHeight * 0.45, 380);
+    const scale = Math.min(wrapW / img.width, maxH / img.height, 1);
+    const w = Math.round(img.width * scale);
+    const h = Math.round(img.height * scale);
+    if (canvas.width === w && canvas.height === h) return; // already correct
+    canvas.width = w;
+    canvas.height = h;
+    // CRITICAL: CSS size must equal internal pixel size to avoid coordinate offset
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    setCropRect(null);
+    cropStartRef.current = null;
+    drawCanvas(null);
+  }, [drawCanvas]);
+
+  // Load image when entering crop mode
+  useEffect(() => {
     if (mode !== 'crop' || !imagePreview) return;
     const img = new Image();
     img.onload = () => {
       imgRef.current = img;
-      const canvas = canvasRef.current;
+      // Trigger fitCanvas if wrapper already has a size
       const wrap = canvasWrapRef.current;
-      if (!canvas || !wrap) return;
-      // Use the wrapper's actual rendered width (already in DOM at this point)
-      const wrapW = wrap.getBoundingClientRect().width || wrap.clientWidth;
-      const maxH = Math.min(window.innerHeight * 0.45, 380);
-      const scaleByW = wrapW / img.width;
-      const scaleByH = maxH / img.height;
-      const scale = Math.min(scaleByW, scaleByH, 1);
-      const w = Math.round(img.width * scale);
-      const h = Math.round(img.height * scale);
-      canvas.width = w;
-      canvas.height = h;
-      // CSS size = internal size → no scaling offset
-      canvas.style.width = w + 'px';
-      canvas.style.height = h + 'px';
-      setCropRect(null);
-      cropStartRef.current = null;
-      drawCanvas(null);
+      if (wrap) {
+        const w = wrap.getBoundingClientRect().width || wrap.clientWidth;
+        fitCanvas(w);
+      }
     };
     img.src = imagePreview;
-  }, [mode, imagePreview, drawCanvas]);
+  }, [mode, imagePreview, fitCanvas]);
+
+  // ResizeObserver: re-fit canvas whenever the wrapper changes size (handles modal animation)
+  useEffect(() => {
+    if (mode !== 'crop') return;
+    const wrap = canvasWrapRef.current;
+    if (!wrap) return;
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const wrapW = entry.contentRect.width;
+      fitCanvas(wrapW);
+    });
+    ro.observe(wrap);
+    return () => ro.disconnect();
+  }, [mode, fitCanvas]);
 
   // Convert pointer event to canvas pixel coordinates (handles devicePixelRatio)
   const getCanvasPos = (clientX: number, clientY: number) => {
