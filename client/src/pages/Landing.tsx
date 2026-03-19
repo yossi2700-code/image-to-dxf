@@ -202,32 +202,32 @@ const PORTRAIT_EXAMPLES = [
     label_en: "Teen Girl",
     desc_he: "פורטרט נערה — שיער מתולתל, קווים עדינים",
     desc_en: "Teen girl portrait — curly hair, delicate lines",
-    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-teen-Hx5cBJBHjbVyLGXAMpMGLG.webp",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait3-dxf-teen-AnsUf2pD3g7cRrBGE29vPT.webp",
+    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-teen_0eb0544e.png",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait3-dxf-teen_1df3ce23.png",
   },
   {
     label_he: "אישה",
     label_en: "Woman",
     desc_he: "פורטרט אישה — שיער קצר, ביטחון",
     desc_en: "Woman portrait — short hair, confidence",
-    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-midwoman-vFGaGPCCqmNJZJFkLJPNpb.webp",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait3-dxf-midwoman-Jr8BSfTp2D6DDEeJAfegNF.webp",
+    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-midwoman_b9ea3bb5.png",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait3-dxf-midwoman_92975579.png",
   },
   {
     label_he: "גבר",
     label_en: "Man",
     desc_he: "פורטרט גבר — זקן, מבנה פנים חזק",
     desc_en: "Man portrait — beard, strong face structure",
-    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-beardman-Vj8XQXEMnCkXBhLBMJdmGF.webp",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait3-dxf-beardman-6i44kHnZcBrtaSdDkujwUV.webp",
+    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-beardman_579be4a0.png",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait3-dxf-beardman_fbc9a161.png",
   },
   {
     label_he: "קשישה",
     label_en: "Elder Woman",
     desc_he: "פורטרט קשישה — קמטים, אופי, עומק",
     desc_en: "Elder woman — wrinkles, character, depth",
-    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-eldwoman-CtBbPJFJkTBLrKLJRpqLHa.webp",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait3-dxf-eldwoman-aVoouxojfWJQ3MBkqbbv87.webp",
+    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-eldwoman_5659b216.png",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait3-dxf-eldwoman_5719e5ee.png",
   },
 ];
 
@@ -533,7 +533,7 @@ export default function Landing() {
                 : "AI detects faces and draws 3 line art variations — ready for engraving on wood, metal, glass and more"}
             </p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 24 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 20 }}>
             {PORTRAIT_EXAMPLES.map((item, i) => (
               <PortraitCard key={i} item={item} isRtl={isRtl} />
             ))}
