@@ -205,6 +205,20 @@ async function runGenerateJob(
   preGroupId?: string
 ) {
   const jobStartTime = Date.now();
+  // AbortController for cancelling in-flight OpenAI requests when timeout fires
+  const abortController = new AbortController();
+  // Hard 5-minute internal timeout
+  const JOB_TIMEOUT_MS = 5 * 60 * 1000;
+  const internalTimeoutId = setTimeout(() => {
+    abortController.abort();
+    const job = getJob(jobId);
+    if (job && job.status !== "done" && job.status !== "cancelled") {
+      updateJob(jobId, {
+        status: "error",
+        error: "Processing timed out after 5 minutes. Try a simpler prompt.",
+      });
+    }
+  }, JOB_TIMEOUT_MS);
   try {
     updateJob(jobId, { status: "processing" });
 
@@ -225,7 +239,7 @@ async function runGenerateJob(
         n: 1,
         size: "1024x1024",
         quality: "medium",
-      });
+      }, { signal: abortController.signal });
 
       const imageData = response.data?.[0];
       if (!imageData) throw new Error("לא הצלחנו לייצר תמונה");
@@ -324,12 +338,18 @@ async function runGenerateJob(
       });
     }
 
+    clearTimeout(internalTimeoutId);
     updateJob(jobId, { status: "done", result: { success: true, images } });
 
   } catch (err: unknown) {
+    clearTimeout(internalTimeoutId);
     console.error("[generateRoute] Job error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
-    updateJob(jobId, { status: "error", error: message });
+    // Don't overwrite a timeout error already set by internalTimeoutId
+    const currentJob = getJob(jobId);
+    if (currentJob && currentJob.status !== "error") {
+      updateJob(jobId, { status: "error", error: message });
+    }
     // No refund needed — tokens were not deducted yet (deduction happens only on success)
     // Record failed action in user history
     void recordUserAction({

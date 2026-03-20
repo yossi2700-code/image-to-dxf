@@ -255,6 +255,23 @@ async function runTraceJob(
   const isHe = lang === "he";
   let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
   const jobStartTime = Date.now();
+  // AbortController for cancelling in-flight OpenAI requests when timeout fires
+  const abortController = new AbortController();
+  // Hard 5-minute internal timeout: abort OpenAI calls and mark job as error
+  const JOB_TIMEOUT_MS = 5 * 60 * 1000;
+  const internalTimeoutId = setTimeout(() => {
+    abortController.abort();
+    clearInterval(heartbeatInterval);
+    const job = getJob(jobId);
+    if (job && job.status !== "done" && job.status !== "cancelled") {
+      updateJob(jobId, {
+        status: "error",
+        error: isHe
+          ? "העיבוד ארך יותר מ-5 דקות. נסה שוב עם תמונה פשוטה יותר."
+          : "Processing timed out after 5 minutes. Try a simpler image.",
+      });
+    }
+  }, JOB_TIMEOUT_MS);
   try {
     updateJob(jobId, {
       status: "processing",
@@ -526,13 +543,14 @@ async function runTraceJob(
           );
 
       // Use gpt-image-1 edit API for high-quality line art generation
+      // Pass signal so the request is aborted immediately when the 5-min timeout fires
       const imageEditResponse = await openai.images.edit({
         model: "gpt-image-1",
         image: new File([editSourceBuffer as unknown as BlobPart], "source.png", { type: "image/png" }),
         prompt: editPrompt,
         n: 1,
         size: aiOutputSize as "1024x1024" | "1536x1024" | "1024x1536",
-      } as Parameters<typeof openai.images.edit>[0]);
+      } as Parameters<typeof openai.images.edit>[0], { signal: abortController.signal });
 
       const b64 = (imageEditResponse as { data?: Array<{ b64_json?: string }> }).data?.[0]?.b64_json;
       if (!b64) throw new Error("gpt-image-1 did not return image data");
@@ -669,13 +687,19 @@ async function runTraceJob(
       });
     }
 
+    clearTimeout(internalTimeoutId);
     updateJob(jobId, { status: "done", result: { success: true, images, objectDescription, suggestions } });
 
   } catch (err: unknown) {
+    clearTimeout(internalTimeoutId);
     clearInterval(heartbeatInterval);
     console.error("[aiTraceRoute] Job error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
-    updateJob(jobId, { status: "error", error: message });
+    // Don't overwrite a timeout error already set by internalTimeoutId
+    const currentJob = getJob(jobId);
+    if (currentJob && currentJob.status !== "error") {
+      updateJob(jobId, { status: "error", error: message });
+    }
     // No token refund needed — tokens are only deducted after success
     // Record failed action in user history
     void recordUserAction({
