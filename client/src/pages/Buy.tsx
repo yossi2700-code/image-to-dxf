@@ -190,10 +190,20 @@ function PurchaseTermsModal({ onClose }: { onClose: () => void }) {
 
 // ─── Main Buy Page ────────────────────────────────────────────────────────────
 export default function Buy() {
-  const { t, isRtl } = useLanguage();
+  const { t, isRtl, language } = useLanguage();
   const [, navigate] = useLocation();
 
+  // Auto-switch currency based on language: Hebrew → ILS, everything else → USD
   const [currency, setCurrency] = useState(() => detectCurrency());
+  useEffect(() => {
+    if (language === "he") {
+      setCurrency("ILS");
+    } else if (currency === "ILS") {
+      // Switched away from Hebrew — reset to USD
+      setCurrency("USD");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language]);
   const [selectedPackage, setSelectedPackage] = useState("tokens_100");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -630,9 +640,9 @@ export default function Buy() {
               <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
               <line x1="1" y1="10" x2="23" y2="10"/>
             </svg>
-            <span>כרטיס אשראי</span>
+            <span>{isRtl ? "כרטיס אשראי" : "Credit Card"}</span>
             <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-black whitespace-nowrap">
-              בקרוב
+              {isRtl ? "בקרוב" : "Soon"}
             </span>
           </button>
         </div>

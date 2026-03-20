@@ -264,7 +264,7 @@ export default function Pricing() {
 
           {/* Currency badge */}
           <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 100, padding: "6px 16px" }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>₪ מחירים בשקל ישראלי</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{isRtl ? "₪ מחירים בשקל ישראלי" : "$ Prices in USD"}</span>
           </div>
         </div>
       </section>
@@ -648,7 +648,7 @@ export default function Pricing() {
           <div style={{ fontSize: 52, position: "relative", zIndex: 1 }}>🏢</div>
           <div style={{ flex: 1, minWidth: 220, position: "relative", zIndex: 1 }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(99,102,241,0.2)", border: "1px solid rgba(99,102,241,0.4)", borderRadius: 100, padding: "3px 12px", marginBottom: 10 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#a5b4fc", letterSpacing: "0.05em" }}>בקרוב</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#a5b4fc", letterSpacing: "0.05em" }}>{isRtl ? "בקרוב" : "Coming Soon"}</span>
             </div>
             <p style={{ fontWeight: 900, fontSize: 22, color: "#fff", margin: "0 0 8px", letterSpacing: "-0.02em" }}>
               {isRtl ? "מנוי עסקי" : "Business Subscription"}
