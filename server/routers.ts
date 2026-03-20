@@ -12,6 +12,7 @@ import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "./emailService";
 import { desc, eq, and, sql } from "drizzle-orm";
 import { getAppUserFromCookie } from "./appAuth";
+import { COUNTRY_NAMES_HE, countryCodeToFlag, getHebrewCountryDisplay } from "./countryNames";
 import { getTokenBalance, addTokens, getTokenTransactions, invalidateTokenCostsCache } from "./tokenService";
 import { createPayPalOrder, capturePayPalOrder, createPayPalOrderForCardFields } from "./paypal";
 import { getPackageById, getPriceForCurrency } from "./products";
@@ -1719,23 +1720,21 @@ export const appRouter = router({
           const rawIp = getClientIp(ctx.req as Parameters<typeof getClientIp>[0]);
           const ipParts = rawIp.split(".");
           const ipAnon = ipParts.length >= 3 ? ipParts.slice(0, 3).join(".") : rawIp.substring(0, 15);
-          // Detect country from IP — try Cloudflare header first, then ip-api.com fallback
+          // Detect country from IP — store 2-letter ISO code, display in Hebrew on read
           let country: string | null = null;
           try {
             const cfCountry = (ctx.req.headers as Record<string, string | string[] | undefined>)["cf-ipcountry"];
             if (cfCountry && typeof cfCountry === "string" && cfCountry.length === 2 && cfCountry !== "XX") {
               country = cfCountry.toUpperCase();
             } else if (rawIp && rawIp !== "unknown" && !rawIp.startsWith("127.") && !rawIp.startsWith("::1") && !rawIp.startsWith("10.") && !rawIp.startsWith("192.168.")) {
-              // Use ip-api.com free tier (45 req/min, no key needed)
-              // Request Hebrew country name directly
-              const geoRes = await fetch(`http://ip-api.com/json/${encodeURIComponent(rawIp)}?fields=countryCode,country&lang=he`, {
+              // Use ip-api.com free tier (45 req/min, no key needed) — only fetch countryCode
+              const geoRes = await fetch(`http://ip-api.com/json/${encodeURIComponent(rawIp)}?fields=countryCode`, {
                 signal: AbortSignal.timeout(3000),
               });
               if (geoRes.ok) {
-                const geoData = await geoRes.json() as { countryCode?: string; country?: string };
-                if (geoData.country && geoData.countryCode) {
-                  // Store as "HE_NAME|CODE" so we can show Hebrew name + flag emoji
-                  country = `${geoData.country}|${geoData.countryCode}`;
+                const geoData = await geoRes.json() as { countryCode?: string };
+                if (geoData.countryCode && geoData.countryCode.length === 2) {
+                  country = geoData.countryCode.toUpperCase();
                 }
               }
             }
@@ -1785,19 +1784,18 @@ export const appRouter = router({
         total: Number(totalRow?.count ?? 0),
         today: Number(todayRow?.count ?? 0),
         byCountry: byCountry.map(r => {
-          const raw = r.country ?? "Unknown";
-          // New format: "שם עברי|קוד" e.g. "ישראל|IL"
+          const raw = r.country ?? null;
+          if (!raw) return { country: "לא ידוע", count: Number(r.count) };
+          // 2-letter ISO code — convert to Hebrew name + flag emoji
+          if (raw.length === 2) {
+            return { country: getHebrewCountryDisplay(raw), count: Number(r.count) };
+          }
+          // Legacy "HE_NAME|CODE" format from previous version
           if (raw.includes("|")) {
-            const [heName, code] = raw.split("|");
-            const flag = code ? String.fromCodePoint(...Array.from(code.toUpperCase()).map(c => 0x1F1E6 + c.charCodeAt(0) - 65)) : "";
-            return { country: `${flag} ${heName}`, count: Number(r.count) };
+            const [, code] = raw.split("|");
+            return { country: code ? getHebrewCountryDisplay(code) : raw, count: Number(r.count) };
           }
-          // Old format: 2-letter code (from Cloudflare) — convert to flag emoji
-          if (raw.length === 2 && raw !== "Unknown") {
-            const flag = String.fromCodePoint(...Array.from(raw.toUpperCase()).map(c => 0x1F1E6 + c.charCodeAt(0) - 65));
-            return { country: `${flag} ${raw}`, count: Number(r.count) };
-          }
-          return { country: raw === "Unknown" ? "לא ידוע" : raw, count: Number(r.count) };
+          return { country: raw, count: Number(r.count) };
         }),
         byPage: byPage.map(r => ({ page: r.page, count: Number(r.count) })),
         recentSessions: Number(uniqueSessionsRow?.count ?? 0),
