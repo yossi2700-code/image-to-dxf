@@ -363,7 +363,7 @@ async function runFaceDetectJob(
         image: editFile,
         prompt: PORTRAIT_STYLE_PROMPTS[style],
         n: 1,
-        size: isMultiFace ? "512x512" : "1024x1024",  // faster for multi-face
+        size: "1024x1024",  // 512x512 not supported with quality param
         quality: "medium",
       });
       const imageData = response.data?.[0];
