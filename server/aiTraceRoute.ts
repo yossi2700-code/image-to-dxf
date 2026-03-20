@@ -616,9 +616,14 @@ async function runTraceJob(
     if (!jobBeforeGen || jobBeforeGen.status === "cancelled") return;
 
     clearInterval(heartbeatInterval);
+    // Suggestions get a 30-second timeout so they never block job completion.
+    const suggestionsWithTimeout = Promise.race([
+      generateImprovementSuggestions(objectDescription, imageBase64, lang),
+      new Promise<string[]>((resolve) => setTimeout(() => resolve([]), 30_000)),
+    ]);
     const [images, suggestions] = await Promise.all([
       Promise.all(generationPromises),
-      generateImprovementSuggestions(objectDescription, imageBase64, lang),
+      suggestionsWithTimeout,
     ]);
 
     const jobAfterGen = getJob(jobId);

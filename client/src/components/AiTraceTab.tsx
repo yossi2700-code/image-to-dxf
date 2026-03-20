@@ -882,35 +882,36 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
                   <img src={imagePreview} alt="Preview" className="w-16 h-16 object-contain rounded-lg shrink-0 border border-gray-200 bg-white" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate text-gray-700">{imageFile?.name}</p>
-                    <p className="text-xs mb-2 text-gray-400">{t("imageSelectedLabel")}</p>
-                    <div className="flex items-center gap-2">
-                      <label
-                        htmlFor="ai-trace-file-input"
-                        className="text-xs font-medium text-teal-600 hover:text-teal-800 cursor-pointer"
-                      >
-                        {t("imageSelected")}
-                      </label>
-                      <span className="text-gray-300">|</span>
-                      <button
-                        type="button"
-                        onClick={() => { setShowCropTool(v => !v); setCropSel(null); }}
-                        className="flex items-center gap-1 text-xs font-medium transition-colors"
-                        style={{ color: showCropTool ? '#6366f1' : '#6b7280' }}
-                      >
-                        <Crop className="w-3 h-3" />
-                        {isRtl ? 'חתוך אזור' : 'Crop area'}
-                      </button>
-                    </div>
+                    <p className="text-xs text-gray-400">{t("imageSelectedLabel")}</p>
                   </div>
+                  {/* Crop button — prominent, right side */}
+                  <button
+                    type="button"
+                    onClick={() => { setShowCropTool(v => !v); setCropSel(null); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0"
+                    style={showCropTool
+                      ? { background: '#6366f1', color: '#fff', boxShadow: '0 2px 8px rgba(99,102,241,0.35)' }
+                      : { background: 'linear-gradient(135deg, #eef2ff, #e0e7ff)', color: '#6366f1', border: '1.5px solid #c7d2fe' }
+                    }
+                  >
+                    <Crop className="w-3.5 h-3.5" />
+                    {isRtl ? 'חתוך' : 'Crop'}
+                  </button>
                   {/* Clear image button */}
                   <button
                     onClick={() => { setImageFile(null); setImagePreviewPersisted(null); setResult(null); setStatus("idle"); setErrorMsg(""); setShowCropTool(false); setCropSel(null); }}
-                    className="absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-100 transition-colors"
+                    className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-100 transition-colors shrink-0"
                     style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444' }}
                     title={isRtl ? 'נקה תמונה' : 'Clear image'}
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
+                </div>
+                {/* Change image link */}
+                <div className="flex justify-end mt-1 px-1">
+                  <label htmlFor="ai-trace-file-input" className="text-xs text-teal-600 hover:text-teal-800 cursor-pointer font-medium">
+                    {t("imageSelected")}
+                  </label>
                 </div>
 
                 {/* ─── Inline Crop Tool ─────────────────────────────────────────── */}
