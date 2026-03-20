@@ -2002,6 +2002,7 @@ export default function Home() {
 
   // Portrait initial image — set when user switches from AI Trace to Portrait tab
   const [portraitInitialImage, setPortraitInitialImage] = useState<string | null>(null);
+  const [portraitImageKey, setPortraitImageKey] = useState(0);
 
   // Remember active tab — auto-switch to tab with active job on page return
   const [activeTab, setActiveTab] = useState<string>(() => {
@@ -2662,6 +2663,7 @@ export default function Home() {
               onInsufficientTokens={() => setShowTokensBanner(true)}
               onSwitchToPortrait={(imageDataUrl) => {
                 setPortraitInitialImage(imageDataUrl);
+                setPortraitImageKey(k => k + 1); // force FaceDetectTab re-mount
                 setActiveTab("face");
                 localStorage.setItem("active_tab", "face");
                 setTimeout(() => {
@@ -2745,6 +2747,7 @@ export default function Home() {
               />
             </div>
             <FaceDetectTab
+              key={portraitImageKey}
               onOpenAuth={() => openAuthAs("unregistered")}
               onInsufficientTokens={() => setShowTokensBanner(true)}
               initialImageDataUrl={portraitInitialImage}

@@ -687,10 +687,11 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       reader.readAsDataURL(file);
     };
     const objectUrl = URL.createObjectURL(file);
-    const origOnload = img.onload;
+    // Capture the onload handler before setting img.src so we can revoke the object URL
+    const mainOnload = img.onload as ((this: GlobalEventHandlers, ev: Event) => void) | null;
     img.onload = (ev) => {
       URL.revokeObjectURL(objectUrl);
-      if (origOnload) (origOnload as EventListener).call(img, ev);
+      if (mainOnload) mainOnload.call(img, ev);
     };
     img.src = objectUrl;
   }, [isRtl, setImagePreviewPersisted, setJobIdPersisted, onSwitchToPortrait]);
