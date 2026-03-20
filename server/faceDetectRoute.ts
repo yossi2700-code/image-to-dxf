@@ -212,8 +212,10 @@ async function generateAiSuggestions(style: PortraitStyle, lang: "he" | "en"): P
     });
 
     const rawContent = response.choices?.[0]?.message?.content;
-    const content = typeof rawContent === "string" ? rawContent : null;
-    if (!content) return [];
+    const rawStr = typeof rawContent === "string" ? rawContent : null;
+    if (!rawStr) return [];
+    // Strip markdown code blocks if present
+    const content = rawStr.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     const parsed = JSON.parse(content) as { suggestions: string[] };
     return parsed.suggestions?.slice(0, 3) ?? [];
   } catch {
@@ -305,8 +307,10 @@ async function runFaceDetectJob(
         },
       },
     });
-    const faceCheckContent = (faceCheckResponse as { choices?: Array<{ message?: { content?: string } }> })
+    const rawFaceCheckContent = (faceCheckResponse as { choices?: Array<{ message?: { content?: string } }> })
       ?.choices?.[0]?.message?.content ?? "{}";
+    // Strip markdown code blocks if present (e.g. ```json\n{...}\n```)
+    const faceCheckContent = rawFaceCheckContent.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     
     type FaceBox = { x_min: number; y_min: number; x_max: number; y_max: number };
     let detectedFaces: FaceBox[] = [];
@@ -728,43 +732,32 @@ router.post(
         messages: [
           {
             role: "system",
-            content: "You are a face detection system. Detect if there are any human faces in the image. Respond with JSON only.",
+            content: 'You are a face detection system. Detect if there are any human faces in the image. You MUST respond with valid JSON only, no other text. Example: {"hasFaces": true, "faceCount": 2}',
           },
           {
             role: "user",
             content: [
-              { type: "image_url", image_url: { url: imageDataUrl, detail: "low" } },
-              { type: "text", text: 'Does this image contain any human faces (adults, babies, children, side profiles)? Return JSON: {"hasFaces": true/false, "faceCount": number}' },
+              { type: "image_url", image_url: { url: imageDataUrl, detail: "auto" } },
+              { type: "text", text: 'Does this image contain any human faces (adults, babies, children, elderly, side profiles)? Respond with JSON only: {"hasFaces": true/false, "faceCount": number}' },
             ],
           },
         ],
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "face_quick_check",
-            strict: true,
-            schema: {
-              type: "object",
-              properties: {
-                hasFaces: { type: "boolean" },
-                faceCount: { type: "number" },
-              },
-              required: ["hasFaces", "faceCount"],
-              additionalProperties: false,
-            },
-          },
-        },
       });
 
-      const content = (faceCheckResponse as { choices?: Array<{ message?: { content?: string } }> })
+      console.log("[quick-check] Full LLM response:", JSON.stringify(faceCheckResponse).substring(0, 500));
+      const rawContent = (faceCheckResponse as { choices?: Array<{ message?: { content?: string } }> })
         ?.choices?.[0]?.message?.content ?? "{}";
+      console.log("[quick-check] LLM response content:", rawContent);
+      // Strip markdown code blocks if present (e.g. ```json\n{...}\n```)
+      const content = rawContent.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
       let hasFaces = false;
       let faceCount = 0;
       try {
         const parsed = JSON.parse(content) as { hasFaces?: boolean; faceCount?: number };
         hasFaces = parsed.hasFaces ?? false;
         faceCount = parsed.faceCount ?? 0;
-      } catch { /* ignore */ }
+        console.log("[quick-check] Parsed result:", { hasFaces, faceCount });
+      } catch (e) { console.log("[quick-check] Parse error:", e, "content:", content); }
 
       return res.json({ hasFaces, faceCount });
     } catch (err) {

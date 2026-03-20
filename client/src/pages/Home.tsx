@@ -474,7 +474,7 @@ function WelcomeBanner({ onDismiss }: { onDismiss: () => void }) {
 
 // // ─── Sale Banner ────────────────────────────────────────────────────────────────────
 function SaleBanner() {
-  const { isRtl } = useLanguage();
+  const { isRtl, language } = useLanguage();
   const [dismissed, setDismissed] = useState(false);
   const { data: prices } = trpc.packages.prices.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
 
@@ -487,7 +487,9 @@ function SaleBanner() {
   if (!salePackage) return null;
 
   const discount = salePackage.discountPercent ?? 0;
-  const label = salePackage.label || (isRtl ? `${salePackage.tokenAmount} אסימונים` : `${salePackage.tokenAmount} tokens`);
+  // Always use localized token word to avoid mixing languages (DB label may be in Hebrew)
+  const tokenWord = language === 'he' ? 'אסימונים' : language === 'ru' ? 'токенов' : 'tokens';
+  const label = `${salePackage.tokenAmount} ${tokenWord}`;
 
   return (
     <div
@@ -1037,6 +1039,7 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
   });
   const [showModify, setShowModify] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [brandBlocked, setBrandBlocked] = useState<{ brand: string; message: string } | null>(null);
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [downloadImg, setDownloadImg] = useState<AiImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
@@ -1237,8 +1240,8 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
         setStatus("error");
         stopProgressSteps();
         const msg = language === "he" ? data.message : data.messageEn;
+        setBrandBlocked({ brand: data.brand, message: msg });
         setErrorMsg(msg);
-        toast.error(msg, { duration: 8000 });
         return;
       }
       if (data.error === "REGISTRATION_REQUIRED" || data.error === "UNAUTHORIZED") {

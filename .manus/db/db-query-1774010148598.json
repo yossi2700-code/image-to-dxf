@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, label, badge, tokenAmount, discountPercent FROM package_prices WHERE badge = 'sale' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, label, badge, tokenAmount, discountPercent FROM package_prices WHERE badge = 'sale' LIMIT 5;",
+  "rows": [
+    {
+      "id": "30008",
+      "label": "300 אסימונים",
+      "badge": "sale",
+      "tokenAmount": "300",
+      "discountPercent": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tlabel\tbadge\ttokenAmount\tdiscountPercent\n30008\t300 אסימונים\tsale\t300\t0\n",
+  "stderr": "",
+  "execution_time_ms": 1530
+}

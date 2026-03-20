@@ -663,11 +663,13 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       // Trigger face detection check (only if portrait switch is supported)
       if (onSwitchToPortrait) {
         setFaceCheckLoading(true);
+        // Use FormData with the original file to avoid base64 corruption issues
+        const formData = new FormData();
+        formData.append("image", file);
         fetch("/api/face-detect/quick-check", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ imageDataUrl: compressed }),
+          body: formData,
         })
           .then(r => r.json())
           .then((data: { hasFaces?: boolean; faceCount?: number }) => {
