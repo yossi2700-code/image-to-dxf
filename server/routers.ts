@@ -1,6 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import jwt from "jsonwebtoken";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { ENV } from "./_core/env";
 import { systemRouter } from "./_core/systemRouter";
@@ -73,11 +74,20 @@ function clearRateLimit(ip: string): void {
   loginAttempts.delete(ip);
 }
 
-/** Check if the request has a valid admin session cookie */
+/** Check if the request has a valid admin session cookie (JWT-signed) */
 function isAdminAuthenticated(req: { headers: Record<string, string | string[] | undefined>; cookies?: Record<string, string> }): boolean {
-  // Express populates req.cookies when cookie-parser is used
   const cookies = (req as { cookies?: Record<string, string> }).cookies ?? {};
-  return cookies[ADMIN_COOKIE] === "authenticated";
+  const token = cookies[ADMIN_COOKIE];
+  if (!token) return false;
+  // Legacy plain-text cookie support (transition period)
+  if (token === "authenticated") return false; // reject old insecure cookies
+  try {
+    const secret = ENV.cookieSecret || "fallback-secret";
+    const payload = jwt.verify(token, secret) as { role?: string };
+    return payload?.role === "admin";
+  } catch {
+    return false;
+  }
 }
 
 /** Procedure that only an admin-cookie holder can call */
@@ -125,9 +135,15 @@ export const appRouter = router({
         // Successful login — clear rate limit counter
         clearRateLimit(ip);
 
-        // Set a simple session cookie (httpOnly, 7 days)
-        // Note: sameSite "lax" works on Safari/iPhone; "none" requires secure but breaks Safari ITP
-        ctx.res.cookie(ADMIN_COOKIE, "authenticated", {
+        // Set a JWT-signed session cookie (httpOnly, 7 days)
+        // JWT prevents cookie forgery — only the server with JWT_SECRET can issue valid tokens
+        const jwtSecret = ENV.cookieSecret || "fallback-secret";
+        const adminToken = jwt.sign(
+          { role: "admin", iat: Math.floor(Date.now() / 1000) },
+          jwtSecret,
+          { expiresIn: "7d" }
+        );
+        ctx.res.cookie(ADMIN_COOKIE, adminToken, {
           httpOnly: true,
           secure: ENV.isProduction,
           sameSite: "lax",
