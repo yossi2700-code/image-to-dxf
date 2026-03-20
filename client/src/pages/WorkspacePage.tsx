@@ -413,16 +413,17 @@ export default function WorkspacePage() {
           dir={isRtl ? "rtl" : "ltr"}
         >
           {/* Tab bar — horizontally scrollable for mobile + future features */}
-          <div style={{ overflowX: 'auto', overflowY: 'visible', WebkitOverflowScrolling: 'touch', marginBottom: 20, paddingBottom: 2 }}>
+          <div style={{ overflowX: 'auto', overflowY: 'visible', WebkitOverflowScrolling: 'touch', marginBottom: 0, paddingBottom: 0 }}>
             <TabsList
               style={{
                 display: 'flex',
-                gap: 6,
-                padding: '6px',
-                background: 'rgba(255,255,255,0.9)',
-                border: '1.5px solid rgba(99,102,241,0.15)',
-                borderRadius: 14,
-                boxShadow: '0 2px 12px rgba(99,102,241,0.08)',
+                gap: 4,
+                padding: '5px 6px',
+                background: '#ffffff',
+                border: '1px solid #e5e7eb',
+                borderBottom: '2px solid #e5e7eb',
+                borderRadius: '12px 12px 0 0',
+                boxShadow: '0 -1px 0 0 #e5e7eb inset',
                 width: 'max-content',
                 minWidth: '100%',
                 height: 'auto',
@@ -555,6 +556,8 @@ export default function WorkspacePage() {
           </div>
 
           {/* ── Tab Contents ── */}
+          {/* CAD-style content panel — connects flush to tab bar */}
+          <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '20px 16px 24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', marginBottom: 24 }}>
           <TabsContent value="ai">
             <AiGeneratorTabInline
               onOpenAuth={() => openAuthAs("unregistered")}
@@ -597,6 +600,7 @@ export default function WorkspacePage() {
               <p style={{ color: '#92400e', fontWeight: 700, marginTop: 8 }}>{isRtl ? 'בקרוב — CNC תבליט' : 'Coming Soon — CNC Relief'}</p>
             </div>
           </TabsContent>
+          </div>{/* end CAD panel */}
         </Tabs>
       </main>
 

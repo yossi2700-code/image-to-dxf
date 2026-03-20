@@ -2074,8 +2074,12 @@ export default function Home() {
         if (d.user) {
           localStorage.setItem("app_user_logged_in", "1");
           setAppUser(d.user);
-          // Auto-claim campaign bonus if URL has ?campaign= OR if there's a pending one in localStorage
+          // Auto-redirect to workspace if user is already logged in (unless they have a campaign code)
           const pendingCampaign = campaignCode || localStorage.getItem("pending_campaign");
+          if (!pendingCampaign && !window.location.search.includes('noredirect')) {
+            window.location.href = '/app';
+            return;
+          }
           if (pendingCampaign) {
             claimCampaignCode(pendingCampaign);
           }
@@ -2458,47 +2462,106 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Feature shortcut buttons — click to switch tab */}
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create', color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-v3-Xq8E28tKQT67AA2juXG9Ze.webp' },
-                { tab: 'trace', label: isRtl ? 'AI Outline' : 'AI Outline', color: '#0d9488', bg: 'linear-gradient(135deg, #0d9488, #06b6d4)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png' },
-                { tab: 'sketch', label: isRtl ? 'AI סקיצה' : 'AI Sketch', color: '#d97706', bg: 'linear-gradient(135deg, #d97706, #f59e0b)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-sketch-ai-text-v2-CcjuVZbxwbYguCvTLMwBo8.webp', comingSoon: true },
-                { tab: 'face', label: isRtl ? 'פורטרט' : 'Portrait', color: '#7c3aed', bg: 'linear-gradient(135deg, #7c3aed, #a855f7)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_e956deb2.png' },
-              ].map((f, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    setActiveTab(f.tab);
-                    localStorage.setItem('active_tab', f.tab);
-                    document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className="flex flex-col items-center gap-0 rounded-2xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
-                  style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 4px 16px rgba(0,0,0,0.10)' }}
-                >
-                  {/* Image area: white bg, object-contain so nothing is cropped */}
-                  <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '62%' }}>
-                    <img
-                      src={f.img}
-                      alt={f.label}
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', padding: '6px' }}
-                    />
-                    {(f as { comingSoon?: boolean }).comingSoon && (
-                      <span
-                        className="absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-full z-10"
-                        style={{ background: '#f59e0b', color: 'white', whiteSpace: 'nowrap', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}
-                      >
-                        {isRtl ? 'בקרוב' : 'Coming soon'}
-                      </span>
-                    )}
-                  </div>
-                  {/* Label bar */}
-                  <span
-                    className="w-full text-xs font-bold text-center py-2"
-                    style={{ background: f.bg, color: 'white', letterSpacing: '0.02em' }}
-                  >{f.label}</span>
-                </button>
-              ))}
+            {/* Feature shortcut cards — SVG illustrations, click to scroll to tab */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* AI Create */}
+              <button
+                onClick={() => { setActiveTab('ai'); localStorage.setItem('active_tab', 'ai'); document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+                className="flex flex-col rounded-2xl overflow-hidden transition-all hover:scale-105 active:scale-95"
+                style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 4px 20px rgba(99,102,241,0.15)' }}
+              >
+                <div className="w-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#eef2ff,#f5f3ff)', height: 100 }}>
+                  <svg viewBox="0 0 80 80" width="72" height="72" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="8" y="20" width="40" height="50" rx="4" stroke="#6366f1" strokeWidth="2" fill="#eef2ff"/>
+                    <path d="M16 36 Q28 24 40 36 Q52 48 64 36" stroke="#6366f1" strokeWidth="2" fill="none" strokeLinecap="round"/>
+                    <path d="M16 46 Q28 34 40 46 Q52 58 64 46" stroke="#8b5cf6" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeDasharray="3 2"/>
+                    <circle cx="60" cy="22" r="10" fill="#6366f1" opacity="0.15" stroke="#6366f1" strokeWidth="1.5"/>
+                    <path d="M56 22 L60 18 L64 22 M60 18 L60 26" stroke="#6366f1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <circle cx="28" cy="30" r="3" fill="#6366f1" opacity="0.4"/>
+                    <line x1="20" y1="55" x2="44" y2="55" stroke="#6366f1" strokeWidth="1.5" strokeLinecap="round"/>
+                    <line x1="20" y1="61" x2="36" y2="61" stroke="#6366f1" strokeWidth="1" strokeLinecap="round" opacity="0.5"/>
+                  </svg>
+                </div>
+                <span className="w-full text-xs font-bold text-center py-2.5" style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: 'white' }}>
+                  {isRtl ? 'AI יצירה' : 'AI Create'}
+                </span>
+              </button>
+              {/* AI Outline */}
+              <button
+                onClick={() => { setActiveTab('trace'); localStorage.setItem('active_tab', 'trace'); document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+                className="flex flex-col rounded-2xl overflow-hidden transition-all hover:scale-105 active:scale-95"
+                style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 4px 20px rgba(13,148,136,0.15)' }}
+              >
+                <div className="w-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#f0fdf4,#ecfdf5)', height: 100 }}>
+                  <svg viewBox="0 0 80 80" width="72" height="72" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    {/* Photo icon left */}
+                    <rect x="4" y="18" width="30" height="24" rx="3" fill="#d1fae5" stroke="#0d9488" strokeWidth="1.5"/>
+                    <circle cx="12" cy="26" r="4" fill="#0d9488" opacity="0.3"/>
+                    <path d="M4 36 L14 26 L22 34 L28 28 L34 36" stroke="#0d9488" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                    {/* Arrow */}
+                    <path d="M37 30 L43 30 M41 27 L44 30 L41 33" stroke="#0d9488" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    {/* Vector outline right */}
+                    <path d="M48 22 Q58 14 68 22 Q76 30 68 38 Q58 46 48 38 Q40 30 48 22 Z" stroke="#0d9488" strokeWidth="2" fill="none" strokeLinecap="round"/>
+                    <path d="M52 28 Q58 22 64 28 Q68 34 64 40 Q58 46 52 40 Q48 34 52 28 Z" stroke="#06b6d4" strokeWidth="1" fill="none" strokeDasharray="2 2"/>
+                    {/* DXF label */}
+                    <rect x="46" y="52" width="22" height="12" rx="3" fill="#0d9488" opacity="0.15" stroke="#0d9488" strokeWidth="1"/>
+                    <text x="57" y="61" textAnchor="middle" fontSize="6" fill="#0d9488" fontWeight="bold">DXF</text>
+                  </svg>
+                </div>
+                <span className="w-full text-xs font-bold text-center py-2.5" style={{ background: 'linear-gradient(135deg,#0d9488,#06b6d4)', color: 'white' }}>
+                  {isRtl ? 'AI Outline' : 'AI Outline'}
+                </span>
+              </button>
+              {/* AI Sketch — coming soon */}
+              <button
+                onClick={() => { setActiveTab('sketch'); localStorage.setItem('active_tab', 'sketch'); document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+                className="flex flex-col rounded-2xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
+                style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 4px 20px rgba(217,119,6,0.12)', opacity: 0.85 }}
+              >
+                <span className="absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded-full z-10" style={{ background: '#f59e0b', color: 'white' }}>
+                  {isRtl ? 'בקרוב' : 'Soon'}
+                </span>
+                <div className="w-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#fffbeb,#fef3c7)', height: 100 }}>
+                  <svg viewBox="0 0 80 80" width="72" height="72" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 60 Q30 20 50 30 Q65 38 55 55" stroke="#d97706" strokeWidth="2" fill="none" strokeLinecap="round"/>
+                    <path d="M18 58 Q28 18 48 28 Q63 36 53 53" stroke="#f59e0b" strokeWidth="1" fill="none" strokeLinecap="round" strokeDasharray="3 2"/>
+                    <circle cx="55" cy="55" r="5" fill="#d97706" opacity="0.2" stroke="#d97706" strokeWidth="1.5"/>
+                    <path d="M52 52 L58 58" stroke="#d97706" strokeWidth="2" strokeLinecap="round"/>
+                    <rect x="10" y="15" width="20" height="6" rx="2" fill="#fde68a" stroke="#d97706" strokeWidth="1"/>
+                    <line x1="12" y1="18" x2="28" y2="18" stroke="#d97706" strokeWidth="1" strokeLinecap="round"/>
+                    <rect x="50" y="15" width="20" height="6" rx="2" fill="#fde68a" stroke="#d97706" strokeWidth="1"/>
+                    <line x1="52" y1="18" x2="68" y2="18" stroke="#d97706" strokeWidth="1" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <span className="w-full text-xs font-bold text-center py-2.5" style={{ background: 'linear-gradient(135deg,#d97706,#f59e0b)', color: 'white' }}>
+                  {isRtl ? 'AI סקיצה' : 'AI Sketch'}
+                </span>
+              </button>
+              {/* Portrait */}
+              <button
+                onClick={() => { setActiveTab('face'); localStorage.setItem('active_tab', 'face'); document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+                className="flex flex-col rounded-2xl overflow-hidden transition-all hover:scale-105 active:scale-95"
+                style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 4px 20px rgba(124,58,237,0.15)' }}
+              >
+                <div className="w-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#f5f3ff,#ede9fe)', height: 100 }}>
+                  <svg viewBox="0 0 80 80" width="72" height="72" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    {/* Face silhouette */}
+                    <ellipse cx="40" cy="32" rx="16" ry="20" stroke="#7c3aed" strokeWidth="2" fill="#ede9fe" opacity="0.5"/>
+                    <path d="M28 48 Q24 60 20 68 Q30 72 40 72 Q50 72 60 68 Q56 60 52 48" stroke="#7c3aed" strokeWidth="2" fill="none" strokeLinecap="round"/>
+                    {/* Vector lines overlay */}
+                    <path d="M32 28 Q36 24 40 28 Q44 24 48 28" stroke="#a855f7" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+                    <path d="M36 36 Q40 40 44 36" stroke="#7c3aed" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+                    <line x1="34" y1="30" x2="34" y2="34" stroke="#7c3aed" strokeWidth="1.5" strokeLinecap="round"/>
+                    <line x1="46" y1="30" x2="46" y2="34" stroke="#7c3aed" strokeWidth="1.5" strokeLinecap="round"/>
+                    {/* DXF corner marks */}
+                    <path d="M8 8 L8 16 L16 16" stroke="#7c3aed" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.4"/>
+                    <path d="M72 8 L72 16 L64 16" stroke="#7c3aed" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.4"/>
+                  </svg>
+                </div>
+                <span className="w-full text-xs font-bold text-center py-2.5" style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)', color: 'white' }}>
+                  {isRtl ? 'פורטרט' : 'Portrait'}
+                </span>
+              </button>
             </div>
               </div>{/* end left column */}
             </div>{/* end flex row */}
