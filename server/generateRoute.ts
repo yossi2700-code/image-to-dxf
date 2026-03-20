@@ -398,6 +398,7 @@ router.post("/api/generate-images", async (req, res) => {
 
     // Block trademarked brand names — OpenAI refuses these and causes silent timeouts
     const BLOCKED_BRANDS = [
+      // English brand names
       "disney", "mickey mouse", "minnie mouse", "donald duck", "goofy", "pluto",
       "marvel", "spider-man", "spiderman", "batman", "superman", "iron man", "ironman",
       "dc comics", "avengers", "pokemon", "pikachu", "nintendo", "mario", "luigi",
@@ -406,11 +407,21 @@ router.post("/api/generate-images", async (req, res) => {
       "coca-cola", "pepsi", "mcdonalds", "mcdonald's", "starbucks", "amazon",
       "ferrari", "lamborghini", "porsche", "bmw", "mercedes", "tesla",
       "louis vuitton", "gucci", "chanel", "prada", "versace", "rolex",
-      "star wars", "harry potter", "lord of the rings", "batman", "superman",
+      "star wars", "harry potter", "lord of the rings",
       "youtube", "instagram", "twitter", "tiktok", "snapchat", "whatsapp",
+      // Hebrew brand names
+      "דיסני", "מיקי מאוס", "מארוול", "ספיידרמן", "באטמן", "סופרמן",
+      "פוקימון", "פיקאצ'ו", "נינטנדו", "מריו",
+      "נייקי", "אדידס", "אפל", "גוגל", "פייסבוק", "מטא", "מיקרוסופט",
+      "קוקה קולה", "פפסי", "מקדונלד", "סטארבקס", "אמזון",
+      "פרארי", "למבורגיני", "פורשה", "מרצדס", "טסלה",
+      "לואי ויטון", "גוצ'י", "שאנל", "פראדה", "ורסאצ'ה", "רולקס",
+      "מלחמת הכוכבים", "הארי פוטר",
+      "יוטיוב", "אינסטגרם", "טוויטר", "טיקטוק", "סנאפצ'ט", "וואטסאפ",
     ];
     const promptLower = prompt.trim().toLowerCase();
-    const matchedBrand = BLOCKED_BRANDS.find(brand => promptLower.includes(brand));
+    const promptOriginal = prompt.trim(); // Hebrew chars are not affected by toLowerCase
+    const matchedBrand = BLOCKED_BRANDS.find(brand => promptLower.includes(brand) || promptOriginal.includes(brand));
     if (matchedBrand) {
       return res.status(422).json({
         error: "BRAND_BLOCKED",
@@ -496,7 +507,19 @@ router.get("/api/generate-images/job/:jobId", (req, res) => {
   if (job.status === "done") {
     return res.json({ status: "done", result: job.result });
   } else if (job.status === "error") {
-    return res.json({ status: "error", error: job.error, message: `שגיאה: ${job.error}` });
+    const rawError = job.error ?? "";
+    // Translate raw OpenAI safety/content errors into friendly messages
+    let friendlyMessage: string;
+    if (rawError.toLowerCase().includes("safety") || rawError.toLowerCase().includes("rejected") || rawError.toLowerCase().includes("content_policy") || rawError.toLowerCase().includes("content policy")) {
+      friendlyMessage = "הבקשה נדחתה על ידי מסנן התוכן של AI. נסה תיאור אחר — הימנע ממותגים רשומים, תוכן פוגעני, או דמויות מוגנות בזכויות יוצרים.";
+    } else if (rawError.toLowerCase().includes("timed out") || rawError.toLowerCase().includes("timeout")) {
+      friendlyMessage = "העיבוד לקח יותר מדי זמן. נסה שוב עם תיאור פשוט יותר.";
+    } else if (rawError.toLowerCase().includes("quota") || rawError.toLowerCase().includes("billing")) {
+      friendlyMessage = "שירות ה-AI אינו זמין כרגע. נסה שוב מאוחר יותר.";
+    } else {
+      friendlyMessage = "שגיאה ביצירת התמונה. נסה שוב עם תיאור שונה.";
+    }
+    return res.json({ status: "error", error: job.error, message: friendlyMessage });
   } else if (job.status === "cancelled") {
     return res.json({ status: "cancelled" });
   } else {

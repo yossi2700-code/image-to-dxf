@@ -2096,3 +2096,5 @@
 - [ ] Fix face detection dialog Yes/No flow - Yes should switch to portrait tab with image, No should trace normally
 - [x] Add brand name detection in AI Create - block trademarked brands with clear error message
 - [x] Add progress bar with percentage and elapsed time to AI Create tab (like AI Trace)
+- [x] Fix AI Create error message - show friendly Hebrew/English message instead of raw OpenAI error
+- [x] Add Hebrew brand names to block list (דיסני, נייקי, אפל, etc.)
