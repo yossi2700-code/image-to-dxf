@@ -399,9 +399,9 @@ function MultiObjectDialog({
   );
 }
 
-interface AiTraceTabProps { onOpenAuth: () => void; onInsufficientTokens?: () => void; }
+interface AiTraceTabProps { onOpenAuth: () => void; onInsufficientTokens?: () => void; onSwitchToPortrait?: (imageDataUrl: string) => void; }
 
-export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps) {
+export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrait }: AiTraceTabProps) {
   const { t, isRtl, language } = useLanguage();
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
   const { reportBug } = useBugReport();
@@ -448,6 +448,10 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [processingTime, setProcessingTime] = useState<number | null>(null); // seconds taken for last job
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+  // Face detection dialog state
+  const [showFaceDialog, setShowFaceDialog] = useState(false);
+  const [faceDialogImageUrl, setFaceDialogImageUrl] = useState<string | null>(null);
+  const [faceCheckLoading, setFaceCheckLoading] = useState(false);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -656,6 +660,25 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
       ctx.drawImage(img, 0, 0, w, h);
       const compressed = canvas.toDataURL("image/jpeg", 0.85);
       setImagePreviewPersisted(compressed);
+      // Trigger face detection check (only if portrait switch is supported)
+      if (onSwitchToPortrait) {
+        setFaceCheckLoading(true);
+        fetch("/api/face-detect/quick-check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ imageDataUrl: compressed }),
+        })
+          .then(r => r.json())
+          .then((data: { hasFaces?: boolean; faceCount?: number }) => {
+            setFaceCheckLoading(false);
+            if (data.hasFaces) {
+              setFaceDialogImageUrl(compressed);
+              setShowFaceDialog(true);
+            }
+          })
+          .catch(() => setFaceCheckLoading(false));
+      }
     };
     img.onerror = () => {
       // Fallback to FileReader if canvas fails
@@ -670,7 +693,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
       if (origOnload) (origOnload as EventListener).call(img, ev);
     };
     img.src = objectUrl;
-  }, [isRtl, setImagePreviewPersisted, setJobIdPersisted]);
+  }, [isRtl, setImagePreviewPersisted, setJobIdPersisted, onSwitchToPortrait]);
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setDragOver(false);
     const file = e.dataTransfer.files[0]; if (file) handleFile(file);
@@ -813,6 +836,68 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
 
   return (
     <>
+      {/* Face Detection Dialog — shown when faces are detected in AI Trace tab */}
+      {showFaceDialog && faceDialogImageUrl && (
+        <div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4">
+          <div
+            className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden"
+            style={{ direction: isRtl ? 'rtl' : 'ltr' }}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-600 to-violet-700 px-5 py-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white text-xl">👤</div>
+              <div>
+                <p className="text-white font-bold text-base">{isRtl ? 'זיהיתי פנים בתמונה' : 'Face detected in image'}</p>
+                <p className="text-white/80 text-xs">{isRtl ? 'האם ברצונך ליצור פורטרט?' : 'Would you like to create a portrait?'}</p>
+              </div>
+            </div>
+            {/* Image preview */}
+            <div className="px-5 pt-4 pb-2">
+              <img
+                src={faceDialogImageUrl}
+                alt="preview"
+                className="w-full h-40 object-cover rounded-xl border border-gray-100"
+              />
+            </div>
+            {/* Description */}
+            <div className="px-5 pb-3">
+              <p className="text-gray-600 text-sm">
+                {isRtl
+                  ? 'מצב פורטרט מייצר ציור קווים מפורט של הפנים, מתאים ללייזר וחיתוך CNC.'
+                  : 'Portrait mode creates a detailed line drawing of the face, ideal for laser cutting and CNC.'}
+              </p>
+            </div>
+            {/* Buttons */}
+            <div className="px-5 pb-5 flex gap-3">
+              <button
+                onClick={() => {
+                  setShowFaceDialog(false);
+                  if (onSwitchToPortrait && faceDialogImageUrl) {
+                    onSwitchToPortrait(faceDialogImageUrl);
+                  }
+                }}
+                className="flex-1 py-3 rounded-xl font-bold text-white text-sm transition-all active:scale-95"
+                style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
+              >
+                {isRtl ? '✅ כן, צור פורטרט' : '✅ Yes, create portrait'}
+              </button>
+              <button
+                onClick={() => setShowFaceDialog(false)}
+                className="flex-1 py-3 rounded-xl font-bold text-gray-700 text-sm border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-all active:scale-95"
+              >
+                {isRtl ? '🖼️ לא, צייר הכל' : '🖼️ No, trace all'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Face check loading indicator */}
+      {faceCheckLoading && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-900/90 text-white text-sm px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+          <span className="animate-spin text-base">⏳</span>
+          <span>{isRtl ? 'בודק תמונה...' : 'Analyzing image...'}</span>
+        </div>
+      )}
       {zoomImg && (
         <div
           className="fixed inset-0 z-50 bg-black/85 flex flex-col"

@@ -2000,6 +2000,9 @@ export default function Home() {
     face: !!localStorage.getItem("face_detect_jobId"),
   }));
 
+  // Portrait initial image — set when user switches from AI Trace to Portrait tab
+  const [portraitInitialImage, setPortraitInitialImage] = useState<string | null>(null);
+
   // Remember active tab — auto-switch to tab with active job on page return
   const [activeTab, setActiveTab] = useState<string>(() => {
     // If there's an active job, go to that tab automatically
@@ -2654,7 +2657,18 @@ export default function Home() {
                 ]}
               />
             </div>
-            <AiTraceTab onOpenAuth={() => openAuthAs("unregistered")} onInsufficientTokens={() => setShowTokensBanner(true)} />
+            <AiTraceTab
+              onOpenAuth={() => openAuthAs("unregistered")}
+              onInsufficientTokens={() => setShowTokensBanner(true)}
+              onSwitchToPortrait={(imageDataUrl) => {
+                setPortraitInitialImage(imageDataUrl);
+                setActiveTab("face");
+                localStorage.setItem("active_tab", "face");
+                setTimeout(() => {
+                  document.getElementById("main-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 100);
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="redraw">
@@ -2730,7 +2744,11 @@ export default function Home() {
                 ]}
               />
             </div>
-            <FaceDetectTab onOpenAuth={() => openAuthAs("unregistered")} onInsufficientTokens={() => setShowTokensBanner(true)} />
+            <FaceDetectTab
+              onOpenAuth={() => openAuthAs("unregistered")}
+              onInsufficientTokens={() => setShowTokensBanner(true)}
+              initialImageDataUrl={portraitInitialImage}
+            />
           </TabsContent>
         </Tabs>
         </div>{/* end centering wrapper */}

@@ -2090,3 +2090,4 @@
 - [x] Add multi-face processing time warning in portrait tab (more faces = longer processing)
 - [x] Add 50-second patience message in AI trace/outline tab ("עוד רגע זה מוכן...")
 - [x] Fix multi-face bug: only 1 face returned when 2 faces in image (adult + baby/child)
+- [x] AI Trace tab: detect faces on image upload, ask user if they want portrait mode (yes=portrait, no=continue trace)

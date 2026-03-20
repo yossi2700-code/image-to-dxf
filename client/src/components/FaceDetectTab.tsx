@@ -158,6 +158,7 @@ function PortraitCard({ image, index, isRtl, onDownload, onZoom }: PortraitCardP
 interface FaceDetectTabProps {
   onOpenAuth?: () => void;
   onInsufficientTokens?: () => void;
+  initialImageDataUrl?: string | null;
 }
 
 const PORTRAIT_DEMO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-comparison-v2-V3XEx63MMyZxexy2zzChhD.webp";
@@ -238,7 +239,7 @@ const STYLE_OPTIONS: { value: PortraitStyle; labelHe: string; labelEn: string; d
   },
 ];
 
-export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTabProps) {
+export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDataUrl }: FaceDetectTabProps) {
   const { language } = useLanguage();
   const isRtl = language === "he";
   const { reportBug } = useBugReport();
@@ -272,6 +273,15 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
   const previewRef = useRef<string | null>(localStorage.getItem("face_detect_imagePreview"));
 
   const { refetch: refetchTokens } = trpc.auth.me.useQuery(undefined, { enabled: false });
+
+  // Load initial image from AiTraceTab face detection redirect
+  useEffect(() => {
+    if (initialImageDataUrl) {
+      setImagePreview(initialImageDataUrl);
+      previewRef.current = initialImageDataUrl;
+      localStorage.setItem("face_detect_imagePreview", initialImageDataUrl);
+    }
+  }, [initialImageDataUrl]);
 
   const setImagePreviewPersisted = useCallback((val: string | null) => {
     setImagePreview(val);

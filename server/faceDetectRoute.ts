@@ -686,4 +686,84 @@ router.post("/api/face-detect/cancel/:jobId", async (req, res) => {
   return res.json({ cancelled: false, reason: "Job already finished" });
 });
 
+// ─── POST /api/face-detect/quick-check ──────────────────────────────────────
+// Lightweight face detection — no token cost, used by AiTraceTab to suggest portrait mode
+router.post(
+  "/api/face-detect/quick-check",
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const appUser = getAppUserFromCookie(req.cookies);
+      if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
+
+      let imageBuffer: Buffer;
+      if (req.file) {
+        imageBuffer = req.file.buffer;
+      } else if (req.body?.imageDataUrl) {
+        // Accept base64 data URL from client
+        const dataUrl = req.body.imageDataUrl as string;
+        const base64 = dataUrl.replace(/^data:image\/\w+;base64,/, "");
+        imageBuffer = Buffer.from(base64, "base64");
+      } else {
+        return res.status(400).json({ error: "NO_IMAGE" });
+      }
+
+      // Resize to 512px for fast detection
+      const resizedBuffer = await sharp(imageBuffer)
+        .resize(512, 512, { fit: "inside", withoutEnlargement: true })
+        .jpeg({ quality: 80 })
+        .toBuffer();
+      const imageBase64 = resizedBuffer.toString("base64");
+
+      const faceCheckResponse = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: "You are a face detection system. Detect if there are any human faces in the image. Respond with JSON only.",
+          },
+          {
+            role: "user",
+            content: [
+              { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "low" } },
+              { type: "text", text: 'Does this image contain any human faces (adults, babies, children, side profiles)? Return JSON: {"hasFaces": true/false, "faceCount": number}' },
+            ],
+          },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "face_quick_check",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                hasFaces: { type: "boolean" },
+                faceCount: { type: "number" },
+              },
+              required: ["hasFaces", "faceCount"],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+
+      const content = (faceCheckResponse as { choices?: Array<{ message?: { content?: string } }> })
+        ?.choices?.[0]?.message?.content ?? "{}";
+      let hasFaces = false;
+      let faceCount = 0;
+      try {
+        const parsed = JSON.parse(content) as { hasFaces?: boolean; faceCount?: number };
+        hasFaces = parsed.hasFaces ?? false;
+        faceCount = parsed.faceCount ?? 0;
+      } catch { /* ignore */ }
+
+      return res.json({ hasFaces, faceCount });
+    } catch (err) {
+      console.error("[faceDetectRoute] Quick check error:", err);
+      // On error, return false so the UI doesn't block the user
+      return res.json({ hasFaces: false, faceCount: 0 });
+    }
+  }
+);
+
 export default router;
