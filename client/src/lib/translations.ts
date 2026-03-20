@@ -60,11 +60,12 @@ const TIMEZONE_LANG_MAP: Record<string, Language> = {
 };
 
 export function detectLanguage(): Language {
-  // 1. Respect user's saved preference
-  const saved = localStorage.getItem("app-language") as Language | null;
+  // 1. Respect user's MANUALLY saved preference (only set when user clicks language picker)
+  const saved = localStorage.getItem("app-language-manual") as Language | null;
   if (saved && LANGUAGES.find((l) => l.code === saved)) return saved;
 
   // 2. Check all browser languages (navigator.languages is more complete)
+  // This respects the device language setting regardless of timezone/location
   const langs = navigator.languages?.length
     ? navigator.languages.map((l) => l.toLowerCase())
     : [navigator.language?.toLowerCase() || ""];
@@ -76,9 +77,10 @@ export function detectLanguage(): Language {
     if (lang.startsWith("ru")) return "ru";
     if (lang.startsWith("es")) return "es";
     if (lang.startsWith("fr")) return "fr";
+    if (lang.startsWith("en")) return "en";
   }
 
-  // 3. Fallback: detect by timezone
+  // 3. Fallback: detect by timezone (only if browser language is not one of our supported langs)
   try {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (tz && TIMEZONE_LANG_MAP[tz]) return TIMEZONE_LANG_MAP[tz];

@@ -16,7 +16,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem("app-language", lang);
+    // Save as manual preference so auto-detect doesn't override it next visit
+    localStorage.setItem("app-language-manual", lang);
+    // Clear old key if present
+    localStorage.removeItem("app-language");
   };
 
   const t = (key: TranslationKey): string => {
