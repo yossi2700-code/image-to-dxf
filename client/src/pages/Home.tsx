@@ -2088,15 +2088,10 @@ export default function Home() {
           localStorage.removeItem("ai_trace_jobId");
           localStorage.removeItem("doc_redraw_jobId");
           localStorage.removeItem("active_tab");
-          // If URL has ?campaign= and user is NOT logged in → open LOGIN dialog immediately
-          // (user already registered, they just need to log in to claim the bonus)
-          if (campaignCode) {
-            setTimeout(() => {
-              setAuthReason("campaign_bonus");
-              setAuthInitialMode("login");
-              setAuthOpen(true);
-            }, 400); // small delay so page renders first
-          }
+          // Not logged in → redirect to /landing
+          // Preserve ?campaign= param so it's not lost
+          const redirectUrl = campaignCode ? `/landing?campaign=${campaignCode}` : "/landing";
+          window.location.replace(redirectUrl);
         }
       })
       .catch(() => {});
@@ -2136,8 +2131,8 @@ export default function Home() {
     clearAllResultCaches();
     setAppUser(null);
     toast.success(t("loggedOutSuccess"));
-    // Reload to clear all React state (tab results, images, etc.)
-    window.location.reload();
+    // Redirect to landing page after logout
+    window.location.replace("/landing");
   };
 
   return (

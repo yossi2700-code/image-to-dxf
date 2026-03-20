@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
+import { AuthDialog } from "@/components/AuthDialog";
 import {
   Zap, Shield, Clock, Download, Star,
   ChevronLeft, ChevronRight, Check, Sparkles, Cpu, FileDown,
@@ -470,6 +471,21 @@ function DemoVideoSection({ isRtl }: { isRtl: boolean }) {
 export default function Landing() {
   const { isRtl, language, setLanguage } = useLanguage();
   const [, navigate] = useLocation();
+  const [authOpen, setAuthOpen] = useState(false);
+
+  // If user is already logged in, redirect to workspace
+  useEffect(() => {
+    fetch("/api/app-auth/me", { credentials: "include" })
+      .then(r => r.json())
+      .then(d => {
+        if (d.user) {
+          window.location.replace("/");
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleOpenAuth = () => setAuthOpen(true);
 
   const { data: contactInfo } = trpc.contact.info.useQuery();
 
@@ -537,7 +553,7 @@ export default function Landing() {
               </a>
             )}
             <button
-              onClick={() => navigate("/")}
+              onClick={handleOpenAuth}
               style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", borderRadius: 10, padding: "9px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer", boxShadow: "0 2px 10px rgba(99,102,241,0.3)" }}
             >
               {t.navCta}
@@ -566,7 +582,7 @@ export default function Landing() {
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <button
-              onClick={() => navigate("/")}
+              onClick={handleOpenAuth}
               style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", borderRadius: 12, padding: "14px 32px", fontWeight: 800, fontSize: 16, cursor: "pointer", boxShadow: "0 4px 20px rgba(99,102,241,0.4)", transition: "transform 0.15s" }}
               onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.04)")}
               onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
@@ -641,7 +657,7 @@ export default function Landing() {
           </div>
           <div style={{ textAlign: "center", marginTop: 36 }}>
             <button
-              onClick={() => navigate("/")}
+              onClick={handleOpenAuth}
               style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff", border: "none", borderRadius: 12, padding: "13px 32px", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 16px rgba(124,58,237,0.35)" }}
               onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.04)")}
               onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
@@ -671,7 +687,7 @@ export default function Landing() {
           </div>
           <div style={{ textAlign: "center", marginTop: 36 }}>
             <button
-              onClick={() => navigate("/")}
+              onClick={handleOpenAuth}
               style={{ background: "linear-gradient(135deg,#7c3aed,#6366f1)", color: "#fff", border: "none", borderRadius: 12, padding: "13px 32px", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 16px rgba(124,58,237,0.3)" }}
               onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.04)")}
               onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
@@ -777,7 +793,7 @@ export default function Landing() {
           <h2 style={{ color: "#fff", fontSize: "clamp(1.6rem,3.5vw,2.4rem)", fontWeight: 900, marginBottom: 16, letterSpacing: "-0.02em" }}>{t.finalCtaTitle}</h2>
           <p style={{ color: "#c4b5fd", fontSize: 16, marginBottom: 36, lineHeight: 1.7 }}>{t.finalCtaSubtitle}</p>
           <button
-            onClick={() => navigate("/")}
+            onClick={handleOpenAuth}
             style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", borderRadius: 14, padding: "16px 40px", fontWeight: 800, fontSize: 18, cursor: "pointer", boxShadow: "0 4px 24px rgba(99,102,241,0.4)", transition: "transform 0.15s" }}
             onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.04)")}
             onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
@@ -787,6 +803,16 @@ export default function Landing() {
           <p style={{ color: "#7c6fcd", fontSize: 13, marginTop: 16 }}>{t.finalCtaTrust}</p>
         </div>
       </section>
+
+      {/* ── Auth Dialog ── */}
+      <AuthDialog
+        open={authOpen}
+        onOpenChange={setAuthOpen}
+        authReason="unregistered"
+        onSuccess={() => {
+          window.location.replace("/");
+        }}
+      />
 
       {/* ── FOOTER ── */}
       <footer style={{ background: "#111827", padding: "32px 24px", textAlign: "center" }}>
