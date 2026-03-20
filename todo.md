@@ -2115,3 +2115,22 @@
 
 ## CNC Relief - Coming Soon Mode
 - [x] Set CNC Relief tab to disabled/coming soon state like AI Sketch tab
+
+## Landing Page / Workspace Split
+- [ ] Create LandingPage.tsx (/) — marketing page for guests with before/after, features, big login/register CTA
+- [ ] Create WorkspacePage.tsx (/app) — CAD-style white grid background, clean tabs, minimal header
+- [ ] App.tsx routing: guests → /, logged-in → /app, logout → /
+- [ ] LandingPage: add prominent login/register button
+- [ ] WorkspacePage: move all tool tabs (AI Create, AI Outline, Portrait, CNC) here
+- [ ] WorkspacePage: CAD grid background (white + subtle gray grid lines)
+- [ ] WorkspacePage: minimal header (logo + tokens + logout only)
+- [ ] WorkspacePage: no banner, no hero, no marketing images
+
+## Landing Page / Workspace Split
+- [x] Create WorkspacePage (/app) - CAD-style white grid background, clean tabs, minimal header
+- [x] Add /app route in App.tsx
+- [x] Redirect unauthenticated users from /app to /
+- [x] Redirect to / on logout from workspace
+- [x] Add 'Workspace' button in Home.tsx header for logged-in users
+- [x] Update 'Get started' CTA to go to /app when logged in
+- [x] Export AiGeneratorTab from Home.tsx for reuse in WorkspacePage

@@ -1010,7 +1010,7 @@ if (!sessionStorage.getItem("page_session_active")) {
 }
 
 // ─── AI Generator Tab ────────────────────────────────────────────────────────
-function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () => void; onInsufficientTokens?: () => void }) {
+export function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () => void; onInsufficientTokens?: () => void }) {
   const { t, isRtl, language } = useLanguage();
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
   const { reportBug } = useBugReport();
@@ -2220,6 +2220,15 @@ export default function Home() {
                   )}
                 </div>
 
+                {/* Enter Workspace button */}
+                <button
+                  onClick={() => { window.location.href = '/app'; }}
+                  className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl font-semibold transition-all hover:opacity-90 shrink-0"
+                  style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', border: 'none', boxShadow: '0 3px 10px rgba(16,185,129,0.35)', whiteSpace: 'nowrap' }}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  {isRtl ? 'סביבת עבודה' : 'Workspace'}
+                </button>
                 {/* User avatar dropdown */}
                 <div className="relative" ref={userMenuRef}>
                   <button
@@ -2798,12 +2807,12 @@ export default function Home() {
             {isRtl ? 'לייזר, CNC ועיצוב וקטורי באיכות מקצועית בעזרת AI' : 'Professional vector files for laser, CNC, and design — powered by AI'}
           </p>
           <button
-            onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            onClick={() => { appUser ? window.location.href = '/app' : (window.scrollTo({ top: 0, behavior: 'smooth' }), setAuthOpen(true)); }}
             className="inline-flex items-center gap-2 font-bold px-7 py-3 rounded-xl transition-all hover:opacity-90"
             style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', boxShadow: '0 4px 16px rgba(99,102,241,0.4)', fontSize: '0.95rem' }}
           >
             <Sparkles className="w-4 h-4" />
-            {isRtl ? 'התחל עכשיו' : 'Get started now'}
+            {appUser ? (isRtl ? 'כנס לסביבת עבודה' : 'Enter Workspace') : (isRtl ? 'התחל עכשיו' : 'Get started now')}
           </button>
           <div className="flex items-center justify-center gap-5 mt-5">
             {[
