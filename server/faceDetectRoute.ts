@@ -255,19 +255,24 @@ async function runFaceDetectJob(
       step: isHe ? "מזהה פנים בתמונה..." : "Detecting face in image...",
       stepEn: "Detecting face in image...",
     });
-    const imageBase64 = imageBuffer.toString("base64");
+    // Resize image for face detection — 1024px max, JPEG for smaller payload
+    const faceDetectBuffer = await sharp(imageBuffer)
+      .resize(1024, 1024, { fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 90 })
+      .toBuffer();
+    const imageBase64 = faceDetectBuffer.toString("base64");
     // Detect faces with bounding boxes (normalized 0-1 coordinates)
     const faceCheckResponse = await invokeLLM({
       messages: [
         {
           role: "system",
-          content: "You are a precise face detection system. Detect all clearly visible human faces in the image and return their bounding boxes as normalized coordinates (0.0 to 1.0). x_min/y_min is top-left, x_max/y_max is bottom-right. Respond with JSON only.",
+          content: "You are an expert face detection system. Your job is to find EVERY human face in the image — adults, babies, children, elderly, side profiles, partially visible faces. Be thorough and do not miss any face. Return normalized bounding box coordinates (0.0 to 1.0) for each face. x_min/y_min is top-left, x_max/y_max is bottom-right. Respond with JSON only.",
         },
         {
           role: "user",
           content: [
             { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "high" } },
-            { type: "text", text: 'Detect all human faces. Return JSON: {"faces": [{"x_min": 0.1, "y_min": 0.05, "x_max": 0.45, "y_max": 0.6}, ...]}. Use normalized 0-1 coordinates. Include head/hair area with 15% padding around each face.' },
+            { type: "text", text: 'Find ALL human faces in this image — including babies, children, adults, elderly, side profiles, and partially visible faces. Do NOT miss any face. Return JSON: {"faces": [{"x_min": 0.1, "y_min": 0.05, "x_max": 0.45, "y_max": 0.6}, ...]}. Use normalized 0-1 coordinates (0.0=left/top, 1.0=right/bottom). Include the full head and hair area with 10% padding around each face bounding box.' },
           ],
         },
       ],
