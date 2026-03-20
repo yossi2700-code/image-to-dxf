@@ -115,7 +115,7 @@ const COMPARISON_HE = [
   { feature: "פורטרט AI", free: "3 ביום", paid: "ללא הגבלה" },
   { feature: "היסטוריית עיצובים", free: true, paid: true },
   { feature: "הורדת DXF + SVG", free: true, paid: true },
-  { feature: "תמיכה בעברית", free: true, paid: true },
+  { feature: "תמיכה במגוון שפות", free: true, paid: true },
   { feature: "אסימונים לא פגים", free: false, paid: true },
   { feature: "עדיפות בתמיכה", free: false, paid: true },
 ];
@@ -127,7 +127,7 @@ const COMPARISON_EN = [
   { feature: "Portrait AI", free: "3/day", paid: "Unlimited" },
   { feature: "Design history", free: true, paid: true },
   { feature: "DXF + SVG download", free: true, paid: true },
-  { feature: "Hebrew & English UI", free: true, paid: true },
+  { feature: "Multi-language support", free: true, paid: true },
   { feature: "Tokens never expire", free: false, paid: true },
   { feature: "Priority support", free: false, paid: true },
 ];
@@ -387,8 +387,8 @@ export default function Pricing() {
 
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 11 }}>
                 {(isRtl
-                  ? ["המרת תמונה ל-DXF", "יצירת עיצוב AI", "AI Trace — עקיבה חכמה", "פורטרט — זיהוי פנים", "היסטוריית עיצובים", "DXF + SVG", "אסימונים לא פגים", "חשבונית מס", "תמיכה בעברית"]
-                  : ["Image to DXF conversion", "AI design generation", "AI Trace — smart tracing", "Portrait — face detection", "Design history", "DXF + SVG download", "Tokens never expire", "Tax invoice", "Hebrew & English support"]
+                  ? ["המרת תמונה ל-DXF", "יצירת עיצוב AI", "AI Trace — עקיבה חכמה", "פורטרט — זיהוי פנים", "היסטוריית עיצובים", "DXF + SVG", "אסימונים לא פגים", "חשבונית מס", "תמיכה במגוון שפות"]
+                  : ["Image to DXF conversion", "AI design generation", "AI Trace — smart tracing", "Portrait — face detection", "Design history", "DXF + SVG download", "Tokens never expire", "Tax invoice", "Multi-language support"]
                 ).map((f, i) => (
                   <li key={i} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: pkg.popular ? "rgba(255,255,255,0.9)" : "#374151" }}>
                     <div style={{
