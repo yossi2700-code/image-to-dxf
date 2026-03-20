@@ -659,6 +659,19 @@ export function AiProcessingAnimation({
           </div>
         </div>
 
+        {/* Patience message after 50 seconds */}
+        {elapsedSeconds >= 50 && (
+          <div
+            className="w-full rounded-xl px-4 py-3 flex items-center gap-3 text-center justify-center"
+            style={{ background: `${accentColor}10`, border: `1px solid ${accentColor}30`, maxWidth: 360 }}
+          >
+            <span className="text-lg">⏳</span>
+            <p className="text-sm font-medium" style={{ color: accentColor }}>
+              {isRtl ? "עוד רגע זה מוכן... ה-AI עובד קשה 💪" : "Almost there... AI is working hard 💪"}
+            </p>
+          </div>
+        )}
+
         {/* Bottom row: music + cancel */}
         <div className="flex items-center gap-2.5">
           {/* Music toggle */}

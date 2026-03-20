@@ -47,6 +47,7 @@ interface FaceResult {
   images: GeneratedImage[];
   faceDescription?: string;
   suggestions?: string[];
+  numFaces?: number;
 }
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -344,6 +345,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
           const faceResult: FaceResult = {
             images: data.result.images,
             faceDescription: data.result.faceDescription ?? "",
+            numFaces: (data.result as FaceResult & { numFaces?: number }).numFaces,
           };
           setResult(faceResult);
           localStorage.setItem("face_detect_result", JSON.stringify(faceResult));
@@ -689,6 +691,16 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens }: FaceDetectTa
                 <li className="flex gap-1.5"><span className="text-purple-400 shrink-0">•</span>{isRtl ? "תאורה טובה, ללא חסימות" : "Good lighting, no obstructions"}</li>
                 <li className="flex gap-1.5"><span className="text-purple-400 shrink-0">•</span>{isRtl ? "פנים צד, חצי פנים, או מלפנים" : "Side profile, 3/4 view, or front-facing"}</li>
               </ul>
+            </div>
+
+            {/* Multi-face processing time notice */}
+            <div className="rounded-lg px-3 py-2 mb-3 flex items-start gap-2" style={{ background: '#fffbeb', border: '1px solid #fde68a' }}>
+              <span className="text-base shrink-0 mt-0.5">⏱️</span>
+              <p className="text-xs text-amber-700">
+                {isRtl
+                  ? "תמונה עם פנים אחדים לוקחת יותר זמן — כל פנים מעובד בנפרד. עם 2 פנים ~2 דקות, עם 3+ פנים ~3-4 דקות."
+                  : "Images with multiple faces take longer — each face is processed separately. 2 faces ~2 min, 3+ faces ~3-4 min."}
+              </p>
             </div>
 
             {/* Submit button */}

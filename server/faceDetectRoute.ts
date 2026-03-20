@@ -476,7 +476,7 @@ async function runFaceDetectJob(
 
     updateJob(jobId, {
       status: "done",
-      result: { success: true, images, suggestions },
+      result: { success: true, images, suggestions, numFaces: faceCount },
     });
   } catch (err: unknown) {
     if (heartbeatInterval) clearInterval(heartbeatInterval);

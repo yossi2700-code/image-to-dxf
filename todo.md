@@ -2084,3 +2084,8 @@
 
 - [x] תיקון: לאחר חיתוך, עיבוד תקוע ב-95% ולא מסיים (CROPPED_SELECTION גורם ל-hang)
 - [x] שיפור: כפתור חיתוך בולט יותר בממשק
+
+## הודעות UX - מרץ 2026
+
+- [x] Add multi-face processing time warning in portrait tab (more faces = longer processing)
+- [x] Add 50-second patience message in AI trace/outline tab ("עוד רגע זה מוכן...")
