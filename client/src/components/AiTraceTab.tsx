@@ -27,6 +27,7 @@ import {
   CheckCircle2,
   X,
   FileText,
+  Crop,
 } from "lucide-react";
 import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 
@@ -437,6 +438,12 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
   const [fullImageMode, setFullImageMode] = useState(false);
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("ai_trace_jobId"));
   const [tryAgainUrl, setTryAgainUrl] = useState<string | null>(null);
+  // ─── Inline crop tool state ───────────────────────────────────────────────────
+  const [showCropTool, setShowCropTool] = useState(false);
+  const cropImgRef = useRef<HTMLImageElement>(null);
+  const cropDragStartRef = useRef<{x:number;y:number} | null>(null);
+  const cropIsDraggingRef = useRef(false);
+  const [cropSel, setCropSel] = useState<{x:number;y:number;w:number;h:number} | null>(null);
   const [currentStep, setCurrentStep] = useState<string>("");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [processingTime, setProcessingTime] = useState<number | null>(null); // seconds taken for last job
@@ -867,30 +874,178 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens }: AiTraceTabProps
             />
 
             {imagePreview ? (
-              <div
-                className="flex items-center gap-3 mb-3 p-3 rounded-xl relative"
-                style={{background: '#f0fdf9', border: '1px solid #99f6e4'}}
-              >
-                <img src={imagePreview} alt="Preview" className="w-16 h-16 object-contain rounded-lg shrink-0 border border-gray-200 bg-white" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate text-gray-700">{imageFile?.name}</p>
-                  <p className="text-xs mb-2 text-gray-400">{t("imageSelectedLabel")}</p>
-                  <label
-                    htmlFor="ai-trace-file-input"
-                    className="text-xs font-medium text-teal-600 hover:text-teal-800 cursor-pointer"
-                  >
-                    {t("imageSelected")}
-                  </label>
-                </div>
-                {/* Clear image button */}
-                <button
-                  onClick={() => { setImageFile(null); setImagePreviewPersisted(null); setResult(null); setStatus("idle"); setErrorMsg(""); }}
-                  className="absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-100 transition-colors"
-                  style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444' }}
-                  title={isRtl ? 'נקה תמונה' : 'Clear image'}
+              <div className="mb-3">
+                <div
+                  className="flex items-center gap-3 p-3 rounded-xl relative"
+                  style={{background: '#f0fdf9', border: '1px solid #99f6e4'}}
                 >
-                  <X className="w-3.5 h-3.5" />
-                </button>
+                  <img src={imagePreview} alt="Preview" className="w-16 h-16 object-contain rounded-lg shrink-0 border border-gray-200 bg-white" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate text-gray-700">{imageFile?.name}</p>
+                    <p className="text-xs mb-2 text-gray-400">{t("imageSelectedLabel")}</p>
+                    <div className="flex items-center gap-2">
+                      <label
+                        htmlFor="ai-trace-file-input"
+                        className="text-xs font-medium text-teal-600 hover:text-teal-800 cursor-pointer"
+                      >
+                        {t("imageSelected")}
+                      </label>
+                      <span className="text-gray-300">|</span>
+                      <button
+                        type="button"
+                        onClick={() => { setShowCropTool(v => !v); setCropSel(null); }}
+                        className="flex items-center gap-1 text-xs font-medium transition-colors"
+                        style={{ color: showCropTool ? '#6366f1' : '#6b7280' }}
+                      >
+                        <Crop className="w-3 h-3" />
+                        {isRtl ? 'חתוך אזור' : 'Crop area'}
+                      </button>
+                    </div>
+                  </div>
+                  {/* Clear image button */}
+                  <button
+                    onClick={() => { setImageFile(null); setImagePreviewPersisted(null); setResult(null); setStatus("idle"); setErrorMsg(""); setShowCropTool(false); setCropSel(null); }}
+                    className="absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-100 transition-colors"
+                    style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444' }}
+                    title={isRtl ? 'נקה תמונה' : 'Clear image'}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* ─── Inline Crop Tool ─────────────────────────────────────────── */}
+                {showCropTool && (() => {
+                  const getCropPos = (clientX: number, clientY: number) => {
+                    const img = cropImgRef.current;
+                    if (!img) return { x: 0, y: 0 };
+                    const rect = img.getBoundingClientRect();
+                    return {
+                      x: Math.max(0, Math.min(clientX - rect.left, rect.width)),
+                      y: Math.max(0, Math.min(clientY - rect.top, rect.height)),
+                    };
+                  };
+                  const hasCropSel = cropSel && Math.abs(cropSel.w) > 10 && Math.abs(cropSel.h) > 10;
+                  const cropSelNorm = cropSel ? {
+                    left: cropSel.w < 0 ? cropSel.x + cropSel.w : cropSel.x,
+                    top: cropSel.h < 0 ? cropSel.y + cropSel.h : cropSel.y,
+                    width: Math.abs(cropSel.w),
+                    height: Math.abs(cropSel.h),
+                  } : null;
+
+                  const handleCropConfirm = () => {
+                    if (!cropSel || !cropImgRef.current || !imagePreview) return;
+                    const imgEl = cropImgRef.current;
+                    const displayW = imgEl.getBoundingClientRect().width;
+                    const displayH = imgEl.getBoundingClientRect().height;
+                    const rx = cropSel.w < 0 ? cropSel.x + cropSel.w : cropSel.x;
+                    const ry = cropSel.h < 0 ? cropSel.y + cropSel.h : cropSel.y;
+                    const rw = Math.abs(cropSel.w);
+                    const rh = Math.abs(cropSel.h);
+                    if (rw < 10 || rh < 10) return;
+                    const scaleX = imgEl.naturalWidth / displayW;
+                    const scaleY = imgEl.naturalHeight / displayH;
+                    const offscreen = document.createElement('canvas');
+                    offscreen.width = Math.round(rw * scaleX);
+                    offscreen.height = Math.round(rh * scaleY);
+                    const ctx = offscreen.getContext('2d')!;
+                    const srcImg = new Image();
+                    srcImg.onload = () => {
+                      ctx.drawImage(srcImg, rx * scaleX, ry * scaleY, rw * scaleX, rh * scaleY, 0, 0, offscreen.width, offscreen.height);
+                      const croppedDataUrl = offscreen.toDataURL('image/png');
+                      previewRef.current = croppedDataUrl;
+                      setImagePreviewPersisted(croppedDataUrl);
+                      setShowCropTool(false);
+                      setCropSel(null);
+                      // Send CROPPED_SELECTION so server skips multi-object detection
+                      setTimeout(() => handleTrace("CROPPED_SELECTION", undefined, true), 50);
+                    };
+                    srcImg.src = imagePreview;
+                  };
+
+                  return (
+                    <div className="mt-2 rounded-xl overflow-hidden" style={{ border: '2px solid #6366f1', background: '#f5f3ff' }}>
+                      {/* Crop header */}
+                      <div className="flex items-center justify-between px-3 py-2" style={{ background: 'linear-gradient(135deg, #eef2ff, #e0e7ff)', borderBottom: '1px solid #c7d2fe' }}>
+                        <div className="flex items-center gap-1.5">
+                          <Crop className="w-3.5 h-3.5 text-indigo-600" />
+                          <span className="text-xs font-bold text-indigo-800">{isRtl ? 'גרור לבחור אזור לחיתוך' : 'Drag to select crop area'}</span>
+                        </div>
+                        <button onClick={() => { setShowCropTool(false); setCropSel(null); }} className="w-6 h-6 rounded-full flex items-center justify-center text-indigo-400 hover:text-indigo-700 hover:bg-indigo-100 transition-colors">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      {/* Image with crop overlay */}
+                      <div
+                        className="relative bg-gray-900 select-none"
+                        style={{ cursor: 'crosshair', touchAction: 'none' }}
+                        onPointerDown={(e) => {
+                          e.preventDefault();
+                          (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+                          cropDragStartRef.current = getCropPos(e.clientX, e.clientY);
+                          setCropSel(null);
+                          cropIsDraggingRef.current = true;
+                        }}
+                        onPointerMove={(e) => {
+                          if (!cropIsDraggingRef.current || !cropDragStartRef.current) return;
+                          const pos = getCropPos(e.clientX, e.clientY);
+                          setCropSel({ x: cropDragStartRef.current.x, y: cropDragStartRef.current.y, w: pos.x - cropDragStartRef.current.x, h: pos.y - cropDragStartRef.current.y });
+                        }}
+                        onPointerUp={() => { cropIsDraggingRef.current = false; }}
+                        onPointerLeave={() => { cropIsDraggingRef.current = false; }}
+                      >
+                        <img
+                          ref={cropImgRef}
+                          src={imagePreview}
+                          alt="crop"
+                          className="block w-full"
+                          style={{ objectFit: 'contain', pointerEvents: 'none', userSelect: 'none', maxHeight: '60vh' }}
+                          draggable={false}
+                        />
+                        {/* Dark overlay around selection */}
+                        {cropSelNorm && (
+                          <>
+                            <div className="absolute inset-x-0 top-0 bg-black/55" style={{ height: cropSelNorm.top }} />
+                            <div className="absolute inset-x-0 bottom-0 bg-black/55" style={{ top: cropSelNorm.top + cropSelNorm.height }} />
+                            <div className="absolute bg-black/55" style={{ top: cropSelNorm.top, left: 0, width: cropSelNorm.left, height: cropSelNorm.height }} />
+                            <div className="absolute bg-black/55" style={{ top: cropSelNorm.top, left: cropSelNorm.left + cropSelNorm.width, right: 0, height: cropSelNorm.height }} />
+                            {/* Selection border with corner handles */}
+                            <div className="absolute" style={{ top: cropSelNorm.top, left: cropSelNorm.left, width: cropSelNorm.width, height: cropSelNorm.height, border: '2px dashed #6366f1', boxSizing: 'border-box' }}>
+                              {/* Corner handles */}
+                              {[{top:'-4px',left:'-4px'},{top:'-4px',right:'-4px'},{bottom:'-4px',left:'-4px'},{bottom:'-4px',right:'-4px'}].map((style, i) => (
+                                <div key={i} className="absolute w-2.5 h-2.5 rounded-sm" style={{ ...style, background: '#6366f1', border: '1.5px solid white' }} />
+                              ))}
+                            </div>
+                            {/* Size badge */}
+                            {cropSelNorm.width > 40 && cropSelNorm.height > 20 && (
+                              <div className="absolute text-xs font-bold px-1.5 py-0.5 rounded" style={{ top: cropSelNorm.top + 4, left: cropSelNorm.left + 4, background: 'rgba(99,102,241,0.9)', color: 'white', fontSize: '10px' }}>
+                                {Math.round(cropSelNorm.width)} × {Math.round(cropSelNorm.height)}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                      {/* Crop footer */}
+                      <div className="px-3 py-2.5 flex gap-2" style={{ borderTop: '1px solid #e0e7ff', background: '#fff' }}>
+                        <button
+                          className="flex-1 flex items-center justify-center gap-1.5 text-sm font-bold py-2 rounded-xl text-white transition-all"
+                          style={{ background: hasCropSel ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : '#9ca3af', cursor: hasCropSel ? 'pointer' : 'not-allowed', boxShadow: hasCropSel ? '0 2px 8px rgba(99,102,241,0.35)' : 'none' }}
+                          disabled={!hasCropSel}
+                          onClick={handleCropConfirm}
+                        >
+                          <Wand2 className="w-3.5 h-3.5" />
+                          {isRtl ? 'צייר את האזור הנבחר' : 'Draw selected area'}
+                        </button>
+                        <button
+                          className="text-sm px-3 py-2 rounded-xl font-medium transition-colors"
+                          style={{ background: '#f1f5f9', color: '#6b7280' }}
+                          onClick={() => { setShowCropTool(false); setCropSel(null); }}
+                        >
+                          {isRtl ? 'ביטול' : 'Cancel'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             ) : (
               <div className="mb-3 space-y-2">
