@@ -706,12 +706,23 @@ router.post(
         return res.status(400).json({ error: "NO_IMAGE" });
       }
 
-      // Resize to 512px for fast detection
-      const resizedBuffer = await sharp(imageBuffer)
-        .resize(512, 512, { fit: "inside", withoutEnlargement: true })
-        .jpeg({ quality: 80 })
-        .toBuffer();
-      const imageBase64 = resizedBuffer.toString("base64");
+      // Send image directly to LLM (skip sharp resize to avoid JPEG corruption issues)
+      // If the input is already a data URL, use it directly; otherwise convert buffer to base64
+      let imageDataUrl: string;
+      if (req.body?.imageDataUrl) {
+        imageDataUrl = req.body.imageDataUrl as string;
+      } else {
+        // Try sharp first, fall back to raw buffer if it fails
+        try {
+          const resizedBuffer = await sharp(imageBuffer)
+            .resize(512, 512, { fit: "inside", withoutEnlargement: true })
+            .jpeg({ quality: 80 })
+            .toBuffer();
+          imageDataUrl = `data:image/jpeg;base64,${resizedBuffer.toString("base64")}`;
+        } catch {
+          imageDataUrl = `data:image/jpeg;base64,${imageBuffer.toString("base64")}`;
+        }
+      }
 
       const faceCheckResponse = await invokeLLM({
         messages: [
@@ -722,7 +733,7 @@ router.post(
           {
             role: "user",
             content: [
-              { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "low" } },
+              { type: "image_url", image_url: { url: imageDataUrl, detail: "low" } },
               { type: "text", text: 'Does this image contain any human faces (adults, babies, children, side profiles)? Return JSON: {"hasFaces": true/false, "faceCount": number}' },
             ],
           },
