@@ -2577,13 +2577,14 @@ export default function Home() {
             </TabsTrigger>
             <TabsTrigger
               value="cnc-relief"
-              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
-              style={{
-                background: activeTab === 'cnc-relief' ? 'linear-gradient(135deg, #b45309, #d97706)' : 'transparent',
-              }}
+              disabled
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-300 opacity-50 cursor-not-allowed relative px-1"
             >
               <Mountain className="w-4 h-4 shrink-0" />
               <span className="truncate text-[11px]">{t("cncReliefTabLabel")}</span>
+              <span className="absolute -top-1.5 -right-1 text-[9px] font-bold bg-orange-400 text-white px-1 rounded-full leading-4">
+                {t("comingSoon")}
+              </span>
             </TabsTrigger>
           </TabsList>
 

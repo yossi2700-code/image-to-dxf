@@ -2112,3 +2112,6 @@
 - [x] Frontend: Add CNC Relief tab to Home.tsx navigation
 - [x] Frontend: Add translations (he/en/zh/es/fr/ar/ru) for all new strings
 - [x] Frontend: Add CNC Relief demo banner with horse examples
+
+## CNC Relief - Coming Soon Mode
+- [x] Set CNC Relief tab to disabled/coming soon state like AI Sketch tab
