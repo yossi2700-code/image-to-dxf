@@ -16,6 +16,7 @@ import { TokenPricingModal } from "@/components/TokenPricingModal";
 import { AiDocumentRedrawTab } from "@/components/AiDocumentRedrawTab";
 import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { FaceDetectTab } from "@/components/FaceDetectTab";
+import { CncReliefTab } from "@/components/CncReliefTab";
 import { AiProcessingAnimation } from "@/components/AiProcessingAnimation";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InsufficientTokensBanner } from "@/components/InsufficientTokensBanner";
@@ -49,6 +50,7 @@ import {
   ChevronDown,
   User,
   CreditCard,
+  Mountain,
 } from "lucide-react";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -2573,6 +2575,16 @@ export default function Home() {
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger
+              value="cnc-relief"
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
+              style={{
+                background: activeTab === 'cnc-relief' ? 'linear-gradient(135deg, #b45309, #d97706)' : 'transparent',
+              }}
+            >
+              <Mountain className="w-4 h-4 shrink-0" />
+              <span className="truncate text-[11px]">{t("cncReliefTabLabel")}</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="ai">
@@ -2720,6 +2732,46 @@ export default function Home() {
               onInsufficientTokens={() => setShowTokensBanner(true)}
               initialImageDataUrl={portraitInitialImage}
             />
+          </TabsContent>
+
+          <TabsContent value="cnc-relief">
+            {/* Demo banner — CNC Relief */}
+            <div
+              className="mb-5 rounded-2xl overflow-hidden p-4"
+              style={{ background: '#ffffff', border: '1px solid #e8eaf0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #b45309, #d97706)'}}>
+                  <Mountain className="w-3.5 h-3.5 text-white" />
+                </div>
+                <span className="text-sm font-bold text-gray-800">
+                  {t("cncReliefTitle")}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="text-center">
+                  <p className="text-xs text-gray-400 mb-1">{t("cncReliefHeightmapLabel")}</p>
+                  <img
+                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/horse_relief_heightmap_666620f2.png"
+                    alt="CNC Heightmap example"
+                    className="w-full rounded-lg object-cover bg-gray-900"
+                    style={{ aspectRatio: '1', maxHeight: '120px', objectFit: 'cover' }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-gray-400 mb-1">{t("cncReliefSimulationLabel")}</p>
+                  <img
+                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/horse_wood_engraving_sim_8c0adad8.png"
+                    alt="CNC Wood simulation example"
+                    className="w-full rounded-lg object-cover"
+                    style={{ aspectRatio: '1', maxHeight: '120px', objectFit: 'cover' }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                </div>
+              </div>
+            </div>
+            <CncReliefTab />
           </TabsContent>
         </Tabs>
         </div>{/* end centering wrapper */}

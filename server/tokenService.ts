@@ -21,6 +21,7 @@ export const TOKEN_COSTS_DEFAULT = {
   ai_generate: 3,
   ai_refine: 2,
   face_detect: 4,
+  cnc_relief: 4,
   convert: 0,
 } as const;
 

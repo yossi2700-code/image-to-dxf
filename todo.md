@@ -2098,3 +2098,17 @@
 - [x] Add progress bar with percentage and elapsed time to AI Create tab (like AI Trace)
 - [x] Fix AI Create error message - show friendly Hebrew/English message instead of raw OpenAI error
 - [x] Add Hebrew brand names to block list (דיסני, נייקי, אפל, etc.)
+
+## CNC 3D Relief Feature
+- [x] Backend: POST /api/cnc-relief/from-image — upload image → generate heightmap PNG + engraving simulation
+- [x] Backend: POST /api/cnc-relief/from-prompt — text prompt → generate heightmap PNG + engraving simulation
+- [x] Backend: Support material parameter (wood, aluminum, mdf, stone, brass) for simulation style
+- [x] Backend: Job polling endpoint GET /api/cnc-relief/job/:jobId
+- [x] Backend: Add token cost for cnc_relief action in token_costs table (4 tokens)
+- [x] Frontend: CncReliefTab component with two sub-modes (from image / from prompt)
+- [x] Frontend: Material selector buttons (Wood, Aluminum, MDF, Stone, Brass)
+- [x] Frontend: Show heightmap + simulation side by side with download buttons
+- [x] Frontend: Progress animation during generation
+- [x] Frontend: Add CNC Relief tab to Home.tsx navigation
+- [x] Frontend: Add translations (he/en/zh/es/fr/ar/ru) for all new strings
+- [x] Frontend: Add CNC Relief demo banner with horse examples
