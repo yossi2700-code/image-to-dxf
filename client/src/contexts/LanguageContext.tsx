@@ -16,10 +16,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    // Save as manual preference so auto-detect doesn't override it next visit
-    localStorage.setItem("app-language-manual", lang);
-    // Clear old key if present
+    // Save in sessionStorage only — lasts current tab session but NOT across refreshes
+    // This way changing phone language is always picked up on next visit
+    sessionStorage.setItem("app-language-session", lang);
+    // Clear any old localStorage keys
     localStorage.removeItem("app-language");
+    localStorage.removeItem("app-language-manual");
   };
 
   const t = (key: TranslationKey): string => {
