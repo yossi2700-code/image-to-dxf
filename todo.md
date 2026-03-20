@@ -2091,3 +2091,5 @@
 - [x] Add 50-second patience message in AI trace/outline tab ("עוד רגע זה מוכן...")
 - [x] Fix multi-face bug: only 1 face returned when 2 faces in image (adult + baby/child)
 - [x] AI Trace tab: detect faces on image upload, ask user if they want portrait mode (yes=portrait, no=continue trace)
+- [ ] Fix announcement banner mixed Hebrew/English text when language is English
+- [x] Fix face detection dialog not showing (quick-check endpoint required auth, Manus OAuth users got 401)

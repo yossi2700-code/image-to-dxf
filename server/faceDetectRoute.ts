@@ -693,9 +693,7 @@ router.post(
   upload.single("image"),
   async (req, res) => {
     try {
-      const appUser = getAppUserFromCookie(req.cookies);
-      if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
-
+      // quick-check is public — no auth required (lightweight LLM call, no token cost)
       let imageBuffer: Buffer;
       if (req.file) {
         imageBuffer = req.file.buffer;
