@@ -2398,30 +2398,16 @@ export default function Home() {
             </button>
           </div>
         )}
-        {/* ── Sale Banner ── */}
-        <SaleBanner />
-        {/* ── Announcement Banner ── */}
-        <AnnouncementBanner />
-        {/* ── News Widget ── */}
-        <NewsWidget isRtl={isRtl} />
+        {/* SaleBanner, AnnouncementBanner, NewsWidget moved to admin Backup Graphics tab */}
         {/* ── Insufficient Tokens Banner ── */}
         {showTokensBanner && (
           <InsufficientTokensBanner onDismiss={() => setShowTokensBanner(false)} hasPendingWelcomeBonus={hasPendingWelcomeBonus} />
         )}
         {/* ── Hero Section ── */}
         <div className="mb-6 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #f0f0ff 0%, #faf5ff 50%, #f0f9ff 100%)', border: '1px solid #e8eaf0' }}>
-          <div className="px-5 pt-5 pb-4">
-            {/* Desktop: side by side. Mobile: stacked */}
-            <div className={`flex flex-col gap-4 items-center ${isRtl ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
-              {/* Mobile: carousel first (order-first on mobile, order-last on desktop) */}
-              <div className="flex-1 w-full lg:max-w-[480px]" style={{ order: 1 }}>
-                <HeroBeforeAfterCarousel />
-              </div>
-
-              {/* Left (LTR) / Right (RTL): text + feature buttons */}
-              <div className="flex-1 w-full" style={{ order: 2 }}>
+          <div className="px-5 pt-5 pb-5">
             {/* Badge pill */}
-            <div className={`flex justify-center ${isRtl ? 'lg:justify-end' : 'lg:justify-start'} mb-3`}>
+            <div className={`flex justify-center mb-3`}>
               <span
                 className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full"
                 style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', letterSpacing: '0.04em' }}
@@ -2430,27 +2416,101 @@ export default function Home() {
                 {isRtl ? 'המרת וקטור מבוססת AI' : 'AI-POWERED VECTOR CONVERSION'}
               </span>
             </div>
-
             {/* Headline */}
-            <div className="text-center lg:text-start mb-4">
-              <h1 className="font-black leading-tight mb-1" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', color: '#111827', letterSpacing: '-0.02em' }}>
+            <div className="text-center mb-5">
+              <h1 className="font-black leading-tight mb-1" style={{ fontSize: 'clamp(1.6rem, 4vw, 2.6rem)', color: '#111827', letterSpacing: '-0.02em' }}>
                 {isRtl ? 'הפוך כל תמונה לוקטור.' : 'From photo to vector.'}
               </h1>
-              <h1 className="font-black leading-tight" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>
+              <h1 className="font-black leading-tight" style={{ fontSize: 'clamp(1.6rem, 4vw, 2.6rem)', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>
                 {isRtl ? 'מיידית.' : 'Instantly.'}
               </h1>
-              <p className="text-sm text-gray-500 mt-2 max-w-sm">
+              <p className="text-sm text-gray-500 mt-2">
                 {isRtl ? 'בינה מלאכותית ממירה תמונות לקבצי DXF לחיתוך לייזר ו-CNC' : 'AI converts images to DXF files for laser cutting & CNC'}
               </p>
             </div>
-
-            {/* Feature shortcut buttons — click to switch tab */}
-            <div className="grid grid-cols-2 gap-2">
+            {/* Feature shortcut buttons with SVG illustrations — click to switch tab */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                { tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create', color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-v3-Xq8E28tKQT67AA2juXG9Ze.webp' },
-                { tab: 'trace', label: isRtl ? 'AI Outline' : 'AI Outline', color: '#0d9488', bg: 'linear-gradient(135deg, #0d9488, #06b6d4)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png' },
-                { tab: 'sketch', label: isRtl ? 'AI סקיצה' : 'AI Sketch', color: '#d97706', bg: 'linear-gradient(135deg, #d97706, #f59e0b)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-sketch-ai-text-v2-CcjuVZbxwbYguCvTLMwBo8.webp', comingSoon: true },
-                { tab: 'face', label: isRtl ? 'פורטרט' : 'Portrait', color: '#7c3aed', bg: 'linear-gradient(135deg, #7c3aed, #a855f7)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_e956deb2.png' },
+                {
+                  tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create',
+                  bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                  svg: (
+                    <svg viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                      <rect width="80" height="60" fill="#eef2ff" rx="8"/>
+                      <text x="12" y="22" fontSize="10" fill="#6366f1" fontWeight="bold" fontFamily="monospace">sports car</text>
+                      <line x1="10" y1="28" x2="38" y2="28" stroke="#a5b4fc" strokeWidth="1.5" strokeDasharray="3 2"/>
+                      <polygon points="42,28 38,25 38,31" fill="#6366f1"/>
+                      {/* Simple car outline */}
+                      <path d="M46 42 L46 36 L50 32 L62 32 L66 36 L66 42 Z" stroke="#6366f1" strokeWidth="1.5" fill="none"/>
+                      <circle cx="50" cy="42" r="2.5" stroke="#6366f1" strokeWidth="1.5" fill="none"/>
+                      <circle cx="62" cy="42" r="2.5" stroke="#6366f1" strokeWidth="1.5" fill="none"/>
+                      <path d="M50 32 L52 36 L62 36" stroke="#6366f1" strokeWidth="1" fill="none"/>
+                      <circle cx="20" cy="20" r="5" fill="#c7d2fe" opacity="0.5"/>
+                      <path d="M17 20 L19 22 L23 17" stroke="#6366f1" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  ),
+                },
+                {
+                  tab: 'trace', label: isRtl ? 'AI Outline' : 'AI Outline',
+                  bg: 'linear-gradient(135deg, #0d9488, #06b6d4)',
+                  svg: (
+                    <svg viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                      <rect width="80" height="60" fill="#f0fdf9" rx="8"/>
+                      {/* Photo side */}
+                      <rect x="5" y="10" width="28" height="40" rx="4" fill="#d1fae5" stroke="#0d9488" strokeWidth="1"/>
+                      <circle cx="14" cy="24" r="5" fill="#6ee7b7"/>
+                      <path d="M5 38 L12 30 L19 36 L24 28 L33 38" fill="#a7f3d0" stroke="none"/>
+                      {/* Arrow */}
+                      <line x1="37" y1="30" x2="43" y2="30" stroke="#0d9488" strokeWidth="1.5"/>
+                      <polygon points="46,30 42,27 42,33" fill="#0d9488"/>
+                      {/* Vector side */}
+                      <rect x="47" y="10" width="28" height="40" rx="4" fill="#f0fdf9" stroke="#0d9488" strokeWidth="1"/>
+                      <circle cx="56" cy="24" r="5" stroke="#0d9488" strokeWidth="1.5" fill="none"/>
+                      <path d="M47 38 L54 30 L61 36 L66 28 L75 38" fill="none" stroke="#0d9488" strokeWidth="1.5"/>
+                    </svg>
+                  ),
+                },
+                {
+                  tab: 'sketch', label: isRtl ? 'AI סקיצה' : 'AI Sketch',
+                  bg: 'linear-gradient(135deg, #d97706, #f59e0b)',
+                  comingSoon: true,
+                  svg: (
+                    <svg viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                      <rect width="80" height="60" fill="#fffbeb" rx="8"/>
+                      {/* Pencil */}
+                      <rect x="52" y="8" width="8" height="28" rx="2" transform="rotate(30 52 8)" fill="#fcd34d" stroke="#d97706" strokeWidth="1"/>
+                      <polygon points="56,42 52,48 60,46" fill="#d97706"/>
+                      {/* Sketch lines */}
+                      <path d="M10 20 Q20 15 30 20 Q40 25 50 18" stroke="#d97706" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+                      <path d="M10 30 Q18 26 28 30 Q38 34 48 28" stroke="#d97706" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.6"/>
+                      <path d="M10 40 Q22 36 32 40 Q42 44 50 38" stroke="#d97706" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.4"/>
+                      <circle cx="15" cy="15" r="3" fill="#fde68a"/>
+                    </svg>
+                  ),
+                },
+                {
+                  tab: 'face', label: isRtl ? 'פורטרט' : 'Portrait',
+                  bg: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+                  svg: (
+                    <svg viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                      <rect width="80" height="60" fill="#faf5ff" rx="8"/>
+                      {/* Photo half */}
+                      <rect x="4" y="8" width="30" height="44" rx="4" fill="#ede9fe" stroke="#7c3aed" strokeWidth="1"/>
+                      <ellipse cx="19" cy="24" rx="8" ry="9" fill="#c4b5fd"/>
+                      <ellipse cx="19" cy="38" rx="11" ry="7" fill="#c4b5fd"/>
+                      {/* Arrow */}
+                      <line x1="37" y1="30" x2="43" y2="30" stroke="#7c3aed" strokeWidth="1.5"/>
+                      <polygon points="46,30 42,27 42,33" fill="#7c3aed"/>
+                      {/* Vector half */}
+                      <rect x="47" y="8" width="30" height="44" rx="4" fill="#faf5ff" stroke="#7c3aed" strokeWidth="1"/>
+                      <ellipse cx="62" cy="24" rx="8" ry="9" stroke="#7c3aed" strokeWidth="1.5" fill="none"/>
+                      <path d="M51 52 Q62 42 73 52" stroke="#7c3aed" strokeWidth="1.5" fill="none"/>
+                      <circle cx="58" cy="22" r="1.5" fill="#7c3aed"/>
+                      <circle cx="66" cy="22" r="1.5" fill="#7c3aed"/>
+                      <path d="M59 27 Q62 29 65 27" stroke="#7c3aed" strokeWidth="1" fill="none"/>
+                    </svg>
+                  ),
+                },
               ].map((f, i) => (
                 <button
                   key={i}
@@ -2462,13 +2522,11 @@ export default function Home() {
                   className="flex flex-col items-center gap-0 rounded-2xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
                   style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 4px 16px rgba(0,0,0,0.10)' }}
                 >
-                  {/* Image area: white bg, object-contain so nothing is cropped */}
-                  <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '62%' }}>
-                    <img
-                      src={f.img}
-                      alt={f.label}
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', padding: '6px' }}
-                    />
+                  {/* SVG illustration area */}
+                  <div className="w-full relative" style={{ paddingBottom: '62%' }}>
+                    <div style={{ position: 'absolute', inset: 0, padding: '8px' }}>
+                      {f.svg}
+                    </div>
                     {(f as { comingSoon?: boolean }).comingSoon && (
                       <span
                         className="absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-full z-10"
@@ -2486,8 +2544,6 @@ export default function Home() {
                 </button>
               ))}
             </div>
-              </div>{/* end left column */}
-            </div>{/* end flex row */}
           </div>
         </div>
 

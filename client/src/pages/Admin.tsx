@@ -519,7 +519,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     return result;
   })();
 
-  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email" | "campaign" | "bugs" | "subscriptions" | "news" | "failed_jobs">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email" | "campaign" | "bugs" | "subscriptions" | "news" | "failed_jobs" | "backup_graphics">("overview");
 
   // ── Failed jobs (for admin debugging) ──
   const { data: failedJobsData, isLoading: failedJobsLoading, refetch: refetchFailedJobs } = trpc.admin.getFailedJobs.useQuery(
@@ -749,6 +749,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     { id: "email", label: "שליחת מייל", shortLabel: "מייל", icon: Mail, color: "#6366f1" },
     { id: "campaign", label: "קמפיין מייל", shortLabel: "קמפיין", icon: Gift, color: "#ec4899" },
     { id: "failed_jobs", label: "כשלונות", shortLabel: "כשלונות", icon: AlertTriangle, color: "#f97316" },
+    { id: "backup_graphics", label: "גיבוי גרפיקה", shortLabel: "גיבוי", icon: ImageIcon, color: "#ec4899" },
     { id: "settings", label: "הגדרות", shortLabel: "הגדרות", icon: Settings, color: "#94a3b8" },
   ] as const;
 
@@ -3218,6 +3219,66 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {activeSection === "backup_graphics" && (
+          <div className="p-4 md:p-6 max-w-7xl mx-auto">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="w-5 h-5 text-pink-500" />
+                  <CardTitle className="text-base">גיבוי גרפיקה — באנרים ווידגטים</CardTitle>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">באנרים ווידגטים שהוסרו מסביבת העבודה — שמורים כאן לשימוש עתידי.</p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Sale Banner Preview */}
+                <div>
+                  <h3 className="text-sm font-semibold mb-2 text-gray-700">🔥 באנר מבצע (SaleBanner)</h3>
+                  <div
+                    className="rounded-xl px-4 py-2.5 flex items-center gap-3"
+                    style={{
+                      background: 'linear-gradient(135deg, #ef4444 0%, #f97316 50%, #eab308 100%)',
+                      boxShadow: '0 2px 12px rgba(239,68,68,0.3)',
+                    }}
+                  >
+                    <span className="shrink-0 text-lg">🔥</span>
+                    <p className="flex-1 text-sm font-bold text-white leading-snug">
+                      מבצע מיוחד! הנחה של 30% על חבילת 300 אסימונים — לחץ לרכישה »
+                    </p>
+                    <span className="shrink-0 text-white/70 p-0.5">✕</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">מוצג כאשר יש חבילה עם badge="sale" או הנחה בדף הרכישה.</p>
+                </div>
+                {/* Announcement Banner Preview */}
+                <div>
+                  <h3 className="text-sm font-semibold mb-2 text-gray-700">🎉 באנר הכרזה (AnnouncementBanner)</h3>
+                  <div
+                    className="rounded-xl px-4 py-2.5 flex items-center gap-3"
+                    style={{
+                      background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%)',
+                      boxShadow: '0 2px 12px rgba(99,102,241,0.25)',
+                    }}
+                  >
+                    <span className="shrink-0 text-lg">🎉</span>
+                    <p className="flex-1 text-sm font-medium text-white leading-snug">
+                      טקסט ההכרזה יופיע כאן כאשר הוא מופעל בהגדרות → הכרזה
+                    </p>
+                    <span className="shrink-0 text-white/70 p-0.5">✕</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">מופעל בהגדרות → הכרזה כאשר enabled=true.</p>
+                </div>
+                {/* Hero Carousel info */}
+                <div>
+                  <h3 className="text-sm font-semibold mb-2 text-gray-700">🎠 קרוסל לפני/אחרי (HeroBeforeAfterCarousel)</h3>
+                  <div className="rounded-xl border-2 border-dashed border-gray-200 p-4 bg-gray-50 text-center">
+                    <p className="text-sm text-gray-500">הקרוסל הוסר מסביבת העבודה. הקוד שמור ב-Home.tsx בפונקציה HeroBeforeAfterCarousel().</p>
+                    <p className="text-xs text-gray-400 mt-1">תמונות: skateboard, camera, controller, parrot, sneaker, bicycle, guitar, car, lion, wolf, eagle, deer</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
