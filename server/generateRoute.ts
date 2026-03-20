@@ -396,6 +396,30 @@ router.post("/api/generate-images", async (req, res) => {
       return res.status(400).json({ error: "נא להזין תיאור של התמונה הרצויה" });
     }
 
+    // Block trademarked brand names — OpenAI refuses these and causes silent timeouts
+    const BLOCKED_BRANDS = [
+      "disney", "mickey mouse", "minnie mouse", "donald duck", "goofy", "pluto",
+      "marvel", "spider-man", "spiderman", "batman", "superman", "iron man", "ironman",
+      "dc comics", "avengers", "pokemon", "pikachu", "nintendo", "mario", "luigi",
+      "hello kitty", "sanrio", "looney tunes", "bugs bunny", "tom and jerry",
+      "nike", "adidas", "apple", "google", "facebook", "meta", "microsoft",
+      "coca-cola", "pepsi", "mcdonalds", "mcdonald's", "starbucks", "amazon",
+      "ferrari", "lamborghini", "porsche", "bmw", "mercedes", "tesla",
+      "louis vuitton", "gucci", "chanel", "prada", "versace", "rolex",
+      "star wars", "harry potter", "lord of the rings", "batman", "superman",
+      "youtube", "instagram", "twitter", "tiktok", "snapchat", "whatsapp",
+    ];
+    const promptLower = prompt.trim().toLowerCase();
+    const matchedBrand = BLOCKED_BRANDS.find(brand => promptLower.includes(brand));
+    if (matchedBrand) {
+      return res.status(422).json({
+        error: "BRAND_BLOCKED",
+        brand: matchedBrand,
+        message: `לא ניתן ליצור לוגואים של מותגים רשומים ("${matchedBrand}"). נסה תיאור כללי, למשל: "לוגו עם טירה ועכבר" במקום "לוגו דיסני".`,
+        messageEn: `Cannot generate logos of trademarked brands ("${matchedBrand}"). Try a generic description instead, e.g. "castle with mouse logo" instead of "Disney logo".`,
+      });
+    }
+
     const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
     const ipAnon = anonymizeIp(rawIp);
     const appUser = getAppUserFromCookie(req.cookies);

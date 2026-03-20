@@ -16,6 +16,7 @@ import { TokenPricingModal } from "@/components/TokenPricingModal";
 import { AiDocumentRedrawTab } from "@/components/AiDocumentRedrawTab";
 import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { FaceDetectTab } from "@/components/FaceDetectTab";
+import { AiProcessingAnimation } from "@/components/AiProcessingAnimation";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InsufficientTokensBanner } from "@/components/InsufficientTokensBanner";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -1046,6 +1047,9 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [progressStep, setProgressStep] = useState(0);
   const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const elapsedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const elapsedStartRef = useRef<number>(0);
 
   // Progress steps for AI Creation loading
   const progressSteps = isRtl
@@ -1061,6 +1065,20 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
         { label: "Processing lines for engraving...", duration: 20000 },
         { label: "Finalizing and optimizing...", duration: 15000 },
       ];
+
+  const startElapsedTimer = useCallback(() => {
+    setElapsedSeconds(0);
+    elapsedStartRef.current = Date.now();
+    if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+    elapsedTimerRef.current = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - elapsedStartRef.current) / 1000));
+    }, 1000);
+  }, []);
+
+  const stopElapsedTimer = useCallback(() => {
+    if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+    setElapsedSeconds(0);
+  }, []);
 
   const startProgressSteps = useCallback(() => {
     setProgressStep(0);
@@ -1078,7 +1096,8 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
   const stopProgressSteps = useCallback(() => {
     if (progressTimerRef.current) clearTimeout(progressTimerRef.current);
     setProgressStep(0);
-  }, []);
+    stopElapsedTimer();
+  }, [stopElapsedTimer]);
 
   const setJobIdPersisted = useCallback((id: string | null) => {
     if (id) localStorage.setItem("ai_generate_jobId", id);
@@ -1200,6 +1219,7 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
     setSelectedIdx(null);
     setErrorMsg("");
     startProgressSteps();
+    startElapsedTimer();
     try {
       const res = await fetch("/api/generate-images", {
         method: "POST",
@@ -1213,6 +1233,14 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
         }),
       });
       const data = await res.json();
+      if (data.error === "BRAND_BLOCKED") {
+        setStatus("error");
+        stopProgressSteps();
+        const msg = language === "he" ? data.message : data.messageEn;
+        setErrorMsg(msg);
+        toast.error(msg, { duration: 8000 });
+        return;
+      }
       if (data.error === "REGISTRATION_REQUIRED" || data.error === "UNAUTHORIZED") {
         setStatus("idle");
         stopProgressSteps();
@@ -1385,79 +1413,16 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
       <div className="flex flex-col gap-4">
       {/* Loading */}
       {status === "loading" && (
-        <div
-          className="rounded-xl p-6"
-          style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
-        >
-          <div className="flex flex-col items-center gap-5 text-center">
-            {/* Spinner */}
-            <div className="relative">
-              <div className="w-16 h-16 rounded-full" style={{border: '3px solid #e0e7ff', borderTopColor: '#4f46e5', animation: 'spin 1s linear infinite'}} />
-              <Sparkles className="w-6 h-6 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-500" />
-            </div>
-
-            {/* Current step label */}
-            <div>
-              <p className="font-semibold text-base text-gray-700">
-                {progressSteps[progressStep]?.label || (t("processingLabel"))}
-              </p>
-              <p className="text-xs mt-1 text-gray-400">
-                {t("processingTime")}
-              </p>
-            </div>
-
-            {/* Progress steps timeline */}
-            <div className="w-full flex flex-col gap-2 text-sm">
-              {progressSteps.map((step, i) => (
-                <div key={i} className="flex items-center gap-3" style={{direction: isRtl ? 'rtl' : 'ltr'}}>
-                  <div
-                    className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-500"
-                    style={{
-                      background: i < progressStep ? '#4f46e5' : i === progressStep ? '#818cf8' : '#e0e7ff',
-                      color: i <= progressStep ? 'white' : '#a5b4fc',
-                      boxShadow: i === progressStep ? '0 0 0 3px rgba(99,102,241,0.2)' : 'none',
-                    }}
-                  >
-                    {i < progressStep ? '✓' : i + 1}
-                  </div>
-                  <span
-                    className="transition-all duration-500"
-                    style={{
-                      color: i < progressStep ? '#6b7280' : i === progressStep ? '#1f2937' : '#9ca3af',
-                      fontWeight: i === progressStep ? 600 : 400,
-                    }}
-                  >
-                    {step.label}
-                  </span>
-                  {i === progressStep && (
-                    <div className="flex gap-0.5 ml-auto">
-                      {[0,1,2].map(j => (
-                        <div key={j} className="w-1.5 h-1.5 rounded-full bg-indigo-400" style={{animation: `bounce 1s infinite ${j*0.15}s`}} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Background hint + cancel */}
-            {jobId && (
-              <p className="text-xs text-gray-400">
-                {t("backgroundProcessing")}
-              </p>
-            )}
-            {jobId && (
-              <button
-                onClick={handleCancel}
-                className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg transition-all"
-                style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}
-              >
-                <X className="w-4 h-4" />
-                {t("cancelRefund")}
-              </button>
-            )}
-          </div>
-        </div>
+        <AiProcessingAnimation
+          elapsedSeconds={elapsedSeconds}
+          currentStep={progressSteps[progressStep]?.label}
+          jobId={jobId}
+          onCancel={handleCancel}
+          isRtl={isRtl}
+          accentColor="#6366f1"
+          accentGradient="linear-gradient(90deg, #6366f1, #8b5cf6)"
+          featureLabel={isRtl ? "AI יצירה" : "AI Create"}
+        />
       )}
 
       {/* Error */}
