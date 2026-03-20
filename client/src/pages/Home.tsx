@@ -2138,7 +2138,11 @@ export default function Home() {
   return (
     <div
       className="min-h-screen"
-      style={{ background: '#f8f9fb' }}
+      style={{
+        background: '#ffffff',
+        backgroundImage: 'linear-gradient(rgba(99,102,241,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.05) 1px, transparent 1px)',
+        backgroundSize: '40px 40px',
+      }}
       dir={isRtl ? "rtl" : "ltr"}
     >
       {/* Token Bonus Animation Overlay */}
@@ -2152,9 +2156,10 @@ export default function Home() {
       <header
         className="sticky top-0 z-20"
         style={{
-          background: '#ffffff',
-          borderBottom: '1px solid #e8eaf0',
-          boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
+          background: 'rgba(255,255,255,0.97)',
+          backdropFilter: 'blur(8px)',
+          borderBottom: '1.5px solid #e2e8f0',
+          boxShadow: 'none',
         }}
       >
         <div className="px-3 py-2 flex items-center gap-2 max-w-7xl mx-auto">
@@ -2403,31 +2408,23 @@ export default function Home() {
         {showTokensBanner && (
           <InsufficientTokensBanner onDismiss={() => setShowTokensBanner(false)} hasPendingWelcomeBonus={hasPendingWelcomeBonus} />
         )}
-        {/* ── Hero Section ── */}
-        <div className="mb-6 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #f0f0ff 0%, #faf5ff 50%, #f0f9ff 100%)', border: '1px solid #e8eaf0' }}>
-          <div className="px-5 pt-5 pb-5">
-            {/* Badge pill */}
-            <div className={`flex justify-center mb-3`}>
-              <span
-                className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full"
-                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', letterSpacing: '0.04em' }}
-              >
-                <Sparkles className="w-3 h-3" />
-                {isRtl ? 'המרת וקטור מבוססת AI' : 'AI-POWERED VECTOR CONVERSION'}
-              </span>
+        {/* ── CAD Workspace Toolbar ── */}
+        <div className="mb-4 flex items-center justify-between" style={{ borderBottom: '1.5px solid #e2e8f0', paddingBottom: '10px' }}>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <div style={{ width: 8, height: 8, border: '1.5px solid #6366f1' }} />
+              <div style={{ width: 8, height: 8, border: '1.5px solid #6366f1', transform: 'rotate(45deg)' }} />
             </div>
-            {/* Headline */}
-            <div className="text-center mb-5">
-              <h1 className="font-black leading-tight mb-1" style={{ fontSize: 'clamp(1.6rem, 4vw, 2.6rem)', color: '#111827', letterSpacing: '-0.02em' }}>
-                {isRtl ? 'הפוך כל תמונה לוקטור.' : 'From photo to vector.'}
-              </h1>
-              <h1 className="font-black leading-tight" style={{ fontSize: 'clamp(1.6rem, 4vw, 2.6rem)', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>
-                {isRtl ? 'מיידית.' : 'Instantly.'}
-              </h1>
-              <p className="text-sm text-gray-500 mt-2">
-                {isRtl ? 'בינה מלאכותית ממירה תמונות לקבצי DXF לחיתוך לייזר ו-CNC' : 'AI converts images to DXF files for laser cutting & CNC'}
-              </p>
-            </div>
+            <span className="text-xs font-mono font-bold" style={{ color: '#6366f1', letterSpacing: '0.1em' }}>WORKSPACE</span>
+            <span className="text-xs font-mono" style={{ color: '#94a3b8', letterSpacing: '0.05em' }}>— {isRtl ? 'בחר כלי' : 'SELECT TOOL'}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px rgba(34,197,94,0.6)' }} />
+            <span className="text-xs font-mono" style={{ color: '#22c55e', letterSpacing: '0.08em' }}>READY</span>
+          </div>
+        </div>
+        {/* Feature shortcut buttons — click to switch tab */}
+        <div className="mb-4">
             {/* Feature shortcut buttons with SVG illustrations — click to switch tab */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
@@ -2544,7 +2541,6 @@ export default function Home() {
                 </button>
               ))}
             </div>
-          </div>
         </div>
 
         {/* Tabs */}
@@ -2558,20 +2554,22 @@ export default function Home() {
           dir={isRtl ? "rtl" : "ltr"}
         >
           <TabsList
-            className="w-full mb-6 gap-1 p-1.5"
+            className="w-full mb-0 gap-0 p-0"
             style={{
-              background: '#ffffff',
-              border: '1px solid #e8eaf0',
-              borderRadius: '1rem',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              background: 'rgba(255,255,255,0.95)',
+              border: '1.5px solid #e2e8f0',
+              borderBottom: '2px solid #e2e8f0',
+              borderRadius: '8px 8px 0 0',
               height: 'auto',
+              overflow: 'hidden',
             }}
           >
             <TabsTrigger
               value="ai"
-              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all text-gray-400 data-[state=active]:text-[#6366f1] relative px-1 rounded-none"
               style={{
-                background: activeTab === 'ai' ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'transparent',
+                background: 'transparent',
+                borderBottom: activeTab === 'ai' ? '2.5px solid #6366f1' : '2.5px solid transparent',
               }}
             >
               <Sparkles className="w-4 h-4 shrink-0" />
@@ -2585,9 +2583,10 @@ export default function Home() {
             </TabsTrigger>
             <TabsTrigger
               value="trace"
-              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all text-gray-400 data-[state=active]:text-[#0d9488] relative px-1 rounded-none"
               style={{
-                background: activeTab === 'trace' ? 'linear-gradient(135deg, #0d9488, #06b6d4)' : 'transparent',
+                background: 'transparent',
+                borderBottom: activeTab === 'trace' ? '2.5px solid #0d9488' : '2.5px solid transparent',
               }}
             >
               <Scan className="w-4 h-4 shrink-0" />
@@ -2602,7 +2601,8 @@ export default function Home() {
             <TabsTrigger
               value="redraw"
               disabled
-              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-300 opacity-50 cursor-not-allowed relative px-1"
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all text-gray-300 opacity-50 cursor-not-allowed relative px-1 rounded-none"
+              style={{ background: 'transparent', borderBottom: '2.5px solid transparent' }}
             >
               <FileEdit className="w-4 h-4 shrink-0" />
               <span className="truncate text-[11px]">{t("aiSketch")}</span>
@@ -2612,9 +2612,10 @@ export default function Home() {
             </TabsTrigger>
             <TabsTrigger
               value="face"
-              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all text-gray-400 data-[state=active]:text-[#7c3aed] relative px-1 rounded-none"
               style={{
-                background: activeTab === 'face' ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : 'transparent',
+                background: 'transparent',
+                borderBottom: activeTab === 'face' ? '2.5px solid #7c3aed' : '2.5px solid transparent',
               }}
             >
               <UserCircle className="w-4 h-4 shrink-0" />
@@ -2629,7 +2630,8 @@ export default function Home() {
             <TabsTrigger
               value="cnc-relief"
               disabled
-              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-300 opacity-50 cursor-not-allowed relative px-1"
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all text-gray-300 opacity-50 cursor-not-allowed relative px-1 rounded-none"
+              style={{ background: 'transparent', borderBottom: '2.5px solid transparent' }}
             >
               <Mountain className="w-4 h-4 shrink-0" />
               <span className="truncate text-[11px]">{t("cncReliefTabLabel")}</span>
@@ -2639,11 +2641,11 @@ export default function Home() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="ai">
+          <TabsContent value="ai" style={{ border: '1.5px solid #e2e8f0', borderTop: 'none', borderRadius: '0 0 8px 8px', padding: '16px', marginTop: 0, background: '#ffffff' }}>
             {/* Demo gallery — AI Create */}
             <div
-              className="mb-5 rounded-2xl overflow-hidden p-4"
-              style={{ background: '#ffffff', border: '1px solid #e8eaf0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+              className="mb-5 rounded-xl overflow-hidden p-4"
+              style={{ background: '#f8faff', border: '1px solid #e8eaf0' }}
             >
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #6366f1, #8b5cf6)'}}>
@@ -2667,11 +2669,11 @@ export default function Home() {
             <AiGeneratorTab onOpenAuth={() => openAuthAs("unregistered")} onInsufficientTokens={() => setShowTokensBanner(true)} />
           </TabsContent>
 
-          <TabsContent value="trace">
+          <TabsContent value="trace" style={{ border: '1.5px solid #e2e8f0', borderTop: 'none', borderRadius: '0 0 8px 8px', padding: '16px', marginTop: 0, background: '#ffffff' }}>
             {/* Demo banner — AI Trace */}
             <div
-              className="mb-5 rounded-2xl overflow-hidden p-4"
-              style={{ background: '#ffffff', border: '1px solid #e8eaf0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+              className="mb-5 rounded-xl overflow-hidden p-4"
+              style={{ background: '#f0fdf9', border: '1px solid #d1fae5' }}
             >
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #0d9488, #06b6d4)'}}>
@@ -2705,7 +2707,7 @@ export default function Home() {
             />
           </TabsContent>
 
-          <TabsContent value="redraw">
+          <TabsContent value="redraw" style={{ border: '1.5px solid #e2e8f0', borderTop: 'none', borderRadius: '0 0 8px 8px', padding: '16px', marginTop: 0, background: '#ffffff' }}>
             {/* Maintenance notice */}
             <div className="mb-4 rounded-xl p-4 flex items-start gap-3" style={{ background: '#fff7ed', border: '1.5px solid #fed7aa' }}>
               <span className="text-2xl mt-0.5">🛠️</span>
@@ -2755,11 +2757,11 @@ export default function Home() {
             <AiDocumentRedrawTab onOpenAuth={() => openAuthAs("unregistered")} onInsufficientTokens={() => setShowTokensBanner(true)} />
           </TabsContent>
 
-          <TabsContent value="face">
+          <TabsContent value="face" style={{ border: '1.5px solid #e2e8f0', borderTop: 'none', borderRadius: '0 0 8px 8px', padding: '16px', marginTop: 0, background: '#ffffff' }}>
             {/* Demo banner — Face Detection */}
             <div
-              className="mb-5 rounded-2xl overflow-hidden p-4"
-              style={{ background: '#ffffff', border: '1px solid #e8eaf0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+              className="mb-5 rounded-xl overflow-hidden p-4"
+              style={{ background: '#faf5ff', border: '1px solid #e9d5ff' }}
             >
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #7c3aed, #a855f7)'}}>
@@ -2786,11 +2788,11 @@ export default function Home() {
             />
           </TabsContent>
 
-          <TabsContent value="cnc-relief">
+          <TabsContent value="cnc-relief" style={{ border: '1.5px solid #e2e8f0', borderTop: 'none', borderRadius: '0 0 8px 8px', padding: '16px', marginTop: 0, background: '#ffffff' }}>
             {/* Demo banner — CNC Relief */}
             <div
-              className="mb-5 rounded-2xl overflow-hidden p-4"
-              style={{ background: '#ffffff', border: '1px solid #e8eaf0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+              className="mb-5 rounded-xl overflow-hidden p-4"
+              style={{ background: '#fffbeb', border: '1px solid #fde68a' }}
             >
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #b45309, #d97706)'}}>
@@ -2829,47 +2831,7 @@ export default function Home() {
         </div>{/* end centering wrapper */}
       </main>
 
-      {/* ── Dark CTA Section ── */}
-      <section
-        className="mt-10 py-10 px-5 text-center"
-        style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%)' }}
-      >
-        <div className="mx-auto" style={{ maxWidth: '560px' }}>
-          <div
-            className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full mb-4"
-            style={{ background: 'rgba(255,255,255,0.12)', color: '#a5b4fc', border: '1px solid rgba(165,180,252,0.3)' }}
-          >
-            <Sparkles className="w-3 h-3" />
-            {isRtl ? 'AI חינמי להתחלה' : 'Free AI to start'}
-          </div>
-          <h2 className="font-black text-white mb-2" style={{ fontSize: 'clamp(1.3rem, 4vw, 1.9rem)', letterSpacing: '-0.02em' }}>
-            {isRtl ? 'התחל להמיר בחינם היום.' : 'Start converting for free today.'}
-          </h2>
-          <p className="text-sm mb-6" style={{ color: '#a5b4fc' }}>
-            {isRtl ? 'לייזר, CNC ועיצוב וקטורי באיכות מקצועית בעזרת AI' : 'Professional vector files for laser, CNC, and design — powered by AI'}
-          </p>
-          <button
-            onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-            className="inline-flex items-center gap-2 font-bold px-7 py-3 rounded-xl transition-all hover:opacity-90"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', boxShadow: '0 4px 16px rgba(99,102,241,0.4)', fontSize: '0.95rem' }}
-          >
-            <Sparkles className="w-4 h-4" />
-            {isRtl ? 'התחל עכשיו' : 'Get started now'}
-          </button>
-          <div className="flex items-center justify-center gap-5 mt-5">
-            {[
-              { label: isRtl ? 'בינה מלאכותית' : 'AI Powered', icon: '✨' },
-              { label: isRtl ? 'לייזר ו-CNC' : 'Laser & CNC', icon: '⚡' },
-              { label: isRtl ? 'קבצי DXF' : 'DXF Files', icon: '📄' },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-1.5 text-xs" style={{ color: '#c7d2fe' }}>
-                <span>{item.icon}</span>
-                <span className="font-medium">{item.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Dark CTA Section moved to /landing page */}
 
       <footer
         className=""
