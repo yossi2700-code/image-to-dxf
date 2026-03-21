@@ -78,6 +78,22 @@ const BEFORE_AFTER = [
     before: `${CDN}/before-toucan_5f8de07e.jpg`,
     after: `${CDN}/after-toucan_c73d6aac.png`,
   },
+  {
+    label_he: "רחפן",
+    label_en: "Drone",
+    desc_he: "רחפן DJI — גוף, זרועות, מנועים, מצלמה",
+    desc_en: "DJI drone — body, arms, motors, camera",
+    before: `${CDN}/drone-original_19e7414f.png`,
+    after: `${CDN}/drone-vector-dxf_10e8b795.png`,
+  },
+  {
+    label_he: "חמניות",
+    label_en: "Sunflowers",
+    desc_he: "שדה חמניות עם שקיעה — פרחים, עלים, קרני שמש",
+    desc_en: "Sunflower field at sunset — flowers, leaves, sun rays",
+    before: `${CDN}/sunflower-original_d7185078.png`,
+    after: `${CDN}/sunflower-vector-dxf_a02bbd11.png`,
+  },
 ];
 
 const AI_EXAMPLES = [
