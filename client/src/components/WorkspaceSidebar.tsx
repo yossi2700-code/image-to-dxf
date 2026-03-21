@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Sparkles,
@@ -12,6 +12,7 @@ import {
   User,
   ChevronDown,
   X,
+  Zap,
 } from "lucide-react";
 
 export type WorkspaceTab = "ai" | "trace" | "redraw" | "face" | "cnc-relief";
@@ -56,6 +57,7 @@ export function WorkspaceSidebar({
   children,
 }: WorkspaceSidebarProps) {
   const { t, isRtl } = useLanguage();
+  const [mobileUserMenuOpen, setMobileUserMenuOpen] = useState(false);
 
   const navItems: NavItem[] = [
     {
@@ -793,9 +795,9 @@ export function WorkspaceSidebar({
             );
           })}
 
-        {/* History tab */}
+        {/* History tab - opens in new tab to preserve state */}
         <button
-          onClick={() => { window.location.href = "/history"; }}
+          onClick={() => { window.open("/history", "_blank"); }}
           style={{
             flex: 1,
             display: "flex",
@@ -825,7 +827,260 @@ export function WorkspaceSidebar({
             {isRtl ? "היסטוריה" : "History"}
           </span>
         </button>
+
+        {/* User / Account tab */}
+        <button
+          onClick={() => setMobileUserMenuOpen(true)}
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 3,
+            padding: "8px 4px 10px",
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            position: "relative",
+          }}
+        >
+          {appUser ? (
+            <div
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "white",
+                fontWeight: 800,
+                fontSize: "0.85rem",
+                boxShadow: "0 2px 8px rgba(99,102,241,0.4)",
+                flexShrink: 0,
+              }}
+            >
+              {userInitial}
+              {/* Token badge */}
+              {tokenBalance !== null && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 4,
+                    right: 4,
+                    background: "#f59e0b",
+                    color: "white",
+                    fontSize: "0.5rem",
+                    fontWeight: 800,
+                    borderRadius: 6,
+                    padding: "1px 4px",
+                    border: "1.5px solid white",
+                    lineHeight: 1.4,
+                    minWidth: 14,
+                    textAlign: "center",
+                  }}
+                >
+                  {tokenBalance}
+                </span>
+              )}
+            </div>
+          ) : (
+            <div
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "white",
+                boxShadow: "0 2px 8px rgba(99,102,241,0.4)",
+              }}
+            >
+              <User className="w-4 h-4" />
+            </div>
+          )}
+          <span style={{ fontSize: "0.6rem", fontWeight: 600, color: "#6366f1", lineHeight: 1 }}>
+            {isRtl ? "אישי" : "Account"}
+          </span>
+        </button>
       </nav>
+
+      {/* ══ MOBILE USER SHEET ══ */}
+      {/* Backdrop */}
+      {mobileUserMenuOpen && (
+        <div
+          onClick={() => setMobileUserMenuOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.45)",
+            zIndex: 40,
+            animation: "fadeIn 0.2s ease",
+          }}
+        />
+      )}
+      {/* Slide-up sheet */}
+      <div
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: "white",
+          borderRadius: "20px 20px 0 0",
+          zIndex: 50,
+          padding: "0 0 env(safe-area-inset-bottom, 16px)",
+          transform: mobileUserMenuOpen ? "translateY(0)" : "translateY(110%)",
+          transition: "transform 0.32s cubic-bezier(0.32,0.72,0,1)",
+          boxShadow: "0 -8px 40px rgba(0,0,0,0.18)",
+        }}
+      >
+        {/* Handle */}
+        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}>
+          <div style={{ width: 40, height: 4, borderRadius: 4, background: "#e2e8f0" }} />
+        </div>
+
+        {appUser ? (
+          <>
+            {/* User info */}
+            <div style={{ padding: "12px 20px 16px", borderBottom: "1px solid #f1f5f9" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "white",
+                    fontWeight: 800,
+                    fontSize: "1.1rem",
+                    flexShrink: 0,
+                  }}
+                >
+                  {userInitial}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {userName}
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {appUser.email}
+                  </div>
+                </div>
+              </div>
+              {/* Token balance */}
+              {tokenBalance !== null && (
+                <button
+                  onClick={() => { setMobileUserMenuOpen(false); onOpenTokenHistory(); }}
+                  style={{
+                    marginTop: 12,
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "10px 14px",
+                    borderRadius: 12,
+                    background: "linear-gradient(135deg, #fef3c7, #fde68a)",
+                    border: "1.5px solid #fcd34d",
+                    cursor: "pointer",
+                  }}
+                >
+                  <Zap style={{ width: 18, height: 18, color: "#d97706", flexShrink: 0 }} />
+                  <span style={{ fontWeight: 700, fontSize: "0.9rem", color: "#92400e" }}>
+                    {tokenBalance} {isRtl ? "אסימונים" : "tokens"}
+                  </span>
+                  <span style={{ fontSize: "0.75rem", color: "#b45309", marginInlineStart: "auto" }}>
+                    {isRtl ? "היסטוריה ←" : "→ history"}
+                  </span>
+                </button>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div style={{ padding: "8px 12px" }}>
+              <button
+                onClick={() => { setMobileUserMenuOpen(false); onOpenPricing(); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 12, width: "100%",
+                  padding: "14px 12px", borderRadius: 12, border: "none",
+                  background: "transparent", cursor: "pointer", textAlign: isRtl ? "right" : "left",
+                }}
+              >
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: "#ede9fe", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <CreditCard style={{ width: 18, height: 18, color: "#6366f1" }} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "#1e293b" }}>{isRtl ? "רכישת אסימונים" : "Buy Tokens"}</div>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>{isRtl ? "הגדל את היתרה שלך" : "Top up your balance"}</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => { setMobileUserMenuOpen(false); window.open("/history", "_blank"); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 12, width: "100%",
+                  padding: "14px 12px", borderRadius: 12, border: "none",
+                  background: "transparent", cursor: "pointer", textAlign: isRtl ? "right" : "left",
+                }}
+              >
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: "#f0fdf4", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <History style={{ width: 18, height: 18, color: "#16a34a" }} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "#1e293b" }}>{isRtl ? "היסטוריה" : "History"}</div>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>{isRtl ? "כל העיצובים שלך" : "All your designs"}</div>
+                </div>
+              </button>
+
+              <div style={{ height: 1, background: "#f1f5f9", margin: "4px 0" }} />
+
+              <button
+                onClick={() => { setMobileUserMenuOpen(false); onLogout(); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 12, width: "100%",
+                  padding: "14px 12px", borderRadius: 12, border: "none",
+                  background: "transparent", cursor: "pointer", textAlign: isRtl ? "right" : "left",
+                }}
+              >
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <LogOut style={{ width: 18, height: 18, color: "#dc2626" }} />
+                </div>
+                <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "#dc2626" }}>
+                  {isRtl ? "התנתק" : "Sign Out"}
+                </div>
+              </button>
+            </div>
+          </>
+        ) : (
+          <div style={{ padding: "20px" }}>
+            <div style={{ textAlign: "center", marginBottom: 16 }}>
+              <div style={{ fontWeight: 700, fontSize: "1.1rem", color: "#1e293b", marginBottom: 4 }}>
+                {isRtl ? "ברוך הבא!" : "Welcome!"}
+              </div>
+              <div style={{ fontSize: "0.85rem", color: "#64748b" }}>
+                {isRtl ? "התחבר כדי לשמור את העיצובים שלך" : "Sign in to save your designs"}
+              </div>
+            </div>
+            <button
+              onClick={() => { setMobileUserMenuOpen(false); onOpenAuth(); }}
+              style={{
+                width: "100%", padding: "14px", borderRadius: 14, border: "none",
+                background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                color: "white", fontWeight: 700, fontSize: "1rem", cursor: "pointer",
+                boxShadow: "0 4px 16px rgba(99,102,241,0.4)",
+              }}
+            >
+              {isRtl ? "התחבר / הרשם" : "Sign In / Register"}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
