@@ -502,6 +502,7 @@ export default function Landing() {
   const { isRtl, language, setLanguage } = useLanguage();
   const [, navigate] = useLocation();
   const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("register");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // If user is already logged in, redirect to workspace
@@ -517,7 +518,10 @@ export default function Landing() {
       .catch(() => {});
   }, []);
 
-  const handleOpenAuth = () => setAuthOpen(true);
+  const handleOpenAuth = (mode: "login" | "register" = "register") => {
+    setAuthMode(mode);
+    setAuthOpen(true);
+  };
 
   const { data: contactInfo } = trpc.contact.info.useQuery();
 
@@ -578,10 +582,16 @@ export default function Landing() {
               </button>
             </div>
             <button
-              onClick={isLoggedIn ? () => window.location.replace("/") : handleOpenAuth}
-              style={{ display: "flex", alignItems: "center", gap: 6, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", borderRadius: 10, padding: "8px 18px", fontWeight: 700, fontSize: 13, cursor: "pointer", boxShadow: "0 2px 8px rgba(99,102,241,0.35)" }}
+              onClick={() => handleOpenAuth("login")}
+              style={{ background: "transparent", color: "#6366f1", border: "1.5px solid #6366f1", borderRadius: 10, padding: "7px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
             >
-              {isLoggedIn ? (isRtl ? "התחבר" : "Log in") : (isRtl ? "הרשם חינם" : "Sign up free")}
+              {isRtl ? "התחבר" : "Log in"}
+            </button>
+            <button
+              onClick={() => handleOpenAuth("register")}
+              style={{ display: "flex", alignItems: "center", gap: 8, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", borderRadius: 10, padding: "8px 18px", fontWeight: 700, fontSize: 13, cursor: "pointer", boxShadow: "0 2px 8px rgba(99,102,241,0.35)" }}
+            >
+              {isRtl ? "הרשם חינם" : "Sign up free"}
             </button>
 
           </div>
@@ -620,7 +630,7 @@ export default function Landing() {
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <button
-              onClick={handleOpenAuth}
+              onClick={() => handleOpenAuth("register")}
               style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", borderRadius: 12, padding: "14px 32px", fontWeight: 800, fontSize: 16, cursor: "pointer", boxShadow: "0 4px 20px rgba(99,102,241,0.4)", transition: "transform 0.15s" }}
               onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.04)")}
               onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
@@ -698,7 +708,7 @@ export default function Landing() {
             ))}
           </div>
           <button
-            onClick={handleOpenAuth}
+            onClick={() => handleOpenAuth("register")}
             style={{ background: "linear-gradient(135deg,#7c3aed,#6366f1)", color: "#fff", border: "none", borderRadius: 12, padding: "13px 30px", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 16px rgba(124,58,237,0.3)" }}
           >
             {isRtl ? "נסה עכשיו — חינם" : "Try now — free"}
@@ -869,7 +879,7 @@ export default function Landing() {
           </div>
           <div style={{ textAlign: "center", marginTop: 36 }}>
             <button
-              onClick={handleOpenAuth}
+              onClick={() => handleOpenAuth("register")}
               style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff", border: "none", borderRadius: 12, padding: "13px 32px", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 16px rgba(124,58,237,0.35)" }}
               onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.04)")}
               onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
@@ -899,7 +909,7 @@ export default function Landing() {
           </div>
           <div style={{ textAlign: "center", marginTop: 36 }}>
             <button
-              onClick={handleOpenAuth}
+              onClick={() => handleOpenAuth("register")}
               style={{ background: "linear-gradient(135deg,#7c3aed,#6366f1)", color: "#fff", border: "none", borderRadius: 12, padding: "13px 32px", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 16px rgba(124,58,237,0.3)" }}
               onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.04)")}
               onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
@@ -1005,7 +1015,7 @@ export default function Landing() {
           <h2 style={{ color: "#fff", fontSize: "clamp(2rem,4.5vw,3rem)", fontWeight: 900, marginBottom: 28, letterSpacing: "-0.02em", lineHeight: 1.2 }}>{t.finalCtaTitle}</h2>
           <p style={{ color: "#c4b5fd", fontSize: 18, marginBottom: 48, lineHeight: 1.8 }}>{t.finalCtaSubtitle}</p>
           <button
-            onClick={handleOpenAuth}
+            onClick={() => handleOpenAuth("register")}
             style={{ background: "linear-gradient(135deg,#7c6fcd,#a78bfa)", color: "#fff", border: "none", borderRadius: 16, padding: "22px 80px", fontWeight: 800, fontSize: 22, cursor: "pointer", boxShadow: "0 8px 32px rgba(124,111,205,0.45)", transition: "transform 0.15s, box-shadow 0.15s", display: "block", margin: "0 auto", minWidth: 280 }}
             onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.04)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(124,111,205,0.6)"; }}
             onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(124,111,205,0.45)"; }}
@@ -1037,6 +1047,7 @@ export default function Landing() {
         open={authOpen}
         onOpenChange={setAuthOpen}
         authReason="unregistered"
+        initialMode={authMode}
         onSuccess={() => {
           window.location.replace("/");
         }}
