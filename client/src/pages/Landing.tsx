@@ -502,6 +502,7 @@ export default function Landing() {
   const { isRtl, language, setLanguage } = useLanguage();
   const [, navigate] = useLocation();
   const [authOpen, setAuthOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // If user is already logged in, redirect to workspace
   useEffect(() => {
@@ -509,6 +510,7 @@ export default function Landing() {
       .then(r => r.json())
       .then(d => {
         if (d.user) {
+          setIsLoggedIn(true);
           window.location.replace("/");
         }
       })
@@ -576,10 +578,10 @@ export default function Landing() {
               </button>
             </div>
             <button
-              onClick={handleOpenAuth}
+              onClick={isLoggedIn ? () => window.location.replace("/") : handleOpenAuth}
               style={{ display: "flex", alignItems: "center", gap: 6, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", borderRadius: 10, padding: "8px 18px", fontWeight: 700, fontSize: 13, cursor: "pointer", boxShadow: "0 2px 8px rgba(99,102,241,0.35)" }}
             >
-              {isRtl ? "הרשם חינם" : "Sign up free"}
+              {isLoggedIn ? (isRtl ? "התחבר" : "Log in") : (isRtl ? "הרשם חינם" : "Sign up free")}
             </button>
 
           </div>
