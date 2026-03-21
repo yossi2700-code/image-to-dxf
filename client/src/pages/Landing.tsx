@@ -980,7 +980,22 @@ export default function Landing() {
           >
             {t.finalCtaBtn}
           </button>
-          <p style={{ color: "#7c6fcd", fontSize: 13, marginTop: 16 }}>{t.finalCtaTrust}</p>
+          <div style={{ marginTop: 20, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
+            {/* PayPal secure badge */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, padding: "7px 14px" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#003087" stroke="#009cde" strokeWidth="0.5"/>
+                <path d="M10 12l2 2 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span style={{ color: "#e0e7ff", fontSize: 12, fontWeight: 600 }}>רכישה מאובטחת</span>
+              {/* PayPal wordmark */}
+              <svg width="52" height="14" viewBox="0 0 52 14" fill="none">
+                <text x="0" y="11" fontFamily="Arial" fontWeight="800" fontSize="11" fill="#009cde">Pay</text>
+                <text x="19" y="11" fontFamily="Arial" fontWeight="800" fontSize="11" fill="#003087">Pal</text>
+              </svg>
+            </div>
+            <p style={{ color: "#7c6fcd", fontSize: 12, margin: 0 }}>ללא כרטיס אשראי</p>
+          </div>
         </div>
       </section>
 
@@ -1068,9 +1083,9 @@ const he = {
   contactSubtitle: "צרו קשר בכל שאלה — נשמח לעזור בבחירת החבילה המתאימה, בעניינים טכניים, או בכל נושא אחר.",
   contactEmail: "השאר פרטים",
   contactWhatsApp: "WhatsApp",
-  finalCtaTitle: "מוכן להתחיל?",
+  finalCtaTitle: "נסה את הקובץ הראשון שלך בחינם",
   finalCtaSubtitle: "צור את קובץ DXF הראשון שלך בחינם — אפס סיכון אשראי וללא צורך בכרטיס אשראי.",
-  finalCtaBtn: "התחל חינם עכשיו",
+  finalCtaBtn: "הרשם בחינם",
   finalCtaTrust: "ללא כרטיס אשראי · רכישה מאובטחת PayPal",
 };
 
@@ -1131,8 +1146,8 @@ const en = {
   contactSubtitle: "Contact us for any question — we're happy to help with package selection, technical issues, or anything else.",
   contactEmail: "Leave details",
   contactWhatsApp: "WhatsApp",
-  finalCtaTitle: "Ready to start?",
+  finalCtaTitle: "Try Your First File Free",
   finalCtaSubtitle: "Create your first DXF file for free — no credit card required.",
-  finalCtaBtn: "Start Free Now",
+  finalCtaBtn: "Sign Up Free",
   finalCtaTrust: "No credit card · Secure PayPal checkout",
 };

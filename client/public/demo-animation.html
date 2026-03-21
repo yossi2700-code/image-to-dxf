@@ -5,618 +5,436 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DXFai — הדגמה חיה</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: #0a0916;
-    color: #fff;
-    font-family: 'Segoe UI', Arial, sans-serif;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-  }
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: #0a0916;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  gap: 24px;
+}
 
-  .title {
-    font-size: clamp(1.4rem, 4vw, 2.2rem);
-    font-weight: 900;
-    text-align: center;
-    margin-bottom: 8px;
-    background: linear-gradient(135deg, #a5b4fc, #c4b5fd, #818cf8);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .subtitle {
-    color: #6b7280;
-    text-align: center;
-    font-size: 15px;
-    margin-bottom: 48px;
-  }
+h1 {
+  font-size: clamp(1.3rem,4vw,2rem);
+  font-weight: 900;
+  background: linear-gradient(135deg,#a5b4fc,#c4b5fd);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+}
+.sub { color:#6b7280; font-size:14px; text-align:center; }
 
-  /* ── DEMO STAGE ── */
-  .stage {
-    width: 100%;
-    max-width: 860px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 24px;
-    padding: 40px 32px;
-    position: relative;
-    overflow: hidden;
-  }
-  .stage::before {
-    content: '';
-    position: absolute;
-    top: -100px; left: 50%;
-    transform: translateX(-50%);
-    width: 500px; height: 300px;
-    background: radial-gradient(ellipse, rgba(99,102,241,0.12) 0%, transparent 70%);
-    pointer-events: none;
-  }
+.card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 32px 24px;
+  width: 100%;
+  max-width: 700px;
+}
 
-  /* ── STEP LABELS ── */
-  .steps-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 28px;
-    gap: 8px;
-  }
-  .step-label {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    flex: 1;
-  }
-  .step-num {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    background: rgba(99,102,241,0.2);
-    border: 1px solid rgba(99,102,241,0.4);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 700; color: #a5b4fc;
-    transition: all 0.4s;
-  }
-  .step-num.active { background: #6366f1; border-color: #6366f1; color: #fff; box-shadow: 0 0 16px rgba(99,102,241,0.6); }
-  .step-num.done { background: #10b981; border-color: #10b981; color: #fff; }
-  .step-text { font-size: 12px; color: #6b7280; text-align: center; transition: color 0.4s; }
-  .step-text.active { color: #a5b4fc; }
-  .step-text.done { color: #10b981; }
-  .step-arrow { color: #374151; font-size: 18px; flex-shrink: 0; }
+/* Steps row */
+.steps {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  gap: 4px;
+}
+.step { flex:1; text-align:center; }
+.step-circle {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: rgba(99,102,241,0.15);
+  border: 1.5px solid rgba(99,102,241,0.3);
+  color: #a5b4fc;
+  font-weight: 700; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 6px;
+  transition: all 0.4s;
+}
+.step-circle.active { background:#6366f1; border-color:#6366f1; color:#fff; box-shadow:0 0 14px rgba(99,102,241,0.5); }
+.step-circle.done { background:#10b981; border-color:#10b981; color:#fff; }
+.step-name { font-size:11px; color:#6b7280; transition:color 0.3s; }
+.step-name.active { color:#a5b4fc; }
+.step-name.done { color:#10b981; }
+.step-arrow { color:#374151; font-size:20px; flex-shrink:0; padding-bottom:18px; }
 
-  /* ── MAIN ANIMATION AREA ── */
-  .anim-area {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 24px;
-    min-height: 220px;
-    position: relative;
-  }
+/* Animation row */
+.anim-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 180px;
+  flex-wrap: wrap;
+}
 
-  /* ── PHOTO CARD ── */
-  .photo-card {
-    width: 160px; height: 160px;
-    border-radius: 16px;
-    background: #1e1b4b;
-    border: 2px solid rgba(99,102,241,0.3);
-    display: flex; align-items: center; justify-content: center;
-    position: relative;
-    overflow: hidden;
-    flex-shrink: 0;
-    transition: all 0.5s;
-  }
-  .photo-card.glow { border-color: #6366f1; box-shadow: 0 0 30px rgba(99,102,241,0.4); }
+.box {
+  width: 140px; height: 140px;
+  border-radius: 16px;
+  display: flex; flex-direction:column;
+  align-items: center; justify-content: center;
+  gap: 8px;
+  border: 2px solid rgba(99,102,241,0.25);
+  background: rgba(99,102,241,0.06);
+  transition: all 0.5s;
+  flex-shrink: 0;
+}
+.box.glow { border-color:#6366f1; box-shadow:0 0 28px rgba(99,102,241,0.35); }
+.box.green { border-color:#10b981; box-shadow:0 0 28px rgba(16,185,129,0.3); background:rgba(16,185,129,0.06); }
+.box-label { font-size:11px; color:#6b7280; }
 
-  /* Camera SVG illustration */
-  .camera-svg { opacity: 0; transition: opacity 0.6s; }
-  .camera-svg.visible { opacity: 1; }
+.arrow-wrap {
+  display: flex; flex-direction:column;
+  align-items: center; gap:4px;
+  opacity:0; transition:opacity 0.5s;
+}
+.arrow-wrap.show { opacity:1; }
+.arrow-line {
+  width:50px; height:2px;
+  background: linear-gradient(90deg,#6366f1,#8b5cf6);
+  border-radius:2px;
+  position:relative;
+}
+.arrow-line::after {
+  content:'';
+  position:absolute; right:-1px; top:-4px;
+  border:5px solid transparent;
+  border-left:8px solid #8b5cf6;
+}
+.arrow-sub { font-size:10px; color:#6b7280; white-space:nowrap; }
 
-  /* ── ARROW ── */
-  .flow-arrow {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    opacity: 0;
-    transition: opacity 0.5s;
-  }
-  .flow-arrow.visible { opacity: 1; }
-  .arrow-line {
-    width: 60px; height: 2px;
-    background: linear-gradient(90deg, #6366f1, #8b5cf6);
-    position: relative;
-    border-radius: 2px;
-  }
-  .arrow-line::after {
-    content: '';
-    position: absolute;
-    right: -1px; top: -4px;
-    border: 5px solid transparent;
-    border-left: 8px solid #8b5cf6;
-  }
-  .arrow-label { font-size: 10px; color: #6b7280; white-space: nowrap; }
+/* Spinner */
+.spinner {
+  width:36px; height:36px;
+  border:3px solid rgba(99,102,241,0.2);
+  border-top-color:#6366f1;
+  border-radius:50%;
+  animation: spin 0.8s linear infinite;
+  display:none;
+}
+.spinner.on { display:block; }
+@keyframes spin { to { transform:rotate(360deg); } }
 
-  /* ── AI PROCESSOR ── */
-  .ai-box {
-    width: 120px; height: 120px;
-    border-radius: 20px;
-    background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15));
-    border: 1px solid rgba(99,102,241,0.3);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 8px;
-    flex-shrink: 0;
-    opacity: 0;
-    transform: scale(0.8);
-    transition: all 0.5s;
-    position: relative;
-    overflow: hidden;
-  }
-  .ai-box.visible {
-    opacity: 1;
-    transform: scale(1);
-    border-color: #6366f1;
-    box-shadow: 0 0 40px rgba(99,102,241,0.25);
-  }
-  .ai-box-label { font-size: 11px; color: #a5b4fc; font-weight: 700; }
-  .ai-spinner {
-    width: 36px; height: 36px;
-    border: 3px solid rgba(99,102,241,0.2);
-    border-top-color: #6366f1;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    display: none;
-  }
-  .ai-spinner.spinning { display: block; }
-  .ai-check { font-size: 28px; display: none; }
-  .ai-check.visible { display: block; animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1); }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+/* DXF SVG paths */
+.dxf-path {
+  stroke:#10b981; stroke-width:1.5; fill:none;
+  stroke-dasharray:500; stroke-dashoffset:500;
+  transition: stroke-dashoffset 1.8s ease;
+}
+.dxf-path.draw { stroke-dashoffset:0; }
 
-  /* Scanning line effect */
-  .scan-line {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #6366f1, transparent);
-    animation: scan 1.2s ease-in-out infinite;
-    display: none;
-  }
-  .scan-line.active { display: block; }
-  @keyframes scan {
-    0% { top: 0; opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { top: 100%; opacity: 0; }
-  }
+/* Progress */
+.prog-wrap {
+  height:4px; background:rgba(255,255,255,0.06);
+  border-radius:2px; overflow:hidden;
+  margin-top:20px; opacity:0; transition:opacity 0.3s;
+}
+.prog-wrap.show { opacity:1; }
+.prog-fill {
+  height:100%; background:linear-gradient(90deg,#6366f1,#8b5cf6);
+  border-radius:2px; width:0%; transition:width 0.4s ease;
+}
 
-  /* ── DXF CARD ── */
-  .dxf-card {
-    width: 160px; height: 160px;
-    border-radius: 16px;
-    background: #0f1a0f;
-    border: 2px solid rgba(16,185,129,0.2);
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    opacity: 0;
-    transform: translateX(20px);
-    transition: all 0.6s;
-    position: relative;
-    overflow: hidden;
-  }
-  .dxf-card.visible {
-    opacity: 1;
-    transform: translateX(0);
-    border-color: #10b981;
-    box-shadow: 0 0 30px rgba(16,185,129,0.25);
-  }
+/* Status */
+.status {
+  display:flex; align-items:center; gap:10px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:10px; padding:12px 16px;
+  margin-top:16px; min-height:46px;
+}
+.dot {
+  width:8px; height:8px; border-radius:50%;
+  background:#374151; flex-shrink:0; transition:background 0.3s;
+}
+.dot.pulse { background:#6366f1; animation:pulse 1s infinite; }
+.dot.done { background:#10b981; animation:none; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.status-txt { font-size:13px; color:#9ca3af; transition:color 0.3s; }
+.status-txt.on { color:#e5e7eb; }
 
-  /* DXF vector drawing animation */
-  .dxf-svg { width: 130px; height: 130px; }
-  .dxf-path {
-    stroke: #10b981;
-    stroke-width: 1.5;
-    fill: none;
-    stroke-dasharray: 1000;
-    stroke-dashoffset: 1000;
-    transition: stroke-dashoffset 2s ease;
-  }
-  .dxf-path.draw { stroke-dashoffset: 0; }
+/* Download btn */
+.dl-btn {
+  display:none; width:100%; margin-top:16px;
+  padding:14px; background:linear-gradient(135deg,#10b981,#059669);
+  border:none; border-radius:12px; color:#fff;
+  font-size:15px; font-weight:700; cursor:pointer;
+  transition:transform 0.2s, box-shadow 0.2s;
+}
+.dl-btn.show { display:block; animation:fadeUp 0.5s ease; }
+.dl-btn:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(16,185,129,0.35); }
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
 
-  /* ── STATUS BAR ── */
-  .status-bar {
-    margin-top: 28px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 12px;
-    padding: 14px 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-height: 52px;
-  }
-  .status-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: #374151;
-    flex-shrink: 0;
-    transition: background 0.3s;
-  }
-  .status-dot.active { background: #6366f1; animation: pulse 1s ease infinite; }
-  .status-dot.done { background: #10b981; animation: none; }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-  .status-text { font-size: 14px; color: #9ca3af; transition: color 0.3s; }
-  .status-text.active { color: #e5e7eb; }
+/* Play button */
+#playBtn {
+  display:block; width:100%; padding:16px;
+  background:linear-gradient(135deg,#6366f1,#8b5cf6);
+  border:none; border-radius:14px; color:#fff;
+  font-size:17px; font-weight:800; cursor:pointer;
+  margin-top:20px;
+  box-shadow:0 4px 20px rgba(99,102,241,0.4);
+  transition:transform 0.15s, box-shadow 0.15s;
+}
+#playBtn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(99,102,241,0.5); }
+#playBtn:active { transform:scale(0.97); }
+#playBtn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
 
-  /* ── DOWNLOAD BUTTON ── */
-  .download-btn {
-    margin-top: 24px;
-    width: 100%;
-    padding: 14px;
-    background: linear-gradient(135deg, #10b981, #059669);
-    border: none;
-    border-radius: 12px;
-    color: #fff;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    opacity: 0;
-    transform: translateY(10px);
-    transition: all 0.5s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-  }
-  .download-btn.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  .download-btn:hover { background: linear-gradient(135deg, #059669, #047857); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(16,185,129,0.3); }
+/* Metrics */
+.metrics {
+  display:flex; gap:12px; flex-wrap:wrap;
+  justify-content:center; width:100%; max-width:700px;
+}
+.metric {
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px; padding:12px 18px;
+  text-align:center; opacity:0; transform:translateY(8px);
+  transition:all 0.5s; flex:1; min-width:120px;
+}
+.metric.show { opacity:1; transform:translateY(0); }
+.metric-val { font-size:20px; font-weight:900; color:#a5b4fc; }
+.metric-lbl { font-size:11px; color:#6b7280; margin-top:3px; }
 
-  /* ── RESTART ── */
-  .restart-btn {
-    margin-top: 16px;
-    background: none;
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #6b7280;
-    padding: 8px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 13px;
-    transition: all 0.2s;
-    display: none;
-  }
-  .restart-btn.visible { display: block; }
-  .restart-btn:hover { color: #9ca3af; border-color: rgba(255,255,255,0.2); }
-
-  /* ── METRICS ── */
-  .metrics {
-    display: flex;
-    gap: 16px;
-    margin-top: 32px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  .metric {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 12px;
-    padding: 12px 20px;
-    text-align: center;
-    opacity: 0;
-    transform: translateY(8px);
-    transition: all 0.5s;
-  }
-  .metric.visible { opacity: 1; transform: translateY(0); }
-  .metric-val { font-size: 22px; font-weight: 900; color: #a5b4fc; }
-  .metric-label { font-size: 11px; color: #6b7280; margin-top: 2px; }
-
-  /* ── PLAY BUTTON ── */
-  .play-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(10,9,22,0.7);
-    border-radius: 24px;
-    cursor: pointer;
-    transition: opacity 0.3s;
-    z-index: 100;
-    border: none;
-    width: 100%;
-  }
-  .play-overlay.hidden { opacity: 0; pointer-events: none; }
-  .play-btn-circle {
-    width: 72px; height: 72px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 0 40px rgba(99,102,241,0.5);
-    transition: transform 0.2s;
-  }
-  .play-btn-circle:hover { transform: scale(1.1); }
-  .play-icon { font-size: 28px; margin-right: -4px; }
-
-  /* ── PROGRESS BAR ── */
-  .progress-wrap {
-    margin-top: 20px;
-    height: 4px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 2px;
-    overflow: hidden;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .progress-wrap.visible { opacity: 1; }
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #6366f1, #8b5cf6);
-    border-radius: 2px;
-    width: 0%;
-    transition: width 0.3s ease;
-  }
-
-  @media (max-width: 600px) {
-    .anim-area { flex-direction: column; gap: 16px; }
-    .flow-arrow { transform: rotate(90deg); }
-    .photo-card, .dxf-card { width: 130px; height: 130px; }
-    .ai-box { width: 100px; height: 100px; }
-  }
+/* Restart */
+#restartBtn {
+  display:none; background:none;
+  border:1px solid rgba(255,255,255,0.12);
+  color:#6b7280; padding:8px 22px;
+  border-radius:8px; cursor:pointer;
+  font-size:13px; transition:all 0.2s;
+  margin-top:8px;
+}
+#restartBtn.show { display:inline-block; }
+#restartBtn:hover { color:#9ca3af; border-color:rgba(255,255,255,0.25); }
 </style>
 </head>
 <body>
 
-<div class="title">✦ DXFai — הדגמה חיה</div>
-<p class="subtitle">צפה כיצד תמונה הופכת לקובץ DXF מוכן לחיתוך</p>
+<h1>✦ DXFai — הדגמה חיה</h1>
+<p class="sub">לחץ על הכפתור וצפה כיצד תמונה הופכת לקובץ DXF</p>
 
-<div class="stage">
-  <!-- Play overlay -->
-  <button class="play-overlay" id="playOverlay" onclick="startDemo()" style="background:rgba(10,9,22,0.75);border:none;cursor:pointer;">
-    <div class="play-btn-circle">
-      <span class="play-icon">▶</span>
-    </div>
-  </button>
+<div class="card">
 
-  <!-- Step labels -->
-  <div class="steps-row">
-    <div class="step-label">
-      <div class="step-num" id="step1">1</div>
-      <div class="step-text" id="step1t">העלאת תמונה</div>
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step">
+      <div class="step-circle" id="s1">1</div>
+      <div class="step-name" id="s1n">העלאת תמונה</div>
     </div>
     <div class="step-arrow">→</div>
-    <div class="step-label">
-      <div class="step-num" id="step2">2</div>
-      <div class="step-text" id="step2t">AI מעבד</div>
+    <div class="step">
+      <div class="step-circle" id="s2">2</div>
+      <div class="step-name" id="s2n">AI מעבד</div>
     </div>
     <div class="step-arrow">→</div>
-    <div class="step-label">
-      <div class="step-num" id="step3">3</div>
-      <div class="step-text" id="step3t">DXF מוכן</div>
+    <div class="step">
+      <div class="step-circle" id="s3">3</div>
+      <div class="step-name" id="s3n">DXF מוכן</div>
     </div>
   </div>
 
-  <!-- Main animation -->
-  <div class="anim-area">
-    <!-- Photo card -->
-    <div class="photo-card" id="photoCard">
-      <svg class="camera-svg" id="cameraSvg" width="110" height="110" viewBox="0 0 110 110" fill="none">
-        <!-- Camera body -->
-        <rect x="10" y="30" width="90" height="60" rx="8" stroke="#6366f1" stroke-width="2" fill="rgba(99,102,241,0.08)"/>
-        <!-- Lens -->
-        <circle cx="55" cy="60" r="20" stroke="#8b5cf6" stroke-width="2" fill="rgba(139,92,246,0.08)"/>
-        <circle cx="55" cy="60" r="12" stroke="#a5b4fc" stroke-width="1.5" fill="rgba(165,180,252,0.08)"/>
-        <circle cx="55" cy="60" r="5" fill="#6366f1" opacity="0.6"/>
-        <!-- Flash -->
-        <rect x="70" y="20" width="18" height="12" rx="4" stroke="#6366f1" stroke-width="1.5" fill="rgba(99,102,241,0.1)"/>
-        <!-- Viewfinder -->
-        <rect x="14" y="34" width="16" height="10" rx="3" stroke="#6366f1" stroke-width="1.5" fill="none"/>
-        <!-- Label -->
-        <text x="55" y="102" text-anchor="middle" fill="#6b7280" font-size="9" font-family="Arial">תמונה מקורית</text>
+  <!-- Animation -->
+  <div class="anim-row">
+
+    <!-- Photo box -->
+    <div class="box" id="photoBox">
+      <svg width="70" height="70" viewBox="0 0 70 70" fill="none">
+        <rect x="5" y="18" width="60" height="40" rx="6" stroke="#6366f1" stroke-width="1.8" fill="rgba(99,102,241,0.08)"/>
+        <circle cx="35" cy="38" r="13" stroke="#8b5cf6" stroke-width="1.8" fill="rgba(139,92,246,0.08)"/>
+        <circle cx="35" cy="38" r="7" stroke="#a5b4fc" stroke-width="1.5" fill="rgba(165,180,252,0.1)"/>
+        <rect x="45" y="10" width="12" height="9" rx="3" stroke="#6366f1" stroke-width="1.5" fill="none"/>
+        <rect x="8" y="21" width="10" height="7" rx="2" stroke="#6366f1" stroke-width="1.5" fill="none"/>
       </svg>
+      <div class="box-label">תמונה מקורית</div>
     </div>
 
     <!-- Arrow 1 -->
-    <div class="flow-arrow" id="arrow1">
+    <div class="arrow-wrap" id="arr1">
       <div class="arrow-line"></div>
-      <div class="arrow-label">שולח ל-AI</div>
+      <div class="arrow-sub">שולח ל-AI</div>
     </div>
 
     <!-- AI box -->
-    <div class="ai-box" id="aiBox">
-      <div class="scan-line" id="scanLine"></div>
-      <div class="ai-spinner" id="aiSpinner"></div>
-      <div class="ai-check" id="aiCheck">✓</div>
-      <div class="ai-box-label" id="aiLabel">AI</div>
+    <div class="box" id="aiBox" style="opacity:0.3;transform:scale(0.9);">
+      <div class="spinner" id="spinner"></div>
+      <div id="aiIcon" style="font-size:32px;">🤖</div>
+      <div class="box-label" id="aiLbl">ממתין...</div>
     </div>
 
     <!-- Arrow 2 -->
-    <div class="flow-arrow" id="arrow2">
+    <div class="arrow-wrap" id="arr2">
       <div class="arrow-line"></div>
-      <div class="arrow-label">מייצר DXF</div>
+      <div class="arrow-sub">מייצר DXF</div>
     </div>
 
-    <!-- DXF card -->
-    <div class="dxf-card" id="dxfCard">
-      <svg class="dxf-svg" viewBox="0 0 130 130">
-        <!-- Camera outline as DXF vector lines -->
-        <path class="dxf-path" id="dxfPath1" d="M15 40 L15 95 Q15 100 20 100 L110 100 Q115 100 115 95 L115 40 Q115 35 110 35 L20 35 Q15 35 15 40 Z"/>
-        <path class="dxf-path" id="dxfPath2" d="M65 67 m-22 0 a22 22 0 1 0 44 0 a22 22 0 1 0 -44 0"/>
-        <path class="dxf-path" id="dxfPath3" d="M65 67 m-13 0 a13 13 0 1 0 26 0 a13 13 0 1 0 -26 0"/>
-        <path class="dxf-path" id="dxfPath4" d="M75 25 L95 25 Q100 25 100 30 L100 37"/>
-        <path class="dxf-path" id="dxfPath5" d="M18 38 L35 38 L35 46 L18 46 Z"/>
-        <text x="65" y="118" text-anchor="middle" fill="#10b981" font-size="8" font-family="monospace" opacity="0">camera.dxf</text>
+    <!-- DXF box -->
+    <div class="box" id="dxfBox" style="opacity:0.3;transform:translateX(16px);">
+      <svg width="100" height="100" viewBox="0 0 100 100">
+        <path class="dxf-path" id="p1" d="M10 30 L10 80 Q10 85 15 85 L85 85 Q90 85 90 80 L90 30 Q90 25 85 25 L15 25 Q10 25 10 30 Z"/>
+        <path class="dxf-path" id="p2" d="M50 55 m-16 0 a16 16 0 1 0 32 0 a16 16 0 1 0 -32 0"/>
+        <path class="dxf-path" id="p3" d="M50 55 m-9 0 a9 9 0 1 0 18 0 a9 9 0 1 0 -18 0"/>
+        <path class="dxf-path" id="p4" d="M58 18 L72 18 Q76 18 76 22 L76 27"/>
+        <path class="dxf-path" id="p5" d="M13 28 L24 28 L24 34 L13 34 Z"/>
       </svg>
+      <div class="box-label" style="color:#10b981;margin-top:-8px;">camera.dxf</div>
     </div>
+
   </div>
 
-  <!-- Progress bar -->
-  <div class="progress-wrap" id="progressWrap">
-    <div class="progress-fill" id="progressFill"></div>
+  <!-- Progress -->
+  <div class="prog-wrap" id="prog">
+    <div class="prog-fill" id="progFill"></div>
   </div>
 
-  <!-- Status bar -->
-  <div class="status-bar">
-    <div class="status-dot" id="statusDot"></div>
-    <div class="status-text" id="statusText">לחץ ▶ להתחיל הדגמה</div>
+  <!-- Status -->
+  <div class="status">
+    <div class="dot" id="dot"></div>
+    <div class="status-txt" id="statusTxt">לחץ על הכפתור להתחיל הדגמה</div>
   </div>
 
-  <!-- Download button -->
-  <button class="download-btn" id="downloadBtn">
-    ⬇ הורד קובץ DXF — camera.dxf (14 KB)
-  </button>
+  <!-- Download -->
+  <button class="dl-btn" id="dlBtn">⬇ הורד קובץ DXF — camera.dxf (14 KB)</button>
 
-  <!-- Restart -->
+  <!-- Play / Restart -->
+  <button id="playBtn">▶ הפעל הדגמה</button>
   <div style="text-align:center">
-    <button class="restart-btn" id="restartBtn" onclick="restartDemo()">↺ הפעל שוב</button>
+    <button id="restartBtn">↺ הפעל שוב</button>
   </div>
+
 </div>
 
 <!-- Metrics -->
 <div class="metrics">
-  <div class="metric" id="m1">
-    <div class="metric-val">3.2s</div>
-    <div class="metric-label">זמן עיבוד</div>
-  </div>
-  <div class="metric" id="m2">
-    <div class="metric-val">2,847</div>
-    <div class="metric-label">נקודות וקטור</div>
-  </div>
-  <div class="metric" id="m3">
-    <div class="metric-val">14 KB</div>
-    <div class="metric-label">גודל קובץ DXF</div>
-  </div>
-  <div class="metric" id="m4">
-    <div class="metric-val">100%</div>
-    <div class="metric-label">תואם LightBurn</div>
-  </div>
+  <div class="metric" id="m1"><div class="metric-val">3.2s</div><div class="metric-lbl">זמן עיבוד</div></div>
+  <div class="metric" id="m2"><div class="metric-val">2,847</div><div class="metric-lbl">נקודות וקטור</div></div>
+  <div class="metric" id="m3"><div class="metric-val">14 KB</div><div class="metric-lbl">גודל קובץ</div></div>
+  <div class="metric" id="m4"><div class="metric-val">100%</div><div class="metric-lbl">תואם LightBurn</div></div>
 </div>
 
 <script>
-let running = false;
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('playBtn').addEventListener('click', runDemo);
+  document.getElementById('restartBtn').addEventListener('click', function(){ location.reload(); });
+});
 
-function setStep(n, state) {
-  const el = document.getElementById('step'+n);
-  const txt = document.getElementById('step'+n+'t');
-  el.className = 'step-num ' + state;
-  txt.className = 'step-text ' + state;
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+function step(n, state){
+  var c = document.getElementById('s'+n);
+  var t = document.getElementById('s'+n+'n');
+  c.className = 'step-circle ' + state;
+  t.className = 'step-name ' + state;
 }
 
-function setStatus(text, active) {
-  const dot = document.getElementById('statusDot');
-  const txt = document.getElementById('statusText');
-  dot.className = 'status-dot ' + (active ? 'active' : '');
-  txt.className = 'status-text ' + (active ? 'active' : '');
-  txt.textContent = text;
+function status(txt, pulse){
+  var d = document.getElementById('dot');
+  var t = document.getElementById('statusTxt');
+  d.className = 'dot ' + (pulse==='pulse'?'pulse': pulse==='done'?'done':'');
+  t.className = 'status-txt ' + (pulse?'on':'');
+  t.textContent = txt;
 }
 
-function setProgress(pct) {
-  document.getElementById('progressFill').style.width = pct + '%';
+function progress(pct){
+  document.getElementById('progFill').style.width = pct+'%';
 }
 
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+async function runDemo(){
+  var btn = document.getElementById('playBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ מריץ הדגמה...';
 
-async function startDemo() {
-  if (running) return;
-  running = true;
+  // show progress bar
+  document.getElementById('prog').classList.add('show');
 
-  // Hide play overlay
-  document.getElementById('playOverlay').classList.add('hidden');
-  document.getElementById('progressWrap').classList.add('visible');
+  // STEP 1
+  step(1,'active');
+  status('מעלה תמונה לשרת...','pulse');
+  document.getElementById('photoBox').classList.add('glow');
+  progress(15);
+  await sleep(1100);
 
-  // ── STEP 1: Upload photo ──
-  setStep(1, 'active');
-  setStatus('מעלה תמונה לשרת...', true);
-  document.getElementById('photoCard').classList.add('glow');
-  document.getElementById('cameraSvg').classList.add('visible');
-  setProgress(15);
-  await delay(1200);
+  // → STEP 2
+  step(1,'done');
+  document.getElementById('arr1').classList.add('show');
+  progress(30);
+  await sleep(400);
 
-  // ── STEP 1 → STEP 2 ──
-  setStep(1, 'done');
-  setStatus('ה-AI מנתח את התמונה...', true);
-  document.getElementById('arrow1').classList.add('visible');
-  setProgress(30);
-  await delay(600);
+  step(2,'active');
+  var ai = document.getElementById('aiBox');
+  ai.style.opacity='1'; ai.style.transform='scale(1)';
+  ai.classList.add('glow');
+  document.getElementById('aiIcon').style.display='none';
+  document.getElementById('spinner').classList.add('on');
+  document.getElementById('aiLbl').textContent='מנתח...';
+  status('ה-AI מנתח את התמונה...','pulse');
+  progress(45);
+  await sleep(800);
 
-  // Show AI box
-  setStep(2, 'active');
-  document.getElementById('aiBox').classList.add('visible');
-  document.getElementById('aiSpinner').classList.add('spinning');
-  document.getElementById('scanLine').classList.add('active');
-  document.getElementById('aiLabel').textContent = 'מנתח...';
-  setProgress(45);
-  await delay(800);
+  status('מזהה קצוות וצורות...','pulse');
+  progress(55);
+  await sleep(700);
 
-  setStatus('מזהה קצוות וצורות...', true);
-  setProgress(55);
-  await delay(700);
+  status('בונה נתיבי וקטור...','pulse');
+  progress(65);
+  await sleep(700);
 
-  setStatus('בונה נתיבי וקטור...', true);
-  setProgress(65);
-  await delay(700);
-
-  setStatus('מבצע אופטימיזציה של נתיבי חיתוך...', true);
-  setProgress(78);
-  await delay(700);
+  status('מבצע אופטימיזציה...','pulse');
+  progress(78);
+  await sleep(700);
 
   // AI done
-  document.getElementById('aiSpinner').classList.remove('spinning');
-  document.getElementById('scanLine').classList.remove('active');
-  document.getElementById('aiCheck').classList.add('visible');
-  document.getElementById('aiLabel').textContent = 'הושלם!';
-  setStep(2, 'done');
-  setProgress(85);
-  await delay(500);
+  document.getElementById('spinner').classList.remove('on');
+  document.getElementById('aiIcon').style.display='block';
+  document.getElementById('aiIcon').textContent='✅';
+  document.getElementById('aiLbl').textContent='הושלם!';
+  step(2,'done');
+  progress(85);
+  await sleep(500);
 
-  // ── STEP 3: DXF ready ──
-  setStep(3, 'active');
-  document.getElementById('arrow2').classList.add('visible');
-  setStatus('מייצר קובץ DXF...', true);
-  setProgress(92);
-  await delay(400);
+  // STEP 3
+  step(3,'active');
+  document.getElementById('arr2').classList.add('show');
+  status('מייצר קובץ DXF...','pulse');
+  progress(92);
+  await sleep(400);
 
-  document.getElementById('dxfCard').classList.add('visible');
+  var dxf = document.getElementById('dxfBox');
+  dxf.style.opacity='1'; dxf.style.transform='translateX(0)';
+  dxf.classList.add('green');
 
-  // Draw DXF paths sequentially
-  const paths = ['dxfPath1','dxfPath2','dxfPath3','dxfPath4','dxfPath5'];
-  for (const id of paths) {
-    document.getElementById(id).classList.add('draw');
-    await delay(300);
+  // draw paths
+  var paths = ['p1','p2','p3','p4','p5'];
+  for(var i=0;i<paths.length;i++){
+    document.getElementById(paths[i]).classList.add('draw');
+    await sleep(280);
   }
 
-  // Show filename
-  document.querySelector('.dxf-svg text').setAttribute('opacity','1');
+  progress(100);
+  step(3,'done');
+  status('✓ קובץ DXF מוכן להורדה!','done');
 
-  setProgress(100);
-  setStep(3, 'done');
-  setStatus('✓ קובץ DXF מוכן להורדה!', false);
-  document.getElementById('statusDot').className = 'status-dot done';
+  // show download
+  await sleep(300);
+  document.getElementById('dlBtn').classList.add('show');
 
-  await delay(400);
-
-  // Show download button
-  document.getElementById('downloadBtn').classList.add('visible');
-
-  // Show metrics
-  await delay(200);
-  ['m1','m2','m3','m4'].forEach((id, i) => {
-    setTimeout(() => document.getElementById(id).classList.add('visible'), i * 120);
+  // metrics
+  await sleep(200);
+  ['m1','m2','m3','m4'].forEach(function(id,i){
+    setTimeout(function(){ document.getElementById(id).classList.add('show'); }, i*120);
   });
 
-  // Show restart
-  await delay(600);
-  document.getElementById('restartBtn').classList.add('visible');
-}
-
-function restartDemo() {
-  running = false;
-  location.reload();
+  // restart
+  await sleep(500);
+  document.getElementById('restartBtn').classList.add('show');
+  btn.style.display='none';
 }
 </script>
 </body>
