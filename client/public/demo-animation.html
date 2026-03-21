@@ -327,7 +327,9 @@
     border-radius: 24px;
     cursor: pointer;
     transition: opacity 0.3s;
-    z-index: 10;
+    z-index: 100;
+    border: none;
+    width: 100%;
   }
   .play-overlay.hidden { opacity: 0; pointer-events: none; }
   .play-btn-circle {
@@ -375,11 +377,11 @@
 
 <div class="stage">
   <!-- Play overlay -->
-  <div class="play-overlay" id="playOverlay" onclick="startDemo()">
+  <button class="play-overlay" id="playOverlay" onclick="startDemo()" style="background:rgba(10,9,22,0.75);border:none;cursor:pointer;">
     <div class="play-btn-circle">
       <span class="play-icon">▶</span>
     </div>
-  </div>
+  </button>
 
   <!-- Step labels -->
   <div class="steps-row">

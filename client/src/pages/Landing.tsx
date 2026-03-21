@@ -601,6 +601,13 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── WAVE DIVIDER: dark → white ── */}
+      <div style={{ background: "linear-gradient(160deg,#1e1b4b 0%,#312e81 45%,#4c1d95 100%)", marginBottom: -2 }}>
+        <svg viewBox="0 0 1440 80" preserveAspectRatio="none" style={{ display: "block", width: "100%", height: 80 }}>
+          <path d="M0,80 C360,0 1080,0 1440,80 L1440,80 L0,80 Z" fill="#fff" />
+        </svg>
+      </div>
+
       {/* ── AI CUTTING PATHS SECTION ── */}
       <section style={{ padding: "64px 24px", background: "#fff" }}>
         <div style={{ maxWidth: 860, margin: "0 auto", textAlign: "center" }}>
@@ -760,7 +767,7 @@ export default function Landing() {
       </section>
 
       {/* ── COMPATIBLE WITH ── */}
-      <section style={{ padding: "52px 24px", background: "#0a0916", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+      <section style={{ padding: "52px 24px", background: "#f3f4f6", borderTop: "1px solid #e5e7eb" }}>
         <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
           <p style={{ color: "#6b7280", fontSize: 13, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 32 }}>
             {isRtl ? "תאימות מלאה לכל תוכנות הסטנדרט" : "Compatible With All Standard Software"}
