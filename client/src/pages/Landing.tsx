@@ -1023,26 +1023,17 @@ export default function Landing() {
           >
             {t.finalCtaBtn}
           </button>
-          <div style={{ marginTop: 28, display: "flex", alignItems: "center", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
-            {/* PayPal secure badge */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 14, padding: "12px 24px", backdropFilter: "blur(8px)" }}>
-              {/* Shield checkmark icon */}
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#1e3a5f" stroke="#60a5fa" strokeWidth="1.5"/>
-                <path d="M9 12l2 2 4-4" stroke="#60a5fa" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <span style={{ color: "#e0e7ff", fontSize: 14, fontWeight: 700, letterSpacing: "0.01em" }}>רכישה מאובטחת</span>
-              <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 16 }}>|</span>
-              {/* Official PayPal logo using SVG path — accurate wordmark */}
-              <svg height="20" viewBox="0 0 101 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="PayPal">
-                <path d="M12.237 2.6H5.543a.954.954 0 0 0-.942.806L2.022 25.847a.573.573 0 0 0 .565.663h3.228a.954.954 0 0 0 .942-.806l.587-3.72a.954.954 0 0 1 .941-.806h2.087c4.342 0 6.848-2.1 7.502-6.26.296-1.82.012-3.25-.84-4.25-.937-1.1-2.598-1.668-4.797-1.668zm.76 6.165c-.36 2.36-2.166 2.36-3.912 2.36h-.994l.697-4.41a.573.573 0 0 1 .565-.483h.456c1.189 0 2.31 0 2.889.678.347.406.453 1.007.3 1.855z" fill="#003087"/>
-                <path d="M35.252 8.706h-3.24a.573.573 0 0 0-.566.483l-.145.921-.23-.334c-.714-1.036-2.306-1.382-3.895-1.382-3.644 0-6.756 2.762-7.362 6.634-.315 1.932.133 3.778 1.23 5.065 1.006 1.184 2.444 1.676 4.155 1.676 2.939 0 4.568-1.889 4.568-1.889l-.147.915a.573.573 0 0 0 .566.664h2.918a.954.954 0 0 0 .942-.806l1.75-11.083a.573.573 0 0 0-.564-.664zm-4.516 6.415c-.319 1.888-1.816 3.156-3.726 3.156-.958 0-1.725-.308-2.217-.89-.488-.578-.672-1.401-.518-2.317.298-1.872 1.82-3.18 3.7-3.18.937 0 1.7.31 2.202.898.503.592.7 1.42.559 2.333z" fill="#003087"/>
-                <path d="M55.43 8.706h-3.254a.955.955 0 0 0-.787.414l-4.544 6.695-1.926-6.434a.954.954 0 0 0-.915-.675h-3.197a.573.573 0 0 0-.543.758l3.625 10.638-3.41 4.813a.573.573 0 0 0 .468.904h3.25a.952.952 0 0 0 .783-.408l10.953-15.81a.573.573 0 0 0-.503-.895z" fill="#003087"/>
-                <path d="M67.052 2.6h-6.694a.954.954 0 0 0-.942.806L56.837 25.847a.573.573 0 0 0 .565.663h3.46a.667.667 0 0 0 .659-.564l.644-4.083a.954.954 0 0 1 .942-.806h2.086c4.342 0 6.847-2.1 7.502-6.26.296-1.82.011-3.25-.841-4.25-.937-1.1-2.597-1.668-4.802-1.668zm.76 6.165c-.36 2.36-2.166 2.36-3.912 2.36h-.993l.697-4.41a.573.573 0 0 1 .565-.483h.456c1.189 0 2.31 0 2.889.678.347.406.452 1.007.298 1.855z" fill="#009cde"/>
-                <path d="M90.067 8.706h-3.24a.573.573 0 0 0-.565.483l-.146.921-.23-.334c-.713-1.036-2.305-1.382-3.894-1.382-3.644 0-6.756 2.762-7.362 6.634-.315 1.932.133 3.778 1.23 5.065 1.006 1.184 2.443 1.676 4.154 1.676 2.94 0 4.568-1.889 4.568-1.889l-.147.915a.573.573 0 0 0 .566.664h2.918a.954.954 0 0 0 .942-.806l1.75-11.083a.573.573 0 0 0-.564-.664zm-4.516 6.415c-.318 1.888-1.816 3.156-3.725 3.156-.958 0-1.725-.308-2.218-.89-.487-.578-.671-1.401-.518-2.317.299-1.872 1.82-3.18 3.7-3.18.938 0 1.7.31 2.203.898.503.592.699 1.42.558 2.333z" fill="#009cde"/>
-                <path d="M99.35 3.07l-2.607 16.594a.573.573 0 0 0 .565.663h2.793a.954.954 0 0 0 .942-.806L103.622 2.08a.573.573 0 0 0-.565-.664h-3.143a.573.573 0 0 0-.565.483z" fill="#009cde"/>
-              </svg>
-            </div>
+          <div style={{ marginTop: 24, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            {/* Shield checkmark icon */}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z" fill="rgba(96,165,250,0.2)" stroke="#60a5fa" strokeWidth="1.5"/>
+              <path d="M9 12l2 2 4-4" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span style={{ color: "rgba(255,255,255,0.65)", fontSize: 13, fontWeight: 500 }}>רכישה מאובטחת</span>
+            {/* PayPal wordmark — clean SVG text */}
+            <span style={{ fontFamily: "Arial, sans-serif", fontWeight: 800, fontSize: 15, letterSpacing: "-0.5px" }}>
+              <span style={{ color: "#009cde" }}>Pay</span><span style={{ color: "#003087" }}>Pal</span>
+            </span>
           </div>
         </div>
       </section>
@@ -1082,7 +1073,7 @@ const he = {
   heroSubtitle: "מעלים תמונה קיימת או מתארים במילים — ה-AI מייצר נתיבי חיתוך אופטימליים לכל מכונת CNC, לייזר, פלזמה או נתב.",
   heroCta1: "צור DXF ראשון בחינם",
   heroCta2: "ראה מחירים",
-  heroTrust: "ללא כרטיס אשראי · רכישה מאובטחת PayPal",
+  heroTrust: "רכישה מאובטחת PayPal",
   howTitle: "איך זה עובד?",
   howSubtitle: "3 שלבים פשוטים מהרעיון שלך ועד לחיתוך במכונה",
   steps: [
@@ -1145,7 +1136,7 @@ const en = {
   heroSubtitle: "Upload an existing image or describe in words — AI generates optimal cutting paths for any CNC, laser, plasma, or router machine.",
   heroCta1: "Create Your First DXF Free",
   heroCta2: "See Pricing",
-  heroTrust: "No credit card · Secure PayPal checkout",
+  heroTrust: "Secure PayPal checkout",
   howTitle: "How does it work?",
   howSubtitle: "3 simple steps from your idea to machine cutting",
   steps: [
