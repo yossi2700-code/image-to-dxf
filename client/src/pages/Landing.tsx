@@ -545,13 +545,12 @@ export default function Landing() {
                 EN
               </button>
             </div>
-            {whatsappUrl && (
-              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
-                style={{ display: "flex", alignItems: "center", gap: 6, background: "#25d366", color: "#fff", border: "none", borderRadius: 10, padding: "8px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer", textDecoration: "none" }}>
-                <MessageCircle size={15} />
-                {isRtl ? "WhatsApp" : "WhatsApp"}
-              </a>
-            )}
+            <button
+              onClick={handleOpenAuth}
+              style={{ display: "flex", alignItems: "center", gap: 6, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", borderRadius: 10, padding: "8px 18px", fontWeight: 700, fontSize: 13, cursor: "pointer", boxShadow: "0 2px 8px rgba(99,102,241,0.35)" }}
+            >
+              {isRtl ? "הרשם חינם" : "Sign up free"}
+            </button>
 
           </div>
         </div>
@@ -685,6 +684,107 @@ export default function Landing() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── WHY DXFAI ── */}
+      <section style={{ padding: "80px 24px", background: "#0f0e1a" }}>
+        <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 56 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", borderRadius: 20, padding: "6px 16px", marginBottom: 20 }}>
+              <Sparkles size={13} color="#a5b4fc" />
+              <span style={{ color: "#a5b4fc", fontSize: 13, fontWeight: 600 }}>{isRtl ? "הבחירה של המקצוענים" : "The Professional's Choice"}</span>
+            </div>
+            <h2 style={{ fontSize: "clamp(1.6rem,3.5vw,2.4rem)", fontWeight: 900, color: "#fff", marginBottom: 14, letterSpacing: "-0.02em" }}>
+              {isRtl ? "למה לבחור ב-DXFai?" : "Why choose DXFai?"}
+            </h2>
+            <p style={{ color: "#9ca3af", fontSize: 16, maxWidth: 560, margin: "0 auto" }}>
+              {isRtl ? "5 הכללים שהופכים אותנו לבחירה של המקצוענים" : "5 rules that make us the choice of professionals"}
+            </p>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {[
+              {
+                num: "01",
+                title: isRtl ? "דיוק גיאומטרי חכם (AI-Native)" : "Smart Geometric Accuracy (AI-Native)",
+                desc: isRtl
+                  ? "בניגוד לממירים רגילים, ה-AI שלנו מבין צורות. הוא מייצר קשתות חלקות ונתיבים רציפים, מה שמונע \"קפיצות\" של ראש הלייזר ושומר על המכונה שלך."
+                  : "Unlike regular converters, our AI understands shapes. It generates smooth arcs and continuous paths, preventing laser head \"jumps\" and protecting your machine.",
+                color: "#6366f1",
+              },
+              {
+                num: "02",
+                title: isRtl ? "מהדמיון למכונה (Text-to-DXF)" : "From Imagination to Machine (Text-to-DXF)",
+                desc: isRtl
+                  ? "הכלי היחידי שמאפשר לך ליצור שרטוט מורכב פשוט על ידי תיאור מילולי. אין לך תמונה? פשוט תכתוב מה אתה צריך, וה-AI ישרטוט עבורך."
+                  : "The only tool that lets you create a complex drawing simply by describing it in words. No image? Just write what you need, and the AI will draw it for you.",
+                color: "#8b5cf6",
+              },
+              {
+                num: "03",
+                title: isRtl ? "אופטימיזציה של נתיבי חיתוך" : "Cutting Path Optimization",
+                desc: isRtl
+                  ? "הקבצים שלנו עוברים \"ניקוי\" אוטומטי מנקודות מיותרות (Nodes) ומרעשים ויזואליים, כך שאתה מקבל קובץ DXF \"רזה\" ומהיר לעיבוד."
+                  : "Our files undergo automatic \"cleaning\" from unnecessary nodes and visual noise, so you get a \"lean\" and fast-to-process DXF file.",
+                color: "#06b6d4",
+              },
+              {
+                num: "04",
+                title: isRtl ? "חיסכון אדיר בזמן עריכה" : "Massive Time Savings on Editing",
+                desc: isRtl
+                  ? "תשכח משעות של עבודה סיזיפית ב-AutoCAD או Illustrator כדי לסגור מסלולים. עם DXFai, הקובץ מגיע מוכן לעבודה (Ready-to-Cut)."
+                  : "Forget hours of tedious work in AutoCAD or Illustrator to close paths. With DXFai, the file arrives ready to work (Ready-to-Cut).",
+                color: "#f59e0b",
+              },
+              {
+                num: "05",
+                title: isRtl ? "נגישות מכל מקום" : "Access from Anywhere",
+                desc: isRtl
+                  ? "ללא התקנות כבדות וללא צורך בחומרה חזקה. מעלים תמונה מהסמארטפון בשטח או מהמחשב במשרד, ומורידים קובץ תוך שניות."
+                  : "No heavy installations and no need for powerful hardware. Upload an image from your smartphone in the field or from your office computer, and download a file within seconds.",
+                color: "#10b981",
+              },
+            ].map((item, i) => (
+              <div key={i} style={{ display: "flex", gap: 24, alignItems: "flex-start", background: "rgba(255,255,255,0.04)", borderRadius: 16, padding: "24px 28px", border: "1px solid rgba(255,255,255,0.07)", transition: "border-color 0.2s" }}>
+                <div style={{ flexShrink: 0, width: 48, height: 48, borderRadius: 14, background: `${item.color}22`, border: `1px solid ${item.color}44`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ color: item.color, fontWeight: 900, fontSize: 15, fontFamily: "monospace" }}>{item.num}</span>
+                </div>
+                <div style={{ flex: 1, textAlign: isRtl ? "right" : "left" }}>
+                  <h3 style={{ color: "#fff", fontWeight: 700, fontSize: 16, marginBottom: 8 }}>{item.title}</h3>
+                  <p style={{ color: "#9ca3af", fontSize: 14, lineHeight: 1.7, margin: 0 }}>{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── COMPATIBLE WITH ── */}
+      <section style={{ padding: "52px 24px", background: "#0a0916", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
+          <p style={{ color: "#6b7280", fontSize: 13, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 32 }}>
+            {isRtl ? "תאימות מלאה לכל תוכנות הסטנדרט" : "Compatible With All Standard Software"}
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 40, justifyContent: "center", alignItems: "center" }}>
+            {[
+              { name: "AutoCAD", svg: `<svg viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="0" y="30" font-family="Arial Black,Arial" font-weight="900" font-size="28" fill="#9ca3af">AutoCAD</text></svg>` },
+              { name: "LightBurn", svg: `<svg viewBox="0 0 130 40" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="0" y="30" font-family="Arial Black,Arial" font-weight="900" font-size="26" fill="#9ca3af">LightBurn</text></svg>` },
+              { name: "RDWorks", svg: `<svg viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="0" y="30" font-family="Arial Black,Arial" font-weight="900" font-size="26" fill="#9ca3af">RDWorks</text></svg>` },
+              { name: "Fusion 360", svg: `<svg viewBox="0 0 140 40" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="0" y="30" font-family="Arial Black,Arial" font-weight="900" font-size="24" fill="#9ca3af">Fusion 360</text></svg>` },
+              { name: "SolidWorks", svg: `<svg viewBox="0 0 145 40" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="0" y="30" font-family="Arial Black,Arial" font-weight="900" font-size="24" fill="#9ca3af">SolidWorks</text></svg>` },
+            ].map((sw, i) => (
+              <div key={i} style={{ opacity: 0.55, filter: "grayscale(1)", transition: "opacity 0.2s" }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = "0.85")}
+                onMouseLeave={e => (e.currentTarget.style.opacity = "0.55")}>
+                <span style={{ color: "#9ca3af", fontWeight: 800, fontSize: 18, fontFamily: "Arial Black, Arial, sans-serif", letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>{sw.name}</span>
+              </div>
+            ))}
+          </div>
+          <p style={{ color: "#4b5563", fontSize: 12, marginTop: 28 }}>
+            {isRtl
+              ? "שמות התוכנות הם סימני מסחר רשומים של בעליהן. DXFai אינה קשורה לחברות אלו ואינה מוסמכת על ידיהן."
+              : "Software names are registered trademarks of their respective owners. DXFai is not affiliated with or endorsed by these companies."}
+          </p>
         </div>
       </section>
 
