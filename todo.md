@@ -2115,3 +2115,9 @@
 
 ## CNC Relief - Coming Soon Mode
 - [x] Set CNC Relief tab to disabled/coming soon state like AI Sketch tab
+
+## שינויים - מרץ 2026 (בקשה נוכחית)
+
+- [x] סדר כרטיסיות: AI יצירה → AI Outline → פורטרט → AI סקיצה (תחזוק) → CNC תבליט (בקרוב)
+- [x] החלפת Hero Section (כותרת + קרוסלה) ב-placeholder אפור
+- [x] שמירת תמונות קרוסלה להורדה

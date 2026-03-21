@@ -2408,87 +2408,14 @@ export default function Home() {
         {showTokensBanner && (
           <InsufficientTokensBanner onDismiss={() => setShowTokensBanner(false)} hasPendingWelcomeBonus={hasPendingWelcomeBonus} />
         )}
-        {/* ── Hero Section ── */}
-        <div className="mb-6 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #f0f0ff 0%, #faf5ff 50%, #f0f9ff 100%)', border: '1px solid #e8eaf0' }}>
-          <div className="px-5 pt-5 pb-4">
-            {/* Desktop: side by side. Mobile: stacked */}
-            <div className={`flex flex-col gap-4 items-center ${isRtl ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
-              {/* Mobile: carousel first (order-first on mobile, order-last on desktop) */}
-              <div className="flex-1 w-full lg:max-w-[480px]" style={{ order: 1 }}>
-                <HeroBeforeAfterCarousel />
-              </div>
-
-              {/* Left (LTR) / Right (RTL): text + feature buttons */}
-              <div className="flex-1 w-full" style={{ order: 2 }}>
-            {/* Badge pill */}
-            <div className={`flex justify-center ${isRtl ? 'lg:justify-end' : 'lg:justify-start'} mb-3`}>
-              <span
-                className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full"
-                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', letterSpacing: '0.04em' }}
-              >
-                <Sparkles className="w-3 h-3" />
-                {isRtl ? 'המרת וקטור מבוססת AI' : 'AI-POWERED VECTOR CONVERSION'}
-              </span>
-            </div>
-
-            {/* Headline */}
-            <div className="text-center lg:text-start mb-4">
-              <h1 className="font-black leading-tight mb-1" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', color: '#111827', letterSpacing: '-0.02em' }}>
-                {isRtl ? 'הפוך כל תמונה לוקטור.' : 'From photo to vector.'}
-              </h1>
-              <h1 className="font-black leading-tight" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>
-                {isRtl ? 'מיידית.' : 'Instantly.'}
-              </h1>
-              <p className="text-sm text-gray-500 mt-2 max-w-sm">
-                {isRtl ? 'בינה מלאכותית ממירה תמונות לקבצי DXF לחיתוך לייזר ו-CNC' : 'AI converts images to DXF files for laser cutting & CNC'}
-              </p>
-            </div>
-
-            {/* Feature shortcut buttons — click to switch tab */}
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create', color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-v3-Xq8E28tKQT67AA2juXG9Ze.webp' },
-                { tab: 'trace', label: isRtl ? 'AI Outline' : 'AI Outline', color: '#0d9488', bg: 'linear-gradient(135deg, #0d9488, #06b6d4)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png' },
-                { tab: 'sketch', label: isRtl ? 'AI סקיצה' : 'AI Sketch', color: '#d97706', bg: 'linear-gradient(135deg, #d97706, #f59e0b)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-sketch-ai-text-v2-CcjuVZbxwbYguCvTLMwBo8.webp', comingSoon: true },
-                { tab: 'face', label: isRtl ? 'פורטרט' : 'Portrait', color: '#7c3aed', bg: 'linear-gradient(135deg, #7c3aed, #a855f7)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_e956deb2.png' },
-              ].map((f, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    setActiveTab(f.tab);
-                    localStorage.setItem('active_tab', f.tab);
-                    document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className="flex flex-col items-center gap-0 rounded-2xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
-                  style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 4px 16px rgba(0,0,0,0.10)' }}
-                >
-                  {/* Image area: white bg, object-contain so nothing is cropped */}
-                  <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '62%' }}>
-                    <img
-                      src={f.img}
-                      alt={f.label}
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', padding: '6px' }}
-                    />
-                    {(f as { comingSoon?: boolean }).comingSoon && (
-                      <span
-                        className="absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-full z-10"
-                        style={{ background: '#f59e0b', color: 'white', whiteSpace: 'nowrap', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}
-                      >
-                        {isRtl ? 'בקרוב' : 'Coming soon'}
-                      </span>
-                    )}
-                  </div>
-                  {/* Label bar */}
-                  <span
-                    className="w-full text-xs font-bold text-center py-2"
-                    style={{ background: f.bg, color: 'white', letterSpacing: '0.02em' }}
-                  >{f.label}</span>
-                </button>
-              ))}
-            </div>
-              </div>{/* end left column */}
-            </div>{/* end flex row */}
-          </div>
+        {/* ── Hero Section — Placeholder (coming soon) ── */}
+        <div
+          className="mb-6 rounded-2xl overflow-hidden flex items-center justify-center"
+          style={{ background: '#e5e7eb', border: '2px dashed #9ca3af', minHeight: 120 }}
+        >
+          <span className="text-gray-400 text-sm font-medium tracking-wide select-none">
+            {isRtl ? 'כותרת ראשית — בקרוב' : 'Hero section — coming soon'}
+          </span>
         </div>
 
         {/* Tabs */}
@@ -2511,6 +2438,7 @@ export default function Home() {
               height: 'auto',
             }}
           >
+            {/* 1. AI Create */}
             <TabsTrigger
               value="ai"
               className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
@@ -2527,6 +2455,7 @@ export default function Home() {
                 </span>
               )}
             </TabsTrigger>
+            {/* 2. AI Outline */}
             <TabsTrigger
               value="trace"
               className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
@@ -2543,17 +2472,7 @@ export default function Home() {
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger
-              value="redraw"
-              disabled
-              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-300 opacity-50 cursor-not-allowed relative px-1"
-            >
-              <FileEdit className="w-4 h-4 shrink-0" />
-              <span className="truncate text-[11px]">{t("aiSketch")}</span>
-              <span className="absolute -top-1.5 -right-1 text-[9px] font-bold bg-orange-400 text-white px-1 rounded-full leading-4">
-                {t("maintenance")}
-              </span>
-            </TabsTrigger>
+            {/* 3. Portrait */}
             <TabsTrigger
               value="face"
               className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
@@ -2570,6 +2489,19 @@ export default function Home() {
                 </span>
               )}
             </TabsTrigger>
+            {/* 4. AI Sketch (maintenance) */}
+            <TabsTrigger
+              value="redraw"
+              disabled
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-300 opacity-50 cursor-not-allowed relative px-1"
+            >
+              <FileEdit className="w-4 h-4 shrink-0" />
+              <span className="truncate text-[11px]">{t("aiSketch")}</span>
+              <span className="absolute -top-1.5 -right-1 text-[9px] font-bold bg-orange-400 text-white px-1 rounded-full leading-4">
+                {t("maintenance")}
+              </span>
+            </TabsTrigger>
+            {/* 5. CNC Relief (coming soon) */}
             <TabsTrigger
               value="cnc-relief"
               disabled
