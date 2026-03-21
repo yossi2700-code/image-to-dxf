@@ -223,8 +223,9 @@ export function WorkspaceSidebar({
                     marginBottom: 3,
                     textAlign: isRtl ? "right" : "left",
                     opacity: item.disabled ? 0.6 : 1,
-                    transition: "all 0.15s",
+                    transition: "background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.1s ease",
                     position: "relative",
+                    overflow: "hidden",
                   }}
                   onMouseEnter={(e) => {
                     if (!item.disabled && !isActive) {
@@ -238,7 +239,31 @@ export function WorkspaceSidebar({
                       (e.currentTarget as HTMLButtonElement).style.color = "#64748b";
                     }
                   }}
+                  onMouseDown={(e) => {
+                    if (!item.disabled) {
+                      (e.currentTarget as HTMLButtonElement).style.transform = "scale(0.97)";
+                    }
+                  }}
+                  onMouseUp={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+                  }}
                 >
+                  {/* Active left-border indicator */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      [isRtl ? "right" : "left"]: 0,
+                      top: "20%",
+                      bottom: "20%",
+                      width: 3,
+                      borderRadius: 3,
+                      background: item.iconColor,
+                      opacity: isActive ? 1 : 0,
+                      transform: isActive ? "scaleY(1)" : "scaleY(0)",
+                      transition: "opacity 0.25s ease, transform 0.25s cubic-bezier(0.34,1.56,0.64,1)",
+                      transformOrigin: "center",
+                    }}
+                  />
                   {/* Icon box */}
                   <div
                     style={{
@@ -251,7 +276,8 @@ export function WorkspaceSidebar({
                       justifyContent: "center",
                       color: isActive ? item.iconColor : "#94a3b8",
                       flexShrink: 0,
-                      transition: "all 0.15s",
+                      transition: "background 0.2s ease, color 0.2s ease, transform 0.2s cubic-bezier(0.34,1.56,0.64,1)",
+                      transform: isActive ? "scale(1.12)" : "scale(1)",
                     }}
                   >
                     {item.icon}

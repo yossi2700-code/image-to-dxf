@@ -2115,3 +2115,7 @@
 
 ## CNC Relief - Coming Soon Mode
 - [x] Set CNC Relief tab to disabled/coming soon state like AI Sketch tab
+
+## אנימציות ניווט
+
+- [x] Add active state animations to WorkspaceSidebar navigation (sliding indicator + icon scale)
