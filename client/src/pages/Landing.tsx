@@ -6,7 +6,7 @@ import { AuthDialog } from "@/components/AuthDialog";
 import {
   Zap, Shield, Clock, Download, Star,
   ChevronLeft, ChevronRight, Check, Sparkles, Cpu, FileDown,
-  Lock, MessageCircle, Mail, Phone
+  Lock, MessageCircle, Mail, Phone, Camera, Keyboard, Scissors, Wand2, Upload
 } from "lucide-react";
 
 // ─── CDN base ────────────────────────────────────────────────────────────────
@@ -552,12 +552,7 @@ export default function Landing() {
                 {isRtl ? "WhatsApp" : "WhatsApp"}
               </a>
             )}
-            <button
-              onClick={handleOpenAuth}
-              style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", borderRadius: 10, padding: "9px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer", boxShadow: "0 2px 10px rgba(99,102,241,0.3)" }}
-            >
-              {t.navCta}
-            </button>
+
           </div>
         </div>
       </header>
@@ -574,10 +569,22 @@ export default function Landing() {
             <Sparkles size={13} color="#a5b4fc" />
             <span style={{ color: "#a5b4fc", fontSize: 13, fontWeight: 600 }}>{t.heroBadge}</span>
           </div>
-          <h1 style={{ color: "#fff", fontSize: "clamp(2rem,5vw,3.2rem)", fontWeight: 900, lineHeight: 1.15, marginBottom: 20, letterSpacing: "-0.03em" }}>
+          <h1 style={{ color: "#fff", fontSize: "clamp(1.8rem,4.5vw,3rem)", fontWeight: 900, lineHeight: 1.2, marginBottom: 20, letterSpacing: "-0.03em" }}>
             {t.heroTitle}
           </h1>
-          <p style={{ color: "#c4b5fd", fontSize: "clamp(1rem,2.5vw,1.2rem)", lineHeight: 1.7, marginBottom: 36, maxWidth: 580, margin: "0 auto 36px" }}>
+          {/* Input method icons */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, marginBottom: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.1)", borderRadius: 12, padding: "8px 16px", border: "1px solid rgba(255,255,255,0.15)" }}>
+              <Camera size={18} color="#a5b4fc" />
+              <span style={{ color: "#c4b5fd", fontSize: 13, fontWeight: 600 }}>{isRtl ? "העלאת תמונה" : "Upload image"}</span>
+            </div>
+            <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 18, fontWeight: 300 }}>+</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.1)", borderRadius: 12, padding: "8px 16px", border: "1px solid rgba(255,255,255,0.15)" }}>
+              <Keyboard size={18} color="#a5b4fc" />
+              <span style={{ color: "#c4b5fd", fontSize: 13, fontWeight: 600 }}>{isRtl ? "תיאור בטקסט" : "Text description"}</span>
+            </div>
+          </div>
+          <p style={{ color: "#c4b5fd", fontSize: "clamp(1rem,2.5vw,1.15rem)", lineHeight: 1.7, marginBottom: 36, maxWidth: 580, margin: "0 auto 36px" }}>
             {t.heroSubtitle}
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
@@ -592,6 +599,72 @@ export default function Landing() {
 
           </div>
           <p style={{ color: "#7c6fcd", fontSize: 13, marginTop: 20 }}>{t.heroTrust}</p>
+        </div>
+      </section>
+
+      {/* ── AI CUTTING PATHS SECTION ── */}
+      <section style={{ padding: "64px 24px", background: "#fff" }}>
+        <div style={{ maxWidth: 860, margin: "0 auto", textAlign: "center" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: 20, padding: "6px 16px", marginBottom: 20 }}>
+            <Scissors size={14} color="#6366f1" />
+            <span style={{ color: "#6366f1", fontSize: 13, fontWeight: 600 }}>{isRtl ? "טכנולוגיית חיתוך מתקדמת" : "Advanced Cutting Technology"}</span>
+          </div>
+          <h2 style={{ fontSize: "clamp(1.4rem,3vw,2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 16, lineHeight: 1.3 }}>
+            {isRtl ? "ה-AI שלנו מייצר נתיבי חיתוך אופטימליים וחלקים" : "Our AI generates optimal and smooth cutting paths"}
+          </h2>
+          <p style={{ color: "#6b7280", fontSize: "clamp(0.95rem,2vw,1.1rem)", lineHeight: 1.8, maxWidth: 680, margin: "0 auto 40px" }}>
+            {isRtl
+              ? "טכנולוגיית AI ייעודית הלומדת ומפענחת צורות מורכבות כדי לייצר נתיבי חיתוך חלקים, ללא 'רעשים' וקווים מיותרים."
+              : "Dedicated AI technology that learns and deciphers complex shapes to generate smooth cutting paths, without 'noise' or unnecessary lines."}
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 24 }}>
+            {[
+              { icon: <Wand2 size={22} color="#6366f1" />, title: isRtl ? "קווים חלקים" : "Smooth Lines", desc: isRtl ? "האלגוריתם מחליק ומנקה כל קו לתוצאה מושלמת" : "Algorithm smooths and cleans every line for perfect results" },
+              { icon: <Scissors size={22} color="#8b5cf6" />, title: isRtl ? "נתיבים רציפים" : "Continuous Paths", desc: isRtl ? "סגירת מסלולים אוטומטית למניעת עצירות בחיתוך" : "Auto path closure to prevent cutting stops" },
+              { icon: <Zap size={22} color="#06b6d4" />, title: isRtl ? "ללא רעשים" : "Zero Noise", desc: isRtl ? "מסנן נקודות ופיקסלים מיותרים שמפריעים לחיתוך" : "Filters unnecessary points and pixels that disrupt cutting" },
+            ].map((item, i) => (
+              <div key={i} style={{ background: "#f8faff", borderRadius: 16, padding: "24px 20px", border: "1px solid #e0e7ff" }}>
+                <div style={{ width: 48, height: 48, borderRadius: 14, background: "#ede9fe", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>{item.icon}</div>
+                <h3 style={{ fontWeight: 700, fontSize: 15, color: "#1e1b4b", marginBottom: 8 }}>{item.title}</h3>
+                <p style={{ color: "#6b7280", fontSize: 13, lineHeight: 1.6 }}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TEXT CREATION SECTION ── */}
+      <section style={{ padding: "64px 24px", background: "linear-gradient(160deg,#f5f3ff 0%,#ede9fe 100%)" }}>
+        <div style={{ maxWidth: 860, margin: "0 auto", textAlign: "center" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.25)", borderRadius: 20, padding: "6px 16px", marginBottom: 20 }}>
+            <Keyboard size={14} color="#7c3aed" />
+            <span style={{ color: "#7c3aed", fontSize: 13, fontWeight: 600 }}>{isRtl ? "יצירה מטקסט" : "Create from text"}</span>
+          </div>
+          <h2 style={{ fontSize: "clamp(1.4rem,3vw,2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 16, lineHeight: 1.3 }}>
+            {isRtl ? "פשוט תארו במילים את מה שברצונכם לייצר" : "Simply describe in words what you want to produce"}
+          </h2>
+          <p style={{ color: "#6b7280", fontSize: "clamp(0.95rem,2vw,1.1rem)", lineHeight: 1.8, maxWidth: 680, margin: "0 auto 32px" }}>
+            {isRtl
+              ? "העלו קובץ תמונה או תארו בטקסט חופשי. ה-AI שלנו יצור עבורכם נתיבי חיתוך חלקים ואופטימליים לכל מכונת CNC, לייזר, פלזמה וכל סוג נתב."
+              : "Upload an image file or describe in free text. Our AI will create smooth and optimal cutting paths for any CNC machine, laser, plasma, and any type of router."}
+          </p>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", marginBottom: 32 }}>
+            {[
+              { text: isRtl ? '"מגן דוד עם עיטורי פרחים"' : '"Star of David with floral ornaments"' },
+              { text: isRtl ? '"שלט לדלת עם שם משפחה"' : '"Door sign with family name"' },
+              { text: isRtl ? '"לוגו חברה בסגנון מינימליסטי"' : '"Company logo in minimalist style"' },
+            ].map((ex, i) => (
+              <div key={i} style={{ background: "white", borderRadius: 10, padding: "10px 18px", border: "1px solid #ddd6fe", color: "#6b7280", fontSize: 13, fontStyle: "italic" }}>
+                {ex.text}
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={handleOpenAuth}
+            style={{ background: "linear-gradient(135deg,#7c3aed,#6366f1)", color: "#fff", border: "none", borderRadius: 12, padding: "13px 30px", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 16px rgba(124,58,237,0.3)" }}
+          >
+            {isRtl ? "נסה עכשיו — חינם" : "Try now — free"}
+          </button>
         </div>
       </section>
 
@@ -834,17 +907,17 @@ export default function Landing() {
 const he = {
   navCta: "נסה חינם",
   heroBadge: "טכנולוגיית AI מתקדמת",
-  heroTitle: "מתמונה לקובץ DXF\nמוכן לחיתוך — תוך שניות",
-  heroSubtitle: "פשוט מעלים תמונה, ה-AI מזהה את הקווים ומייצר קובץ DXF מדויק לכל מכונת CNC, לייזר או נתב.",
+  heroTitle: "מתמונה או תיאור לקובץ DXF מדויק ומוכן לייצור",
+  heroSubtitle: "מעלים תמונה קיימת או מתארים במילים — ה-AI מייצר נתיבי חיתוך אופטימליים לכל מכונת CNC, לייזר, פלזמה או נתב.",
   heroCta1: "התחל חינם — 10 אסימונים מתנה",
   heroCta2: "ראה מחירים",
   heroTrust: "ללא כרטיס אשראי · רכישה מאובטחת PayPal",
   howTitle: "איך זה עובד?",
-  howSubtitle: "3 שלבים פשוטים מתמונה לקובץ מוכן לייצור",
+  howSubtitle: "3 שלבים פשוטים מהרעיון שלך ועד לחיתוך במכונה",
   steps: [
-    { title: "מעלים תמונה", desc: "JPG, PNG או WEBP — כל תמונה עם קווים ברורים מתאימה" },
-    { title: "AI מעבד", desc: "הבינה המלאכותית מזהה קווי מתאר ומייצרת נתיבים וקטוריים מדויקים" },
-    { title: "מורידים DXF", desc: "קובץ DXF מוכן לייבוא ב-Lightburn, AutoCAD, Fusion 360 ועוד" },
+    { title: "בוחרים איך להתחיל", desc: "מעלים תמונה קיימת (לוגו, סקיצה או צילום) או פשוט כותבים בטקסט חופשי מה תרצו לייצר — למשל: \"מגן דוד עם עיטורי פרחים\" או \"שלט לדלת עם שם משפחה\"." },
+    { title: "ה-AI יוצר ומבצע אופטימיזציה", desc: "האלגוריתם המתקדם בונה את הווקטור מאפס או מנקה את התמונה הקיימת. הוא מחליק קווים, סוגר מסלולים ומבטיח נתיבי חיתוך רציפים ואופטימליים ללא \"רעשים\"." },
+    { title: "מורידים קובץ DXF מוכן", desc: "מקבלים קובץ תקני, נקי ומדויק שמתאים ב-100% לכל תוכנות ה-CNC, הלייזר והפלזמה — RDWorks, LightBurn, AutoCAD ועוד." },
   ],
   galleryTitle: "דוגמאות לפני ואחרי",
   gallerySubtitle: "לחץ על תמונה כדי לראות את קובץ ה-DXF שנוצר",
@@ -897,17 +970,17 @@ const he = {
 const en = {
   navCta: "Try Free",
   heroBadge: "Advanced AI Technology",
-  heroTitle: "From image to DXF file\nready for cutting — in seconds",
-  heroSubtitle: "Simply upload an image, the AI detects the lines and generates a precise DXF file for any CNC, laser, or router machine.",
+  heroTitle: "From image or description to precise DXF ready for production",
+  heroSubtitle: "Upload an existing image or describe in words — AI generates optimal cutting paths for any CNC, laser, plasma, or router machine.",
   heroCta1: "Start Free — 10 Tokens Gift",
   heroCta2: "See Pricing",
   heroTrust: "No credit card · Secure PayPal checkout",
   howTitle: "How does it work?",
-  howSubtitle: "3 simple steps from image to production-ready file",
+  howSubtitle: "3 simple steps from your idea to machine cutting",
   steps: [
-    { title: "Upload image", desc: "JPG, PNG or WEBP — any image with clear lines works" },
-    { title: "AI processes", desc: "The AI detects contour lines and generates precise vector paths" },
-    { title: "Download DXF", desc: "DXF file ready to import in Lightburn, AutoCAD, Fusion 360 and more" },
+    { title: "Choose how to start", desc: "Upload an existing image (logo, sketch or photo) or simply write in free text what you want to produce — e.g. \"Star of David with floral ornaments\" or \"Door sign with family name\"." },
+    { title: "AI creates & optimizes", desc: "Our advanced algorithm builds the vector from scratch or cleans the existing image. It smooths lines, closes paths and ensures continuous, optimal cutting paths without \"noise\"." },
+    { title: "Download ready DXF file", desc: "Get a standard, clean and precise file that is 100% compatible with all CNC, laser and plasma software — RDWorks, LightBurn, AutoCAD and more." },
   ],
   galleryTitle: "Before & After Examples",
   gallerySubtitle: "Click an image to see the generated DXF file",
