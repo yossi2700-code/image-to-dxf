@@ -698,9 +698,10 @@ export default function Landing() {
           </p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", marginBottom: 32 }}>
             {[
-              { text: isRtl ? '"מגן דוד עם עיטורי פרחים"' : '"Star of David with floral ornaments"' },
-              { text: isRtl ? '"שלט לדלת עם שם משפחה"' : '"Door sign with family name"' },
-              { text: isRtl ? '"לוגו חברה בסגנון מינימליסטי"' : '"Company logo in minimalist style"' },
+              { text: isRtl ? '"מכונית ספורט קלאסית עם כל הפרטים"' : '"Classic sports car with full detail"' },
+              { text: isRtl ? '"רחפן עם זרועות, מנועים ומצלמה"' : '"Drone with arms, motors and camera"' },
+              { text: isRtl ? '"פנים אריה מפורט עם רעמה"' : '"Detailed lion face with mane"' },
+              { text: isRtl ? '"מנוע V8 עם צינורות ובלוקים"' : '"V8 engine with pipes and blocks"' },
             ].map((ex, i) => (
               <div key={i} style={{ background: "white", borderRadius: 10, padding: "10px 18px", border: "1px solid #ddd6fe", color: "#6b7280", fontSize: 13, fontStyle: "italic" }}>
                 {ex.text}
