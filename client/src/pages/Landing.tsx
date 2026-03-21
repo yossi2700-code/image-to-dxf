@@ -688,17 +688,17 @@ export default function Landing() {
       </section>
 
       {/* ── WHY DXFAI ── */}
-      <section style={{ padding: "80px 24px", background: "#0f0e1a" }}>
+      <section style={{ padding: "80px 24px", background: "#fff" }}>
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 56 }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", borderRadius: 20, padding: "6px 16px", marginBottom: 20 }}>
               <Sparkles size={13} color="#a5b4fc" />
-              <span style={{ color: "#a5b4fc", fontSize: 13, fontWeight: 600 }}>{isRtl ? "הבחירה של המקצוענים" : "The Professional's Choice"}</span>
+              <span style={{ color: "#6366f1", fontSize: 13, fontWeight: 600 }}>{isRtl ? "הבחירה של המקצוענים" : "The Professional's Choice"}</span>
             </div>
-            <h2 style={{ fontSize: "clamp(1.6rem,3.5vw,2.4rem)", fontWeight: 900, color: "#fff", marginBottom: 14, letterSpacing: "-0.02em" }}>
+            <h2 style={{ fontSize: "clamp(1.6rem,3.5vw,2.4rem)", fontWeight: 900, color: "#1e1b4b", marginBottom: 14, letterSpacing: "-0.02em" }}>
               {isRtl ? "למה לבחור ב-DXFai?" : "Why choose DXFai?"}
             </h2>
-            <p style={{ color: "#9ca3af", fontSize: 16, maxWidth: 560, margin: "0 auto" }}>
+            <p style={{ color: "#6b7280", fontSize: 16, maxWidth: 560, margin: "0 auto" }}>
               {isRtl ? "5 הכללים שהופכים אותנו לבחירה של המקצוענים" : "5 rules that make us the choice of professionals"}
             </p>
           </div>
@@ -745,13 +745,13 @@ export default function Landing() {
                 color: "#10b981",
               },
             ].map((item, i) => (
-              <div key={i} style={{ display: "flex", gap: 24, alignItems: "flex-start", background: "rgba(255,255,255,0.04)", borderRadius: 16, padding: "24px 28px", border: "1px solid rgba(255,255,255,0.07)", transition: "border-color 0.2s" }}>
+              <div key={i} style={{ display: "flex", gap: 24, alignItems: "flex-start", background: "#f9fafb", borderRadius: 16, padding: "24px 28px", border: "1px solid #e5e7eb", transition: "border-color 0.2s" }}>
                 <div style={{ flexShrink: 0, width: 48, height: 48, borderRadius: 14, background: `${item.color}22`, border: `1px solid ${item.color}44`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <span style={{ color: item.color, fontWeight: 900, fontSize: 15, fontFamily: "monospace" }}>{item.num}</span>
                 </div>
                 <div style={{ flex: 1, textAlign: isRtl ? "right" : "left" }}>
-                  <h3 style={{ color: "#fff", fontWeight: 700, fontSize: 16, marginBottom: 8 }}>{item.title}</h3>
-                  <p style={{ color: "#9ca3af", fontSize: 14, lineHeight: 1.7, margin: 0 }}>{item.desc}</p>
+                  <h3 style={{ color: "#111827", fontWeight: 700, fontSize: 16, marginBottom: 8 }}>{item.title}</h3>
+                  <p style={{ color: "#6b7280", fontSize: 14, lineHeight: 1.7, margin: 0 }}>{item.desc}</p>
                 </div>
               </div>
             ))}
