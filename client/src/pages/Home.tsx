@@ -19,7 +19,6 @@ import { FaceDetectTab } from "@/components/FaceDetectTab";
 import { CncReliefTab } from "@/components/CncReliefTab";
 import { AiProcessingAnimation } from "@/components/AiProcessingAnimation";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { WorkspaceSidebar, type WorkspaceTab } from "@/components/WorkspaceSidebar";
 import { InsufficientTokensBanner } from "@/components/InsufficientTokensBanner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
@@ -1976,14 +1975,14 @@ export default function Home() {
   const [portraitImageKey, setPortraitImageKey] = useState(0);
 
   // Remember active tab — auto-switch to tab with active job on page return
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>(() => {
+  const [activeTab, setActiveTab] = useState<string>(() => {
     // If there's an active job, go to that tab automatically
     if (localStorage.getItem("ai_trace_jobId")) return "trace";
     if (localStorage.getItem("doc_redraw_jobId")) return "redraw";
     if (localStorage.getItem("ai_generate_jobId")) return "ai";
     if (localStorage.getItem("face_detect_jobId")) return "face";
     // Otherwise restore last visited tab
-    return (localStorage.getItem("active_tab") as WorkspaceTab) ?? "ai";
+    return localStorage.getItem("active_tab") ?? "ai";
   });
 
   // Poll localStorage every 2s to detect job changes (even from child components)
@@ -2137,7 +2136,11 @@ export default function Home() {
   };
 
   return (
-    <>
+    <div
+      className="min-h-screen"
+      style={{ background: '#f8f9fb' }}
+      dir={isRtl ? "rtl" : "ltr"}
+    >
       {/* Token Bonus Animation Overlay */}
       {bonusAnimation && (
         <TokenBonusAnimation
@@ -2145,23 +2148,200 @@ export default function Home() {
           onDone={() => setBonusAnimation(null)}
         />
       )}
-      <WorkspaceSidebar
-        activeTab={activeTab}
-        onTabChange={(tab) => {
-          setActiveTab(tab);
-          localStorage.setItem("active_tab", tab);
-          document.getElementById("main-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      {/* Header */}
+      <header
+        className="sticky top-0 z-20"
+        style={{
+          background: '#ffffff',
+          borderBottom: '1px solid #e8eaf0',
+          boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
         }}
-        appUser={appUser ? { email: appUser.email, name: appUser.name ?? undefined } : null}
-        tokenBalance={tokenBalance}
-        hasPendingWelcomeBonus={hasPendingWelcomeBonus}
-        onOpenPricing={() => setPricingModalOpen(true)}
-        onOpenTokenHistory={() => setTokenHistoryOpen(v => !v)}
-        onLogout={handleLogout}
-        onOpenAuth={() => { setLimitReached(false); setAuthOpen(true); }}
-        activeJobs={{ generate: activeJobs.generate, trace: activeJobs.trace, face: activeJobs.face }}
       >
+        <div className="px-3 py-2 flex items-center gap-2 max-w-7xl mx-auto">
+          {/* AiDXF Logo */}
+          <a href="/landing" className="flex items-center gap-1.5 shrink-0 cursor-pointer" style={{ textDecoration: 'none' }}>
+            <div
+              className="w-7 h-7 rounded-lg shrink-0 flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                <path d="M4 16 Q7 7 10 10 Q13 13 16 4" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
+                <circle cx="4" cy="16" r="1.8" fill="#06b6d4"/>
+                <circle cx="10" cy="10" r="1.8" fill="white"/>
+                <circle cx="16" cy="4" r="1.8" fill="#06b6d4"/>
+              </svg>
+            </div>
+            <span className="hidden sm:inline text-base font-black tracking-tight" style={{ color: '#6366f1', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>Ai</span><span className="hidden sm:inline text-base font-black tracking-tight" style={{ color: '#111827', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>DXF</span>
+          </a>
 
+          {/* Right side nav */}
+          <div className="flex items-center gap-2 ms-auto">
+            {/* Pricing button — opens token pricing modal */}
+            <button
+              onClick={() => setPricingModalOpen(true)}
+              className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-80 shrink-0"
+              style={{ color: '#6366f1', background: '#eef2ff', border: '1px solid #c7d2fe', whiteSpace: 'nowrap' }}
+            >
+              {isRtl ? '💎 מחירון' : '💎 Pricing'}
+            </button>
+
+            {appUser ? (
+              <>
+                {/* Token balance badge with history popup */}
+                <div className="relative" ref={tokenHistoryRef}>
+                  <button
+                    onClick={() => setTokenHistoryOpen(v => !v)}
+                    className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full shrink-0 hover:opacity-80 transition-opacity"
+                    style={{ background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4338ca', fontSize: '12px', whiteSpace: 'nowrap' }}
+                    title={isRtl ? 'היסטוריית אסימונים' : 'Token history'}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{tokenBalance}</span>
+                    {/* Pending welcome bonus dot */}
+                    {hasPendingWelcomeBonus && (
+                      <span
+                        className="w-2 h-2 rounded-full animate-pulse"
+                        style={{ background: '#f59e0b', display: 'inline-block', marginLeft: 2 }}
+                        title={isRtl ? 'מחכים לך 20 בונוס במייל' : '20 bonus tokens waiting in your email'}
+                      />
+                    )}
+                  </button>
+                  {tokenHistoryOpen && (
+                    <TokenHistoryPopup
+                      onClose={() => setTokenHistoryOpen(false)}
+                      isRtl={isRtl}
+                      containerRef={tokenHistoryRef}
+                    />
+                  )}
+                </div>
+
+                {/* User avatar dropdown */}
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    onClick={() => setUserMenuOpen(v => !v)}
+                    className="flex items-center gap-2 rounded-2xl px-3 py-1.5 font-semibold transition-all hover:opacity-90 active:scale-95"
+                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', boxShadow: '0 2px 10px rgba(99,102,241,0.4)' }}
+                    aria-label={isRtl ? 'תפריט משתמש' : 'User menu'}
+                  >
+                    {/* Avatar circle with initials */}
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-black shrink-0"
+                      style={{ background: 'rgba(255,255,255,0.28)' }}
+                    >
+                      {(appUser.name || appUser.email || '?').charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-sm font-bold max-w-[60px] truncate hidden sm:inline">
+                      {appUser.name || appUser.email.split('@')[0]}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Dropdown menu */}
+                  {userMenuOpen && (
+                    <div
+                      className="absolute top-full mt-2 z-50 overflow-hidden"
+                      style={{
+                        [isRtl ? 'left' : 'right']: 0,
+                        minWidth: 230,
+                        background: 'linear-gradient(160deg, #1a1a2e 0%, #16213e 100%)',
+                        border: '1px solid rgba(139,92,246,0.3)',
+                        borderRadius: 16,
+                        boxShadow: '0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,92,246,0.1), inset 0 1px 0 rgba(255,255,255,0.05)',
+                      }}
+                    >
+                      {/* User info header */}
+                      <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid rgba(139,92,246,0.15)', background: 'rgba(139,92,246,0.06)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: '#fff', flexShrink: 0, boxShadow: '0 2px 8px rgba(124,58,237,0.4)' }}>
+                            {(appUser.name || appUser.email)[0].toUpperCase()}
+                          </div>
+                          <div style={{ overflow: 'hidden', flex: 1 }}>
+                            <p style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{appUser.name || appUser.email.split('@')[0]}</p>
+                            <p style={{ fontSize: 11, color: 'rgba(148,163,184,0.75)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{appUser.email}</p>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Menu items */}
+                      <div style={{ padding: '8px 8px 4px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {/* Personal Area */}
+                        <button
+                          onClick={() => { setUserMenuOpen(false); window.location.href = '/account'; }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.1)', cursor: 'pointer', width: '100%', color: '#c4b5fd', fontSize: 13, fontWeight: 600, textAlign: isRtl ? 'right' : 'left', transition: 'all 0.15s' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(139,92,246,0.22)'; (e.currentTarget as HTMLButtonElement).style.color = '#ddd6fe'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(139,92,246,0.5)'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(139,92,246,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#c4b5fd'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(139,92,246,0.25)'; }}
+                        >
+                          <span style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg, #7c3aed, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(124,58,237,0.4)' }}>
+                            <User style={{ width: 15, height: 15, color: 'white' }} />
+                          </span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 700, fontSize: 13 }}>{isRtl ? 'אזור אישי' : 'My Account'}</div>
+                            <div style={{ fontSize: 10, color: 'rgba(196,181,253,0.65)', fontWeight: 400 }}>{isRtl ? 'פרופיל וסטטיסטיקות' : 'Profile & stats'}</div>
+                          </div>
+                        </button>
+                        {/* History */}
+                        <button
+                          onClick={() => { setUserMenuOpen(false); window.location.href = '/history'; }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(99,102,241,0.25)', background: 'rgba(99,102,241,0.1)', cursor: 'pointer', width: '100%', color: '#a5b4fc', fontSize: 13, fontWeight: 600, textAlign: isRtl ? 'right' : 'left', transition: 'all 0.15s' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(99,102,241,0.22)'; (e.currentTarget as HTMLButtonElement).style.color = '#c7d2fe'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(99,102,241,0.5)'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(99,102,241,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#a5b4fc'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(99,102,241,0.25)'; }}
+                        >
+                          <span style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg, #4f46e5, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(79,70,229,0.4)' }}>
+                            <History style={{ width: 15, height: 15, color: 'white' }} />
+                          </span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 700, fontSize: 13 }}>{isRtl ? 'היסטוריה' : 'History'}</div>
+                            <div style={{ fontSize: 10, color: 'rgba(165,180,252,0.65)', fontWeight: 400 }}>{isRtl ? 'כל העיצובים שלך' : 'All your designs'}</div>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => { setUserMenuOpen(false); window.location.href = '/buy'; }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: 'none', background: 'rgba(16,185,129,0.08)', cursor: 'pointer', width: '100%', color: '#6ee7b7', fontSize: 13, fontWeight: 600, textAlign: isRtl ? 'right' : 'left' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.2)'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.08)'; }}
+                        >
+                          <span style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <CreditCard style={{ width: 14, height: 14 }} />
+                          </span>
+                          <span>{isRtl ? '✨ קנה קרדיטים' : '✨ Buy Tokens'}</span>
+                        </button>
+                      </div>
+                      {/* Logout */}
+                      <div style={{ padding: '4px 8px 8px', borderTop: '1px solid rgba(239,68,68,0.12)', marginTop: 2 }}>
+                        <button
+                          onClick={() => { setUserMenuOpen(false); handleLogout(); }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: 'none', background: 'transparent', cursor: 'pointer', width: '100%', color: '#f87171', fontSize: 13, fontWeight: 500, textAlign: isRtl ? 'right' : 'left' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.12)'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+                        >
+                          <span style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <LogOut style={{ width: 14, height: 14 }} />
+                          </span>
+                          <span>{isRtl ? 'התנתק' : 'Sign out'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <button
+                onClick={() => { setLimitReached(false); setAuthOpen(true); }}
+                className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl font-semibold transition-all hover:opacity-90 shrink-0"
+                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: 'none', boxShadow: '0 3px 10px rgba(99,102,241,0.35)', whiteSpace: 'nowrap' }}
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                {t("loginRegister")}
+              </button>
+            )}
+          </div>
+
+          {/* Language switcher - always visible */}
+          <div className="shrink-0">
+            <LanguageSwitcher />
+          </div>
+
+        </div>
+      </header>
 
       <AuthDialog
         open={authOpen}
@@ -2187,7 +2367,9 @@ export default function Home() {
         }}
       />
 
-      <div>
+      <main className="py-5" style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px 24px' }}>
+        {/* Responsive layout */}
+        <div className="mx-auto" style={{ maxWidth: '100%' }}>
 
          {/* ── Welcome Banner (new registrations only) ── */}
         {showWelcomeBanner && (
@@ -2216,127 +2398,77 @@ export default function Home() {
             </button>
           </div>
         )}
-        {/* SaleBanner, AnnouncementBanner, NewsWidget moved to admin Backup Graphics tab */}
+        {/* ── Sale Banner ── */}
+        <SaleBanner />
+        {/* ── Announcement Banner ── */}
+        <AnnouncementBanner />
+        {/* ── News Widget ── */}
+        <NewsWidget isRtl={isRtl} />
         {/* ── Insufficient Tokens Banner ── */}
         {showTokensBanner && (
           <InsufficientTokensBanner onDismiss={() => setShowTokensBanner(false)} hasPendingWelcomeBonus={hasPendingWelcomeBonus} />
         )}
-        {/* ── CAD Workspace Toolbar ── */}
-        <div className="mb-4 flex items-center justify-between" style={{ borderBottom: '1.5px solid #e2e8f0', paddingBottom: '10px' }}>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <div style={{ width: 8, height: 8, border: '1.5px solid #6366f1' }} />
-              <div style={{ width: 8, height: 8, border: '1.5px solid #6366f1', transform: 'rotate(45deg)' }} />
+        {/* ── Hero Section ── */}
+        <div className="mb-6 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #f0f0ff 0%, #faf5ff 50%, #f0f9ff 100%)', border: '1px solid #e8eaf0' }}>
+          <div className="px-5 pt-5 pb-4">
+            {/* Desktop: side by side. Mobile: stacked */}
+            <div className={`flex flex-col gap-4 items-center ${isRtl ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
+              {/* Mobile: carousel first (order-first on mobile, order-last on desktop) */}
+              <div className="flex-1 w-full lg:max-w-[480px]" style={{ order: 1 }}>
+                <HeroBeforeAfterCarousel />
+              </div>
+
+              {/* Left (LTR) / Right (RTL): text + feature buttons */}
+              <div className="flex-1 w-full" style={{ order: 2 }}>
+            {/* Badge pill */}
+            <div className={`flex justify-center ${isRtl ? 'lg:justify-end' : 'lg:justify-start'} mb-3`}>
+              <span
+                className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full"
+                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', letterSpacing: '0.04em' }}
+              >
+                <Sparkles className="w-3 h-3" />
+                {isRtl ? 'המרת וקטור מבוססת AI' : 'AI-POWERED VECTOR CONVERSION'}
+              </span>
             </div>
-            <span className="text-xs font-mono font-bold" style={{ color: '#6366f1', letterSpacing: '0.1em' }}>WORKSPACE</span>
-            <span className="text-xs font-mono" style={{ color: '#94a3b8', letterSpacing: '0.05em' }}>— {isRtl ? 'בחר כלי' : 'SELECT TOOL'}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px rgba(34,197,94,0.6)' }} />
-            <span className="text-xs font-mono" style={{ color: '#22c55e', letterSpacing: '0.08em' }}>READY</span>
-          </div>
-        </div>
-        {/* Feature shortcut buttons — click to switch tab */}
-        <div className="mb-4">
-            {/* Feature shortcut buttons with SVG illustrations — click to switch tab */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+
+            {/* Headline */}
+            <div className="text-center lg:text-start mb-4">
+              <h1 className="font-black leading-tight mb-1" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', color: '#111827', letterSpacing: '-0.02em' }}>
+                {isRtl ? 'הפוך כל תמונה לוקטור.' : 'From photo to vector.'}
+              </h1>
+              <h1 className="font-black leading-tight" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>
+                {isRtl ? 'מיידית.' : 'Instantly.'}
+              </h1>
+              <p className="text-sm text-gray-500 mt-2 max-w-sm">
+                {isRtl ? 'בינה מלאכותית ממירה תמונות לקבצי DXF לחיתוך לייזר ו-CNC' : 'AI converts images to DXF files for laser cutting & CNC'}
+              </p>
+            </div>
+
+            {/* Feature shortcut buttons — click to switch tab */}
+            <div className="grid grid-cols-2 gap-2">
               {[
-                {
-                  tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create',
-                  bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                  svg: (
-                    <svg viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                      <rect width="80" height="60" fill="#eef2ff" rx="8"/>
-                      <text x="12" y="22" fontSize="10" fill="#6366f1" fontWeight="bold" fontFamily="monospace">sports car</text>
-                      <line x1="10" y1="28" x2="38" y2="28" stroke="#a5b4fc" strokeWidth="1.5" strokeDasharray="3 2"/>
-                      <polygon points="42,28 38,25 38,31" fill="#6366f1"/>
-                      {/* Simple car outline */}
-                      <path d="M46 42 L46 36 L50 32 L62 32 L66 36 L66 42 Z" stroke="#6366f1" strokeWidth="1.5" fill="none"/>
-                      <circle cx="50" cy="42" r="2.5" stroke="#6366f1" strokeWidth="1.5" fill="none"/>
-                      <circle cx="62" cy="42" r="2.5" stroke="#6366f1" strokeWidth="1.5" fill="none"/>
-                      <path d="M50 32 L52 36 L62 36" stroke="#6366f1" strokeWidth="1" fill="none"/>
-                      <circle cx="20" cy="20" r="5" fill="#c7d2fe" opacity="0.5"/>
-                      <path d="M17 20 L19 22 L23 17" stroke="#6366f1" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  ),
-                },
-                {
-                  tab: 'trace', label: isRtl ? 'AI Outline' : 'AI Outline',
-                  bg: 'linear-gradient(135deg, #0d9488, #06b6d4)',
-                  svg: (
-                    <svg viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                      <rect width="80" height="60" fill="#f0fdf9" rx="8"/>
-                      {/* Photo side */}
-                      <rect x="5" y="10" width="28" height="40" rx="4" fill="#d1fae5" stroke="#0d9488" strokeWidth="1"/>
-                      <circle cx="14" cy="24" r="5" fill="#6ee7b7"/>
-                      <path d="M5 38 L12 30 L19 36 L24 28 L33 38" fill="#a7f3d0" stroke="none"/>
-                      {/* Arrow */}
-                      <line x1="37" y1="30" x2="43" y2="30" stroke="#0d9488" strokeWidth="1.5"/>
-                      <polygon points="46,30 42,27 42,33" fill="#0d9488"/>
-                      {/* Vector side */}
-                      <rect x="47" y="10" width="28" height="40" rx="4" fill="#f0fdf9" stroke="#0d9488" strokeWidth="1"/>
-                      <circle cx="56" cy="24" r="5" stroke="#0d9488" strokeWidth="1.5" fill="none"/>
-                      <path d="M47 38 L54 30 L61 36 L66 28 L75 38" fill="none" stroke="#0d9488" strokeWidth="1.5"/>
-                    </svg>
-                  ),
-                },
-                {
-                  tab: 'sketch', label: isRtl ? 'AI סקיצה' : 'AI Sketch',
-                  bg: 'linear-gradient(135deg, #d97706, #f59e0b)',
-                  comingSoon: true,
-                  svg: (
-                    <svg viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                      <rect width="80" height="60" fill="#fffbeb" rx="8"/>
-                      {/* Pencil */}
-                      <rect x="52" y="8" width="8" height="28" rx="2" transform="rotate(30 52 8)" fill="#fcd34d" stroke="#d97706" strokeWidth="1"/>
-                      <polygon points="56,42 52,48 60,46" fill="#d97706"/>
-                      {/* Sketch lines */}
-                      <path d="M10 20 Q20 15 30 20 Q40 25 50 18" stroke="#d97706" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-                      <path d="M10 30 Q18 26 28 30 Q38 34 48 28" stroke="#d97706" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.6"/>
-                      <path d="M10 40 Q22 36 32 40 Q42 44 50 38" stroke="#d97706" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.4"/>
-                      <circle cx="15" cy="15" r="3" fill="#fde68a"/>
-                    </svg>
-                  ),
-                },
-                {
-                  tab: 'face', label: isRtl ? 'פורטרט' : 'Portrait',
-                  bg: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-                  svg: (
-                    <svg viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                      <rect width="80" height="60" fill="#faf5ff" rx="8"/>
-                      {/* Photo half */}
-                      <rect x="4" y="8" width="30" height="44" rx="4" fill="#ede9fe" stroke="#7c3aed" strokeWidth="1"/>
-                      <ellipse cx="19" cy="24" rx="8" ry="9" fill="#c4b5fd"/>
-                      <ellipse cx="19" cy="38" rx="11" ry="7" fill="#c4b5fd"/>
-                      {/* Arrow */}
-                      <line x1="37" y1="30" x2="43" y2="30" stroke="#7c3aed" strokeWidth="1.5"/>
-                      <polygon points="46,30 42,27 42,33" fill="#7c3aed"/>
-                      {/* Vector half */}
-                      <rect x="47" y="8" width="30" height="44" rx="4" fill="#faf5ff" stroke="#7c3aed" strokeWidth="1"/>
-                      <ellipse cx="62" cy="24" rx="8" ry="9" stroke="#7c3aed" strokeWidth="1.5" fill="none"/>
-                      <path d="M51 52 Q62 42 73 52" stroke="#7c3aed" strokeWidth="1.5" fill="none"/>
-                      <circle cx="58" cy="22" r="1.5" fill="#7c3aed"/>
-                      <circle cx="66" cy="22" r="1.5" fill="#7c3aed"/>
-                      <path d="M59 27 Q62 29 65 27" stroke="#7c3aed" strokeWidth="1" fill="none"/>
-                    </svg>
-                  ),
-                },
+                { tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create', color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-v3-Xq8E28tKQT67AA2juXG9Ze.webp' },
+                { tab: 'trace', label: isRtl ? 'AI Outline' : 'AI Outline', color: '#0d9488', bg: 'linear-gradient(135deg, #0d9488, #06b6d4)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png' },
+                { tab: 'sketch', label: isRtl ? 'AI סקיצה' : 'AI Sketch', color: '#d97706', bg: 'linear-gradient(135deg, #d97706, #f59e0b)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-sketch-ai-text-v2-CcjuVZbxwbYguCvTLMwBo8.webp', comingSoon: true },
+                { tab: 'face', label: isRtl ? 'פורטרט' : 'Portrait', color: '#7c3aed', bg: 'linear-gradient(135deg, #7c3aed, #a855f7)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_e956deb2.png' },
               ].map((f, i) => (
                 <button
                   key={i}
                   onClick={() => {
-                    setActiveTab(f.tab as WorkspaceTab);
+                    setActiveTab(f.tab);
                     localStorage.setItem('active_tab', f.tab);
                     document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }}
                   className="flex flex-col items-center gap-0 rounded-2xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
                   style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 4px 16px rgba(0,0,0,0.10)' }}
                 >
-                  {/* SVG illustration area */}
-                  <div className="w-full relative" style={{ paddingBottom: '62%' }}>
-                    <div style={{ position: 'absolute', inset: 0, padding: '8px' }}>
-                      {f.svg}
-                    </div>
+                  {/* Image area: white bg, object-contain so nothing is cropped */}
+                  <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '62%' }}>
+                    <img
+                      src={f.img}
+                      alt={f.label}
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', padding: '6px' }}
+                    />
                     {(f as { comingSoon?: boolean }).comingSoon && (
                       <span
                         className="absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-full z-10"
@@ -2354,6 +2486,9 @@ export default function Home() {
                 </button>
               ))}
             </div>
+              </div>{/* end left column */}
+            </div>{/* end flex row */}
+          </div>
         </div>
 
         {/* Tabs */}
@@ -2361,28 +2496,26 @@ export default function Home() {
         <Tabs
           value={activeTab}
           onValueChange={(v) => {
-            setActiveTab(v as WorkspaceTab);
+            setActiveTab(v);
             localStorage.setItem("active_tab", v);
           }}
           dir={isRtl ? "rtl" : "ltr"}
         >
           <TabsList
-            className="w-full mb-0 gap-0 p-0"
+            className="w-full mb-6 gap-1 p-1.5"
             style={{
-              background: 'rgba(255,255,255,0.95)',
-              border: '1.5px solid #e2e8f0',
-              borderBottom: '2px solid #e2e8f0',
-              borderRadius: '8px 8px 0 0',
+              background: '#ffffff',
+              border: '1px solid #e8eaf0',
+              borderRadius: '1rem',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
               height: 'auto',
-              overflow: 'hidden',
             }}
           >
             <TabsTrigger
               value="ai"
-              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all text-gray-400 data-[state=active]:text-[#6366f1] relative px-1 rounded-none"
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
               style={{
-                background: 'transparent',
-                borderBottom: activeTab === 'ai' ? '2.5px solid #6366f1' : '2.5px solid transparent',
+                background: activeTab === 'ai' ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'transparent',
               }}
             >
               <Sparkles className="w-4 h-4 shrink-0" />
@@ -2396,10 +2529,9 @@ export default function Home() {
             </TabsTrigger>
             <TabsTrigger
               value="trace"
-              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all text-gray-400 data-[state=active]:text-[#0d9488] relative px-1 rounded-none"
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
               style={{
-                background: 'transparent',
-                borderBottom: activeTab === 'trace' ? '2.5px solid #0d9488' : '2.5px solid transparent',
+                background: activeTab === 'trace' ? 'linear-gradient(135deg, #0d9488, #06b6d4)' : 'transparent',
               }}
             >
               <Scan className="w-4 h-4 shrink-0" />
@@ -2414,8 +2546,7 @@ export default function Home() {
             <TabsTrigger
               value="redraw"
               disabled
-              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all text-gray-300 opacity-50 cursor-not-allowed relative px-1 rounded-none"
-              style={{ background: 'transparent', borderBottom: '2.5px solid transparent' }}
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-300 opacity-50 cursor-not-allowed relative px-1"
             >
               <FileEdit className="w-4 h-4 shrink-0" />
               <span className="truncate text-[11px]">{t("aiSketch")}</span>
@@ -2425,10 +2556,9 @@ export default function Home() {
             </TabsTrigger>
             <TabsTrigger
               value="face"
-              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all text-gray-400 data-[state=active]:text-[#7c3aed] relative px-1 rounded-none"
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
               style={{
-                background: 'transparent',
-                borderBottom: activeTab === 'face' ? '2.5px solid #7c3aed' : '2.5px solid transparent',
+                background: activeTab === 'face' ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : 'transparent',
               }}
             >
               <UserCircle className="w-4 h-4 shrink-0" />
@@ -2443,8 +2573,7 @@ export default function Home() {
             <TabsTrigger
               value="cnc-relief"
               disabled
-              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all text-gray-300 opacity-50 cursor-not-allowed relative px-1 rounded-none"
-              style={{ background: 'transparent', borderBottom: '2.5px solid transparent' }}
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-300 opacity-50 cursor-not-allowed relative px-1"
             >
               <Mountain className="w-4 h-4 shrink-0" />
               <span className="truncate text-[11px]">{t("cncReliefTabLabel")}</span>
@@ -2454,11 +2583,11 @@ export default function Home() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="ai" style={{ border: '1.5px solid #e2e8f0', borderTop: 'none', borderRadius: '0 0 8px 8px', padding: '16px', marginTop: 0, background: '#ffffff' }}>
+          <TabsContent value="ai">
             {/* Demo gallery — AI Create */}
             <div
-              className="mb-5 rounded-xl overflow-hidden p-4"
-              style={{ background: '#f8faff', border: '1px solid #e8eaf0' }}
+              className="mb-5 rounded-2xl overflow-hidden p-4"
+              style={{ background: '#ffffff', border: '1px solid #e8eaf0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
             >
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #6366f1, #8b5cf6)'}}>
@@ -2482,11 +2611,11 @@ export default function Home() {
             <AiGeneratorTab onOpenAuth={() => openAuthAs("unregistered")} onInsufficientTokens={() => setShowTokensBanner(true)} />
           </TabsContent>
 
-          <TabsContent value="trace" style={{ border: '1.5px solid #e2e8f0', borderTop: 'none', borderRadius: '0 0 8px 8px', padding: '16px', marginTop: 0, background: '#ffffff' }}>
+          <TabsContent value="trace">
             {/* Demo banner — AI Trace */}
             <div
-              className="mb-5 rounded-xl overflow-hidden p-4"
-              style={{ background: '#f0fdf9', border: '1px solid #d1fae5' }}
+              className="mb-5 rounded-2xl overflow-hidden p-4"
+              style={{ background: '#ffffff', border: '1px solid #e8eaf0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
             >
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #0d9488, #06b6d4)'}}>
@@ -2520,7 +2649,7 @@ export default function Home() {
             />
           </TabsContent>
 
-          <TabsContent value="redraw" style={{ border: '1.5px solid #e2e8f0', borderTop: 'none', borderRadius: '0 0 8px 8px', padding: '16px', marginTop: 0, background: '#ffffff' }}>
+          <TabsContent value="redraw">
             {/* Maintenance notice */}
             <div className="mb-4 rounded-xl p-4 flex items-start gap-3" style={{ background: '#fff7ed', border: '1.5px solid #fed7aa' }}>
               <span className="text-2xl mt-0.5">🛠️</span>
@@ -2570,11 +2699,11 @@ export default function Home() {
             <AiDocumentRedrawTab onOpenAuth={() => openAuthAs("unregistered")} onInsufficientTokens={() => setShowTokensBanner(true)} />
           </TabsContent>
 
-          <TabsContent value="face" style={{ border: '1.5px solid #e2e8f0', borderTop: 'none', borderRadius: '0 0 8px 8px', padding: '16px', marginTop: 0, background: '#ffffff' }}>
+          <TabsContent value="face">
             {/* Demo banner — Face Detection */}
             <div
-              className="mb-5 rounded-xl overflow-hidden p-4"
-              style={{ background: '#faf5ff', border: '1px solid #e9d5ff' }}
+              className="mb-5 rounded-2xl overflow-hidden p-4"
+              style={{ background: '#ffffff', border: '1px solid #e8eaf0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
             >
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #7c3aed, #a855f7)'}}>
@@ -2601,11 +2730,11 @@ export default function Home() {
             />
           </TabsContent>
 
-          <TabsContent value="cnc-relief" style={{ border: '1.5px solid #e2e8f0', borderTop: 'none', borderRadius: '0 0 8px 8px', padding: '16px', marginTop: 0, background: '#ffffff' }}>
+          <TabsContent value="cnc-relief">
             {/* Demo banner — CNC Relief */}
             <div
-              className="mb-5 rounded-xl overflow-hidden p-4"
-              style={{ background: '#fffbeb', border: '1px solid #fde68a' }}
+              className="mb-5 rounded-2xl overflow-hidden p-4"
+              style={{ background: '#ffffff', border: '1px solid #e8eaf0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
             >
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #b45309, #d97706)'}}>
@@ -2641,11 +2770,77 @@ export default function Home() {
             <CncReliefTab />
           </TabsContent>
         </Tabs>
-      </div>{/* end outer wrapper div */}
-      </WorkspaceSidebar>
+        </div>{/* end centering wrapper */}
+      </main>
+
+      {/* ── Dark CTA Section ── */}
+      <section
+        className="mt-10 py-10 px-5 text-center"
+        style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%)' }}
+      >
+        <div className="mx-auto" style={{ maxWidth: '560px' }}>
+          <div
+            className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full mb-4"
+            style={{ background: 'rgba(255,255,255,0.12)', color: '#a5b4fc', border: '1px solid rgba(165,180,252,0.3)' }}
+          >
+            <Sparkles className="w-3 h-3" />
+            {isRtl ? 'AI חינמי להתחלה' : 'Free AI to start'}
+          </div>
+          <h2 className="font-black text-white mb-2" style={{ fontSize: 'clamp(1.3rem, 4vw, 1.9rem)', letterSpacing: '-0.02em' }}>
+            {isRtl ? 'התחל להמיר בחינם היום.' : 'Start converting for free today.'}
+          </h2>
+          <p className="text-sm mb-6" style={{ color: '#a5b4fc' }}>
+            {isRtl ? 'לייזר, CNC ועיצוב וקטורי באיכות מקצועית בעזרת AI' : 'Professional vector files for laser, CNC, and design — powered by AI'}
+          </p>
+          <button
+            onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className="inline-flex items-center gap-2 font-bold px-7 py-3 rounded-xl transition-all hover:opacity-90"
+            style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', boxShadow: '0 4px 16px rgba(99,102,241,0.4)', fontSize: '0.95rem' }}
+          >
+            <Sparkles className="w-4 h-4" />
+            {isRtl ? 'התחל עכשיו' : 'Get started now'}
+          </button>
+          <div className="flex items-center justify-center gap-5 mt-5">
+            {[
+              { label: isRtl ? 'בינה מלאכותית' : 'AI Powered', icon: '✨' },
+              { label: isRtl ? 'לייזר ו-CNC' : 'Laser & CNC', icon: '⚡' },
+              { label: isRtl ? 'קבצי DXF' : 'DXF Files', icon: '📄' },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-1.5 text-xs" style={{ color: '#c7d2fe' }}>
+                <span>{item.icon}</span>
+                <span className="font-medium">{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <footer
+        className=""
+        style={{ borderTop: '1px solid #e8eaf0', background: '#ffffff' }}
+      >
+        <div className="container py-5">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-base font-black tracking-tight" style={{ color: '#6366f1' }}>Ai</span><span className="text-base font-black tracking-tight text-gray-800">DXF</span>
+              <span className="text-xs text-gray-400 hidden sm:block">— {t("aiPoweredConverter")}</span>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-gray-400">
+              <ContactButtons />
+              <a href="/terms" className="hover:text-gray-600 transition-colors">
+                {t("terms")}
+              </a>
+              <a href="/privacy" className="hover:text-gray-600 transition-colors">
+                {t("privacy")}
+              </a>
+              <span>© 2026 AiDXF</span>
+            </div>
+          </div>
+        </div>
+      </footer>
 
       {/* Token Pricing Modal */}
       <TokenPricingModal open={pricingModalOpen} onClose={() => setPricingModalOpen(false)} />
-    </>
+    </div>
   );
 }
