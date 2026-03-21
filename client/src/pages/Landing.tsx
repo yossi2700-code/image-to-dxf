@@ -968,33 +968,34 @@ export default function Landing() {
       </section>
 
       {/* ── FINAL CTA ── */}
-      <section style={{ padding: "80px 24px", background: "linear-gradient(160deg,#1e1b4b 0%,#312e81 100%)", textAlign: "center" }}>
-        <div style={{ maxWidth: 600, margin: "0 auto" }}>
-          <h2 style={{ color: "#fff", fontSize: "clamp(1.6rem,3.5vw,2.4rem)", fontWeight: 900, marginBottom: 16, letterSpacing: "-0.02em" }}>{t.finalCtaTitle}</h2>
-          <p style={{ color: "#c4b5fd", fontSize: 16, marginBottom: 36, lineHeight: 1.7 }}>{t.finalCtaSubtitle}</p>
+      <section style={{ padding: "100px 24px", background: "linear-gradient(160deg,#1e1b4b 0%,#312e81 100%)", textAlign: "center" }}>
+        <div style={{ maxWidth: 640, margin: "0 auto" }}>
+          <h2 style={{ color: "#fff", fontSize: "clamp(2rem,4.5vw,3rem)", fontWeight: 900, marginBottom: 28, letterSpacing: "-0.02em", lineHeight: 1.2 }}>{t.finalCtaTitle}</h2>
+          <p style={{ color: "#c4b5fd", fontSize: 18, marginBottom: 48, lineHeight: 1.8 }}>{t.finalCtaSubtitle}</p>
           <button
             onClick={handleOpenAuth}
-            style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", borderRadius: 14, padding: "16px 40px", fontWeight: 800, fontSize: 18, cursor: "pointer", boxShadow: "0 4px 24px rgba(99,102,241,0.4)", transition: "transform 0.15s" }}
-            onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.04)")}
-            onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+            style={{ background: "linear-gradient(135deg,#7c6fcd,#a78bfa)", color: "#fff", border: "none", borderRadius: 16, padding: "22px 80px", fontWeight: 800, fontSize: 22, cursor: "pointer", boxShadow: "0 8px 32px rgba(124,111,205,0.45)", transition: "transform 0.15s, box-shadow 0.15s", display: "block", margin: "0 auto", minWidth: 280 }}
+            onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.04)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(124,111,205,0.6)"; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(124,111,205,0.45)"; }}
           >
             {t.finalCtaBtn}
           </button>
-          <div style={{ marginTop: 20, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
+          <div style={{ marginTop: 28, display: "flex", alignItems: "center", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
             {/* PayPal secure badge */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, padding: "7px 14px" }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#003087" stroke="#009cde" strokeWidth="0.5"/>
-                <path d="M10 12l2 2 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 12, padding: "10px 20px" }}>
+              {/* Shield checkmark icon */}
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#1e3a5f" stroke="#60a5fa" strokeWidth="1"/>
+                <path d="M9 12l2 2 4-4" stroke="#60a5fa" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span style={{ color: "#e0e7ff", fontSize: 12, fontWeight: 600 }}>רכישה מאובטחת</span>
+              <span style={{ color: "#e0e7ff", fontSize: 14, fontWeight: 700 }}>רכישה מאובטחת</span>
               {/* PayPal wordmark */}
-              <svg width="52" height="14" viewBox="0 0 52 14" fill="none">
-                <text x="0" y="11" fontFamily="Arial" fontWeight="800" fontSize="11" fill="#009cde">Pay</text>
-                <text x="19" y="11" fontFamily="Arial" fontWeight="800" fontSize="11" fill="#003087">Pal</text>
+              <svg width="56" height="16" viewBox="0 0 56 16" fill="none">
+                <text x="0" y="13" fontFamily="Arial" fontWeight="800" fontSize="13" fill="#009cde">Pay</text>
+                <text x="22" y="13" fontFamily="Arial" fontWeight="800" fontSize="13" fill="#003087">Pal</text>
               </svg>
             </div>
-            <p style={{ color: "#7c6fcd", fontSize: 12, margin: 0 }}>ללא כרטיס אשראי</p>
+            <span style={{ color: "#8b7fd4", fontSize: 14, fontWeight: 500 }}>ללא כרטיס אשראי</span>
           </div>
         </div>
       </section>
