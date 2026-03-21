@@ -92,7 +92,7 @@ const BEFORE_AFTER = [
     desc_he: "שדה חמניות עם שקיעה — פרחים, עלים, קרני שמש",
     desc_en: "Sunflower field at sunset — flowers, leaves, sun rays",
     before: `${CDN}/sunflower-hq-Y3aohWoQ46fckgCDfbq6hr.png`,
-    after: `${CDN}/sunflower-vector-hq_51c83cd7.png`,
+    after: `${CDN}/sunflower-vector-v3_598ee7c1.png`,
   },
 ];
 
@@ -208,6 +208,20 @@ const AI_EXAMPLES = [
     prompt_he: "מספריים מקצועיות",
     prompt_en: "Professional scissors",
     img: `${CDN}/ai-create-scissors-QopeAzD8GtJKXM92QkvmRD.webp`,
+  },
+  {
+    label_he: "סקייטבורד",
+    label_en: "Skateboard",
+    prompt_he: "סקייטבורד מקצועי עם גלגלים",
+    prompt_en: "Professional skateboard with wheels",
+    img: `${CDN}/ai-skateboard-dxf-HSkbD3L5Ksf9jFSsx67SLy.png`,
+  },
+  {
+    label_he: "נעל ספורט",
+    label_en: "Sneaker",
+    prompt_he: "נעל ספורט גבוהה קלאסית",
+    prompt_en: "Classic high-top sneaker",
+    img: `${CDN}/ai-sneaker-dxf_a01cf887.png`,
   },
 ];
 
