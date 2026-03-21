@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>עיצוב A — 3 וריאציות Sidebar</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; padding: 32px 16px; }
+  h1 { text-align: center; font-size: 1.5rem; color: #1e293b; margin-bottom: 8px; font-weight: 800; }
+  .subtitle { text-align: center; color: #64748b; font-size: 0.9rem; margin-bottom: 40px; }
+  .mockup-section { margin-bottom: 56px; }
+  .mockup-label { display: inline-flex; align-items: center; gap: 8px; background: #1e293b; color: white; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; padding: 6px 14px; border-radius: 20px; margin-bottom: 10px; }
+  .mockup-desc { color: #475569; font-size: 0.85rem; margin-bottom: 16px; max-width: 680px; line-height: 1.5; }
+  .workspace-frame { border-radius: 14px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.13); max-width: 900px; }
+  .divider { height: 1px; background: #e2e8f0; margin: 40px 0; }
+
+  /* ══════════════════════════════════════════
+     VARIANT A1 — Dark Navy + Indigo Accent
+  ══════════════════════════════════════════ */
+  .a1 { display: flex; min-height: 500px; }
+  .a1 .sb { width: 230px; background: #0f172a; display: flex; flex-direction: column; flex-shrink: 0; }
+  .a1 .sb-top { padding: 20px 18px 16px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .a1 .sb-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .a1 .sb-logo-icon { width: 34px; height: 34px; border-radius: 9px; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+  .a1 .sb-logo-text { font-size: 1.05rem; font-weight: 800; color: white; letter-spacing: -0.02em; }
+  .a1 .sb-logo-text span { color: #818cf8; }
+  .a1 .sb-tagline { font-size: 0.68rem; color: #475569; font-weight: 500; margin-top: 2px; }
+  .a1 .sb-nav { flex: 1; padding: 12px 10px; }
+  .a1 .sb-section-label { font-size: 0.62rem; font-weight: 700; color: #334155; letter-spacing: 0.12em; padding: 0 8px; margin: 12px 0 6px; }
+  .a1 .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 9px; color: #64748b; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.15s; margin-bottom: 2px; }
+  .a1 .nav-item:hover { background: rgba(255,255,255,0.06); color: #cbd5e1; }
+  .a1 .nav-item.active { background: rgba(99,102,241,0.18); color: #a5b4fc; }
+  .a1 .nav-icon { width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; background: rgba(255,255,255,0.05); flex-shrink: 0; }
+  .a1 .nav-item.active .nav-icon { background: rgba(99,102,241,0.25); }
+  .a1 .nav-badge { margin-left: auto; font-size: 0.62rem; font-weight: 700; padding: 2px 6px; border-radius: 8px; background: #f59e0b; color: white; }
+  .a1 .sb-bottom { padding: 14px 10px; border-top: 1px solid rgba(255,255,255,0.07); }
+  .a1 .user-row { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 9px; cursor: pointer; }
+  .a1 .user-row:hover { background: rgba(255,255,255,0.06); }
+  .a1 .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
+  .a1 .user-name { font-size: 0.78rem; font-weight: 600; color: #94a3b8; flex: 1; }
+  .a1 .token-chip { font-size: 0.68rem; font-weight: 700; color: #818cf8; }
+  .a1 .main { flex: 1; background: #f8faff; display: flex; flex-direction: column; }
+  .a1 .topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 22px; background: white; border-bottom: 1px solid #e8eaf0; }
+  .a1 .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: #94a3b8; }
+  .a1 .breadcrumb b { color: #1e293b; font-weight: 700; }
+  .a1 .topbar-actions { display: flex; align-items: center; gap: 8px; }
+  .a1 .btn-sm { padding: 6px 14px; border-radius: 7px; font-size: 0.78rem; font-weight: 600; cursor: pointer; border: none; }
+  .a1 .btn-ghost { background: #f1f5f9; color: #64748b; }
+  .a1 .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; }
+  .a1 .content { flex: 1; padding: 22px; }
+  .a1 .upload-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 28px; text-align: center; margin-bottom: 16px; }
+  .a1 .upload-icon-wrap { width: 56px; height: 56px; border-radius: 14px; background: #ede9fe; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+  .a1 .upload-title { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+  .a1 .upload-sub { font-size: 0.78rem; color: #94a3b8; }
+  .a1 .dashed-zone { border: 2px dashed #c7d2fe; border-radius: 10px; padding: 20px; text-align: center; margin-top: 14px; font-size: 0.8rem; color: #94a3b8; }
+  .a1 .dashed-zone b { color: #6366f1; }
+  .a1 .action-bar { display: flex; gap: 10px; margin-top: 14px; }
+  .a1 .btn-generate { flex: 1; padding: 12px; border-radius: 9px; border: none; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; font-weight: 700; font-size: 0.88rem; cursor: pointer; }
+  .a1 .btn-history { padding: 12px 18px; border-radius: 9px; border: 1.5px solid #e2e8f0; background: white; color: #64748b; font-weight: 600; font-size: 0.88rem; cursor: pointer; }
+
+  /* ══════════════════════════════════════════
+     VARIANT A2 — Light Sidebar + Colorful Icons
+  ══════════════════════════════════════════ */
+  .a2 { display: flex; min-height: 500px; }
+  .a2 .sb { width: 240px; background: white; border-right: 1.5px solid #e2e8f0; display: flex; flex-direction: column; flex-shrink: 0; }
+  .a2 .sb-top { padding: 20px 18px 16px; border-bottom: 1.5px solid #f1f5f9; }
+  .a2 .sb-logo { display: flex; align-items: center; gap: 10px; }
+  .a2 .sb-logo-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
+  .a2 .sb-logo-name { font-size: 1.1rem; font-weight: 800; color: #1e293b; letter-spacing: -0.02em; }
+  .a2 .sb-logo-name span { color: #6366f1; }
+  .a2 .sb-nav { flex: 1; padding: 14px 12px; }
+  .a2 .nav-label { font-size: 0.62rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.12em; padding: 0 6px; margin: 10px 0 6px; }
+  .a2 .nav-item { display: flex; align-items: center; gap: 11px; padding: 10px 10px; border-radius: 10px; color: #64748b; font-size: 0.83rem; font-weight: 500; cursor: pointer; transition: all 0.15s; margin-bottom: 3px; }
+  .a2 .nav-item:hover { background: #f8faff; color: #334155; }
+  .a2 .nav-item.active { background: #f0f0ff; color: #6366f1; font-weight: 700; }
+  .a2 .nav-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0; }
+  .a2 .nav-icon.purple { background: #ede9fe; }
+  .a2 .nav-icon.teal { background: #ccfbf1; }
+  .a2 .nav-icon.amber { background: #fef3c7; }
+  .a2 .nav-icon.violet { background: #f3e8ff; }
+  .a2 .nav-icon.slate { background: #f1f5f9; }
+  .a2 .nav-badge { margin-left: auto; font-size: 0.62rem; font-weight: 700; padding: 2px 7px; border-radius: 10px; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+  .a2 .sb-bottom { padding: 14px 12px; border-top: 1.5px solid #f1f5f9; }
+  .a2 .token-card { background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 10px; padding: 12px 14px; }
+  .a2 .token-label { font-size: 0.68rem; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 2px; }
+  .a2 .token-val { font-size: 1.2rem; font-weight: 800; color: white; }
+  .a2 .token-sub { font-size: 0.68rem; color: rgba(255,255,255,0.6); margin-top: 1px; }
+  .a2 .main { flex: 1; background: #f8faff; display: flex; flex-direction: column; }
+  .a2 .topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 22px; background: white; border-bottom: 1.5px solid #f1f5f9; }
+  .a2 .page-title { font-size: 1rem; font-weight: 800; color: #1e293b; }
+  .a2 .page-sub { font-size: 0.72rem; color: #94a3b8; margin-top: 1px; }
+  .a2 .user-pill { display: flex; align-items: center; gap: 8px; background: #f8faff; border: 1.5px solid #e2e8f0; border-radius: 20px; padding: 5px 12px 5px 5px; cursor: pointer; }
+  .a2 .user-av { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.72rem; font-weight: 700; }
+  .a2 .user-nm { font-size: 0.75rem; font-weight: 600; color: #334155; }
+  .a2 .content { flex: 1; padding: 22px; }
+  .a2 .mode-tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+  .a2 .mode-tab { flex: 1; padding: 10px; border-radius: 9px; text-align: center; font-size: 0.8rem; font-weight: 600; cursor: pointer; border: 1.5px solid #e2e8f0; background: white; color: #64748b; }
+  .a2 .mode-tab.active { border-color: #6366f1; background: #f0f0ff; color: #6366f1; }
+  .a2 .input-card { background: white; border-radius: 12px; border: 1.5px solid #e2e8f0; padding: 20px; margin-bottom: 14px; }
+  .a2 .input-label { font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; }
+  .a2 .input-field { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid #e2e8f0; font-size: 0.85rem; color: #1e293b; background: #f8faff; outline: none; }
+  .a2 .or-divider { text-align: center; font-size: 0.72rem; color: #94a3b8; font-weight: 600; margin: 12px 0; }
+  .a2 .upload-zone { border: 2px dashed #c7d2fe; border-radius: 9px; padding: 18px; text-align: center; font-size: 0.78rem; color: #94a3b8; background: #f8faff; }
+  .a2 .upload-zone b { color: #6366f1; }
+  .a2 .gen-btn { width: 100%; padding: 12px; border-radius: 9px; border: none; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer; margin-top: 14px; box-shadow: 0 4px 14px rgba(99,102,241,0.3); }
+
+  /* ══════════════════════════════════════════
+     VARIANT A3 — Gradient Sidebar + Glassmorphism
+  ══════════════════════════════════════════ */
+  .a3 { display: flex; min-height: 500px; background: #0a0a1a; }
+  .a3 .sb { width: 230px; background: linear-gradient(180deg, #1a1040 0%, #0f0a2e 100%); display: flex; flex-direction: column; flex-shrink: 0; border-right: 1px solid rgba(139,92,246,0.2); }
+  .a3 .sb-top { padding: 22px 16px 18px; }
+  .a3 .sb-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .a3 .sb-logo-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #7c3aed, #6366f1); display: flex; align-items: center; justify-content: center; font-size: 1rem; box-shadow: 0 0 16px rgba(124,58,237,0.5); }
+  .a3 .sb-logo-text { font-size: 1.05rem; font-weight: 800; color: white; letter-spacing: -0.02em; }
+  .a3 .sb-logo-text span { background: linear-gradient(135deg, #a78bfa, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .a3 .sb-tagline { font-size: 0.65rem; color: rgba(139,92,246,0.7); font-weight: 500; letter-spacing: 0.05em; }
+  .a3 .sb-nav { flex: 1; padding: 8px 12px; }
+  .a3 .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 10px; border-radius: 10px; color: rgba(148,163,184,0.7); font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.2s; margin-bottom: 3px; }
+  .a3 .nav-item:hover { background: rgba(139,92,246,0.1); color: #c4b5fd; }
+  .a3 .nav-item.active { background: rgba(139,92,246,0.2); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
+  .a3 .nav-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; background: rgba(255,255,255,0.05); flex-shrink: 0; }
+  .a3 .nav-item.active .nav-icon { background: rgba(139,92,246,0.3); box-shadow: 0 0 10px rgba(139,92,246,0.3); }
+  .a3 .nav-badge { margin-left: auto; font-size: 0.62rem; font-weight: 700; padding: 2px 6px; border-radius: 8px; background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+  .a3 .sb-bottom { padding: 14px 12px; border-top: 1px solid rgba(139,92,246,0.15); }
+  .a3 .user-glass { background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.2); border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 9px; cursor: pointer; }
+  .a3 .user-av { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #6366f1); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.72rem; font-weight: 700; box-shadow: 0 0 8px rgba(124,58,237,0.4); }
+  .a3 .user-info { flex: 1; }
+  .a3 .user-name { font-size: 0.75rem; font-weight: 600; color: #c4b5fd; }
+  .a3 .user-tokens { font-size: 0.65rem; color: rgba(139,92,246,0.7); }
+  .a3 .main { flex: 1; background: #0d0d1f; display: flex; flex-direction: column; }
+  .a3 .topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 22px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(139,92,246,0.15); }
+  .a3 .breadcrumb { font-size: 0.78rem; color: rgba(148,163,184,0.6); }
+  .a3 .breadcrumb b { color: #a78bfa; font-weight: 700; }
+  .a3 .topbar-right { display: flex; align-items: center; gap: 8px; }
+  .a3 .btn-glass { padding: 6px 14px; border-radius: 7px; font-size: 0.75rem; font-weight: 600; cursor: pointer; background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3); color: #a78bfa; }
+  .a3 .content { flex: 1; padding: 22px; }
+  .a3 .glass-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(139,92,246,0.2); border-radius: 14px; padding: 24px; backdrop-filter: blur(10px); }
+  .a3 .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .a3 .card-icon { width: 38px; height: 38px; border-radius: 10px; background: rgba(139,92,246,0.25); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 0 12px rgba(139,92,246,0.3); }
+  .a3 .card-title { font-size: 0.95rem; font-weight: 700; color: white; }
+  .a3 .card-sub { font-size: 0.72rem; color: rgba(148,163,184,0.6); margin-top: 1px; }
+  .a3 .upload-zone { border: 1.5px dashed rgba(139,92,246,0.4); border-radius: 10px; padding: 24px; text-align: center; background: rgba(139,92,246,0.05); margin-bottom: 14px; }
+  .a3 .upload-zone-icon { font-size: 1.8rem; margin-bottom: 8px; }
+  .a3 .upload-zone-text { font-size: 0.8rem; color: rgba(148,163,184,0.6); }
+  .a3 .upload-zone-text b { color: #a78bfa; }
+  .a3 .gen-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; background: linear-gradient(135deg, #7c3aed, #6366f1); color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer; box-shadow: 0 4px 20px rgba(124,58,237,0.4); letter-spacing: 0.02em; }
+</style>
+</head>
+<body>
+
+<h1>עיצוב A — 3 וריאציות Sidebar</h1>
+<p class="subtitle">כל וריאציה שומרת על הסגנון הצדדי — שינוי בצבעים, אווירה ופרטים</p>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- A1: Dark Navy + Indigo -->
+<!-- ═══════════════════════════════════════ -->
+<div class="mockup-section">
+  <div class="mockup-label">A1 — Dark Navy + Indigo</div>
+  <p class="mockup-desc">Sidebar כהה עם רקע Navy עמוק, accent בגוון Indigo/Purple. עיצוב מקצועי ורציני — מזכיר Linear, Vercel, Supabase. מתאים למשתמשים טכניים.</p>
+  <div class="workspace-frame">
+    <div class="a1">
+      <div class="sb">
+        <div class="sb-top">
+          <div class="sb-logo">
+            <div class="sb-logo-icon">✦</div>
+            <div>
+              <div class="sb-logo-text">Ai <span>DXF</span></div>
+              <div class="sb-tagline">Vector & CNC Tools</div>
+            </div>
+          </div>
+        </div>
+        <div class="sb-nav">
+          <div class="sb-section-label">TOOLS</div>
+          <div class="nav-item active">
+            <div class="nav-icon">✨</div>
+            <span>AI Create</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-icon">🔍</div>
+            <span>AI Outline</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-icon">✏️</div>
+            <span>AI Sketch</span>
+            <span class="nav-badge">Soon</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-icon">👤</div>
+            <span>Portrait</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-icon">⛰️</div>
+            <span>CNC Relief</span>
+            <span class="nav-badge">Soon</span>
+          </div>
+          <div class="sb-section-label">ACCOUNT</div>
+          <div class="nav-item">
+            <div class="nav-icon">📋</div>
+            <span>History</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-icon">💳</div>
+            <span>Pricing</span>
+          </div>
+        </div>
+        <div class="sb-bottom">
+          <div class="user-row">
+            <div class="user-avatar">Y</div>
+            <div class="user-name">Yossi</div>
+            <div class="token-chip">⚡ 20</div>
+          </div>
+        </div>
+      </div>
+      <div class="main">
+        <div class="topbar">
+          <div class="breadcrumb">Tools / <b>AI Create</b></div>
+          <div class="topbar-actions">
+            <button class="btn-sm btn-ghost">📋 History</button>
+            <button class="btn-sm btn-primary">✨ Generate</button>
+          </div>
+        </div>
+        <div class="content">
+          <div class="upload-card">
+            <div class="upload-icon-wrap">✨</div>
+            <div class="upload-title">AI Create — Generate from text</div>
+            <div class="upload-sub">Describe your design and AI will generate a DXF vector file</div>
+            <div class="dashed-zone">
+              Drop image here or <b>click to upload</b> — or type a description below
+            </div>
+          </div>
+          <div class="action-bar">
+            <button class="btn-generate">✨ Generate DXF</button>
+            <button class="btn-history">📋 History</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- A2: Light Sidebar + Colorful Icons -->
+<!-- ═══════════════════════════════════════ -->
+<div class="mockup-section">
+  <div class="mockup-label">A2 — Light Sidebar + כרטיס אסימונים</div>
+  <p class="mockup-desc">Sidebar לבן עם אייקונים צבעוניים לכל כלי, כרטיס אסימונים בתחתית. עיצוב ידידותי ומוכר — מזכיר Notion, Slack. מתאים לכל סוגי משתמשים.</p>
+  <div class="workspace-frame">
+    <div class="a2">
+      <div class="sb">
+        <div class="sb-top">
+          <div class="sb-logo">
+            <div class="sb-logo-icon">✦</div>
+            <div class="sb-logo-name">Ai <span>DXF</span></div>
+          </div>
+        </div>
+        <div class="sb-nav">
+          <div class="nav-label">TOOLS</div>
+          <div class="nav-item active">
+            <div class="nav-icon purple">✨</div>
+            <span>AI Create</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-icon teal">🔍</div>
+            <span>AI Outline</span>
+          </div>
+          <div class="nav-item" style="opacity:0.5">
+            <div class="nav-icon amber">✏️</div>
+            <span>AI Sketch</span>
+            <span class="nav-badge">Soon</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-icon violet">👤</div>
+            <span>Portrait</span>
+          </div>
+          <div class="nav-item" style="opacity:0.5">
+            <div class="nav-icon slate">⛰️</div>
+            <span>CNC Relief</span>
+            <span class="nav-badge">Soon</span>
+          </div>
+          <div class="nav-label">ACCOUNT</div>
+          <div class="nav-item">
+            <div class="nav-icon slate">📋</div>
+            <span>History</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-icon slate">💳</div>
+            <span>Pricing</span>
+          </div>
+        </div>
+        <div class="sb-bottom">
+          <div class="token-card">
+            <div class="token-label">TOKENS BALANCE</div>
+            <div class="token-val">20 ⚡</div>
+            <div class="token-sub">Buy more tokens →</div>
+          </div>
+        </div>
+      </div>
+      <div class="main">
+        <div class="topbar">
+          <div>
+            <div class="page-title">AI Create</div>
+            <div class="page-sub">Generate DXF from text or image</div>
+          </div>
+          <div class="user-pill">
+            <div class="user-av">Y</div>
+            <div class="user-nm">Yossi</div>
+          </div>
+        </div>
+        <div class="content">
+          <div class="mode-tabs">
+            <div class="mode-tab active">📝 From Text</div>
+            <div class="mode-tab">🖼️ From Image</div>
+          </div>
+          <div class="input-card">
+            <div class="input-label">DESCRIBE YOUR DESIGN</div>
+            <input class="input-field" placeholder="e.g. Classic motorcycle side view with detailed engine..." readonly />
+            <div class="or-divider">— or upload an image —</div>
+            <div class="upload-zone">Drop image here or <b>click to upload</b></div>
+          </div>
+          <button class="gen-btn">✨ Generate DXF — 2 tokens</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- A3: Gradient Dark + Glassmorphism -->
+<!-- ═══════════════════════════════════════ -->
+<div class="mockup-section">
+  <div class="mockup-label">A3 — Dark Gradient + Glassmorphism</div>
+  <p class="mockup-desc">Sidebar עם gradient כהה ואפקט זכוכית (glassmorphism). עיצוב פרימיום ומרשים — מזכיר Adobe, Midjourney. מתאים לקהל שמחפש חוויה ויזואלית עשירה.</p>
+  <div class="workspace-frame">
+    <div class="a3">
+      <div class="sb">
+        <div class="sb-top">
+          <div class="sb-logo">
+            <div class="sb-logo-icon">✦</div>
+            <div>
+              <div class="sb-logo-text">Ai <span>DXF</span></div>
+              <div class="sb-tagline">AI Vector Studio</div>
+            </div>
+          </div>
+        </div>
+        <div class="sb-nav">
+          <div class="nav-item active">
+            <div class="nav-icon">✨</div>
+            <span>AI Create</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-icon">🔍</div>
+            <span>AI Outline</span>
+          </div>
+          <div class="nav-item" style="opacity:0.4">
+            <div class="nav-icon">✏️</div>
+            <span>AI Sketch</span>
+            <span class="nav-badge">Soon</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-icon">👤</div>
+            <span>Portrait</span>
+          </div>
+          <div class="nav-item" style="opacity:0.4">
+            <div class="nav-icon">⛰️</div>
+            <span>CNC Relief</span>
+            <span class="nav-badge">Soon</span>
+          </div>
+          <div class="nav-item" style="margin-top:12px">
+            <div class="nav-icon">📋</div>
+            <span>History</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-icon">💳</div>
+            <span>Pricing</span>
+          </div>
+        </div>
+        <div class="sb-bottom">
+          <div class="user-glass">
+            <div class="user-av">Y</div>
+            <div class="user-info">
+              <div class="user-name">Yossi</div>
+              <div class="user-tokens">⚡ 20 tokens</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="main">
+        <div class="topbar">
+          <div class="breadcrumb">Workspace / <b>AI Create</b></div>
+          <div class="topbar-right">
+            <button class="btn-glass">📋 History</button>
+            <button class="btn-glass">⚡ Buy Tokens</button>
+          </div>
+        </div>
+        <div class="content">
+          <div class="glass-card">
+            <div class="card-header">
+              <div class="card-icon">✨</div>
+              <div>
+                <div class="card-title">AI Create</div>
+                <div class="card-sub">Generate DXF vector from text description or image</div>
+              </div>
+            </div>
+            <div class="upload-zone">
+              <div class="upload-zone-icon">🖼️</div>
+              <div class="upload-zone-text">Drop image here or <b>click to upload</b><br>or type a description below</div>
+            </div>
+            <button class="gen-btn" style="margin-top:14px">✨ Generate DXF — 2 tokens</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

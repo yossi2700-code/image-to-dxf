@@ -19,6 +19,7 @@ import { FaceDetectTab } from "@/components/FaceDetectTab";
 import { CncReliefTab } from "@/components/CncReliefTab";
 import { AiProcessingAnimation } from "@/components/AiProcessingAnimation";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { WorkspaceSidebar, type WorkspaceTab } from "@/components/WorkspaceSidebar";
 import { InsufficientTokensBanner } from "@/components/InsufficientTokensBanner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
@@ -1975,14 +1976,14 @@ export default function Home() {
   const [portraitImageKey, setPortraitImageKey] = useState(0);
 
   // Remember active tab — auto-switch to tab with active job on page return
-  const [activeTab, setActiveTab] = useState<string>(() => {
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>(() => {
     // If there's an active job, go to that tab automatically
     if (localStorage.getItem("ai_trace_jobId")) return "trace";
     if (localStorage.getItem("doc_redraw_jobId")) return "redraw";
     if (localStorage.getItem("ai_generate_jobId")) return "ai";
     if (localStorage.getItem("face_detect_jobId")) return "face";
     // Otherwise restore last visited tab
-    return localStorage.getItem("active_tab") ?? "ai";
+    return (localStorage.getItem("active_tab") as WorkspaceTab) ?? "ai";
   });
 
   // Poll localStorage every 2s to detect job changes (even from child components)
@@ -2136,15 +2137,7 @@ export default function Home() {
   };
 
   return (
-    <div
-      className="min-h-screen"
-      style={{
-        background: '#ffffff',
-        backgroundImage: 'linear-gradient(rgba(99,102,241,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.05) 1px, transparent 1px)',
-        backgroundSize: '40px 40px',
-      }}
-      dir={isRtl ? "rtl" : "ltr"}
-    >
+    <>
       {/* Token Bonus Animation Overlay */}
       {bonusAnimation && (
         <TokenBonusAnimation
@@ -2152,201 +2145,23 @@ export default function Home() {
           onDone={() => setBonusAnimation(null)}
         />
       )}
-      {/* Header */}
-      <header
-        className="sticky top-0 z-20"
-        style={{
-          background: 'rgba(255,255,255,0.97)',
-          backdropFilter: 'blur(8px)',
-          borderBottom: '1.5px solid #e2e8f0',
-          boxShadow: 'none',
+      <WorkspaceSidebar
+        activeTab={activeTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          localStorage.setItem("active_tab", tab);
+          document.getElementById("main-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
         }}
+        appUser={appUser ? { email: appUser.email, name: appUser.name ?? undefined } : null}
+        tokenBalance={tokenBalance}
+        hasPendingWelcomeBonus={hasPendingWelcomeBonus}
+        onOpenPricing={() => setPricingModalOpen(true)}
+        onOpenTokenHistory={() => setTokenHistoryOpen(v => !v)}
+        onLogout={handleLogout}
+        onOpenAuth={() => { setLimitReached(false); setAuthOpen(true); }}
+        activeJobs={{ generate: activeJobs.generate, trace: activeJobs.trace, face: activeJobs.face }}
       >
-        <div className="px-3 py-2 flex items-center gap-2 max-w-7xl mx-auto">
-          {/* AiDXF Logo */}
-          <a href="/landing" className="flex items-center gap-1.5 shrink-0 cursor-pointer" style={{ textDecoration: 'none' }}>
-            <div
-              className="w-7 h-7 rounded-lg shrink-0 flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}
-            >
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-                <path d="M4 16 Q7 7 10 10 Q13 13 16 4" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
-                <circle cx="4" cy="16" r="1.8" fill="#06b6d4"/>
-                <circle cx="10" cy="10" r="1.8" fill="white"/>
-                <circle cx="16" cy="4" r="1.8" fill="#06b6d4"/>
-              </svg>
-            </div>
-            <span className="hidden sm:inline text-base font-black tracking-tight" style={{ color: '#6366f1', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>Ai</span><span className="hidden sm:inline text-base font-black tracking-tight" style={{ color: '#111827', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>DXF</span>
-          </a>
 
-          {/* Right side nav */}
-          <div className="flex items-center gap-2 ms-auto">
-            {/* Pricing button — opens token pricing modal */}
-            <button
-              onClick={() => setPricingModalOpen(true)}
-              className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-80 shrink-0"
-              style={{ color: '#6366f1', background: '#eef2ff', border: '1px solid #c7d2fe', whiteSpace: 'nowrap' }}
-            >
-              {isRtl ? '💎 מחירון' : '💎 Pricing'}
-            </button>
-
-            {appUser ? (
-              <>
-                {/* Token balance badge with history popup */}
-                <div className="relative" ref={tokenHistoryRef}>
-                  <button
-                    onClick={() => setTokenHistoryOpen(v => !v)}
-                    className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full shrink-0 hover:opacity-80 transition-opacity"
-                    style={{ background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4338ca', fontSize: '12px', whiteSpace: 'nowrap' }}
-                    title={isRtl ? 'היסטוריית אסימונים' : 'Token history'}
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>{tokenBalance}</span>
-                    {/* Pending welcome bonus dot */}
-                    {hasPendingWelcomeBonus && (
-                      <span
-                        className="w-2 h-2 rounded-full animate-pulse"
-                        style={{ background: '#f59e0b', display: 'inline-block', marginLeft: 2 }}
-                        title={isRtl ? 'מחכים לך 20 בונוס במייל' : '20 bonus tokens waiting in your email'}
-                      />
-                    )}
-                  </button>
-                  {tokenHistoryOpen && (
-                    <TokenHistoryPopup
-                      onClose={() => setTokenHistoryOpen(false)}
-                      isRtl={isRtl}
-                      containerRef={tokenHistoryRef}
-                    />
-                  )}
-                </div>
-
-                {/* User avatar dropdown */}
-                <div className="relative" ref={userMenuRef}>
-                  <button
-                    onClick={() => setUserMenuOpen(v => !v)}
-                    className="flex items-center gap-2 rounded-2xl px-3 py-1.5 font-semibold transition-all hover:opacity-90 active:scale-95"
-                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', boxShadow: '0 2px 10px rgba(99,102,241,0.4)' }}
-                    aria-label={isRtl ? 'תפריט משתמש' : 'User menu'}
-                  >
-                    {/* Avatar circle with initials */}
-                    <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-black shrink-0"
-                      style={{ background: 'rgba(255,255,255,0.28)' }}
-                    >
-                      {(appUser.name || appUser.email || '?').charAt(0).toUpperCase()}
-                    </div>
-                    <span className="text-sm font-bold max-w-[60px] truncate hidden sm:inline">
-                      {appUser.name || appUser.email.split('@')[0]}
-                    </span>
-                    <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {/* Dropdown menu */}
-                  {userMenuOpen && (
-                    <div
-                      className="absolute top-full mt-2 z-50 overflow-hidden"
-                      style={{
-                        [isRtl ? 'left' : 'right']: 0,
-                        minWidth: 230,
-                        background: 'linear-gradient(160deg, #1a1a2e 0%, #16213e 100%)',
-                        border: '1px solid rgba(139,92,246,0.3)',
-                        borderRadius: 16,
-                        boxShadow: '0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,92,246,0.1), inset 0 1px 0 rgba(255,255,255,0.05)',
-                      }}
-                    >
-                      {/* User info header */}
-                      <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid rgba(139,92,246,0.15)', background: 'rgba(139,92,246,0.06)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: '#fff', flexShrink: 0, boxShadow: '0 2px 8px rgba(124,58,237,0.4)' }}>
-                            {(appUser.name || appUser.email)[0].toUpperCase()}
-                          </div>
-                          <div style={{ overflow: 'hidden', flex: 1 }}>
-                            <p style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{appUser.name || appUser.email.split('@')[0]}</p>
-                            <p style={{ fontSize: 11, color: 'rgba(148,163,184,0.75)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{appUser.email}</p>
-                          </div>
-                        </div>
-                      </div>
-                      {/* Menu items */}
-                      <div style={{ padding: '8px 8px 4px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        {/* Personal Area */}
-                        <button
-                          onClick={() => { setUserMenuOpen(false); window.location.href = '/account'; }}
-                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.1)', cursor: 'pointer', width: '100%', color: '#c4b5fd', fontSize: 13, fontWeight: 600, textAlign: isRtl ? 'right' : 'left', transition: 'all 0.15s' }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(139,92,246,0.22)'; (e.currentTarget as HTMLButtonElement).style.color = '#ddd6fe'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(139,92,246,0.5)'; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(139,92,246,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#c4b5fd'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(139,92,246,0.25)'; }}
-                        >
-                          <span style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg, #7c3aed, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(124,58,237,0.4)' }}>
-                            <User style={{ width: 15, height: 15, color: 'white' }} />
-                          </span>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 700, fontSize: 13 }}>{isRtl ? 'אזור אישי' : 'My Account'}</div>
-                            <div style={{ fontSize: 10, color: 'rgba(196,181,253,0.65)', fontWeight: 400 }}>{isRtl ? 'פרופיל וסטטיסטיקות' : 'Profile & stats'}</div>
-                          </div>
-                        </button>
-                        {/* History */}
-                        <button
-                          onClick={() => { setUserMenuOpen(false); window.location.href = '/history'; }}
-                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(99,102,241,0.25)', background: 'rgba(99,102,241,0.1)', cursor: 'pointer', width: '100%', color: '#a5b4fc', fontSize: 13, fontWeight: 600, textAlign: isRtl ? 'right' : 'left', transition: 'all 0.15s' }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(99,102,241,0.22)'; (e.currentTarget as HTMLButtonElement).style.color = '#c7d2fe'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(99,102,241,0.5)'; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(99,102,241,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#a5b4fc'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(99,102,241,0.25)'; }}
-                        >
-                          <span style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg, #4f46e5, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(79,70,229,0.4)' }}>
-                            <History style={{ width: 15, height: 15, color: 'white' }} />
-                          </span>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 700, fontSize: 13 }}>{isRtl ? 'היסטוריה' : 'History'}</div>
-                            <div style={{ fontSize: 10, color: 'rgba(165,180,252,0.65)', fontWeight: 400 }}>{isRtl ? 'כל העיצובים שלך' : 'All your designs'}</div>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => { setUserMenuOpen(false); window.location.href = '/buy'; }}
-                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: 'none', background: 'rgba(16,185,129,0.08)', cursor: 'pointer', width: '100%', color: '#6ee7b7', fontSize: 13, fontWeight: 600, textAlign: isRtl ? 'right' : 'left' }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.2)'; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.08)'; }}
-                        >
-                          <span style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <CreditCard style={{ width: 14, height: 14 }} />
-                          </span>
-                          <span>{isRtl ? '✨ קנה קרדיטים' : '✨ Buy Tokens'}</span>
-                        </button>
-                      </div>
-                      {/* Logout */}
-                      <div style={{ padding: '4px 8px 8px', borderTop: '1px solid rgba(239,68,68,0.12)', marginTop: 2 }}>
-                        <button
-                          onClick={() => { setUserMenuOpen(false); handleLogout(); }}
-                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: 'none', background: 'transparent', cursor: 'pointer', width: '100%', color: '#f87171', fontSize: 13, fontWeight: 500, textAlign: isRtl ? 'right' : 'left' }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.12)'; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
-                        >
-                          <span style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <LogOut style={{ width: 14, height: 14 }} />
-                          </span>
-                          <span>{isRtl ? 'התנתק' : 'Sign out'}</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <button
-                onClick={() => { setLimitReached(false); setAuthOpen(true); }}
-                className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl font-semibold transition-all hover:opacity-90 shrink-0"
-                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: 'none', boxShadow: '0 3px 10px rgba(99,102,241,0.35)', whiteSpace: 'nowrap' }}
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                {t("loginRegister")}
-              </button>
-            )}
-          </div>
-
-          {/* Language switcher - always visible */}
-          <div className="shrink-0">
-            <LanguageSwitcher />
-          </div>
-
-        </div>
-      </header>
 
       <AuthDialog
         open={authOpen}
@@ -2372,9 +2187,7 @@ export default function Home() {
         }}
       />
 
-      <main className="py-5" style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px 24px' }}>
-        {/* Responsive layout */}
-        <div className="mx-auto" style={{ maxWidth: '100%' }}>
+      <div>
 
          {/* ── Welcome Banner (new registrations only) ── */}
         {showWelcomeBanner && (
@@ -2512,7 +2325,7 @@ export default function Home() {
                 <button
                   key={i}
                   onClick={() => {
-                    setActiveTab(f.tab);
+                    setActiveTab(f.tab as WorkspaceTab);
                     localStorage.setItem('active_tab', f.tab);
                     document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }}
@@ -2548,7 +2361,7 @@ export default function Home() {
         <Tabs
           value={activeTab}
           onValueChange={(v) => {
-            setActiveTab(v);
+            setActiveTab(v as WorkspaceTab);
             localStorage.setItem("active_tab", v);
           }}
           dir={isRtl ? "rtl" : "ltr"}
@@ -2828,37 +2641,11 @@ export default function Home() {
             <CncReliefTab />
           </TabsContent>
         </Tabs>
-        </div>{/* end centering wrapper */}
-      </main>
-
-      {/* Dark CTA Section moved to /landing page */}
-
-      <footer
-        className=""
-        style={{ borderTop: '1px solid #e8eaf0', background: '#ffffff' }}
-      >
-        <div className="container py-5">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-base font-black tracking-tight" style={{ color: '#6366f1' }}>Ai</span><span className="text-base font-black tracking-tight text-gray-800">DXF</span>
-              <span className="text-xs text-gray-400 hidden sm:block">— {t("aiPoweredConverter")}</span>
-            </div>
-            <div className="flex items-center gap-4 text-xs text-gray-400">
-              <ContactButtons />
-              <a href="/terms" className="hover:text-gray-600 transition-colors">
-                {t("terms")}
-              </a>
-              <a href="/privacy" className="hover:text-gray-600 transition-colors">
-                {t("privacy")}
-              </a>
-              <span>© 2026 AiDXF</span>
-            </div>
-          </div>
-        </div>
-      </footer>
+      </div>{/* end outer wrapper div */}
+      </WorkspaceSidebar>
 
       {/* Token Pricing Modal */}
       <TokenPricingModal open={pricingModalOpen} onClose={() => setPricingModalOpen(false)} />
-    </div>
+    </>
   );
 }

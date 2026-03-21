@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Mockups — Workspace Feature Area</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; padding: 32px 16px; }
+  h1 { text-align: center; font-size: 1.5rem; color: #1e293b; margin-bottom: 8px; font-weight: 800; }
+  .subtitle { text-align: center; color: #64748b; font-size: 0.9rem; margin-bottom: 40px; }
+  .mockup-section { margin-bottom: 56px; }
+  .mockup-label { display: inline-flex; align-items: center; gap: 8px; background: #1e293b; color: white; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; padding: 6px 14px; border-radius: 20px; margin-bottom: 16px; }
+  .mockup-desc { color: #475569; font-size: 0.85rem; margin-bottom: 16px; max-width: 600px; line-height: 1.5; }
+  .workspace-frame { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.10); max-width: 860px; }
+
+  /* ─── STYLE A: Professional Sidebar ─── */
+  .style-a { display: flex; min-height: 480px; }
+  .style-a .sidebar { width: 220px; background: #0f172a; padding: 20px 0; flex-shrink: 0; }
+  .style-a .sidebar-logo { padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px; }
+  .style-a .sidebar-logo span { font-size: 1.1rem; font-weight: 800; color: white; letter-spacing: -0.02em; }
+  .style-a .sidebar-logo span b { color: #818cf8; }
+  .style-a .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; color: #94a3b8; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.15s; border-left: 3px solid transparent; }
+  .style-a .nav-item:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
+  .style-a .nav-item.active { background: rgba(99,102,241,0.15); color: #a5b4fc; border-left-color: #6366f1; }
+  .style-a .nav-item .icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+  .style-a .nav-item.active .icon { background: rgba(99,102,241,0.25); }
+  .style-a .nav-item .badge { margin-left: auto; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 10px; background: #f59e0b; color: white; }
+  .style-a .content { flex: 1; padding: 24px; background: #f8faff; }
+  .style-a .content-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .style-a .content-title { font-size: 1.1rem; font-weight: 700; color: #1e293b; }
+  .style-a .content-subtitle { font-size: 0.78rem; color: #94a3b8; margin-top: 2px; }
+  .style-a .token-badge { display: flex; align-items: center; gap: 6px; background: white; border: 1px solid #e2e8f0; border-radius: 20px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; color: #6366f1; }
+  .style-a .upload-area { border: 2px dashed #c7d2fe; border-radius: 12px; padding: 32px; text-align: center; background: white; margin-bottom: 16px; }
+  .style-a .upload-icon { font-size: 2rem; margin-bottom: 8px; }
+  .style-a .upload-text { font-size: 0.85rem; color: #64748b; }
+  .style-a .upload-text b { color: #6366f1; }
+  .style-a .action-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+  /* ─── STYLE B: Clean Cards Grid ─── */
+  .style-b { padding: 0; }
+  .style-b .topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; border-bottom: 1px solid #e2e8f0; background: white; }
+  .style-b .topbar-logo { font-size: 1rem; font-weight: 800; color: #1e293b; }
+  .style-b .topbar-logo b { color: #6366f1; }
+  .style-b .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .style-b .topbar-token { background: #f0f0ff; border-radius: 20px; padding: 5px 12px; font-size: 0.78rem; font-weight: 600; color: #6366f1; }
+  .style-b .topbar-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; font-weight: 700; }
+  .style-b .tools-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-bottom: 1px solid #e2e8f0; }
+  .style-b .tool-card { padding: 16px 12px; text-align: center; cursor: pointer; border-right: 1px solid #e2e8f0; transition: all 0.15s; position: relative; }
+  .style-b .tool-card:last-child { border-right: none; }
+  .style-b .tool-card:hover { background: #f8faff; }
+  .style-b .tool-card.active { background: #f0f0ff; }
+  .style-b .tool-card.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: #6366f1; }
+  .style-b .tool-card.active-teal::after { background: #0d9488; }
+  .style-b .tool-card.active-teal { background: #f0fdf9; }
+  .style-b .tool-icon { width: 48px; height: 48px; border-radius: 12px; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+  .style-b .tool-icon.purple { background: #ede9fe; }
+  .style-b .tool-icon.teal { background: #ccfbf1; }
+  .style-b .tool-icon.amber { background: #fef3c7; }
+  .style-b .tool-icon.violet { background: #f3e8ff; }
+  .style-b .tool-name { font-size: 0.75rem; font-weight: 700; color: #334155; }
+  .style-b .tool-desc { font-size: 0.65rem; color: #94a3b8; margin-top: 2px; }
+  .style-b .tool-badge { position: absolute; top: 8px; right: 8px; font-size: 0.6rem; font-weight: 700; padding: 2px 5px; border-radius: 8px; background: #f59e0b; color: white; }
+  .style-b .content-area { padding: 24px; background: #f8faff; min-height: 280px; }
+  .style-b .content-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; }
+  .style-b .content-card-title { font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .style-b .content-card-sub { font-size: 0.78rem; color: #94a3b8; margin-bottom: 16px; }
+  .style-b .upload-row { display: flex; gap: 12px; }
+  .style-b .upload-box { flex: 1; border: 2px dashed #c7d2fe; border-radius: 10px; padding: 20px; text-align: center; font-size: 0.78rem; color: #94a3b8; }
+  .style-b .upload-box b { display: block; color: #6366f1; font-size: 1.5rem; margin-bottom: 4px; }
+  .style-b .action-row { display: flex; gap: 10px; margin-top: 16px; }
+  .style-b .btn-primary { flex: 1; padding: 10px; border-radius: 8px; border: none; background: #6366f1; color: white; font-weight: 700; font-size: 0.85rem; cursor: pointer; }
+  .style-b .btn-secondary { padding: 10px 16px; border-radius: 8px; border: 1.5px solid #e2e8f0; background: white; color: #64748b; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+
+  /* ─── STYLE C: Minimal CAD Engineering ─── */
+  .style-c { background: white; }
+  .style-c .cad-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; border-bottom: 1.5px solid #e2e8f0; background: white; }
+  .style-c .cad-logo { display: flex; align-items: center; gap: 8px; }
+  .style-c .cad-logo-mark { display: flex; gap: 3px; }
+  .style-c .cad-logo-mark span { display: block; }
+  .style-c .cad-logo-mark .sq { width: 8px; height: 8px; border: 1.5px solid #6366f1; }
+  .style-c .cad-logo-mark .di { width: 8px; height: 8px; border: 1.5px solid #6366f1; transform: rotate(45deg); }
+  .style-c .cad-logo-text { font-size: 0.9rem; font-weight: 800; color: #1e293b; letter-spacing: -0.02em; }
+  .style-c .cad-logo-text b { color: #6366f1; }
+  .style-c .cad-status { display: flex; align-items: center; gap: 16px; }
+  .style-c .cad-token { font-size: 0.75rem; font-weight: 600; color: #6366f1; background: #f0f0ff; padding: 4px 10px; border-radius: 6px; border: 1px solid #c7d2fe; font-family: monospace; }
+  .style-c .cad-ready { display: flex; align-items: center; gap: 5px; font-size: 0.7rem; font-weight: 700; color: #22c55e; font-family: monospace; letter-spacing: 0.08em; }
+  .style-c .cad-ready-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.6); }
+  .style-c .cad-toolbar { display: flex; align-items: center; gap: 0; border-bottom: 1.5px solid #e2e8f0; padding: 0 20px; background: #fafafa; overflow-x: auto; }
+  .style-c .cad-tab { display: flex; align-items: center; gap: 7px; padding: 10px 16px; font-size: 0.78rem; font-weight: 600; color: #94a3b8; cursor: pointer; border-bottom: 2.5px solid transparent; white-space: nowrap; transition: all 0.15s; font-family: monospace; letter-spacing: 0.02em; }
+  .style-c .cad-tab:hover { color: #475569; }
+  .style-c .cad-tab.active { color: #6366f1; border-bottom-color: #6366f1; background: white; }
+  .style-c .cad-tab.active-teal { color: #0d9488; border-bottom-color: #0d9488; background: white; }
+  .style-c .cad-tab.disabled { opacity: 0.4; cursor: not-allowed; }
+  .style-c .cad-tab-icon { width: 18px; height: 18px; }
+  .style-c .cad-tab-badge { font-size: 0.6rem; font-weight: 700; padding: 1px 5px; border-radius: 8px; background: #f59e0b; color: white; font-family: sans-serif; }
+  .style-c .cad-body { display: flex; min-height: 340px; }
+  .style-c .cad-panel { flex: 1; padding: 20px; background: white; }
+  .style-c .cad-panel-title { font-size: 0.7rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.12em; font-family: monospace; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .style-c .cad-panel-title::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
+  .style-c .cad-upload { border: 1.5px dashed #c7d2fe; border-radius: 8px; padding: 28px 20px; text-align: center; background: #f8faff; margin-bottom: 14px; }
+  .style-c .cad-upload-icon { font-size: 1.8rem; margin-bottom: 8px; }
+  .style-c .cad-upload-text { font-size: 0.8rem; color: #64748b; line-height: 1.5; }
+  .style-c .cad-upload-text b { color: #6366f1; }
+  .style-c .cad-actions { display: flex; gap: 8px; }
+  .style-c .cad-btn { flex: 1; padding: 10px; border-radius: 6px; border: 1.5px solid #6366f1; background: #6366f1; color: white; font-weight: 700; font-size: 0.82rem; cursor: pointer; font-family: monospace; letter-spacing: 0.04em; }
+  .style-c .cad-btn-outline { background: white; color: #6366f1; }
+  .style-c .cad-info { width: 200px; border-left: 1.5px solid #e2e8f0; padding: 20px; background: #fafafa; }
+  .style-c .cad-info-title { font-size: 0.65rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.12em; font-family: monospace; margin-bottom: 12px; }
+  .style-c .cad-info-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.72rem; }
+  .style-c .cad-info-key { color: #94a3b8; font-family: monospace; }
+  .style-c .cad-info-val { color: #334155; font-weight: 600; font-family: monospace; }
+  .style-c .cad-grid-bg { background-image: linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px); background-size: 24px 24px; }
+
+  .divider { height: 1px; background: #e2e8f0; margin: 40px 0; }
+</style>
+</head>
+<body>
+
+<h1>3 עיצובים לבחירה — סביבת עבודה</h1>
+<p class="subtitle">כל עיצוב מציג סגנון שונה — בחר את המועדף עליך</p>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- STYLE A: Professional Sidebar -->
+<!-- ═══════════════════════════════════════ -->
+<div class="mockup-section">
+  <div class="mockup-label">עיצוב A — Sidebar מקצועי</div>
+  <p class="mockup-desc">ניווט צדדי קבוע עם אייקונים, תוכן מרכזי נקי. מתאים לכלים מקצועיים כמו Figma / Linear. נוח לניווט מהיר בין כלים.</p>
+  <div class="workspace-frame">
+    <div class="style-a">
+      <div class="sidebar">
+        <div class="sidebar-logo"><span>Ai <b>DXF</b></span></div>
+        <div class="nav-item active">
+          <div class="icon">✨</div>
+          <span>AI Create</span>
+        </div>
+        <div class="nav-item">
+          <div class="icon">🔍</div>
+          <span>AI Outline</span>
+        </div>
+        <div class="nav-item">
+          <div class="icon">✏️</div>
+          <span>AI Sketch</span>
+          <span class="badge">Soon</span>
+        </div>
+        <div class="nav-item">
+          <div class="icon">👤</div>
+          <span>Portrait</span>
+        </div>
+        <div class="nav-item">
+          <div class="icon">⛰️</div>
+          <span>CNC Relief</span>
+          <span class="badge">Soon</span>
+        </div>
+      </div>
+      <div class="content">
+        <div class="content-header">
+          <div>
+            <div class="content-title">AI Create</div>
+            <div class="content-subtitle">Describe a design in text — AI draws it</div>
+          </div>
+          <div class="token-badge">✨ 20 tokens</div>
+        </div>
+        <div class="upload-area">
+          <div class="upload-icon">📝</div>
+          <div class="upload-text">Type a description or <b>upload an image</b><br>to generate a DXF vector file</div>
+        </div>
+        <button class="action-btn">✨ Generate DXF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- STYLE B: Clean Cards Grid -->
+<!-- ═══════════════════════════════════════ -->
+<div class="mockup-section">
+  <div class="mockup-label">עיצוב B — כרטיסים + תוכן</div>
+  <p class="mockup-desc">שורת כרטיסי כלים בחלק העליון עם אייקון + שם + תיאור קצר. תוכן הכלי הפעיל מתחת. עיצוב ידידותי ומוכר, מתאים לכל גיל.</p>
+  <div class="workspace-frame">
+    <div class="style-b">
+      <div class="topbar">
+        <div class="topbar-logo">Ai <b>DXF</b></div>
+        <div class="topbar-right">
+          <div class="topbar-token">✨ 20 tokens</div>
+          <div class="topbar-avatar">Y</div>
+        </div>
+      </div>
+      <div class="tools-grid">
+        <div class="tool-card active">
+          <div class="tool-icon purple">✨</div>
+          <div class="tool-name">AI Create</div>
+          <div class="tool-desc">Text → DXF</div>
+        </div>
+        <div class="tool-card active-teal">
+          <div class="tool-icon teal">🔍</div>
+          <div class="tool-name">AI Outline</div>
+          <div class="tool-desc">Image → Vector</div>
+        </div>
+        <div class="tool-card" style="opacity:0.5">
+          <div class="tool-badge">Soon</div>
+          <div class="tool-icon amber">✏️</div>
+          <div class="tool-name">AI Sketch</div>
+          <div class="tool-desc">Doc → Lines</div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-icon violet">👤</div>
+          <div class="tool-name">Portrait</div>
+          <div class="tool-desc">Face → Vector</div>
+        </div>
+      </div>
+      <div class="content-area">
+        <div class="content-card">
+          <div class="content-card-title">
+            <span style="width:24px;height:24px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:0.8rem">✨</span>
+            AI Create — Generate from text
+          </div>
+          <div class="content-card-sub">Describe your design and AI will generate a DXF vector file ready for laser or CNC</div>
+          <div class="upload-row">
+            <div class="upload-box"><b>📝</b>Type a description</div>
+            <div class="upload-box"><b>🖼️</b>Or upload image</div>
+          </div>
+          <div class="action-row">
+            <button class="btn-primary">✨ Generate DXF</button>
+            <button class="btn-secondary">History</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- STYLE C: Minimal CAD Engineering -->
+<!-- ═══════════════════════════════════════ -->
+<div class="mockup-section">
+  <div class="mockup-label">עיצוב C — CAD Engineering (הנוכחי משופר)</div>
+  <p class="mockup-desc">סגנון הנדסי-מקצועי עם טאבים שטוחים, גריד עדין, פאנל מידע צדדי. מתאים למשתמשי CNC/לייזר מקצועיים. נקי ומדויק.</p>
+  <div class="workspace-frame">
+    <div class="style-c">
+      <div class="cad-header">
+        <div class="cad-logo">
+          <div class="cad-logo-mark">
+            <span class="sq"></span>
+            <span class="di"></span>
+          </div>
+          <div class="cad-logo-text">Ai <b>DXF</b></div>
+        </div>
+        <div class="cad-status">
+          <div class="cad-token">⚡ 20 TKN</div>
+          <div class="cad-ready"><div class="cad-ready-dot"></div>READY</div>
+        </div>
+      </div>
+      <div class="cad-toolbar">
+        <div class="cad-tab active">
+          <svg class="cad-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          AI_CREATE
+        </div>
+        <div class="cad-tab active-teal">
+          <svg class="cad-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          AI_OUTLINE
+        </div>
+        <div class="cad-tab disabled">
+          <svg class="cad-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          AI_SKETCH
+          <span class="cad-tab-badge">SOON</span>
+        </div>
+        <div class="cad-tab">
+          <svg class="cad-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          PORTRAIT
+        </div>
+        <div class="cad-tab disabled">
+          <svg class="cad-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H2v6l6.29 6.29c.94.94 2.48.94 3.42 0l3.58-3.58c.94-.94.94-2.48 0-3.42L8 3z"/><path d="M4.5 6.5h.01"/></svg>
+          CNC_RELIEF
+          <span class="cad-tab-badge">SOON</span>
+        </div>
+      </div>
+      <div class="cad-body">
+        <div class="cad-panel cad-grid-bg">
+          <div class="cad-panel-title">INPUT / AI_CREATE</div>
+          <div class="cad-upload">
+            <div class="cad-upload-icon">📝</div>
+            <div class="cad-upload-text">
+              Type a description or <b>upload an image</b><br>
+              AI will generate a DXF vector file
+            </div>
+          </div>
+          <div class="cad-actions">
+            <button class="cad-btn">▶ GENERATE DXF</button>
+            <button class="cad-btn cad-btn-outline">⟳ HISTORY</button>
+          </div>
+        </div>
+        <div class="cad-info">
+          <div class="cad-info-title">PARAMETERS</div>
+          <div class="cad-info-item"><span class="cad-info-key">FORMAT</span><span class="cad-info-val">DXF</span></div>
+          <div class="cad-info-item"><span class="cad-info-key">MODE</span><span class="cad-info-val">AI_GEN</span></div>
+          <div class="cad-info-item"><span class="cad-info-key">COST</span><span class="cad-info-val">2 TKN</span></div>
+          <div class="cad-info-item"><span class="cad-info-key">STATUS</span><span class="cad-info-val" style="color:#22c55e">READY</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
