@@ -1032,7 +1032,7 @@ export default function Landing() {
             <span style={{ color: "rgba(255,255,255,0.65)", fontSize: 13, fontWeight: 500 }}>רכישה מאובטחת</span>
             {/* PayPal wordmark — clean SVG text */}
             <span style={{ fontFamily: "Arial, sans-serif", fontWeight: 800, fontSize: 15, letterSpacing: "-0.5px" }}>
-              <span style={{ color: "#009cde" }}>Pay</span><span style={{ color: "#003087" }}>Pal</span>
+              <span style={{ color: "#ffffff", fontWeight: 900 }}>Pay</span><span style={{ color: "rgba(255,255,255,0.75)" }}>Pal</span>
             </span>
           </div>
         </div>
