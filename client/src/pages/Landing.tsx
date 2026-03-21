@@ -774,16 +774,16 @@ export default function Landing() {
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 40, justifyContent: "center", alignItems: "center" }}>
             {[
-              { name: "AutoCAD", svg: `<svg viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="0" y="30" font-family="Arial Black,Arial" font-weight="900" font-size="28" fill="#9ca3af">AutoCAD</text></svg>` },
-              { name: "LightBurn", svg: `<svg viewBox="0 0 130 40" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="0" y="30" font-family="Arial Black,Arial" font-weight="900" font-size="26" fill="#9ca3af">LightBurn</text></svg>` },
-              { name: "RDWorks", svg: `<svg viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="0" y="30" font-family="Arial Black,Arial" font-weight="900" font-size="26" fill="#9ca3af">RDWorks</text></svg>` },
-              { name: "Fusion 360", svg: `<svg viewBox="0 0 140 40" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="0" y="30" font-family="Arial Black,Arial" font-weight="900" font-size="24" fill="#9ca3af">Fusion 360</text></svg>` },
-              { name: "SolidWorks", svg: `<svg viewBox="0 0 145 40" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="0" y="30" font-family="Arial Black,Arial" font-weight="900" font-size="24" fill="#9ca3af">SolidWorks</text></svg>` },
+              { name: "AutoCAD", svg: `<svg viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="0" y="30" font-family="Arial Black,Arial" font-weight="900" font-size="28" fill="#1f2937">AutoCAD</text></svg>` },
+              { name: "LightBurn", svg: `<svg viewBox="0 0 130 40" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="0" y="30" font-family="Arial Black,Arial" font-weight="900" font-size="26" fill="#1f2937">LightBurn</text></svg>` },
+              { name: "RDWorks", svg: `<svg viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="0" y="30" font-family="Arial Black,Arial" font-weight="900" font-size="26" fill="#1f2937">RDWorks</text></svg>` },
+              { name: "Fusion 360", svg: `<svg viewBox="0 0 140 40" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="0" y="30" font-family="Arial Black,Arial" font-weight="900" font-size="24" fill="#1f2937">Fusion 360</text></svg>` },
+              { name: "SolidWorks", svg: `<svg viewBox="0 0 145 40" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="0" y="30" font-family="Arial Black,Arial" font-weight="900" font-size="24" fill="#1f2937">SolidWorks</text></svg>` },
             ].map((sw, i) => (
-              <div key={i} style={{ opacity: 0.55, filter: "grayscale(1)", transition: "opacity 0.2s" }}
-                onMouseEnter={e => (e.currentTarget.style.opacity = "0.85")}
-                onMouseLeave={e => (e.currentTarget.style.opacity = "0.55")}>
-                <span style={{ color: "#9ca3af", fontWeight: 800, fontSize: 18, fontFamily: "Arial Black, Arial, sans-serif", letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>{sw.name}</span>
+              <div key={i} style={{ opacity: 0.85, transition: "opacity 0.2s" }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
+                onMouseLeave={e => (e.currentTarget.style.opacity = "0.85")}>
+                <span style={{ color: "#1f2937", fontWeight: 800, fontSize: 18, fontFamily: "Arial Black, Arial, sans-serif", letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>{sw.name}</span>
               </div>
             ))}
           </div>
