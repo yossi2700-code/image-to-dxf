@@ -2221,160 +2221,107 @@ export default function Home() {
         {showTokensBanner && (
           <InsufficientTokensBanner onDismiss={() => setShowTokensBanner(false)} hasPendingWelcomeBonus={hasPendingWelcomeBonus} />
         )}
-        {/* ── CAD Workspace Toolbar — B1 Glassmorphism ── */}
-        <div
-          className="mb-4 rounded-2xl overflow-hidden"
-          style={{
-            background: 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)',
-            padding: '18px 16px 14px',
-            position: 'relative',
-          }}
-        >
-          {/* Glow blobs */}
-          <div style={{ position: 'absolute', width: 120, height: 120, borderRadius: '50%', background: '#6366f1', filter: 'blur(50px)', opacity: 0.25, top: -30, left: -20, pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', width: 100, height: 100, borderRadius: '50%', background: '#0d9488', filter: 'blur(40px)', opacity: 0.2, bottom: -20, right: 40, pointerEvents: 'none' }} />
-
-          {/* Header row */}
-          <div className="flex items-center justify-between mb-3" style={{ position: 'relative' }}>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                <div style={{ width: 7, height: 7, border: '1.5px solid rgba(99,102,241,0.8)' }} />
-                <div style={{ width: 7, height: 7, border: '1.5px solid rgba(99,102,241,0.8)', transform: 'rotate(45deg)' }} />
-              </div>
-              <span className="text-xs font-mono font-bold" style={{ color: '#a5b4fc', letterSpacing: '0.1em' }}>WORKSPACE</span>
-              <span className="text-xs font-mono" style={{ color: 'rgba(255,255,255,0.3)', letterSpacing: '0.05em' }}>— {isRtl ? 'בחר כלי' : 'SELECT TOOL'}</span>
+        {/* ── CAD Workspace Toolbar ── */}
+        <div className="mb-4 flex items-center justify-between" style={{ borderBottom: '1.5px solid #e2e8f0', paddingBottom: '10px' }}>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <div style={{ width: 8, height: 8, border: '1.5px solid #6366f1' }} />
+              <div style={{ width: 8, height: 8, border: '1.5px solid #6366f1', transform: 'rotate(45deg)' }} />
             </div>
-            <div className="flex items-center gap-2">
-              {/* Language switcher */}
-              <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.12)', overflow: 'hidden' }}>
-                <LanguageSwitcher />
-              </div>
-              {/* User area */}
-              {appUser ? (
-                <button
-                  onClick={() => setTokenHistoryOpen(v => !v)}
-                  className="flex items-center gap-1.5"
-                  style={{
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: 20,
-                    padding: '4px 10px 4px 5px',
-                    cursor: 'pointer',
-                    transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.14)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
-                >
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '0.65rem', flexShrink: 0 }}>
-                    {(appUser.name || appUser.email || '?').charAt(0).toUpperCase()}
-                  </div>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.85)', maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {appUser.name || appUser.email.split('@')[0]}
-                  </span>
-                  <span style={{ fontSize: '0.65rem', color: '#fbbf24', fontWeight: 700 }}>⚡{tokenBalance}</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => { setLimitReached(false); setAuthOpen(true); }}
-                  style={{
-                    background: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
-                    border: 'none', borderRadius: 20, padding: '5px 14px',
-                    color: 'white', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer',
-                    boxShadow: '0 3px 10px rgba(99,102,241,0.4)',
-                  }}
-                >
-                  {isRtl ? 'התחבר' : 'Sign In'}
-                </button>
-              )}
-              {/* Ready dot */}
-              <div className="flex items-center gap-1.5">
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px rgba(34,197,94,0.7)' }} />
-                <span className="text-xs font-mono" style={{ color: '#22c55e', letterSpacing: '0.08em' }}>READY</span>
-              </div>
-            </div>
+            <span className="text-xs font-mono font-bold" style={{ color: '#6366f1', letterSpacing: '0.1em' }}>WORKSPACE</span>
+            <span className="text-xs font-mono" style={{ color: '#94a3b8', letterSpacing: '0.05em' }}>— {isRtl ? 'בחר כלי' : 'SELECT TOOL'}</span>
           </div>
-
-          {/* B1 Tool Cards Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" style={{ position: 'relative' }}>
-            {[
-              {
-                tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create',
-                labelIcon: '✦',
-                glowColor: '#6366f1',
-                labelBg: 'linear-gradient(135deg,#4f46e5,#6366f1)',
-                svg: (
-                  <svg viewBox="0 0 110 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
-                    <rect x="5" y="15" width="60" height="28" rx="8" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5"/>
-                    <text x="12" y="34" fontSize="9" fill="rgba(255,255,255,0.7)" fontFamily="monospace">sports car</text>
-                    <path d="M70 29 L82 29" stroke="#a5b4fc" strokeWidth="2" strokeLinecap="round"/>
-                    <path d="M79 25 L83 29 L79 33" stroke="#a5b4fc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                    <g transform="translate(86,18)">
-                      <path d="M2 18 L2 12 L6 6 L16 4 L22 6 L24 12 L24 18 Z" fill="none" stroke="#818cf8" strokeWidth="1.8" strokeLinejoin="round"/>
-                      <circle cx="7" cy="19" r="3" fill="none" stroke="#818cf8" strokeWidth="1.8"/>
-                      <circle cx="19" cy="19" r="3" fill="none" stroke="#818cf8" strokeWidth="1.8"/>
-                      <path d="M6 12 L10 7 L16 7 L20 12" fill="none" stroke="#818cf8" strokeWidth="1.2"/>
-                    </g>
-                    <path d="M50 8 L51.5 3 L53 8 L58 9.5 L53 11 L51.5 16 L50 11 L45 9.5 Z" fill="#c7d2fe" opacity="0.9"/>
-                  </svg>
-                ),
-              },
-              {
-                tab: 'trace', label: isRtl ? 'AI Outline' : 'AI Outline',
-                labelIcon: '⬡',
-                glowColor: '#0d9488',
-                labelBg: 'linear-gradient(135deg,#0f766e,#0d9488)',
-                svg: (
-                  <svg viewBox="0 0 110 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
-                    <rect x="5" y="10" width="42" height="34" rx="8" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5"/>
-                    <circle cx="17" cy="22" r="5" fill="rgba(13,148,136,0.4)"/>
-                    <path d="M8 40 L16 28 L24 34 L30 26 L44 40" fill="rgba(13,148,136,0.2)" stroke="rgba(13,148,136,0.5)" strokeWidth="1.2"/>
-                    <path d="M52 27 L64 27" stroke="#5eead4" strokeWidth="2" strokeLinecap="round"/>
-                    <path d="M61 23 L65 27 L61 31" stroke="#5eead4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                    <rect x="68" y="10" width="38" height="34" rx="8" fill="rgba(255,255,255,0.08)" stroke="rgba(13,148,136,0.5)" strokeWidth="1.5"/>
-                    <path d="M74 38 L80 26 L88 32 L94 22 L102 38" fill="none" stroke="#2dd4bf" strokeWidth="1.8" strokeLinejoin="round"/>
-                    <circle cx="80" cy="20" r="4" fill="none" stroke="#2dd4bf" strokeWidth="1.8"/>
-                  </svg>
-                ),
-              },
-              {
-                tab: 'sketch', label: isRtl ? 'AI סקיצה' : 'AI Sketch',
-                labelIcon: '✏',
-                glowColor: '#d97706',
-                labelBg: 'linear-gradient(135deg,#b45309,#d97706)',
-                comingSoon: true,
-                svg: (
-                  <svg viewBox="0 0 110 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
-                    <path d="M20 55 Q35 20 55 35 Q70 48 90 25" fill="none" stroke="rgba(251,191,36,0.5)" strokeWidth="2.5" strokeLinecap="round"/>
-                    <path d="M15 60 Q40 30 60 42 Q75 52 95 30" fill="none" stroke="rgba(251,191,36,0.3)" strokeWidth="1.5" strokeLinecap="round"/>
-                    <g transform="translate(70,10) rotate(45)">
-                      <rect x="0" y="0" width="8" height="28" rx="2" fill="#fbbf24"/>
-                      <polygon points="0,28 8,28 4,36" fill="#f59e0b"/>
-                      <rect x="0" y="0" width="8" height="5" rx="2" fill="rgba(255,255,255,0.4)"/>
-                    </g>
-                  </svg>
-                ),
-              },
-              {
-                tab: 'face', label: isRtl ? 'פורטרט' : 'Portrait',
-                labelIcon: '◉',
-                glowColor: '#7c3aed',
-                labelBg: 'linear-gradient(135deg,#6d28d9,#7c3aed)',
-                svg: (
-                  <svg viewBox="0 0 110 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
-                    <circle cx="32" cy="22" r="12" fill="rgba(139,92,246,0.2)" stroke="rgba(139,92,246,0.5)" strokeWidth="1.5"/>
-                    <path d="M14 50 Q14 38 32 38 Q50 38 50 50" fill="rgba(139,92,246,0.15)" stroke="rgba(139,92,246,0.4)" strokeWidth="1.5"/>
-                    <path d="M55 30 L67 30" stroke="#c4b5fd" strokeWidth="2" strokeLinecap="round"/>
-                    <path d="M64 26 L68 30 L64 34" stroke="#c4b5fd" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                    <circle cx="84" cy="28" r="16" fill="rgba(139,92,246,0.15)" stroke="#a78bfa" strokeWidth="1.8"/>
-                    <circle cx="79" cy="25" r="2" fill="#a78bfa"/>
-                    <circle cx="89" cy="25" r="2" fill="#a78bfa"/>
-                    <path d="M78 32 Q84 37 90 32" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                ),
-              },
-            ].map((f, i) => {
-              const isActive = activeTab === f.tab;
-              return (
+          <div className="flex items-center gap-2">
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px rgba(34,197,94,0.6)' }} />
+            <span className="text-xs font-mono" style={{ color: '#22c55e', letterSpacing: '0.08em' }}>READY</span>
+          </div>
+        </div>
+        {/* Feature shortcut buttons — click to switch tab */}
+        <div className="mb-4">
+            {/* Feature shortcut buttons with SVG illustrations — click to switch tab */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                {
+                  tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create',
+                  bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                  svg: (
+                    <svg viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                      <rect width="80" height="60" fill="#eef2ff" rx="8"/>
+                      <text x="12" y="22" fontSize="10" fill="#6366f1" fontWeight="bold" fontFamily="monospace">sports car</text>
+                      <line x1="10" y1="28" x2="38" y2="28" stroke="#a5b4fc" strokeWidth="1.5" strokeDasharray="3 2"/>
+                      <polygon points="42,28 38,25 38,31" fill="#6366f1"/>
+                      {/* Simple car outline */}
+                      <path d="M46 42 L46 36 L50 32 L62 32 L66 36 L66 42 Z" stroke="#6366f1" strokeWidth="1.5" fill="none"/>
+                      <circle cx="50" cy="42" r="2.5" stroke="#6366f1" strokeWidth="1.5" fill="none"/>
+                      <circle cx="62" cy="42" r="2.5" stroke="#6366f1" strokeWidth="1.5" fill="none"/>
+                      <path d="M50 32 L52 36 L62 36" stroke="#6366f1" strokeWidth="1" fill="none"/>
+                      <circle cx="20" cy="20" r="5" fill="#c7d2fe" opacity="0.5"/>
+                      <path d="M17 20 L19 22 L23 17" stroke="#6366f1" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  ),
+                },
+                {
+                  tab: 'trace', label: isRtl ? 'AI Outline' : 'AI Outline',
+                  bg: 'linear-gradient(135deg, #0d9488, #06b6d4)',
+                  svg: (
+                    <svg viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                      <rect width="80" height="60" fill="#f0fdf9" rx="8"/>
+                      {/* Photo side */}
+                      <rect x="5" y="10" width="28" height="40" rx="4" fill="#d1fae5" stroke="#0d9488" strokeWidth="1"/>
+                      <circle cx="14" cy="24" r="5" fill="#6ee7b7"/>
+                      <path d="M5 38 L12 30 L19 36 L24 28 L33 38" fill="#a7f3d0" stroke="none"/>
+                      {/* Arrow */}
+                      <line x1="37" y1="30" x2="43" y2="30" stroke="#0d9488" strokeWidth="1.5"/>
+                      <polygon points="46,30 42,27 42,33" fill="#0d9488"/>
+                      {/* Vector side */}
+                      <rect x="47" y="10" width="28" height="40" rx="4" fill="#f0fdf9" stroke="#0d9488" strokeWidth="1"/>
+                      <circle cx="56" cy="24" r="5" stroke="#0d9488" strokeWidth="1.5" fill="none"/>
+                      <path d="M47 38 L54 30 L61 36 L66 28 L75 38" fill="none" stroke="#0d9488" strokeWidth="1.5"/>
+                    </svg>
+                  ),
+                },
+                {
+                  tab: 'sketch', label: isRtl ? 'AI סקיצה' : 'AI Sketch',
+                  bg: 'linear-gradient(135deg, #d97706, #f59e0b)',
+                  comingSoon: true,
+                  svg: (
+                    <svg viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                      <rect width="80" height="60" fill="#fffbeb" rx="8"/>
+                      {/* Pencil */}
+                      <rect x="52" y="8" width="8" height="28" rx="2" transform="rotate(30 52 8)" fill="#fcd34d" stroke="#d97706" strokeWidth="1"/>
+                      <polygon points="56,42 52,48 60,46" fill="#d97706"/>
+                      {/* Sketch lines */}
+                      <path d="M10 20 Q20 15 30 20 Q40 25 50 18" stroke="#d97706" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+                      <path d="M10 30 Q18 26 28 30 Q38 34 48 28" stroke="#d97706" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.6"/>
+                      <path d="M10 40 Q22 36 32 40 Q42 44 50 38" stroke="#d97706" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.4"/>
+                      <circle cx="15" cy="15" r="3" fill="#fde68a"/>
+                    </svg>
+                  ),
+                },
+                {
+                  tab: 'face', label: isRtl ? 'פורטרט' : 'Portrait',
+                  bg: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+                  svg: (
+                    <svg viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                      <rect width="80" height="60" fill="#faf5ff" rx="8"/>
+                      {/* Photo half */}
+                      <rect x="4" y="8" width="30" height="44" rx="4" fill="#ede9fe" stroke="#7c3aed" strokeWidth="1"/>
+                      <ellipse cx="19" cy="24" rx="8" ry="9" fill="#c4b5fd"/>
+                      <ellipse cx="19" cy="38" rx="11" ry="7" fill="#c4b5fd"/>
+                      {/* Arrow */}
+                      <line x1="37" y1="30" x2="43" y2="30" stroke="#7c3aed" strokeWidth="1.5"/>
+                      <polygon points="46,30 42,27 42,33" fill="#7c3aed"/>
+                      {/* Vector half */}
+                      <rect x="47" y="8" width="30" height="44" rx="4" fill="#faf5ff" stroke="#7c3aed" strokeWidth="1"/>
+                      <ellipse cx="62" cy="24" rx="8" ry="9" stroke="#7c3aed" strokeWidth="1.5" fill="none"/>
+                      <path d="M51 52 Q62 42 73 52" stroke="#7c3aed" strokeWidth="1.5" fill="none"/>
+                      <circle cx="58" cy="22" r="1.5" fill="#7c3aed"/>
+                      <circle cx="66" cy="22" r="1.5" fill="#7c3aed"/>
+                      <path d="M59 27 Q62 29 65 27" stroke="#7c3aed" strokeWidth="1" fill="none"/>
+                    </svg>
+                  ),
+                },
+              ].map((f, i) => (
                 <button
                   key={i}
                   onClick={() => {
@@ -2382,35 +2329,18 @@ export default function Home() {
                     localStorage.setItem('active_tab', f.tab);
                     document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }}
-                  className="flex flex-col items-center gap-0 rounded-2xl overflow-hidden relative"
-                  style={{
-                    border: isActive ? `1px solid ${f.glowColor}55` : '1px solid rgba(255,255,255,0.1)',
-                    padding: 0,
-                    background: isActive ? `rgba(255,255,255,0.13)` : 'rgba(255,255,255,0.06)',
-                    backdropFilter: 'blur(12px)',
-                    boxShadow: isActive ? `0 8px 24px ${f.glowColor}33` : 'none',
-                    transition: 'all 0.2s',
-                    cursor: 'pointer',
-                    transform: 'scale(1)',
-                  }}
-                  onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.transform = 'translateY(-2px)'; } }}
-                  onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.transform = 'scale(1)'; } }}
-                  onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.97)'; }}
-                  onMouseUp={e => { e.currentTarget.style.transform = isActive ? 'scale(1)' : 'translateY(-2px)'; }}
+                  className="flex flex-col items-center gap-0 rounded-2xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
+                  style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 4px 16px rgba(0,0,0,0.10)' }}
                 >
-                  {/* Glow blob */}
-                  {isActive && (
-                    <div style={{ position: 'absolute', width: 60, height: 60, borderRadius: '50%', background: f.glowColor, filter: 'blur(25px)', opacity: 0.35, top: -10, left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none' }} />
-                  )}
                   {/* SVG illustration area */}
-                  <div className="w-full relative" style={{ paddingBottom: '68%' }}>
-                    <div style={{ position: 'absolute', inset: 0, padding: '10px 8px 6px' }}>
+                  <div className="w-full relative" style={{ paddingBottom: '62%' }}>
+                    <div style={{ position: 'absolute', inset: 0, padding: '8px' }}>
                       {f.svg}
                     </div>
                     {(f as { comingSoon?: boolean }).comingSoon && (
                       <span
-                        className="absolute top-2 right-2 text-[9px] font-bold px-2 py-0.5 rounded-full z-10"
-                        style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.25)', backdropFilter: 'blur(8px)', whiteSpace: 'nowrap' }}
+                        className="absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-full z-10"
+                        style={{ background: '#f59e0b', color: 'white', whiteSpace: 'nowrap', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}
                       >
                         {isRtl ? 'בקרוב' : 'Coming soon'}
                       </span>
@@ -2419,12 +2349,11 @@ export default function Home() {
                   {/* Label bar */}
                   <span
                     className="w-full text-xs font-bold text-center py-2"
-                    style={{ background: f.labelBg, color: 'white', letterSpacing: '0.03em' }}
-                  >{f.labelIcon} {f.label}</span>
+                    style={{ background: f.bg, color: 'white', letterSpacing: '0.02em' }}
+                  >{f.label}</span>
                 </button>
-              );
-            })}
-          </div>
+              ))}
+            </div>
         </div>
 
         {/* Tabs */}
