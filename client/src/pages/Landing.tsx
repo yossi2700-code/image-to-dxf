@@ -1037,7 +1037,7 @@ export default function Landing() {
                 <text x="22" y="13" fontFamily="Arial" fontWeight="800" fontSize="13" fill="#003087">Pal</text>
               </svg>
             </div>
-            <span style={{ color: "#8b7fd4", fontSize: 14, fontWeight: 500 }}>ללא כרטיס אשראי</span>
+
           </div>
         </div>
       </section>
@@ -1057,11 +1057,11 @@ export default function Landing() {
       <footer style={{ background: "#111827", padding: "32px 24px", textAlign: "center" }}>
         <div style={{ color: "#6b7280", fontSize: 13, lineHeight: 1.8, maxWidth: 700, margin: "0 auto" }}>
           <p style={{ marginBottom: 8 }}>
-            {isRtl ? "© 2025 AiDXF — כל הזכויות שמורות" : "© 2025 AiDXF — All rights reserved"}
+            {isRtl ? "© 2026 dxfai — כל הזכויות שמורות" : "© 2026 dxfai — All rights reserved"}
             {" · "}
-            <span style={{ cursor: "pointer", color: "#9ca3af" }} onClick={() => navigate("/terms")}>{isRtl ? "תנאי שימוש" : "Terms"}</span>
+            <a href="/terms" style={{ color: "#9ca3af", textDecoration: "underline" }}>{isRtl ? "תנאי שימוש" : "Terms"}</a>
             {" · "}
-            <span style={{ cursor: "pointer", color: "#9ca3af" }} onClick={() => navigate("/privacy")}>{isRtl ? "פרטיות" : "Privacy"}</span>
+            <a href="/privacy" style={{ color: "#9ca3af", textDecoration: "underline" }}>{isRtl ? "פרטיות" : "Privacy"}</a>
           </p>
         </div>
       </footer>
@@ -1128,7 +1128,7 @@ const he = {
   contactEmail: "השאר פרטים",
   contactWhatsApp: "WhatsApp",
   finalCtaTitle: "נסה את הקובץ הראשון שלך בחינם",
-  finalCtaSubtitle: "צור את קובץ DXF הראשון שלך בחינם — אפס סיכון אשראי וללא צורך בכרטיס אשראי.",
+  finalCtaSubtitle: "צור את הקובץ DXF הראשון שלך",
   finalCtaBtn: "הרשם בחינם",
   finalCtaTrust: "ללא כרטיס אשראי · רכישה מאובטחת PayPal",
 };
@@ -1191,7 +1191,7 @@ const en = {
   contactEmail: "Leave details",
   contactWhatsApp: "WhatsApp",
   finalCtaTitle: "Try Your First File Free",
-  finalCtaSubtitle: "Create your first DXF file for free — no credit card required.",
+  finalCtaSubtitle: "Create your first DXF file",
   finalCtaBtn: "Sign Up Free",
   finalCtaTrust: "No credit card · Secure PayPal checkout",
 };
