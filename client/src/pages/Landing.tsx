@@ -20,7 +20,7 @@ const BEFORE_AFTER = [
     desc_he: "מצלמת SLR קלאסית — פרטים עדינים, עדשה, כפתורים",
     desc_en: "Classic SLR camera — fine details, lens, buttons",
     before: `${CDN}/before-camera_e8ff1c90.jpg`,
-    after: `${CDN}/after-camera_de9f1f99.png`,
+    after: `${CDN}/after-camera_62da43b0.webp`,
   },
   {
     label_he: "אופניים",
@@ -28,7 +28,7 @@ const BEFORE_AFTER = [
     desc_he: "אופניים — שלדה, גלגלים, שרשרת",
     desc_en: "Bicycle — frame, wheels, chain",
     before: `${CDN}/before-bicycle_dbe6f82f.jpg`,
-    after: `${CDN}/after-bicycle_10ff03f6.png`,
+    after: `${CDN}/after-bicycle_f9116dba.webp`,
   },
   {
     label_he: "אריה",
@@ -36,7 +36,7 @@ const BEFORE_AFTER = [
     desc_he: "ראש אריה — רעמה, פנים, ביטוי",
     desc_en: "Lion head — mane, face, expression",
     before: `${CDN}/before-lion_06430793.jpg`,
-    after: `${CDN}/after-lion_51a7de96.png`,
+    after: `${CDN}/after-lion_9061a0f9.webp`,
   },
   {
     label_he: "מפתח ברגים",
@@ -44,7 +44,7 @@ const BEFORE_AFTER = [
     desc_he: "מפתח ברגים — כלי עבודה מתכתי",
     desc_en: "Wrench — metal workshop tool",
     before: `${CDN}/before-wrench_c1f95777.jpg`,
-    after: `${CDN}/after-wrench_07e4cc11.png`,
+    after: `${CDN}/after-wrench_8e8d740a.webp`,
   },
   {
     label_he: "מקדחה",
@@ -52,7 +52,7 @@ const BEFORE_AFTER = [
     desc_he: "מקדחה חשמלית — גוף, ידית, מקדח",
     desc_en: "Power drill — body, handle, bit",
     before: `${CDN}/before-drill_64d49d0c.jpg`,
-    after: `${CDN}/after-drill_fe1af063.png`,
+    after: `${CDN}/after-drill_f1ef38e9.webp`,
   },
   {
     label_he: "חתול",
@@ -60,7 +60,7 @@ const BEFORE_AFTER = [
     desc_he: "חתול יושב — פרווה, עיניים, זנב",
     desc_en: "Sitting cat — fur, eyes, tail",
     before: `${CDN}/before-cat_dcacb10f.jpg`,
-    after: `${CDN}/after-cat_b2225f8d.png`,
+    after: `${CDN}/after-cat_552cb407.webp`,
   },
   {
     label_he: "אופנוע",
@@ -68,7 +68,7 @@ const BEFORE_AFTER = [
     desc_he: "אופנוע קלאסי — מנוע, גלגלים, מסגרת",
     desc_en: "Classic motorcycle — engine, wheels, frame",
     before: `${CDN}/before-motorcycle_45e267a0.jpg`,
-    after: `${CDN}/after-motorcycle_75dff73c.png`,
+    after: `${CDN}/after-motorcycle_5d9f2f8b.webp`,
   },
   {
     label_he: "טוקן",
@@ -76,7 +76,7 @@ const BEFORE_AFTER = [
     desc_he: "ציפור טוקי — מקור גדול, נוצות, ענף",
     desc_en: "Toucan bird — large beak, feathers, branch",
     before: `${CDN}/before-toucan_5f8de07e.jpg`,
-    after: `${CDN}/after-toucan_c73d6aac.png`,
+    after: `${CDN}/after-toucan_61617d63.webp`,
   },
   {
     label_he: "רחפן",
@@ -84,7 +84,7 @@ const BEFORE_AFTER = [
     desc_he: "רחפן DJI — גוף, זרועות, מנועים, מצלמה",
     desc_en: "DJI drone — body, arms, motors, camera",
     before: `${CDN}/drone-hq-XPcfmcuJvNJWeqok3bG94j.png`,
-    after: `${CDN}/drone-vector-hq_707da589.png`,
+    after: `${CDN}/drone-vector-hq_5618a96c.webp`,
   },
   {
     label_he: "חמניות",
@@ -92,7 +92,7 @@ const BEFORE_AFTER = [
     desc_he: "שדה חמניות עם שקיעה — פרחים, עלים, קרני שמש",
     desc_en: "Sunflower field at sunset — flowers, leaves, sun rays",
     before: `${CDN}/sunflower-hq-Y3aohWoQ46fckgCDfbq6hr.png`,
-    after: `${CDN}/sunflower-vector-v3_598ee7c1.png`,
+    after: `${CDN}/sunflower-vector-v3_82858490.webp`,
   },
 ];
 
