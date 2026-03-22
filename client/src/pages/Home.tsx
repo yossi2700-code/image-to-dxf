@@ -2418,6 +2418,49 @@ export default function Home() {
           </span>
         </div>
 
+        {/* ── Feature Shortcut Cards ── */}
+        <div className="grid grid-cols-2 gap-2 mb-6">
+          {[
+            { tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create', color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-v3-Xq8E28tKQT67AA2juXG9Ze.webp' },
+            { tab: 'trace', label: isRtl ? 'AI Outline' : 'AI Outline', color: '#0d9488', bg: 'linear-gradient(135deg, #0d9488, #06b6d4)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png' },
+            { tab: 'face', label: isRtl ? 'פורטרט' : 'Portrait', color: '#7c3aed', bg: 'linear-gradient(135deg, #7c3aed, #a855f7)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_e956deb2.png' },
+            { tab: 'cnc-relief', label: isRtl ? 'CNC תבליט' : 'CNC Relief', color: '#b45309', bg: 'linear-gradient(135deg, #b45309, #d97706)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/horse_wood_engraving_sim_8c0adad8.png', comingSoon: true },
+          ].map((f, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                setActiveTab(f.tab);
+                localStorage.setItem('active_tab', f.tab);
+                document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              className="flex flex-col items-center gap-0 rounded-2xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
+              style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 4px 16px rgba(0,0,0,0.10)', cursor: 'pointer' }}
+            >
+              {/* Image area */}
+              <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '62%' }}>
+                <img
+                  src={f.img}
+                  alt={f.label}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', padding: '6px' }}
+                />
+                {(f as { comingSoon?: boolean }).comingSoon && (
+                  <span
+                    className="absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-full z-10"
+                    style={{ background: '#f59e0b', color: 'white', whiteSpace: 'nowrap', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}
+                  >
+                    {isRtl ? 'בקרוב' : 'Coming soon'}
+                  </span>
+                )}
+              </div>
+              {/* Label bar */}
+              <span
+                className="w-full text-xs font-bold text-center py-2"
+                style={{ background: f.bg, color: 'white', letterSpacing: '0.02em' }}
+              >{f.label}</span>
+            </button>
+          ))}
+        </div>
+
         {/* Tabs */}
         <div id="main-tabs" />
         <Tabs
