@@ -314,50 +314,105 @@ function PortraitCard({ item, isRtl }: { item: typeof PORTRAIT_EXAMPLES[0]; isRt
 // ─── Before/After Card ────────────────────────────────────────────────────────
 function BeforeAfterCard({ item, isRtl }: { item: typeof BEFORE_AFTER[0]; isRtl: boolean }) {
   const [showAfter, setShowAfter] = useState(false);
+  const [lightbox, setLightbox] = useState<string | null>(null);
+
   return (
-    <div
-      style={{
-        borderRadius: 16, overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.10)",
-        cursor: "pointer", position: "relative", background: "#fff",
-        transition: "transform 0.2s, box-shadow 0.2s",
-      }}
-      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(-4px)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 32px rgba(99,102,241,0.18)"; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = "none"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 20px rgba(0,0,0,0.10)"; }}
-      onClick={() => setShowAfter(v => !v)}
-    >
-      <div style={{ position: "relative", width: "100%", paddingBottom: "100%", background: "#f8f8f8" }}>
-        <img
-          src={showAfter ? item.after : item.before}
-          alt={isRtl ? item.label_he : item.label_en}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", background: "#f8f8f8", transition: "opacity 0.3s" }}
-        />
-        <div style={{
-          position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)",
-          background: showAfter
-            ? "linear-gradient(135deg,rgba(99,102,241,0.95),rgba(139,92,246,0.95))"
-            : "linear-gradient(135deg,rgba(16,185,129,0.92),rgba(5,150,105,0.92))",
-          color: "#fff", borderRadius: 20, padding: "6px 16px", fontSize: 12, fontWeight: 700,
-          backdropFilter: "blur(4px)", whiteSpace: "nowrap",
-          boxShadow: showAfter ? "0 3px 12px rgba(99,102,241,0.5)" : "0 3px 12px rgba(16,185,129,0.5)",
-          letterSpacing: "0.01em",
-        }}>
-          {showAfter ? (isRtl ? "← לחץ לחזור למקור" : "← Back to original") : (isRtl ? "👁 הצג DXF" : "👁 Show DXF")}
-        </div>
-      </div>
-      <div style={{ padding: "10px 14px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
-          <span style={{ fontWeight: 700, fontSize: 14, color: "#1e1b4b" }}>{isRtl ? item.label_he : item.label_en}</span>
-          <span style={{ fontSize: 11, color: showAfter ? "#6366f1" : "#9ca3af", fontWeight: 600 }}>
-            {showAfter ? "DXF" : (isRtl ? "מקור" : "Original")}
-          </span>
-        </div>
-        {'desc_he' in item && (
-          <div style={{ fontSize: 11, color: "#6b7280", lineHeight: 1.4 }}>
-            {isRtl ? (item as any).desc_he : (item as any).desc_en}
+    <>
+      {/* Lightbox overlay */}
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 9999,
+            background: "rgba(0,0,0,0.85)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 16,
+          }}
+        >
+          <div onClick={e => e.stopPropagation()} style={{ position: "relative", maxWidth: 700, width: "100%" }}>
+            <img
+              src={lightbox}
+              alt="preview"
+              style={{ width: "100%", height: "auto", borderRadius: 12, background: "#fff", display: "block" }}
+            />
+            <button
+              onClick={() => setLightbox(null)}
+              style={{
+                position: "absolute", top: -14, right: -14,
+                width: 32, height: 32, borderRadius: "50%",
+                background: "#fff", border: "none", cursor: "pointer",
+                fontSize: 18, fontWeight: 700, color: "#1e1b4b",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+              }}
+            >×</button>
           </div>
-        )}
+        </div>
+      )}
+
+      <div
+        style={{
+          borderRadius: 16, overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.10)",
+          cursor: "pointer", position: "relative", background: "#fff",
+          transition: "transform 0.2s, box-shadow 0.2s",
+        }}
+        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(-4px)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 32px rgba(99,102,241,0.18)"; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = "none"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 20px rgba(0,0,0,0.10)"; }}
+        onClick={() => setShowAfter(v => !v)}
+      >
+        <div style={{ position: "relative", width: "100%", paddingBottom: "100%", background: "#f8f8f8" }}>
+          <img
+            src={showAfter ? item.after : item.before}
+            alt={isRtl ? item.label_he : item.label_en}
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", background: "#f8f8f8", transition: "opacity 0.3s" }}
+          />
+          {/* Zoom button — only when showing DXF */}
+          {showAfter && (
+            <button
+              onClick={e => { e.stopPropagation(); setLightbox(item.after); }}
+              title={isRtl ? "הגדל" : "Zoom in"}
+              style={{
+                position: "absolute", top: 8, right: 8,
+                width: 30, height: 30, borderRadius: "50%",
+                background: "rgba(99,102,241,0.9)", border: "none", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 2px 8px rgba(99,102,241,0.4)",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+              </svg>
+            </button>
+          )}
+          <div style={{
+            position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)",
+            background: showAfter
+              ? "linear-gradient(135deg,rgba(99,102,241,0.95),rgba(139,92,246,0.95))"
+              : "linear-gradient(135deg,rgba(16,185,129,0.92),rgba(5,150,105,0.92))",
+            color: "#fff", borderRadius: 20, padding: "6px 16px", fontSize: 12, fontWeight: 700,
+            backdropFilter: "blur(4px)", whiteSpace: "nowrap",
+            boxShadow: showAfter ? "0 3px 12px rgba(99,102,241,0.5)" : "0 3px 12px rgba(16,185,129,0.5)",
+            letterSpacing: "0.01em",
+          }}>
+            {showAfter ? (isRtl ? "← לחץ לחזור למקור" : "← Back to original") : (isRtl ? "👁 הצג DXF" : "👁 Show DXF")}
+          </div>
+        </div>
+        <div style={{ padding: "10px 14px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
+            <span style={{ fontWeight: 700, fontSize: 14, color: "#1e1b4b" }}>{isRtl ? item.label_he : item.label_en}</span>
+            <span style={{ fontSize: 11, color: showAfter ? "#6366f1" : "#9ca3af", fontWeight: 600 }}>
+              {showAfter ? "DXF" : (isRtl ? "מקור" : "Original")}
+            </span>
+          </div>
+          {'desc_he' in item && (
+            <div style={{ fontSize: 11, color: "#6b7280", lineHeight: 1.4 }}>
+              {isRtl ? (item as any).desc_he : (item as any).desc_en}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

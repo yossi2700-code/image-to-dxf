@@ -2137,3 +2137,4 @@
 - [x] תיקון גלריית DXF demo — 2 עמודות על מסך צר (BEFORE_AFTER + AI_EXAMPLES)
 - [x] תיקון כפתור שפה ב-navbar — קומפקטי עם Globe + קוד קצר (EN/HE/RU...)
 - [x] העלאת 22 תמונות WebP דחוסות ל-CDN (50-200KB במקום 4-7MB) ועדכון URLs ב-Landing.tsx
+- [x] הוספת lightbox popup לגלריית BeforeAfterCard — לחיצה פותחת תמונה בגדול לתצוגה ברורה של DXF
