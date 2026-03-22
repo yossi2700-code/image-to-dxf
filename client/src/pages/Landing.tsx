@@ -19,7 +19,7 @@ const BEFORE_AFTER = [
     label_en: "Camera",
     desc_he: "מצלמת SLR קלאסית — פרטים עדינים, עדשה, כפתורים",
     desc_en: "Classic SLR camera — fine details, lens, buttons",
-    before: `${CDN}/before-camera_e8ff1c90.jpg`,
+    before: `${CDN}/before-camera_e61c19ce.webp`,
     after: `${CDN}/after-camera_62da43b0.webp`,
   },
   {
@@ -27,7 +27,7 @@ const BEFORE_AFTER = [
     label_en: "Bicycle",
     desc_he: "אופניים — שלדה, גלגלים, שרשרת",
     desc_en: "Bicycle — frame, wheels, chain",
-    before: `${CDN}/before-bicycle_dbe6f82f.jpg`,
+    before: `${CDN}/before-bicycle_ccd30311.webp`,
     after: `${CDN}/after-bicycle_f9116dba.webp`,
   },
   {
@@ -35,7 +35,7 @@ const BEFORE_AFTER = [
     label_en: "Lion",
     desc_he: "ראש אריה — רעמה, פנים, ביטוי",
     desc_en: "Lion head — mane, face, expression",
-    before: `${CDN}/before-lion_06430793.jpg`,
+    before: `${CDN}/before-lion_3fc83f14.webp`,
     after: `${CDN}/after-lion_9061a0f9.webp`,
   },
   {
@@ -43,7 +43,7 @@ const BEFORE_AFTER = [
     label_en: "Wrench",
     desc_he: "מפתח ברגים — כלי עבודה מתכתי",
     desc_en: "Wrench — metal workshop tool",
-    before: `${CDN}/before-wrench_c1f95777.jpg`,
+    before: `${CDN}/before-wrench_2707cb1c.webp`,
     after: `${CDN}/after-wrench_8e8d740a.webp`,
   },
   {
@@ -51,7 +51,7 @@ const BEFORE_AFTER = [
     label_en: "Drill",
     desc_he: "מקדחה חשמלית — גוף, ידית, מקדח",
     desc_en: "Power drill — body, handle, bit",
-    before: `${CDN}/before-drill_64d49d0c.jpg`,
+    before: `${CDN}/before-drill_82980991.webp`,
     after: `${CDN}/after-drill_f1ef38e9.webp`,
   },
   {
@@ -59,7 +59,7 @@ const BEFORE_AFTER = [
     label_en: "Cat",
     desc_he: "חתול יושב — פרווה, עיניים, זנב",
     desc_en: "Sitting cat — fur, eyes, tail",
-    before: `${CDN}/before-cat_dcacb10f.jpg`,
+    before: `${CDN}/before-cat_d5e4497a.webp`,
     after: `${CDN}/after-cat_552cb407.webp`,
   },
   {
@@ -67,7 +67,7 @@ const BEFORE_AFTER = [
     label_en: "Motorcycle",
     desc_he: "אופנוע קלאסי — מנוע, גלגלים, מסגרת",
     desc_en: "Classic motorcycle — engine, wheels, frame",
-    before: `${CDN}/before-motorcycle_45e267a0.jpg`,
+    before: `${CDN}/before-motorcycle_fb24e4de.webp`,
     after: `${CDN}/after-motorcycle_5d9f2f8b.webp`,
   },
   {
@@ -75,7 +75,7 @@ const BEFORE_AFTER = [
     label_en: "Toucan",
     desc_he: "ציפור טוקי — מקור גדול, נוצות, ענף",
     desc_en: "Toucan bird — large beak, feathers, branch",
-    before: `${CDN}/before-toucan_5f8de07e.jpg`,
+    before: `${CDN}/before-toucan_7aa9198f.webp`,
     after: `${CDN}/after-toucan_61617d63.webp`,
   },
   {
@@ -83,7 +83,7 @@ const BEFORE_AFTER = [
     label_en: "Drone",
     desc_he: "רחפן DJI — גוף, זרועות, מנועים, מצלמה",
     desc_en: "DJI drone — body, arms, motors, camera",
-    before: `${CDN}/drone-hq-XPcfmcuJvNJWeqok3bG94j.png`,
+    before: `${CDN}/drone-hq_b3634d9d.webp`,
     after: `${CDN}/drone-vector-hq_5618a96c.webp`,
   },
   {
@@ -91,7 +91,7 @@ const BEFORE_AFTER = [
     label_en: "Sunflowers",
     desc_he: "שדה חמניות עם שקיעה — פרחים, עלים, קרני שמש",
     desc_en: "Sunflower field at sunset — flowers, leaves, sun rays",
-    before: `${CDN}/sunflower-hq-Y3aohWoQ46fckgCDfbq6hr.png`,
+    before: `${CDN}/sunflower-hq_ac53a133.webp`,
     after: `${CDN}/sunflower-vector-v3_82858490.webp`,
   },
 ];
@@ -102,105 +102,105 @@ const AI_EXAMPLES = [
     label_en: "Geometric Wolf",
     prompt_he: "זאב גיאומטרי מודרני",
     prompt_en: "Modern geometric wolf",
-    img: `${CDN}/ai-geometric-wolf_98d1980b.png`,
+    img: `${CDN}/ai-geometric-wolf_11ff1166.webp`,
   },
   {
     label_he: "מנדלה",
     label_en: "Mandala",
     prompt_he: "מנדלה גיאומטרית סימטרית",
     prompt_en: "Geometric symmetric mandala",
-    img: `${CDN}/ai-mandala-v2_614c147f.png`,
+    img: `${CDN}/ai-mandala-v2_12f65a94.webp`,
   },
   {
     label_he: "מזלג",
     label_en: "Fork",
     prompt_he: "מזלג עם ידית מעוטרת",
     prompt_en: "Fork with ornate handle",
-    img: `${CDN}/ai-fork_c40aff55.png`,
+    img: `${CDN}/ai-fork_b54da0cd.webp`,
   },
   {
     label_he: "גיטרה",
     label_en: "Guitar",
     prompt_he: "גיטרה אקוסטית קלאסית",
     prompt_en: "Classic acoustic guitar",
-    img: `${CDN}/ai-guitar_c2583706.png`,
+    img: `${CDN}/ai-guitar_9e84fdc5.webp`,
   },
   {
     label_he: "פרפר",
     label_en: "Butterfly",
     prompt_he: "פרפר עם כנפיים מפורטות",
     prompt_en: "Butterfly with detailed wings",
-    img: `${CDN}/ai-butterfly_4f4f3fba.png`,
+    img: `${CDN}/ai-butterfly_d8bd12e4.webp`,
   },
   {
     label_he: "בית",
     label_en: "House",
     prompt_he: "בית קוטג' עם גינה",
     prompt_en: "Cottage house with garden",
-    img: `${CDN}/ai-house_261c8791.png`,
+    img: `${CDN}/ai-house_892017a9.webp`,
   },
   {
     label_he: "אופניים",
     label_en: "Bicycle",
     prompt_he: "אופניים קלאסיים",
     prompt_en: "Classic bicycle",
-    img: `${CDN}/ai-bicycle-clean_8a1a189e.png`,
+    img: `${CDN}/ai-bicycle-clean_05166615.webp`,
   },
   {
     label_he: "סקייטבורד",
     label_en: "Skateboard",
     prompt_he: "סקייטבורד מקצועי",
     prompt_en: "Professional skateboard",
-    img: `${CDN}/ai-skateboard_664b0f3a.png`,
+    img: `${CDN}/ai-skateboard_56ec679e.webp`,
   },
   {
     label_he: "נעל",
     label_en: "Sneaker",
     prompt_he: "נעל סניקרס קלאסית",
     prompt_en: "Classic sneaker shoe",
-    img: `${CDN}/ai-sneaker_18d964e4.png`,
+    img: `${CDN}/ai-sneaker_d3ad2ab7.webp`,
   },
   {
     label_he: "אוזניות",
     label_en: "Headphones",
     prompt_he: "אוזניות over-ear",
     prompt_en: "Over-ear headphones",
-    img: `${CDN}/ai-headphones-v2_186a9ebd.png`,
+    img: `${CDN}/ai-headphones-v2_45622dbf.webp`,
   },
   {
     label_he: "מצלמה",
     label_en: "Camera",
     prompt_he: "מצלמת SLR וינטאג'",
     prompt_en: "Vintage SLR camera",
-    img: `${CDN}/ai-camera-art_5db350a3.png`,
+    img: `${CDN}/ai-camera-art_2efadfd5.webp`,
   },
   {
     label_he: "מכונית",
     label_en: "Car",
     prompt_he: "מכונית ספורט קלאסית",
     prompt_en: "Classic sports car",
-    img: `${CDN}/ai-car_c6c9e6ef.png`,
+    img: `${CDN}/ai-car_1eda266f.webp`,
   },
   {
     label_he: "כלב",
     label_en: "Dog",
     prompt_he: "כלב יושב",
     prompt_en: "Sitting dog",
-    img: `${CDN}/ai-dog_a52e996b.png`,
+    img: `${CDN}/ai-dog_8c903238.webp`,
   },
   {
     label_he: "עוגן",
     label_en: "Anchor",
     prompt_he: "עוגן ימי קלאסי",
     prompt_en: "Classic nautical anchor",
-    img: `${CDN}/ai-anchor_5b6ebb85.png`,
+    img: `${CDN}/ai-anchor_b3d2ed73.webp`,
   },
   {
     label_he: "רקטה",
     label_en: "Rocket",
     prompt_he: "רקטה חלל מודרנית",
     prompt_en: "Modern space rocket",
-    img: `${CDN}/ai-rocket_d39317d5.png`,
+    img: `${CDN}/ai-rocket_237c4ae0.webp`,
   },
   {
     label_he: "מספריים מקצועיות",
@@ -599,7 +599,7 @@ function ReliefSection({ isRtl, onCta }: { isRtl: boolean; onCta: () => void }) 
           ))}
         </div>
         {/* Gallery */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 16, marginBottom: 40 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 16, marginBottom: 40 }}>
           {RELIEF_EXAMPLES.map((item, i) => (
             <ReliefCard key={i} item={item} isRtl={isRtl} />
           ))}
@@ -968,7 +968,7 @@ export default function Landing() {
             <h2 style={{ fontSize: "clamp(1.5rem,3vw,2.2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 12 }}>{t.galleryTitle}</h2>
             <p style={{ color: "#6b7280", fontSize: 16 }}>{t.gallerySubtitle}</p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 20 }}>
             {BEFORE_AFTER.map((item, i) => (
               <BeforeAfterCard key={i} item={item} isRtl={isRtl} />
             ))}
@@ -1024,7 +1024,7 @@ export default function Landing() {
             <p style={{ color: "#6b7280", fontSize: 16 }}>{t.aiCreateSubtitle}</p>
           </div>
           {/* Grid of all 15 examples */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 16 }}>
             {AI_EXAMPLES.map((item, i) => (
               <AiExampleCard key={i} item={item} isRtl={isRtl} />
             ))}
