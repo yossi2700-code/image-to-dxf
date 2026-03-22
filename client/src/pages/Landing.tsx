@@ -712,7 +712,7 @@ export default function Landing() {
               onClick={() => handleOpenAuth("register")}
               style={{ display: "flex", alignItems: "center", gap: 8, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", borderRadius: 10, padding: "8px 18px", fontWeight: 700, fontSize: 13, cursor: "pointer", boxShadow: "0 2px 8px rgba(99,102,241,0.35)" }}
             >
-              {isRtl ? "הרשם חינם" : "Sign up free"}
+              {isRtl ? "הרשמה" : "Sign Up"}
             </button>
 
           </div>
@@ -1191,11 +1191,11 @@ export default function Landing() {
 
 // ─── Translations ─────────────────────────────────────────────────────────────
 const he = {
-  navCta: "נסה חינם",
+  navCta: "הרשמה",
   heroBadge: "טכנולוגיית AI מתקדמת",
   heroTitle: "מתמונה או תיאור לקובץ DXF מדויק ומוכן לייצור",
   heroSubtitle: "מעלים תמונה קיימת או מתארים במילים — ה-AI מייצר נתיבי חיתוך אופטימליים לכל מכונת CNC, לייזר, פלזמה או נתב.",
-  heroCta1: "צור DXF ראשון בחינם",
+  heroCta1: "צור DXF ראשון",
   heroCta2: "ראה מחירים",
   heroTrust: "רכישה מאובטחת PayPal",
   howTitle: "איך זה עובד?",
@@ -1247,18 +1247,18 @@ const he = {
   contactSubtitle: "צרו קשר בכל שאלה — נשמח לעזור בבחירת החבילה המתאימה, בעניינים טכניים, או בכל נושא אחר.",
   contactEmail: "השאר פרטים",
   contactWhatsApp: "WhatsApp",
-  finalCtaTitle: "נסה את הקובץ הראשון שלך בחינם",
+  finalCtaTitle: "צור את הקובץ הראשון שלך",
   finalCtaSubtitle: "צור את הקובץ DXF הראשון שלך",
-  finalCtaBtn: "הרשם בחינם",
+  finalCtaBtn: "הרשמה",
   finalCtaTrust: "ללא כרטיס אשראי · רכישה מאובטחת PayPal",
 };
 
 const en = {
-  navCta: "Try Free",
+  navCta: "Sign Up",
   heroBadge: "Advanced AI Technology",
   heroTitle: "From image or description to precise DXF ready for production",
   heroSubtitle: "Upload an existing image or describe in words — AI generates optimal cutting paths for any CNC, laser, plasma, or router machine.",
-  heroCta1: "Create Your First DXF Free",
+  heroCta1: "Create Your First DXF",
   heroCta2: "See Pricing",
   heroTrust: "Secure PayPal checkout",
   howTitle: "How does it work?",
@@ -1310,8 +1310,8 @@ const en = {
   contactSubtitle: "Contact us for any question — we're happy to help with package selection, technical issues, or anything else.",
   contactEmail: "Leave details",
   contactWhatsApp: "WhatsApp",
-  finalCtaTitle: "Try Your First File Free",
+  finalCtaTitle: "Create Your First File",
   finalCtaSubtitle: "Create your first DXF file",
-  finalCtaBtn: "Sign Up Free",
+  finalCtaBtn: "Sign Up",
   finalCtaTrust: "No credit card · Secure PayPal checkout",
 };

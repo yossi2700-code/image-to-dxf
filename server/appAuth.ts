@@ -543,3 +543,85 @@ export async function getAppUserFromRequest(
 
 export { ANON_DAILY_LIMIT, USER_DAILY_LIMIT, APP_USER_COOKIE };
 export default router;
+// ─── Google OAuth (ID token verification) ────────────────────────────────────
+
+router.post("/api/app-auth/google", async (req, res) => {
+  try {
+    const { credential } = req.body as { credential?: string };
+    if (!credential) return res.status(400).json({ error: "Google credential חסר" });
+
+    const { OAuth2Client } = await import("google-auth-library");
+    const client = new OAuth2Client(ENV.googleClientId);
+
+    let payload: import("google-auth-library").TokenPayload;
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: ENV.googleClientId,
+      });
+      const p = ticket.getPayload();
+      if (!p) throw new Error("No payload");
+      payload = p;
+    } catch (e) {
+      console.error("[google-auth] Token verification failed:", e);
+      return res.status(401).json({ error: "אימות גוגל נכשל" });
+    }
+
+    const email = payload.email?.toLowerCase();
+    const name = payload.name ?? payload.given_name ?? null;
+    if (!email) return res.status(400).json({ error: "לא ניתן לקבל אימייל מגוגל" });
+
+    const db = await getDb();
+    if (!db) return res.status(500).json({ error: "שגיאת מסד נתונים" });
+
+    // Find or create user
+    let [user] = await db
+      .select({ id: appUsers.id, email: appUsers.email, name: appUsers.name, tokenBalance: appUsers.tokenBalance })
+      .from(appUsers)
+      .where(eq(appUsers.email, email));
+
+    let isNewUser = false;
+    if (!user) {
+      isNewUser = true;
+      const [result] = await db.insert(appUsers).values({
+        email,
+        name: name ?? null,
+        emailVerified: 1,
+        tokenBalance: 10,
+      });
+      const insertId = (result as { insertId: number }).insertId;
+      const [newUser] = await db
+        .select({ id: appUsers.id, email: appUsers.email, name: appUsers.name, tokenBalance: appUsers.tokenBalance })
+        .from(appUsers)
+        .where(eq(appUsers.id, insertId));
+      user = newUser;
+
+      // Send welcome email for new users
+      try {
+        const lang = (req.headers["accept-language"] ?? "").startsWith("he") ? "he" : "en";
+        void sendWelcomeEmail({
+          to: email,
+          name: name ?? null,
+          tokens: 10,
+          siteUrl: "https://dxfai.ai",
+          language: lang,
+        });
+      } catch (e) {
+        console.warn("[google-auth] Failed to send welcome email:", e);
+      }
+    } else {
+      // Update last login
+      await db.update(appUsers).set({ lastLoginAt: new Date() }).where(eq(appUsers.id, user.id));
+    }
+
+    if (!user) return res.status(500).json({ error: "שגיאה ביצירת משתמש" });
+
+    const token = signToken(user.id, user.email);
+    setSessionCookie(res, token);
+
+    return res.json({ success: true, user: { id: user.id, email: user.email, name: user.name }, isNewUser });
+  } catch (err) {
+    console.error("[app-auth/google]", err);
+    return res.status(500).json({ error: "שגיאה בהתחברות עם גוגל" });
+  }
+});

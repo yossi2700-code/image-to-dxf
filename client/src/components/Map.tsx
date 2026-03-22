@@ -82,7 +82,8 @@ import { cn } from "@/lib/utils";
 
 declare global {
   interface Window {
-    google?: typeof google;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    google?: any;
   }
 }
 
@@ -140,7 +141,7 @@ export function MapView({
       streetViewControl: true,
       mapId: "DEMO_MAP_ID",
     });
-    if (onMapReady) {
+    if (onMapReady && map.current) {
       onMapReady(map.current);
     }
   });
