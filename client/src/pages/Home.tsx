@@ -450,7 +450,7 @@ function WelcomeBanner({ onDismiss }: { onDismiss: () => void }) {
           {/* Email CTA */}
           <div
             className="rounded-xl px-4 py-3 flex items-start gap-3"
-            style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(165,180,252,0.22)' }}
+            style={{ background: 'rgba(0,0,0,0.1)', border: '1px solid rgba(165,180,252,0.22)' }}
           >
             <span className="text-xl shrink-0 mt-0.5">📧</span>
             <p className="text-indigo-100 text-sm leading-relaxed">
@@ -2411,7 +2411,7 @@ export default function Home() {
         {/* ── Hero Section — Machine Background ── */}
         <div
           className="mb-6 rounded-2xl overflow-hidden relative"
-          style={{ background: '#0a0a0f', minHeight: 200 }}
+          style={{ background: '#ebebee', minHeight: 200 }}
         >
           {/* Machine images row */}
           <div className="absolute inset-0 flex">
@@ -2425,16 +2425,16 @@ export default function Home() {
                   src={m.src}
                   alt={m.label}
                   className="w-full h-full object-cover"
-                  style={{ filter: 'brightness(0.28) grayscale(0.3)' }}
+                  style={{ filter: 'brightness(0.72) grayscale(0.9) contrast(1.05)' }}
                 />
                 {/* Vertical dividers */}
                 {i < 2 && (
-                  <div className="absolute top-0 right-0 w-px h-full" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                  <div className="absolute top-0 right-0 w-px h-full" style={{ background: 'rgba(0,0,0,0.1)' }} />
                 )}
                 {/* Machine label at bottom */}
                 <div
                   className="absolute bottom-0 inset-x-0 text-center py-1.5"
-                  style={{ background: 'rgba(0,0,0,0.5)' }}
+                  style={{ background: 'rgba(0,0,0,0.35)' }}
                 >
                   <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.5)', letterSpacing: '0.06em', textTransform: 'uppercase', fontSize: 10 }}>{m.label}</span>
                 </div>
@@ -2443,17 +2443,17 @@ export default function Home() {
           </div>
 
           {/* Overlay gradient for text readability */}
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(10,10,15,0.2) 0%, rgba(10,10,15,0.55) 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(235,235,238,0.1) 0%, rgba(235,235,238,0.45) 100%)' }} />
 
           {/* Content */}
           <div className="relative z-10 flex flex-col items-center justify-center text-center px-5 py-8" style={{ minHeight: 200 }}>
             {/* Badge */}
             <div
               className="inline-flex items-center gap-1.5 mb-3 px-3 py-1 rounded-full"
-              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}
+              style={{ background: 'rgba(0,0,0,0.1)', border: '1px solid rgba(0,0,0,0.16)' }}
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-              <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.7)', letterSpacing: '0.04em' }}>
+              <span className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.65)', letterSpacing: '0.04em' }}>
                 {isRtl ? 'תוכנה לאנשי מקצוע' : 'Built for professionals'}
               </span>
             </div>
@@ -2461,11 +2461,11 @@ export default function Home() {
             {/* Headline */}
             <h1
               className="font-black leading-tight mb-2"
-              style={{ fontSize: 'clamp(1.4rem, 4vw, 2rem)', color: '#ffffff', letterSpacing: '-0.02em', textShadow: '0 2px 12px rgba(0,0,0,0.6)' }}
+              style={{ fontSize: 'clamp(1.4rem, 4vw, 2rem)', color: '#111111', letterSpacing: '-0.02em', textShadow: '0 1px 4px rgba(255,255,255,0.6)' }}
             >
               {isRtl ? 'מתמונה לקובץ DXF — מיידי.' : 'Image to DXF — instantly.'}
             </h1>
-            <p className="text-sm mb-5" style={{ color: 'rgba(255,255,255,0.55)', maxWidth: 280, lineHeight: 1.5 }}>
+            <p className="text-sm mb-5" style={{ color: 'rgba(0,0,0,0.6)', maxWidth: 280, lineHeight: 1.5 }}>
               {isRtl
                 ? 'לייזר, CNC ופייבר — ייצא קבצים מוכנים לייצור'
                 : 'Laser, CNC & fiber — export production-ready files'}
@@ -2475,7 +2475,7 @@ export default function Home() {
             <button
               onClick={() => { document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
               className="inline-flex items-center gap-2 font-bold px-5 py-2.5 rounded-xl transition-all hover:opacity-90 active:scale-95"
-              style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.22)', color: 'white', fontSize: 13, backdropFilter: 'blur(8px)' }}
+              style={{ background: 'rgba(0,0,0,0.12)', border: '1px solid rgba(0,0,0,0.22)', color: '#111111', fontSize: 13, backdropFilter: 'blur(8px)' }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
               {isRtl ? 'התחל עכשיו' : 'Start now'}
@@ -2788,7 +2788,7 @@ export default function Home() {
                 <div className="text-center">
                   <p className="text-xs text-gray-400 mb-1">{t("cncReliefHeightmapLabel")}</p>
                   <img
-                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/horse_relief_heightmap_666620f2.png"
+                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/cnc-daisy-heightmap-clean-5Z5GHGqUN3iKLn7TMwDSE5.webp"
                     alt="CNC Heightmap example"
                     className="w-full rounded-lg object-cover bg-gray-900"
                     style={{ aspectRatio: '1', maxHeight: '120px', objectFit: 'cover' }}
@@ -2798,7 +2798,7 @@ export default function Home() {
                 <div className="text-center">
                   <p className="text-xs text-gray-400 mb-1">{t("cncReliefSimulationLabel")}</p>
                   <img
-                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/horse_wood_engraving_sim_8c0adad8.png"
+                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/cnc-daisy-wood-v2_b1b59b13.png"
                     alt="CNC Wood simulation example"
                     className="w-full rounded-lg object-cover"
                     style={{ aspectRatio: '1', maxHeight: '120px', objectFit: 'cover' }}
