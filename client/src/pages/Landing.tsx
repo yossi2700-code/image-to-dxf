@@ -280,7 +280,7 @@ function PortraitCard({ item, isRtl }: { item: typeof PORTRAIT_EXAMPLES[0]; isRt
         <img
           src={showAfter ? item.after : item.before}
           alt={isRtl ? item.label_he : item.label_en}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", transition: "opacity 0.3s" }}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", background: "#f8f8f8", transition: "opacity 0.3s" }}
         />
         {/* Toggle button */}
         <div style={{
@@ -329,7 +329,7 @@ function BeforeAfterCard({ item, isRtl }: { item: typeof BEFORE_AFTER[0]; isRtl:
         <img
           src={showAfter ? item.after : item.before}
           alt={isRtl ? item.label_he : item.label_en}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "opacity 0.3s" }}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", background: "#f8f8f8", transition: "opacity 0.3s" }}
         />
         <div style={{
           position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)",
@@ -376,7 +376,7 @@ function AiExampleCard({ item, isRtl }: { item: typeof AI_EXAMPLES[0]; isRtl: bo
         <img
           src={item.img}
           alt={isRtl ? item.label_he : item.label_en}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", background: "#f8f6ff" }}
         />
         <div style={{
           position: "absolute", top: 8, right: 8,
@@ -492,6 +492,132 @@ function DemoVideoSection({ isRtl }: { isRtl: boolean }) {
         <p style={{ color: "rgba(196,181,253,0.6)", fontSize: 13, marginTop: 20 }}>
           {isRtl ? "לחץ על 🔇 להפעלת השמע" : "Tap 🔇 to enable audio"}
         </p>
+      </div>
+    </section>
+  );
+}
+
+// ─── CNC Relief Data ──────────────────────────────────────────────
+const CDN2 = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw";
+const RELIEF_EXAMPLES = [
+  { label_he: "אופנוע", label_en: "Motorcycle", material_he: "עץ אגוז", material_en: "Walnut Wood", before: `${CDN2}/orig-motorcycle_9ae9c2de.png`, after: `${CDN2}/cnc-motorcycle-walnut_b7af6270.png` },
+  { label_he: "מכונית ספורט", label_en: "Sports Car", material_he: "אלומיניום", material_en: "Aluminum", before: `${CDN2}/orig-sports-car_4d7d3cca.png`, after: `${CDN2}/cnc-sports-car-aluminum_6ff5c5f1.png` },
+  { label_he: "גיטרה", label_en: "Guitar", material_he: "עץ אורן", material_en: "Pine Wood", before: `${CDN2}/orig-guitar_c0251ccb.png`, after: `${CDN2}/cnc-guitar-pine_a4b542a2.png` },
+  { label_he: "ורדים", label_en: "Roses", material_he: "שיש", material_en: "Marble", before: `${CDN2}/orig-rose-bouquet_c7f28ba9.png`, after: `${CDN2}/cnc-roses-marble_a9a811f1.png` },
+  { label_he: "פנים", label_en: "Face", material_he: "עץ אלון", material_en: "Oak Wood", before: `${CDN2}/orig-woman-face_900f5091.png`, after: `${CDN2}/cnc-face-oak_3485a724.png` },
+  { label_he: "זאב", label_en: "Wolf", material_he: "נחושת", material_en: "Copper", before: `${CDN2}/orig-wolf_0d7b28b8.png`, after: `${CDN2}/cnc-wolf-copper_20632d0c.png` },
+  { label_he: "גולגולת", label_en: "Skull", material_he: "פלדה", material_en: "Steel", before: `${CDN2}/orig-skull_06a64c96.png`, after: `${CDN2}/cnc-skull-steel_346401b0.png` },
+  { label_he: "חמניות", label_en: "Sunflowers", material_he: "עץ דובדבן", material_en: "Cherry Wood", before: `${CDN2}/orig-sunflower-field_df3831b3.png`, after: `${CDN2}/cnc-sunflowers-cherry_2f77a6fb.png` },
+  { label_he: "נוף הרים", label_en: "Mountains", material_he: "גרניט", material_en: "Granite", before: `${CDN2}/orig-mountain-landscape_4f410e30.png`, after: `${CDN2}/cnc-mountains-granite_19315df4.png` },
+  { label_he: "עיטורים", label_en: "Ornament", material_he: "גרניט", material_en: "Granite", before: `${CDN2}/orig-ornament-color_4cb1a244.png`, after: `${CDN2}/cnc-ornament-granite_7318f878.png` },
+  { label_he: "מנדלה", label_en: "Mandala", material_he: "עץ אגוז", material_en: "Walnut Wood", before: `${CDN2}/before-mandala_4750ce7c.jpg`, after: `${CDN2}/cnc-mandala-walnut_0fc8bc97.png` },
+];
+
+function ReliefCard({ item, isRtl }: { item: typeof RELIEF_EXAMPLES[0]; isRtl: boolean }) {
+  const [showAfter, setShowAfter] = useState(false);
+  return (
+    <div
+      style={{ borderRadius: 16, overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.12)", cursor: "pointer", background: "#1a1a1a", transition: "transform 0.2s, box-shadow 0.2s" }}
+      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(-4px)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 12px 36px rgba(0,0,0,0.28)"; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = "none"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 20px rgba(0,0,0,0.12)"; }}
+      onClick={() => setShowAfter(v => !v)}
+    >
+      <div style={{ position: "relative", width: "100%", paddingBottom: "100%", background: "#111" }}>
+        <img
+          src={showAfter ? item.after : item.before}
+          alt={isRtl ? item.label_he : item.label_en}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", background: showAfter ? "#1a1a1a" : "#f8f8f8", transition: "opacity 0.35s" }}
+        />
+        <div style={{
+          position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)",
+          background: showAfter ? "rgba(0,0,0,0.75)" : "rgba(255,255,255,0.9)",
+          color: showAfter ? "#e5e7eb" : "#1f2937",
+          borderRadius: 20, padding: "5px 14px", fontSize: 11, fontWeight: 700,
+          backdropFilter: "blur(6px)", whiteSpace: "nowrap",
+        }}>
+          {showAfter ? (isRtl ? "← חזור למקור" : "← Back to original") : (isRtl ? "👁 הצג תבליט" : "👁 Show Relief")}
+        </div>
+        {showAfter && (
+          <div style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.6)", color: "#d1d5db", borderRadius: 8, padding: "2px 8px", fontSize: 10, fontWeight: 600 }}>
+            {isRtl ? item.material_he : item.material_en}
+          </div>
+        )}
+      </div>
+      <div style={{ padding: "10px 14px", background: "#1a1a1a" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: "#f9fafb" }}>{isRtl ? item.label_he : item.label_en}</span>
+          <span style={{ fontSize: 10, color: showAfter ? "#9ca3af" : "#6b7280", fontWeight: 600 }}>
+            {showAfter ? (isRtl ? item.material_he : item.material_en) : (isRtl ? "מקור" : "Original")}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReliefSection({ isRtl, onCta }: { isRtl: boolean; onCta: () => void }) {
+  const PROCESS_STEPS = isRtl ? [
+    { icon: "📷", title: "מעלים תמונה", desc: "מעלים כל תמונה או מתארים בטקסט מה רוצים לגלפ" },
+    { icon: "🤖", title: "AI מעבד את התמונה", desc: "ה-AI מזהה עומקים, צללים ופרטים ליצירת מפת גובה (Heightmap) מדויק" },
+    { icon: "📁", title: "הורדת קובץ איכותי", desc: "מקבלים PNG 16bit ברזולוציה 3000-4000px — מוכן ל-ArtCAM, Aspire, Fusion 360" },
+    { icon: "⚙️", title: "גליפה במכונה", desc: "מכניסים לתוכנת CAM, מגדירים עומק וכלי, והמכונה גולפת תבליט תלת-ממדי" },
+  ] : [
+    { icon: "📷", title: "Upload Image", desc: "Upload any photo or describe in text what you want to carve" },
+    { icon: "🤖", title: "AI Processes", desc: "AI identifies depths, shadows and details to create a precise Heightmap" },
+    { icon: "📁", title: "Download HQ File", desc: "Get PNG 16bit at 3000-4000px resolution — ready for ArtCAM, Aspire, Fusion 360" },
+    { icon: "⚙️", title: "Machine Carves", desc: "Import to CAM software, set depth and tool, and the machine carves a 3D relief" },
+  ];
+  return (
+    <section style={{ padding: "80px 24px", background: "linear-gradient(160deg,#0f0c29 0%,#1a1a2e 60%,#16213e 100%)", position: "relative", overflow: "hidden" }}>
+      <div style={{ position: "absolute", top: -100, left: "10%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", bottom: -80, right: "5%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)", pointerEvents: "none" }} />
+      <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative", zIndex: 1 }}>
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: 52 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(139,92,246,0.2)", border: "1px solid rgba(139,92,246,0.4)", borderRadius: 20, padding: "6px 16px", marginBottom: 20 }}>
+            <span style={{ fontSize: 14 }}>⚙️</span>
+            <span style={{ color: "#c4b5fd", fontSize: 13, fontWeight: 600 }}>{isRtl ? "תבליט CNC — Relief Machining" : "CNC Relief — Relief Machining"}</span>
+          </div>
+          <h2 style={{ fontSize: "clamp(1.5rem,3vw,2.2rem)", fontWeight: 900, color: "#f9fafb", marginBottom: 16, letterSpacing: "-0.02em" }}>
+            {isRtl ? "מתמונה לתבליט תלת-ממדי" : "From Image to 3D Relief"}
+          </h2>
+          <p style={{ color: "#9ca3af", fontSize: "clamp(0.95rem,2vw,1.1rem)", lineHeight: 1.8, maxWidth: 640, margin: "0 auto" }}>
+            {isRtl
+              ? "ה-AI שלנו ממיר כל תמונה למפת גובה (Heightmap) מדויק ב-16bit — מוכן ישירות לכל תוכנת CAM לגליפת תבליט תלת-ממדי על עץ, אבן, מתכת ועוד"
+              : "Our AI converts any image into a precise 16-bit Heightmap — ready for any CAM software to carve a 3D relief on wood, stone, metal and more"}
+          </p>
+        </div>
+        {/* Process steps */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 20, marginBottom: 56 }}>
+          {PROCESS_STEPS.map((step, i) => (
+            <div key={i} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: "24px 20px", textAlign: "center", backdropFilter: "blur(8px)" }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>{step.icon}</div>
+              <div style={{ width: 24, height: 24, borderRadius: "50%", background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", fontWeight: 800, fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", margin: "-4px auto 10px" }}>{i + 1}</div>
+              <h3 style={{ fontWeight: 700, fontSize: 14, color: "#f9fafb", marginBottom: 8 }}>{step.title}</h3>
+              <p style={{ color: "#9ca3af", fontSize: 12, lineHeight: 1.6 }}>{step.desc}</p>
+            </div>
+          ))}
+        </div>
+        {/* Gallery */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 16, marginBottom: 40 }}>
+          {RELIEF_EXAMPLES.map((item, i) => (
+            <ReliefCard key={i} item={item} isRtl={isRtl} />
+          ))}
+        </div>
+        {/* CTA */}
+        <div style={{ textAlign: "center" }}>
+          <p style={{ color: "#9ca3af", fontSize: 13, marginBottom: 20 }}>
+            {isRtl ? "👁 לחץ על כל תמונה לראות את התבליט" : "👁 Click any image to see the relief"}
+          </p>
+          <button
+            onClick={onCta}
+            style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", borderRadius: 12, padding: "14px 36px", fontWeight: 800, fontSize: 16, cursor: "pointer", boxShadow: "0 4px 20px rgba(99,102,241,0.4)", transition: "transform 0.15s" }}
+            onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.04)")}
+            onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+          >
+            {isRtl ? "צור תבליט עכשיו" : "Create Relief Now"}
+          </button>
+        </div>
       </div>
     </section>
   );
@@ -915,6 +1041,9 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* ── CNC RELIEF SECTION ── */}
+      <ReliefSection isRtl={isRtl} onCta={() => handleOpenAuth("register")} />
 
       {/* ── BENEFITS ── */}
       <section style={{ padding: "72px 24px", background: "#fff" }}>
