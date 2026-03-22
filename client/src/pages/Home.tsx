@@ -570,8 +570,10 @@ function CtaSection() {
   const [msgEmail, setMsgEmail] = useState('');
   const [msgText, setMsgText] = useState('');
   const [msgSent, setMsgSent] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const sendMsg = trpc.contact.sendMessage.useMutation({
-    onSuccess: () => { setMsgSent(true); setMsgName(''); setMsgEmail(''); setMsgText(''); },
+    onSuccess: () => { setMsgSent(true); setMsgName(''); setMsgEmail(''); setMsgText(''); setEmailError(''); },
     onError: () => toast.error(isRtl ? 'שגיאה בשליחה, נסה שוב' : 'Failed to send, please try again'),
   });
 
@@ -671,13 +673,15 @@ function CtaSection() {
                   <label className="text-xs font-medium text-gray-700">{isRtl ? 'מייל' : 'Email'} <span className="text-red-500">*</span></label>
                   <input
                     className="w-full px-3 py-2 rounded-lg text-sm border"
-                    style={{ borderColor: '#e0e7ff', outline: 'none' }}
+                    style={{ borderColor: emailError ? '#ef4444' : '#e0e7ff', outline: 'none' }}
                     placeholder={isRtl ? 'הכנס מייל...' : 'Enter your email...'}
                     value={msgEmail}
-                    onChange={e => setMsgEmail(e.target.value)}
+                    onChange={e => { setMsgEmail(e.target.value); if (emailError) setEmailError(''); }}
+                    onBlur={() => { if (msgEmail && !isValidEmail(msgEmail)) setEmailError(isRtl ? 'מייל לא תקין' : 'Invalid email address'); }}
                     type="email"
                     required
                   />
+                  {emailError && <span className="text-xs text-red-500">{emailError}</span>}
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-medium text-gray-700">{isRtl ? 'הודעה' : 'Message'} <span className="text-red-500">*</span></label>
@@ -691,8 +695,11 @@ function CtaSection() {
                   />
                 </div>
                 <button
-                  onClick={() => { if (msgName.trim() && msgEmail.trim() && msgText.trim()) sendMsg.mutate({ name: msgName.trim(), message: msgText.trim(), email: msgEmail.trim() }); }}
-                  disabled={!msgName.trim() || !msgEmail.trim() || !msgText.trim() || sendMsg.isPending}
+                  onClick={() => {
+                    if (!isValidEmail(msgEmail)) { setEmailError(isRtl ? 'מייל לא תקין' : 'Invalid email address'); return; }
+                    if (msgName.trim() && msgEmail.trim() && msgText.trim()) sendMsg.mutate({ name: msgName.trim(), message: msgText.trim(), email: msgEmail.trim() });
+                  }}
+                  disabled={!msgName.trim() || !msgEmail.trim() || !msgText.trim() || !!emailError || sendMsg.isPending}
                   className="w-full py-2.5 rounded-xl font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
                   style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
                 >
@@ -2119,6 +2126,41 @@ export default function Home() {
   const [portraitInitialImage, setPortraitInitialImage] = useState<string | null>(null);
   const [portraitImageKey, setPortraitImageKey] = useState(0);
 
+  // Typing animation for AI Create card
+  const aiCreateWords = isRtl
+    ? ['רכב ספורט', 'אופנוע', 'דרקון', 'פרח', 'נשר', 'אריה']
+    : ['sports car', 'motorcycle', 'dragon', 'flower', 'eagle', 'lion'];
+  const [typingWordIdx, setTypingWordIdx] = useState(0);
+  const [typingText, setTypingText] = useState(aiCreateWords[0]);
+  const [typingPhase, setTypingPhase] = useState<'typing' | 'pause' | 'erasing'>('pause');
+  useEffect(() => {
+    const word = aiCreateWords[typingWordIdx];
+    if (typingPhase === 'pause') {
+      const t = setTimeout(() => setTypingPhase('erasing'), 1800);
+      return () => clearTimeout(t);
+    }
+    if (typingPhase === 'erasing') {
+      if (typingText.length === 0) {
+        const nextIdx = (typingWordIdx + 1) % aiCreateWords.length;
+        setTypingWordIdx(nextIdx);
+        setTypingPhase('typing');
+        return;
+      }
+      const t = setTimeout(() => setTypingText(prev => prev.slice(0, -1)), 60);
+      return () => clearTimeout(t);
+    }
+    if (typingPhase === 'typing') {
+      const nextWord = aiCreateWords[typingWordIdx];
+      if (typingText.length === nextWord.length) {
+        setTypingPhase('pause');
+        return;
+      }
+      const t = setTimeout(() => setTypingText(nextWord.slice(0, typingText.length + 1)), 80);
+      return () => clearTimeout(t);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typingPhase, typingText, typingWordIdx]);
+
   // Remember active tab — auto-switch to tab with active job on page return
   const [activeTab, setActiveTab] = useState<string>(() => {
     // If there's an active job, go to that tab automatically
@@ -2586,8 +2628,8 @@ export default function Home() {
               {/* Text prompt pill */}
               <div className="absolute top-2 right-2 left-10 z-10">
                 <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: 'white', border: '1.5px solid rgba(99,102,241,0.5)', boxShadow: '0 2px 8px rgba(99,102,241,0.18)' }}>
-                  <span className="text-[11px] font-semibold" style={{ color: '#4f46e5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>sports car</span>
-                  <span className="text-[11px] animate-pulse font-bold" style={{ color: '#6366f1' }}>|</span>
+                  <span className="text-[11px] font-semibold" style={{ color: '#4f46e5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{typingText}</span>
+                  <span className="text-[11px] font-bold" style={{ color: '#6366f1', opacity: typingPhase === 'pause' ? 1 : 0.4 }}>|</span>
                 </div>
               </div>
               {/* Arrow */}

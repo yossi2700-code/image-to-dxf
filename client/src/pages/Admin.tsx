@@ -525,6 +525,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const { data: contactMessagesData, isLoading: contactMessagesLoading, refetch: refetchContactMessages } = trpc.admin.getContactMessages.useQuery(
     undefined, { enabled: activeSection === "messages" }
   );
+  const { data: unreadMsgCount } = trpc.admin.getContactMessages.useQuery(
+    undefined, { refetchInterval: 30000, select: (data) => data.filter((m: { isRead: number | boolean }) => !m.isRead).length }
+  );
   const markReadMutation = trpc.admin.markContactMessageRead.useMutation({
     onSuccess: () => refetchContactMessages(),
   });
@@ -838,10 +841,15 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   }
                 >
                   <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 relative"
                     style={{ background: activeSection === id ? `${color}22` : '#f1f5f9' }}
                   >
                     <Icon className="w-3.5 h-3.5" style={{ color: activeSection === id ? color : '#94a3b8' }} />
+                    {id === 'messages' && !!unreadMsgCount && unreadMsgCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white" style={{ background: '#ef4444' }}>
+                        {unreadMsgCount > 9 ? '9+' : unreadMsgCount}
+                      </span>
+                    )}
                   </div>
                   {label}
                 </button>
