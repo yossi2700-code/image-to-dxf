@@ -1141,6 +1141,23 @@ export const appRouter = router({
       const map = Object.fromEntries(rows.map(r => [r.key, r.value]));
       return { supportEmail: map["support_email"] ?? "", whatsappNumber: map["whatsapp_number"] ?? "" };
     }),
+    sendMessage: publicProcedure
+      .input(z.object({
+        name: z.string().min(1).max(100),
+        message: z.string().min(1).max(1000),
+        email: z.string().email().optional(),
+        phone: z.string().max(30).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const content = [
+          `👤 שם: ${input.name}`,
+          input.email ? `📧 מייל: ${input.email}` : null,
+          input.phone ? `📱 טלפון: ${input.phone}` : null,
+          `💬 הודעה: ${input.message}`,
+        ].filter(Boolean).join('\n');
+        await notifyOwner({ title: `📩 הודעה חדשה מ-${input.name}`, content });
+        return { success: true };
+      }),
   }),
 
   /** Public package prices — available to all users */
