@@ -2411,12 +2411,12 @@ export default function Home() {
         {/* ── Hero Section — Machine Background ── */}
         <div className="mb-5">
           {/* On desktop: constrained height; on mobile: taller */}
-          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(99,102,241,0.35)' }}>
+          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(99,102,241,0.35)', height: 'clamp(180px, 22vw, 280px)' }}>
             <img
               src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-option-1-laser-sparks_de4a7010.png"
               alt=""
-              className="w-full block"
-              style={{ display: 'block', maxHeight: '320px', objectFit: 'contain', background: '#0a0a1a' }}
+              className="w-full h-full"
+              style={{ display: 'block', objectFit: 'cover', objectPosition: 'center center' }}
             />
           </div>
         </div>
@@ -2431,13 +2431,20 @@ export default function Home() {
           ].map((f, i) => (
             <button
               key={i}
+              disabled={(f as { comingSoon?: boolean }).comingSoon}
               onClick={() => {
+                if ((f as { comingSoon?: boolean }).comingSoon) return;
                 setActiveTab(f.tab);
                 localStorage.setItem('active_tab', f.tab);
                 document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }}
-              className="flex flex-col items-center gap-0 rounded-xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
-              style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', cursor: 'pointer' }}
+              className="flex flex-col items-center gap-0 rounded-xl overflow-hidden transition-all relative"
+              style={{
+                border: 'none', padding: 0, background: 'white',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
+                cursor: (f as { comingSoon?: boolean }).comingSoon ? 'not-allowed' : 'pointer',
+                opacity: (f as { comingSoon?: boolean }).comingSoon ? 0.6 : 1,
+              }}
             >
               {/* Image area */}
               <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '55%' }}>
