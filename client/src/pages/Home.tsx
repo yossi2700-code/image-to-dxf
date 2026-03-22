@@ -589,9 +589,6 @@ function CtaSection() {
             <Sparkles className="w-3 h-3" />
             {isRtl ? 'AI חכם' : 'Smart AI'}
           </div>
-          <h2 className="font-black text-white mb-2" style={{ fontSize: 'clamp(1.3rem, 4vw, 1.9rem)', letterSpacing: '-0.02em' }}>
-            {isRtl ? 'התחל להמיר בחינם היום.' : 'Start converting for free today.'}
-          </h2>
           <p className="text-sm mb-6" style={{ color: '#a5b4fc' }}>
             {isRtl ? 'לייזר, CNC ועיצוב וקטורי באיכות מקצועית בעזרת AI' : 'Professional vector files for laser, CNC, and design — powered by AI'}
           </p>
@@ -662,7 +659,7 @@ function CtaSection() {
                 <input
                   className="w-full px-3 py-2 rounded-lg text-sm border"
                   style={{ borderColor: '#e0e7ff', outline: 'none' }}
-                  placeholder={isRtl ? 'שם מלא' : 'Your name'}
+                  placeholder={isRtl ? 'שם (אופציונלי)' : 'Your name (optional)'}
                   value={msgName}
                   onChange={e => setMsgName(e.target.value)}
                 />
@@ -681,8 +678,8 @@ function CtaSection() {
                   onChange={e => setMsgText(e.target.value)}
                 />
                 <button
-                  onClick={() => { if (msgName.trim() && msgText.trim()) sendMsg.mutate({ name: msgName.trim(), message: msgText.trim(), email: msgEmail.trim() || undefined }); }}
-                  disabled={!msgName.trim() || !msgText.trim() || sendMsg.isPending}
+                  onClick={() => { if (msgText.trim()) sendMsg.mutate({ name: msgName.trim() || (isRtl ? 'אנונימי' : 'Anonymous'), message: msgText.trim(), email: msgEmail.trim() || undefined }); }}
+                  disabled={!msgText.trim() || sendMsg.isPending}
                   className="w-full py-2.5 rounded-xl font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
                   style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
                 >
