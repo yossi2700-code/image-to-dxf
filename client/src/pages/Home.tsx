@@ -2428,26 +2428,26 @@ export default function Home() {
           <button
             onClick={() => { setActiveTab('ai'); localStorage.setItem('active_tab', 'ai'); document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
             className="flex flex-col items-center gap-0 rounded-xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
-            style={{ border: 'none', padding: 0, boxShadow: '0 2px 10px rgba(0,0,0,0.12)', cursor: 'pointer', background: '#0f0c29' }}
+            style={{ border: 'none', padding: 0, boxShadow: '0 2px 10px rgba(0,0,0,0.08)', cursor: 'pointer', background: 'white' }}
           >
-            {/* Dark gradient background area */}
-            <div className="w-full relative" style={{ background: 'linear-gradient(160deg, #1e1b4b 0%, #2d2060 50%, #1a2456 100%)', paddingBottom: '55%' }}>
+            {/* White background matching other cards */}
+            <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '55%' }}>
               {/* Keyboard icon top-left */}
               <div className="absolute top-2 left-2 flex items-center gap-1 z-10">
                 <div className="rounded-md flex items-center justify-center" style={{ background: 'rgba(99,102,241,0.25)', padding: '3px 5px' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10"/></svg>
                 </div>
               </div>
               {/* Text prompt pill */}
               <div className="absolute top-2 right-2 left-10 z-10">
-                <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(165,180,252,0.3)' }}>
-                  <span className="text-[9px] font-mono" style={{ color: '#a5b4fc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>sports car</span>
+                <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: 'white', border: '1px solid rgba(99,102,241,0.3)', boxShadow: '0 1px 4px rgba(99,102,241,0.1)' }}>
+                  <span className="text-[9px] font-mono" style={{ color: '#4f46e5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>sports car</span>
                   <span className="text-[9px] animate-pulse" style={{ color: '#6366f1' }}>|</span>
                 </div>
               </div>
               {/* Arrow */}
               <div className="absolute z-10" style={{ top: '38%', left: '50%', transform: 'translateX(-50%)' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
               </div>
               {/* Car DXF image */}
               <img
