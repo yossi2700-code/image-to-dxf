@@ -2411,27 +2411,27 @@ export default function Home() {
         {/* ── Hero Section — Machine Background ── */}
         <div className="mb-6 flex flex-col gap-2">
           {/* Image 1: Fiber laser cutting metal with sparks */}
-          <div className="rounded-2xl overflow-hidden" style={{ height: 180 }}>
+          <div className="rounded-2xl overflow-hidden" style={{ height: 160 }}>
             <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-laser-metal-sparks-Wwu68BSNWmwDEx9EFp5YMh.webp"
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-option-1-laser-sparks_de4a7010.png"
               alt=""
               className="w-full h-full object-cover"
               style={{ display: 'block' }}
             />
           </div>
-          {/* Images 2 & 3: side by side */}
+          {/* Images 2 & 3: side by side, equal width */}
           <div className="flex gap-2">
-            <div className="rounded-2xl overflow-hidden flex-1" style={{ height: 140 }}>
+            <div className="rounded-2xl overflow-hidden" style={{ height: 130, flex: '1 1 0' }}>
               <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-cnc-wood-vector-CXDCLd28U6N55Ju72AtKtb.webp"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-option-2-cnc-wood-v2_ebd7567a.png"
                 alt=""
                 className="w-full h-full object-cover"
                 style={{ display: 'block' }}
               />
             </div>
-            <div className="rounded-2xl overflow-hidden flex-1" style={{ height: 140 }}>
+            <div className="rounded-2xl overflow-hidden" style={{ height: 130, flex: '1 1 0' }}>
               <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-laser-creative-products-mexXCtadZctcjjXBdfqQvK.webp"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-option-3-creative-products_5f9e6db3.png"
                 alt=""
                 className="w-full h-full object-cover"
                 style={{ display: 'block' }}
