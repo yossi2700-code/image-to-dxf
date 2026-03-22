@@ -2409,19 +2409,20 @@ export default function Home() {
           <InsufficientTokensBanner onDismiss={() => setShowTokensBanner(false)} hasPendingWelcomeBonus={hasPendingWelcomeBonus} />
         )}
         {/* ── Hero Section — Machine Background ── */}
-        <div className="mb-6">
-          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(99,102,241,0.35)', height: 200 }}>
+        <div className="mb-5">
+          {/* On desktop: constrained height; on mobile: taller */}
+          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(99,102,241,0.35)', height: 'clamp(140px, 20vw, 220px)' }}>
             <img
               src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-option-1-laser-sparks_de4a7010.png"
               alt=""
               className="w-full h-full object-cover"
-              style={{ display: 'block' }}
+              style={{ display: 'block', objectPosition: 'center 40%' }}
             />
           </div>
         </div>
 
-        {/* ── Feature Shortcut Cards ── */}
-        <div className="grid grid-cols-2 gap-2 mb-6">
+        {/* ── Feature Shortcut Cards — hidden on desktop (sidebar handles navigation) ── */}
+        <div className="grid grid-cols-2 gap-2 mb-5 md:grid-cols-4 md:gap-3">
           {[
             { tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create', color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-v3-Xq8E28tKQT67AA2juXG9Ze.webp' },
             { tab: 'trace', label: isRtl ? 'AI Outline' : 'AI Outline', color: '#0d9488', bg: 'linear-gradient(135deg, #0d9488, #06b6d4)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png' },
@@ -2435,19 +2436,19 @@ export default function Home() {
                 localStorage.setItem('active_tab', f.tab);
                 document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }}
-              className="flex flex-col items-center gap-0 rounded-2xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
-              style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 4px 16px rgba(0,0,0,0.10)', cursor: 'pointer' }}
+              className="flex flex-col items-center gap-0 rounded-xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
+              style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', cursor: 'pointer' }}
             >
               {/* Image area */}
-              <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '62%' }}>
+              <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '55%' }}>
                 <img
                   src={f.img}
                   alt={f.label}
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', padding: '6px' }}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', padding: '5px' }}
                 />
                 {(f as { comingSoon?: boolean }).comingSoon && (
                   <span
-                    className="absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-full z-10"
+                    className="absolute top-1.5 right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full z-10"
                     style={{ background: '#f59e0b', color: 'white', whiteSpace: 'nowrap', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}
                   >
                     {isRtl ? 'בקרוב' : 'Coming soon'}
@@ -2456,7 +2457,7 @@ export default function Home() {
               </div>
               {/* Label bar */}
               <span
-                className="w-full text-xs font-bold text-center py-2"
+                className="w-full text-[11px] font-bold text-center py-1.5"
                 style={{ background: f.bg, color: 'white', letterSpacing: '0.02em' }}
               >{f.label}</span>
             </button>
@@ -2472,9 +2473,12 @@ export default function Home() {
             localStorage.setItem("active_tab", v);
           }}
           dir={isRtl ? "rtl" : "ltr"}
+          className="flex flex-col md:flex-row gap-4"
         >
+          {/* Sidebar TabsList — vertical on desktop, horizontal on mobile */}
           <TabsList
-            className="w-full mb-6 gap-1 p-1.5"
+            className="w-full mb-0 gap-1 p-1.5
+              md:flex-col md:w-[130px] md:shrink-0 md:self-start md:sticky md:top-4"
             style={{
               background: '#ffffff',
               border: '1px solid #e8eaf0',
