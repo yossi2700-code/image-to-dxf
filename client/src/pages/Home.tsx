@@ -2411,27 +2411,14 @@ export default function Home() {
         {/* ── Hero Section — Machine Background ── */}
         <div
           className="mb-6 rounded-2xl overflow-hidden relative"
-          style={{ background: '#ebebee', minHeight: 200 }}
+          style={{ minHeight: 220 }}
         >
-          {/* Machine images row */}
-          <div className="absolute inset-0 flex">
-            {[
-              'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/engrave-fiber-laser_43fe8406.png',
-              'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/engrave-laser-wood_a4ff04fc.jpg',
-              'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/engrave-laser-pattern_cbfba1a2.jpg',
-            ].map((src, i) => (
-              <div key={i} className="flex-1 relative overflow-hidden">
-                <img
-                  src={src}
-                  alt=""
-                  className="w-full h-full object-cover"
-                  style={{ filter: 'brightness(0.72) grayscale(0.9) contrast(1.05)' }}
-                />
-              </div>
-            ))}
-          </div>
-
-
+          <img
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-laser-cut-metal_7f9ee329.png"
+            alt=""
+            className="w-full h-full object-cover"
+            style={{ display: 'block', minHeight: 220, filter: 'brightness(0.85) grayscale(0.3) contrast(1.1)' }}
+          />
         </div>
 
         {/* ── Feature Shortcut Cards ── */}
