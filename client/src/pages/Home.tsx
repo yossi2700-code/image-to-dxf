@@ -2451,7 +2451,7 @@ export default function Home() {
               </div>
               {/* Car DXF image */}
               <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/sports-car-vector-white-MuYQe4Mbpb5Yi5cY772uQi.webp"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/sports-car-vector-bold-B5boCeXkHsi94FrZZdc7gq.webp"
                 alt="AI Create - sports car"
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center bottom', padding: '22px 6px 4px' }}
               />
