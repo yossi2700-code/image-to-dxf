@@ -968,7 +968,7 @@ export default function Landing() {
             <h2 style={{ fontSize: "clamp(1.5rem,3vw,2.2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 12 }}>{t.galleryTitle}</h2>
             <p style={{ color: "#6b7280", fontSize: 16 }}>{t.gallerySubtitle}</p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 20 }}>
             {BEFORE_AFTER.map((item, i) => (
               <BeforeAfterCard key={i} item={item} isRtl={isRtl} />
             ))}
@@ -1024,7 +1024,7 @@ export default function Landing() {
             <p style={{ color: "#6b7280", fontSize: 16 }}>{t.aiCreateSubtitle}</p>
           </div>
           {/* Grid of all 15 examples */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 16 }}>
             {AI_EXAMPLES.map((item, i) => (
               <AiExampleCard key={i} item={item} isRtl={isRtl} />
             ))}

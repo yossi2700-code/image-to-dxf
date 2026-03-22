@@ -1,7 +1,18 @@
 import { useState, useRef, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LANGUAGES } from "@/lib/translations";
-import { ChevronDown, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
+
+// Short display codes for each language
+const SHORT_LABELS: Record<string, string> = {
+  he: "HE",
+  en: "EN",
+  zh: "中",
+  es: "ES",
+  fr: "FR",
+  ar: "AR",
+  ru: "RU",
+};
 
 export function LanguageSwitcher() {
   const { language, setLanguage } = useLanguage();
@@ -25,18 +36,18 @@ export function LanguageSwitcher() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-muted hover:bg-muted/80 text-sm font-medium transition-colors"
+        className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-muted hover:bg-muted/80 text-xs font-semibold transition-colors"
         aria-haspopup="listbox"
         aria-expanded={open}
+        title={current.label}
       >
-        <Globe className="w-3.5 h-3.5 opacity-60" />
-        <span>{current.label}</span>
-        <ChevronDown className={`w-3 h-3 opacity-60 transition-transform ${open ? "rotate-180" : ""}`} />
+        <Globe className="w-3.5 h-3.5 opacity-60 shrink-0" />
+        <span className="tracking-wide">{SHORT_LABELS[language] ?? language.toUpperCase()}</span>
       </button>
 
       {open && (
         <div
-          className="absolute z-50 mt-1 w-40 rounded-md border border-border bg-popover text-popover-foreground shadow-md py-1"
+          className="absolute z-50 mt-1 w-36 rounded-md border border-border bg-popover text-popover-foreground shadow-md py-1"
           style={{ [(language === "he" || language === "ar") ? "right" : "left"]: 0 }}
           role="listbox"
         >
@@ -57,6 +68,7 @@ export function LanguageSwitcher() {
               <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
                 language === lang.code ? "bg-primary" : "opacity-0"
               }`} />
+              <span className="text-xs font-bold text-muted-foreground w-6">{SHORT_LABELS[lang.code]}</span>
               {lang.label}
             </button>
           ))}
