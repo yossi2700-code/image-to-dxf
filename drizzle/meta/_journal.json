@@ -281,6 +281,13 @@
       "when": 1773765754599,
       "tag": "0039_solid_makkari",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "5",
+      "when": 1774187216132,
+      "tag": "0040_zippy_vertigo",
+      "breakpoints": true
     }
   ]
 }

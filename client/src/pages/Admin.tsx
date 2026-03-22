@@ -519,7 +519,18 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     return result;
   })();
 
-  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email" | "campaign" | "bugs" | "subscriptions" | "news" | "failed_jobs">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email" | "campaign" | "bugs" | "subscriptions" | "news" | "failed_jobs" | "messages">("overview");
+
+  // ── Contact messages ──
+  const { data: contactMessagesData, isLoading: contactMessagesLoading, refetch: refetchContactMessages } = trpc.admin.getContactMessages.useQuery(
+    undefined, { enabled: activeSection === "messages" }
+  );
+  const markReadMutation = trpc.admin.markContactMessageRead.useMutation({
+    onSuccess: () => refetchContactMessages(),
+  });
+  const deleteContactMsgMutation = trpc.admin.deleteContactMessage.useMutation({
+    onSuccess: () => refetchContactMessages(),
+  });
 
   // ── Failed jobs (for admin debugging) ──
   const { data: failedJobsData, isLoading: failedJobsLoading, refetch: refetchFailedJobs } = trpc.admin.getFailedJobs.useQuery(
@@ -748,6 +759,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     { id: "payments", label: "תשלומי PayPal", shortLabel: "PayPal", icon: CreditCard, color: "#0ea5e9" },
     { id: "email", label: "שליחת מייל", shortLabel: "מייל", icon: Mail, color: "#6366f1" },
     { id: "campaign", label: "קמפיין מייל", shortLabel: "קמפיין", icon: Gift, color: "#ec4899" },
+    { id: "messages", label: "הודעות", shortLabel: "הודעות", icon: Mail, color: "#10b981" },
     { id: "failed_jobs", label: "כשלונות", shortLabel: "כשלונות", icon: AlertTriangle, color: "#f97316" },
     { id: "settings", label: "הגדרות", shortLabel: "הגדרות", icon: Settings, color: "#94a3b8" },
   ] as const;
@@ -3223,13 +3235,85 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           </div>
         )}
 
+        {activeSection === "messages" && (
+          <div className="p-4 md:p-6 max-w-7xl mx-auto">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-5 h-5 text-emerald-500" />
+                    <CardTitle className="text-base">הודעות מטופס יצירת קשר</CardTitle>
+                    {contactMessagesData && (
+                      <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
+                        {contactMessagesData.length} הודעות
+                      </span>
+                    )}
+                    {contactMessagesData && contactMessagesData.filter(m => !m.isRead).length > 0 && (
+                      <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+                        {contactMessagesData.filter(m => !m.isRead).length} לא נקראו
+                      </span>
+                    )}
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => refetchContactMessages()} className="gap-1">
+                    <RefreshCw className="w-3.5 h-3.5" />רענן
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {contactMessagesLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : !contactMessagesData || contactMessagesData.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Mail className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">אין הודעות עדיין.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {contactMessagesData.map((msg) => (
+                      <div key={msg.id} className={`border rounded-lg p-4 transition-colors ${msg.isRead ? 'bg-white' : 'bg-emerald-50 border-emerald-200'}`}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              {!msg.isRead && (
+                                <span className="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full font-medium">חדש</span>
+                              )}
+                              <span className="text-sm font-semibold text-slate-800">{msg.name || 'אנונימי'}</span>
+                              {msg.email && (
+                                <a href={`mailto:${msg.email}`} className="text-xs text-blue-600 hover:underline">{msg.email}</a>
+                              )}
+                              <span className="text-xs text-muted-foreground">{new Date(msg.createdAt).toLocaleString('he-IL')}</span>
+                            </div>
+                            <p className="text-sm text-slate-700 whitespace-pre-wrap">{msg.message}</p>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            {!msg.isRead && (
+                              <Button variant="outline" size="sm" onClick={() => markReadMutation.mutate({ id: msg.id })} className="gap-1 text-xs">
+                                <CheckCircle className="w-3.5 h-3.5" />סמן נקרא
+                              </Button>
+                            )}
+                            <Button variant="outline" size="sm" onClick={() => { if (confirm('למחוק הודעה זו?')) deleteContactMsgMutation.mutate({ id: msg.id }); }} className="gap-1 text-xs text-red-600 hover:text-red-700">
+                              <Trash2 className="w-3.5 h-3.5" />מחק
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         </main>
       </div>
     </div>
   );
 }
 
-// ─── Main Export ──────────────────────────────────────────────────────────────
+// ─── Main Export ─────────────────────────────────────────────────────────────────────────────────
 export default function Admin() {
   const { data: checkData, isLoading } = trpc.admin.check.useQuery();
   const [forceShow, setForceShow] = useState(false);

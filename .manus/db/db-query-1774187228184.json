@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `contact_messages` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `name` varchar(128),\n  `email` varchar(320),\n  `message` text NOT NULL,\n  `isRead` int NOT NULL DEFAULT 0,\n  `ipAnon` varchar(20),\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  CONSTRAINT `contact_messages_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute CREATE TABLE IF NOT EXISTS `contact_messages` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `name` varchar(128),\n  `email` varchar(320),\n  `message` text NOT NULL,\n  `isRead` int NOT NULL DEFAULT 0,\n  `ipAnon` varchar(20),\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  CONSTRAINT `contact_messages_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2176
+}

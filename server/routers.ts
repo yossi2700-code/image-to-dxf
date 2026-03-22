@@ -8,7 +8,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks, emailVerifications, failedJobs, visitorEvents } from "../drizzle/schema";
+import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks, emailVerifications, failedJobs, visitorEvents, contactMessages } from "../drizzle/schema";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "./emailService";
 import { desc, eq, and, sql } from "drizzle-orm";
@@ -1120,6 +1120,28 @@ export const appRouter = router({
         await db.delete(appUsers).where(eq(appUsers.id, userId));
         return { success: true };
       }),
+    // Contact messages
+    getContactMessages: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.select().from(contactMessages).orderBy(desc(contactMessages.createdAt));
+    }),
+    markContactMessageRead: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { success: false };
+        await db.update(contactMessages).set({ isRead: 1 }).where(eq(contactMessages.id, input.id));
+        return { success: true };
+      }),
+    deleteContactMessage: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { success: false };
+        await db.delete(contactMessages).where(eq(contactMessages.id, input.id));
+        return { success: true };
+      }),
   }),
 
   /** Public token costs — available to all users (for display purposes) */
@@ -1148,7 +1170,21 @@ export const appRouter = router({
         email: z.string().email().optional(),
         phone: z.string().max(30).optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const db = await getDb();
+        // Save to DB
+        if (db) {
+          const ip = getClientIp(ctx.req);
+          const ipAnon = ip.split('.').slice(0, 3).join('.') + '.x';
+          await db.insert(contactMessages).values({
+            name: input.name,
+            email: input.email ?? null,
+            message: input.message,
+            isRead: 0,
+            ipAnon,
+          });
+        }
+        // Also notify owner
         const content = [
           `👤 שם: ${input.name}`,
           input.email ? `📧 מייל: ${input.email}` : null,
@@ -1156,6 +1192,35 @@ export const appRouter = router({
           `💬 הודעה: ${input.message}`,
         ].filter(Boolean).join('\n');
         await notifyOwner({ title: `📩 הודעה חדשה מ-${input.name}`, content });
+        return { success: true };
+      }),
+    // Admin: list all messages
+    listMessages: publicProcedure
+      .input(z.object({ adminPin: z.string() }))
+      .query(async ({ input }) => {
+        if (input.adminPin !== ENV.adminPin) throw new TRPCError({ code: 'FORBIDDEN' });
+        const db = await getDb();
+        if (!db) return [];
+        return db.select().from(contactMessages).orderBy(desc(contactMessages.createdAt));
+      }),
+    // Admin: mark message as read
+    markRead: publicProcedure
+      .input(z.object({ adminPin: z.string(), id: z.number() }))
+      .mutation(async ({ input }) => {
+        if (input.adminPin !== ENV.adminPin) throw new TRPCError({ code: 'FORBIDDEN' });
+        const db = await getDb();
+        if (!db) return { success: false };
+        await db.update(contactMessages).set({ isRead: 1 }).where(eq(contactMessages.id, input.id));
+        return { success: true };
+      }),
+    // Admin: delete message
+    deleteMessage: publicProcedure
+      .input(z.object({ adminPin: z.string(), id: z.number() }))
+      .mutation(async ({ input }) => {
+        if (input.adminPin !== ENV.adminPin) throw new TRPCError({ code: 'FORBIDDEN' });
+        const db = await getDb();
+        if (!db) return { success: false };
+        await db.delete(contactMessages).where(eq(contactMessages.id, input.id));
         return { success: true };
       }),
   }),

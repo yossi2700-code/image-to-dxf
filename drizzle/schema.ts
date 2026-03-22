@@ -195,6 +195,26 @@ export const consentRecords = mysqlTable("consent_records", {
 
 export type ConsentRecord = typeof consentRecords.$inferSelect;
 export type InsertConsentRecord = typeof consentRecords.$inferInsert;
+
+// Contact messages — messages sent from the CTA section contact form
+export const contactMessages = mysqlTable("contact_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Sender name (optional, defaults to Anonymous) */
+  name: varchar("name", { length: 128 }),
+  /** Sender email (optional) */
+  email: varchar("email", { length: 320 }),
+  /** Message content */
+  message: text("message").notNull(),
+  /** Whether the owner has read this message */
+  isRead: int("isRead").default(0).notNull(),
+  /** Anonymized IP address */
+  ipAnon: varchar("ipAnon", { length: 20 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ContactMessage = typeof contactMessages.$inferSelect;
+export type InsertContactMessage = typeof contactMessages.$inferInsert;
+
 // PayPal orders — tracks token purchases
 export const paypalOrders = mysqlTable("paypal_orders", {
   id: int("id").autoincrement().primaryKey(),
