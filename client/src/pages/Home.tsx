@@ -2442,45 +2442,7 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Overlay gradient for text readability */}
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(235,235,238,0.1) 0%, rgba(235,235,238,0.45) 100%)' }} />
 
-          {/* Content */}
-          <div className="relative z-10 flex flex-col items-center justify-center text-center px-5 py-8" style={{ minHeight: 200 }}>
-            {/* Badge */}
-            <div
-              className="inline-flex items-center gap-1.5 mb-3 px-3 py-1 rounded-full"
-              style={{ background: 'rgba(0,0,0,0.1)', border: '1px solid rgba(0,0,0,0.16)' }}
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-              <span className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.65)', letterSpacing: '0.04em' }}>
-                {isRtl ? 'תוכנה לאנשי מקצוע' : 'Built for professionals'}
-              </span>
-            </div>
-
-            {/* Headline */}
-            <h1
-              className="font-black leading-tight mb-2"
-              style={{ fontSize: 'clamp(1.4rem, 4vw, 2rem)', color: '#111111', letterSpacing: '-0.02em', textShadow: '0 1px 4px rgba(255,255,255,0.6)' }}
-            >
-              {isRtl ? 'מתמונה לקובץ DXF — מיידי.' : 'Image to DXF — instantly.'}
-            </h1>
-            <p className="text-sm mb-5" style={{ color: 'rgba(0,0,0,0.6)', maxWidth: 280, lineHeight: 1.5 }}>
-              {isRtl
-                ? 'לייזר, CNC ופייבר — ייצא קבצים מוכנים לייצור'
-                : 'Laser, CNC & fiber — export production-ready files'}
-            </p>
-
-            {/* CTA */}
-            <button
-              onClick={() => { document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
-              className="inline-flex items-center gap-2 font-bold px-5 py-2.5 rounded-xl transition-all hover:opacity-90 active:scale-95"
-              style={{ background: 'rgba(0,0,0,0.12)', border: '1px solid rgba(0,0,0,0.22)', color: '#111111', fontSize: 13, backdropFilter: 'blur(8px)' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-              {isRtl ? 'התחל עכשיו' : 'Start now'}
-            </button>
-          </div>
         </div>
 
         {/* ── Feature Shortcut Cards ── */}
