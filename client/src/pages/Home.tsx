@@ -2411,12 +2411,12 @@ export default function Home() {
         {/* ── Hero Section — Machine Background ── */}
         <div className="mb-5">
           {/* On desktop: constrained height; on mobile: taller */}
-          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(99,102,241,0.35)', height: 'clamp(140px, 20vw, 220px)' }}>
+          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(99,102,241,0.35)' }}>
             <img
               src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-option-1-laser-sparks_de4a7010.png"
               alt=""
-              className="w-full h-full object-cover"
-              style={{ display: 'block', objectPosition: 'center 40%' }}
+              className="w-full block"
+              style={{ display: 'block', maxHeight: '320px', objectFit: 'contain', background: '#0a0a1a' }}
             />
           </div>
         </div>
