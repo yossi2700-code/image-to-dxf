@@ -453,7 +453,7 @@ function DemoVideoSection({ isRtl }: { isRtl: boolean }) {
 
           <video
             ref={videoRef}
-            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-video-v4-final_faa88b15.mp4"
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-video-v5-final_2f98db64.mp4"
             autoPlay
             muted
             loop

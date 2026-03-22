@@ -2416,28 +2416,17 @@ export default function Home() {
           {/* Machine images row */}
           <div className="absolute inset-0 flex">
             {[
-              { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/machine-cnc3axis_693a6721.jpg', label: isRtl ? 'CNC 3 צירים' : 'CNC 3-Axis' },
-              { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/machine-laser-co2_c2c03c37.jpg', label: isRtl ? 'לייזר CO₂' : 'CO₂ Laser' },
-              { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/machine-fiber-laser_17fc3367.jpg', label: isRtl ? 'פייבר לייזר' : 'Fiber Laser' },
-            ].map((m, i) => (
+              'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/engrave-fiber-laser_43fe8406.png',
+              'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/engrave-laser-wood_a4ff04fc.jpg',
+              'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/engrave-laser-pattern_cbfba1a2.jpg',
+            ].map((src, i) => (
               <div key={i} className="flex-1 relative overflow-hidden">
                 <img
-                  src={m.src}
-                  alt={m.label}
+                  src={src}
+                  alt=""
                   className="w-full h-full object-cover"
                   style={{ filter: 'brightness(0.72) grayscale(0.9) contrast(1.05)' }}
                 />
-                {/* Vertical dividers */}
-                {i < 2 && (
-                  <div className="absolute top-0 right-0 w-px h-full" style={{ background: 'rgba(0,0,0,0.1)' }} />
-                )}
-                {/* Machine label at bottom */}
-                <div
-                  className="absolute bottom-0 inset-x-0 text-center py-1.5"
-                  style={{ background: 'rgba(0,0,0,0.35)' }}
-                >
-                  <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.5)', letterSpacing: '0.06em', textTransform: 'uppercase', fontSize: 10 }}>{m.label}</span>
-                </div>
               </div>
             ))}
           </div>
