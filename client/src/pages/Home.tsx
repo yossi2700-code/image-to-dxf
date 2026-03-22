@@ -2409,16 +2409,35 @@ export default function Home() {
           <InsufficientTokensBanner onDismiss={() => setShowTokensBanner(false)} hasPendingWelcomeBonus={hasPendingWelcomeBonus} />
         )}
         {/* ── Hero Section — Machine Background ── */}
-        <div
-          className="mb-6 rounded-2xl overflow-hidden relative"
-          style={{ minHeight: 220 }}
-        >
-          <img
-            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-laser-cut-steel-parts_2ff9a7f3.jpg"
-            alt=""
-            className="w-full h-full object-cover"
-            style={{ display: 'block', minHeight: 220, filter: 'brightness(0.85) grayscale(0.3) contrast(1.1)' }}
-          />
+        <div className="mb-6 flex flex-col gap-2">
+          {/* Image 1: Fiber laser cutting metal with sparks */}
+          <div className="rounded-2xl overflow-hidden" style={{ height: 180 }}>
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-laser-metal-sparks-Wwu68BSNWmwDEx9EFp5YMh.webp"
+              alt=""
+              className="w-full h-full object-cover"
+              style={{ display: 'block' }}
+            />
+          </div>
+          {/* Images 2 & 3: side by side */}
+          <div className="flex gap-2">
+            <div className="rounded-2xl overflow-hidden flex-1" style={{ height: 140 }}>
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-cnc-wood-vector-CXDCLd28U6N55Ju72AtKtb.webp"
+                alt=""
+                className="w-full h-full object-cover"
+                style={{ display: 'block' }}
+              />
+            </div>
+            <div className="rounded-2xl overflow-hidden flex-1" style={{ height: 140 }}>
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-laser-creative-products-mexXCtadZctcjjXBdfqQvK.webp"
+                alt=""
+                className="w-full h-full object-cover"
+                style={{ display: 'block' }}
+              />
+            </div>
+          </div>
         </div>
 
         {/* ── Feature Shortcut Cards ── */}
