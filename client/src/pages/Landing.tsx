@@ -707,7 +707,7 @@ export default function Landing() {
             onClick={() => handleOpenAuth("register")}
             style={{ background: "linear-gradient(135deg,#7c3aed,#6366f1)", color: "#fff", border: "none", borderRadius: 12, padding: "13px 30px", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 16px rgba(124,58,237,0.3)" }}
           >
-            {isRtl ? "נסה עכשיו — חינם" : "Try now — free"}
+            {isRtl ? "נסה עכשיו" : "Try now"}
           </button>
         </div>
       </section>
