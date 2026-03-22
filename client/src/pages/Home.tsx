@@ -2431,7 +2431,7 @@ export default function Home() {
             style={{ border: 'none', padding: 0, boxShadow: '0 2px 10px rgba(0,0,0,0.12)', cursor: 'pointer', background: '#0f0c29' }}
           >
             {/* Dark gradient background area */}
-            <div className="w-full relative" style={{ background: 'linear-gradient(160deg, #0f0c29 0%, #1a1040 50%, #0d1b3e 100%)', paddingBottom: '70%' }}>
+            <div className="w-full relative" style={{ background: 'linear-gradient(160deg, #1e1b4b 0%, #2d2060 50%, #1a2456 100%)', paddingBottom: '55%' }}>
               {/* Keyboard icon top-left */}
               <div className="absolute top-2 left-2 flex items-center gap-1 z-10">
                 <div className="rounded-md flex items-center justify-center" style={{ background: 'rgba(99,102,241,0.25)', padding: '3px 5px' }}>
