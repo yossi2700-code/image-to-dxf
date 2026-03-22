@@ -542,16 +542,11 @@ export default function Landing() {
       <header style={{ position: "sticky", top: 0, zIndex: 30, background: "rgba(255,255,255,0.95)", backdropFilter: "blur(8px)", borderBottom: "1px solid #e8eaf0", boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => navigate("/")}>
-            <div style={{ width: 32, height: 32, borderRadius: 9, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
-                <path d="M4 16 Q7 7 10 10 Q13 13 16 4" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-                <circle cx="4" cy="16" r="1.8" fill="#06b6d4" />
-                <circle cx="10" cy="10" r="1.8" fill="white" />
-                <circle cx="16" cy="4" r="1.8" fill="#06b6d4" />
-              </svg>
-            </div>
-            <span style={{ fontWeight: 900, fontSize: 18, color: "#6366f1", letterSpacing: "-0.02em" }}>Ai</span>
-            <span style={{ fontWeight: 900, fontSize: 18, color: "#111827", letterSpacing: "-0.02em" }}>DXF</span>
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai-final_6d4eec74.png"
+              alt="dxfai logo"
+              style={{ width: 36, height: 36, borderRadius: 9, objectFit: "cover" }}
+            />
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             {/* Language toggle He / En */}

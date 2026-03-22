@@ -2347,18 +2347,11 @@ export default function Home() {
         <div className="px-3 py-2 flex items-center gap-2 max-w-7xl mx-auto">
           {/* AiDXF Logo */}
           <a href="/landing" className="flex items-center gap-1.5 shrink-0 cursor-pointer" style={{ textDecoration: 'none' }}>
-            <div
-              className="w-7 h-7 rounded-lg shrink-0 flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}
-            >
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-                <path d="M4 16 Q7 7 10 10 Q13 13 16 4" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
-                <circle cx="4" cy="16" r="1.8" fill="#06b6d4"/>
-                <circle cx="10" cy="10" r="1.8" fill="white"/>
-                <circle cx="16" cy="4" r="1.8" fill="#06b6d4"/>
-              </svg>
-            </div>
-            <span className="hidden sm:inline text-base font-black tracking-tight" style={{ color: '#6366f1', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>Ai</span><span className="hidden sm:inline text-base font-black tracking-tight" style={{ color: '#111827', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>DXF</span>
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai-final_6d4eec74.png"
+              alt="dxfai logo"
+              className="h-8 w-8 rounded-lg object-cover shrink-0"
+            />
           </a>
 
           {/* Right side nav */}
