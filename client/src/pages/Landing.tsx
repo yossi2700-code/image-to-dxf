@@ -500,17 +500,17 @@ function DemoVideoSection({ isRtl }: { isRtl: boolean }) {
 // ─── CNC Relief Data ──────────────────────────────────────────────
 const CDN2 = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw";
 const RELIEF_EXAMPLES = [
-  { label_he: "אופנוע", label_en: "Motorcycle", material_he: "עץ אגוז", material_en: "Walnut Wood", before: `${CDN2}/orig-motorcycle_1eee4e43.webp`, after: `${CDN2}/cnc-motorcycle-walnut_30b4b653.webp` },
-  { label_he: "מכונית ספורט", label_en: "Sports Car", material_he: "אלומיניום", material_en: "Aluminum", before: `${CDN2}/orig-sports-car_9a689403.webp`, after: `${CDN2}/cnc-sports-car-aluminum_6038fbec.webp` },
-  { label_he: "גיטרה", label_en: "Guitar", material_he: "עץ אורן", material_en: "Pine Wood", before: `${CDN2}/orig-guitar_93e8465e.webp`, after: `${CDN2}/cnc-guitar-pine_895db17c.webp` },
-  { label_he: "ורדים", label_en: "Roses", material_he: "שיש", material_en: "Marble", before: `${CDN2}/orig-rose-bouquet_c006188c.webp`, after: `${CDN2}/cnc-roses-marble_f501a815.webp` },
-  { label_he: "פנים", label_en: "Face", material_he: "עץ אלון", material_en: "Oak Wood", before: `${CDN2}/orig-woman-face_7160ea96.webp`, after: `${CDN2}/cnc-face-oak_87730b6e.webp` },
-  { label_he: "זאב", label_en: "Wolf", material_he: "נחושת", material_en: "Copper", before: `${CDN2}/orig-wolf_24a0eec1.webp`, after: `${CDN2}/cnc-wolf-copper_9ef91c95.webp` },
-  { label_he: "גולגולת", label_en: "Skull", material_he: "פלדה", material_en: "Steel", before: `${CDN2}/orig-skull_d87817b2.webp`, after: `${CDN2}/cnc-skull-steel_2376f88c.webp` },
-  { label_he: "חמניות", label_en: "Sunflowers", material_he: "עץ דובדבן", material_en: "Cherry Wood", before: `${CDN2}/orig-sunflower-field_384a033f.webp`, after: `${CDN2}/cnc-sunflowers-cherry_e9d721eb.webp` },
-  { label_he: "נוף הרים", label_en: "Mountains", material_he: "גרניט", material_en: "Granite", before: `${CDN2}/orig-mountain-landscape_7f7127ed.webp`, after: `${CDN2}/cnc-mountains-granite_d0f10110.webp` },
-  { label_he: "עיטורים", label_en: "Ornament", material_he: "גרניט", material_en: "Granite", before: `${CDN2}/orig-ornament-color_1e7210c1.webp`, after: `${CDN2}/cnc-ornament-granite_9c5cc581.webp` },
-  { label_he: "מנדלה", label_en: "Mandala", material_he: "עץ אגוז", material_en: "Walnut Wood", before: `${CDN2}/before-mandala_e956d06c.webp`, after: `${CDN2}/cnc-mandala-walnut_ccecba4f.webp` },
+  { label_he: "אופנוע", label_en: "Motorcycle", material_he: "עץ אגוז", material_en: "Walnut Wood", before: `${CDN2}/orig-motorcycle_e4c4f289.webp`, after: `${CDN2}/cnc-motorcycle-walnut_ec7213ae.webp` },
+  { label_he: "מכונית ספורט", label_en: "Sports Car", material_he: "אלומיניום", material_en: "Aluminum", before: `${CDN2}/orig-sports-car_9f17f872.webp`, after: `${CDN2}/cnc-sports-car-aluminum_ec7d9f80.webp` },
+  { label_he: "גיטרה", label_en: "Guitar", material_he: "עץ אורן", material_en: "Pine Wood", before: `${CDN2}/orig-guitar_eabb9155.webp`, after: `${CDN2}/cnc-guitar-pine_4ec8f124.webp` },
+  { label_he: "ורדים", label_en: "Roses", material_he: "שיש", material_en: "Marble", before: `${CDN2}/orig-rose-bouquet_1c69bf7c.webp`, after: `${CDN2}/cnc-roses-marble_c15f9585.webp` },
+  { label_he: "פנים", label_en: "Face", material_he: "עץ אלון", material_en: "Oak Wood", before: `${CDN2}/orig-woman-face_a39b6b07.webp`, after: `${CDN2}/cnc-face-oak_c69cf858.webp` },
+  { label_he: "זאב", label_en: "Wolf", material_he: "נחושת", material_en: "Copper", before: `${CDN2}/orig-wolf_8e9f6a50.webp`, after: `${CDN2}/cnc-wolf-copper_83d08b9a.webp` },
+  { label_he: "גולגולת", label_en: "Skull", material_he: "פלדה", material_en: "Steel", before: `${CDN2}/orig-skull_1a339ac1.webp`, after: `${CDN2}/cnc-skull-steel_2fc5d69a.webp` },
+  { label_he: "חמניות", label_en: "Sunflowers", material_he: "עץ דובדבן", material_en: "Cherry Wood", before: `${CDN2}/orig-sunflower-field_cd6a538b.webp`, after: `${CDN2}/cnc-sunflowers-cherry_977f3c9e.webp` },
+  { label_he: "נוף הרים", label_en: "Mountains", material_he: "גרניט", material_en: "Granite", before: `${CDN2}/orig-mountain-landscape_803fac5a.webp`, after: `${CDN2}/cnc-mountains-granite_c7ef39dd.webp` },
+  { label_he: "עיטורים", label_en: "Ornament", material_he: "גרניט", material_en: "Granite", before: `${CDN2}/orig-ornament-color_829ed617.webp`, after: `${CDN2}/cnc-ornament-granite_6037aeb3.webp` },
+  { label_he: "מנדלה", label_en: "Mandala", material_he: "עץ אגוז", material_en: "Walnut Wood", before: `${CDN2}/before-mandala_bb9b4278.webp`, after: `${CDN2}/cnc-mandala-walnut_47f8d152.webp` },
 ];
 
 function ReliefCard({ item, isRtl }: { item: typeof RELIEF_EXAMPLES[0]; isRtl: boolean }) {
