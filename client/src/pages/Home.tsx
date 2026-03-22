@@ -2348,7 +2348,7 @@ export default function Home() {
           {/* AiDXF Logo */}
           <a href="/landing" className="flex items-center gap-1.5 shrink-0 cursor-pointer" style={{ textDecoration: 'none' }}>
             <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai-final_6d4eec74.png"
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai_99079d72.webp"
               alt="dxfai logo"
               className="h-8 w-8 rounded-lg object-cover shrink-0"
             />
@@ -2593,7 +2593,7 @@ export default function Home() {
           {/* On desktop: constrained height; on mobile: taller */}
           <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(99,102,241,0.35)', height: 'clamp(180px, 22vw, 280px)' }}>
             <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-option-1-laser-sparks_de4a7010.png"
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-laser_6e8b92dd.webp"
               alt=""
               className="w-full h-full"
               style={{ display: 'block', objectFit: 'cover', objectPosition: 'center center' }}
@@ -2648,7 +2648,7 @@ export default function Home() {
             style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', cursor: 'pointer' }}
           >
             <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '55%' }}>
-              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png" alt="AI Outline" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: '5px' }} />
+              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_618d6046.webp" alt="AI Outline" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: '5px' }} />
             </div>
             <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #0d9488, #06b6d4)', color: 'white', letterSpacing: '0.02em' }}>AI Outline</span>
           </button>
@@ -2660,7 +2660,7 @@ export default function Home() {
             style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', cursor: 'pointer' }}
           >
             <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '55%' }}>
-              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_e956deb2.png" alt="Portrait" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: '5px' }} />
+              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_dec41044.webp" alt="Portrait" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: '5px' }} />
             </div>
             <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: 'white', letterSpacing: '0.02em' }}>{isRtl ? 'פורטרט' : 'Portrait'}</span>
           </button>
@@ -2672,7 +2672,7 @@ export default function Home() {
             style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', cursor: 'not-allowed', opacity: 0.6 }}
           >
             <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '55%' }}>
-              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/horse_wood_engraving_sim_8c0adad8.png" alt="CNC Relief" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: '5px' }} />
+              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/horse-wood_553ee849.webp" alt="CNC Relief" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: '5px' }} />
               <span className="absolute top-1.5 right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full z-10" style={{ background: '#f59e0b', color: 'white', whiteSpace: 'nowrap' }}>
                 {isRtl ? 'בקרוב' : 'Coming soon'}
               </span>
@@ -2802,8 +2802,8 @@ export default function Home() {
                   { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-motorcycle-v2-kVk2NjU3C7JJaYLTy45BEJ.webp', alt: 'AI Create - Motorcycle' },
                   { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-dragon-v2-6NFwgC4XgrvF23uFyw6QtY.webp', alt: 'AI Create - Dragon' },
                   { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-sneaker-v2-Ww8poumNGGE5fv9v9WKGJ5.webp', alt: 'AI Create - Sneaker' },
-                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-typewriter_a3336bbc.png', alt: 'AI Generate - Typewriter' },
-                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-sunglasses_e7cbfe74.png', alt: 'AI Generate - Sunglasses' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-typewriter_54b34164.webp', alt: 'AI Generate - Typewriter' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-gen-sunglasses_a4843264.webp', alt: 'AI Generate - Sunglasses' },
                 ]}
               />
             </div>
@@ -2827,9 +2827,9 @@ export default function Home() {
               <DemoSlider
                 accentColor="#0d9488"
                 images={[
-                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png', alt: 'AI Outline - Bicycle' },
-                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-sneaker_9fe887cf.png', alt: 'AI Outline - Sneaker' },
-                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-tools_9ff33dc7.png', alt: 'AI Outline - Tools' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_618d6046.webp', alt: 'AI Outline - Bicycle' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-sneaker_fa207b82.webp', alt: 'AI Outline - Sneaker' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-tools_02a638ad.webp', alt: 'AI Outline - Tools' },
                 ]}
               />
             </div>
@@ -2915,9 +2915,9 @@ export default function Home() {
               <DemoSlider
                 accentColor="#7c3aed"
                 images={[
-                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_e956deb2.png', alt: 'Portrait - Woman' },
-                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-man_1c4399d3.png', alt: 'Portrait - Man' },
-                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-child_d468e82c.png', alt: 'Portrait - Child' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_dec41044.webp', alt: 'Portrait - Woman' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-man_7daae409.webp', alt: 'Portrait - Man' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-child_1400f488.webp', alt: 'Portrait - Child' },
                 ]}
               />
             </div>
@@ -2957,7 +2957,7 @@ export default function Home() {
                 <div className="text-center">
                   <p className="text-xs text-gray-400 mb-1">{t("cncReliefSimulationLabel")}</p>
                   <img
-                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/cnc-daisy-wood-v2_b1b59b13.png"
+                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/cnc-daisy-wood_b87724cc.webp"
                     alt="CNC Wood simulation example"
                     className="w-full rounded-lg object-cover"
                     style={{ aspectRatio: '1', maxHeight: '120px', objectFit: 'cover' }}

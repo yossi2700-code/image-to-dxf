@@ -233,7 +233,7 @@ const PORTRAIT_EXAMPLES = [
     label_en: "Teen Girl",
     desc_he: "פורטרט נערה — שיער מתולתל, קווים עדינים",
     desc_en: "Teen girl portrait — curly hair, delicate lines",
-    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-teen_0eb0544e.png",
+    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-teen_bb1048a7.webp",
     after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-teen-v4-PXoePry5PzKQwr84US3zye.png",
   },
   {
@@ -241,7 +241,7 @@ const PORTRAIT_EXAMPLES = [
     label_en: "Woman",
     desc_he: "פורטרט אישה — שיער קצר, ביטחון",
     desc_en: "Woman portrait — short hair, confidence",
-    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-midwoman_b9ea3bb5.png",
+    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-midwoman_0639eabc.webp",
     after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-woman-v4-mfy3rkFb6YewV7z5whRfFN.png",
   },
   {
@@ -249,7 +249,7 @@ const PORTRAIT_EXAMPLES = [
     label_en: "Man",
     desc_he: "פורטרט גבר — זקן, מבנה פנים חזק",
     desc_en: "Man portrait — beard, strong face structure",
-    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-beardman_579be4a0.png",
+    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-beardman_8845c11b.webp",
     after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-man-v4-WKVfnHTho32roe24MBhsh8.png",
   },
   {
@@ -257,7 +257,7 @@ const PORTRAIT_EXAMPLES = [
     label_en: "Elder Woman",
     desc_he: "פורטרט קשישה — קמטים, אופי, עומק",
     desc_en: "Elder woman — wrinkles, character, depth",
-    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-before-eldwoman_5659b216.png",
+    before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-eldwoman_63c4142b.webp",
     after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-elder-v4-UaPqSPFfVh3J3GmiFEBbF3.png",
   },
 ];
@@ -669,7 +669,7 @@ export default function Landing() {
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => navigate("/")}>
             <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai-final_6d4eec74.png"
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai_99079d72.webp"
               alt="dxfai logo"
               style={{ width: 36, height: 36, borderRadius: 9, objectFit: "cover" }}
             />
