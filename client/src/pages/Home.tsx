@@ -2423,52 +2423,83 @@ export default function Home() {
 
         {/* ── Feature Shortcut Cards — hidden on desktop (sidebar handles navigation) ── */}
         <div className="grid grid-cols-2 gap-2 mb-5 md:grid-cols-4 md:gap-3">
-          {[
-            { tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create', color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-v3-Xq8E28tKQT67AA2juXG9Ze.webp' },
-            { tab: 'trace', label: isRtl ? 'AI Outline' : 'AI Outline', color: '#0d9488', bg: 'linear-gradient(135deg, #0d9488, #06b6d4)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png' },
-            { tab: 'face', label: isRtl ? 'פורטרט' : 'Portrait', color: '#7c3aed', bg: 'linear-gradient(135deg, #7c3aed, #a855f7)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_e956deb2.png' },
-            { tab: 'cnc-relief', label: isRtl ? 'CNC תבליט' : 'CNC Relief', color: '#7c3aed', bg: 'linear-gradient(135deg, #6366f1, #7c3aed)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/horse_wood_engraving_sim_8c0adad8.png', comingSoon: true },
-          ].map((f, i) => (
-            <button
-              key={i}
-              disabled={(f as { comingSoon?: boolean }).comingSoon}
-              onClick={() => {
-                if ((f as { comingSoon?: boolean }).comingSoon) return;
-                setActiveTab(f.tab);
-                localStorage.setItem('active_tab', f.tab);
-                document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }}
-              className="flex flex-col items-center gap-0 rounded-xl overflow-hidden transition-all relative"
-              style={{
-                border: 'none', padding: 0, background: 'white',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
-                cursor: (f as { comingSoon?: boolean }).comingSoon ? 'not-allowed' : 'pointer',
-                opacity: (f as { comingSoon?: boolean }).comingSoon ? 0.6 : 1,
-              }}
-            >
-              {/* Image area */}
-              <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '55%' }}>
-                <img
-                  src={f.img}
-                  alt={f.label}
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', padding: '5px' }}
-                />
-                {(f as { comingSoon?: boolean }).comingSoon && (
-                  <span
-                    className="absolute top-1.5 right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full z-10"
-                    style={{ background: '#f59e0b', color: 'white', whiteSpace: 'nowrap', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}
-                  >
-                    {isRtl ? 'בקרוב' : 'Coming soon'}
-                  </span>
-                )}
+
+          {/* AI Create — custom card with keyboard icon + text prompt + car */}
+          <button
+            onClick={() => { setActiveTab('ai'); localStorage.setItem('active_tab', 'ai'); document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+            className="flex flex-col items-center gap-0 rounded-xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
+            style={{ border: 'none', padding: 0, boxShadow: '0 2px 10px rgba(0,0,0,0.12)', cursor: 'pointer', background: '#0f0c29' }}
+          >
+            {/* Dark gradient background area */}
+            <div className="w-full relative" style={{ background: 'linear-gradient(160deg, #0f0c29 0%, #1a1040 50%, #0d1b3e 100%)', paddingBottom: '70%' }}>
+              {/* Keyboard icon top-left */}
+              <div className="absolute top-2 left-2 flex items-center gap-1 z-10">
+                <div className="rounded-md flex items-center justify-center" style={{ background: 'rgba(99,102,241,0.25)', padding: '3px 5px' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10"/></svg>
+                </div>
               </div>
-              {/* Label bar */}
-              <span
-                className="w-full text-[11px] font-bold text-center py-1.5"
-                style={{ background: f.bg, color: 'white', letterSpacing: '0.02em' }}
-              >{f.label}</span>
-            </button>
-          ))}
+              {/* Text prompt pill */}
+              <div className="absolute top-2 right-2 left-10 z-10">
+                <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(165,180,252,0.3)' }}>
+                  <span className="text-[9px] font-mono" style={{ color: '#a5b4fc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>sports car</span>
+                  <span className="text-[9px] animate-pulse" style={{ color: '#6366f1' }}>|</span>
+                </div>
+              </div>
+              {/* Arrow */}
+              <div className="absolute z-10" style={{ top: '38%', left: '50%', transform: 'translateX(-50%)' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </div>
+              {/* Car DXF image */}
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-v3-Xq8E28tKQT67AA2juXG9Ze.webp"
+                alt="AI Create - sports car"
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center bottom', padding: '22px 6px 4px' }}
+              />
+            </div>
+            <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', letterSpacing: '0.02em' }}>
+              {isRtl ? 'AI יצירה' : 'AI Create'}
+            </span>
+          </button>
+
+          {/* AI Outline */}
+          <button
+            onClick={() => { setActiveTab('trace'); localStorage.setItem('active_tab', 'trace'); document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+            className="flex flex-col items-center gap-0 rounded-xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
+            style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', cursor: 'pointer' }}
+          >
+            <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '55%' }}>
+              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png" alt="AI Outline" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: '5px' }} />
+            </div>
+            <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #0d9488, #06b6d4)', color: 'white', letterSpacing: '0.02em' }}>AI Outline</span>
+          </button>
+
+          {/* Portrait */}
+          <button
+            onClick={() => { setActiveTab('face'); localStorage.setItem('active_tab', 'face'); document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+            className="flex flex-col items-center gap-0 rounded-xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
+            style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', cursor: 'pointer' }}
+          >
+            <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '55%' }}>
+              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_e956deb2.png" alt="Portrait" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: '5px' }} />
+            </div>
+            <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: 'white', letterSpacing: '0.02em' }}>{isRtl ? 'פורטרט' : 'Portrait'}</span>
+          </button>
+
+          {/* CNC Relief — disabled */}
+          <button
+            disabled
+            className="flex flex-col items-center gap-0 rounded-xl overflow-hidden relative"
+            style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', cursor: 'not-allowed', opacity: 0.6 }}
+          >
+            <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '55%' }}>
+              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/horse_wood_engraving_sim_8c0adad8.png" alt="CNC Relief" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: '5px' }} />
+              <span className="absolute top-1.5 right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full z-10" style={{ background: '#f59e0b', color: 'white', whiteSpace: 'nowrap' }}>
+                {isRtl ? 'בקרוב' : 'Coming soon'}
+              </span>
+            </div>
+            <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #6366f1, #7c3aed)', color: 'white', letterSpacing: '0.02em' }}>{isRtl ? 'CNC תבליט' : 'CNC Relief'}</span>
+          </button>
+
         </div>
 
         {/* Tabs */}
