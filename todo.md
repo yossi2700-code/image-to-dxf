@@ -2127,3 +2127,7 @@
 - [ ] Fix CNC Relief before/after images to use matching horse pair
 - [ ] Add size/DPI/aspect-ratio parameters to CNC Relief tab
 - [ ] Update CNC Relief feature card color to match site palette (purple/blue)
+
+## תיקון גריד גלריית CNC Relief - מרץ 2026
+
+- [x] תיקון גריד גלריית CNC Relief לתמיד 2 עמודות על כל גודל מסך (שינוי מ-auto-fill minmax(180px) ל-repeat(2,1fr))
