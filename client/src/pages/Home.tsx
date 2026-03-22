@@ -2427,7 +2427,7 @@ export default function Home() {
             { tab: 'ai', label: isRtl ? 'AI יצירה' : 'AI Create', color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1, #8b5cf6)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-ai-create-v3-Xq8E28tKQT67AA2juXG9Ze.webp' },
             { tab: 'trace', label: isRtl ? 'AI Outline' : 'AI Outline', color: '#0d9488', bg: 'linear-gradient(135deg, #0d9488, #06b6d4)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_c5150be7.png' },
             { tab: 'face', label: isRtl ? 'פורטרט' : 'Portrait', color: '#7c3aed', bg: 'linear-gradient(135deg, #7c3aed, #a855f7)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_e956deb2.png' },
-            { tab: 'cnc-relief', label: isRtl ? 'CNC תבליט' : 'CNC Relief', color: '#b45309', bg: 'linear-gradient(135deg, #b45309, #d97706)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/horse_wood_engraving_sim_8c0adad8.png', comingSoon: true },
+            { tab: 'cnc-relief', label: isRtl ? 'CNC תבליט' : 'CNC Relief', color: '#7c3aed', bg: 'linear-gradient(135deg, #6366f1, #7c3aed)', img: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/horse_wood_engraving_sim_8c0adad8.png', comingSoon: true },
           ].map((f, i) => (
             <button
               key={i}
@@ -2555,7 +2555,7 @@ export default function Home() {
             >
               <Mountain className="w-4 h-4 shrink-0" />
               <span className="truncate text-[11px]">{t("cncReliefTabLabel")}</span>
-              <span className="absolute -top-1.5 -right-1 text-[9px] font-bold bg-orange-400 text-white px-1 rounded-full leading-4">
+              <span className="absolute -top-1.5 -right-1 text-[9px] font-bold bg-violet-500 text-white px-1 rounded-full leading-4">
                 {t("comingSoon")}
               </span>
             </TabsTrigger>
@@ -2715,7 +2715,7 @@ export default function Home() {
               style={{ background: '#ffffff', border: '1px solid #e8eaf0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
             >
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #b45309, #d97706)'}}>
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #6366f1, #7c3aed)'}}>
                   <Mountain className="w-3.5 h-3.5 text-white" />
                 </div>
                 <span className="text-sm font-bold text-gray-800">

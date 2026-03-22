@@ -2121,3 +2121,9 @@
 - [x] סדר כרטיסיות: AI יצירה → AI Outline → פורטרט → AI סקיצה (תחזוק) → CNC תבליט (בקרוב)
 - [x] החלפת Hero Section (כותרת + קרוסלה) ב-placeholder אפור
 - [x] שמירת תמונות קרוסלה להורדה
+
+## CNC Relief Tab Updates (מרץ 2026)
+- [ ] Generate matching horse heightmap + wood carving simulation pair
+- [ ] Fix CNC Relief before/after images to use matching horse pair
+- [ ] Add size/DPI/aspect-ratio parameters to CNC Relief tab
+- [ ] Update CNC Relief feature card color to match site palette (purple/blue)
