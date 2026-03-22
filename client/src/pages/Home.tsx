@@ -656,30 +656,43 @@ function CtaSection() {
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                <input
-                  className="w-full px-3 py-2 rounded-lg text-sm border"
-                  style={{ borderColor: '#e0e7ff', outline: 'none' }}
-                  placeholder={isRtl ? 'שם (אופציונלי)' : 'Your name (optional)'}
-                  value={msgName}
-                  onChange={e => setMsgName(e.target.value)}
-                />
-                <input
-                  className="w-full px-3 py-2 rounded-lg text-sm border"
-                  style={{ borderColor: '#e0e7ff', outline: 'none' }}
-                  placeholder={isRtl ? 'מייל (אופציונלי)' : 'Email (optional)'}
-                  value={msgEmail}
-                  onChange={e => setMsgEmail(e.target.value)}
-                />
-                <textarea
-                  className="w-full px-3 py-2 rounded-lg text-sm border resize-none"
-                  style={{ borderColor: '#e0e7ff', outline: 'none', minHeight: '100px' }}
-                  placeholder={isRtl ? 'הודעה שלך...' : 'Your message...'}
-                  value={msgText}
-                  onChange={e => setMsgText(e.target.value)}
-                />
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-700">{isRtl ? 'שם' : 'Name'} <span className="text-red-500">*</span></label>
+                  <input
+                    className="w-full px-3 py-2 rounded-lg text-sm border"
+                    style={{ borderColor: '#e0e7ff', outline: 'none' }}
+                    placeholder={isRtl ? 'הכנס שם...' : 'Enter your name...'}
+                    value={msgName}
+                    onChange={e => setMsgName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-700">{isRtl ? 'מייל' : 'Email'} <span className="text-red-500">*</span></label>
+                  <input
+                    className="w-full px-3 py-2 rounded-lg text-sm border"
+                    style={{ borderColor: '#e0e7ff', outline: 'none' }}
+                    placeholder={isRtl ? 'הכנס מייל...' : 'Enter your email...'}
+                    value={msgEmail}
+                    onChange={e => setMsgEmail(e.target.value)}
+                    type="email"
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-700">{isRtl ? 'הודעה' : 'Message'} <span className="text-red-500">*</span></label>
+                  <textarea
+                    className="w-full px-3 py-2 rounded-lg text-sm border resize-none"
+                    style={{ borderColor: '#e0e7ff', outline: 'none', minHeight: '100px' }}
+                    placeholder={isRtl ? 'הודעה שלך...' : 'Your message...'}
+                    value={msgText}
+                    onChange={e => setMsgText(e.target.value)}
+                    required
+                  />
+                </div>
                 <button
-                  onClick={() => { if (msgText.trim()) sendMsg.mutate({ name: msgName.trim() || (isRtl ? 'אנונימי' : 'Anonymous'), message: msgText.trim(), email: msgEmail.trim() || undefined }); }}
-                  disabled={!msgText.trim() || sendMsg.isPending}
+                  onClick={() => { if (msgName.trim() && msgEmail.trim() && msgText.trim()) sendMsg.mutate({ name: msgName.trim(), message: msgText.trim(), email: msgEmail.trim() }); }}
+                  disabled={!msgName.trim() || !msgEmail.trim() || !msgText.trim() || sendMsg.isPending}
                   className="w-full py-2.5 rounded-xl font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
                   style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
                 >
