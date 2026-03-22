@@ -2414,7 +2414,7 @@ export default function Home() {
           style={{ minHeight: 220 }}
         >
           <img
-            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-laser-cut-metal_7f9ee329.png"
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/hero-laser-cut-steel-parts_2ff9a7f3.jpg"
             alt=""
             className="w-full h-full object-cover"
             style={{ display: 'block', minHeight: 220, filter: 'brightness(0.85) grayscale(0.3) contrast(1.1)' }}
