@@ -334,7 +334,7 @@ router.get("/api/app-auth/verify-email", async (req, res) => {
 
 router.post("/api/app-auth/forgot-password", async (req, res) => {
   try {
-    const { email, origin } = req.body as { email?: string; origin?: string };
+    const { email, origin, language } = req.body as { email?: string; origin?: string; language?: string };
     if (!email) return res.status(400).json({ error: "אימייל נדרש" });
 
     const db = await getDb();
@@ -353,7 +353,11 @@ router.post("/api/app-auth/forgot-password", async (req, res) => {
         const safeOrigin = origin ?? (req.headers["x-forwarded-proto"] ? `${req.headers["x-forwarded-proto"]}://${req.headers["x-forwarded-host"]}` : `${req.protocol}://${req.get("host")}`);
         const resetUrl = `${safeOrigin}/reset-password?token=${resetToken}`;
         try {
-          await sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl });
+          const lang = (language === "he" || language === "en" || language === "ru") ? language
+            : (req.headers["accept-language"] ?? "").startsWith("he") ? "he"
+            : (req.headers["accept-language"] ?? "").startsWith("ru") ? "ru"
+            : "en";
+          await sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl, language: lang });
           console.log(`[forgot-password] Email sent to ${user.email}`);
         } catch (emailErr: unknown) {
           const msg = emailErr instanceof Error ? emailErr.message : String(emailErr);

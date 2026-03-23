@@ -115,7 +115,7 @@ function GoogleSignInButton({ onSuccess, onError, disabled }: {
 }
 
 export function AuthDialog({ open, onOpenChange, limitReached, authReason, initialMode, onSuccess }: AuthDialogProps) {
-  const { t, isRtl } = useLanguage();
+  const { t, isRtl, language } = useLanguage();
   const [mode, setMode] = useState<Mode>("register");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -193,7 +193,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, initi
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, origin: window.location.origin }),
+        body: JSON.stringify({ email, origin: window.location.origin, language }),
       });
       const data = await res.json();
       if (!res.ok) {

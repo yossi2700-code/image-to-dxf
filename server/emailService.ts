@@ -47,28 +47,68 @@ export async function sendPasswordResetEmail(opts: {
   to: string;
   name: string | null;
   resetUrl: string;
+  language?: "he" | "en" | "ru";
 }): Promise<void> {
   if (!resend) { console.warn("[emailService] RESEND_API_KEY not set, skipping email"); return; }
+  const isHe = (opts.language ?? "he") === "he";
+  const isRu = opts.language === "ru";
+  const displayName = opts.name ?? (isHe ? "" : isRu ? "" : "");
+
+  const subject = isHe
+    ? `איפוס סיסמא — DXF AI`
+    : isRu
+    ? `Сброс пароля — DXF AI`
+    : `Password Reset — DXF AI`;
+
+  const html = isHe ? `
+    <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background: #f8fafc; border-radius: 12px;">
+      <h2 style="color: #1e40af; margin-bottom: 8px;">איפוס סיסמא</h2>
+      <p style="color: #374151; margin-bottom: 20px;">
+        שלום ${displayName}!<br/>
+        קיבלנו בקשה לאיפוס הסיסמא שלך. לחץ על הכפתור למטה להמשך.
+      </p>
+      <a href="${opts.resetUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
+        אפס סיסמא
+      </a>
+      <p style="color: #9ca3af; font-size: 12px; margin-top: 24px;">
+        הקישור תקף לשעה אחת. אם לא ביקשת איפוס סיסמא, התעלם מהמייל הזה.
+      </p>
+    </div>
+  ` : isRu ? `
+    <div dir="ltr" style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background: #f8fafc; border-radius: 12px;">
+      <h2 style="color: #1e40af; margin-bottom: 8px;">Сброс пароля</h2>
+      <p style="color: #374151; margin-bottom: 20px;">
+        Здравствуйте${displayName ? `, ${displayName}` : ""}!<br/>
+        Мы получили запрос на сброс пароля. Нажмите кнопку ниже, чтобы продолжить.
+      </p>
+      <a href="${opts.resetUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
+        Сбросить пароль
+      </a>
+      <p style="color: #9ca3af; font-size: 12px; margin-top: 24px;">
+        Ссылка действительна один час. Если вы не запрашивали сброс пароля, просто игнорируйте это письмо.
+      </p>
+    </div>
+  ` : `
+    <div dir="ltr" style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background: #f8fafc; border-radius: 12px;">
+      <h2 style="color: #1e40af; margin-bottom: 8px;">Password Reset</h2>
+      <p style="color: #374151; margin-bottom: 20px;">
+        Hi${displayName ? ` ${displayName}` : ""}!<br/>
+        We received a request to reset your password. Click the button below to continue.
+      </p>
+      <a href="${opts.resetUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
+        Reset Password
+      </a>
+      <p style="color: #9ca3af; font-size: 12px; margin-top: 24px;">
+        This link is valid for 1 hour. If you didn't request a password reset, you can safely ignore this email.
+      </p>
+    </div>
+  `;
+
   await resend.emails.send({
     from: FROM_ADDRESS,
     to: opts.to,
-    subject: `איפוס סיסמה — ${APP_NAME}`,
-    html: `
-      <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background: #f8fafc; border-radius: 12px;">
-        <h2 style="color: #1e40af; margin-bottom: 8px;">איפוס סיסמה</h2>
-        <p style="color: #374151; margin-bottom: 20px;">
-          שלום ${opts.name ?? ""}!<br/>
-          קיבלנו בקשה לאיפוס הסיסמה שלך. לחץ על הכפתור למטה להמשך.
-        </p>
-        <a href="${opts.resetUrl}"
-           style="display: inline-block; background: #2563eb; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
-          אפס סיסמה
-        </a>
-        <p style="color: #9ca3af; font-size: 12px; margin-top: 24px;">
-          הקישור תקף לשעה אחת. אם לא ביקשת איפוס סיסמה, התעלם מהמייל הזה.
-        </p>
-      </div>
-    `,
+    subject,
+    html,
   });
 }
 
