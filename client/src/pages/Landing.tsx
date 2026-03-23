@@ -506,7 +506,7 @@ const RELIEF_EXAMPLES = [
   { label_he: "ורדים", label_en: "Roses", material_he: "שיש", material_en: "Marble", before: `${CDN2}/orig-rose-bouquet_1c69bf7c.webp`, after: `${CDN2}/cnc-roses-marble_c15f9585.webp` },
   { label_he: "פנים", label_en: "Face", material_he: "עץ אלון", material_en: "Oak Wood", before: `${CDN2}/orig-woman-face_a39b6b07.webp`, after: `${CDN2}/cnc-face-oak_c69cf858.webp` },
   { label_he: "זאב", label_en: "Wolf", material_he: "נחושת", material_en: "Copper", before: `${CDN2}/orig-wolf_8e9f6a50.webp`, after: `${CDN2}/cnc-wolf-copper_83d08b9a.webp` },
-  { label_he: "גולגולת", label_en: "Skull", material_he: "פלדה", material_en: "Steel", before: `${CDN2}/orig-skull_1a339ac1.webp`, after: `${CDN2}/cnc-skull-steel_2fc5d69a.webp` },
+
   { label_he: "חמניות", label_en: "Sunflowers", material_he: "עץ דובדבן", material_en: "Cherry Wood", before: `${CDN2}/orig-sunflower-field_cd6a538b.webp`, after: `${CDN2}/cnc-sunflowers-cherry_977f3c9e.webp` },
   { label_he: "נוף הרים", label_en: "Mountains", material_he: "גרניט", material_en: "Granite", before: `${CDN2}/orig-mountain-landscape_803fac5a.webp`, after: `${CDN2}/cnc-mountains-granite_c7ef39dd.webp` },
   { label_he: "עיטורים", label_en: "Ornament", material_he: "גרניט", material_en: "Granite", before: `${CDN2}/orig-ornament-color_829ed617.webp`, after: `${CDN2}/cnc-ornament-granite_6037aeb3.webp` },
@@ -599,7 +599,7 @@ function ReliefSection({ isRtl, onCta }: { isRtl: boolean; onCta: () => void }) 
           ))}
         </div>
         {/* Gallery */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 16, marginBottom: 40 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 16, marginBottom: 40 }}>
           {RELIEF_EXAMPLES.map((item, i) => (
             <ReliefCard key={i} item={item} isRtl={isRtl} />
           ))}
@@ -968,7 +968,7 @@ export default function Landing() {
             <h2 style={{ fontSize: "clamp(1.5rem,3vw,2.2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 12 }}>{t.galleryTitle}</h2>
             <p style={{ color: "#6b7280", fontSize: 16 }}>{t.gallerySubtitle}</p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 20 }}>
             {BEFORE_AFTER.map((item, i) => (
               <BeforeAfterCard key={i} item={item} isRtl={isRtl} />
             ))}
@@ -1023,8 +1023,8 @@ export default function Landing() {
             <h2 style={{ fontSize: "clamp(1.5rem,3vw,2.2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 12 }}>{t.aiCreateTitle}</h2>
             <p style={{ color: "#6b7280", fontSize: 16 }}>{t.aiCreateSubtitle}</p>
           </div>
-          {/* Grid of all 15 examples */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 16 }}>
+          {/* Grid of all 18 examples — 6 columns = 3 full rows */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(6,1fr)", gap: 16 }}>
             {AI_EXAMPLES.map((item, i) => (
               <AiExampleCard key={i} item={item} isRtl={isRtl} />
             ))}
