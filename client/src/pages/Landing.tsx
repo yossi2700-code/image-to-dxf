@@ -415,7 +415,7 @@ function DemoVideoSection({ isRtl }: { isRtl: boolean }) {
 
   return (
     <section style={{
-      padding: "80px 0",
+      padding: "48px 0",
       background: "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)",
       position: "relative",
       overflow: "hidden",
@@ -424,7 +424,7 @@ function DemoVideoSection({ isRtl }: { isRtl: boolean }) {
       <div style={{ position: "absolute", top: -80, left: "20%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%)", pointerEvents: "none" }} />
       <div style={{ position: "absolute", bottom: -60, right: "15%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(167,139,250,0.20) 0%, transparent 70%)", pointerEvents: "none" }} />
 
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 24px", textAlign: "center", position: "relative", zIndex: 1 }}>
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 24px", textAlign: "center", position: "relative", zIndex: 1 }}>
         {/* Badge */}
         <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 24, padding: "6px 16px", marginBottom: 20, backdropFilter: "blur(8px)" }}>
           <span style={{ fontSize: 16 }}>🎬</span>
@@ -458,7 +458,7 @@ function DemoVideoSection({ isRtl }: { isRtl: boolean }) {
             muted
             loop
             playsInline
-            style={{ width: "100%", display: "block", maxHeight: 520 }}
+            style={{ width: "100%", display: "block", maxHeight: 380 }}
           />
 
           {/* Mute/Unmute button overlay */}
