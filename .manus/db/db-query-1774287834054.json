@@ -1,0 +1,26 @@
+{
+  "query": "SELECT id, name, email, createdAt, lastLoginAt, tokenBalance FROM app_users WHERE name LIKE '%אבן%' OR name LIKE '%aven%' OR name LIKE '%Aven%' OR name LIKE '%AVEN%' ORDER BY createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, name, email, createdAt, lastLoginAt, tokenBalance FROM app_users WHERE name LIKE '%אבן%' OR name LIKE '%aven%' OR name LIKE '%Aven%' OR name LIKE '%AVEN%' ORDER BY createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "1200001",
+      "name": "הכל על האבן",
+      "email": "hakol.even@gmail.com",
+      "createdAt": "2026-03-23 16:34:26",
+      "lastLoginAt": "2026-03-23 16:34:26",
+      "tokenBalance": "10"
+    },
+    {
+      "id": "840014",
+      "name": "אבן גל",
+      "email": "evengal@013net.net",
+      "createdAt": "2026-03-15 12:19:51",
+      "lastLoginAt": "2026-03-23 12:44:54",
+      "tokenBalance": "2"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tcreatedAt\tlastLoginAt\ttokenBalance\n1200001\tהכל על האבן\thakol.even@gmail.com\t2026-03-23 16:34:26\t2026-03-23 16:34:26\t10\n840014\tאבן גל\tevengal@013net.net\t2026-03-15 12:19:51\t2026-03-23 12:44:54\t2\n",
+  "stderr": "",
+  "execution_time_ms": 1683
+}

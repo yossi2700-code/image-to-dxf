@@ -1,0 +1,9 @@
+{
+  "query": "SELECT * FROM failed_jobs WHERE appUserId = 1200001 ORDER BY createdAt DESC LIMIT 10;\nSELECT * FROM token_transactions WHERE appUserId = 1200001 ORDER BY createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT * FROM failed_jobs WHERE appUserId = 1200001 ORDER BY createdAt DESC LIMIT 10;\nSELECT * FROM token_transactions WHERE appUserId = 1200001 ORDER BY createdAt DESC LIMIT 10;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1839
+}

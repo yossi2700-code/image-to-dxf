@@ -960,7 +960,7 @@ export default function Landing() {
       </section>
 
       {/* ── DEMO VIDEO ── */}
-      <DemoVideoSection isRtl={isRtl} />
+      {/* DemoVideoSection removed for performance */}
       {/* ── BEFORE / AFTER GALLERY ── */}
       <section style={{ padding: "72px 24px", background: "#fff" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
