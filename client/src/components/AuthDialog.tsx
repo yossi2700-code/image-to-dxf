@@ -54,6 +54,17 @@ function GoogleSignInButton({ onSuccess, onError, disabled }: {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     if (!clientId) return;
 
+    // Load GSI script dynamically (not in <head>) to avoid render-blocking
+    const loadGSI = () => {
+      if (document.querySelector('script[src*="accounts.google.com/gsi"]')) return; // already loading
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    };
+    loadGSI();
+
     const init = () => {
       const gsi = getGoogleGSI();
       if (!gsi || !btnRef.current) return;

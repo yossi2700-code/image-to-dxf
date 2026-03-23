@@ -2206,3 +2206,4 @@
 - [x] Manual chunks ב-vite.config.ts: pdf-export (jsPDF+svg2pdf+html2canvas) בחבילה נפרדת — bundle ראשי ירד מ-2.1MB ל-885KB
 - [x] Preconnect ל-CDN (d2xsxph8kpxj0f.cloudfront.net) ב-index.html
 - [x] Fonts non-blocking: Google Fonts נטען עם media=print → onload='all' (לא חוסם render)
+- [x] הסרת Google GSI script מה-head וטעינה דינמית בלבד כש-AuthDialog נפתח — חיסכון 600ms render-blocking
