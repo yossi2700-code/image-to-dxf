@@ -234,7 +234,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט נערה — שיער מתולתל, קווים עדינים",
     desc_en: "Teen girl portrait — curly hair, delicate lines",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-teen_bb1048a7.webp",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-teen-v4-PXoePry5PzKQwr84US3zye.png",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-teen-v4-PXoePry5PzKQwr84US3zye_27ae1fc3.webp",
   },
   {
     label_he: "אישה",
@@ -242,7 +242,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט אישה — שיער קצר, ביטחון",
     desc_en: "Woman portrait — short hair, confidence",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-midwoman_0639eabc.webp",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-woman-v4-mfy3rkFb6YewV7z5whRfFN.png",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-woman-v4-mfy3rkFb6YewV7z5whRfFN_ff06288f.webp",
   },
   {
     label_he: "גבר",
@@ -250,7 +250,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט גבר — זקן, מבנה פנים חזק",
     desc_en: "Man portrait — beard, strong face structure",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-beardman_8845c11b.webp",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-man-v4-WKVfnHTho32roe24MBhsh8.png",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-man-v4-WKVfnHTho32roe24MBhsh8_000b3881.webp",
   },
   {
     label_he: "קשישה",
@@ -258,7 +258,7 @@ const PORTRAIT_EXAMPLES = [
     desc_he: "פורטרט קשישה — קמטים, אופי, עומק",
     desc_en: "Elder woman — wrinkles, character, depth",
     before: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait2-eldwoman_63c4142b.webp",
-    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-elder-v4-UaPqSPFfVh3J3GmiFEBbF3.png",
+    after: "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-dxf-elder-v4-UaPqSPFfVh3J3GmiFEBbF3_82a4d53f.webp",
   },
 ];
 
@@ -280,6 +280,8 @@ function PortraitCard({ item, isRtl }: { item: typeof PORTRAIT_EXAMPLES[0]; isRt
         <img
           src={showAfter ? item.after : item.before}
           alt={isRtl ? item.label_he : item.label_en}
+          loading="lazy"
+          decoding="async"
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", background: "#f8f8f8", transition: "opacity 0.3s" }}
         />
         {/* Toggle button */}
@@ -329,6 +331,8 @@ function BeforeAfterCard({ item, isRtl }: { item: typeof BEFORE_AFTER[0]; isRtl:
         <img
           src={showAfter ? item.after : item.before}
           alt={isRtl ? item.label_he : item.label_en}
+          loading="lazy"
+          decoding="async"
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", background: "#f8f8f8", transition: "opacity 0.3s" }}
         />
         <div style={{
@@ -376,6 +380,8 @@ function AiExampleCard({ item, isRtl }: { item: typeof AI_EXAMPLES[0]; isRtl: bo
         <img
           src={item.img}
           alt={isRtl ? item.label_he : item.label_en}
+          loading="lazy"
+          decoding="async"
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", background: "#f8f6ff" }}
         />
         <div style={{

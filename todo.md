@@ -2193,3 +2193,9 @@
 ## סרטון Click-to-Play - מרץ 2026
 
 - [x] שינוי סרטון הדמו ל-click-to-play — נטען ומתנגן רק לאחר לחיצה, thumbnail מוצג בינתיים
+
+## אופטימיזציית ביצועים — מרץ 2026
+
+- [x] המרת 4 תמונות PNG של פורטרטים ל-WebP (חיסכון ~3.5MB: 1.2MB+944KB+870KB+837KB → 257KB+183KB+155KB+128KB)
+- [x] הוספת Cache-Control headers לנכסים סטטיים (JS/CSS hashed: 1 שנה, תמונות: שבוע, HTML: no-cache)
+- [x] הוספת lazy loading + decoding=async לכל תמונות הגלריה בדף הנחיתה
