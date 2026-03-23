@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE `system_settings` CHANGE COLUMN `key` `setting_key` VARCHAR(64) NOT NULL, CHANGE COLUMN `value` `setting_value` TEXT NOT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute ALTER TABLE `system_settings` CHANGE COLUMN `key` `setting_key` VARCHAR(64) NOT NULL, CHANGE COLUMN `value` `setting_value` TEXT NOT NULL;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 9001 (HY000) at line 1: PD server timeout:"
+  ]
+}

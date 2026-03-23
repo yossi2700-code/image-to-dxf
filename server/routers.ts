@@ -361,7 +361,8 @@ export const appRouter = router({
     getMaintenanceMode: adminProcedure.query(async () => {
       const db = await getDb();
       if (!db) return { enabled: false };
-      const [row] = await db.select().from(systemSettings).where(eq(systemSettings.key, "maintenance_mode")).limit(1);
+      const rows = await db.execute(sql`SELECT \`id\`, \`key\`, \`value\` FROM \`system_settings\` WHERE \`key\` = 'maintenance_mode' LIMIT 1`);
+      const row = (rows as unknown as Array<{ key: string; value: string }>)[0];
       return { enabled: row?.value === "1" };
     }),
 
@@ -371,10 +372,8 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-        await db
-          .insert(systemSettings)
-          .values({ key: "maintenance_mode", value: input.enabled ? "1" : "0" })
-          .onDuplicateKeyUpdate({ set: { value: input.enabled ? "1" : "0" } });
+        const val = input.enabled ? "1" : "0";
+        await db.execute(sql`INSERT INTO \`system_settings\` (\`key\`, \`value\`) VALUES ('maintenance_mode', ${val}) ON DUPLICATE KEY UPDATE \`value\` = ${val}`);
         return { success: true, enabled: input.enabled };
       }),
 
@@ -585,9 +584,8 @@ export const appRouter = router({
     getContactSettings: adminProcedure.query(async () => {
       const db = await getDb();
       if (!db) return { supportEmail: "", whatsappNumber: "" };
-      const rows = await db.select().from(systemSettings)
-        .where(sql`${systemSettings.key} IN ('support_email', 'whatsapp_number')`);
-      const map = Object.fromEntries(rows.map(r => [r.key, r.value]));
+      const rows = await db.execute(sql`SELECT \`key\`, \`value\` FROM \`system_settings\` WHERE \`key\` IN ('support_email', 'whatsapp_number')`);
+      const map = Object.fromEntries((rows as unknown as Array<{ key: string; value: string }>).map(r => [r.key, r.value]));
       return { supportEmail: map["support_email"] ?? "", whatsappNumber: map["whatsapp_number"] ?? "" };
     }),
 
@@ -597,10 +595,8 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-        await db.insert(systemSettings).values({ key: "support_email", value: input.supportEmail })
-          .onDuplicateKeyUpdate({ set: { value: input.supportEmail } });
-        await db.insert(systemSettings).values({ key: "whatsapp_number", value: input.whatsappNumber })
-          .onDuplicateKeyUpdate({ set: { value: input.whatsappNumber } });
+        await db.execute(sql`INSERT INTO \`system_settings\` (\`key\`, \`value\`) VALUES ('support_email', ${input.supportEmail}) ON DUPLICATE KEY UPDATE \`value\` = ${input.supportEmail}`);
+        await db.execute(sql`INSERT INTO \`system_settings\` (\`key\`, \`value\`) VALUES ('whatsapp_number', ${input.whatsappNumber}) ON DUPLICATE KEY UPDATE \`value\` = ${input.whatsappNumber}`);
         return { success: true };
       }),
 
@@ -1161,9 +1157,8 @@ export const appRouter = router({
     info: publicProcedure.query(async () => {
       const db = await getDb();
       if (!db) return { supportEmail: "", whatsappNumber: "" };
-      const rows = await db.select().from(systemSettings)
-        .where(sql`${systemSettings.key} IN ('support_email', 'whatsapp_number')`);
-      const map = Object.fromEntries(rows.map(r => [r.key, r.value]));
+      const rows = await db.execute(sql`SELECT \`key\`, \`value\` FROM \`system_settings\` WHERE \`key\` IN ('support_email', 'whatsapp_number')`);
+      const map = Object.fromEntries((rows as unknown as Array<{ key: string; value: string }>).map(r => [r.key, r.value]));
       return { supportEmail: map["support_email"] ?? "", whatsappNumber: map["whatsapp_number"] ?? "" };
     }),
     sendMessage: publicProcedure
@@ -1767,11 +1762,8 @@ export const appRouter = router({
     get: publicProcedure.query(async () => {
       const db = await getDb();
       if (!db) return { text: "", enabled: false };
-      const [row] = await db
-        .select()
-        .from(systemSettings)
-        .where(eq(systemSettings.key, "announcement_banner"))
-        .limit(1);
+      const rows = await db.execute(sql`SELECT \`key\`, \`value\` FROM \`system_settings\` WHERE \`key\` = 'announcement_banner' LIMIT 1`);
+      const row = (rows as unknown as Array<{ key: string; value: string }>)[0];
       if (!row) return { text: "", enabled: false };
       try {
         return JSON.parse(row.value) as { text: string; enabled: boolean };
@@ -1793,10 +1785,7 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         const value = JSON.stringify({ text: input.text, enabled: input.enabled });
-        await db
-          .insert(systemSettings)
-          .values({ key: "announcement_banner", value })
-          .onDuplicateKeyUpdate({ set: { value } });
+        await db.execute(sql`INSERT INTO \`system_settings\` (\`key\`, \`value\`) VALUES ('announcement_banner', ${value}) ON DUPLICATE KEY UPDATE \`value\` = ${value}`);
         return { success: true };
       }),
   }),

@@ -2,8 +2,7 @@ import { z } from "zod";
 import { notifyOwner } from "./notification";
 import { adminProcedure, publicProcedure, router } from "./trpc";
 import { getDb } from "../db";
-import { systemSettings } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 export const systemRouter = router({
   health: publicProcedure
@@ -20,7 +19,9 @@ export const systemRouter = router({
   maintenanceMode: publicProcedure.query(async () => {
     const db = await getDb();
     if (!db) return { enabled: false };
-    const [row] = await db.select().from(systemSettings).where(eq(systemSettings.key, "maintenance_mode")).limit(1);
+    // Use raw SQL to avoid TiDB reserved word issue with `key` and `value` column names
+    const rows = await db.execute(sql`SELECT \`id\`, \`key\`, \`value\` FROM \`system_settings\` WHERE \`key\` = 'maintenance_mode' LIMIT 1`);
+    const row = (rows as unknown as Array<{ key: string; value: string }>)[0];
     return { enabled: row?.value === "1" };
   }),
 
