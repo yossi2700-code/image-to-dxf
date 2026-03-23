@@ -588,7 +588,7 @@ function ReliefSection({ isRtl, onCta }: { isRtl: boolean; onCta: () => void }) 
           </p>
         </div>
         {/* Process steps */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 20, marginBottom: 56 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 20, marginBottom: 56 }}>
           {PROCESS_STEPS.map((step, i) => (
             <div key={i} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: "24px 20px", textAlign: "center", backdropFilter: "blur(8px)" }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>{step.icon}</div>
@@ -599,7 +599,7 @@ function ReliefSection({ isRtl, onCta }: { isRtl: boolean; onCta: () => void }) 
           ))}
         </div>
         {/* Gallery */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 16, marginBottom: 40 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 16, marginBottom: 40 }}>
           {RELIEF_EXAMPLES.map((item, i) => (
             <ReliefCard key={i} item={item} isRtl={isRtl} />
           ))}
@@ -786,7 +786,7 @@ export default function Landing() {
               ? "טכנולוגיית AI ייעודית הלומדת ומפענחת צורות מורכבות כדי לייצר נתיבי חיתוך חלקים, ללא 'רעשים' וקווים מיותרים."
               : "Dedicated AI technology that learns and deciphers complex shapes to generate smooth cutting paths, without 'noise' or unnecessary lines."}
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 24 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 24 }}>
             {[
               { icon: <Wand2 size={22} color="#6366f1" />, title: isRtl ? "קווים חלקים" : "Smooth Lines", desc: isRtl ? "האלגוריתם מחליק ומנקה כל קו לתוצאה מושלמת" : "Algorithm smooths and cleans every line for perfect results" },
               { icon: <Scissors size={22} color="#8b5cf6" />, title: isRtl ? "נתיבים רציפים" : "Continuous Paths", desc: isRtl ? "סגירת מסלולים אוטומטית למניעת עצירות בחיתוך" : "Auto path closure to prevent cutting stops" },
@@ -968,7 +968,7 @@ export default function Landing() {
             <h2 style={{ fontSize: "clamp(1.5rem,3vw,2.2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 12 }}>{t.galleryTitle}</h2>
             <p style={{ color: "#6b7280", fontSize: 16 }}>{t.gallerySubtitle}</p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 20 }}>
             {BEFORE_AFTER.map((item, i) => (
               <BeforeAfterCard key={i} item={item} isRtl={isRtl} />
             ))}
