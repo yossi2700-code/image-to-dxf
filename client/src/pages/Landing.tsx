@@ -599,7 +599,7 @@ function ReliefSection({ isRtl, onCta }: { isRtl: boolean; onCta: () => void }) 
           ))}
         </div>
         {/* Gallery */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 16, marginBottom: 40 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(140px,1fr))", gap: 14, marginBottom: 40 }}>
           {RELIEF_EXAMPLES.map((item, i) => (
             <ReliefCard key={i} item={item} isRtl={isRtl} />
           ))}
@@ -968,7 +968,7 @@ export default function Landing() {
             <h2 style={{ fontSize: "clamp(1.5rem,3vw,2.2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 12 }}>{t.galleryTitle}</h2>
             <p style={{ color: "#6b7280", fontSize: 16 }}>{t.gallerySubtitle}</p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(140px,1fr))", gap: 16 }}>
             {BEFORE_AFTER.map((item, i) => (
               <BeforeAfterCard key={i} item={item} isRtl={isRtl} />
             ))}
@@ -1023,8 +1023,8 @@ export default function Landing() {
             <h2 style={{ fontSize: "clamp(1.5rem,3vw,2.2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 12 }}>{t.aiCreateTitle}</h2>
             <p style={{ color: "#6b7280", fontSize: 16 }}>{t.aiCreateSubtitle}</p>
           </div>
-          {/* Grid of all 18 examples — 6 columns = 3 full rows */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(6,1fr)", gap: 16 }}>
+          {/* Grid of all 18 examples — responsive: 2 on mobile, 4 on tablet, 6 on desktop */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(130px,1fr))", gap: 12 }}>
             {AI_EXAMPLES.map((item, i) => (
               <AiExampleCard key={i} item={item} isRtl={isRtl} />
             ))}
