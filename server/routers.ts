@@ -6,12 +6,12 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { ENV } from "./_core/env";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
-import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
+import { getDailyActivity, getRecentEvents, getUsageStats, TimeRange } from "./usageDb";
 import { getDb } from "./db";
 import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks, emailVerifications, failedJobs, visitorEvents, contactMessages, issueReports } from "../drizzle/schema";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "./emailService";
-import { desc, eq, and, sql } from "drizzle-orm";
+import { desc, eq, and, sql, gte } from "drizzle-orm";
 import { getAppUserFromCookie } from "./appAuth";
 import { COUNTRY_NAMES_HE, countryCodeToFlag, getHebrewCountryDisplay } from "./countryNames";
 import { getTokenBalance, addTokens, getTokenTransactions, invalidateTokenCostsCache } from "./tokenService";
@@ -176,10 +176,14 @@ export const appRouter = router({
       return getDailyActivity(30);
     }),
 
-    /** Recent events list */
-    recentEvents: adminProcedure.query(async () => {
-      return getRecentEvents(500);
-    }),
+    /** Recent events list with optional time range filter */
+    recentEvents: adminProcedure
+      .input(z.object({ timeRange: z.enum(["day", "week", "month", "all"]).default("day") }).optional())
+      .query(async ({ input }) => {
+        const timeRange: TimeRange = input?.timeRange ?? "day";
+        const limit = timeRange === "all" ? 500 : timeRange === "month" ? 500 : 200;
+        return getRecentEvents(limit, timeRange);
+      }),
 
     /** Registered app users list */
     users: adminProcedure.query(async () => {
@@ -200,30 +204,48 @@ export const appRouter = router({
     }),
 
     /** All user actions (for admin view) */
-    userActions: adminProcedure.query(async () => {
-      const db = await getDb();
-      if (!db) return [];
-      return db
-        .select({
-          id: userActions.id,
-          appUserId: userActions.appUserId,
-          actionType: userActions.actionType,
-          description: userActions.description,
-          segmentCount: userActions.segmentCount,
-          dxfUrl: userActions.dxfUrl,
-          imageUrl: userActions.imageUrl,
-          feature: userActions.feature,
-          ipAnon: userActions.ipAnon,
-          createdAt: userActions.createdAt,
-          durationMs: userActions.durationMs,
-          userName: appUsers.name,
-          userEmail: appUsers.email,
-        })
-        .from(userActions)
-        .leftJoin(appUsers, eq(userActions.appUserId, appUsers.id))
-        .orderBy(desc(userActions.createdAt))
-        .limit(500);
-    }),
+    userActions: adminProcedure
+      .input(z.object({ timeRange: z.enum(["day", "week", "month", "all"]).default("day") }).optional())
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return [];
+        const timeRange = input?.timeRange ?? "day";
+        let cutoff: Date | null = null;
+        if (timeRange !== "all") {
+          cutoff = new Date();
+          if (timeRange === "day") cutoff.setDate(cutoff.getDate() - 1);
+          else if (timeRange === "week") cutoff.setDate(cutoff.getDate() - 7);
+          else if (timeRange === "month") cutoff.setMonth(cutoff.getMonth() - 1);
+        }
+        const query = db
+          .select({
+            id: userActions.id,
+            appUserId: userActions.appUserId,
+            actionType: userActions.actionType,
+            description: userActions.description,
+            segmentCount: userActions.segmentCount,
+            dxfUrl: userActions.dxfUrl,
+            imageUrl: userActions.imageUrl,
+            feature: userActions.feature,
+            ipAnon: userActions.ipAnon,
+            createdAt: userActions.createdAt,
+            durationMs: userActions.durationMs,
+            userName: appUsers.name,
+            userEmail: appUsers.email,
+          })
+          .from(userActions)
+          .leftJoin(appUsers, eq(userActions.appUserId, appUsers.id));
+        const limit = timeRange === "all" ? 500 : timeRange === "month" ? 500 : 200;
+        if (cutoff) {
+          return query
+            .where(gte(userActions.createdAt, cutoff))
+            .orderBy(desc(userActions.createdAt))
+            .limit(limit);
+        }
+        return query
+          .orderBy(desc(userActions.createdAt))
+          .limit(limit);
+      }),
 
     /** Actions for a specific user */
     userActionsByUser: adminProcedure

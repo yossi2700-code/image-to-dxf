@@ -203,7 +203,12 @@ type RecentEvent = {
   durationMs: number | null;
 };
 
-function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | undefined; recentLoading: boolean }) {
+function ActivitySection({ recent, recentLoading, timeRange = "day", onTimeRangeChange }: {
+  recent: RecentEvent[] | undefined;
+  recentLoading: boolean;
+  timeRange?: "day" | "week" | "month" | "all";
+  onTimeRangeChange?: (range: "day" | "week" | "month" | "all") => void;
+}) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "convert" | "ai">("all");
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -264,25 +269,43 @@ function ActivitySection({ recent, recentLoading }: { recent: RecentEvent[] | un
             </span>
           </div>
           {sectionOpen && (
-          <div className="flex gap-2 flex-wrap">
-            <Input
-              placeholder="חפש לפי שם או מייל..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="max-w-[220px] h-8 text-sm"
-            />
-            <div className="flex gap-1">
-              {(["all", "convert", "ai"] as const).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setTypeFilter(f)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                    typeFilter === f ? "bg-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  {f === "all" ? "הכל" : f === "convert" ? "המרה" : "AI"}
-                </button>
-              ))}
+          <div className="flex flex-col gap-2">
+            {/* Time range tabs */}
+            {onTimeRangeChange && (
+              <div className="flex gap-1">
+                {(["day", "week", "month", "all"] as const).map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => onTimeRangeChange(r)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                      timeRange === r ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    {r === "day" ? "יום אחרון" : r === "week" ? "שבוע" : r === "month" ? "חודש" : "הכל"}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2 flex-wrap">
+              <Input
+                placeholder="חפש לפי שם או מייל..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="max-w-[220px] h-8 text-sm"
+              />
+              <div className="flex gap-1">
+                {(["all", "convert", "ai"] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setTypeFilter(f)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                      typeFilter === f ? "bg-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    {f === "all" ? "הכל" : f === "convert" ? "המרה" : "AI"}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           )}
@@ -424,7 +447,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const { data: recent, isLoading: recentLoading } = trpc.admin.recentEvents.useQuery();
   const { data: visitorStats } = trpc.visitors.stats.useQuery();
   const { data: registeredUsers, isLoading: usersLoading, refetch: refetchUsers } = trpc.admin.usersWithTokens.useQuery();
-  const { data: userActionsData, isLoading: actionsLoading } = trpc.admin.userActions.useQuery();
+  const [activityTimeRange, setActivityTimeRange] = useState<"day" | "week" | "month" | "all">("day");
+  const { data: userActionsData, isLoading: actionsLoading } = trpc.admin.userActions.useQuery({ timeRange: activityTimeRange });
   const [expandedUser, setExpandedUser] = useState<number | null>(null);
   const [editingLimit, setEditingLimit] = useState<number | null>(null);
   const [limitInput, setLimitInput] = useState("");
@@ -1156,7 +1180,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
         {/* ── ACTIVITY SECTION ── */}
         {activeSection === "activity" && (
-          <ActivitySection recent={userActionsData as unknown as RecentEvent[] | undefined} recentLoading={actionsLoading} />
+          <ActivitySection recent={userActionsData as unknown as RecentEvent[] | undefined} recentLoading={actionsLoading} timeRange={activityTimeRange} onTimeRangeChange={setActivityTimeRange} />
         )}
 
         {/* ── USERS SECTION ── */}

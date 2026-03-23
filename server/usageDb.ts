@@ -108,11 +108,22 @@ export async function getDailyActivity(days = 30) {
 }
 
 /** Get recent events */
-export async function getRecentEvents(limit = 20) {
+export type TimeRange = "day" | "week" | "month" | "all";
+
+export async function getRecentEvents(limit = 200, timeRange: TimeRange = "day") {
   const db = await getDb();
   if (!db) return [];
 
-  return db
+  // Calculate cutoff timestamp based on timeRange
+  let cutoff: Date | null = null;
+  if (timeRange !== "all") {
+    cutoff = new Date();
+    if (timeRange === "day") cutoff.setDate(cutoff.getDate() - 1);
+    else if (timeRange === "week") cutoff.setDate(cutoff.getDate() - 7);
+    else if (timeRange === "month") cutoff.setMonth(cutoff.getMonth() - 1);
+  }
+
+  const query = db
     .select({
       id: usageEvents.id,
       type: usageEvents.type,
@@ -125,7 +136,16 @@ export async function getRecentEvents(limit = 20) {
       userEmail: appUsers.email,
     })
     .from(usageEvents)
-    .leftJoin(appUsers, eq(usageEvents.appUserId, appUsers.id))
+    .leftJoin(appUsers, eq(usageEvents.appUserId, appUsers.id));
+
+  if (cutoff) {
+    return query
+      .where(gte(usageEvents.createdAt, cutoff))
+      .orderBy(desc(usageEvents.createdAt))
+      .limit(limit);
+  }
+
+  return query
     .orderBy(desc(usageEvents.createdAt))
     .limit(limit);
 }
