@@ -400,32 +400,24 @@ function AiExampleCard({ item, isRtl }: { item: typeof AI_EXAMPLES[0]; isRtl: bo
 
 // ─── Demo Video Section ─────────────────────────────────────────────────────
 function DemoVideoSection({ isRtl }: { isRtl: boolean }) {
-  const [muted, setMuted] = useState(true);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
 
-  // Lazy load: only load video when section scrolls into view
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" }
-    );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
-  }, []);
+  const handlePlay = () => {
+    setIsPlaying(true);
+    // Small delay to let the video element render
+    setTimeout(() => {
+      if (videoRef.current) {
+        videoRef.current.play();
+      }
+    }, 50);
+  };
 
   const toggleMute = () => {
     if (videoRef.current) {
       videoRef.current.muted = !muted;
-      if (!muted === false) {
-        videoRef.current.play();
-      }
       setMuted(!muted);
     }
   };
@@ -468,26 +460,39 @@ function DemoVideoSection({ isRtl }: { isRtl: boolean }) {
             <span style={{ marginLeft: 8, color: "rgba(255,255,255,0.4)", fontSize: 12, fontFamily: "monospace" }}>dxfai.ai — Live Demo</span>
           </div>
 
-          {isVisible ? (
+          {isPlaying ? (
             <video
               ref={videoRef}
-              autoPlay
-              muted
+              muted={muted}
               loop
               playsInline
+              controls
               style={{ width: "100%", display: "block", maxHeight: 380 }}
             >
               <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-video-v5_2cbf5d32.webm" type="video/webm" />
               <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-video-v5-final_2f98db64.mp4" type="video/mp4" />
             </video>
           ) : (
-            <div style={{ width: "100%", height: 320, background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 48 }}>▶</span>
+            /* Thumbnail / click-to-play placeholder */
+            <div
+              onClick={handlePlay}
+              style={{ width: "100%", height: 320, background: "linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", gap: 16, userSelect: "none" }}
+            >
+              {/* Play button circle */}
+              <div style={{ width: 80, height: 80, borderRadius: "50%", background: "rgba(99,102,241,0.9)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 40px rgba(99,102,241,0.5)", transition: "transform 0.2s", fontSize: 32 }}>
+                ▶
+              </div>
+              <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 15, fontWeight: 600 }}>
+                {isRtl ? "לחץ לצפייה בדמו" : "Click to watch demo"}
+              </span>
+              <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 12 }}>
+                {isRtl ? "הסרטון נטען רק לאחר לחיצה" : "Video loads only when clicked"}
+              </span>
             </div>
           )}
 
-          {/* Mute/Unmute button overlay */}
-          <button
+          {/* Mute/Unmute button overlay — only show when playing */}
+          {isPlaying && <button
             onClick={toggleMute}
             style={{
               position: "absolute",
@@ -510,13 +515,13 @@ function DemoVideoSection({ isRtl }: { isRtl: boolean }) {
           >
             <span style={{ fontSize: 16 }}>{muted ? "🔇" : "🔊"}</span>
             <span>{muted ? (isRtl ? "הפעל שמע" : "Unmute") : (isRtl ? "השתק" : "Mute")}</span>
-          </button>
+          </button>}
         </div>
 
         {/* CTA below video */}
-        <p style={{ color: "rgba(196,181,253,0.6)", fontSize: 13, marginTop: 20 }}>
+        {isPlaying && <p style={{ color: "rgba(196,181,253,0.6)", fontSize: 13, marginTop: 20 }}>
           {isRtl ? "לחץ על 🔇 להפעלת השמע" : "Tap 🔇 to enable audio"}
-        </p>
+        </p>}
       </div>
     </section>
   );
