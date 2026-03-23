@@ -214,14 +214,14 @@ const AI_EXAMPLES = [
     label_en: "Skateboard",
     prompt_he: "סקייטבורד מקצועי עם גלגלים",
     prompt_en: "Professional skateboard with wheels",
-    img: `${CDN}/ai-skateboard-dxf-HSkbD3L5Ksf9jFSsx67SLy.png`,
+    img: `${CDN}/ai-skateboard-dxf_f2024ed6.webp`,
   },
   {
     label_he: "נעל ספורט",
     label_en: "Sneaker",
     prompt_he: "נעל ספורט גבוהה קלאסית",
     prompt_en: "Classic high-top sneaker",
-    img: `${CDN}/ai-sneaker-dxf_a01cf887.png`,
+    img: `${CDN}/ai-sneaker-dxf_f5a3c866.webp`,
   },
 ];
 
