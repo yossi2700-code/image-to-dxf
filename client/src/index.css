@@ -360,3 +360,11 @@
   stroke-linejoin: round !important;
   opacity: 1 !important;
 }
+
+/* Google Sign-In button centering fix */
+/* GSI renders an iframe inside the container — force it to fill width */
+div[data-google-signin-button] > div,
+div[data-google-signin-button] iframe,
+div[data-google-signin-button] > div > div {
+  width: 100% !important;
+}
