@@ -569,6 +569,7 @@ router.post("/api/app-auth/google", async (req, res) => {
 
     const email = payload.email?.toLowerCase();
     const name = payload.name ?? payload.given_name ?? null;
+    const googleSub = payload.sub; // unique Google user ID
     if (!email) return res.status(400).json({ error: "לא ניתן לקבל אימייל מגוגל" });
 
     const db = await getDb();
@@ -588,6 +589,7 @@ router.post("/api/app-auth/google", async (req, res) => {
         name: name ?? null,
         emailVerified: 1,
         tokenBalance: 10,
+        googleId: googleSub,
       });
       const insertId = (result as { insertId: number }).insertId;
       const [newUser] = await db
@@ -610,8 +612,10 @@ router.post("/api/app-auth/google", async (req, res) => {
         console.warn("[google-auth] Failed to send welcome email:", e);
       }
     } else {
-      // Update last login
-      await db.update(appUsers).set({ lastLoginAt: new Date() }).where(eq(appUsers.id, user.id));
+      // Update last login and save googleId if not already set
+      await db.update(appUsers)
+        .set({ lastLoginAt: new Date(), googleId: googleSub })
+        .where(eq(appUsers.id, user.id));
     }
 
     if (!user) return res.status(500).json({ error: "שגיאה ביצירת משתמש" });

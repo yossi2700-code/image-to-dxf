@@ -1,0 +1,150 @@
+{
+  "query": "SELECT id, name, email, googleId, createdAt FROM app_users ORDER BY createdAt DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, name, email, googleId, createdAt FROM app_users ORDER BY createdAt DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "1170001",
+      "name": "יוסף אייזנבך",
+      "email": "yossi2700xl90@gmail.com",
+      "googleId": "NULL",
+      "createdAt": "2026-03-23 06:49:56"
+    },
+    {
+      "id": "1140001",
+      "name": "Tal",
+      "email": "talhazan11@gmail.com",
+      "googleId": "NULL",
+      "createdAt": "2026-03-20 14:45:38"
+    },
+    {
+      "id": "1110001",
+      "name": "נוי עידן",
+      "email": "noyidan87@gmail.com",
+      "googleId": "NULL",
+      "createdAt": "2026-03-19 11:20:34"
+    },
+    {
+      "id": "1080001",
+      "name": "אלירן נחון",
+      "email": "elirannhuom357@gmail.com",
+      "googleId": "NULL",
+      "createdAt": "2026-03-19 09:35:22"
+    },
+    {
+      "id": "1050001",
+      "name": "נחמן מזרחי",
+      "email": "n0556672751@gmail.com",
+      "googleId": "NULL",
+      "createdAt": "2026-03-18 10:59:01"
+    },
+    {
+      "id": "1020001",
+      "name": "בני",
+      "email": "abnisoam@gmail.com",
+      "googleId": "NULL",
+      "createdAt": "2026-03-18 10:14:49"
+    },
+    {
+      "id": "990001",
+      "name": "שמעון",
+      "email": "shimond148@gmail.com",
+      "googleId": "NULL",
+      "createdAt": "2026-03-18 09:38:03"
+    },
+    {
+      "id": "960002",
+      "name": "Linas Vidmantas",
+      "email": "linasvidmantas@gmail.com",
+      "googleId": "NULL",
+      "createdAt": "2026-03-17 13:55:55"
+    },
+    {
+      "id": "960001",
+      "name": "Snail",
+      "email": "snail@txgm.com",
+      "googleId": "NULL",
+      "createdAt": "2026-03-17 13:00:19"
+    },
+    {
+      "id": "930001",
+      "name": "גולן חסון",
+      "email": "hassong15@gmail.com",
+      "googleId": "NULL",
+      "createdAt": "2026-03-17 11:33:44"
+    },
+    {
+      "id": "900001",
+      "name": "משה אייזנבך",
+      "email": "m0547300456@gmail.com",
+      "googleId": "NULL",
+      "createdAt": "2026-03-17 08:12:35"
+    },
+    {
+      "id": "870001",
+      "name": "נבל",
+      "email": "n1979ss@gmail.com",
+      "googleId": "NULL",
+      "createdAt": "2026-03-17 02:37:24"
+    },
+    {
+      "id": "840017",
+      "name": "Eksun 3D",
+      "email": "sunnybajare@gmail.com",
+      "googleId": "NULL",
+      "createdAt": "2026-03-16 10:39:45"
+    },
+    {
+      "id": "840016",
+      "name": "דני שמעונוב",
+      "email": "danishimon33@gmail.com",
+      "googleId": "NULL",
+      "createdAt": "2026-03-15 21:31:21"
+    },
+    {
+      "id": "840015",
+      "name": "NULL",
+      "email": "dima@t-print.co.il",
+      "googleId": "NULL",
+      "createdAt": "2026-03-15 17:48:59"
+    },
+    {
+      "id": "840014",
+      "name": "אבן גל",
+      "email": "evengal@013net.net",
+      "googleId": "NULL",
+      "createdAt": "2026-03-15 12:19:51"
+    },
+    {
+      "id": "840013",
+      "name": "NULL",
+      "email": "liad118811@gmail.com",
+      "googleId": "NULL",
+      "createdAt": "2026-03-15 08:25:55"
+    },
+    {
+      "id": "840012",
+      "name": "טסט 2",
+      "email": "yossi2700apple@gmail.com",
+      "googleId": "NULL",
+      "createdAt": "2026-03-14 07:47:41"
+    },
+    {
+      "id": "840011",
+      "name": "טסט1",
+      "email": "yossi2700xl3@gmail.com",
+      "googleId": "NULL",
+      "createdAt": "2026-03-14 07:07:32"
+    },
+    {
+      "id": "840010",
+      "name": "דני",
+      "email": "dvaiksel9@gmail.com",
+      "googleId": "NULL",
+      "createdAt": "2026-03-14 00:05:58"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tgoogleId\tcreatedAt\n1170001\tיוסף אייזנבך\tyossi2700xl90@gmail.com\tNULL\t2026-03-23 06:49:56\n1140001\tTal\ttalhazan11@gmail.com\tNULL\t2026-03-20 14:45:38\n1110001\tנוי עידן\tnoyidan87@gmail.com\tNULL\t2026-03-19 11:20:34\n1080001\tאלירן נחון\telirannhuom357@gmail.com\tNULL\t2026-03-19 09:35:22\n1050001\tנחמן מזרחי\tn0556672751@gmail.com\tNULL\t2026-03-18 10:59:01\n1020001\tבני\tabnisoam@gmail.com\tNULL\t2026-03-18 10:14:49\n990001\tשמעון\tshimond148@gmail.com\tNULL\t2026-03-18 09:38:03\n960002\tLinas Vidmantas\tlinasvidmantas@gmail.com\tNULL\t2026-03-17 13:55:55\n960001\tSnail\tsnail@txgm.com\tNULL\t2026-03-17 13:00:19\n930001\tגולן חסון\thassong15@gmail.com\tNULL\t2026-03-17 11:33:44\n900001\tמשה אייזנבך\tm0547300456@gmail.com\tNULL\t2026-03-17 08:12:35\n870001\tנבל\tn1979ss@gmail.com\tNULL\t2026-03-17 02:37:24\n840017\tEksun 3D\tsunnybajare@gmail.com\tNULL\t2026-03-16 10:39:45\n840016\tדני שמעונוב\tdanishimon33@gmail.com\tNULL\t2026-03-15 21:31:21\n840015\tNULL\tdima@t-print.co.il\tNULL\t2026-03-15 17:48:59\n840014\tאבן גל\tevengal@013net.net\tNULL\t2026-03-15 12:19:51\n840013\tNULL\tliad118811@gmail.com\tNULL\t2026-03-15 08:25:55\n840012\tטסט 2\tyossi2700apple@gmail.com\tNULL\t2026-03-14 07:47:41\n840011\tטסט1\tyossi2700xl3@gmail.com\tNULL\t2026-03-14 07:07:32\n840010\tדני\tdvaiksel9@gmail.com\tNULL\t2026-03-14 00:05:58\n",
+  "stderr": "",
+  "execution_time_ms": 1601
+}
