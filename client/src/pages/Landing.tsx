@@ -401,7 +401,24 @@ function AiExampleCard({ item, isRtl }: { item: typeof AI_EXAMPLES[0]; isRtl: bo
 // ─── Demo Video Section ─────────────────────────────────────────────────────
 function DemoVideoSection({ isRtl }: { isRtl: boolean }) {
   const [muted, setMuted] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  // Lazy load: only load video when section scrolls into view
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    if (sectionRef.current) observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const toggleMute = () => {
     if (videoRef.current) {
@@ -419,7 +436,7 @@ function DemoVideoSection({ isRtl }: { isRtl: boolean }) {
       background: "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)",
       position: "relative",
       overflow: "hidden",
-    }}>
+    }} ref={sectionRef}>
       {/* Background glow orbs */}
       <div style={{ position: "absolute", top: -80, left: "20%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%)", pointerEvents: "none" }} />
       <div style={{ position: "absolute", bottom: -60, right: "15%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(167,139,250,0.20) 0%, transparent 70%)", pointerEvents: "none" }} />
@@ -451,15 +468,23 @@ function DemoVideoSection({ isRtl }: { isRtl: boolean }) {
             <span style={{ marginLeft: 8, color: "rgba(255,255,255,0.4)", fontSize: 12, fontFamily: "monospace" }}>dxfai.ai — Live Demo</span>
           </div>
 
-          <video
-            ref={videoRef}
-            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-video-v5-final_2f98db64.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            style={{ width: "100%", display: "block", maxHeight: 380 }}
-          />
+          {isVisible ? (
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              loop
+              playsInline
+              style={{ width: "100%", display: "block", maxHeight: 380 }}
+            >
+              <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-video-v5_2cbf5d32.webm" type="video/webm" />
+              <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-video-v5-final_2f98db64.mp4" type="video/mp4" />
+            </video>
+          ) : (
+            <div style={{ width: "100%", height: 320, background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 48 }}>▶</span>
+            </div>
+          )}
 
           {/* Mute/Unmute button overlay */}
           <button
@@ -960,7 +985,7 @@ export default function Landing() {
       </section>
 
       {/* ── DEMO VIDEO ── */}
-      {/* DemoVideoSection removed for performance */}
+      <DemoVideoSection isRtl={isRtl} />
       {/* ── BEFORE / AFTER GALLERY ── */}
       <section style={{ padding: "72px 24px", background: "#fff" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>

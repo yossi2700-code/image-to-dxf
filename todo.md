@@ -2175,3 +2175,8 @@
 ## הסרת וידאו מדף נחיתה - מרץ 2026
 
 - [x] הסרת demo-video מ-Landing.tsx לשיפור ביצועים
+
+## דחיסת סרטון דמו - מרץ 2026
+
+- [x] דחיסת demo-video מ-2.6MB ל-998KB WebM (CRF42 720p) - חיסכון 62%
+- [x] החזרת הסרטון לדף הנחיתה עם lazy load (IntersectionObserver)
