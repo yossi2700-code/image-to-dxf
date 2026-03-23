@@ -194,6 +194,24 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Heavy PDF/export libs — loaded lazily, keep in separate chunk
+          if (id.includes("jspdf") || id.includes("jsPDF")) return "pdf-export";
+          if (id.includes("svg2pdf")) return "pdf-export";
+          if (id.includes("html2canvas")) return "pdf-export";
+          // React core
+          if (id.includes("node_modules/react/") || id.includes("node_modules/react-dom/")) return "react-core";
+          // tRPC + tanstack query
+          if (id.includes("@trpc") || id.includes("@tanstack")) return "trpc-query";
+          // Lucide icons
+          if (id.includes("lucide-react")) return "icons";
+          // Radix UI
+          if (id.includes("@radix-ui")) return "radix";
+        },
+      },
+    },
   },
   define: {
     __BUILD_GIT_HASH__: JSON.stringify(BUILD_GIT_HASH),

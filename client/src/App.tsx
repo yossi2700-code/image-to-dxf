@@ -1,31 +1,36 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
-import Home from "./pages/Home";
-import Admin from "./pages/Admin";
-import History from "./pages/History";
-import Tokens from "./pages/Tokens";
-import Share from "./pages/Share";
-import Terms from "./pages/Terms";
-import Privacy from "./pages/Privacy";
-import ResetPassword from "./pages/ResetPassword";
-import AdminAnnouncement from "./pages/AdminAnnouncement";
-import Account from "./pages/Account";
-import Buy from "./pages/Buy";
-import BuySuccess from "./pages/BuySuccess";
-import Marketing from "./pages/Marketing";
-import PurchaseTerms from "./pages/PurchaseTerms";
-import MaintenancePage from "./pages/Maintenance";
-import VerifyEmail from "./pages/VerifyEmail";
-import Pricing from "./pages/Pricing";
-import Landing from "./pages/Landing";
-import Promo from "./pages/Promo";
+import { lazy, Suspense } from "react";
 import { trpc } from "./lib/trpc";
 import { useEffect, useRef } from "react";
+
+// Eagerly loaded — critical path (first paint)
+import Home from "./pages/Home";
+import Landing from "./pages/Landing";
+import NotFound from "@/pages/NotFound";
+
+// Lazily loaded — only when user navigates to these routes
+const Admin = lazy(() => import("./pages/Admin"));
+const AdminAnnouncement = lazy(() => import("./pages/AdminAnnouncement"));
+const History = lazy(() => import("./pages/History"));
+const Tokens = lazy(() => import("./pages/Tokens"));
+const Share = lazy(() => import("./pages/Share"));
+const Terms = lazy(() => import("./pages/Terms"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Account = lazy(() => import("./pages/Account"));
+const Buy = lazy(() => import("./pages/Buy"));
+const BuySuccess = lazy(() => import("./pages/BuySuccess"));
+const Marketing = lazy(() => import("./pages/Marketing"));
+const PurchaseTerms = lazy(() => import("./pages/PurchaseTerms"));
+const MaintenancePage = lazy(() => import("./pages/Maintenance"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const Promo = lazy(() => import("./pages/Promo"));
 
 /** Generates or retrieves a persistent session ID from localStorage */
 function getOrCreateSessionId(): string {
@@ -84,9 +89,10 @@ function MaintenanceGuard({ children }: { children: React.ReactNode }) {
 
 function Router() {
   return (
-    <MaintenanceGuard>
-      <VisitorTracker />
-      <Switch>
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#fff" }} />}>
+      <MaintenanceGuard>
+        <VisitorTracker />
+        <Switch>
         <Route path={"/"} component={Home} />
         <Route path={"/admin"} component={Admin} />
         <Route path={"/admin/announcement"} component={AdminAnnouncement} />
@@ -108,8 +114,9 @@ function Router() {
         <Route path={"/404"} component={NotFound} />
         {/* Final fallback route */}
         <Route component={NotFound} />
-      </Switch>
-    </MaintenanceGuard>
+        </Switch>
+      </MaintenanceGuard>
+    </Suspense>
   );
 }
 

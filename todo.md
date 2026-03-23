@@ -2199,3 +2199,10 @@
 - [x] המרת 4 תמונות PNG של פורטרטים ל-WebP (חיסכון ~3.5MB: 1.2MB+944KB+870KB+837KB → 257KB+183KB+155KB+128KB)
 - [x] הוספת Cache-Control headers לנכסים סטטיים (JS/CSS hashed: 1 שנה, תמונות: שבוע, HTML: no-cache)
 - [x] הוספת lazy loading + decoding=async לכל תמונות הגלריה בדף הנחיתה
+
+## שיפורי ביצועים מתקדמים — מרץ 2026 (סבב 2)
+
+- [x] Code splitting: lazy loading לכל דפי App.tsx (Admin, History, Buy, Pricing וכו') — נטענים רק כשמנווטים אליהם
+- [x] Manual chunks ב-vite.config.ts: pdf-export (jsPDF+svg2pdf+html2canvas) בחבילה נפרדת — bundle ראשי ירד מ-2.1MB ל-885KB
+- [x] Preconnect ל-CDN (d2xsxph8kpxj0f.cloudfront.net) ב-index.html
+- [x] Fonts non-blocking: Google Fonts נטען עם media=print → onload='all' (לא חוסם render)
