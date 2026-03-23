@@ -29,6 +29,7 @@ import {
   Mountain,
   Cpu,
 } from "lucide-react";
+import { ReportIssueButton } from "@/components/ReportIssueButton";
 
 type ReliefMaterial = "wood" | "aluminum" | "mdf" | "stone" | "brass";
 type Mode = "image" | "prompt";
@@ -546,6 +547,15 @@ export function CncReliefTab() {
                 </Button>
               </div>
             </div>
+          </div>
+
+          {/* Report issue button */}
+          <div className="flex justify-end">
+            <ReportIssueButton
+              sourceImageUrl={imagePreview || undefined}
+              resultImageUrl={result?.simulationUrl}
+              feature="cnc_relief"
+            />
           </div>
 
           {/* New Design button */}

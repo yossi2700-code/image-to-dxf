@@ -288,6 +288,13 @@
       "when": 1774187216132,
       "tag": "0040_zippy_vertigo",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "5",
+      "when": 1774260755272,
+      "tag": "0041_loose_elektra",
+      "breakpoints": true
     }
   ]
 }

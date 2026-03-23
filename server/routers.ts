@@ -8,7 +8,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks, emailVerifications, failedJobs, visitorEvents, contactMessages } from "../drizzle/schema";
+import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks, emailVerifications, failedJobs, visitorEvents, contactMessages, issueReports } from "../drizzle/schema";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "./emailService";
 import { desc, eq, and, sql } from "drizzle-orm";
@@ -1890,6 +1890,146 @@ export const appRouter = router({
         byPage: byPage.map(r => ({ page: r.page, count: Number(r.count) })),
         recentSessions: Number(uniqueSessionsRow?.count ?? 0),
       };
+    }),
+  }),
+
+  // ── Issue Reports ─────────────────────────────────────────────────────────────
+  issueReports: router({
+    /** Submit a new issue report (authenticated users only) */
+    submit: publicProcedure
+      .input(z.object({
+        sourceImageUrl: z.string().optional(),
+        resultImageUrl: z.string().optional(),
+        feature: z.string().optional(),
+        description: z.string().min(5, "נא לתאר את הבעיה"),
+        userActionId: z.number().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const appUser = getAppUserFromCookie(
+          (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
+        );
+        if (!appUser) throw new TRPCError({ code: "UNAUTHORIZED", message: "יש להתחבר כדי לדווח על בעיה" });
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db.insert(issueReports).values({
+          appUserId: appUser.userId,
+          userActionId: input.userActionId ?? null,
+          sourceImageUrl: input.sourceImageUrl ?? null,
+          resultImageUrl: input.resultImageUrl ?? null,
+          feature: input.feature ?? null,
+          description: input.description,
+          status: "pending",
+        });
+        // Notify owner
+        await notifyOwner({
+          title: "דיווח בעיה חדש",
+          content: `משתמש ${appUser.email} דיווח על בעיה ב-${input.feature ?? "לא ידוע"}: ${input.description.slice(0, 200)}`,
+        }).catch(() => {});
+        return { success: true };
+      }),
+
+    /** Get all issue reports (admin only) */
+    list: publicProcedure
+      .input(z.object({
+        status: z.enum(["pending", "approved", "rejected", "all"]).default("all"),
+      }))
+      .query(async ({ input, ctx }) => {
+        if (!isAdminAuthenticated(ctx.req)) throw new TRPCError({ code: "UNAUTHORIZED" });
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const rows = await db
+          .select({
+            id: issueReports.id,
+            appUserId: issueReports.appUserId,
+            userActionId: issueReports.userActionId,
+            sourceImageUrl: issueReports.sourceImageUrl,
+            resultImageUrl: issueReports.resultImageUrl,
+            feature: issueReports.feature,
+            description: issueReports.description,
+            status: issueReports.status,
+            tokensRefunded: issueReports.tokensRefunded,
+            adminNote: issueReports.adminNote,
+            reviewedAt: issueReports.reviewedAt,
+            createdAt: issueReports.createdAt,
+            userEmail: appUsers.email,
+            userName: appUsers.name,
+          })
+          .from(issueReports)
+          .leftJoin(appUsers, eq(issueReports.appUserId, appUsers.id))
+          .where(input.status !== "all" ? eq(issueReports.status, input.status as "pending" | "approved" | "rejected") : undefined)
+          .orderBy(desc(issueReports.createdAt))
+          .limit(200);
+        return rows;
+      }),
+
+    /** Approve a report and refund tokens (admin only) */
+    approve: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        tokensToRefund: z.number().min(1).max(50),
+        adminNote: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!isAdminAuthenticated(ctx.req)) throw new TRPCError({ code: "UNAUTHORIZED" });
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        // Get the report
+        const [report] = await db.select().from(issueReports).where(eq(issueReports.id, input.id)).limit(1);
+        if (!report) throw new TRPCError({ code: "NOT_FOUND", message: "דיווח לא נמצא" });
+        if (report.status !== "pending") throw new TRPCError({ code: "BAD_REQUEST", message: "הדיווח כבר טופל" });
+        // Refund tokens
+        await addTokens(report.appUserId, input.tokensToRefund, "issue_refund", `זיכוי על בעיה: ${report.description?.slice(0, 100)}`);
+        // Update report status
+        await db.update(issueReports)
+          .set({
+            status: "approved",
+            tokensRefunded: input.tokensToRefund,
+            adminNote: input.adminNote ?? null,
+            reviewedAt: new Date(),
+          })
+          .where(eq(issueReports.id, input.id));
+        return { success: true };
+      }),
+
+    /** Reject a report (admin only) */
+    reject: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        adminNote: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!isAdminAuthenticated(ctx.req)) throw new TRPCError({ code: "UNAUTHORIZED" });
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const [report] = await db.select().from(issueReports).where(eq(issueReports.id, input.id)).limit(1);
+        if (!report) throw new TRPCError({ code: "NOT_FOUND", message: "דיווח לא נמצא" });
+        if (report.status !== "pending") throw new TRPCError({ code: "BAD_REQUEST", message: "הדיווח כבר טופל" });
+        await db.update(issueReports)
+          .set({
+            status: "rejected",
+            adminNote: input.adminNote ?? null,
+            reviewedAt: new Date(),
+          })
+          .where(eq(issueReports.id, input.id));
+        return { success: true };
+      }),
+
+    /** Get issue report count by status (admin only) */
+    counts: publicProcedure.query(async ({ ctx }) => {
+      if (!isAdminAuthenticated(ctx.req)) throw new TRPCError({ code: "UNAUTHORIZED" });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db
+        .select({ status: issueReports.status, count: sql<number>`COUNT(*)` })
+        .from(issueReports)
+        .groupBy(issueReports.status);
+      const result = { pending: 0, approved: 0, rejected: 0, total: 0 };
+      for (const r of rows) {
+        const n = Number(r.count);
+        result[r.status as keyof typeof result] = n;
+        result.total += n;
+      }
+      return result;
     }),
   }),
 });

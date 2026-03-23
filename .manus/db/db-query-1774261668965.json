@@ -1,0 +1,20 @@
+{
+  "query": "SELECT id, email, googleId FROM app_users WHERE googleId IS NOT NULL LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, email, googleId FROM app_users WHERE googleId IS NOT NULL LIMIT 5;",
+  "rows": [
+    {
+      "id": "840003",
+      "email": "yossi2700@gmail.com",
+      "googleId": "111980039425168915759"
+    },
+    {
+      "id": "840011",
+      "email": "yossi2700xl3@gmail.com",
+      "googleId": "117071116940812839280"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tgoogleId\n840003\tyossi2700@gmail.com\t111980039425168915759\n840011\tyossi2700xl3@gmail.com\t117071116940812839280\n",
+  "stderr": "",
+  "execution_time_ms": 1546
+}

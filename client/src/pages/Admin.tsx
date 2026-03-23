@@ -519,7 +519,39 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     return result;
   })();
 
-  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email" | "campaign" | "bugs" | "subscriptions" | "news" | "failed_jobs" | "messages">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email" | "campaign" | "bugs" | "subscriptions" | "news" | "failed_jobs" | "messages" | "issue_reports">("overview");
+
+  // ── Issue Reports ──
+  const [issueStatusFilter, setIssueStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending");
+  const [issueApproveId, setIssueApproveId] = useState<number | null>(null);
+  const [issueTokensToRefund, setIssueTokensToRefund] = useState(5);
+  const [issueAdminNote, setIssueAdminNote] = useState("");
+  const { data: issueReportsData, isLoading: issueReportsLoading, refetch: refetchIssueReports } = trpc.issueReports.list.useQuery(
+    { status: issueStatusFilter },
+    { enabled: activeSection === "issue_reports" }
+  );
+  const { data: issueCountsData, refetch: refetchIssueCounts } = trpc.issueReports.counts.useQuery(
+    undefined,
+    { refetchInterval: 60000 }
+  );
+  const approveIssueMutation = trpc.issueReports.approve.useMutation({
+    onSuccess: () => {
+      toast.success("הדיווח אושר והאסימונים זוכו");
+      setIssueApproveId(null);
+      setIssueAdminNote("");
+      refetchIssueReports();
+      refetchIssueCounts();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const rejectIssueMutation = trpc.issueReports.reject.useMutation({
+    onSuccess: () => {
+      toast.success("הדיווח נדחה");
+      refetchIssueReports();
+      refetchIssueCounts();
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   // ── Contact messages ──
   const { data: contactMessagesData, isLoading: contactMessagesLoading, refetch: refetchContactMessages } = trpc.admin.getContactMessages.useQuery(
@@ -763,6 +795,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     { id: "email", label: "שליחת מייל", shortLabel: "מייל", icon: Mail, color: "#6366f1" },
     { id: "campaign", label: "קמפיין מייל", shortLabel: "קמפיין", icon: Gift, color: "#ec4899" },
     { id: "messages", label: "הודעות", shortLabel: "הודעות", icon: Mail, color: "#10b981" },
+    { id: "issue_reports", label: "דיווחי בעיות", shortLabel: "דיווחים", icon: Flag, color: "#e11d48" },
     { id: "failed_jobs", label: "כשלונות", shortLabel: "כשלונות", icon: AlertTriangle, color: "#f97316" },
     { id: "settings", label: "הגדרות", shortLabel: "הגדרות", icon: Settings, color: "#94a3b8" },
   ] as const;
@@ -848,6 +881,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                     {id === 'messages' && !!unreadMsgCount && unreadMsgCount > 0 && (
                       <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white" style={{ background: '#ef4444' }}>
                         {unreadMsgCount > 9 ? '9+' : unreadMsgCount}
+                      </span>
+                    )}
+                    {id === 'issue_reports' && !!issueCountsData?.pending && issueCountsData.pending > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white" style={{ background: '#e11d48' }}>
+                        {issueCountsData.pending > 9 ? '9+' : issueCountsData.pending}
                       </span>
                     )}
                   </div>
@@ -3316,6 +3354,171 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                               <Trash2 className="w-3.5 h-3.5" />מחק
                             </Button>
                           </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {activeSection === "issue_reports" && (
+          <div className="p-4 md:p-6 max-w-7xl mx-auto">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Flag className="w-5 h-5 text-rose-500" />
+                    <CardTitle className="text-base">דיווחי בעיות ממשתמשים</CardTitle>
+                    {issueCountsData && (
+                      <>
+                        <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium">ממתין: {issueCountsData.pending}</span>
+                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">אושרו: {issueCountsData.approved}</span>
+                        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">נדחו: {issueCountsData.rejected}</span>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex rounded-lg overflow-hidden border border-slate-200">
+                      {(["pending", "approved", "rejected", "all"] as const).map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => setIssueStatusFilter(s)}
+                          className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                            issueStatusFilter === s ? "bg-rose-500 text-white" : "bg-white text-slate-600 hover:bg-slate-50"
+                          }`}
+                        >
+                          {s === "pending" ? "ממתין" : s === "approved" ? "אושר" : s === "rejected" ? "נדחה" : "הכל"}
+                        </button>
+                      ))}
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => { refetchIssueReports(); refetchIssueCounts(); }} className="gap-1">
+                      <RefreshCw className="w-3.5 h-3.5" />רענן
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {issueReportsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="w-6 h-6 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : !issueReportsData || issueReportsData.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Flag className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">אין דיווחים בסטטוס זה.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {issueReportsData.map((report) => (
+                      <div key={report.id} className={`border rounded-xl p-4 transition-colors ${
+                        report.status === "pending" ? "bg-yellow-50 border-yellow-200" :
+                        report.status === "approved" ? "bg-green-50 border-green-200" :
+                        "bg-slate-50 border-slate-200"
+                      }`}>
+                        <div className="flex items-start justify-between gap-3 flex-wrap">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-2">
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                                report.status === "pending" ? "bg-yellow-200 text-yellow-800" :
+                                report.status === "approved" ? "bg-green-200 text-green-800" :
+                                "bg-slate-200 text-slate-700"
+                              }`}>
+                                {report.status === "pending" ? "ממתין" : report.status === "approved" ? "אושר" : "נדחה"}
+                              </span>
+                              <span className="text-xs font-semibold text-slate-700">{report.userEmail || `משתמש #${report.appUserId}`}</span>
+                              <span className="text-xs text-slate-400">{new Date(report.createdAt).toLocaleString("he-IL")}</span>
+                              {report.feature && (
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{report.feature}</span>
+                              )}
+                              {report.tokensRefunded && (
+                                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">זוכה: {report.tokensRefunded} אסימונים</span>
+                              )}
+                            </div>
+                            <p className="text-sm text-slate-700 mb-3 whitespace-pre-wrap">{report.description}</p>
+                            {/* Images */}
+                            {(report.sourceImageUrl || report.resultImageUrl) && (
+                              <div className="flex gap-3 mb-3 flex-wrap">
+                                {report.sourceImageUrl && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">תמונה מקורית</p>
+                                    <a href={report.sourceImageUrl} target="_blank" rel="noopener noreferrer">
+                                      <img src={report.sourceImageUrl} alt="source" className="w-24 h-24 object-contain rounded-lg border border-slate-200 bg-white hover:opacity-80 transition-opacity" />
+                                    </a>
+                                  </div>
+                                )}
+                                {report.resultImageUrl && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">תוצאה</p>
+                                    <a href={report.resultImageUrl} target="_blank" rel="noopener noreferrer">
+                                      <img src={report.resultImageUrl} alt="result" className="w-24 h-24 object-contain rounded-lg border border-slate-200 bg-white hover:opacity-80 transition-opacity" />
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {report.adminNote && (
+                              <p className="text-xs text-slate-500 italic">הערת מנהל: {report.adminNote}</p>
+                            )}
+                          </div>
+                          {/* Actions */}
+                          {report.status === "pending" && (
+                            <div className="flex flex-col gap-2 shrink-0">
+                              {issueApproveId === report.id ? (
+                                <div className="bg-white rounded-lg border border-green-200 p-3 space-y-2 min-w-[200px]">
+                                  <p className="text-xs font-semibold text-green-700">אישור דיווח וזיכוי אסימונים</p>
+                                  <div className="flex items-center gap-2">
+                                    <label className="text-xs text-slate-600">כמות אסימונים:</label>
+                                    <input
+                                      type="number"
+                                      min={1}
+                                      max={50}
+                                      value={issueTokensToRefund}
+                                      onChange={(e) => setIssueTokensToRefund(Number(e.target.value))}
+                                      className="w-16 border border-slate-200 rounded px-2 py-1 text-xs"
+                                    />
+                                  </div>
+                                  <input
+                                    type="text"
+                                    placeholder="הערה (אופציונלי)"
+                                    value={issueAdminNote}
+                                    onChange={(e) => setIssueAdminNote(e.target.value)}
+                                    className="w-full border border-slate-200 rounded px-2 py-1 text-xs"
+                                  />
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      className="flex-1 text-xs bg-green-600 hover:bg-green-700 text-white"
+                                      disabled={approveIssueMutation.isPending}
+                                      onClick={() => approveIssueMutation.mutate({ id: report.id, tokensToRefund: issueTokensToRefund, adminNote: issueAdminNote || undefined })}
+                                    >
+                                      {approveIssueMutation.isPending ? "מאשר..." : "אשר וזכה"}
+                                    </Button>
+                                    <Button size="sm" variant="outline" className="text-xs" onClick={() => setIssueApproveId(null)}>בטל</Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  className="text-xs bg-green-600 hover:bg-green-700 text-white gap-1"
+                                  onClick={() => { setIssueApproveId(report.id); setIssueTokensToRefund(5); setIssueAdminNote(""); }}
+                                >
+                                  <CheckCircle className="w-3.5 h-3.5" />אשר וזכה
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs text-red-600 hover:text-red-700 gap-1"
+                                disabled={rejectIssueMutation.isPending}
+                                onClick={() => { if (confirm("לדחות דיווח זה?")) rejectIssueMutation.mutate({ id: report.id }); }}
+                              >
+                                <XCircle className="w-3.5 h-3.5" />דחה
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}

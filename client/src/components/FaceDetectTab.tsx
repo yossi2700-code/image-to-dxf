@@ -27,6 +27,7 @@ import {
   Share2,
 } from "lucide-react";
 import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
+import { ReportIssueButton } from "@/components/ReportIssueButton";
 
 interface GeneratedImage {
   imageUrl: string;
@@ -979,6 +980,14 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
             >
               {isRtl ? "תמונה חדשה" : "New Photo"}
             </button>
+          </div>
+          {/* Report issue button */}
+          <div className="flex justify-end">
+            <ReportIssueButton
+              sourceImageUrl={imagePreview || undefined}
+              resultImageUrl={result?.images[0]?.imageUrl}
+              feature="portrait"
+            />
           </div>
         </>
       )}

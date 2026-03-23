@@ -30,6 +30,7 @@ import {
   Crop,
 } from "lucide-react";
 import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
+import { ReportIssueButton } from "@/components/ReportIssueButton";
 
 interface GeneratedImage {
   imageUrl: string;
@@ -1739,6 +1740,15 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                   processingTime={processingTime}
                 />
               ))}
+            </div>
+
+            {/* Report issue button */}
+            <div className="flex justify-end">
+              <ReportIssueButton
+                sourceImageUrl={imagePreview || tryAgainUrl || undefined}
+                resultImageUrl={result.images[0]?.imageUrl}
+                feature="ai_trace"
+              />
             </div>
 
             <button

@@ -20,6 +20,7 @@ import { CncReliefTab } from "@/components/CncReliefTab";
 import { AiProcessingAnimation } from "@/components/AiProcessingAnimation";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InsufficientTokensBanner } from "@/components/InsufficientTokensBanner";
+import { ReportIssueButton } from "@/components/ReportIssueButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Upload,
@@ -1110,6 +1111,13 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                     isRtl={isRtl}
                   />
                 </div>
+                {/* Report issue button */}
+                <div className="flex justify-end">
+                  <ReportIssueButton
+                    sourceImageUrl={imagePreview || undefined}
+                    feature="convert"
+                  />
+                </div>
                 <Button variant="outline" size="sm" className="w-full" onClick={reset}>
                   {t("convertNewImage")}
                 </Button>
@@ -1760,6 +1768,13 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
                     <ChevronLeft className="w-3.5 h-3.5" />
                     {t("newDesign")}
                   </button>
+                </div>
+                {/* Report issue button */}
+                <div className="flex justify-end mt-1">
+                  <ReportIssueButton
+                    resultImageUrl={selected.imageUrl}
+                    feature="ai_generate"
+                  />
                 </div>
                 {showModify && (
                   <div

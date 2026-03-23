@@ -490,3 +490,33 @@ export const visitorEvents = mysqlTable("visitor_events", {
 });
 export type VisitorEvent = typeof visitorEvents.$inferSelect;
 export type InsertVisitorEvent = typeof visitorEvents.$inferInsert;
+
+// Issue reports — users report problems with AI results for token refund review
+export const issueReports = mysqlTable("issue_reports", {
+  id: int("id").autoincrement().primaryKey(),
+  /** App user who submitted the report */
+  appUserId: int("appUserId").notNull(),
+  /** The user action that had the problem */
+  userActionId: int("userActionId"),
+  /** URL of the original source image */
+  sourceImageUrl: text("sourceImageUrl"),
+  /** URL of the generated result image/DXF */
+  resultImageUrl: text("resultImageUrl"),
+  /** Feature that had the issue: portrait | ai_trace | ai_generate | convert */
+  feature: varchar("feature", { length: 32 }),
+  /** User's description of the problem */
+  description: text("description").notNull(),
+  /** Status: pending | approved | rejected */
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).notNull().default("pending"),
+  /** Number of tokens refunded (set when approved) */
+  tokensRefunded: int("tokensRefunded").default(0),
+  /** Admin note when reviewing */
+  adminNote: text("adminNote"),
+  /** Admin user ID who reviewed */
+  reviewedByAdminId: int("reviewedByAdminId"),
+  /** When the report was reviewed */
+  reviewedAt: timestamp("reviewedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type IssueReport = typeof issueReports.$inferSelect;
+export type InsertIssueReport = typeof issueReports.$inferInsert;

@@ -2144,3 +2144,16 @@
 - [x] תיקון גריד גלריה בדסקטופ — auto-fill minmax(220px) = 2 עמודות במובייל, 4+ בדסקטופ
 - [x] תיקון גלריית CNC Relief — minmax(160px) = 2 עמודות על כל אייפון (375px+)
 - [ ] הוספת סימן Google בדף ניהול משתמשים — אייקון G ליד משתמשים שהתחברו דרך Google OAuth
+
+## מערכת דיווח בעיות - מרץ 2026
+
+- [x] טבלת issue_reports ב-DB (sourceImageUrl, resultImageUrl, feature, description, status, tokensRefunded)
+- [x] tRPC procedure: issueReports.submit (משתמש מחובר שולח דיווח)
+- [x] tRPC procedure: issueReports.list (ניהול — רשימת דיווחים לפי סטטוס)
+- [x] tRPC procedure: issueReports.counts (ניהול — ספירת דיווחים לפי סטטוס)
+- [x] tRPC procedure: issueReports.approve (ניהול — אישור + זיכוי אסימונים)
+- [x] tRPC procedure: issueReports.reject (ניהול — דחיית דיווח)
+- [x] רכיב ReportIssueButton — כפתור קטן + dialog עם תמונות + הסבר על זיכוי
+- [x] הוספת ReportIssueButton לכל הפיצ'רים: AiTraceTab, AiGeneratorTab, FaceDetectTab, CncReliefTab, Convert
+- [x] דף ניהול "דיווחי בעיות" ב-Admin.tsx עם פילטר סטטוס, תמונות, אישור/דחייה
+- [x] Badge אדום על כפתור הניהול כשיש דיווחים ממתינים

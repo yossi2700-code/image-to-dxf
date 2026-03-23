@@ -38,14 +38,15 @@ const PORTRAIT_STYLE_PROMPTS: Record<PortraitStyle, string> = {
   simple:
     "TASK: Trace this face photo as clean black-and-white line art. DO NOT invent or imagine any features — only draw what is literally visible in the photo. " +
     "ABSOLUTE RULE: Every line you draw must correspond to something actually visible in this photo. If you cannot see it clearly, do not draw it. " +
+    "CRITICAL: Draw ONLY the face and head. Do NOT add any objects, accessories, or items that are not clearly part of the face itself. " +
     "IDENTITY FIDELITY — trace these features EXACTLY as they appear: " +
     "(1) FACE OUTLINE: trace the exact silhouette of the face, jaw, chin, and forehead as seen in the photo. " +
     "(2) EYES: trace the actual eye shape, eyelids, and brows exactly as positioned in the photo — do not make them larger or more symmetrical than they are. " +
     "(3) NOSE: trace the actual nose shape visible in the photo — bridge, tip, nostrils exactly as they are. " +
-    "(4) MOUTH: trace the actual lips and any objects in or near the mouth (pacifier, food, etc.) exactly as visible. " +
+    "(4) MOUTH: trace ONLY the lips as they appear — closed or open. Do NOT add any object near or in the mouth unless it is unmistakably and clearly visible in the photo. " +
     "(5) HAIR: trace the actual hair shape and direction visible in the photo. " +
-    "(6) ANY OBJECTS ON FACE: if there is a pacifier, glasses, hat, or any other object visible — INCLUDE IT exactly as shown. " +
-    "FORBIDDEN: Do not smooth features, do not make the face more attractive, do not add features not visible, do not remove visible objects. " +
+    "(6) GLASSES ONLY: if the person is clearly wearing glasses, include them. Do not add any other objects. " +
+    "FORBIDDEN: Do not smooth features, do not make the face more attractive, do not add features not visible, do not add objects that are not clearly on the face. " +
     "Style: clean minimal line art, pure black strokes on white background, no shading, no grey tones. " +
     "Composition: head and face fills 65-75% of canvas. No clothing, no background. " +
     "No text, no watermarks.",
@@ -53,15 +54,16 @@ const PORTRAIT_STYLE_PROMPTS: Record<PortraitStyle, string> = {
   detailed:
     "TASK: Trace this face photo as detailed black-and-white line art. DO NOT invent or imagine any features — only draw what is literally visible in the photo. " +
     "ABSOLUTE RULE: Every line must correspond to something actually visible in this specific photo. Trace, do not create. " +
+    "CRITICAL: Draw ONLY the face and head. Do NOT add any objects, accessories, or items that are not clearly part of the face itself. " +
     "MAXIMUM IDENTITY FIDELITY — trace every visible detail: " +
     "(1) FACE OUTLINE: exact silhouette of the face, jaw, chin, forehead, cheekbones as visible in the photo. " +
     "(2) EYES: exact shape of eyelids, iris, lashes, brows — trace their actual position and size, not idealized versions. " +
     "(3) NOSE: trace every visible detail — bridge, tip shape, nostrils, columella — exactly as they appear. " +
-    "(4) MOUTH: trace the actual lips, philtrum, and any object in/near the mouth (pacifier, food, etc.) exactly as visible. " +
+    "(4) MOUTH: trace the actual lips and philtrum exactly as visible. Do NOT add any object near or in the mouth unless it is unmistakably and clearly present in the photo. " +
     "(5) HAIR: trace individual hair strands and the overall hair shape as visible in the photo. " +
-    "(6) ANY OBJECTS ON FACE: if there is a pacifier, glasses, hat, or any other object visible — INCLUDE IT with full detail. " +
+    "(6) GLASSES ONLY: if the person is clearly wearing glasses, include them with full detail. Do not add any other objects. " +
     "(7) SKIN TEXTURE: fine lines for visible wrinkles, folds, dimples only where actually visible. " +
-    "FORBIDDEN: Do not smooth features, do not idealize, do not add features not visible, do not remove visible objects. " +
+    "FORBIDDEN: Do not smooth features, do not idealize, do not add features not visible, do not add objects that are not clearly on the face. " +
     "Style: detailed line art, pure black lines on white, no shading, no grey. " +
     "Composition: head and face fills 65-75% of canvas. No clothing, no background. " +
     "No text, no watermarks.",

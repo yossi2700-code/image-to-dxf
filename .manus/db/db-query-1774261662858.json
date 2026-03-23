@@ -1,0 +1,18 @@
+{
+  "query": "SHOW COLUMNS FROM app_users LIKE 'googleId';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SHOW COLUMNS FROM app_users LIKE 'googleId';",
+  "rows": [
+    {
+      "Field": "googleId",
+      "Type": "varchar(128)",
+      "Null": "YES",
+      "Key": "UNI",
+      "Default": "NULL",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\ngoogleId\tvarchar(128)\tYES\tUNI\tNULL\t\n",
+  "stderr": "",
+  "execution_time_ms": 1539
+}
