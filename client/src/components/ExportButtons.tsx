@@ -18,6 +18,7 @@
 import { useState } from "react";
 import { Download, FileText, Eye, Loader2, Settings2 } from "lucide-react";
 import { toast } from "sonner";
+import { saveFileAs } from "@/lib/saveFileAs";
 
 export interface ExportButtonsProps {
   svgContent: string;
@@ -44,17 +45,9 @@ export function truncateFilename(name: string, maxLen = 30): string {
 
 // ─── Shared download helper ─────────────────────────────────────────────────
 async function downloadBlob(blob: Blob, filename: string): Promise<void> {
-  const pdfFile = new File([blob], filename, { type: "application/pdf" });
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  if (isIOS && navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-    try { await navigator.share({ files: [pdfFile], title: filename }); return; }
-    catch (e: unknown) { if (e instanceof Error && e.name === "AbortError") return; }
-  }
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  const ext = filename.split(".").pop()?.toLowerCase();
+  const mimeType = ext === "pdf" ? "application/pdf" : "application/octet-stream";
+  await saveFileAs({ blob, filename, mimeType });
 }
 
 // ─── SVG sanitizer ──────────────────────────────────────────────────────────
@@ -197,18 +190,7 @@ export function ExportButtons({
       const text = await resp.text();
       const blob = new Blob([text], { type: "application/dxf" });
       const baseName = truncateFilename(dxfFilename);
-      const dxfFile = new File([blob], `${baseName}.dxf`, { type: "application/dxf" });
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      if (isIOS && navigator.share && navigator.canShare && navigator.canShare({ files: [dxfFile] })) {
-        try { await navigator.share({ files: [dxfFile], title: baseName }); return; }
-        catch (e: unknown) { if (e instanceof Error && e.name === "AbortError") return; }
-      }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${baseName}.dxf`;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      await saveFileAs({ blob, filename: `${baseName}.dxf`, mimeType: "application/dxf" });
     } catch {
       // Fallback: direct link
       const a = document.createElement("a");

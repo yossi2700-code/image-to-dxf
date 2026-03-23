@@ -284,11 +284,22 @@ export function CncReliefTab() {
     setStep("");
   };
 
-  const handleDownload = (url: string, filename: string) => {
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
+  const handleDownload = async (url: string, filename: string) => {
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error("Download error");
+      const blob = await resp.blob();
+      const ext = filename.split(".").pop()?.toLowerCase();
+      const mimeType = ext === "pdf" ? "application/pdf" : "application/octet-stream";
+      const { saveFileAs } = await import("@/lib/saveFileAs");
+      await saveFileAs({ blob, filename, mimeType });
+    } catch {
+      // Fallback: direct link
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+    }
   };
 
   const handleReset = () => {

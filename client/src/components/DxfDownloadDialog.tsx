@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Download, X, FileCode2, FileText, Loader2, Share2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { saveFileAs } from "@/lib/saveFileAs";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -225,27 +226,10 @@ export function DxfDownloadDialog({
       const originalDxf = await resp.text();
       const scaledDxf = scaleDxfContent(originalDxf, scaleFactor);
       const blob = new Blob([scaledDxf], { type: "application/octet-stream" });
-      const file = new File([blob], `${cleanFilename}.dxf`, { type: "application/octet-stream" });
-
-      if (useShareSheet && navigator.canShare && navigator.canShare({ files: [file] })) {
-        // Mobile: open native Share Sheet
-        await navigator.share({ files: [file], title: cleanFilename });
-        onClose();
-        return;
-      }
-
-      // Desktop: direct download
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${cleanFilename}.dxf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      await saveFileAs({ blob, filename: `${cleanFilename}.dxf`, mimeType: "application/octet-stream" });
       onClose();
     } catch (err: unknown) {
-      if (err instanceof Error && err.name === "AbortError") return; // user cancelled share
+      if (err instanceof Error && err.name === "AbortError") return; // user cancelled
       console.error("DXF action error:", err);
       // Fallback: direct link
       const a = document.createElement("a");
@@ -267,27 +251,10 @@ export function DxfDownloadDialog({
     try {
       const pdfBytes = await generatePdfBlob(svgContent, outputWidthMm, outputHeightMm);
       const blob = new Blob([pdfBytes], { type: "application/pdf" });
-      const file = new File([blob], `${cleanFilename}.pdf`, { type: "application/pdf" });
-
-      if (useShareSheet && navigator.canShare && navigator.canShare({ files: [file] })) {
-        // Mobile: open native Share Sheet
-        await navigator.share({ files: [file], title: cleanFilename });
-        onClose();
-        return;
-      }
-
-      // Desktop: direct download
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${cleanFilename}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      await saveFileAs({ blob, filename: `${cleanFilename}.pdf`, mimeType: "application/pdf" });
       onClose();
     } catch (err: unknown) {
-      if (err instanceof Error && err.name === "AbortError") return; // user cancelled share
+      if (err instanceof Error && err.name === "AbortError") return; // user cancelled
       console.error("PDF action error:", err);
       const msg = err instanceof Error ? err.message : String(err);
       setError(`PDF export error: ${msg}`);

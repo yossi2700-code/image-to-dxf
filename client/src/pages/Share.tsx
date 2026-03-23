@@ -92,12 +92,22 @@ export default function SharePage() {
     if (design.imageUrl) setMeta("og:image", design.imageUrl);
   }, [design]);
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!design?.dxfUrl) return;
-    const a = document.createElement("a");
-    a.href = design.dxfUrl;
-    a.download = `${design.shareTitle ?? design.description ?? "design"}.dxf`;
-    a.click();
+    const filename = `${design.shareTitle ?? design.description ?? "design"}.dxf`;
+    try {
+      const resp = await fetch(design.dxfUrl);
+      if (!resp.ok) throw new Error("Download error");
+      const blob = await resp.blob();
+      const { saveFileAs } = await import("@/lib/saveFileAs");
+      await saveFileAs({ blob, filename, mimeType: "application/octet-stream" });
+    } catch {
+      // Fallback: direct link
+      const a = document.createElement("a");
+      a.href = design.dxfUrl;
+      a.download = filename;
+      a.click();
+    }
   };
 
   const handleWhatsApp = () => {
