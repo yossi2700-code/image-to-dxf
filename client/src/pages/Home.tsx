@@ -2617,6 +2617,11 @@ export default function Home() {
         </div>
 
         {/* ── Feature Shortcut Cards — hidden on desktop (sidebar handles navigation) ── */}
+        <div className="mb-2 flex items-center gap-2">
+          <div className="flex-1 h-px bg-border/50" />
+          <span className="text-xs font-semibold text-muted-foreground px-2">{isRtl ? '👇 בחר פיצ\'ר להתחיל' : '👇 Choose a feature to start'}</span>
+          <div className="flex-1 h-px bg-border/50" />
+        </div>
         <div className="grid grid-cols-2 gap-2 mb-5 md:grid-cols-4 md:gap-3">
 
           {/* AI Create — custom card with keyboard icon + text prompt + car */}
@@ -2664,6 +2669,10 @@ export default function Home() {
           >
             <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '55%' }}>
               <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_618d6046.webp" alt="AI Outline" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: '5px' }} />
+              {/* Upload badge */}
+              <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full z-10 whitespace-nowrap" style={{ background: 'rgba(13,148,136,0.9)', color: 'white' }}>
+                <Upload className="w-2.5 h-2.5" />{isRtl ? 'העלה תמונה' : 'Upload image'}
+              </span>
             </div>
             <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #0d9488, #06b6d4)', color: 'white', letterSpacing: '0.02em' }}>AI Outline</span>
           </button>
@@ -2676,6 +2685,10 @@ export default function Home() {
           >
             <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '55%' }}>
               <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-portrait-woman_dec41044.webp" alt="Portrait" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: '5px' }} />
+              {/* Upload badge */}
+              <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full z-10 whitespace-nowrap" style={{ background: 'rgba(124,58,237,0.9)', color: 'white' }}>
+                <Upload className="w-2.5 h-2.5" />{isRtl ? 'העלה תמונה' : 'Upload image'}
+              </span>
             </div>
             <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: 'white', letterSpacing: '0.02em' }}>{isRtl ? 'פורטרט' : 'Portrait'}</span>
           </button>

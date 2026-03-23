@@ -2184,3 +2184,8 @@
 ## Security Headers - מרץ 2026
 
 - [x] הוספת CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy לשרת
+
+## שיפור UX העלאת תמונה - מרץ 2026
+
+- [x] שיפור אזורי העלאת תמונה - badge "העלה תמונה" על AI Outline ו-Portrait
+- [x] הוספת טקסט הנחיה "בחר פיצ'ר להתחיל" מעל הכרטיסיות
