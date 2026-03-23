@@ -20,7 +20,7 @@ const BEFORE_AFTER = [
     desc_he: "מצלמת SLR קלאסית — פרטים עדינים, עדשה, כפתורים",
     desc_en: "Classic SLR camera — fine details, lens, buttons",
     before: `${CDN}/before-camera_e61c19ce.webp`,
-    after: `${CDN}/after-camera_62da43b0.webp`,
+    after: `${CDN}/after-camera-opt_50154033.webp`,
   },
   {
     label_he: "אופניים",
@@ -91,8 +91,8 @@ const BEFORE_AFTER = [
     label_en: "Sunflowers",
     desc_he: "שדה חמניות עם שקיעה — פרחים, עלים, קרני שמש",
     desc_en: "Sunflower field at sunset — flowers, leaves, sun rays",
-    before: `${CDN}/sunflower-hq_ac53a133.webp`,
-    after: `${CDN}/sunflower-vector-v3_82858490.webp`,
+    before: `${CDN}/sunflower-hq-opt_e6ee7993.webp`,
+    after: `${CDN}/sunflower-vector-opt_5673512d.webp`,
   },
 ];
 

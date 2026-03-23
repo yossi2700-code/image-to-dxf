@@ -9,9 +9,11 @@ import { trpc } from "./lib/trpc";
 import { useEffect, useRef } from "react";
 
 // Eagerly loaded — critical path (first paint)
-import Home from "./pages/Home";
-import Landing from "./pages/Landing";
 import NotFound from "@/pages/NotFound";
+
+// Lazily loaded — large pages split to reduce initial bundle
+const Home = lazy(() => import("./pages/Home"));
+const Landing = lazy(() => import("./pages/Landing"));
 
 // Lazily loaded — only when user navigates to these routes
 const Admin = lazy(() => import("./pages/Admin"));
