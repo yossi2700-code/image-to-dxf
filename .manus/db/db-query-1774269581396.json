@@ -1,0 +1,22 @@
+{
+  "query": "SELECT id, email, name, passwordHash IS NOT NULL as hasPassword, googleId IS NOT NULL as isGoogle, tokenBalance, isBlocked, emailVerified, createdAt, lastLoginAt FROM app_users WHERE email = 'evengal@013net.net';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, email, name, passwordHash IS NOT NULL as hasPassword, googleId IS NOT NULL as isGoogle, tokenBalance, isBlocked, emailVerified, createdAt, lastLoginAt FROM app_users WHERE email = 'evengal@013net.net';",
+  "rows": [
+    {
+      "id": "840014",
+      "email": "evengal@013net.net",
+      "name": "אבן גל",
+      "hasPassword": "1",
+      "isGoogle": "0",
+      "tokenBalance": "2",
+      "isBlocked": "0",
+      "emailVerified": "0",
+      "createdAt": "2026-03-15 12:19:51",
+      "lastLoginAt": "2026-03-23 12:39:02"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\thasPassword\tisGoogle\ttokenBalance\tisBlocked\temailVerified\tcreatedAt\tlastLoginAt\n840014\tevengal@013net.net\tאבן גל\t1\t0\t2\t0\t0\t2026-03-15 12:19:51\t2026-03-23 12:39:02\n",
+  "stderr": "",
+  "execution_time_ms": 1681
+}

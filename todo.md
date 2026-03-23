@@ -2157,3 +2157,7 @@
 - [x] הוספת ReportIssueButton לכל הפיצ'רים: AiTraceTab, AiGeneratorTab, FaceDetectTab, CncReliefTab, Convert
 - [x] דף ניהול "דיווחי בעיות" ב-Admin.tsx עם פילטר סטטוס, תמונות, אישור/דחייה
 - [x] Badge אדום על כפתור הניהול כשיש דיווחים ממתינים
+
+## תיקון לולאת כניסה - מרץ 2026
+
+- [x] תיקון: שינוי redirect מ-301 (cached) ל-302 (לא cached) כדי למנוע לולאת ניתוק לאחר כניסה מ-dxfai.net

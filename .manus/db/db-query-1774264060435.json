@@ -1,0 +1,60 @@
+{
+  "query": "SELECT id, email, name, googleId IS NOT NULL as isGoogle, passwordHash IS NOT NULL as hasPassword, tokenBalance, createdAt, isBlocked FROM app_users WHERE tokenBalance > 100 OR (passwordHash IS NULL AND googleId IS NULL) ORDER BY tokenBalance DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, email, name, googleId IS NOT NULL as isGoogle, passwordHash IS NOT NULL as hasPassword, tokenBalance, createdAt, isBlocked FROM app_users WHERE tokenBalance > 100 OR (passwordHash IS NULL AND googleId IS NULL) ORDER BY tokenBalance DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "180001",
+      "email": "aryee07@gmail.com",
+      "name": "ד\"ר אריה",
+      "isGoogle": "0",
+      "hasPassword": "1",
+      "tokenBalance": "476",
+      "createdAt": "2026-03-01 14:23:59",
+      "isBlocked": "0"
+    },
+    {
+      "id": "960001",
+      "email": "snail@txgm.com",
+      "name": "Snail",
+      "isGoogle": "0",
+      "hasPassword": "1",
+      "tokenBalance": "310",
+      "createdAt": "2026-03-17 13:00:19",
+      "isBlocked": "0"
+    },
+    {
+      "id": "210001",
+      "email": "zvizvi011@gmail.com",
+      "name": "צבי",
+      "isGoogle": "0",
+      "hasPassword": "1",
+      "tokenBalance": "216",
+      "createdAt": "2026-03-02 08:17:06",
+      "isBlocked": "0"
+    },
+    {
+      "id": "840004",
+      "email": "yossi2700@icloud.com",
+      "name": "יוסי אייזנבך",
+      "isGoogle": "0",
+      "hasPassword": "0",
+      "tokenBalance": "20",
+      "createdAt": "2026-03-13 13:38:33",
+      "isBlocked": "0"
+    },
+    {
+      "id": "1170001",
+      "email": "yossi2700xl90@gmail.com",
+      "name": "יוסף אייזנבך",
+      "isGoogle": "0",
+      "hasPassword": "0",
+      "tokenBalance": "10",
+      "createdAt": "2026-03-23 06:49:56",
+      "isBlocked": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\tisGoogle\thasPassword\ttokenBalance\tcreatedAt\tisBlocked\n180001\taryee07@gmail.com\tד\"ר אריה\t0\t1\t476\t2026-03-01 14:23:59\t0\n960001\tsnail@txgm.com\tSnail\t0\t1\t310\t2026-03-17 13:00:19\t0\n210001\tzvizvi011@gmail.com\tצבי\t0\t1\t216\t2026-03-02 08:17:06\t0\n840004\tyossi2700@icloud.com\tיוסי אייזנבך\t0\t0\t20\t2026-03-13 13:38:33\t0\n1170001\tyossi2700xl90@gmail.com\tיוסף אייזנבך\t0\t0\t10\t2026-03-23 06:49:56\t0\n",
+  "stderr": "",
+  "execution_time_ms": 1606
+}

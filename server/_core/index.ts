@@ -64,7 +64,9 @@ async function startServer() {
   });
 
   // ── Primary domain redirect (dxfai.ai) ────────────────────────────────────────
-  // All other domains redirect to dxfai.ai with 301 (SEO-safe permanent redirect)
+  // All other domains redirect to dxfai.ai
+  // Using 302 (temporary) instead of 301 (permanent) to prevent browsers from caching
+  // the redirect and breaking cookie-based sessions (cookies are domain-specific)
   const PRIMARY_DOMAIN = "dxfai.ai";
   const REDIRECT_DOMAINS = new Set([
     "dxfai.net", "www.dxfai.net",
@@ -76,7 +78,9 @@ async function startServer() {
     if (process.env.NODE_ENV !== "production") return next();
     const host = (req.headers.host || "").split(":")[0].toLowerCase();
     if (REDIRECT_DOMAINS.has(host)) {
-      return res.redirect(301, `https://${PRIMARY_DOMAIN}${req.originalUrl}`);
+      // 302 = temporary redirect, not cached by browsers
+      // This ensures cookies set on dxfai.ai are always sent on subsequent requests
+      return res.redirect(302, `https://${PRIMARY_DOMAIN}${req.originalUrl}`);
     }
     return next();
   });
