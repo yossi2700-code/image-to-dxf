@@ -192,6 +192,7 @@ export const appRouter = router({
           email: appUsers.email,
           createdAt: appUsers.createdAt,
           lastLoginAt: appUsers.lastLoginAt,
+          googleId: appUsers.googleId,
         })
         .from(appUsers)
         .orderBy(desc(appUsers.createdAt))
@@ -264,6 +265,7 @@ export const appRouter = router({
           isBlocked: appUsers.isBlocked,
           createdAt: appUsers.createdAt,
           lastLoginAt: appUsers.lastLoginAt,
+          googleId: appUsers.googleId,
         })
         .from(appUsers)
         .orderBy(desc(appUsers.createdAt))
@@ -909,6 +911,7 @@ export const appRouter = router({
           emailVerified: appUsers.emailVerified,
           createdAt: appUsers.createdAt,
           lastLoginAt: appUsers.lastLoginAt,
+          googleId: appUsers.googleId,
         })
         .from(appUsers)
         .orderBy(desc(appUsers.createdAt))
