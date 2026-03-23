@@ -2180,3 +2180,7 @@
 
 - [x] דחיסת demo-video מ-2.6MB ל-998KB WebM (CRF42 720p) - חיסכון 62%
 - [x] החזרת הסרטון לדף הנחיתה עם lazy load (IntersectionObserver)
+
+## Security Headers - מרץ 2026
+
+- [x] הוספת CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy לשרת

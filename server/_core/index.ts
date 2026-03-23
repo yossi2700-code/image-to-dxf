@@ -20,6 +20,7 @@ import paypalRoute from "../paypalRoute";
 import cncReliefRoute from "../cncReliefRoute";
 import {
   helmetMiddleware,
+  permissionsPolicyMiddleware,
   globalApiLimiter,
   authLimiter,
   uploadLimiter,
@@ -50,8 +51,9 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // ── Security: Helmet (HTTP headers) ─────────────────────────────────────────
+  // ── Security: Helmet (HTTP headers) ─────────────────────────────────────────────────────
   app.use(helmetMiddleware);
+  app.use(permissionsPolicyMiddleware);
 
   // ── Force HTTPS in production ────────────────────────────────────────────────
   app.use((req, res, next) => {

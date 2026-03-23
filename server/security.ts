@@ -71,7 +71,20 @@ export const helmetMiddleware = helmet({
   referrerPolicy: { policy: "strict-origin-when-cross-origin" },
   // Permissions policy — disable unused browser features
   permittedCrossDomainPolicies: false,
+  // Cross-Origin policies
+  crossOriginEmbedderPolicy: false, // Allow embedding external resources (images, CDN)
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }, // Allow OAuth popups
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow CDN resources
 });
+
+// ── Permissions-Policy middleware (not in helmet by default) ──────────────────
+export function permissionsPolicyMiddleware(req: Request, res: Response, next: NextFunction): void {
+  res.setHeader(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), payment=(self), usb=(), fullscreen=(self)"
+  );
+  next();
+}
 
 // ── 2. Global API rate limiter ────────────────────────────────────────────────
 // 300 requests per 5 minutes per IP — generous for normal use, blocks scrapers
