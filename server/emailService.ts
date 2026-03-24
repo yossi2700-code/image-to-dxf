@@ -143,7 +143,7 @@ export async function sendWelcomeEmail(opts: {
   <!-- Header -->
   <tr><td style="background:#4338ca;border-radius:20px 20px 0 0;padding:36px 40px 28px;text-align:center;">
     <div style="display:inline-block;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:50px;padding:7px 18px;margin-bottom:18px;">
-      <span style="color:#ffffff;font-size:13px;font-weight:700;">✦ AI DXF — dxfai.net</span>
+      <span style="color:#ffffff;font-size:13px;font-weight:700;">✦ AI DXF — dxfai.ai</span>
     </div>
     <h1 style="color:#ffffff;font-size:26px;font-weight:900;margin:0 0 10px;line-height:1.3;">ברוכים הבאים!<br/>עכשיו אתה <span style="color:#fde68a;">מקצוען בווקטורים</span></h1>
     <p style="color:#e0e7ff;font-size:14px;margin:0;line-height:1.6;">הכלי המתקדם ביותר להמרת תמונות לקבצי DXF<br/>מוכנים לחריטה, כרסום ולייזר</p>
@@ -264,11 +264,11 @@ export async function sendWelcomeEmail(opts: {
 
   <!-- Footer -->
   <tr><td style="background:#f8f9ff;border-radius:0 0 20px 20px;padding:24px 40px;text-align:center;border-top:1px solid #e0e7ff;">
-    <p style="font-size:13px;font-weight:700;color:#4338ca;margin:0 0 6px;">AI DXF — dxfai.net</p>
+    <p style="font-size:13px;font-weight:700;color:#4338ca;margin:0 0 6px;">AI DXF — dxfai.ai</p>
     <p style="font-size:11px;color:#9ca3af;line-height:1.7;margin:0;">
       קיבלת מייל זה כיוון שנרשמת לאתר AI DXF.<br/>
-      <a href="${opts.siteUrl}" style="color:#6366f1;text-decoration:none;">dxfai.net</a> &nbsp;|&nbsp;
-      <a href="mailto:support@dxfai.net" style="color:#6366f1;text-decoration:none;">support@dxfai.net</a>
+      <a href="${opts.siteUrl}" style="color:#6366f1;text-decoration:none;">dxfai.ai</a> &nbsp;|&nbsp;
+      <a href="mailto:support@dxfai.ai" style="color:#6366f1;text-decoration:none;">support@dxfai.ai</a>
     </p>
   </td></tr>
 
@@ -308,7 +308,7 @@ export async function sendWelcomeEmail(opts: {
         <div style="text-align: center; margin-bottom: 28px;">
           <a href="${opts.siteUrl}" style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 14px 36px; border-radius: 50px; text-decoration: none; font-weight: 900; font-size: 16px; box-shadow: 0 4px 16px rgba(99,102,241,0.4);">🚀 Start converting now</a>
         </div>
-        <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">Need help? Contact us anytime • <a href="${opts.siteUrl}" style="color: #6366f1; text-decoration: none;">dxfai.net</a></p>
+        <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">Need help? Contact us anytime • <a href="${opts.siteUrl}" style="color: #6366f1; text-decoration: none;">dxfai.ai</a></p>
       </div>
     </div>
   `;
@@ -413,7 +413,7 @@ export async function sendPurchaseConfirmationEmail(opts: {
         </div>
 
         <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
-          צריך עזרה? פנה אלינו בכל עת • <a href="${opts.siteUrl}" style="color: #6366f1; text-decoration: none;">dxfai.net</a>
+          צריך עזרה? פנה אלינו בכל עת • <a href="${opts.siteUrl}" style="color: #6366f1; text-decoration: none;">dxfai.ai</a>
         </p>
       </div>
     </div>
@@ -455,7 +455,7 @@ export async function sendPurchaseConfirmationEmail(opts: {
         <div style="text-align: center; margin-bottom: 28px;">
           <a href="${opts.siteUrl}" style="display: inline-block; color: #6366f1; padding: 8px 20px; text-decoration: none; font-size: 14px; font-weight: 600;">🎨 Start converting now</a>
         </div>
-        <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">Need help? Contact us anytime • <a href="${opts.siteUrl}" style="color: #6366f1; text-decoration: none;">dxfai.net</a></p>
+        <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">Need help? Contact us anytime • <a href="${opts.siteUrl}" style="color: #6366f1; text-decoration: none;">dxfai.ai</a></p>
       </div>
     </div>
   `;
@@ -466,7 +466,7 @@ export async function sendPurchaseConfirmationEmail(opts: {
     subject,
     html: isHe ? heHtml : enHtml,
     headers: {
-      'List-Unsubscribe': `<mailto:noreply@dxfai.net?subject=unsubscribe>`,
+      'List-Unsubscribe': `<mailto:noreply@dxfai.ai?subject=unsubscribe>`,
       'X-Entity-Ref-ID': opts.orderId,
     },
   });
@@ -503,7 +503,7 @@ export async function sendBulkEmail(opts: {
   <tr>
     <td align="center" style="background:#1e1b4b; padding:20px 32px;">
       <p style="margin:0; font-size:22px; font-weight:bold; color:#ffffff; font-family:Arial,sans-serif;">AI DXF</p>
-      <p style="margin:4px 0 0; font-size:12px; color:#a5b4fc; font-family:Arial,sans-serif;">dxfai.net</p>
+      <p style="margin:4px 0 0; font-size:12px; color:#a5b4fc; font-family:Arial,sans-serif;">dxfai.ai</p>
     </td>
   </tr>
   <tr>
@@ -514,10 +514,10 @@ export async function sendBulkEmail(opts: {
   <tr>
     <td style="background:#f9fafb; padding:14px 32px; text-align:center; border-top:1px solid #e5e7eb; direction:rtl;">
       <p style="margin:0 0 4px; font-size:12px; color:#9ca3af; font-family:Arial,sans-serif;">
-        AI DXF &bull; <a href="https://dxfai.net" style="color:#4f46e5; text-decoration:none;">dxfai.net</a>
+        AI DXF &bull; <a href="https://dxfai.ai" style="color:#4f46e5; text-decoration:none;">dxfai.ai</a>
       </p>
       <p style="margin:0; font-size:11px; color:#d1d5db; font-family:Arial,sans-serif;">
-        קיבלת מייל זה כי נרשמת לאתר AI DXF. <a href="mailto:noreply@dxfai.net?subject=unsubscribe" style="color:#d1d5db;">הסרה מרשימת תפוצה</a>
+        קיבלת מייל זה כי נרשמת לאתר AI DXF. <a href="mailto:noreply@dxfai.ai?subject=unsubscribe" style="color:#d1d5db;">הסרה מרשימת תפוצה</a>
       </p>
     </td>
   </tr>
@@ -529,10 +529,10 @@ export async function sendBulkEmail(opts: {
 
   // Build plain text version (important for spam filters)
   const textVersion = personalizedText ||
-    `AI DXF - dxfai.net\n\n` +
+    `AI DXF - dxfai.ai\n\n` +
     `שלום ${displayName},\n\n` +
-    `לכניסה לאתר: https://dxfai.net\n\n` +
-    `להסרה מרשימת תפוצה: noreply@dxfai.net`;
+    `לכניסה לאתר: https://dxfai.ai\n\n` +
+    `להסרה מרשימת תפוצה: noreply@dxfai.ai`;
 
   await resend.emails.send({
     from: FROM_ADDRESS,
@@ -541,7 +541,7 @@ export async function sendBulkEmail(opts: {
     html: wrappedHtml,
     text: textVersion,
     headers: {
-      'List-Unsubscribe': `<mailto:noreply@dxfai.net?subject=unsubscribe>, <https://dxfai.net/unsubscribe>`,
+      'List-Unsubscribe': `<mailto:noreply@dxfai.ai?subject=unsubscribe>, <https://dxfai.ai/unsubscribe>`,
       'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
     },
   });
@@ -581,7 +581,7 @@ export async function sendReminderEmail(opts: {
   <!-- Header -->
   <tr><td style="background:#7c3aed;border-radius:20px 20px 0 0;padding:36px 40px 28px;text-align:center;">
     <div style="display:inline-block;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:50px;padding:7px 18px;margin-bottom:18px;">
-      <span style="color:#ffffff;font-size:13px;font-weight:700;">✦ AI DXF — dxfai.net</span>
+      <span style="color:#ffffff;font-size:13px;font-weight:700;">✦ AI DXF — dxfai.ai</span>
     </div>
     <div style="font-size:48px;margin-bottom:12px;">⏰</div>
     <h1 style="color:#ffffff;font-size:24px;font-weight:900;margin:0 0 10px;line-height:1.3;">שלום ${displayName},<br/>האסימונים שלך עוד מחכים!</h1>
@@ -607,11 +607,11 @@ export async function sendReminderEmail(opts: {
 
   <!-- Footer -->
   <tr><td style="background:#f8f9ff;border-radius:0 0 20px 20px;padding:24px 40px;text-align:center;border-top:1px solid #e0e7ff;">
-    <p style="font-size:13px;font-weight:700;color:#4338ca;margin:0 0 6px;">AI DXF — dxfai.net</p>
+    <p style="font-size:13px;font-weight:700;color:#4338ca;margin:0 0 6px;">AI DXF — dxfai.ai</p>
     <p style="font-size:11px;color:#9ca3af;line-height:1.7;margin:0;">
       קיבלת מייל זה כיוון שנרשמת לאתר AI DXF.<br/>
-      <a href="${opts.siteUrl}" style="color:#6366f1;text-decoration:none;">dxfai.net</a> &nbsp;|&nbsp;
-      <a href="mailto:support@dxfai.net" style="color:#6366f1;text-decoration:none;">support@dxfai.net</a>
+      <a href="${opts.siteUrl}" style="color:#6366f1;text-decoration:none;">dxfai.ai</a> &nbsp;|&nbsp;
+      <a href="mailto:support@dxfai.ai" style="color:#6366f1;text-decoration:none;">support@dxfai.ai</a>
     </p>
   </td></tr>
 
@@ -641,15 +641,15 @@ export async function sendReminderEmail(opts: {
     </table>
   </td></tr>
   <tr><td style="background:#f8f9ff;border-radius:0 0 20px 20px;padding:24px 40px;text-align:center;border-top:1px solid #e0e7ff;">
-    <p style="font-size:11px;color:#9ca3af;">You received this because you registered at DXF AI. <a href="${opts.siteUrl}" style="color:#6366f1;">dxfai.net</a></p>
+    <p style="font-size:11px;color:#9ca3af;">You received this because you registered at DXF AI. <a href="${opts.siteUrl}" style="color:#6366f1;">dxfai.ai</a></p>
   </td></tr>
 </table>
 </td></tr></table>
 </body></html>`;
 
   const reminderPlainText = isHe
-    ? `שלום ${displayName},\n\nנרשמת ל-DXF AI אבל עוד לא קיבלת את 20 האסימונים הבונוס שלך.\n\nלחץ כאן לקבלתם: ${bonusUrl}\n\nצוות DXF AI\ndxfai.net\n\nלהסרה: noreply@dxfai.net`
-    : `Hi ${displayName},\n\nYou signed up for DXF AI but haven't claimed your 20 bonus tokens yet.\n\nClaim them here: ${bonusUrl}\n\nDXF AI Team\ndxfai.net\n\nUnsubscribe: noreply@dxfai.net`;
+    ? `שלום ${displayName},\n\nנרשמת ל-DXF AI אבל עוד לא קיבלת את 20 האסימונים הבונוס שלך.\n\nלחץ כאן לקבלתם: ${bonusUrl}\n\nצוות DXF AI\ndxfai.ai\n\nלהסרה: noreply@dxfai.ai`
+    : `Hi ${displayName},\n\nYou signed up for DXF AI but haven't claimed your 20 bonus tokens yet.\n\nClaim them here: ${bonusUrl}\n\nDXF AI Team\ndxfai.ai\n\nUnsubscribe: noreply@dxfai.ai`;
 
   await resend.emails.send({
     from: FROM_ADDRESS,
@@ -658,7 +658,7 @@ export async function sendReminderEmail(opts: {
     html: isHe ? heHtml : enHtml,
     text: reminderPlainText,
     headers: {
-      'List-Unsubscribe': `<mailto:noreply@dxfai.net?subject=unsubscribe>, <https://dxfai.net/unsubscribe>`,
+      'List-Unsubscribe': `<mailto:noreply@dxfai.ai?subject=unsubscribe>, <https://dxfai.ai/unsubscribe>`,
       'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
     },
   });

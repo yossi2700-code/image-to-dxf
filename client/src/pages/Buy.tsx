@@ -84,13 +84,13 @@ function PurchaseTermsModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="p-6 space-y-5 text-sm text-gray-700 dark:text-gray-300" dir={isHe ? "rtl" : "ltr"}>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{isHe ? "עדכון אחרון: מרץ 2026 | dxfai.net" : "Last updated: March 2026 | dxfai.net"}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{isHe ? "עדכון אחרון: מרץ 2026 | dxfai.ai" : "Last updated: March 2026 | dxfai.ai"}</p>
 
           {isHe ? (
             <>
               <section>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">1. חבילות אסימונים ותמחור</h3>
-                <p>בהשלמת הרכישה אתה רוכש רישיון שאינו ניתן להחזר ואינו ניתן להעברה לשימוש במספר האסימונים המצוין בפלטפורמת dxfai.net. לאסימונים אין ערך כספי, לא ניתן להמירם למזומן, ואינם ניתנים להעברה לחשבונות אחרים. המחירים מוצגים במטבע שנבחר וכוללים מסים רלוונטיים אלא אם צוין אחרת.</p>
+                <p>בהשלמת הרכישה אתה רוכש רישיון שאינו ניתן להחזר ואינו ניתן להעברה לשימוש במספר האסימונים המצוין בפלטפורמת dxfai.ai. לאסימונים אין ערך כספי, לא ניתן להמירם למזומן, ואינם ניתנים להעברה לחשבונות אחרים. המחירים מוצגים במטבע שנבחר וכוללים מסים רלוונטיים אלא אם צוין אחרת.</p>
               </section>
               <section>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">2. ללא תפוגה</h3>
@@ -98,7 +98,7 @@ function PurchaseTermsModal({ onClose }: { onClose: () => void }) {
               </section>
               <section>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">3. מדיניות אי-החזר</h3>
-                <p>כל הרכישות סופיות ואינן ניתנות להחזר. איננו מציעים החזרים, זיכויים, או החלפות עבור אסימונים שנרכשו, אלא כנדרש על פי חוק מחייב. אם אתה סבור שחיוב בוצע בטעות, פנה לתמיכה בכתובת support@dxfai.net תוך 14 יום מתאריך העסקה.</p>
+                <p>כל הרכישות סופיות ואינן ניתנות להחזר. איננו מציעים החזרים, זיכויים, או החלפות עבור אסימונים שנרכשו, אלא כנדרש על פי חוק מחייב. אם אתה סבור שחיוב בוצע בטעות, פנה לתמיכה בכתובת support@dxfai.ai תוך 14 יום מתאריך העסקה.</p>
               </section>
               <section>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">4. עיבוד תשלומים</h3>
@@ -126,14 +126,14 @@ function PurchaseTermsModal({ onClose }: { onClose: () => void }) {
               </section>
               <section>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">10. יצירת קשר</h3>
-                <p>לשאלות הקשורות לרכישה: <a href="mailto:support@dxfai.net" className="text-blue-500 hover:underline">support@dxfai.net</a></p>
+                <p>לשאלות הקשורות לרכישה: <a href="mailto:support@dxfai.ai" className="text-blue-500 hover:underline">support@dxfai.ai</a></p>
               </section>
             </>
           ) : (
             <>
               <section>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">1. Token Packages &amp; Pricing</h3>
-                <p>By completing a purchase you acquire a non-refundable, non-transferable licence to use the stated number of design tokens ("Tokens") on the dxfai.net platform. Tokens have no monetary value, cannot be exchanged for cash, and are not transferable to other accounts. Prices are displayed in your selected currency and are inclusive of any applicable taxes unless stated otherwise.</p>
+                <p>By completing a purchase you acquire a non-refundable, non-transferable licence to use the stated number of design tokens ("Tokens") on the dxfai.ai platform. Tokens have no monetary value, cannot be exchanged for cash, and are not transferable to other accounts. Prices are displayed in your selected currency and are inclusive of any applicable taxes unless stated otherwise.</p>
               </section>
               <section>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">2. No Expiry</h3>
@@ -141,7 +141,7 @@ function PurchaseTermsModal({ onClose }: { onClose: () => void }) {
               </section>
               <section>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">3. No Refunds Policy</h3>
-                <p>All purchases are final and non-refundable. We do not offer refunds, credits, or exchanges for purchased Tokens except where required by applicable mandatory law. If you believe a charge was made in error, please contact support at support@dxfai.net within 14 days of the transaction date.</p>
+                <p>All purchases are final and non-refundable. We do not offer refunds, credits, or exchanges for purchased Tokens except where required by applicable mandatory law. If you believe a charge was made in error, please contact support at support@dxfai.ai within 14 days of the transaction date.</p>
               </section>
               <section>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">4. Payment Processing</h3>
@@ -169,7 +169,7 @@ function PurchaseTermsModal({ onClose }: { onClose: () => void }) {
               </section>
               <section>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">10. Contact</h3>
-                <p>For purchase-related queries: <a href="mailto:support@dxfai.net" className="text-blue-500 hover:underline">support@dxfai.net</a></p>
+                <p>For purchase-related queries: <a href="mailto:support@dxfai.ai" className="text-blue-500 hover:underline">support@dxfai.ai</a></p>
               </section>
             </>
           )}
@@ -864,13 +864,13 @@ export default function Buy() {
             )}
             {!contactSettings?.supportEmail && !contactSettings?.whatsappNumber && (
               <a
-                href="mailto:support@dxfai.net"
+                href="mailto:support@dxfai.ai"
                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold transition-colors text-sm"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                support@dxfai.net
+                support@dxfai.ai
               </a>
             )}
           </div>

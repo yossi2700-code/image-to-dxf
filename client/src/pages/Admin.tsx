@@ -674,9 +674,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 </td></tr>
 </table>
 <p style="text-align:center; margin:0 0 8px;">
-<a href="https://dxfai.net/?campaign=email_bonus_2026_03" style="display:inline-block; background:#4f46e5; color:#ffffff; font-size:15px; font-weight:bold; padding:12px 36px; text-decoration:none; border-radius:6px;">כניסה לאתר וקבלת האסימונים</a>
+<a href="https://dxfai.ai/?campaign=email_bonus_2026_03" style="display:inline-block; background:#4f46e5; color:#ffffff; font-size:15px; font-weight:bold; padding:12px 36px; text-decoration:none; border-radius:6px;">כניסה לאתר וקבלת האסימונים</a>
 </p>`;
-  const CAMPAIGN_EMAIL_TEXT = `שלום {{name}},\n\nתודה שנרשמת לאתר AI DXF.\n\nמה חדש:\n- יצירת תמונה מטקסט (AI Create)\n- רכישת אסימונים\n- ממשק משופר\n\nמתנה מיוחדת: 15 אסימונים נוספים לכל מי שנכנס דרך הקישור:\nhttps://dxfai.net/?campaign=email_bonus_2026_03\n\nAI DXF - dxfai.net`;
+  const CAMPAIGN_EMAIL_TEXT = `שלום {{name}},\n\nתודה שנרשמת לאתר AI DXF.\n\nמה חדש:\n- יצירת תמונה מטקסט (AI Create)\n- רכישת אסימונים\n- ממשק משופר\n\nמתנה מיוחדת: 15 אסימונים נוספים לכל מי שנכנס דרך הקישור:\nhttps://dxfai.ai/?campaign=email_bonus_2026_03\n\nAI DXF - dxfai.ai`;
 
   const [emailSubject, setEmailSubject] = useState(CAMPAIGN_EMAIL_SUBJECT);
   const [emailBody, setEmailBody] = useState(CAMPAIGN_EMAIL_BODY);
@@ -2966,7 +2966,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   <label className="text-xs font-medium text-muted-foreground block mb-1">מייל תמיכה</label>
                   <Input
                     type="email"
-                    placeholder="support@dxfai.net"
+                    placeholder="support@dxfai.ai"
                     value={contactEmail}
                     onChange={e => setContactEmail(e.target.value)}
                     dir="ltr"

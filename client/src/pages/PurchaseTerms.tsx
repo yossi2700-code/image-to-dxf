@@ -16,12 +16,12 @@ export default function PurchaseTerms() {
         </button>
 
         <h1 className="text-3xl font-bold mb-2">Purchase Terms &amp; Conditions</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-10">Last updated: March 2026 | dxfai.net</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-10">Last updated: March 2026 | dxfai.ai</p>
 
         <div className="prose prose-gray dark:prose-invert max-w-none space-y-8">
           <section>
             <h2>1. Token Packages &amp; Pricing</h2>
-            <p>By completing a purchase you acquire a non-refundable, non-transferable licence to use the stated number of design tokens ("Tokens") on the dxfai.net platform. Tokens have no monetary value, cannot be exchanged for cash, and are not transferable to other accounts. Prices are displayed in your selected currency and are inclusive of any applicable taxes unless stated otherwise.</p>
+            <p>By completing a purchase you acquire a non-refundable, non-transferable licence to use the stated number of design tokens ("Tokens") on the dxfai.ai platform. Tokens have no monetary value, cannot be exchanged for cash, and are not transferable to other accounts. Prices are displayed in your selected currency and are inclusive of any applicable taxes unless stated otherwise.</p>
           </section>
 
           <section>
@@ -31,7 +31,7 @@ export default function PurchaseTerms() {
 
           <section>
             <h2>3. No Refunds Policy</h2>
-            <p>All purchases are final and non-refundable. We do not offer refunds, credits, or exchanges for purchased Tokens except where required by applicable mandatory law. If you believe a charge was made in error, please contact support at <a href="mailto:support@dxfai.net">support@dxfai.net</a> within 14 days of the transaction date.</p>
+            <p>All purchases are final and non-refundable. We do not offer refunds, credits, or exchanges for purchased Tokens except where required by applicable mandatory law. If you believe a charge was made in error, please contact support at <a href="mailto:support@dxfai.ai">support@dxfai.ai</a> within 14 days of the transaction date.</p>
           </section>
 
           <section>
@@ -66,7 +66,7 @@ export default function PurchaseTerms() {
 
           <section>
             <h2>10. Contact</h2>
-            <p>For purchase-related queries: <a href="mailto:support@dxfai.net">support@dxfai.net</a></p>
+            <p>For purchase-related queries: <a href="mailto:support@dxfai.ai">support@dxfai.ai</a></p>
           </section>
         </div>
       </div>

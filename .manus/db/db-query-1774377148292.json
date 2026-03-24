@@ -1,0 +1,154 @@
+{
+  "query": "\nSELECT \n  DATE(createdAt) as signup_date,\n  COUNT(*) as new_users,\n  SUM(CASE WHEN googleId IS NOT NULL THEN 1 ELSE 0 END) as via_google,\n  SUM(CASE WHEN googleId IS NULL THEN 1 ELSE 0 END) as via_email\nFROM app_users\nWHERE createdAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)\nGROUP BY DATE(createdAt)\nORDER BY signup_date DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT \n  DATE(createdAt) as signup_date,\n  COUNT(*) as new_users,\n  SUM(CASE WHEN googleId IS NOT NULL THEN 1 ELSE 0 END) as via_google,\n  SUM(CASE WHEN googleId IS NULL THEN 1 ELSE 0 END) as via_email\nFROM app_users\nWHERE createdAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)\nGROUP BY DATE(createdAt)\nORDER BY signup_date DESC;\n",
+  "rows": [
+    {
+      "signup_date": "2026-03-24",
+      "new_users": "2",
+      "via_google": "0",
+      "via_email": "2"
+    },
+    {
+      "signup_date": "2026-03-23",
+      "new_users": "3",
+      "via_google": "2",
+      "via_email": "1"
+    },
+    {
+      "signup_date": "2026-03-20",
+      "new_users": "1",
+      "via_google": "0",
+      "via_email": "1"
+    },
+    {
+      "signup_date": "2026-03-19",
+      "new_users": "2",
+      "via_google": "0",
+      "via_email": "2"
+    },
+    {
+      "signup_date": "2026-03-18",
+      "new_users": "3",
+      "via_google": "0",
+      "via_email": "3"
+    },
+    {
+      "signup_date": "2026-03-17",
+      "new_users": "5",
+      "via_google": "0",
+      "via_email": "5"
+    },
+    {
+      "signup_date": "2026-03-16",
+      "new_users": "1",
+      "via_google": "0",
+      "via_email": "1"
+    },
+    {
+      "signup_date": "2026-03-15",
+      "new_users": "4",
+      "via_google": "0",
+      "via_email": "4"
+    },
+    {
+      "signup_date": "2026-03-14",
+      "new_users": "3",
+      "via_google": "1",
+      "via_email": "2"
+    },
+    {
+      "signup_date": "2026-03-13",
+      "new_users": "3",
+      "via_google": "1",
+      "via_email": "2"
+    },
+    {
+      "signup_date": "2026-03-12",
+      "new_users": "4",
+      "via_google": "0",
+      "via_email": "4"
+    },
+    {
+      "signup_date": "2026-03-11",
+      "new_users": "3",
+      "via_google": "0",
+      "via_email": "3"
+    },
+    {
+      "signup_date": "2026-03-10",
+      "new_users": "2",
+      "via_google": "0",
+      "via_email": "2"
+    },
+    {
+      "signup_date": "2026-03-09",
+      "new_users": "2",
+      "via_google": "0",
+      "via_email": "2"
+    },
+    {
+      "signup_date": "2026-03-08",
+      "new_users": "7",
+      "via_google": "0",
+      "via_email": "7"
+    },
+    {
+      "signup_date": "2026-03-06",
+      "new_users": "1",
+      "via_google": "0",
+      "via_email": "1"
+    },
+    {
+      "signup_date": "2026-03-05",
+      "new_users": "4",
+      "via_google": "0",
+      "via_email": "4"
+    },
+    {
+      "signup_date": "2026-03-04",
+      "new_users": "2",
+      "via_google": "0",
+      "via_email": "2"
+    },
+    {
+      "signup_date": "2026-03-03",
+      "new_users": "2",
+      "via_google": "0",
+      "via_email": "2"
+    },
+    {
+      "signup_date": "2026-03-02",
+      "new_users": "4",
+      "via_google": "0",
+      "via_email": "4"
+    },
+    {
+      "signup_date": "2026-03-01",
+      "new_users": "3",
+      "via_google": "0",
+      "via_email": "3"
+    },
+    {
+      "signup_date": "2026-02-28",
+      "new_users": "1",
+      "via_google": "0",
+      "via_email": "1"
+    },
+    {
+      "signup_date": "2026-02-27",
+      "new_users": "1",
+      "via_google": "0",
+      "via_email": "1"
+    },
+    {
+      "signup_date": "2026-02-26",
+      "new_users": "1",
+      "via_google": "0",
+      "via_email": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "signup_date\tnew_users\tvia_google\tvia_email\n2026-03-24\t2\t0\t2\n2026-03-23\t3\t2\t1\n2026-03-20\t1\t0\t1\n2026-03-19\t2\t0\t2\n2026-03-18\t3\t0\t3\n2026-03-17\t5\t0\t5\n2026-03-16\t1\t0\t1\n2026-03-15\t4\t0\t4\n2026-03-14\t3\t1\t2\n2026-03-13\t3\t1\t2\n2026-03-12\t4\t0\t4\n2026-03-11\t3\t0\t3\n2026-03-10\t2\t0\t2\n2026-03-09\t2\t0\t2\n2026-03-08\t7\t0\t7\n2026-03-06\t1\t0\t1\n2026-03-05\t4\t0\t4\n2026-03-04\t2\t0\t2\n2026-03-03\t2\t0\t2\n2026-03-02\t4\t0\t4\n2026-03-01\t3\t0\t3\n2026-02-28\t1\t0\t1\n2026-02-27\t1\t0\t1\n2026-02-26\t1\t0\t1\n",
+  "stderr": "",
+  "execution_time_ms": 1604
+}

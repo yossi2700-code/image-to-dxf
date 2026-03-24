@@ -5,7 +5,7 @@ const PARROT_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnD
 const BOTTLE_KITCHEN_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/before-after-bottle-kitchen-NMZfnioMoqX7XgjurPfovQ.webp";
 const BIKE_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/before-after-bike-Zo6kmezpPh3J6smmgb3hYT.webp";
 
-const SITE_URL = "https://dxfai.net";
+const SITE_URL = "https://dxfai.ai";
 
 export default function Marketing() {
   const [visible, setVisible] = useState(false);
@@ -341,7 +341,7 @@ export default function Marketing() {
             letterSpacing: 0.5,
           }}
         >
-          כנס לאתר — dxfai.net ←
+          כנס לאתר — dxfai.ai ←
         </a>
       </div>
 
@@ -355,7 +355,7 @@ export default function Marketing() {
           color: "rgba(255,255,255,0.3)",
         }}
       >
-        © 2025 AI DXF · <a href={SITE_URL} style={{ color: "rgba(6, 182, 212, 0.6)", textDecoration: "none" }}>dxfai.net</a>
+        © 2025 AI DXF · <a href={SITE_URL} style={{ color: "rgba(6, 182, 212, 0.6)", textDecoration: "none" }}>dxfai.ai</a>
       </div>
     </div>
   );

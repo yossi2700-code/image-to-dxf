@@ -673,7 +673,7 @@ export default function Pricing() {
             </div>
           </div>
           <button
-            onClick={() => { window.location.href = "mailto:support@dxfai.net?subject=מנוי עסקי"; }}
+            onClick={() => { window.location.href = "mailto:support@dxfai.ai?subject=מנוי עסקי"; }}
             style={{
               background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#fff", border: "none", borderRadius: 14,
               padding: "14px 28px", fontWeight: 800, fontSize: 15, cursor: "pointer",
@@ -745,7 +745,7 @@ export default function Pricing() {
           {" · "}
           <a href="/purchase-terms" style={{ color: "#6b7280", textDecoration: "none" }}>{isRtl ? "תנאי רכישה" : "Purchase terms"}</a>
           {" · "}
-          <a href="mailto:support@dxfai.net" style={{ color: "#6b7280", textDecoration: "none" }}>support@dxfai.net</a>
+          <a href="mailto:support@dxfai.ai" style={{ color: "#6b7280", textDecoration: "none" }}>support@dxfai.ai</a>
         </p>
       </footer>
     </div>

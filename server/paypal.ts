@@ -75,7 +75,7 @@ export async function createPayPalOrder(params: CreateOrderParams): Promise<PayP
     purchase_units: [
       {
         reference_id: `${params.packageId}_${params.userId}`,
-        description: `${params.tokens} Design Tokens — dxfai.net`,
+        description: `${params.tokens} Design Tokens — dxfai.ai`,
         amount: {
           currency_code: params.currency,
           value: params.amount,
@@ -164,7 +164,7 @@ export async function createPayPalOrderForCardFields(params: Omit<CreateOrderPar
     purchase_units: [
       {
         reference_id: `${params.packageId}_${params.userId}`,
-        description: `${params.tokens} Design Tokens — dxfai.net`,
+        description: `${params.tokens} Design Tokens — dxfai.ai`,
         amount: {
           currency_code: params.currency,
           value: params.amount,

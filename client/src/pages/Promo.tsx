@@ -2,7 +2,7 @@ import { Link } from "wouter";
 
 const MANDALA_GIF = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/mandala-before-after_6f1d5e8d.gif";
 const LION_GIF    = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/lion-before-after_6ca2fe6a.gif";
-const SITE_URL    = "https://dxfai.net";
+const SITE_URL    = "https://dxfai.ai";
 
 export default function Promo() {
   return (
@@ -34,7 +34,7 @@ export default function Promo() {
             letterSpacing: 1,
           }}
         >
-          ✦ &nbsp;AI DXF — dxfai.net
+          ✦ &nbsp;AI DXF — dxfai.ai
         </div>
 
         {/* Hero headline */}
@@ -132,7 +132,7 @@ export default function Promo() {
           נסה עכשיו — 10 אסימונים חינם »
         </a>
         <p style={{ fontSize: 12, color: "#475569" }}>
-          ללא כרטיס אשראי · מיידי · dxfai.net
+          ללא כרטיס אשראי · מיידי · dxfai.ai
         </p>
       </div>
 

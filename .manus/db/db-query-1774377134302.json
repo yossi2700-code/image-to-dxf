@@ -1,0 +1,19 @@
+{
+  "query": "\nSELECT \n  COUNT(*) as total_users,\n  SUM(CASE WHEN googleId IS NOT NULL AND passwordHash IS NULL THEN 1 ELSE 0 END) as google_only,\n  SUM(CASE WHEN googleId IS NOT NULL AND passwordHash IS NOT NULL THEN 1 ELSE 0 END) as google_and_email,\n  SUM(CASE WHEN googleId IS NULL AND passwordHash IS NOT NULL THEN 1 ELSE 0 END) as email_only,\n  SUM(CASE WHEN emailVerified = 1 THEN 1 ELSE 0 END) as verified_email,\n  SUM(CASE WHEN createdAt >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as last_7_days,\n  SUM(CASE WHEN createdAt >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as last_30_days\nFROM app_users;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT \n  COUNT(*) as total_users,\n  SUM(CASE WHEN googleId IS NOT NULL AND passwordHash IS NULL THEN 1 ELSE 0 END) as google_only,\n  SUM(CASE WHEN googleId IS NOT NULL AND passwordHash IS NOT NULL THEN 1 ELSE 0 END) as google_and_email,\n  SUM(CASE WHEN googleId IS NULL AND passwordHash IS NOT NULL THEN 1 ELSE 0 END) as email_only,\n  SUM(CASE WHEN emailVerified = 1 THEN 1 ELSE 0 END) as verified_email,\n  SUM(CASE WHEN createdAt >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as last_7_days,\n  SUM(CASE WHEN createdAt >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as last_30_days\nFROM app_users;\n",
+  "rows": [
+    {
+      "total_users": "64",
+      "google_only": "2",
+      "google_and_email": "2",
+      "email_only": "59",
+      "verified_email": "13",
+      "last_7_days": "11",
+      "last_30_days": "64"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_users\tgoogle_only\tgoogle_and_email\temail_only\tverified_email\tlast_7_days\tlast_30_days\n64\t2\t2\t59\t13\t11\t64\n",
+  "stderr": "",
+  "execution_time_ms": 1604
+}

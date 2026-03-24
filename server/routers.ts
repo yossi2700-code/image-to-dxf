@@ -1402,7 +1402,7 @@ export const appRouter = router({
           resolvedCurrency = price.currency;
           resolvedTokens = pkg.tokens;
         }
-        const safeOrigin = input.origin ?? "https://dxfai.net";
+        const safeOrigin = input.origin ?? "https://dxfai.ai";
         const paypalOrder = await createPayPalOrder({
           packageId: input.packageId,
           tokens: resolvedTokens,
@@ -1530,7 +1530,7 @@ export const appRouter = router({
         try {
           const [userRow] = await db.select({ name: appUsers.name, email: appUsers.email }).from(appUsers).where(eq(appUsers.id, appUserId));
           if (userRow?.email) {
-            void sendPurchaseConfirmationEmail({ to: userRow.email, name: userRow.name ?? null, tokens: dbOrder.tokenAmount, amount: dbOrder.priceAmount, currency: dbOrder.currency, orderId: input.orderId, siteUrl: "https://dxfai.net", language: "he" });
+            void sendPurchaseConfirmationEmail({ to: userRow.email, name: userRow.name ?? null, tokens: dbOrder.tokenAmount, amount: dbOrder.priceAmount, currency: dbOrder.currency, orderId: input.orderId, siteUrl: "https://dxfai.ai", language: "he" });
           }
         } catch { /* ignore email errors */ }
         void notifyOwner({ title: `💰 רכישה חדשה — ${dbOrder.tokenAmount} אסימונים`, content: `לקוח רכש ${dbOrder.tokenAmount} אסימונים תמורת ${dbOrder.priceAmount} ${dbOrder.currency}.` }).catch(() => {});

@@ -147,7 +147,7 @@ router.post("/api/app-auth/register", async (req, res) => {
       const verifyToken = randomBytes(48).toString("hex");
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
       await db.insert(emailVerifications).values({ appUserId: userId, token: verifyToken, expiresAt });
-      const verifyUrl = `https://dxfai.net/verify-email?token=${verifyToken}`;
+      const verifyUrl = `https://dxfai.ai/verify-email?token=${verifyToken}`;
       void sendVerificationEmail({ to: email.toLowerCase(), name: name?.trim() || null, verifyUrl });
     } catch (e) {
       console.warn("[register] Failed to send verification email:", e);
@@ -173,7 +173,7 @@ router.post("/api/app-auth/register", async (req, res) => {
     // Send welcome email (fire-and-forget)
     try {
       // Always use the production domain for email links
-      const frontendOrigin = "https://dxfai.net";
+      const frontendOrigin = "https://dxfai.ai";
       const lang = (req.headers["accept-language"] ?? "").startsWith("he") ? "he" : "en";
       void sendWelcomeEmail({
         to: email.toLowerCase(),

@@ -688,7 +688,7 @@ export default function Landing() {
   const { data: contactInfo } = trpc.contact.info.useQuery();
 
   const whatsappNumber = contactInfo?.whatsappNumber || "";
-  const supportEmail = contactInfo?.supportEmail || "info@dxfai.net";
+  const supportEmail = contactInfo?.supportEmail || "info@dxfai.ai";
 
   const whatsappUrl = whatsappNumber
     ? `https://wa.me/${whatsappNumber.replace(/\D/g, "")}?text=${encodeURIComponent(isRtl ? "שלום, אני מעוניין בשירות AiDXF" : "Hello, I'm interested in AiDXF")}`

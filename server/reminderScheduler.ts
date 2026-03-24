@@ -75,7 +75,7 @@ async function runReminderCheck() {
         }
 
         // Send reminder email
-        const siteUrl = process.env.SITE_URL || "https://dxfai.net";
+        const siteUrl = process.env.SITE_URL || "https://dxfai.ai";
         await sendReminderEmail({
           to: user.email,
           name: user.name,

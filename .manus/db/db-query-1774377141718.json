@@ -1,0 +1,46 @@
+{
+  "query": "\nSELECT \n  email,\n  name,\n  CASE WHEN googleId IS NOT NULL THEN 'Google' ELSE 'Email' END as signup_method,\n  emailVerified,\n  createdAt,\n  lastLoginAt,\n  maxActions\nFROM app_users\nWHERE googleId IS NOT NULL\nORDER BY createdAt DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT \n  email,\n  name,\n  CASE WHEN googleId IS NOT NULL THEN 'Google' ELSE 'Email' END as signup_method,\n  emailVerified,\n  createdAt,\n  lastLoginAt,\n  maxActions\nFROM app_users\nWHERE googleId IS NOT NULL\nORDER BY createdAt DESC;\n",
+  "rows": [
+    {
+      "email": "dxfai@dxfai.ai",
+      "name": "yosef aizenbach",
+      "signup_method": "Google",
+      "emailVerified": "1",
+      "createdAt": "2026-03-23 22:22:32",
+      "lastLoginAt": "2026-03-23 22:22:32",
+      "maxActions": "10"
+    },
+    {
+      "email": "yossi2700xl90@gmail.com",
+      "name": "יוסף אייזנבך",
+      "signup_method": "Google",
+      "emailVerified": "1",
+      "createdAt": "2026-03-23 06:49:56",
+      "lastLoginAt": "2026-03-24 12:11:29",
+      "maxActions": "10"
+    },
+    {
+      "email": "yossi2700xl3@gmail.com",
+      "name": "טסט1",
+      "signup_method": "Google",
+      "emailVerified": "1",
+      "createdAt": "2026-03-14 07:07:32",
+      "lastLoginAt": "2026-03-24 11:35:24",
+      "maxActions": "10"
+    },
+    {
+      "email": "yossi2700@gmail.com",
+      "name": "יוסי",
+      "signup_method": "Google",
+      "emailVerified": "0",
+      "createdAt": "2026-03-13 13:33:17",
+      "lastLoginAt": "2026-03-24 13:43:50",
+      "maxActions": "10"
+    }
+  ],
+  "messages": [],
+  "stdout": "email\tname\tsignup_method\temailVerified\tcreatedAt\tlastLoginAt\tmaxActions\ndxfai@dxfai.ai\tyosef aizenbach\tGoogle\t1\t2026-03-23 22:22:32\t2026-03-23 22:22:32\t10\nyossi2700xl90@gmail.com\tיוסף אייזנבך\tGoogle\t1\t2026-03-23 06:49:56\t2026-03-24 12:11:29\t10\nyossi2700xl3@gmail.com\tטסט1\tGoogle\t1\t2026-03-14 07:07:32\t2026-03-24 11:35:24\t10\nyossi2700@gmail.com\tיוסי\tGoogle\t0\t2026-03-13 13:33:17\t2026-03-24 13:43:50\t10\n",
+  "stderr": "",
+  "execution_time_ms": 1636
+}
