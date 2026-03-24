@@ -144,7 +144,7 @@ function SvgOverlay({ rect, step }: { rect: SpotRect | null; step: number }) {
     return (
       <div
         className="fixed inset-0 z-[9998]"
-        style={{ background: "rgba(10,10,30,0.82)", backdropFilter: "blur(2px)" }}
+        style={{ background: "rgba(10,10,30,0.45)", backdropFilter: "blur(1px)" }}
       />
     );
   }
@@ -191,7 +191,7 @@ function SvgOverlay({ rect, step }: { rect: SpotRect | null; step: number }) {
       {/* Dark overlay with cutout */}
       <path
         d={clipPath}
-        fill="rgba(10,10,30,0.80)"
+        fill="rgba(10,10,30,0.45)"
         fillRule="evenodd"
         style={{ backdropFilter: "blur(2px)" }}
       />
@@ -379,9 +379,11 @@ export function OnboardingTour({ forceShow }: OnboardingTourProps) {
         <div
           className="rounded-2xl shadow-2xl overflow-hidden"
           style={{
-            background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%)",
+            background: "linear-gradient(135deg, rgba(30,27,75,0.72) 0%, rgba(49,46,129,0.72) 50%, rgba(76,29,149,0.72) 100%)",
             border: "1px solid rgba(139,92,246,0.5)",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 0 30px rgba(139,92,246,0.2)",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.3), 0 0 30px rgba(139,92,246,0.15)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
           }}
         >
           {/* Header */}
