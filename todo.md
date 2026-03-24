@@ -2287,3 +2287,5 @@
 - [ ] תיקון staleTime ל-0 כדי שהמייל/וואצאפ יוצגו מיידית אחרי עדכון בניהול
 - [ ] בדיקת מייל ב-DB ותיקון אם לא עודכן
 - [x] תיקון: contact.info procedure לא פרס נכון את result[0] מ-db.execute (mysql2 tuple)
+- [x] הסרת כפילות: הסרת וואצאפ/מייל מ-CtaSection ומ-footer, נשאר רק ContactBar הלבן
+- [x] שיפור מסגרת מהבהבת בטיור — צבע כתום/אדום, עבה 4px, glow effect
