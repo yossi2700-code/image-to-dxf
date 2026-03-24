@@ -105,6 +105,9 @@ export function AiRefinePanel({ imageUrl, originalPrompt, onRefined }: AiRefineP
         } else if (data.error === "INVALID_REFINE_INSTRUCTION") {
           const msg = isRtl ? (data.message || t("refineError")) : (data.messageEn || data.message || t("refineError"));
           toast.error(msg, { duration: 6000 });
+        } else if (data.error === "CONTENT_POLICY") {
+          const msg = isRtl ? (data.message || "הבקשה נדחתה — נסה תיאור אחר") : (data.messageEn || data.message || "Request rejected — try a different description");
+          toast.error(msg, { duration: 6000 });
         } else {
           toast.error(data.message || data.error || t("refineError"));
         }

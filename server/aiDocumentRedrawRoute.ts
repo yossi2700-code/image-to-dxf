@@ -444,12 +444,19 @@ router.get("/api/ai-document-redraw/job/:jobId", (req, res) => {
     return res.json({ status: "done", result: job.result });
   } else if (job.status === "error") {
     const isNoIllustrations = job.error === "NO_ILLUSTRATIONS_FOUND";
+    const rawError = job.error ?? "";
+    const isContentPolicy = rawError.toLowerCase().includes("safety") || rawError.toLowerCase().includes("content_policy") ||
+      rawError.toLowerCase().includes("content policy") || rawError.toLowerCase().includes("rejected") ||
+      rawError.toLowerCase().includes("moderation") || rawError.toLowerCase().includes("inappropriate") ||
+      rawError.toLowerCase().includes("violat");
     return res.json({
       status: "error",
       error: job.error,
       message: isNoIllustrations
         ? "לא נמצאו איורים או עיטורים בתמונה. נסה תמונה עם פרחים, סמלים, עיטורים או ציורים."
-        : `שגיאה: ${job.error}`,
+        : isContentPolicy
+          ? "הבקשה נדחתה על ידי מסנן התוכן של AI. נסה תמונה אחרת — הימנע מתוכן פוגעני, דמויות מוגנות בזכויות יוצרים, או תוכן לא הולם."
+          : `שגיאה: ${rawError}`,
     });
   } else if (job.status === "cancelled") {
     return res.json({ status: "cancelled" });

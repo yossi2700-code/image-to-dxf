@@ -698,7 +698,17 @@ async function runTraceJob(
     // Don't overwrite a timeout error already set by internalTimeoutId
     const currentJob = getJob(jobId);
     if (currentJob && currentJob.status !== "error") {
-      updateJob(jobId, { status: "error", error: message });
+      // Detect content policy / safety filter rejections and set a friendly errorCode
+      const msgLower = message.toLowerCase();
+      const isContentPolicy = msgLower.includes("safety") || msgLower.includes("content_policy") ||
+        msgLower.includes("content policy") || msgLower.includes("rejected") ||
+        msgLower.includes("moderation") || msgLower.includes("inappropriate") ||
+        msgLower.includes("violat");
+      updateJob(jobId, {
+        status: "error",
+        error: message,
+        errorCode: isContentPolicy ? "CONTENT_POLICY" : undefined,
+      });
     }
     // No token refund needed — tokens are only deducted after success
     // Record failed action in user history
@@ -892,7 +902,18 @@ router.get("/api/ai-trace/job/:jobId", (req, res) => {
   if (job.status === "done") {
     return res.json({ status: "done", result: job.result });
   } else if (job.status === "error") {
-    return res.json({ status: "error", error: job.error, errorCode: job.errorCode, message: `שגיאה: ${job.error}` });
+    const rawError = job.error ?? "";
+    let friendlyMessage: string;
+    if (job.errorCode === "CONTENT_POLICY") {
+      friendlyMessage = "הבקשה נדחתה על ידי מסנן התוכן של AI. נסה תמונה אחרת — הימנע מתוכן פוגעני, דמויות מוגנות בזכויות יוצרים, או תוכן לא הולם.";
+    } else if (rawError.toLowerCase().includes("timed out") || rawError.toLowerCase().includes("timeout")) {
+      friendlyMessage = "העיבוד לקח יותר מדי זמן. נסה שוב עם תמונה פשוטה יותר.";
+    } else if (rawError.toLowerCase().includes("quota") || rawError.toLowerCase().includes("billing")) {
+      friendlyMessage = "שירות ה-AI אינו זמין כרגע. נסה שוב מאוחר יותר.";
+    } else {
+      friendlyMessage = `שגיאה: ${rawError}`;
+    }
+    return res.json({ status: "error", error: job.error, errorCode: job.errorCode, message: friendlyMessage });
   } else if (job.status === "cancelled") {
     return res.json({ status: "cancelled" });
   } else {

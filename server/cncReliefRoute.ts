@@ -427,7 +427,15 @@ router.get("/api/cnc-relief/job/:jobId", (req, res) => {
   if (job.status === "done") {
     return res.json({ status: "done", result: job.result });
   } else if (job.status === "error") {
-    return res.json({ status: "error", error: job.error, message: job.error });
+    const rawError = job.error ?? "";
+    const isContentPolicy = rawError.toLowerCase().includes("safety") || rawError.toLowerCase().includes("content_policy") ||
+      rawError.toLowerCase().includes("content policy") || rawError.toLowerCase().includes("rejected") ||
+      rawError.toLowerCase().includes("moderation") || rawError.toLowerCase().includes("inappropriate") ||
+      rawError.toLowerCase().includes("violat");
+    const friendlyMessage = isContentPolicy
+      ? "הבקשה נדחתה על ידי מסנן התוכן של AI. נסה תיאור אחר — הימנע מתוכן פוגעני, דמויות מוגנות בזכויות יוצרים, או תוכן לא הולם."
+      : rawError;
+    return res.json({ status: "error", error: job.error, message: friendlyMessage });
   } else if (job.status === "cancelled") {
     return res.json({ status: "cancelled" });
   } else {

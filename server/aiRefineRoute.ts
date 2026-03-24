@@ -261,6 +261,18 @@ router.post("/api/ai-refine", async (req, res) => {
   } catch (err: unknown) {
     console.error("[AI Refine] Error:", err);
     const message = err instanceof Error ? err.message : "שגיאה לא ידועה";
+    const msgLower = message.toLowerCase();
+    const isContentPolicy = msgLower.includes("safety") || msgLower.includes("content_policy") ||
+      msgLower.includes("content policy") || msgLower.includes("rejected") ||
+      msgLower.includes("moderation") || msgLower.includes("inappropriate") ||
+      msgLower.includes("violat");
+    if (isContentPolicy) {
+      return res.status(422).json({
+        error: "CONTENT_POLICY",
+        message: "הבקשה נדחתה על ידי מסנן התוכן של AI. נסה תיאור אחר — הימנע מתוכן פוגעני, דמויות מוגנות בזכויות יוצרים, או תוכן לא הולם.",
+        messageEn: "Request rejected by AI content filter. Try a different description — avoid offensive content, copyrighted characters, or inappropriate content.",
+      });
+    }
     return res.status(500).json({ error: "שגיאה בתיקון AI", details: message });
   }
 });

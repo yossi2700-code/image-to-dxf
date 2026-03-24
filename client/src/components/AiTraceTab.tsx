@@ -544,13 +544,16 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
           const isTokenError = data.error === "INSUFFICIENT_TOKENS" || data.error === "QUOTA_EXCEEDED";
           const isUnclear = data.errorCode === "UNCLEAR_IMAGE";
           const isScene = data.errorCode === "SCENE_DETECTED";
+          const isContentPolicy = data.errorCode === "CONTENT_POLICY";
           const msg = isTokenError
             ? (data.message || t("processingError"))
             : isUnclear
               ? (data.error || (isRtl ? "התמונה לא ברורה" : "Image unclear"))
               : isScene
                 ? (data.error || (isRtl ? "זיהינו תמונת נוף" : "Scene detected"))
-                : t("jobErrorRetry");
+                : isContentPolicy
+                  ? (data.message || (isRtl ? "הבקשה נדחתה — נסה תמונה אחרת" : "Request rejected — try a different image"))
+                  : (data.message || t("jobErrorRetry"));
           setErrorMsg(msg);
           setIsUnclearImage(isUnclear);
           setIsSceneDetected(isScene);

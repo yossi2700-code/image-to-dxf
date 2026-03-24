@@ -2207,3 +2207,14 @@
 - [x] Preconnect ל-CDN (d2xsxph8kpxj0f.cloudfront.net) ב-index.html
 - [x] Fonts non-blocking: Google Fonts נטען עם media=print → onload='all' (לא חוסם render)
 - [x] הסרת Google GSI script מה-head וטעינה דינמית בלבד כש-AuthDialog נפתח — חיסכון 600ms render-blocking
+
+## תיקון שגיאות content policy — מרץ 2026
+
+- [x] תיקון טיפול בשגיאת content policy של AI — הצגת הודעה ברורה למשתמש במקום שהדף יתקע
+  - aiTraceRoute: זיהוי CONTENT_POLICY errorCode + הודעה ידידותית בפולינג
+  - aiRefineRoute: זיהוי content policy + החזרת 422 עם הודעה ברורה
+  - aiDocumentRedrawRoute: הוספת זיהוי content policy בפולינג
+  - cncReliefRoute: הוספת זיהוי content policy בפולינג
+  - generateRoute: כבר היה מטופל נכון
+  - AiTraceTab: הוספת isContentPolicy + שימוש ב-data.message
+  - AiRefinePanel: הוספת טיפול ב-CONTENT_POLICY error
