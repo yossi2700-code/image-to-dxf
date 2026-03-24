@@ -33,6 +33,7 @@ const MaintenancePage = lazy(() => import("./pages/Maintenance"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const Promo = lazy(() => import("./pages/Promo"));
+const OnboardingTour = lazy(() => import("./components/OnboardingTour"));
 
 /** Generates or retrieves a persistent session ID from localStorage */
 function getOrCreateSessionId(): string {
@@ -130,6 +131,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router />
+            <Suspense fallback={null}><OnboardingTour /></Suspense>
           </TooltipProvider>
         </ThemeProvider>
       </LanguageProvider>

@@ -2229,3 +2229,10 @@
 - [x] הוספת translations לכפתור CAS WIN בכל 7 שפות
 - [x] endpoint /api/dxf-legacy בשרת (כבר נוצר)
 - [x] עיצוב מחדש DxfDownloadDialog: תצוגה מקדימה + שם קובץ + גודל + בחירת פורמט בכרטיסיות (DXF / CAS WIN / PDF)
+
+## Onboarding Spotlight Tour — מרץ 2026
+
+- [x] הוספת translations לטיור (עברית + אנגלית)
+- [x] בניית OnboardingTour component עם Spotlight ואנימציות
+- [x] שילוב הטיור ב-App.tsx + הוספת id לכפתורי הfeatures
+- [x] כרגע מופיע לכולם (לבדיקות) — בעתיד רק למשתמשים חדשים עד שישלימו feature אחד

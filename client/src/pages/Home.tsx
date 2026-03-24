@@ -2626,6 +2626,7 @@ export default function Home() {
 
           {/* AI Create — custom card with keyboard icon + text prompt + car */}
           <button
+            id="tour-ai-create"
             onClick={() => { setActiveTab('ai'); localStorage.setItem('active_tab', 'ai'); document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
             className="flex flex-col items-center gap-0 rounded-xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
             style={{ border: 'none', padding: 0, boxShadow: '0 2px 10px rgba(0,0,0,0.08)', cursor: 'pointer', background: 'white' }}
@@ -2663,6 +2664,7 @@ export default function Home() {
 
           {/* AI Outline */}
           <button
+            id="tour-ai-outline"
             onClick={() => { setActiveTab('trace'); localStorage.setItem('active_tab', 'trace'); document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
             className="flex flex-col items-center gap-0 rounded-xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
             style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', cursor: 'pointer' }}
@@ -2679,6 +2681,7 @@ export default function Home() {
 
           {/* Portrait */}
           <button
+            id="tour-portrait"
             onClick={() => { setActiveTab('face'); localStorage.setItem('active_tab', 'face'); document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
             className="flex flex-col items-center gap-0 rounded-xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
             style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', cursor: 'pointer' }}
