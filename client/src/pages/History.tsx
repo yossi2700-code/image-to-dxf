@@ -459,7 +459,12 @@ export default function History() {
   const { t, isRtl } = useLanguage();
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
-  const { data: items, isLoading } = trpc.history.list.useQuery();
+  const [period, setPeriod] = useState<"day" | "week" | "month" | "all">("week");
+  const [page, setPage] = useState(1);
+  const { data: historyData, isLoading } = trpc.history.list.useQuery({ period, page, pageSize: 20 });
+  const items = historyData?.items ?? [];
+  const totalItems = historyData?.total ?? 0;
+  const hasMore = historyData?.hasMore ?? false;
   const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<HistoryGroup | null>(null);
   const [downloadTarget, setDownloadTarget] = useState<HistoryItem | null>(null);
@@ -467,13 +472,19 @@ export default function History() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
 
+  // Reset page when period changes
+  const handlePeriodChange = (p: "day" | "week" | "month" | "all") => {
+    setPeriod(p);
+    setPage(1);
+  };
+
   // Group items by groupId
   const groups = useMemo<HistoryGroup[]>(() => {
     if (!items) return [];
     const groupMap = new Map<string, HistoryItem[]>();
     const ungrouped: HistoryItem[] = [];
 
-    for (const item of items as HistoryItem[]) {
+    for (const item of (items as HistoryItem[])) {
       if (item.groupId) {
         const existing = groupMap.get(item.groupId) ?? [];
         existing.push(item);
@@ -530,7 +541,7 @@ export default function History() {
 
   // Delete group (all items)
   const deleteMutation = trpc.history.delete.useMutation({
-    onSuccess: () => void utils.history.list.invalidate(),
+    onSuccess: () => { void utils.history.list.invalidate(); setPage(1); },
   });
 
   const handleDeleteConfirm = async () => {
@@ -602,6 +613,31 @@ export default function History() {
       </header>
 
       <main className="container py-6 space-y-4">
+        {/* Period filter */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {(["day", "week", "month", "all"] as const).map((p) => (
+            <button
+              key={p}
+              onClick={() => handlePeriodChange(p)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+                period === p
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-muted-foreground border-border hover:border-primary/50"
+              }`}
+            >
+              {p === "day" ? (isRtl ? "יום אחרון" : "Last day") :
+               p === "week" ? (isRtl ? "שבוע אחרון" : "Last week") :
+               p === "month" ? (isRtl ? "חודש אחרון" : "Last month") :
+               (isRtl ? "הכל" : "All")}
+            </button>
+          ))}
+          {totalItems > 0 && (
+            <span className="text-xs text-muted-foreground ms-auto">
+              {totalItems} {isRtl ? "עיצובים" : "designs"}
+            </span>
+          )}
+        </div>
+
         {/* Search */}
         {!isLoading && groups.length > 0 && (
           <div className="relative max-w-sm">
@@ -701,6 +737,28 @@ export default function History() {
                       isRtl={isRtl}
                       emptyLabel={isRtl ? "אין עיצובים בקטגוריה זו" : "No designs in this category"}
                     />
+                    {/* Pagination */}
+                    {(page > 1 || hasMore) && (
+                      <div className="flex items-center justify-center gap-3 mt-6">
+                        <button
+                          onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          disabled={page === 1}
+                          className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40 hover:bg-muted transition-colors"
+                        >
+                          {isRtl ? "הקודם" : "Previous"}
+                        </button>
+                        <span className="text-sm text-muted-foreground">
+                          {isRtl ? `עמוד ${page}` : `Page ${page}`}
+                        </span>
+                        <button
+                          onClick={() => setPage((p) => p + 1)}
+                          disabled={!hasMore}
+                          className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40 hover:bg-muted transition-colors"
+                        >
+                          {isRtl ? "הבא" : "Next"}
+                        </button>
+                      </div>
+                    )}
                   </>
                 )}
               </TabsContent>

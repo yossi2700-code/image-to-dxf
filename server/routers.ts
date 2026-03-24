@@ -1566,14 +1566,41 @@ export const appRouter = router({
 
   /** History — returns the logged-in app user's own actions */
   history: router({
-    list: publicProcedure.query(async ({ ctx }) => {
+    list: publicProcedure
+      .input(z.object({
+        period: z.enum(["day", "week", "month", "all"]).default("week"),
+        page: z.number().int().min(1).default(1),
+        pageSize: z.number().int().min(1).max(50).default(20),
+      }).optional())
+      .query(async ({ ctx, input }) => {
       const appUser = getAppUserFromCookie(
         (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
       );
-      if (!appUser) return [];
+      if (!appUser) return { items: [], total: 0, page: 1, pageSize: 20, hasMore: false };
       const db = await getDb();
-      if (!db) return [];
-      return db
+      if (!db) return { items: [], total: 0, page: 1, pageSize: 20, hasMore: false };
+      const period = input?.period ?? "week";
+      const page = input?.page ?? 1;
+      const pageSize = input?.pageSize ?? 20;
+      const offset = (page - 1) * pageSize;
+      const now = Date.now();
+      const periodMs: Record<string, number> = {
+        day: 24 * 60 * 60 * 1000,
+        week: 7 * 24 * 60 * 60 * 1000,
+        month: 30 * 24 * 60 * 60 * 1000,
+      };
+      const whereConditions = period === "all"
+        ? eq(userActions.appUserId, appUser.userId)
+        : and(
+            eq(userActions.appUserId, appUser.userId),
+            gte(userActions.createdAt, new Date(now - periodMs[period]))
+          );
+      const [{ count: totalCount }] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(userActions)
+        .where(whereConditions);
+      const total = Number(totalCount);
+      const items = await db
         .select({
           id: userActions.id,
           actionType: userActions.actionType,
@@ -1590,9 +1617,11 @@ export const appRouter = router({
           createdAt: userActions.createdAt,
         })
         .from(userActions)
-        .where(eq(userActions.appUserId, appUser.userId))
+        .where(whereConditions)
         .orderBy(desc(userActions.createdAt))
-        .limit(200);
+        .limit(pageSize)
+        .offset(offset);
+      return { items, total, page, pageSize, hasMore: offset + items.length < total };
     }),
 
     /** Create a share link for a specific action */
