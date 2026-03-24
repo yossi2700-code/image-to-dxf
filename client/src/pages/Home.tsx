@@ -2659,6 +2659,14 @@ export default function Home() {
           // Show welcome banner only for brand-new registrations
           if (isNewRegistration) {
             setShowWelcomeBanner(true);
+            // Google Ads conversion tracking - sign_up
+            if (typeof window !== 'undefined' && (window as any).gtag) {
+              (window as any).gtag('event', 'conversion', {
+                'send_to': 'AW-18000656977/FGBsCL_t8I4cENH0sIdD',
+                'value': 1.0,
+                'currency': 'ILS'
+              });
+            }
           }
           // Claim any pending campaign bonus after login/register
           const pendingCampaign = localStorage.getItem("pending_campaign");

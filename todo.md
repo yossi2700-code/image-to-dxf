@@ -2298,3 +2298,6 @@
 - [x] עדכון דומיין ראשי ל-dxfai.ai בכל הקבצים (index.html meta tags, og:url, canonical, אימיילים, emailService.ts)
 - [x] תיקון באג double refund בפיצ'ר Portrait — refund רץ פעמיים כשפנים לא מזוהות
 - [x] שיפור הודעת שגיאה כשפנים לא מזוהות — popup מרכזי + תיקון כתיב + טיפים
+- [x] הוספת Google Tag AW-18000656977 ל-index.html
+- [x] הוספת conversion event להרשמה (sign_up) בקוד הלקוח
+- [x] הוספת conversion event לרכישת קרדיטים (purchase) בקוד הלקוח
