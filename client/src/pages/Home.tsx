@@ -727,7 +727,7 @@ function CtaSection() {
 }
 
 function ContactBar() {
-  const { data } = trpc.contact.info.useQuery(undefined, { staleTime: 10 * 60 * 1000 });
+  const { data } = trpc.contact.info.useQuery(undefined, { staleTime: 0 });
   const { isRtl } = useLanguage();
   const [showMsgModal, setShowMsgModal] = useState(false);
   const [msgName, setMsgName] = useState('');
@@ -778,14 +778,6 @@ function ContactBar() {
                 {isRtl ? 'טלפון' : 'Call'}
               </a>
             )}
-            <button
-              onClick={() => { setShowMsgModal(true); setMsgSent(false); }}
-              className="inline-flex items-center gap-2 font-bold px-4 py-2 rounded-xl transition-all hover:opacity-90 hover:scale-105 text-sm"
-              style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #e5e7eb' }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-              {isRtl ? 'שלח הודעה' : 'Message'}
-            </button>
           </div>
         </div>
       </div>
