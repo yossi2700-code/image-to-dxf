@@ -109,6 +109,25 @@ function buildLandscapePrompt(userPrompt: string, variationIndex: number): strin
 }
 
 /**
+ * Detect if the user prompt contains quoted text or explicit text-to-render instructions.
+ * e.g. 'logo with text "Hello"', 'כתוב: שלום', 'with the words ABC'
+ * Returns the exact text strings that should appear in the image.
+ */
+function detectExactTextInPrompt(userPrompt: string): string[] {
+  const results: string[] = [];
+  // Match quoted strings: "...", '...', «...», or Hebrew-style quotes
+  let m: RegExpExecArray | null;
+  const quoteRe = /["'«»“”‘’]([^"'«»“”‘’]{1,80})["'«»“”‘’]/g;
+  while ((m = quoteRe.exec(userPrompt)) !== null) results.push(m[1].trim());
+  // Match explicit text instructions: "כתוב:", "הכיתוב:", "with text:", "text:", "the words:"
+  const labelMatch = userPrompt.match(/(?:כתוב|הכיתוב|הטקסט|with text|text:|the words?|label)[:\s]+([\u0590-\u05FF\w][^,\.\n]{1,80})/i);
+  if (labelMatch) results.push(labelMatch[1].trim());
+  // Deduplicate
+  const seen = new Set<string>();
+  return results.filter(t => { if (seen.has(t) || !t) return false; seen.add(t); return true; });
+}
+
+/**
  * Detect if the user prompt contains a scene/context keyword alongside an object.
  * e.g. "bluey landscape", "cat in forest", "dog on beach"
  */
@@ -121,13 +140,21 @@ function detectObjectAndScene(userPrompt: string): { hasScene: boolean; sceneKey
 function buildLineArtPrompt(userPrompt: string, variationIndex: number): string {
   const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
   const { hasScene } = detectObjectAndScene(userPrompt);
+  const exactTexts = detectExactTextInPrompt(userPrompt);
+  const hasExactText = exactTexts.length > 0;
+
+  // Build text instruction: if user specified exact text, enforce it precisely
+  const textRule = hasExactText
+    ? `CRITICAL TEXT RULE — The illustration MUST include the following text written EXACTLY, letter by letter, with NO spelling errors, NO missing letters, NO added letters: ${exactTexts.map(t => `"${t}"`).join(', ')}. ` +
+      `Render this text clearly and legibly in the image. The text must match EXACTLY what is specified above.`
+    : `ABSOLUTE RULE — NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS ANYWHERE IN THE IMAGE. ` +
+      `The user's description is WHAT TO DRAW, not what to write. Do NOT render any part of the description as text.`;
 
   // If user prompt contains both an object AND a scene (e.g. "bluey landscape"),
   // use the landscape-style prompt to render the object within the scene
   if (hasScene) {
     return (
-      "ABSOLUTE RULE \u2014 NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS ANYWHERE IN THE IMAGE. " +
-      "The user's description is WHAT TO DRAW, not what to write. Do NOT render any part of the description as text. " +
+      `${textRule} ` +
       `Professional black and white line art illustration: ${userPrompt}. ` +
       "IMPORTANT: If the prompt mentions a specific character, creature, or object (e.g. Bluey, a cat, a dog), " +
       "that character/object MUST be the MAIN FOCUS of the illustration, prominently placed in the scene. " +
@@ -136,15 +163,12 @@ function buildLineArtPrompt(userPrompt: string, variationIndex: number): string 
       "High contrast: only pure black (#000000) lines on white. " +
       `${variation.style} ` +
       "CRITICAL FRAMING: The entire scene with the character must fit completely inside the frame. " +
-      "Leave at least 10% white margin on every edge. Nothing cropped. " +
-      "FINAL REMINDER: Zero text, zero letters, zero numbers anywhere. Pure illustration only."
+      "Leave at least 10% white margin on every edge. Nothing cropped."
     );
   }
 
   return (
-    // Lead with the absolute no-text rule so the model cannot ignore it
-    "ABSOLUTE RULE \u2014 NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS ANYWHERE IN THE IMAGE. " +
-    "The user's description is WHAT TO DRAW, not what to write. Do NOT render any part of the description as text. " +
+    `${textRule} ` +
     `Professional black and white line art illustration of ${userPrompt}. ` +
     "Pure white background (#FFFFFF). " +
     "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
@@ -154,8 +178,7 @@ function buildLineArtPrompt(userPrompt: string, variationIndex: number): string 
     "There MUST be at least 17% white empty space on EVERY side (top, bottom, left, right). " +
     "The object must be FULLY VISIBLE \u2014 nothing cut off, nothing touching or near the border. " +
     "Show depth and structure with clear internal lines. " +
-    `${variation.style} ` +
-    "FINAL REMINDER: Zero text, zero letters, zero numbers anywhere. Pure illustration only."
+    `${variation.style}`
   );
 }
 

@@ -64,15 +64,21 @@ interface PortraitCardProps {
   image: GeneratedImage;
   index: number;
   isRtl: boolean;
+  numFaces?: number;
   onDownload: (image: GeneratedImage) => void;
   onZoom: (src: string, alt: string) => void;
 }
-function PortraitCard({ image, index, isRtl, onDownload, onZoom }: PortraitCardProps) {
+function PortraitCard({ image, index, isRtl, numFaces, onDownload, onZoom }: PortraitCardProps) {
   const [showVector, setShowVector] = useState(false);
 
+  const isMultiFace = (numFaces ?? 1) >= 2;
+  // For multi-face: use server-provided styleLabel (e.g. "פשוט (אדם 1)")
+  // For single face: use style-based labels
   const LABELS_HE = ["פשוט", "מפורט", "אמנותי"];
   const LABELS_EN = ["Simple", "Detailed", "Artistic"];
-  const label = isRtl ? (LABELS_HE[index] ?? LABELS_HE[0]) : (LABELS_EN[index] ?? LABELS_EN[0]);
+  const label = isMultiFace
+    ? (isRtl ? (image.styleLabel ?? `אדם ${index + 1}`) : (image.styleLabelEn ?? `Person ${index + 1}`))
+    : (isRtl ? (LABELS_HE[index] ?? LABELS_HE[0]) : (LABELS_EN[index] ?? LABELS_EN[0]));
   const isRecommended = index === 0;
 
   return (
@@ -474,7 +480,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
         reader.readAsDataURL(imageFile);
       });
     }
-    setShowSuccessOverlay(false); setStatus("loading"); setResult(null); setErrorMsg(""); setCurrentStep(""); setProgressPct(5);
+    setShowSuccessOverlay(false); setStatus("loading"); setResult(null); localStorage.removeItem("face_detect_result"); setErrorMsg(""); setCurrentStep(""); setProgressPct(5);
     try {
       const formData = new FormData();
       if (imageFile) {
@@ -902,6 +908,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
                 image={img}
                 index={idx}
                 isRtl={isRtl}
+                numFaces={result.numFaces}
                 onDownload={setDownloadTarget}
                 onZoom={(src, alt) => setZoomImg({ src, alt })}
               />
@@ -922,6 +929,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
                   onClick={() => {
                     setPortraitStyle(opt.value);
                     setResult(null);
+                    localStorage.removeItem('face_detect_result');
                     setStatus('idle');
                     setTimeout(() => {
                       const btn = document.querySelector('[data-face-submit]') as HTMLButtonElement;
@@ -985,6 +993,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
                   // Store custom request and re-submit
                   sessionStorage.setItem('portrait_custom_request', customText);
                   setResult(null);
+                  localStorage.removeItem('face_detect_result');
                   setStatus('idle');
                   setTimeout(() => {
                     const btn = document.querySelector('[data-face-submit]') as HTMLButtonElement;
@@ -1011,6 +1020,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
                 const nextStyle = styleValues[(styleValues.indexOf(currentStyle) + 1) % styleValues.length];
                 setPortraitStyle(nextStyle);
                 setResult(null);
+                localStorage.removeItem('face_detect_result');
                 setStatus("idle");
                 // Small delay to let state update, then auto-submit
                 setTimeout(() => {
