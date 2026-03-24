@@ -231,16 +231,16 @@ export function OnboardingTour({ forceShow }: OnboardingTourProps) {
         .${PULSE_CLASS} {
           position: relative;
           z-index: 10;
-          animation: tour-pulse-scale 1.4s ease-in-out infinite;
-          outline: 4px solid #f59e0b !important;
-          outline-offset: 5px;
+          animation: tour-pulse-scale 1.2s ease-in-out infinite;
+          outline: 5px solid #00ff88 !important;
+          outline-offset: 6px;
           border-radius: 12px;
-          box-shadow: 0 0 0 0 rgba(245,158,11,0.8), 0 0 20px rgba(245,158,11,0.4);
+          box-shadow: 0 0 0 0 rgba(0,255,136,0.9), 0 0 28px rgba(0,255,136,0.7);
         }
         @keyframes tour-pulse-scale {
-          0%   { outline-color: #f59e0b; box-shadow: 0 0 0 0 rgba(245,158,11,0.8), 0 0 20px rgba(245,158,11,0.4); }
-          50%  { outline-color: #ef4444; box-shadow: 0 0 0 10px rgba(245,158,11,0), 0 0 30px rgba(239,68,68,0.5); }
-          100% { outline-color: #f59e0b; box-shadow: 0 0 0 0 rgba(245,158,11,0), 0 0 20px rgba(245,158,11,0.4); }
+          0%   { outline-color: #00ff88; box-shadow: 0 0 0 0 rgba(0,255,136,0.9), 0 0 28px rgba(0,255,136,0.7); }
+          50%  { outline-color: #00e5ff; box-shadow: 0 0 0 16px rgba(0,255,136,0), 0 0 48px rgba(0,229,255,0.8); }
+          100% { outline-color: #00ff88; box-shadow: 0 0 0 0 rgba(0,255,136,0), 0 0 28px rgba(0,255,136,0.7); }
         }
       `}</style>
 
