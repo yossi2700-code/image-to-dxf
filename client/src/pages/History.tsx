@@ -311,16 +311,10 @@ function GroupCard({
               {isRtl ? "נסה שוב" : "Try Again"}
             </button>
           )}
-          {activeItem?.dxfUrl && (
+          {(activeItem?.dxfUrl || activeItem?.svgPreview) && (
             <button onClick={() => onDownload(activeItem)} className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md bg-green-600 hover:bg-green-700 text-white text-xs font-semibold transition-colors">
               <Download className="w-3.5 h-3.5" />
-              DXF
-            </button>
-          )}
-          {activeItem?.svgPreview && (
-            <button onClick={() => onPdf(activeItem)} className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors">
-              <Download className="w-3.5 h-3.5" />
-              PDF
+              {isRtl ? "הורד קובץ" : "Download"}
             </button>
           )}
           <button onClick={() => onDelete(group)} className="w-8 h-8 flex items-center justify-center rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
@@ -392,10 +386,10 @@ function DetailDialog({
                   {isRtl ? "ערוך מחדש" : "Re-edit"}
                 </Button>
               )}
-              {item.dxfUrl && (
+              {(item.dxfUrl || item.svgPreview) && (
                 <Button size="sm" className="gap-1.5 bg-green-600 hover:bg-green-700 font-semibold" onClick={() => { onClose(); onDownload(item); }}>
                   <Download className="w-4 h-4" />
-                  {isRtl ? "הורד DXF / PDF" : "Download DXF / PDF"}
+                  {isRtl ? "הורד קובץ" : "Download File"}
                 </Button>
               )}
             </div>
@@ -459,7 +453,7 @@ export default function History() {
   const { t, isRtl } = useLanguage();
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
-  const [period, setPeriod] = useState<"day" | "week" | "month" | "all">("week");
+  const [period, setPeriod] = useState<"day" | "week" | "month" | "all">("day");
   const [page, setPage] = useState(1);
   const { data: historyData, isLoading } = trpc.history.list.useQuery({ period, page, pageSize: 20 });
   const items = historyData?.items ?? [];
@@ -784,7 +778,7 @@ export default function History() {
       />
 
       <DxfDownloadDialog
-        open={downloadOpen && !!downloadTarget?.dxfUrl}
+        open={downloadOpen && !!(downloadTarget?.dxfUrl || downloadTarget?.svgPreview)}
         onClose={() => { setDownloadOpen(false); setTimeout(() => setDownloadTarget(null), 300); }}
         svgContent={downloadTarget?.svgPreview ?? ""}
         dxfUrl={downloadTarget?.dxfUrl ?? ""}

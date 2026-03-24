@@ -1,234 +1,86 @@
 /**
- * OnboardingTour — Spotlight-based guided tour for new users.
+ * OnboardingTour — Side panel guided tour for new users.
  *
  * Steps:
- *  1. Welcome overlay (full screen)
+ *  1. Welcome (no target)
  *  2. AI Create card
  *  3. AI Outline card
  *  4. Portrait card
- *  5. Download button (shown after first result)
+ *  5. Download button
  *
- * Storage: localStorage key "onboarding_tour_done" = "1" when dismissed.
- * Currently shows to ALL users (for testing). Later: only new users.
+ * Storage: localStorage key "onboarding_tour_done_v2" = "1" when dismissed.
+ * Shows to all users who haven't completed it yet (per browser).
+ * forceShow=true resets and re-shows the tour.
  */
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { X, ChevronRight, ChevronLeft, Sparkles } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { X, ChevronRight, ChevronLeft, Sparkles, ArrowDown } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { TranslationKey } from "@/lib/translations";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface TourStep {
-  targetId?: string;       // DOM element id to spotlight (optional — if missing, full-screen)
+  targetId?: string;
   titleKey: string;
   descKey: string;
-  placement?: "top" | "bottom" | "left" | "right" | "center";
 }
 
 const TOUR_STEPS: TourStep[] = [
   {
     titleKey: "tour1Title",
     descKey: "tour1Desc",
-    placement: "center",
   },
   {
     targetId: "tour-ai-create",
     titleKey: "tour2Title",
     descKey: "tour2Desc",
-    placement: "bottom",
   },
   {
     targetId: "tour-ai-outline",
     titleKey: "tour3Title",
     descKey: "tour3Desc",
-    placement: "bottom",
   },
   {
     targetId: "tour-portrait",
     titleKey: "tour4Title",
     descKey: "tour4Desc",
-    placement: "bottom",
   },
   {
     targetId: "tour-download",
     titleKey: "tour5Title",
     descKey: "tour5Desc",
-    placement: "top",
   },
 ];
 
-const STORAGE_KEY = "onboarding_tour_done";
+const STORAGE_KEY = "onboarding_tour_done_v2";
 
-// ─── Spotlight rect ───────────────────────────────────────────────────────────
+// ─── Pulse ring injected via CSS ──────────────────────────────────────────────
 
-interface SpotRect {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
-}
+const PULSE_CLASS = "tour-pulse-highlight";
 
-function getElementRect(id: string): SpotRect | null {
+function addPulse(id: string) {
+  removePulse();
   const el = document.getElementById(id);
-  if (!el) return null;
+  if (!el) return;
+  el.classList.add(PULSE_CLASS);
+  // Scroll into view
   const rect = el.getBoundingClientRect();
-  return {
-    top: rect.top + window.scrollY,
-    left: rect.left + window.scrollX,
-    width: rect.width,
-    height: rect.height,
-  };
+  const inView = rect.top >= 80 && rect.bottom <= window.innerHeight - 80;
+  if (!inView) {
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
 }
 
-// ─── Tooltip position ─────────────────────────────────────────────────────────
-
-interface TooltipPos {
-  top?: number | string;
-  left?: number | string;
-  right?: number | string;
-  bottom?: number | string;
-  transform?: string;
-}
-
-function calcTooltipPos(
-  rect: SpotRect | null,
-  placement: TourStep["placement"],
-  tooltipW = 300,
-  tooltipH = 160
-): TooltipPos {
-  if (!rect || placement === "center") {
-    return {
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%, -50%)",
-    };
-  }
-
-  const PAD = 16;
-  const vw = window.innerWidth;
-  const scrollY = window.scrollY;
-
-  if (placement === "bottom") {
-    let left = rect.left + rect.width / 2 - tooltipW / 2;
-    left = Math.max(PAD, Math.min(left, vw - tooltipW - PAD));
-    return {
-      top: rect.top + rect.height + PAD,
-      left,
-    };
-  }
-  if (placement === "top") {
-    let left = rect.left + rect.width / 2 - tooltipW / 2;
-    left = Math.max(PAD, Math.min(left, vw - tooltipW - PAD));
-    return {
-      top: rect.top - tooltipH - PAD,
-      left,
-    };
-  }
-  // fallback center
-  return {
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-  };
-}
-
-// ─── SVG Overlay ──────────────────────────────────────────────────────────────
-
-function SvgOverlay({ rect, step }: { rect: SpotRect | null; step: number }) {
-  const PAD = 12;
-  const R = 14; // corner radius
-
-  if (!rect || step === 0) {
-    // Full dark overlay for welcome step
-    return (
-      <div
-        className="fixed inset-0 z-[9998]"
-        style={{ background: "rgba(10,10,30,0.45)", backdropFilter: "blur(1px)" }}
-      />
-    );
-  }
-
-  const x = rect.left - PAD;
-  const y = rect.top - PAD;
-  const w = rect.width + PAD * 2;
-  const h = rect.height + PAD * 2;
-
-  // Full page dimensions
-  const pw = document.documentElement.scrollWidth;
-  const ph = document.documentElement.scrollHeight;
-
-  const clipPath = `
-    M 0 0
-    L ${pw} 0
-    L ${pw} ${ph}
-    L 0 ${ph}
-    Z
-    M ${x + R} ${y}
-    L ${x + w - R} ${y}
-    Q ${x + w} ${y} ${x + w} ${y + R}
-    L ${x + w} ${y + h - R}
-    Q ${x + w} ${y + h} ${x + w - R} ${y + h}
-    L ${x + R} ${y + h}
-    Q ${x} ${y + h} ${x} ${y + h - R}
-    L ${x} ${y + R}
-    Q ${x} ${y} ${x + R} ${y}
-    Z
-  `;
-
-  return (
-    <svg
-      className="fixed inset-0 z-[9998] pointer-events-none"
-      style={{ width: "100vw", height: "100vh", overflow: "visible" }}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <filter id="tour-glow">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feComposite in="SourceGraphic" in2="blur" operator="over" />
-        </filter>
-      </defs>
-      {/* Dark overlay with cutout */}
-      <path
-        d={clipPath}
-        fill="rgba(10,10,30,0.45)"
-        fillRule="evenodd"
-        style={{ backdropFilter: "blur(2px)" }}
-      />
-      {/* Glow border around spotlight */}
-      <rect
-        x={x}
-        y={y}
-        width={w}
-        height={h}
-        rx={R}
-        fill="none"
-        stroke="rgba(139,92,246,0.9)"
-        strokeWidth="2.5"
-        filter="url(#tour-glow)"
-      />
-      {/* Animated pulse ring */}
-      <rect
-        x={x - 4}
-        y={y - 4}
-        width={w + 8}
-        height={h + 8}
-        rx={R + 4}
-        fill="none"
-        stroke="rgba(139,92,246,0.4)"
-        strokeWidth="2"
-      >
-        <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite" />
-        <animate attributeName="stroke-width" values="2;6;2" dur="2s" repeatCount="indefinite" />
-      </rect>
-    </svg>
-  );
+function removePulse() {
+  document.querySelectorAll(`.${PULSE_CLASS}`).forEach((el) => {
+    el.classList.remove(PULSE_CLASS);
+  });
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export interface OnboardingTourProps {
-  /** Force show (for testing). Default: auto from localStorage. */
+  /** Force show the tour, even if it was already completed */
   forceShow?: boolean;
 }
 
@@ -236,10 +88,7 @@ export function OnboardingTour({ forceShow }: OnboardingTourProps) {
   const { t, isRtl } = useLanguage();
   const [active, setActive] = useState(false);
   const [step, setStep] = useState(0);
-  const [spotRect, setSpotRect] = useState<SpotRect | null>(null);
-  const [tooltipPos, setTooltipPos] = useState<TooltipPos>({ top: "50%", left: "50%", transform: "translate(-50%,-50%)" });
   const [visible, setVisible] = useState(false);
-  const rafRef = useRef<number>(0);
 
   const currentStep = TOUR_STEPS[step];
   const totalSteps = TOUR_STEPS.length;
@@ -247,72 +96,72 @@ export function OnboardingTour({ forceShow }: OnboardingTourProps) {
   // ── Init ──────────────────────────────────────────────────────────────────
 
   useEffect(() => {
+    if (forceShow) {
+      // Reset and force show
+      localStorage.removeItem(STORAGE_KEY);
+      setStep(0);
+      setActive(true);
+      setTimeout(() => setVisible(true), 50);
+      return;
+    }
     const done = localStorage.getItem(STORAGE_KEY);
-    if (forceShow || !done) {
-      // Small delay so page renders first
-      const t = setTimeout(() => {
+    if (!done) {
+      const timer = setTimeout(() => {
         setActive(true);
         setTimeout(() => setVisible(true), 50);
-      }, 800);
-      return () => clearTimeout(t);
+      }, 900);
+      return () => clearTimeout(timer);
     }
   }, [forceShow]);
 
-  // ── Update spotlight position ─────────────────────────────────────────────
-
-  const updatePos = useCallback(() => {
-    if (!active) return;
-    const step_data = TOUR_STEPS[step];
-    if (!step_data.targetId) {
-      setSpotRect(null);
-      setTooltipPos({ top: "50%", left: "50%", transform: "translate(-50%,-50%)" });
-      return;
-    }
-    const rect = getElementRect(step_data.targetId);
-    if (rect) {
-      // Scroll element into view if needed
-      const el = document.getElementById(step_data.targetId);
-      if (el) {
-        const elRect = el.getBoundingClientRect();
-        const inView = elRect.top >= 0 && elRect.bottom <= window.innerHeight;
-        if (!inView) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-          // Re-measure after scroll
-          setTimeout(() => {
-            const r2 = getElementRect(step_data.targetId!);
-            if (r2) {
-              setSpotRect(r2);
-              setTooltipPos(calcTooltipPos(r2, step_data.placement));
-            }
-          }, 400);
-          return;
-        }
+  // Listen for tour reset event from other components
+  useEffect(() => {
+    const handler = (e: StorageEvent) => {
+      if (e.key === 'tour_force_show' && e.newValue === '1') {
+        localStorage.removeItem('tour_force_show');
+        localStorage.removeItem(STORAGE_KEY);
+        setStep(0);
+        setActive(true);
+        setTimeout(() => setVisible(true), 50);
       }
-      setSpotRect(rect);
-      setTooltipPos(calcTooltipPos(rect, step_data.placement));
-    } else {
-      // Element not found — show centered
-      setSpotRect(null);
-      setTooltipPos({ top: "50%", left: "50%", transform: "translate(-50%,-50%)" });
-    }
-  }, [active, step]);
+    };
+    // Also listen for custom event (same-tab)
+    const customHandler = () => {
+      localStorage.removeItem(STORAGE_KEY);
+      setStep(0);
+      setActive(true);
+      setVisible(false);
+      setTimeout(() => setVisible(true), 50);
+    };
+    window.addEventListener('storage', handler);
+    window.addEventListener('tour:reset', customHandler);
+    return () => {
+      window.removeEventListener('storage', handler);
+      window.removeEventListener('tour:reset', customHandler);
+    };
+  }, []);
+
+  // ── Pulse on step change ──────────────────────────────────────────────────
 
   useEffect(() => {
-    updatePos();
-    const handleResize = () => updatePos();
-    window.addEventListener("resize", handleResize);
-    window.addEventListener("scroll", updatePos, { passive: true });
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      window.removeEventListener("scroll", updatePos);
-      cancelAnimationFrame(rafRef.current);
-    };
-  }, [updatePos]);
+    if (!active) return;
+    if (currentStep.targetId) {
+      // Small delay to allow scroll to complete
+      const t = setTimeout(() => addPulse(currentStep.targetId!), 300);
+      return () => { clearTimeout(t); removePulse(); };
+    } else {
+      removePulse();
+    }
+  }, [active, step, currentStep.targetId]);
+
+  // Cleanup on unmount
+  useEffect(() => () => removePulse(), []);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   const dismiss = useCallback(() => {
     setVisible(false);
+    removePulse();
     setTimeout(() => {
       setActive(false);
       localStorage.setItem(STORAGE_KEY, "1");
@@ -351,50 +200,69 @@ export function OnboardingTour({ forceShow }: OnboardingTourProps) {
     .replace("{step}", String(step + 1))
     .replace("{total}", String(totalSteps));
 
-  // Tooltip width
-  const TOOLTIP_W = 300;
+  // Step icons
+  const stepIcons = ["👋", "✨", "🖼️", "🎨", "⬇️"];
 
   return (
     <>
-      {/* Overlay */}
-      <div
-        className="transition-opacity duration-300"
-        style={{ opacity: visible ? 1 : 0 }}
-      >
-        <SvgOverlay rect={spotRect} step={step} />
-      </div>
+      {/* Inject pulse CSS */}
+      <style>{`
+        .${PULSE_CLASS} {
+          position: relative;
+          z-index: 10;
+          animation: tour-pulse-scale 1.8s ease-in-out infinite;
+          outline: 3px solid rgba(139,92,246,0.9) !important;
+          outline-offset: 4px;
+          border-radius: 12px;
+          box-shadow: 0 0 0 0 rgba(139,92,246,0.7);
+        }
+        @keyframes tour-pulse-scale {
+          0%   { box-shadow: 0 0 0 0 rgba(139,92,246,0.7); }
+          50%  { box-shadow: 0 0 0 12px rgba(139,92,246,0); }
+          100% { box-shadow: 0 0 0 0 rgba(139,92,246,0); }
+        }
+      `}</style>
 
-      {/* Tooltip card */}
+      {/* Side panel — fixed bottom-right (or bottom-left for RTL) */}
       <div
-        className="fixed z-[9999] transition-all duration-300"
+        className="fixed bottom-6 z-[9999] transition-all duration-400"
         style={{
-          ...tooltipPos,
-          width: TOOLTIP_W,
+          [isRtl ? "left" : "right"]: "16px",
+          width: "min(320px, calc(100vw - 32px))",
           opacity: visible ? 1 : 0,
-          transform: tooltipPos.transform ?? (visible ? "translateY(0)" : "translateY(8px)"),
+          transform: visible ? "translateY(0)" : "translateY(20px)",
           pointerEvents: "auto",
         }}
         dir={isRtl ? "rtl" : "ltr"}
       >
         <div
-          className="rounded-2xl shadow-2xl overflow-hidden"
+          className="rounded-2xl overflow-hidden"
           style={{
-            background: "linear-gradient(135deg, rgba(30,27,75,0.72) 0%, rgba(49,46,129,0.72) 50%, rgba(76,29,149,0.72) 100%)",
-            border: "1px solid rgba(139,92,246,0.5)",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.3), 0 0 30px rgba(139,92,246,0.15)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
+            background: "#ffffff",
+            border: "1px solid rgba(139,92,246,0.25)",
+            boxShadow: "0 8px 40px rgba(0,0,0,0.14), 0 0 0 1px rgba(139,92,246,0.08)",
           }}
         >
+          {/* Colored top bar */}
+          <div
+            className="h-1.5 w-full"
+            style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7, #ec4899)" }}
+          />
+
           {/* Header */}
-          <div className="flex items-center justify-between px-4 pt-4 pb-2">
+          <div className="flex items-center justify-between px-4 pt-3 pb-1">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-purple-300" />
-              <span className="text-xs text-purple-300 font-semibold">{stepLabel}</span>
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-sm"
+                style={{ background: "linear-gradient(135deg, #7c3aed22, #a855f722)" }}
+              >
+                {stepIcons[step]}
+              </div>
+              <span className="text-xs text-purple-600 font-semibold">{stepLabel}</span>
             </div>
             <button
               onClick={dismiss}
-              className="text-purple-300 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
               aria-label={t("tourSkip")}
             >
               <X className="w-4 h-4" />
@@ -402,31 +270,39 @@ export function OnboardingTour({ forceShow }: OnboardingTourProps) {
           </div>
 
           {/* Progress bar */}
-          <div className="mx-4 mb-3 h-1 bg-white/10 rounded-full overflow-hidden">
+          <div className="mx-4 mb-3 h-1 bg-gray-100 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${((step + 1) / totalSteps) * 100}%`,
-                background: "linear-gradient(90deg, #8b5cf6, #a855f7)",
+                background: "linear-gradient(90deg, #7c3aed, #a855f7)",
               }}
             />
           </div>
 
           {/* Content */}
           <div className="px-4 pb-4">
-            <h3 className="text-white font-bold text-base mb-1.5 leading-tight">
+            <h3 className="text-gray-900 font-bold text-sm mb-1 leading-tight">
               {t(currentStep.titleKey as TranslationKey)}
             </h3>
-            <p className="text-purple-200 text-sm leading-relaxed mb-4">
+            <p className="text-gray-500 text-xs leading-relaxed mb-4">
               {t(currentStep.descKey as TranslationKey)}
             </p>
+
+            {/* Arrow hint when element is targeted */}
+            {currentStep.targetId && (
+              <div className="flex items-center gap-1.5 text-purple-500 text-xs mb-3">
+                <ArrowDown className="w-3 h-3 animate-bounce" />
+                <span>{isRtl ? "מהבהב בדף" : "Highlighted on page"}</span>
+              </div>
+            )}
 
             {/* Navigation */}
             <div className="flex items-center justify-between gap-2">
               {/* Skip */}
               <button
                 onClick={dismiss}
-                className="text-xs text-purple-400 hover:text-purple-200 transition-colors underline underline-offset-2"
+                className="text-xs text-gray-400 hover:text-gray-600 transition-colors underline underline-offset-2"
               >
                 {t("tourSkip")}
               </button>
@@ -434,70 +310,52 @@ export function OnboardingTour({ forceShow }: OnboardingTourProps) {
               <div className="flex items-center gap-2">
                 {/* Prev */}
                 {!isFirst && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
+                  <button
                     onClick={goPrev}
-                    className="h-8 px-2 text-purple-300 hover:text-white hover:bg-white/10"
+                    className="h-8 w-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
                   >
                     {isRtl ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-                  </Button>
+                  </button>
                 )}
 
                 {/* Next / Done */}
-                <Button
-                  size="sm"
+                <button
                   onClick={goNext}
-                  className="h-8 px-4 font-bold text-white"
+                  className="h-8 px-4 rounded-lg font-bold text-white text-xs flex items-center gap-1 transition-all hover:opacity-90"
                   style={{
                     background: "linear-gradient(135deg, #7c3aed, #a855f7)",
-                    border: "none",
-                    boxShadow: "0 4px 12px rgba(124,58,237,0.4)",
+                    boxShadow: "0 4px 12px rgba(124,58,237,0.3)",
                   }}
                 >
-                  {isLast ? t("tourDone") : t("tourNext")}
-                  {!isLast && (
-                    isRtl
-                      ? <ChevronLeft className="w-4 h-4 mr-1" />
-                      : <ChevronRight className="w-4 h-4 ml-1" />
+                  {isLast ? (
+                    <>
+                      <Sparkles className="w-3 h-3" />
+                      {t("tourDone")}
+                    </>
+                  ) : (
+                    <>
+                      {t("tourNext")}
+                      {isRtl ? <ChevronLeft className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                    </>
                   )}
-                </Button>
+                </button>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Arrow pointer (only when spotlighting an element) */}
-        {spotRect && currentStep.placement === "bottom" && (
-          <div
-            className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45"
-            style={{
-              background: "linear-gradient(135deg, #1e1b4b, #312e81)",
-              border: "1px solid rgba(139,92,246,0.5)",
-              borderRight: "none",
-              borderBottom: "none",
-            }}
-          />
-        )}
-        {spotRect && currentStep.placement === "top" && (
-          <div
-            className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45"
-            style={{
-              background: "linear-gradient(135deg, #312e81, #4c1d95)",
-              border: "1px solid rgba(139,92,246,0.5)",
-              borderLeft: "none",
-              borderTop: "none",
-            }}
-          />
-        )}
       </div>
     </>
   );
 }
 
-/** Hook to reset the tour (for testing) */
+/** Reset the tour so it shows again on next page load */
 export function resetOnboardingTour() {
   localStorage.removeItem(STORAGE_KEY);
+}
+
+/** Check if the tour has been completed */
+export function isTourDone(): boolean {
+  return localStorage.getItem(STORAGE_KEY) === "1";
 }
 
 // Default export for lazy loading

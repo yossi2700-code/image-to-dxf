@@ -225,22 +225,12 @@ export function ExportButtons({
     return (
       <div className="flex gap-1.5">
         <button
-          onClick={handleDxf}
-          disabled={isDxfLoading}
+          onClick={onMoreOptions}
           className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-90"
-          style={{ background: isDxfLoading ? 'linear-gradient(135deg, #6ee7b7, #34d399)' : 'linear-gradient(135deg, #059669, #10b981)', color: "white", border: "none", boxShadow: '0 2px 8px rgba(5,150,105,0.3)', opacity: isDxfLoading ? 0.7 : 1 }}
+          style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: "white", border: "none", boxShadow: '0 2px 8px rgba(5,150,105,0.3)' }}
         >
-          {isDxfLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-          DXF
-        </button>
-        <button
-          onClick={handlePdf}
-          disabled={isPdfLoading}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-90"
-          style={{ background: isPdfLoading ? '#93c5fd' : 'linear-gradient(135deg, #2563eb, #3b82f6)', color: "white", border: "none", boxShadow: '0 2px 8px rgba(37,99,235,0.3)', opacity: isPdfLoading ? 0.7 : 1 }}
-        >
-          {isPdfLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
-          PDF
+          <Download className="w-3.5 h-3.5" />
+          {isRtl ? "הורד קובץ" : "Download"}
         </button>
         <button
           onClick={onToggleVector}
@@ -252,44 +242,22 @@ export function ExportButtons({
           <Eye className="w-3.5 h-3.5" />
           {showVector ? (isRtl ? "תמונה" : "Photo") : (isRtl ? "וקטור" : "Vector")}
         </button>
-        <button
-          onClick={onMoreOptions}
-          className="flex items-center justify-center gap-1 py-2.5 px-2.5 rounded-xl text-xs font-medium transition-all hover:bg-gray-100"
-          style={{ background: "#f8fafc", color: "#6366f1", border: "1px solid #e0e7ff" }}
-          title={isRtl ? "אפשרויות נוספות" : "More options"}
-        >
-          <Settings2 className="w-3.5 h-3.5" />
-        </button>
       </div>
     );
   }
-  // Default: 3-col grid + more options row (used by AI Trace, AI Redraw, AI Generate)
+  // Default layout: Download button + Vector toggle (used by AI Trace, AI Redraw, AI Generate)
   return (
     <div className="flex flex-col gap-2">
-      <div className="grid grid-cols-3 gap-2">
-        {/* DXF */}
+      <div className="grid grid-cols-2 gap-2">
+        {/* Download file — opens DxfDownloadDialog */}
         <button
-          onClick={handleDxf}
-          disabled={isDxfLoading}
+          id="tour-download"
+          onClick={onMoreOptions}
           className="flex flex-col items-center justify-center gap-1.5 py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]"
-          style={{ background: isDxfLoading ? 'linear-gradient(135deg, #6ee7b7, #34d399)' : 'linear-gradient(135deg, #059669, #10b981)', color: "white", border: "none", boxShadow: "0 4px 14px rgba(5,150,105,0.35)", opacity: isDxfLoading ? 0.7 : 1 }}
+          style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: "white", border: "none", boxShadow: "0 4px 14px rgba(5,150,105,0.35)" }}
         >
-          {isDxfLoading
-            ? <Loader2 className="w-5 h-5 animate-spin" />
-            : <Download className="w-5 h-5" />}
-          <span className="text-xs font-black tracking-wide">DXF</span>
-        </button>
-        {/* PDF */}
-        <button
-          onClick={handlePdf}
-          disabled={isPdfLoading}
-          className="flex flex-col items-center justify-center gap-1.5 py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]"
-          style={{ background: isPdfLoading ? '#93c5fd' : 'linear-gradient(135deg, #2563eb, #3b82f6)', color: "white", border: "none", boxShadow: "0 4px 14px rgba(37,99,235,0.35)", opacity: isPdfLoading ? 0.7 : 1 }}
-        >
-          {isPdfLoading
-            ? <Loader2 className="w-5 h-5 animate-spin" />
-            : <FileText className="w-5 h-5" />}
-          <span className="text-xs font-black tracking-wide">PDF</span>
+          <Download className="w-5 h-5" />
+          <span className="text-xs font-black tracking-wide">{isRtl ? "הורד קובץ" : "Download"}</span>
         </button>
         {/* Vector toggle */}
         <button
@@ -303,15 +271,6 @@ export function ExportButtons({
           <span className="text-xs font-black tracking-wide">{showVector ? (isRtl ? "תמונה" : "Photo") : (isRtl ? "וקטור" : "Vector")}</span>
         </button>
       </div>
-      {/* More options */}
-      <button
-        className="w-full py-2.5 font-semibold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all hover:bg-indigo-50"
-        style={{ background: "#f8fafc", border: "1.5px solid #e0e7ff", color: "#6366f1" }}
-        onClick={onMoreOptions}
-      >
-        <Settings2 className="w-3.5 h-3.5" />
-        {isRtl ? "אפשרויות נוספות (שם קובץ, גודל)" : "More options (filename, size)"}
-      </button>
     </div>
   );
 }

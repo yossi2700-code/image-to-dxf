@@ -18,6 +18,7 @@ import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { FaceDetectTab } from "@/components/FaceDetectTab";
 import { CncReliefTab } from "@/components/CncReliefTab";
 import { AiProcessingAnimation } from "@/components/AiProcessingAnimation";
+import { resetOnboardingTour } from "@/components/OnboardingTour";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InsufficientTokensBanner } from "@/components/InsufficientTokensBanner";
 import { ReportIssueButton } from "@/components/ReportIssueButton";
@@ -2498,6 +2499,21 @@ export default function Home() {
                             <CreditCard style={{ width: 14, height: 14 }} />
                           </span>
                           <span>{isRtl ? '✨ קנה קרדיטים' : '✨ Buy Tokens'}</span>
+                        </button>
+                        {/* Tour button */}
+                        <button
+                          onClick={() => { setUserMenuOpen(false); resetOnboardingTour(); window.dispatchEvent(new CustomEvent('tour:reset')); }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.08)', cursor: 'pointer', width: '100%', color: '#c4b5fd', fontSize: 13, fontWeight: 600, textAlign: isRtl ? 'right' : 'left', transition: 'all 0.15s' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(139,92,246,0.2)'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(139,92,246,0.08)'; }}
+                        >
+                          <span style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg, #7c3aed, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(124,58,237,0.4)' }}>
+                            <span style={{ fontSize: 15 }}>👋</span>
+                          </span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 700, fontSize: 13 }}>{isRtl ? 'הצג מדריך' : 'Show Tour'}</div>
+                            <div style={{ fontSize: 10, color: 'rgba(196,181,253,0.65)', fontWeight: 400 }}>{isRtl ? 'סיור מודרך בתכונות' : 'Guided feature tour'}</div>
+                          </div>
                         </button>
                       </div>
                       {/* Logout */}
