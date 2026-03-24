@@ -1582,6 +1582,14 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
             dir={isRtl ? "rtl" : "ltr"}
             disabled={status === "loading"}
           />
+          {/* Exact text hint */}
+          <div className="mt-1.5 flex items-start gap-1.5" dir={isRtl ? "rtl" : "ltr"}>
+            <span className="text-[11px] leading-relaxed text-gray-400">
+              {isRtl
+                ? <>💡 לטקסט מדויק בתמונה, השתמש בגרשיים: <span className="font-mono bg-gray-100 px-1 rounded text-gray-500">לוגו עם הכיתוב "שם החברה"</span></>
+                : <>💡 For exact text in the image, use quotes: <span className="font-mono bg-gray-100 px-1 rounded text-gray-500">logo with text "Company Name"</span></>}
+            </span>
+          </div>
           {/* Landscape mode toggle */}
           <div className="mt-3 mb-1">
             <div
