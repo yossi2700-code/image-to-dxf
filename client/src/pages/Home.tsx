@@ -2459,6 +2459,7 @@ export default function Home() {
           <div className="flex items-center gap-2 ms-auto">
             {/* Pricing button — opens token pricing modal */}
             <button
+              id="tour-pricing"
               onClick={() => setPricingModalOpen(true)}
               className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-80 shrink-0"
               style={{ color: '#6366f1', background: '#eef2ff', border: '1px solid #c7d2fe', whiteSpace: 'nowrap' }}
@@ -2471,6 +2472,7 @@ export default function Home() {
                 {/* Token balance badge with history popup */}
                 <div className="relative" ref={tokenHistoryRef}>
                   <button
+                    id="tour-tokens"
                     onClick={() => setTokenHistoryOpen(v => !v)}
                     className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full shrink-0 hover:opacity-80 transition-opacity"
                     style={{ background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4338ca', fontSize: '12px', whiteSpace: 'nowrap' }}

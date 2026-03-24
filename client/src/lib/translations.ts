@@ -503,6 +503,10 @@ export const translations = {
     tour6Desc: "לחץ על שמך בפינה — תוכל לגשת לפרופיל, לסטטיסטיקות ולהגדרות החשבון.",
     tour7Title: "ההיסטוריה שלך 📋",
     tour7Desc: "כל העיצובים שיצרת שמורים בהיסטוריה. תוכל להוריד אותם שוב בכל עת.",
+    tour8Title: "מצב אסימונים ✨",
+    tour8Desc: "כאן רואה כמה אסימונים נשארו לך. כל פעולה (AI Create, Outline, Portrait) עולה אסימון. לחץ להיסטוריית שימושים.",
+    tour9Title: "קנה קרדיטים 💎",
+    tour9Desc: "נגמרו לך האסימונים? לחץ כאן לרכישת חבילה במחיר מיוחד. חבילות מונפקות לשימוש בלתי מוגבל בזמן.",
   },
   en: {
     appTitle: "Image to DXF Converter",
@@ -895,6 +899,10 @@ export const translations = {
     tour6Desc: "Click your name in the corner — access your profile, statistics, and account settings.",
     tour7Title: "Your History 📋",
     tour7Desc: "All your designs are saved in History. You can re-download them at any time.",
+    tour8Title: "Token Balance ✨",
+    tour8Desc: "See how many tokens you have left. Each action (AI Create, Outline, Portrait) costs one token. Click to view usage history.",
+    tour9Title: "Buy Credits 💎",
+    tour9Desc: "Ran out of tokens? Click here to purchase a package at a special price. Packages never expire.",
   },
   zh: {
     appTitle: "图片转DXF转换器",

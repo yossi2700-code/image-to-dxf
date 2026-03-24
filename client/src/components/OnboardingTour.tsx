@@ -64,6 +64,16 @@ const TOUR_STEPS: TourStep[] = [
     descKey: "tour7Desc",
     openUserMenu: true,
   },
+  {
+    targetId: "tour-tokens",
+    titleKey: "tour8Title",
+    descKey: "tour8Desc",
+  },
+  {
+    targetId: "tour-pricing",
+    titleKey: "tour9Title",
+    descKey: "tour9Desc",
+  },
 ];
 
 const STORAGE_KEY = "onboarding_tour_done_v2";
@@ -222,7 +232,7 @@ export function OnboardingTour({ forceShow }: OnboardingTourProps) {
     .replace("{total}", String(totalSteps));
 
   // Step icons
-  const stepIcons = ["👋", "✨", "🖼️", "🎨", "⬇️", "👤", "📋"];
+  const stepIcons = ["👋", "✨", "🖼️", "🎨", "⬇️", "👤", "📋", "✨", "💎"];
 
   return (
     <>
@@ -279,7 +289,7 @@ export function OnboardingTour({ forceShow }: OnboardingTourProps) {
               >
                 {stepIcons[step]}
               </div>
-              <span className="text-xs text-purple-600 font-semibold">{stepLabel}</span>
+              <span className="text-xs font-semibold" style={{ color: '#059669' }}>{stepLabel}</span>
             </div>
             <button
               onClick={dismiss}
@@ -296,7 +306,7 @@ export function OnboardingTour({ forceShow }: OnboardingTourProps) {
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${((step + 1) / totalSteps) * 100}%`,
-                background: "linear-gradient(90deg, #7c3aed, #a855f7)",
+                background: "linear-gradient(90deg, #059669, #00cc6a)",
               }}
             />
           </div>
@@ -312,7 +322,7 @@ export function OnboardingTour({ forceShow }: OnboardingTourProps) {
 
             {/* Arrow hint when element is targeted */}
             {currentStep.targetId && (
-              <div className="flex items-center gap-1.5 text-purple-500 text-xs mb-3">
+              <div className="flex items-center gap-1.5 text-xs mb-3" style={{ color: '#059669' }}>
                 <ArrowDown className="w-3 h-3 animate-bounce" />
                 <span>{isRtl ? "מהבהב בדף" : "Highlighted on page"}</span>
               </div>
@@ -344,8 +354,9 @@ export function OnboardingTour({ forceShow }: OnboardingTourProps) {
                   onClick={goNext}
                   className="h-8 px-4 rounded-lg font-bold text-white text-xs flex items-center gap-1 transition-all hover:opacity-90"
                   style={{
-                    background: "linear-gradient(135deg, #7c3aed, #a855f7)",
-                    boxShadow: "0 4px 12px rgba(124,58,237,0.3)",
+                    background: "linear-gradient(135deg, #059669, #00cc6a)",
+                    boxShadow: "0 4px 14px rgba(0,204,106,0.45)",
+                    color: "#fff",
                   }}
                 >
                   {isLast ? (
