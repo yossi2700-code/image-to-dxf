@@ -1,23 +1,25 @@
 /**
- * DxfDownloadDialog — unified download dialog for ALL features:
- * - Custom filename input
- * - Scale 10%–100% (mm only)
- * - DXF download / share
- * - PDF export / share
- * - SVG mini preview
+ * DxfDownloadDialog — unified download dialog for ALL features.
  *
- * On iOS/Android: all download buttons trigger the native Share Sheet
- * (allows saving to Files, WhatsApp, AirDrop, Mail, etc.)
- * On desktop: standard file download behavior.
+ * Layout:
+ *  ┌─────────────────────────────────┐
+ *  │  SVG mini-preview               │
+ *  │  Filename input                 │
+ *  │  Scale slider (mm)              │
+ *  │  ┌──────────────────────────┐   │
+ *  │  │ [DXF] [DXF-CAS] [PDF]   │   │  ← format selector cards
+ *  │  └──────────────────────────┘   │
+ *  │  [ Download / Share button ]    │
+ *  └─────────────────────────────────┘
  *
- * Used by: Upload tab, AI Generate tab, AI Trace tab, History page
+ * Used by: Upload tab, AI Generate tab, AI Trace tab, History page, CNC Relief, etc.
  */
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Download, X, FileCode2, FileText, Loader2, Share2 } from "lucide-react";
+import { Download, X, FileCode2, FileText, Loader2, Share2, Settings2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { saveFileAs } from "@/lib/saveFileAs";
 
@@ -35,6 +37,8 @@ export interface DxfDownloadDialogProps {
   /** Original SVG height in px */
   svgHeight?: number;
 }
+
+type FileFormat = "dxf" | "dxf-legacy" | "pdf";
 
 // ─── Scale DXF content ────────────────────────────────────────────────────────
 
@@ -84,11 +88,7 @@ async function generatePdfBlob(
   const widthPx = Math.min(Math.round(pdfW * PX_PER_MM * 2), 3000);
   const heightPx = Math.min(Math.round(pdfH * PX_PER_MM * 2), 3000);
 
-  // Sanitize SVG before sending to server — fix corrupt header / XML parse errors.
-  // potrace/AI SVGs sometimes have unclosed tags, stray attributes, or invalid XML.
-  // NOTE: No lookbehind assertions — must be Safari-compatible.
   let sanitizedSvg = svgContent;
-  // 1. Fix unclosed void elements (Safari-safe, no lookbehind)
   sanitizedSvg = sanitizedSvg.replace(/<path([^>]*[^/])>/g, '<path$1/>');
   sanitizedSvg = sanitizedSvg.replace(/<path>/g, '<path/>');
   sanitizedSvg = sanitizedSvg.replace(/<circle([^>]*[^/])>/g, '<circle$1/>');
@@ -97,15 +97,11 @@ async function generatePdfBlob(
   sanitizedSvg = sanitizedSvg.replace(/<line([^>]*[^/])>/g, '<line$1/>');
   sanitizedSvg = sanitizedSvg.replace(/<polygon([^>]*[^/])>/g, '<polygon$1/>');
   sanitizedSvg = sanitizedSvg.replace(/<polyline([^>]*[^/])>/g, '<polyline$1/>');
-  // 2. Remove any <script> or <foreignObject> tags that break XML parsers
   sanitizedSvg = sanitizedSvg.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
   sanitizedSvg = sanitizedSvg.replace(/<foreignObject[^>]*>[\s\S]*?<\/foreignObject>/gi, '');
-  // 3. Strip null bytes and control characters that corrupt the XML header
   sanitizedSvg = sanitizedSvg.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-  // 4. Strip any BOM or non-SVG prefix before the <?xml or <svg tag
   const svgStart = sanitizedSvg.search(/<(?:\?xml|svg)/i);
   if (svgStart > 0) sanitizedSvg = sanitizedSvg.slice(svgStart);
-  // 5. Ensure SVG namespace
   if (!sanitizedSvg.includes('xmlns=')) {
     sanitizedSvg = sanitizedSvg.replace(/<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
   }
@@ -159,7 +155,7 @@ function SvgMiniPreview({ svg }: { svg: string }) {
   return (
     <div
       className="border-2 border-border rounded-xl bg-white overflow-hidden flex items-center justify-center p-3"
-      style={{ height: 160 }}
+      style={{ height: 150 }}
     >
       <div
         className="w-full h-full flex items-center justify-center"
@@ -173,6 +169,44 @@ function SvgMiniPreview({ svg }: { svg: string }) {
 
 function formatMm(mm: number) {
   return `${mm.toFixed(0)} מ"מ`;
+}
+
+// ─── Format Card ──────────────────────────────────────────────────────────────
+
+interface FormatCardProps {
+  selected: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  color: string; // tailwind bg class for selected state
+  borderColor: string;
+}
+
+function FormatCard({ selected, onClick, icon, title, description, color, borderColor }: FormatCardProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`
+        flex-1 flex flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-3 text-center transition-all cursor-pointer
+        ${selected
+          ? `${color} ${borderColor} shadow-sm`
+          : "border-border bg-muted/30 hover:bg-muted/60"
+        }
+      `}
+    >
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${selected ? "bg-white/60" : "bg-muted"}`}>
+        {icon}
+      </div>
+      <span className={`text-xs font-bold leading-tight ${selected ? "text-foreground" : "text-muted-foreground"}`}>
+        {title}
+      </span>
+      <span className={`text-[10px] leading-tight ${selected ? "text-foreground/70" : "text-muted-foreground/70"}`}>
+        {description}
+      </span>
+    </button>
+  );
 }
 
 // ─── Main Dialog ──────────────────────────────────────────────────────────────
@@ -191,13 +225,12 @@ export function DxfDownloadDialog({
 }: DxfDownloadDialogProps) {
   const [filename, setFilename] = useState(defaultFilename.replace(/\.dxf$/i, "").slice(0, 30).trimEnd());
   const [scalePercent, setScalePercent] = useState(100);
-  const [isDxfLoading, setIsDxfLoading] = useState(false);
-  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [selectedFormat, setSelectedFormat] = useState<FileFormat>("dxf");
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isMobile = isMobileDevice();
   const supportsShare = canShareFiles();
-  // On mobile with share support → use share sheet. On desktop → direct download.
   const useShareSheet = isMobile && supportsShare;
 
   useEffect(() => {
@@ -205,6 +238,7 @@ export function DxfDownloadDialog({
       setFilename(defaultFilename.replace(/\.dxf$/i, "").slice(0, 30).trimEnd());
       setScalePercent(100);
       setError(null);
+      setSelectedFormat("dxf");
     }
   }, [open, defaultFilename]);
 
@@ -215,56 +249,91 @@ export function DxfDownloadDialog({
   const outputHeightMm = svgHeight * scaleFactor;
   const cleanFilename = (filename.trim() || "design").slice(0, 30).trimEnd();
 
-  // ── DXF: Share Sheet on mobile, direct download on desktop ───────────────
-
-  const handleDxfAction = async () => {
-    setIsDxfLoading(true);
-    setError(null);
-    try {
-      const resp = await fetch(dxfUrl);
-      if (!resp.ok) throw new Error("Download error");
-      const originalDxf = await resp.text();
-      const scaledDxf = scaleDxfContent(originalDxf, scaleFactor);
-      const blob = new Blob([scaledDxf], { type: "application/octet-stream" });
-      await saveFileAs({ blob, filename: `${cleanFilename}.dxf`, mimeType: "application/octet-stream" });
-      onClose();
-    } catch (err: unknown) {
-      if (err instanceof Error && err.name === "AbortError") return; // user cancelled
-      console.error("DXF action error:", err);
-      // Fallback: direct link
-      const a = document.createElement("a");
-      a.href = dxfUrl;
-      a.download = `${cleanFilename}.dxf`;
-      a.click();
-      onClose();
-    } finally {
-      setIsDxfLoading(false);
-    }
-  };
-
-  // ── PDF: Share Sheet on mobile, direct download on desktop ───────────────
-
-  const handlePdfAction = async () => {
-    if (!svgContent) return;
-    setIsPdfLoading(true);
-    setError(null);
-    try {
-      const pdfBytes = await generatePdfBlob(svgContent, outputWidthMm, outputHeightMm);
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
-      await saveFileAs({ blob, filename: `${cleanFilename}.pdf`, mimeType: "application/pdf" });
-      onClose();
-    } catch (err: unknown) {
-      if (err instanceof Error && err.name === "AbortError") return; // user cancelled
-      console.error("PDF action error:", err);
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(`PDF export error: ${msg}`);
-    } finally {
-      setIsPdfLoading(false);
-    }
-  };
-
-  const isLoading = isDxfLoading || isPdfLoading;
   const { t, isRtl } = useLanguage();
+
+  // ── Download handler ─────────────────────────────────────────────────────
+
+  const handleDownload = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      if (selectedFormat === "dxf") {
+        // Standard DXF (LWPOLYLINE / R2000)
+        const resp = await fetch(dxfUrl);
+        if (!resp.ok) throw new Error("Download error");
+        const originalDxf = await resp.text();
+        const scaledDxf = scaleDxfContent(originalDxf, scaleFactor);
+        const blob = new Blob([scaledDxf], { type: "application/octet-stream" });
+        await saveFileAs({ blob, filename: `${cleanFilename}.dxf`, mimeType: "application/octet-stream" });
+        onClose();
+
+      } else if (selectedFormat === "dxf-legacy") {
+        // Legacy DXF (LINE entities / R12 — CAS WIN compatible)
+        const legacyUrl = `/api/dxf-legacy?url=${encodeURIComponent(dxfUrl)}&scale=${scaleFactor}`;
+        const resp = await fetch(legacyUrl);
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({})) as Record<string, unknown>;
+          throw new Error((err.error as string) || `Error ${resp.status}`);
+        }
+        const blob = await resp.blob();
+        await saveFileAs({ blob, filename: `${cleanFilename}_caswin.dxf`, mimeType: "application/octet-stream" });
+        onClose();
+
+      } else if (selectedFormat === "pdf") {
+        // PDF export
+        if (!svgContent) return;
+        const pdfBytes = await generatePdfBlob(svgContent, outputWidthMm, outputHeightMm);
+        const blob = new Blob([pdfBytes], { type: "application/pdf" });
+        await saveFileAs({ blob, filename: `${cleanFilename}.pdf`, mimeType: "application/pdf" });
+        onClose();
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      console.error("Download error:", err);
+      if (selectedFormat === "pdf") {
+        const msg = err instanceof Error ? err.message : String(err);
+        setError(`PDF export error: ${msg}`);
+      } else {
+        // DXF fallback
+        const a = document.createElement("a");
+        a.href = dxfUrl;
+        a.download = `${cleanFilename}.dxf`;
+        a.click();
+        onClose();
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ── Button label ─────────────────────────────────────────────────────────
+
+  const getButtonLabel = () => {
+    if (isLoading) {
+      if (selectedFormat === "pdf") return t("exportingPdf");
+      if (selectedFormat === "dxf-legacy") return t("preparingLegacyDxf");
+      return t("preparingDxf");
+    }
+    if (useShareSheet) {
+      if (selectedFormat === "pdf") return t("shareOrSavePdf");
+      return t("shareOrSaveDxf");
+    }
+    if (selectedFormat === "pdf") return t("downloadPdfBtn");
+    if (selectedFormat === "dxf-legacy") return t("downloadLegacyDxfBtn");
+    return t("downloadDxfBtn");
+  };
+
+  const getButtonStyle = (): React.CSSProperties => {
+    if (selectedFormat === "pdf") {
+      return { background: "linear-gradient(135deg, #2563eb, #3b82f6)", border: "none", boxShadow: "0 3px 10px rgba(37,99,235,0.3)" };
+    }
+    if (selectedFormat === "dxf-legacy") {
+      return { background: "linear-gradient(135deg, #7c3aed, #a855f7)", border: "none", boxShadow: "0 3px 10px rgba(124,58,237,0.3)" };
+    }
+    return { background: "linear-gradient(135deg, #059669, #10b981)", border: "none", boxShadow: "0 3px 10px rgba(5,150,105,0.3)" };
+  };
+
+  const hasPdf = !!svgContent;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && !isLoading && onClose()}>
@@ -299,7 +368,9 @@ export function DxfDownloadDialog({
                 className="text-right flex-1 text-sm"
                 dir="rtl"
               />
-              <span className="text-xs text-muted-foreground shrink-0 font-mono bg-muted px-1.5 py-1 rounded">.dxf / .pdf</span>
+              <span className="text-xs text-muted-foreground shrink-0 font-mono bg-muted px-1.5 py-1 rounded">
+                {selectedFormat === "pdf" ? ".pdf" : ".dxf"}
+              </span>
             </div>
           </div>
 
@@ -334,6 +405,48 @@ export function DxfDownloadDialog({
             </div>
           </div>
 
+          {/* Format selector */}
+          <div>
+            <label className="text-sm font-semibold block mb-2 flex items-center gap-1.5">
+              <Settings2 className="w-4 h-4" />
+              {isRtl ? "בחר פורמט קובץ" : "Choose file format"}
+            </label>
+            <div className="flex gap-2">
+              {/* DXF standard */}
+              <FormatCard
+                selected={selectedFormat === "dxf"}
+                onClick={() => setSelectedFormat("dxf")}
+                icon={<FileCode2 className={`w-4 h-4 ${selectedFormat === "dxf" ? "text-emerald-700" : "text-muted-foreground"}`} />}
+                title="DXF"
+                description={isRtl ? "CorelDRAW, AutoCAD, Inkscape" : "CorelDRAW, AutoCAD"}
+                color="bg-emerald-50"
+                borderColor="border-emerald-500"
+              />
+              {/* DXF legacy */}
+              <FormatCard
+                selected={selectedFormat === "dxf-legacy"}
+                onClick={() => setSelectedFormat("dxf-legacy")}
+                icon={<FileCode2 className={`w-4 h-4 ${selectedFormat === "dxf-legacy" ? "text-purple-700" : "text-muted-foreground"}`} />}
+                title="DXF R12"
+                description={isRtl ? "CAS WIN, AutoCAD ישן" : "CAS WIN, old AutoCAD"}
+                color="bg-purple-50"
+                borderColor="border-purple-500"
+              />
+              {/* PDF */}
+              {hasPdf && (
+                <FormatCard
+                  selected={selectedFormat === "pdf"}
+                  onClick={() => setSelectedFormat("pdf")}
+                  icon={<FileText className={`w-4 h-4 ${selectedFormat === "pdf" ? "text-blue-700" : "text-muted-foreground"}`} />}
+                  title="PDF"
+                  description={isRtl ? "הדפסה, שיתוף" : "Print, share"}
+                  color="bg-blue-50"
+                  borderColor="border-blue-500"
+                />
+              )}
+            </div>
+          </div>
+
           {/* Mobile share hint */}
           {useShareSheet && (
             <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700">
@@ -349,43 +462,22 @@ export function DxfDownloadDialog({
 
           {/* Action buttons */}
           <div className="flex flex-col gap-2 pt-1">
-            {/* DXF button */}
             <Button
               size="lg"
               className="w-full font-bold text-base h-12 text-white hover:opacity-90 transition-all"
-              style={{ background: 'linear-gradient(135deg, #059669, #10b981)', border: 'none', boxShadow: '0 3px 10px rgba(5,150,105,0.3)' } as React.CSSProperties}
-              onClick={handleDxfAction}
+              style={getButtonStyle()}
+              onClick={handleDownload}
               disabled={isLoading}
             >
-              {isDxfLoading ? (
+              {isLoading ? (
                 <Loader2 className="w-5 h-5 ml-2 animate-spin" />
               ) : useShareSheet ? (
                 <Share2 className="w-5 h-5 ml-2" />
               ) : (
                 <Download className="w-5 h-5 ml-2" />
               )}
-              {isDxfLoading ? t("preparingDxf") : useShareSheet ? t("shareOrSaveDxf") : t("downloadDxfBtn")}
+              {getButtonLabel()}
             </Button>
-
-            {/* PDF button */}
-            {svgContent && (
-              <Button
-                size="lg"
-                className="w-full font-bold text-base h-12 text-white hover:opacity-90 transition-all"
-                style={{ background: 'linear-gradient(135deg, #2563eb, #3b82f6)', border: 'none', boxShadow: '0 3px 10px rgba(37,99,235,0.3)' } as React.CSSProperties}
-                onClick={handlePdfAction}
-                disabled={isLoading}
-              >
-                {isPdfLoading ? (
-                  <Loader2 className="w-5 h-5 ml-2 animate-spin" />
-                ) : useShareSheet ? (
-                  <Share2 className="w-5 h-5 ml-2" />
-                ) : (
-                  <FileText className="w-5 h-5 ml-2" />
-                )}
-                {isPdfLoading ? t("exportingPdf") : useShareSheet ? t("shareOrSavePdf") : t("downloadPdfBtn")}
-              </Button>
-            )}
 
             {/* Cancel */}
             <Button

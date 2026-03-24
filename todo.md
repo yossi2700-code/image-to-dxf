@@ -2218,3 +2218,14 @@
   - generateRoute: כבר היה מטופל נכון
   - AiTraceTab: הוספת isContentPolicy + שימוש ב-data.message
   - AiRefinePanel: הוספת טיפול ב-CONTENT_POLICY error
+
+## תמיכה ב-CAS WIN — מרץ 2026
+
+- [ ] הוספת endpoint /api/dxf-convert?url=... שממיר DXF ל-LINE entities (תואם CAS WIN / AutoCAD ישן)
+- [ ] עדכון DxfDownloadDialog — הוספת בחירת פורמט: "DXF רגיל" / "DXF תואם CAS WIN"
+
+## עיצוב מחדש דיאלוג הורדה — מרץ 2026
+
+- [x] הוספת translations לכפתור CAS WIN בכל 7 שפות
+- [x] endpoint /api/dxf-legacy בשרת (כבר נוצר)
+- [x] עיצוב מחדש DxfDownloadDialog: תצוגה מקדימה + שם קובץ + גודל + בחירת פורמט בכרטיסיות (DXF / CAS WIN / PDF)

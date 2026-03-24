@@ -18,6 +18,7 @@ import svgToPngRoute from "../svgToPngRoute";
 import faceDetectRoute from "../faceDetectRoute";
 import paypalRoute from "../paypalRoute";
 import cncReliefRoute from "../cncReliefRoute";
+import dxfLegacyRoute from "../dxfLegacyRoute";
 import {
   helmetMiddleware,
   permissionsPolicyMiddleware,
@@ -137,6 +138,8 @@ async function startServer() {
   // CNC Relief route (image/prompt → heightmap + simulation)
   app.use(cncReliefRoute);
   app.use("/api/cnc-relief", uploadLimiter);
+  // DXF Legacy conversion route (LWPOLYLINE → LINE entities for CAS WIN / old CAD)
+  app.use(dxfLegacyRoute);
 
   // ── tRPC API ─────────────────────────────────────────────────────────────────
   app.use(
