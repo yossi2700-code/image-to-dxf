@@ -18,7 +18,7 @@ import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { FaceDetectTab } from "@/components/FaceDetectTab";
 import { CncReliefTab } from "@/components/CncReliefTab";
 import { AiProcessingAnimation } from "@/components/AiProcessingAnimation";
-import { resetOnboardingTour } from "@/components/OnboardingTour";
+import { OnboardingTour, resetOnboardingTour } from "@/components/OnboardingTour";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InsufficientTokensBanner } from "@/components/InsufficientTokensBanner";
 import { ReportIssueButton } from "@/components/ReportIssueButton";
@@ -718,10 +718,10 @@ function CtaSection() {
 
 function ContactButtons() {
   const { data } = trpc.contact.info.useQuery(undefined, { staleTime: 10 * 60 * 1000 });
-  if (!data?.supportEmail && !data?.whatsappNumber) return null;
+  if (!data?.supportEmail && !data?.whatsappNumber && !data?.contactPhone) return null;
   return (
     <div className="flex items-center gap-2">
-      {data.whatsappNumber && (
+      {data?.whatsappNumber && (
         <a
           href={`https://wa.me/${data.whatsappNumber.replace(/[^0-9]/g, "")}`}
           target="_blank"
@@ -733,7 +733,7 @@ function ContactButtons() {
           וואצאפ
         </a>
       )}
-      {data.supportEmail && (
+      {data?.supportEmail && (
         <a
           href={`mailto:${data.supportEmail}`}
           className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 transition-colors font-medium"
@@ -741,6 +741,16 @@ function ContactButtons() {
         >
           <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
           מייל
+        </a>
+      )}
+      {data?.contactPhone && (
+        <a
+          href={`tel:${data.contactPhone.replace(/\s/g, "")}`}
+          className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 transition-colors font-medium"
+          title="חייג טלפון"
+        >
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+          טלפון
         </a>
       )}
     </div>
@@ -2312,6 +2322,18 @@ export default function Home() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [userMenuOpen]);
 
+  // Tour: open/close user menu on demand
+  useEffect(() => {
+    const openHandler = () => setUserMenuOpen(true);
+    const closeHandler = () => setUserMenuOpen(false);
+    window.addEventListener('tour:open-user-menu', openHandler);
+    window.addEventListener('tour:close-user-menu', closeHandler);
+    return () => {
+      window.removeEventListener('tour:open-user-menu', openHandler);
+      window.removeEventListener('tour:close-user-menu', closeHandler);
+    };
+  }, []);
+
   const clearAllResultCaches = () => {
     localStorage.removeItem("app_user_logged_in");
     localStorage.removeItem("ai_generate_result");
@@ -2414,6 +2436,7 @@ export default function Home() {
                 {/* User avatar dropdown */}
                 <div className="relative" ref={userMenuRef}>
                   <button
+                    id="tour-user-menu"
                     onClick={() => setUserMenuOpen(v => !v)}
                     className="flex items-center gap-2 rounded-2xl px-3 py-1.5 font-semibold transition-all hover:opacity-90 active:scale-95"
                     style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', boxShadow: '0 2px 10px rgba(99,102,241,0.4)' }}
@@ -2461,6 +2484,7 @@ export default function Home() {
                       <div style={{ padding: '8px 8px 4px', display: 'flex', flexDirection: 'column', gap: 4 }}>
                         {/* Personal Area */}
                         <button
+                          id="tour-account"
                           onClick={() => { setUserMenuOpen(false); window.location.href = '/account'; }}
                           style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.1)', cursor: 'pointer', width: '100%', color: '#c4b5fd', fontSize: 13, fontWeight: 600, textAlign: isRtl ? 'right' : 'left', transition: 'all 0.15s' }}
                           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(139,92,246,0.22)'; (e.currentTarget as HTMLButtonElement).style.color = '#ddd6fe'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(139,92,246,0.5)'; }}
@@ -2476,6 +2500,7 @@ export default function Home() {
                         </button>
                         {/* History */}
                         <button
+                          id="tour-history"
                           onClick={() => { setUserMenuOpen(false); window.location.href = '/history'; }}
                           style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(99,102,241,0.25)', background: 'rgba(99,102,241,0.1)', cursor: 'pointer', width: '100%', color: '#a5b4fc', fontSize: 13, fontWeight: 600, textAlign: isRtl ? 'right' : 'left', transition: 'all 0.15s' }}
                           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(99,102,241,0.22)'; (e.currentTarget as HTMLButtonElement).style.color = '#c7d2fe'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(99,102,241,0.5)'; }}
@@ -3048,6 +3073,8 @@ export default function Home() {
 
       {/* Token Pricing Modal */}
       <TokenPricingModal open={pricingModalOpen} onClose={() => setPricingModalOpen(false)} />
+      {/* Onboarding Tour — only for logged-in users */}
+      {!!appUser && <OnboardingTour />}
     </div>
   );
 }

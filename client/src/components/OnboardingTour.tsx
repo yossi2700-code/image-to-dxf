@@ -23,6 +23,8 @@ interface TourStep {
   targetId?: string;
   titleKey: string;
   descKey: string;
+  /** If true, the user menu dropdown should be opened to reveal this element */
+  openUserMenu?: boolean;
 }
 
 const TOUR_STEPS: TourStep[] = [
@@ -49,6 +51,18 @@ const TOUR_STEPS: TourStep[] = [
     targetId: "tour-download",
     titleKey: "tour5Title",
     descKey: "tour5Desc",
+  },
+  {
+    targetId: "tour-user-menu",
+    titleKey: "tour6Title",
+    descKey: "tour6Desc",
+    openUserMenu: true,
+  },
+  {
+    targetId: "tour-history",
+    titleKey: "tour7Title",
+    descKey: "tour7Desc",
+    openUserMenu: true,
   },
 ];
 
@@ -146,13 +160,19 @@ export function OnboardingTour({ forceShow }: OnboardingTourProps) {
   useEffect(() => {
     if (!active) return;
     if (currentStep.targetId) {
-      // Small delay to allow scroll to complete
-      const t = setTimeout(() => addPulse(currentStep.targetId!), 300);
+      // If step requires user menu to be open, dispatch event to open it
+      if (currentStep.openUserMenu) {
+        window.dispatchEvent(new CustomEvent('tour:open-user-menu'));
+      }
+      // Small delay to allow scroll and menu open to complete
+      const t = setTimeout(() => addPulse(currentStep.targetId!), 500);
       return () => { clearTimeout(t); removePulse(); };
     } else {
+      // Close user menu when not needed
+      window.dispatchEvent(new CustomEvent('tour:close-user-menu'));
       removePulse();
     }
-  }, [active, step, currentStep.targetId]);
+  }, [active, step, currentStep.targetId, currentStep.openUserMenu]);
 
   // Cleanup on unmount
   useEffect(() => () => removePulse(), []);
@@ -162,6 +182,7 @@ export function OnboardingTour({ forceShow }: OnboardingTourProps) {
   const dismiss = useCallback(() => {
     setVisible(false);
     removePulse();
+    window.dispatchEvent(new CustomEvent('tour:close-user-menu'));
     setTimeout(() => {
       setActive(false);
       localStorage.setItem(STORAGE_KEY, "1");
@@ -201,7 +222,7 @@ export function OnboardingTour({ forceShow }: OnboardingTourProps) {
     .replace("{total}", String(totalSteps));
 
   // Step icons
-  const stepIcons = ["👋", "✨", "🖼️", "🎨", "⬇️"];
+  const stepIcons = ["👋", "✨", "🖼️", "🎨", "⬇️", "👤", "📋"];
 
   return (
     <>

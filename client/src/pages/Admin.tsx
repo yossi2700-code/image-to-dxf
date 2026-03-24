@@ -773,6 +773,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   );
   const [contactEmail, setContactEmail] = useState("");
   const [contactWhatsapp, setContactWhatsapp] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
   const updateContactMutation = trpc.admin.updateContactSettings.useMutation({
     onSuccess: () => { toast.success("פרטי קשר עודכנו!"); refetchContact(); },
     onError: (e) => toast.error("שגיאה: " + e.message),
@@ -781,6 +782,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     if (contactSettings) {
       setContactEmail(contactSettings.supportEmail ?? "");
       setContactWhatsapp(contactSettings.whatsappNumber ?? "");
+      setContactPhone(contactSettings.contactPhone ?? "");
     }
   }, [contactSettings]);
 
@@ -2980,10 +2982,20 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                     dir="ltr"
                   />
                 </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">טלפון לחיצה (אופציונלי, למשל +972501234567)</label>
+                  <Input
+                    type="tel"
+                    placeholder="+972501234567"
+                    value={contactPhone}
+                    onChange={e => setContactPhone(e.target.value)}
+                    dir="ltr"
+                  />
+                </div>
                 <Button
                   className="w-full"
                   disabled={updateContactMutation.isPending}
-                  onClick={() => updateContactMutation.mutate({ supportEmail: contactEmail, whatsappNumber: contactWhatsapp })}
+                  onClick={() => updateContactMutation.mutate({ supportEmail: contactEmail, whatsappNumber: contactWhatsapp, contactPhone })}
                 >
                   {updateContactMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4" /> שמור פרטי קשר</>}
                 </Button>

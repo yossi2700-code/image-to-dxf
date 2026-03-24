@@ -499,6 +499,10 @@ export const translations = {
     tour4Desc: "העלה תמונה עם פנים וה-AI יצייר 3 פורטרטים בסגנונות שונים.",
     tour5Title: "הורד את הקובץ 💾",
     tour5Desc: "לאחר העיבוד, לחץ הורד קובץ לבחירת פורמט: DXF, DXF לCAS WIN, או PDF.",
+    tour6Title: "האזור האישי שלך 👤",
+    tour6Desc: "לחץ על שמך בפינה — תוכל לגשת לפרופיל, לסטטיסטיקות ולהגדרות החשבון.",
+    tour7Title: "ההיסטוריה שלך 📋",
+    tour7Desc: "כל העיצובים שיצרת שמורים בהיסטוריה. תוכל להוריד אותם שוב בכל עת.",
   },
   en: {
     appTitle: "Image to DXF Converter",
@@ -887,6 +891,10 @@ export const translations = {
     tour4Desc: "Upload a photo with faces and AI draws 3 portrait variations.",
     tour5Title: "Download your file 💾",
     tour5Desc: "After processing, click Download to choose format: DXF, DXF for CAS WIN, or PDF.",
+    tour6Title: "Your Personal Area 👤",
+    tour6Desc: "Click your name in the corner — access your profile, statistics, and account settings.",
+    tour7Title: "Your History 📋",
+    tour7Desc: "All your designs are saved in History. You can re-download them at any time.",
   },
   zh: {
     appTitle: "图片转DXF转换器",

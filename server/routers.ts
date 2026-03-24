@@ -602,23 +602,24 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    /** Get contact settings (support email + WhatsApp) */
+    /** Get contact settings (support email + WhatsApp + phone) */
     getContactSettings: adminProcedure.query(async () => {
       const db = await getDb();
-      if (!db) return { supportEmail: "", whatsappNumber: "" };
-      const rows = await db.execute(sql`SELECT \`key\`, \`value\` FROM \`system_settings\` WHERE \`key\` IN ('support_email', 'whatsapp_number')`);
+      if (!db) return { supportEmail: "", whatsappNumber: "", contactPhone: "" };
+      const rows = await db.execute(sql`SELECT \`key\`, \`value\` FROM \`system_settings\` WHERE \`key\` IN ('support_email', 'whatsapp_number', 'contact_phone')`);
       const map = Object.fromEntries((rows as unknown as Array<{ key: string; value: string }>).map(r => [r.key, r.value]));
-      return { supportEmail: map["support_email"] ?? "", whatsappNumber: map["whatsapp_number"] ?? "" };
+      return { supportEmail: map["support_email"] ?? "", whatsappNumber: map["whatsapp_number"] ?? "", contactPhone: map["contact_phone"] ?? "" };
     }),
 
     /** Update contact settings */
     updateContactSettings: adminProcedure
-      .input(z.object({ supportEmail: z.string(), whatsappNumber: z.string() }))
+      .input(z.object({ supportEmail: z.string(), whatsappNumber: z.string(), contactPhone: z.string().optional() }))
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         await db.execute(sql`INSERT INTO \`system_settings\` (\`key\`, \`value\`) VALUES ('support_email', ${input.supportEmail}) ON DUPLICATE KEY UPDATE \`value\` = ${input.supportEmail}`);
         await db.execute(sql`INSERT INTO \`system_settings\` (\`key\`, \`value\`) VALUES ('whatsapp_number', ${input.whatsappNumber}) ON DUPLICATE KEY UPDATE \`value\` = ${input.whatsappNumber}`);
+        await db.execute(sql`INSERT INTO \`system_settings\` (\`key\`, \`value\`) VALUES ('contact_phone', ${input.contactPhone ?? ""}) ON DUPLICATE KEY UPDATE \`value\` = ${input.contactPhone ?? ""}`);
         return { success: true };
       }),
 
@@ -1178,10 +1179,10 @@ export const appRouter = router({
   contact: router({
     info: publicProcedure.query(async () => {
       const db = await getDb();
-      if (!db) return { supportEmail: "", whatsappNumber: "" };
-      const rows = await db.execute(sql`SELECT \`key\`, \`value\` FROM \`system_settings\` WHERE \`key\` IN ('support_email', 'whatsapp_number')`);
+      if (!db) return { supportEmail: "", whatsappNumber: "", contactPhone: "" };
+      const rows = await db.execute(sql`SELECT \`key\`, \`value\` FROM \`system_settings\` WHERE \`key\` IN ('support_email', 'whatsapp_number', 'contact_phone')`);
       const map = Object.fromEntries((rows as unknown as Array<{ key: string; value: string }>).map(r => [r.key, r.value]));
-      return { supportEmail: map["support_email"] ?? "", whatsappNumber: map["whatsapp_number"] ?? "" };
+      return { supportEmail: map["support_email"] ?? "", whatsappNumber: map["whatsapp_number"] ?? "", contactPhone: map["contact_phone"] ?? "" };
     }),
     sendMessage: publicProcedure
       .input(z.object({
