@@ -2301,3 +2301,5 @@
 - [x] הוספת Google Tag AW-18000656977 ל-index.html
 - [x] הוספת conversion event להרשמה (sign_up) בקוד הלקוח
 - [x] הוספת conversion event לרכישת קרדיטים (purchase) בקוד הלקוח
+- [x] הזזת כפתורי WhatsApp ומייל לתוך המלבן הכחול בתחתית הדף
+- [x] הזזת כפתורי WhatsApp ומייל לתוך המלבן הכחול בתחתית הדף
