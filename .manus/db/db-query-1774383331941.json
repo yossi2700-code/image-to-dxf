@@ -1,0 +1,37 @@
+{
+  "query": "\nSELECT \n  t.id, t.amount, t.reason, t.description, t.balanceAfter, t.createdAt,\n  u.tokenBalance as currentBalance\nFROM token_transactions t\nJOIN app_users u ON u.id = t.appUserId\nWHERE u.email LIKE '%8822705%'\nORDER BY t.createdAt ASC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT \n  t.id, t.amount, t.reason, t.description, t.balanceAfter, t.createdAt,\n  u.tokenBalance as currentBalance\nFROM token_transactions t\nJOIN app_users u ON u.id = t.appUserId\nWHERE u.email LIKE '%8822705%'\nORDER BY t.createdAt ASC;\n",
+  "rows": [
+    {
+      "id": "4620001",
+      "amount": "4",
+      "reason": "refund",
+      "description": "No face detected — tokens refunded",
+      "balanceAfter": "14",
+      "createdAt": "2026-03-24 19:25:01",
+      "currentBalance": "13"
+    },
+    {
+      "id": "4620002",
+      "amount": "4",
+      "reason": "refund",
+      "description": "No face detected — tokens refunded",
+      "balanceAfter": "18",
+      "createdAt": "2026-03-24 19:25:38",
+      "currentBalance": "13"
+    },
+    {
+      "id": "4620003",
+      "amount": "-5",
+      "reason": "ai_trace",
+      "description": "NULL",
+      "balanceAfter": "13",
+      "createdAt": "2026-03-24 19:26:59",
+      "currentBalance": "13"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tamount\treason\tdescription\tbalanceAfter\tcreatedAt\tcurrentBalance\n4620001\t4\trefund\tNo face detected — tokens refunded\t14\t2026-03-24 19:25:01\t13\n4620002\t4\trefund\tNo face detected — tokens refunded\t18\t2026-03-24 19:25:38\t13\n4620003\t-5\tai_trace\tNULL\t13\t2026-03-24 19:26:59\t13\n",
+  "stderr": "",
+  "execution_time_ms": 1663
+}

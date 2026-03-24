@@ -324,13 +324,17 @@ async function runFaceDetectJob(
     const faceCount = detectedFaces.length;
     
     if (faceCount === 0) {
-      // Refund tokens — no face found
-      try {
-        const noFaceRefundCost = await getTokenCostForAction("face_detect");
-        await addTokens(appUserId, noFaceRefundCost, "refund", "No face detected — tokens refunded");
-      } catch { /* ignore */ }
+      // Refund tokens — no face found (guard against double refund)
+      const jobForRefundCheck = getJob(jobId);
+      if (!jobForRefundCheck?.noFaceRefundSent) {
+        updateJob(jobId, { noFaceRefundSent: true });
+        try {
+          const noFaceRefundCost = await getTokenCostForAction("face_detect");
+          await addTokens(appUserId, noFaceRefundCost, "refund", "No face detected — tokens refunded");
+        } catch { /* ignore */ }
+      }
       const errorMsg = isHe
-        ? "לא זויינו פנים בתמונה זו. אנא העלה תמונה ברורה של פנים אחד או יותר."
+        ? "לא זוהו פנים בתמונה זו. אנא העלה תמונה ברורה עם פנים אחד או יותר."
         : "No face detected in this image. Please upload a clear photo with at least one visible face.";
       updateJob(jobId, { status: "error", error: errorMsg });
       return;

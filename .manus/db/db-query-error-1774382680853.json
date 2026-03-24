@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT \n  u.email, u.name, u.maxActions, u.actionsLeft, u.createdAt,\n  t.type, t.amount, t.balance, t.reason, t.createdAt as tokenDate\nFROM app_users u\nLEFT JOIN token_transactions t ON t.userId = u.id\nWHERE u.email LIKE '%8822705%'\nORDER BY t.createdAt ASC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT \n  u.email, u.name, u.maxActions, u.actionsLeft, u.createdAt,\n  t.type, t.amount, t.balance, t.reason, t.createdAt as tokenDate\nFROM app_users u\nLEFT JOIN token_transactions t ON t.userId = u.id\nWHERE u.email LIKE '%8822705%'\nORDER BY t.createdAt ASC;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 't.userid' in 'on clause'"
+  ]
+}
