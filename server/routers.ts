@@ -606,8 +606,9 @@ export const appRouter = router({
     getContactSettings: adminProcedure.query(async () => {
       const db = await getDb();
       if (!db) return { supportEmail: "", whatsappNumber: "", contactPhone: "" };
-      const rows = await db.execute(sql`SELECT \`key\`, \`value\` FROM \`system_settings\` WHERE \`key\` IN ('support_email', 'whatsapp_number', 'contact_phone')`);
-      const map = Object.fromEntries((rows as unknown as Array<{ key: string; value: string }>).map(r => [r.key, r.value]));
+      const result = await db.execute(sql`SELECT \`key\`, \`value\` FROM \`system_settings\` WHERE \`key\` IN ('support_email', 'whatsapp_number', 'contact_phone')`);
+      const actualRows = (Array.isArray(result) && Array.isArray(result[0])) ? result[0] : result;
+      const map = Object.fromEntries((actualRows as unknown as Array<{ key: string; value: string }>).map(r => [r.key, r.value]));
       return { supportEmail: map["support_email"] ?? "", whatsappNumber: map["whatsapp_number"] ?? "", contactPhone: map["contact_phone"] ?? "" };
     }),
 
@@ -1180,8 +1181,9 @@ export const appRouter = router({
     info: publicProcedure.query(async () => {
       const db = await getDb();
       if (!db) return { supportEmail: "", whatsappNumber: "", contactPhone: "" };
-      const rows = await db.execute(sql`SELECT \`key\`, \`value\` FROM \`system_settings\` WHERE \`key\` IN ('support_email', 'whatsapp_number', 'contact_phone')`);
-      const map = Object.fromEntries((rows as unknown as Array<{ key: string; value: string }>).map(r => [r.key, r.value]));
+      const result = await db.execute(sql`SELECT \`key\`, \`value\` FROM \`system_settings\` WHERE \`key\` IN ('support_email', 'whatsapp_number', 'contact_phone')`);
+      const actualRows = (Array.isArray(result) && Array.isArray(result[0])) ? result[0] : result;
+      const map = Object.fromEntries((actualRows as unknown as Array<{ key: string; value: string }>).map(r => [r.key, r.value]));
       return { supportEmail: map["support_email"] ?? "", whatsappNumber: map["whatsapp_number"] ?? "", contactPhone: map["contact_phone"] ?? "" };
     }),
     sendMessage: publicProcedure
