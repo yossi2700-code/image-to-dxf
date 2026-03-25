@@ -10,17 +10,11 @@ import sharp from "sharp";
 const execFileAsync = promisify(execFile);
 const router = Router();
 
-// 20 MB limit for PDF uploads
+// Accept any file — we validate it's a PDF by content, not MIME type
+// iOS sometimes sends PDFs with wrong MIME types (e.g., application/octet-stream)
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 20 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
-    if (file.mimetype === "application/pdf" || file.originalname.toLowerCase().endsWith(".pdf")) {
-      cb(null, true);
-    } else {
-      cb(new Error("Only PDF files are accepted"));
-    }
-  },
 });
 
 /**
@@ -32,26 +26,35 @@ router.post("/pdf-to-image", upload.single("file"), async (req, res) => {
     return res.status(400).json({ error: "No PDF file provided" });
   }
 
+  // Validate PDF magic bytes (%PDF-)
+  const buf = req.file.buffer;
+  const magic = buf.slice(0, 5).toString("ascii");
+  if (magic !== "%PDF-") {
+    return res.status(400).json({ error: "File is not a valid PDF" });
+  }
+
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "pdf-convert-"));
   const pdfPath = path.join(tmpDir, "input.pdf");
   const outputPrefix = path.join(tmpDir, "page");
 
   try {
     // Write PDF buffer to temp file
-    fs.writeFileSync(pdfPath, req.file.buffer);
+    fs.writeFileSync(pdfPath, buf);
 
-    // Convert first page to PPM using pdftoppm (poppler-utils, pre-installed)
+    // Convert first page to PNG using pdftoppm (poppler-utils, pre-installed)
     // -r 150: 150 DPI (good quality, reasonable size)
     // -f 1 -l 1: only first page
     // -png: output as PNG
+    // -cropbox: use crop box for better rendering
     await execFileAsync("pdftoppm", [
       "-r", "150",
       "-f", "1",
       "-l", "1",
       "-png",
+      "-cropbox",
       pdfPath,
       outputPrefix,
-    ]);
+    ], { timeout: 30000 });
 
     // pdftoppm outputs files like page-1.png or page-01.png
     const files = fs.readdirSync(tmpDir).filter(f => f.startsWith("page") && f.endsWith(".png"));
@@ -59,12 +62,14 @@ router.post("/pdf-to-image", upload.single("file"), async (req, res) => {
       throw new Error("PDF conversion produced no output");
     }
 
+    // Sort to get the first page file
+    files.sort();
     const pngPath = path.join(tmpDir, files[0]);
 
-    // Optionally resize to max 2000px wide to keep file size reasonable
+    // Resize to max 2000px wide to keep file size reasonable
     const resized = await sharp(pngPath)
       .resize({ width: 2000, withoutEnlargement: true })
-      .png({ quality: 90 })
+      .png({ compressionLevel: 6 })
       .toBuffer();
 
     const base64 = resized.toString("base64");
