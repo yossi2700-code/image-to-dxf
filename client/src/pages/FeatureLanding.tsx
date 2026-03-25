@@ -67,18 +67,26 @@ function BeforeAfterCard({ example, isRtl, imageFit = "cover" }: { example: Feat
               alt={isRtl ? example.label_he : example.label_en}
               className={imgClass}
             />
-            <div className="absolute bottom-2 left-2 right-2 flex gap-1">
+            <div className="absolute bottom-3 left-3 right-3 flex gap-2">
               <button
                 onClick={() => setShowAfter(false)}
-                className={`flex-1 text-xs py-1 rounded-lg font-medium transition-all ${!showAfter ? "bg-white text-gray-900 shadow" : "bg-black/40 text-white"}`}
+                className={`flex-1 text-sm py-2 px-3 rounded-xl font-bold transition-all duration-200 border-2 ${
+                  !showAfter
+                    ? "bg-white text-gray-900 border-white shadow-lg scale-105"
+                    : "bg-black/50 text-white/80 border-white/30 hover:bg-black/60"
+                }`}
               >
-                {isRtl ? "לפני" : "Before"}
+                {isRtl ? "📷 לפני" : "📷 Before"}
               </button>
               <button
                 onClick={() => setShowAfter(true)}
-                className={`flex-1 text-xs py-1 rounded-lg font-medium transition-all ${showAfter ? "bg-white text-gray-900 shadow" : "bg-black/40 text-white"}`}
+                className={`flex-1 text-sm py-2 px-3 rounded-xl font-bold transition-all duration-200 border-2 ${
+                  showAfter
+                    ? "bg-white text-gray-900 border-white shadow-lg scale-105"
+                    : "bg-black/50 text-white/80 border-white/30 hover:bg-black/60"
+                }`}
               >
-                {isRtl ? "אחרי" : "After"}
+                {isRtl ? "✨ אחרי" : "✨ After"}
               </button>
             </div>
           </>
