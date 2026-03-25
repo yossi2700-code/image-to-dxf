@@ -33,6 +33,11 @@ const MaintenancePage = lazy(() => import("./pages/Maintenance"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const Promo = lazy(() => import("./pages/Promo"));
+const FeatureAiCreate = lazy(() => import("./pages/FeatureAiCreate"));
+const FeatureAiOutline = lazy(() => import("./pages/FeatureAiOutline"));
+const FeaturePortrait = lazy(() => import("./pages/FeaturePortrait"));
+const FeatureCncRelief = lazy(() => import("./pages/FeatureCncRelief"));
+const FeatureDocRedraw = lazy(() => import("./pages/FeatureDocRedraw"));
 
 /** Generates or retrieves a persistent session ID from localStorage */
 function getOrCreateSessionId(): string {
@@ -113,6 +118,11 @@ function Router() {
         <Route path={"/pricing"} component={Pricing} />
         <Route path={"/landing"} component={Landing} />
         <Route path={"/promo"} component={Promo} />
+        <Route path={"/feature/ai-create"} component={FeatureAiCreate} />
+        <Route path={"/feature/ai-outline"} component={FeatureAiOutline} />
+        <Route path={"/feature/portrait"} component={FeaturePortrait} />
+        <Route path={"/feature/cnc-relief"} component={FeatureCncRelief} />
+        <Route path={"/feature/document-redraw"} component={FeatureDocRedraw} />
         <Route path={"/404"} component={NotFound} />
         {/* Final fallback route */}
         <Route component={NotFound} />

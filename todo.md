@@ -2378,3 +2378,12 @@
 ## תיקון שם קובץ PDF - מרץ 2026
 
 - [x] תיקון שם קובץ PDF: נשמר כ-example.com (.COM) כי שם הקובץ מכיל URL — תוקן: URLs ודומיינים מנוקים משם הקובץ
+
+## דפי נחיתה לפיצ'רים - מרץ 2026
+
+- [x] דף נחיתה AI Create (/feature/ai-create)
+- [x] דף נחיתה AI Outline (/feature/ai-outline)
+- [x] דף נחיתה Portrait (/feature/portrait)
+- [x] דף נחיתה CNC Relief (/feature/cnc-relief)
+- [x] דף נחיתה Document Redraw (/feature/document-redraw)
+- [x] רישום כל הנתיבים ב-App.tsx
