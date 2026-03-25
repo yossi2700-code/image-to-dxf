@@ -102,6 +102,8 @@ function BeforeAfterCard({ example, isRtl, imageFit = "cover" }: { example: Feat
   );
 }
 
+const LOGO_BLACK = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai_99079d72.webp";
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function FeatureLandingPage({ config }: { config: FeatureLandingConfig }) {
   const { isRtl } = useLanguage();
@@ -120,7 +122,8 @@ export function FeatureLandingPage({ config }: { config: FeatureLandingConfig })
     if (isLoggedIn) {
       navigate(`/?tab=${config.slug}`);
     } else {
-      setAuthOpen(true);
+      // Send non-logged-in users to the landing page where they can sign up / log in
+      navigate("/landing");
     }
   };
 
@@ -140,7 +143,13 @@ export function FeatureLandingPage({ config }: { config: FeatureLandingConfig })
             {isRtl ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
             {isRtl ? "חזרה" : "Back"}
           </button>
-          <a href="/landing" className="font-bold text-lg tracking-tight text-primary">dxfai</a>
+          <a href="/landing" className="flex items-center gap-2">
+            <img
+              src={LOGO_BLACK}
+              alt="dxfai logo"
+              className="h-9 w-9 rounded-xl object-cover"
+            />
+          </a>
           <Button size="sm" onClick={handleCta}>
             {isRtl ? "התחל" : "Start"}
           </Button>
@@ -237,7 +246,7 @@ export function FeatureLandingPage({ config }: { config: FeatureLandingConfig })
         </Button>
       </section>
 
-      {/* ── Auth Dialog ── */}
+      {/* Auth dialog kept for logged-in flow edge cases */}
       <AuthDialog
         open={authOpen}
         onOpenChange={setAuthOpen}
