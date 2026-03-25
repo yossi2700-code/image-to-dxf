@@ -38,9 +38,18 @@ export interface ExportButtonsProps {
 // ─── Filename helper ────────────────────────────────────────────────────────
 /** Truncate a filename base to max 30 chars, stripping any extension first */
 export function truncateFilename(name: string, maxLen = 30): string {
-  const base = name.replace(/\.[^.]+$/, "").trim(); // strip extension
+  let base = name
+    .replace(/https?:\/\/[^\s]*/gi, "")     // strip full URLs
+    .replace(/\b[\w-]+\.(com|net|org|ai|io|co|app|dev|pdf|dxf|png|jpg|svg)\b/gi, "") // strip domain-like tokens
+    .replace(/\.dxf$/i, "")                  // strip .dxf extension
+    .replace(/[^\w\s\u0590-\u05FF._-]/g, " ") // keep only safe chars
+    .replace(/\s+/g, "_")                    // spaces → underscores
+    .replace(/_{2,}/g, "_")                  // collapse multiple underscores
+    .replace(/^[_.-]+|[_.-]+$/g, "")          // trim leading/trailing punctuation
+    .trim();
+  if (!base) base = "design";
   if (base.length <= maxLen) return base;
-  return base.slice(0, maxLen).trimEnd();
+  return base.slice(0, maxLen).replace(/[_.-]+$/, "");
 }
 
 // ─── Shared download helper ─────────────────────────────────────────────────

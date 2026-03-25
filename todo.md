@@ -2374,3 +2374,7 @@
 
 - [x] הוספת @vitejs/plugin-legacy לתמיכה ב-Chrome ישן (Windows 7): מייצר bundle ES5 + polyfills
 - [x] postcss-oklab-function כבר היה קיים — ממיר oklch() לצבעים תואמים Chrome < 111
+
+## תיקון שם קובץ PDF - מרץ 2026
+
+- [x] תיקון שם קובץ PDF: נשמר כ-example.com (.COM) כי שם הקובץ מכיל URL — תוקן: URLs ודומיינים מנוקים משם הקובץ

@@ -247,7 +247,18 @@ export function DxfDownloadDialog({
   const scaleFactor = PX_TO_MM * (scalePercent / 100);
   const outputWidthMm = svgWidth * scaleFactor;
   const outputHeightMm = svgHeight * scaleFactor;
-  const cleanFilename = (filename.trim() || "design").slice(0, 30).trimEnd();
+  const cleanFilename = (() => {
+    let base = (filename.trim() || "design")
+      .replace(/https?:\/\/[^\s]*/gi, "")
+      .replace(/\b[\w-]+\.(com|net|org|ai|io|co|app|dev|pdf|dxf|png|jpg|svg)\b/gi, "")
+      .replace(/\.dxf$/i, "")
+      .replace(/[^\w\s\u0590-\u05FF._-]/g, " ")
+      .replace(/\s+/g, "_")
+      .replace(/_{2,}/g, "_")
+      .replace(/^[_.-]+|[_.-]+$/g, "")
+      .trim();
+    return (base || "design").slice(0, 30).replace(/[_.-]+$/, "");
+  })();
 
   const { t, isRtl } = useLanguage();
 
