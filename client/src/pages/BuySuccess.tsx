@@ -49,7 +49,7 @@ export default function BuySuccess() {
           // Google Ads conversion tracking - purchase
           if (typeof window !== 'undefined' && (window as any).gtag) {
             (window as any).gtag('event', 'conversion', {
-              'send_to': 'AW-18000656977/FGBsCL_t8I4cENH0sIdD',
+              'send_to': 'AW-18000656977/FGDECNzyu4ccENH0sIdD',
               'value': parseFloat(data.amount) || 1.0,
               'currency': data.currency || 'ILS',
               'transaction_id': data.orderId
