@@ -46,15 +46,18 @@ export interface FeatureLandingConfig {
   benefits: FeatureBenefit[];
   cta_he?: string;
   cta_en?: string;
+  imageFit?: "cover" | "contain"; // default: "cover"; use "contain" for portrait/face images
 }
 
 // ─── Before/After Slider ─────────────────────────────────────────────────────
-function BeforeAfterCard({ example, isRtl }: { example: FeatureExample; isRtl: boolean }) {
+function BeforeAfterCard({ example, isRtl, imageFit = "cover" }: { example: FeatureExample; isRtl: boolean; imageFit?: "cover" | "contain" }) {
   // Start with "Before" (original image) so visitors immediately see the source material
   const [showAfter, setShowAfter] = useState(false);
+  const imgClass = `w-full h-full transition-opacity duration-300 ${imageFit === "contain" ? "object-contain" : "object-cover"}`;
+  const aspectClass = imageFit === "contain" ? "relative aspect-[3/4] bg-muted" : "relative aspect-square bg-muted";
   return (
     <div className="rounded-2xl overflow-hidden border border-border bg-card shadow-sm">
-      <div className="relative aspect-square bg-muted">
+      <div className={aspectClass}>
         {example.before ? (
           <>
             {/* Preload the after image so switching is instant */}
@@ -62,7 +65,7 @@ function BeforeAfterCard({ example, isRtl }: { example: FeatureExample; isRtl: b
             <img
               src={showAfter ? example.after : example.before}
               alt={isRtl ? example.label_he : example.label_en}
-              className="w-full h-full object-cover transition-opacity duration-300"
+              className={imgClass}
             />
             <div className="absolute bottom-2 left-2 right-2 flex gap-1">
               <button
@@ -83,7 +86,7 @@ function BeforeAfterCard({ example, isRtl }: { example: FeatureExample; isRtl: b
           <img
             src={example.after}
             alt={isRtl ? example.label_he : example.label_en}
-            className="w-full h-full object-cover"
+            className={imgClass}
           />
         )}
       </div>
@@ -171,7 +174,7 @@ export function FeatureLandingPage({ config }: { config: FeatureLandingConfig })
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {visibleExamples.map((ex, i) => (
-              <BeforeAfterCard key={i} example={ex} isRtl={isRtl} />
+              <BeforeAfterCard key={i} example={ex} isRtl={isRtl} imageFit={config.imageFit ?? "cover"} />
             ))}
           </div>
           {totalPages > 1 && (

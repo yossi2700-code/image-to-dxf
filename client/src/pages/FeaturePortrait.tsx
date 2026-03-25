@@ -47,6 +47,7 @@ const config = {
   ],
   cta_he: "נסה Portrait חינם",
   cta_en: "Try Portrait Free",
+  imageFit: "contain" as const,
 };
 
 export default function FeaturePortrait() {
