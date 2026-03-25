@@ -437,6 +437,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
   const [detailLevel, setDetailLevel] = useState<0 | 1>(0);
   // Single line mode: draw centerline strokes instead of double outlines
   const [singleLine, setSingleLine] = useState(false);
+  // Close paths: force all open paths to be closed in the DXF output
+  const [closePaths, setClosePaths] = useState(false);
   const [lineweightMm, setLineweightMm] = useState<string>(""); // empty = default
   const [dragOver, setDragOver] = useState(false);
   const [fullImageMode, setFullImageMode] = useState(false);
@@ -762,6 +764,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       formData.append("landscapeMode", effectiveLandscapeMode ? "true" : "false");
       formData.append("variationIndex", String(detailLevel));
       if (singleLine) formData.append("singleLine", "true");
+      if (singleLine && closePaths) formData.append("closePaths", "true");
       const lwVal = parseFloat(lineweightMm);
       if (!isNaN(lwVal) && lwVal >= 0) formData.append("lineweightMm", String(lwVal));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
@@ -819,6 +822,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       formData.append("landscapeMode", fullImageMode ? "true" : "false");
       formData.append("variationIndex", String(detailLevel));
       if (singleLine) formData.append("singleLine", "true");
+      if (singleLine && closePaths) formData.append("closePaths", "true");
       const lwVal = parseFloat(lineweightMm);
       if (!isNaN(lwVal) && lwVal >= 0) formData.append("lineweightMm", String(lwVal));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
@@ -1429,6 +1433,49 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                 </div>
               </button>
             </div>
+
+            {/* Close paths sub-option — only shown when single line is active */}
+            {singleLine && (
+              <div className="ml-4 mt-1 mb-1">
+                <button
+                  type="button"
+                  onClick={() => setClosePaths(v => !v)}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all"
+                  style={closePaths
+                    ? { background: '#fef3c7', border: '1.5px solid #f59e0b' }
+                    : { background: '#f1f5f9', border: '1.5px solid #cbd5e1' }
+                  }
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
+                      style={{ background: closePaths ? '#f59e0b' : '#e2e8f0' }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <circle cx="6" cy="6" r="4.5" stroke={closePaths ? 'white' : '#9ca3af'} strokeWidth="1.5" fill="none"/>
+                        <circle cx="6" cy="1.5" r="1" fill={closePaths ? 'white' : '#9ca3af'}/>
+                      </svg>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs font-semibold" style={{ color: closePaths ? '#92400e' : '#374151', fontSize: '10px' }}>
+                        {isRtl ? 'סגור קווים פתוחים' : 'Close Open Paths'}
+                      </p>
+                      <p style={{ color: closePaths ? '#b45309' : '#9ca3af', fontSize: '9px' }}>
+                        {isRtl ? 'מחבר סוף קו לתחילתו — לכרסום CNC' : 'Connects end to start — for CNC routing'}
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    className="w-8 h-4 rounded-full relative transition-all shrink-0"
+                    style={{ background: closePaths ? '#f59e0b' : '#d1d5db' }}
+                  >
+                    <div
+                      className="absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-all"
+                      style={{ left: closePaths ? '17px' : '2px' }}
+                    />
+                  </div>
+                </button>
+              </div>
+            )}
 
             {/* Lineweight option */}
             <div className="flex items-center gap-2 pt-1 pb-1 flex-wrap">

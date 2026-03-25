@@ -386,7 +386,7 @@ function writeLwPolyline(
 
 // ─── SVG → DXF main function ──────────────────────────────────────────────────
 
-export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: number, minGapMm = 0, forceOpenPaths = false): DxfResult {
+export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: number, minGapMm = 0, forceOpenPaths = false, forceClosePaths = false): DxfResult {
   resetHandles(); // reset entity handle counter for each DXF export
   // Extract viewBox dimensions
   const vbMatch = svgContent.match(/viewBox="([^"]*)"/i);
@@ -561,7 +561,9 @@ export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: nu
 
   for (const poly of outputPolylines) {
     // forceOpenPaths: treat all paths as open (no closed loops) — used for detailed mode
-    writeLwPolyline(lines, poly.points, forceOpenPaths ? false : poly.closed, outputHeight, lwCode);
+    // forceClosePaths: close all paths (connect end point back to start) — used for single-line CNC routing
+    const isClosed = forceClosePaths ? true : (forceOpenPaths ? false : poly.closed);
+    writeLwPolyline(lines, poly.points, isClosed, outputHeight, lwCode);
   }
 
   lines.push("0\nENDSEC\n0\nEOF");

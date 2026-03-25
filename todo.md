@@ -2334,3 +2334,8 @@
 
 - [x] הוספת toggle "קו יחיד / קו כפול" ב-AI Outline
 - [x] עדכון prompt בשרת: כשנבחר "קו יחיד" — AI מצייר centerline/skeleton strokes בלבד
+
+## סגירת קווים פתוחים - מרץ 2026
+
+- [x] הוספת לוגיקה לסגירת קווים פתוחים ב-SVG/DXF אחרי עיבוד AI (closePaths)
+- [x] הוספת toggle "סגור קווים" ב-UI של AI Outline (מופיע כשקו יחיד פעיל)

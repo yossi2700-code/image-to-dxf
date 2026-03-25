@@ -261,7 +261,8 @@ async function runTraceJob(
   variationIndex: number = 1,
   hairline = false,
   lineweightMm?: number,
-  singleLine = false
+  singleLine = false,
+  closePaths = false
 ) {
   const isHe = lang === "he";
   let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
@@ -619,7 +620,7 @@ async function runTraceJob(
       const cleanSvg = cleanSvgForPreview(rawSvg);
 
       // All paths closed — CorelDRAW/Flexi need closed LWPOLYLINE for fill/cut operations.
-      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, 0, false);
+      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, 0, false, singleLine && closePaths);
       const imgKey = `ai-trace-generated/${nanoid()}.png`;
       const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
       const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
@@ -837,6 +838,7 @@ router.post(
       const variationIndex = Math.min(2, Math.max(0, parseInt((req.body?.variationIndex as string) ?? "0", 10)));
       const hairline = req.body?.hairline === "true" || req.body?.hairline === true;
       const singleLine = req.body?.singleLine === "true" || req.body?.singleLine === true;
+      const closePaths = req.body?.closePaths === "true" || req.body?.closePaths === true;
       const lineweightMmRaw = parseFloat((req.body?.lineweightMm as string) ?? "");
       const lineweightMm = isNaN(lineweightMmRaw) ? undefined : Math.min(2.0, Math.max(0, lineweightMmRaw));
       const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
@@ -867,7 +869,7 @@ router.post(
         setTimeout(() => reject(new Error("Job timed out after 5 minutes")), MAX_JOB_MS)
       );
       Promise.race([
-        runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline, lineweightMm, singleLine),
+        runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline, lineweightMm, singleLine, closePaths),
         timeoutPromise,
       ]).catch((err) => {
         const msg = err instanceof Error ? err.message : String(err);
