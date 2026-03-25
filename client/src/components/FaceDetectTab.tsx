@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { ReportIssueButton } from "@/components/ReportIssueButton";
+import { convertPdfToImage, isPdf } from "@/lib/pdfToImage";
 
 interface GeneratedImage {
   imageUrl: string;
@@ -436,7 +437,17 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
     setJobIdPersisted(null);
   }, [jobId, isRtl, refetchTokens, setJobIdPersisted]);
 
-  const handleFile = useCallback((file: File) => {
+  const handleFile = useCallback(async (file: File) => {
+    // PDF support: convert first page to image before processing
+    if (isPdf(file)) {
+      toast.info(isRtl ? "ממיר PDF לתמונה..." : "Converting PDF to image...");
+      try {
+        file = await convertPdfToImage(file);
+      } catch (err: any) {
+        toast.error(isRtl ? "שגיאה בהמרת PDF" : "Failed to convert PDF");
+        return;
+      }
+    }
     const allowed = ["image/png", "image/jpeg", "image/bmp", "image/webp", "image/gif"];
     if (!allowed.includes(file.type)) { toast.error(isRtl ? "פורמט לא נתמך." : "Unsupported format."); return; }
     if (file.size > 16 * 1024 * 1024) { toast.error(isRtl ? "הקובץ גדול מדי. מקסימום 16 MB." : "File too large. Max 16 MB."); return; }
@@ -584,7 +595,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/png,image/jpeg,image/bmp,image/webp,image/gif"
+                accept="image/png,image/jpeg,image/bmp,image/webp,image/gif,application/pdf"
                 className="hidden"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
               />

@@ -19,6 +19,7 @@ import faceDetectRoute from "../faceDetectRoute";
 import paypalRoute from "../paypalRoute";
 import cncReliefRoute from "../cncReliefRoute";
 import dxfLegacyRoute from "../dxfLegacyRoute";
+import pdfConvertRoute from "../pdfConvertRoute";
 import {
   helmetMiddleware,
   permissionsPolicyMiddleware,
@@ -140,6 +141,9 @@ async function startServer() {
   app.use("/api/cnc-relief", uploadLimiter);
   // DXF Legacy conversion route (LWPOLYLINE → LINE entities for CAS WIN / old CAD)
   app.use(dxfLegacyRoute);
+  // PDF → Image conversion route (first page of PDF → PNG base64)
+  app.use("/api", pdfConvertRoute);
+  app.use("/api/pdf-to-image", uploadLimiter);
 
   // ── tRPC API ─────────────────────────────────────────────────────────────────
   app.use(

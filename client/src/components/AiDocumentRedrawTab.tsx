@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
+import { convertPdfToImage, isPdf } from "@/lib/pdfToImage";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface RedrawImage {
@@ -490,7 +491,17 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleFile = useCallback((file: File) => {
+  const handleFile = useCallback(async (file: File) => {
+    // PDF support: convert first page to image before processing
+    if (isPdf(file)) {
+      toast.info(isRtl ? "ממיר PDF לתמונה..." : "Converting PDF to image...");
+      try {
+        file = await convertPdfToImage(file);
+      } catch (err: any) {
+        toast.error(isRtl ? "שגיאה בהמרת PDF" : "Failed to convert PDF");
+        return;
+      }
+    }
     const allowed = ["image/png", "image/jpeg", "image/bmp", "image/webp", "image/gif", "image/heic", "image/heif"];
     if (!allowed.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|bmp|webp|gif|heic|heif)$/i)) {
       toast.error(isRtl ? "פורמט לא נתמך. השתמש ב-JPG, PNG, BMP, WebP." : "Unsupported format. Use JPG, PNG, BMP, WebP.");
@@ -643,7 +654,7 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,application/pdf"
           className="hidden"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
         />

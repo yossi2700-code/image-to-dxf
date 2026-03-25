@@ -2324,3 +2324,8 @@
 ## hint טקסט מדויק ב-AI Create - מרץ 2026
 
 - [x] הוספת hint בשדה הטקסט של AI Create: הסבר שימוש בגרשיים לטקסט מדויק
+
+## תמיכה ב-PDF - מרץ 2026
+
+- [x] הוספת endpoint בשרת להמרת PDF לתמונה (עמוד ראשון)- [x] עדכון AI Outline: קבלת PDF ושליחתו ל endpoint המרה לפני עיבוד- [x] עדכון AI Trace (Portrait): קבלת PDF ושליחתו ל endpoint המרה לפני עיבוד
+- [x] עדכון ה-accept בכל שדות העלאת קבצים לכלול application/pdf

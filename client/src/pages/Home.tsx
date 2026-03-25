@@ -22,6 +22,7 @@ import { OnboardingTour, resetOnboardingTour } from "@/components/OnboardingTour
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InsufficientTokensBanner } from "@/components/InsufficientTokensBanner";
 import { ReportIssueButton } from "@/components/ReportIssueButton";
+import { convertPdfToImage, isPdf } from "@/lib/pdfToImage";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Upload,
@@ -854,7 +855,17 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
   const [downloadOpen, setDownloadOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = useCallback((file: File) => {
+  const handleFile = useCallback(async (file: File) => {
+    // PDF support: convert first page to image before processing
+    if (isPdf(file)) {
+      toast.info(isRtl ? "ממיר PDF לתמונה..." : "Converting PDF to image...");
+      try {
+        file = await convertPdfToImage(file);
+      } catch (err: any) {
+        toast.error(isRtl ? "שגיאה בהמרת PDF" : "Failed to convert PDF");
+        return;
+      }
+    }
     const allowed = ["image/png", "image/jpeg", "image/bmp", "image/webp"];
     if (!allowed.includes(file.type)) {
       toast.error(t("unsupportedFormat"));
@@ -980,7 +991,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/*,application/pdf"
               className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
             />
