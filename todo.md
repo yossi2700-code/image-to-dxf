@@ -2387,3 +2387,7 @@
 - [x] דף נחיתה CNC Relief (/feature/cnc-relief)
 - [x] דף נחיתה Document Redraw (/feature/document-redraw)
 - [x] רישום כל הנתיבים ב-App.tsx
+
+## תיקון 404 בנתיבי /feature/* - מרץ 2026
+
+- [ ] תיקון 404 בנתיבי /feature/* ב-production — השרת צריך להחזיר index.html לכל נתיב לא מוכר
