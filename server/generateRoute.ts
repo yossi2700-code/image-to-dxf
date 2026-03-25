@@ -182,19 +182,62 @@ function buildLineArtPrompt(userPrompt: string, variationIndex: number): string 
   );
 }
 
+/** Simple Hebrew → Latin transliteration map for common words */
+const HE_TO_EN_GEN: Record<string, string> = {
+  "עכבר": "mouse", "מחשב": "computer", "כלב": "dog", "חתול": "cat",
+  "ציפור": "bird", "דג": "fish", "פרח": "flower", "עץ": "tree",
+  "בית": "house", "מכונית": "car", "אופנוע": "motorcycle", "אופניים": "bicycle",
+  "לב": "heart", "כוכב": "star", "ירח": "moon", "שמש": "sun",
+  "אריה": "lion", "נמר": "tiger", "דוב": "bear", "סוס": "horse",
+  "פיל": "elephant", "פרפר": "butterfly", "נחש": "snake", "צב": "turtle",
+  "תפוח": "apple", "בננה": "banana", "תות": "strawberry",
+  "ספר": "book", "עיפרון": "pencil", "מפתח": "key", "כוס": "cup",
+  "שעון": "clock", "טלפון": "phone", "מצלמה": "camera",
+  "לוגו": "logo", "סמל": "symbol", "עיצוב": "design",
+};
+
 function promptToFilename(prompt: string): string {
-  const words = prompt
+  // First try English/ASCII words
+  const englishWords = prompt
     .trim()
-    .replace(/[^\u0590-\u05FF\w\s]/g, "")
+    .replace(/[^a-zA-Z0-9\s]/g, " ")
     .split(/\s+/)
-    .filter(Boolean);
-  let name = "";
-  for (const w of words) {
-    const next = name ? `${name}_${w}` : w;
-    if (next.length > 20) break;
-    name = next;
+    .filter(w => w.length > 1);
+
+  if (englishWords.length > 0) {
+    let name = "";
+    for (const w of englishWords) {
+      const next = name ? `${name}_${w}` : w;
+      if (next.length > 20) break;
+      name = next;
+    }
+    return (name || "design").slice(0, 20).replace(/_+$/, "");
   }
-  return (name || "design").slice(0, 20).replace(/_+$/, "");
+
+  // Try Hebrew transliteration
+  const hebrewWords = prompt
+    .replace(/[^\u0590-\u05FF\s]/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(w => w.length > 0);
+
+  const transliterated: string[] = [];
+  for (const w of hebrewWords) {
+    const en = HE_TO_EN_GEN[w];
+    if (en) transliterated.push(en);
+  }
+
+  if (transliterated.length > 0) {
+    let name = "";
+    for (const w of transliterated) {
+      const next = name ? `${name}_${w}` : w;
+      if (next.length > 20) break;
+      name = next;
+    }
+    return (name || "design").slice(0, 20).replace(/_+$/, "");
+  }
+
+  return "design";
 }
 
 function pngToSvg(pngBuffer: Buffer): Promise<string> {

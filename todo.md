@@ -2363,3 +2363,9 @@
 - [x] תיקון תצוגת דף רכישה על אייפון צר: padding, גריד, גדלי פונט מותאמים למסכים קטנים
 - [x] OAuth origin_mismatch: הוסבר למשתמש שיש להוסיף dxfai.ai ל-Authorized Origins ב-Google Cloud Console
 - [x] שם קובץ DXF ב-iOS Share Sheet: נבדק ונמצא תקין
+
+## תיקון שמות קבצים - מרץ 2026
+
+- [x] buildFilename (aiTraceRoute): שמות קבצים DXF עכשיו ASCII בלבד — עברית מתורגמת למילים אנגליות (עכבר→mouse, מחשב→computer וכו')
+- [x] promptToFilename (generateRoute): אותו תיקון — שמות קבצים ASCII בלבד לתאימות iOS Share Sheet
+- [x] OAuth dxfai.ai: הוסבר למשתמש שיש להוסיף את הדומיין ל-Google Cloud Console (Authorized JavaScript Origins)

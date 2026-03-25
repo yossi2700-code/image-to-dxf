@@ -37,7 +37,7 @@ const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
-/** Convert description to safe filename — capped at 15 chars for clean download names */
+/** Convert description to safe filename — ASCII only, capped at 20 chars for clean download names */
 // Words that come from AI analysis descriptions — not useful as filenames
 const AI_NOISE_WORDS = new Set([
   "camera", "angle", "front", "view", "facing", "direction", "body", "pose",
@@ -47,19 +47,63 @@ const AI_NOISE_WORDS = new Set([
   "side", "profile", "rear", "top", "down", "low", "high", "style", "notes",
   "key", "structural", "features", "description",
 ]);
+
+/** Simple Hebrew → Latin transliteration map for common words */
+const HE_TO_EN: Record<string, string> = {
+  "עכבר": "mouse", "מחשב": "computer", "כלב": "dog", "חתול": "cat",
+  "ציפור": "bird", "דג": "fish", "פרח": "flower", "עץ": "tree",
+  "בית": "house", "מכונית": "car", "אופנוע": "motorcycle", "אופניים": "bicycle",
+  "לב": "heart", "כוכב": "star", "ירח": "moon", "שמש": "sun",
+  "אריה": "lion", "נמר": "tiger", "דוב": "bear", "סוס": "horse",
+  "פיל": "elephant", "פרפר": "butterfly", "נחש": "snake", "צב": "turtle",
+  "תפוח": "apple", "בננה": "banana", "תות": "strawberry",
+  "ספר": "book", "עיפרון": "pencil", "מפתח": "key", "כוס": "cup",
+  "שעון": "clock", "טלפון": "phone", "מצלמה": "camera",
+  "לוגו": "logo", "סמל": "symbol", "עיצוב": "design",
+};
+
 function buildFilename(description: string): string {
-  const words = description
-    .replace(/[^\u0590-\u05FFa-zA-Z0-9\s]/g, "")
+  // First try to extract English words (ASCII letters/digits only)
+  const englishWords = description
+    .replace(/[^a-zA-Z0-9\s]/g, " ")
     .trim()
     .split(/\s+/)
     .filter(w => w.length > 1 && !AI_NOISE_WORDS.has(w.toLowerCase()));
-  let name = "";
-  for (const w of words) {
-    const next = name ? `${name}_${w}` : w;
-    if (next.length > 20) break;
-    name = next;
+
+  if (englishWords.length > 0) {
+    let name = "";
+    for (const w of englishWords) {
+      const next = name ? `${name}_${w}` : w;
+      if (next.length > 20) break;
+      name = next;
+    }
+    return (name || "ai_trace").slice(0, 20).replace(/_+$/, "");
   }
-  return (name || "ai_trace").slice(0, 20).replace(/_+$/, "");
+
+  // If description is Hebrew, try transliteration map
+  const hebrewWords = description
+    .replace(/[^\u0590-\u05FF\s]/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(w => w.length > 0);
+
+  const transliterated: string[] = [];
+  for (const w of hebrewWords) {
+    const en = HE_TO_EN[w];
+    if (en) transliterated.push(en);
+  }
+
+  if (transliterated.length > 0) {
+    let name = "";
+    for (const w of transliterated) {
+      const next = name ? `${name}_${w}` : w;
+      if (next.length > 20) break;
+      name = next;
+    }
+    return (name || "ai_trace").slice(0, 20).replace(/_+$/, "");
+  }
+
+  return "ai_trace";
 }
 
 /**
