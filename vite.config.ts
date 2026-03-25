@@ -1,6 +1,7 @@
 import { jsxLocPlugin } from "@builder.io/vite-plugin-jsx-loc";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
+import legacy from "@vitejs/plugin-legacy";
 import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
@@ -170,7 +171,19 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+const plugins = [
+  react(),
+  tailwindcss(),
+  jsxLocPlugin(),
+  vitePluginManusRuntime(),
+  vitePluginManusDebugCollector(),
+  // Legacy browser support: generates ES5 fallback bundle + polyfills for Chrome < 80, IE11, etc.
+  legacy({
+    targets: ["chrome >= 60", "firefox >= 60", "safari >= 11", "edge >= 79"],
+    renderLegacyChunks: true,
+    modernPolyfills: true,
+  }),
+];
 export default defineConfig({
   plugins,
   css: {

@@ -2369,3 +2369,8 @@
 - [x] buildFilename (aiTraceRoute): שמות קבצים DXF עכשיו ASCII בלבד — עברית מתורגמת למילים אנגליות (עכבר→mouse, מחשב→computer וכו')
 - [x] promptToFilename (generateRoute): אותו תיקון — שמות קבצים ASCII בלבד לתאימות iOS Share Sheet
 - [x] OAuth dxfai.ai: הוסבר למשתמש שיש להוסיף את הדומיין ל-Google Cloud Console (Authorized JavaScript Origins)
+
+## תמיכה בדפדפנים ישנים - מרץ 2026
+
+- [x] הוספת @vitejs/plugin-legacy לתמיכה ב-Chrome ישן (Windows 7): מייצר bundle ES5 + polyfills
+- [x] postcss-oklab-function כבר היה קיים — ממיר oklch() לצבעים תואמים Chrome < 111
