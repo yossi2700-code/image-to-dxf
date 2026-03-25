@@ -96,12 +96,10 @@ const STYLE_VARIATIONS = [
 ];
 
 const SINGLE_LINE_STYLE =
-  "SINGLE-LINE / CENTERLINE ART ONLY: Draw ONLY the center skeleton of each shape — one single line per edge, stroke, or feature. " +
-  "Every line must be a single open or closed path — NEVER two parallel lines forming an outline/contour. " +
-  "Think of it like a wire-frame skeleton: one line traces the center of each element. " +
-  "Pure black (#000000) single-pixel-width strokes on pure white (#FFFFFF) background. " +
-  "ABSOLUTELY NO: double lines, outlines with thickness, filled shapes, shading, gradients, grey tones, hatching. " +
-  "Style: centerline engraving art — like a technical wire drawing, every stroke is a single hairline path.";
+  "STRICT LINE ART ONLY: pure black (#000000) thin single lines on pure white (#FFFFFF) background. " +
+  "Draw only one line per edge — do not draw outlines with two parallel lines. " +
+  "Use the thinnest possible strokes. No fill, no shading, no gradients, no grey tones. " +
+  "Style: minimal wire-frame line drawing, every stroke is a single thin line.";
 
 function buildFullImagePrompt(sceneDescription: string, variationIndex: number, singleLine = false): string {
   const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
@@ -558,6 +556,7 @@ async function runTraceJob(
 
       // Use gpt-image-1 edit API for high-quality line art generation
       // Pass signal so the request is aborted immediately when the 5-min timeout fires
+      if (singleLine) console.log(`[aiTraceRoute] Single-line job ${jobId}: sending prompt to gpt-image-1, length=${editPrompt.length}`);
       const imageEditResponse = await openai.images.edit({
         model: "gpt-image-1",
         image: new File([editSourceBuffer as unknown as BlobPart], "source.png", { type: "image/png" }),
