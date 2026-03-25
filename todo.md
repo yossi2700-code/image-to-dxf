@@ -2348,3 +2348,7 @@
 
 - [x] מימוש skeletonization על תמונת ה-PNG לפני potrace כשsingleLine=true
 - [x] חיבור: שימוש ב-centerline pipeline במקום ה-AI single-line prompt
+
+## באג: תצוגה SVG לא ממלאת קופסה - מרץ 2026
+
+- [x] תיקון: תצוגה מקדימה SVG מציגה רווח לבן גדול מתחת לציור — viewBox גדול מהתוכן
