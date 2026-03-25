@@ -28,6 +28,10 @@ import { svgToDxf } from "./svgToDxf";
 import { cleanSvgForPreview } from "./svgClean";
 import OpenAI from "openai";
 import potrace from "potrace";
+import { spawn } from "child_process";
+import fs from "fs/promises";
+import os from "os";
+import path from "path";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
@@ -600,6 +604,33 @@ async function runTraceJob(
           .threshold(160)
           .png()
           .toBuffer();
+      }
+
+      // Centerline / single-line mode: run Zhang-Suen skeletonization on the processed image
+      // before potrace so every stroke is exactly 1 pixel wide → potrace traces single-line paths.
+      // This is much more faithful to the original image than asking the AI to draw single lines.
+      if (singleLine) {
+        const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "skeleton-"));
+        const inPath = path.join(tmpDir, "in.png");
+        const outPath = path.join(tmpDir, "out.png");
+        try {
+          await fs.writeFile(inPath, processedBuffer);
+          await new Promise<void>((resolve, reject) => {
+            const scriptPath = path.join(__dirname, "skeletonize.py");
+            const proc = spawn("python3", [scriptPath, inPath, outPath]);
+            proc.on("close", (code) => {
+              if (code === 0) resolve();
+              else reject(new Error(`skeletonize.py exited with code ${code}`));
+            });
+            proc.on("error", reject);
+          });
+          processedBuffer = await fs.readFile(outPath);
+          console.log(`[aiTraceRoute] Skeletonized image for job ${jobId}`);
+        } catch (skelErr) {
+          console.warn(`[aiTraceRoute] Skeletonization failed, using original:`, skelErr);
+        } finally {
+          await fs.rm(tmpDir, { recursive: true, force: true });
+        }
       }
 
       // Simple: large turdSize removes small details; Detailed: small turdSize keeps texture/detail lines

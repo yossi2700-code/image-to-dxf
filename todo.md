@@ -2343,3 +2343,8 @@
 ## באג: קו יחיד תקוע - מרץ 2026
 
 - [ ] תיקון: AI Outline במצב קו יחיד לא מסיים עיבוד — job תקוע
+
+## Centerline Tracing אמיתי - מרץ 2026
+
+- [x] מימוש skeletonization על תמונת ה-PNG לפני potrace כשsingleLine=true
+- [x] חיבור: שימוש ב-centerline pipeline במקום ה-AI single-line prompt
