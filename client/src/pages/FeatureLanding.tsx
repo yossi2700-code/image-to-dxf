@@ -50,12 +50,15 @@ export interface FeatureLandingConfig {
 
 // ─── Before/After Slider ─────────────────────────────────────────────────────
 function BeforeAfterCard({ example, isRtl }: { example: FeatureExample; isRtl: boolean }) {
-  const [showAfter, setShowAfter] = useState(true);
+  // Start with "Before" (original image) so visitors immediately see the source material
+  const [showAfter, setShowAfter] = useState(false);
   return (
     <div className="rounded-2xl overflow-hidden border border-border bg-card shadow-sm">
       <div className="relative aspect-square bg-muted">
         {example.before ? (
           <>
+            {/* Preload the after image so switching is instant */}
+            <link rel="preload" as="image" href={example.after} />
             <img
               src={showAfter ? example.after : example.before}
               alt={isRtl ? example.label_he : example.label_en}
