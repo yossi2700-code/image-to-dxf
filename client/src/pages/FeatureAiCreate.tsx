@@ -7,7 +7,7 @@ const config = {
   badge_en: "✨ AI Create",
   title_he: "צור קובץ DXF מטקסט",
   title_en: "Generate DXF from Text",
-  subtitle_he: "תאר מה אתה רוצה בעברית או אנגלית — ה-AI יצייר קווים מדויקים לחריטה, לייזר ו-CNC",
+  subtitle_he: "תאר מה אתה רוצה בעברית — ה-AI יצייר קווים מדויקים לחריטה, לייזר ו-CNC",
   subtitle_en: "Describe what you want in any language — AI draws precise lines for engraving, laser and CNC",
   examples: [
     { label_he: "זאב גיאומטרי", label_en: "Geometric Wolf", after: `${CDN}/ai-geometric-wolf_11ff1166.webp` },
@@ -24,7 +24,7 @@ const config = {
     { icon: "⌨️", title_he: "רק טקסט", title_en: "Text only", desc_he: "אין צורך בתמונה — פשוט תאר מה אתה רוצה", desc_en: "No image needed — just describe what you want" },
     { icon: "⚡", title_he: "מהיר", title_en: "Fast", desc_he: "תוצאה תוך שניות ספורות", desc_en: "Results in seconds" },
     { icon: "🎯", title_he: "מדויק", title_en: "Precise", desc_he: "קווים נקיים מוכנים לחריטה ולייזר", desc_en: "Clean lines ready for engraving and laser" },
-    { icon: "🌍", title_he: "כל שפה", title_en: "Any language", desc_he: "עברית, אנגלית, ערבית — הכל עובד", desc_en: "Hebrew, English, Arabic — all work" },
+    { icon: "🇮🇱", title_he: "תמיכה בעברית", title_en: "Hebrew Support", desc_he: "ממשק ותוצאות מלאות בעברית", desc_en: "Full Hebrew interface and results" },
     { icon: "📐", title_he: "פורמטים", title_en: "Formats", desc_he: "DXF, PDF, SVG — לכל תוכנת CNC", desc_en: "DXF, PDF, SVG — for any CNC software" },
     { icon: "🔄", title_he: "וריאציות", title_en: "Variations", desc_he: "קבל מספר גרסאות לבחירה", desc_en: "Get multiple versions to choose from" },
   ],
