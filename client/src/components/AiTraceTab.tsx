@@ -435,6 +435,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   // Detail level: 0 = simple (default), 1 = detailed
   const [detailLevel, setDetailLevel] = useState<0 | 1>(0);
+  // Single line mode: draw centerline strokes instead of double outlines
+  const [singleLine, setSingleLine] = useState(false);
   const [lineweightMm, setLineweightMm] = useState<string>(""); // empty = default
   const [dragOver, setDragOver] = useState(false);
   const [fullImageMode, setFullImageMode] = useState(false);
@@ -759,6 +761,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       const effectiveLandscapeMode = forceLandscape !== undefined ? forceLandscape : fullImageMode;
       formData.append("landscapeMode", effectiveLandscapeMode ? "true" : "false");
       formData.append("variationIndex", String(detailLevel));
+      if (singleLine) formData.append("singleLine", "true");
       const lwVal = parseFloat(lineweightMm);
       if (!isNaN(lwVal) && lwVal >= 0) formData.append("lineweightMm", String(lwVal));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
@@ -815,6 +818,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       formData.append("lang", language);
       formData.append("landscapeMode", fullImageMode ? "true" : "false");
       formData.append("variationIndex", String(detailLevel));
+      if (singleLine) formData.append("singleLine", "true");
       const lwVal = parseFloat(lineweightMm);
       if (!isNaN(lwVal) && lwVal >= 0) formData.append("lineweightMm", String(lwVal));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
@@ -1385,6 +1389,47 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                     </button>
                   );
                 })}
+            {/* Single line toggle */}
+            <div className="mt-2 mb-1">
+              <button
+                type="button"
+                onClick={() => setSingleLine(v => !v)}
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all"
+                style={singleLine
+                  ? { background: 'linear-gradient(135deg, #f59e0b22, #f97316 11)', border: '2px solid #f59e0b', boxShadow: '0 2px 8px rgba(245,158,11,0.2)' }
+                  : { background: '#f8fafc', border: '2px solid #e2e8f0' }
+                }
+              >
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
+                    style={{ background: singleLine ? '#f59e0b' : '#e2e8f0' }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                      <path d="M2 9 Q5 4 9 9 Q13 14 16 9" stroke={singleLine ? 'white' : '#9ca3af'} strokeWidth="2" strokeLinecap="round" fill="none"/>
+                    </svg>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-xs font-bold" style={{ color: singleLine ? '#92400e' : '#374151' }}>
+                      {isRtl ? 'קו יחיד (Centerline)' : 'Single Line (Centerline)'}
+                    </p>
+                    <p className="text-xs" style={{ color: singleLine ? '#b45309' : '#9ca3af', fontSize: '9px' }}>
+                      {isRtl ? 'קו מרכזי בלבד — מושלם לחריטת לייזר' : 'Center skeleton only — ideal for laser engraving'}
+                    </p>
+                  </div>
+                </div>
+                <div
+                  className="w-10 h-5 rounded-full relative transition-all shrink-0"
+                  style={{ background: singleLine ? '#f59e0b' : '#d1d5db' }}
+                >
+                  <div
+                    className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all"
+                    style={{ left: singleLine ? '22px' : '2px' }}
+                  />
+                </div>
+              </button>
+            </div>
+
             {/* Lineweight option */}
             <div className="flex items-center gap-2 pt-1 pb-1 flex-wrap">
               <label className="text-sm font-medium shrink-0">

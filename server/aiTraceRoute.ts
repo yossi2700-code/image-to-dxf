@@ -95,8 +95,17 @@ const STYLE_VARIATIONS = [
   },
 ];
 
-function buildFullImagePrompt(sceneDescription: string, variationIndex: number): string {
+const SINGLE_LINE_STYLE =
+  "SINGLE-LINE / CENTERLINE ART ONLY: Draw ONLY the center skeleton of each shape — one single line per edge, stroke, or feature. " +
+  "Every line must be a single open or closed path — NEVER two parallel lines forming an outline/contour. " +
+  "Think of it like a wire-frame skeleton: one line traces the center of each element. " +
+  "Pure black (#000000) single-pixel-width strokes on pure white (#FFFFFF) background. " +
+  "ABSOLUTELY NO: double lines, outlines with thickness, filled shapes, shading, gradients, grey tones, hatching. " +
+  "Style: centerline engraving art — like a technical wire drawing, every stroke is a single hairline path.";
+
+function buildFullImagePrompt(sceneDescription: string, variationIndex: number, singleLine = false): string {
   const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
+  const styleBlock = singleLine ? SINGLE_LINE_STYLE : variation.style;
   return (
     `Professional black and white line art of the following scene: ${sceneDescription}. ` +
     "Pure white background (#FFFFFF). " +
@@ -104,7 +113,7 @@ function buildFullImagePrompt(sceneDescription: string, variationIndex: number):
     "High contrast: only pure black (#000000) lines on white. " +
     "CRITICAL: Draw ALL elements visible in the image EXACTLY as described — every object, decoration, symbol, and detail in their correct positions and proportions. " +
     "Do NOT substitute or replace any element with a generic version. Draw the SPECIFIC items described. " +
-    `${variation.style} ` +
+    `${styleBlock} ` +
     "=== MANDATORY FRAMING RULES === " +
     "The entire composition MUST fit completely inside the frame. Leave AT LEAST 15% white margin on every edge. All elements fully visible, NOTHING cropped or touching the border. " +
     "=== END FRAMING RULES === " +
@@ -187,8 +196,9 @@ async function generateImprovementSuggestions(
   return [];
 }
 
-function buildLineArtPrompt(objectDescription: string, variationIndex: number): string {
+function buildLineArtPrompt(objectDescription: string, variationIndex: number, singleLine = false): string {
   const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
+  const styleBlock = singleLine ? SINGLE_LINE_STYLE : variation.style;
   return (
     `Professional black and white line art illustration. ` +
     `EXACT SUBJECT TO DRAW: ${objectDescription} ` +
@@ -205,7 +215,7 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number): 
     "Pure white background (#FFFFFF). " +
     "Bold thick black outlines, no fill, no shading, no gradients, no grey tones. " +
     "High contrast: only pure black (#000000) lines on white. " +
-    `${variation.style} ` +
+    `${styleBlock} ` +
     "\n=== FRAMING RULES (NEVER VIOLATE) === " +
     "The ENTIRE object MUST be 100% visible inside the frame with generous white margins. " +
     "Leave AT LEAST 20% white empty space on EVERY side. " +
@@ -250,7 +260,8 @@ async function runTraceJob(
   sourceImageUrl?: string,
   variationIndex: number = 1,
   hairline = false,
-  lineweightMm?: number
+  lineweightMm?: number,
+  singleLine = false
 ) {
   const isHe = lang === "he";
   let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
@@ -497,7 +508,9 @@ async function runTraceJob(
       const isPortrait = !isAnimal && !isEngraving && /\b(face|portrait|person|man|woman|boy|girl|human|selfie|head|hair|eyes|nose|mouth|beard|cheek|forehead|chin|neck|ear)\b/i.test(objectDescription);
       // Detect if this is a toy, cartoon figure, or character figurine
       const isToyOrFigurine = /\b(toy|figurine|figure|doll|plush|stuffed|cartoon|character|action figure|miniature|statue|sculpture|puppet|mascot|anime|manga|bluey|lego|funko|pokemon|pikachu|sonic|mario|disney|pixar|robot|alien|monster|creature|animal figure)\b/i.test(objectDescription);
-      const editPrompt = effectiveLandscapeMode
+      const editPrompt = singleLine
+        ? buildLineArtPrompt(objectDescription, idx, true)
+        : effectiveLandscapeMode
         ? buildFullImagePrompt(objectDescription, idx)
         : (isPortrait && !isToyOrFigurine)
         ? (
@@ -506,7 +519,7 @@ async function runTraceJob(
             `Preserve the EXACT facial likeness: face shape, eye shape, nose, mouth, jawline, hair style. ` +
             `Keep the same pose, angle, and proportions. ` +
             `Use only pure black lines on pure white background. No shading, no grey tones, no gradients. ` +
-            `${variation.style} ` +
+            `${singleLine ? SINGLE_LINE_STYLE : variation.style} ` +
             `No text, no letters, no numbers anywhere.`
           )
         : isToyOrFigurine
@@ -516,7 +529,7 @@ async function runTraceJob(
             `Preserve the EXACT toy appearance: cartoon eyes, toy proportions, stylized features. ` +
             `Do NOT humanize — keep it looking like a toy/cartoon, not a real person. ` +
             `Use only pure black lines on pure white background. No shading, no grey tones. ` +
-            `${variation.style} ` +
+            `${singleLine ? SINGLE_LINE_STYLE : variation.style} ` +
             `No text, no letters, no numbers anywhere.`
           )
         : isAnimal
@@ -529,7 +542,7 @@ async function runTraceJob(
             `DO NOT make the eyes large and round like a cartoon — keep the real eye shape from the photo. ` +
             `This must look like a realistic illustration of THIS specific animal, not a generic cute cartoon animal. ` +
             `Use only pure black (#000000) lines on pure white (#FFFFFF) background. No shading, no grey tones, no gradients. ` +
-            `${variation.style} ` +
+            `${singleLine ? SINGLE_LINE_STYLE : variation.style} ` +
             `No text, no letters, no numbers, no logos anywhere.`
           )
         : (
@@ -538,7 +551,7 @@ async function runTraceJob(
             `Draw ONLY the main subject on a pure white background — remove the background completely. ` +
             `Use only pure black (#000000) lines on pure white (#FFFFFF). No shading, no grey tones, no gradients. ` +
             `Preserve the exact proportions and shape of the original object. ` +
-            `${variation.style} ` +
+            `${singleLine ? SINGLE_LINE_STYLE : variation.style} ` +
             `No text, no letters, no numbers, no logos, no watermarks anywhere.`
           );
 
@@ -823,6 +836,7 @@ router.post(
       const lang = ((req.body?.lang as string) || "en") === "he" ? "he" : "en";
       const variationIndex = Math.min(2, Math.max(0, parseInt((req.body?.variationIndex as string) ?? "0", 10)));
       const hairline = req.body?.hairline === "true" || req.body?.hairline === true;
+      const singleLine = req.body?.singleLine === "true" || req.body?.singleLine === true;
       const lineweightMmRaw = parseFloat((req.body?.lineweightMm as string) ?? "");
       const lineweightMm = isNaN(lineweightMmRaw) ? undefined : Math.min(2.0, Math.max(0, lineweightMmRaw));
       const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
@@ -853,7 +867,7 @@ router.post(
         setTimeout(() => reject(new Error("Job timed out after 5 minutes")), MAX_JOB_MS)
       );
       Promise.race([
-        runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline, lineweightMm),
+        runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline, lineweightMm, singleLine),
         timeoutPromise,
       ]).catch((err) => {
         const msg = err instanceof Error ? err.message : String(err);

@@ -2329,3 +2329,8 @@
 
 - [x] הוספת endpoint בשרת להמרת PDF לתמונה (עמוד ראשון)- [x] עדכון AI Outline: קבלת PDF ושליחתו ל endpoint המרה לפני עיבוד- [x] עדכון AI Trace (Portrait): קבלת PDF ושליחתו ל endpoint המרה לפני עיבוד
 - [x] עדכון ה-accept בכל שדות העלאת קבצים לכלול application/pdf
+
+## קו יחיד ב-AI Outline - מרץ 2026
+
+- [x] הוספת toggle "קו יחיד / קו כפול" ב-AI Outline
+- [x] עדכון prompt בשרת: כשנבחר "קו יחיד" — AI מצייר centerline/skeleton strokes בלבד
