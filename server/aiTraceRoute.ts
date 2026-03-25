@@ -485,6 +485,15 @@ async function runTraceJob(
       .toBuffer();
     const { channels } = await sharp(rawResized).stats();
     const avgBrightness = (channels[0].mean + channels[1].mean + channels[2].mean) / 3;
+    // Detect if image is monochrome/B&W: check if all channels have very similar means
+    // and low saturation (difference between max and min channel mean < 15)
+    const channelDiff = Math.max(
+      Math.abs(channels[0].mean - channels[1].mean),
+      Math.abs(channels[1].mean - channels[2].mean),
+      Math.abs(channels[0].mean - channels[2].mean)
+    );
+    const isMonochrome = channelDiff < 15; // very low color difference = B&W or near-B&W
+    console.log(`[aiTraceRoute] Job ${jobId}: avgBrightness=${avgBrightness.toFixed(1)}, channelDiff=${channelDiff.toFixed(1)}, isMonochrome=${isMonochrome}`);
     // If average brightness < 80 (out of 255), image is dark — apply normalization
     const editSourceBuffer = avgBrightness < 80
       ? await sharp(rawResized)
@@ -547,6 +556,17 @@ async function runTraceJob(
             `Use only pure black (#000000) lines on pure white (#FFFFFF) background. No shading, no grey tones, no gradients. ` +
             `${singleLine ? SINGLE_LINE_STYLE : variation.style} ` +
             `No text, no letters, no numbers, no logos anywhere.`
+          )
+        : isMonochrome
+        ? (
+            // Monochrome/B&W source — strict tracing: preserve every line exactly as-is
+            `This image is already a black and white line drawing. ` +
+            `CRITICAL: Trace and reproduce the EXACT lines from this drawing — do NOT add, remove, or change any detail. ` +
+            `Keep every branch, leaf, stroke, and shape EXACTLY as shown in the original. ` +
+            `Convert to clean pure black (#000000) lines on pure white (#FFFFFF) background. ` +
+            `Remove any grey tones — make all lines fully black. Remove the background completely. ` +
+            `${singleLine ? SINGLE_LINE_STYLE : variation.style} ` +
+            `No text, no letters, no numbers, no logos, no watermarks anywhere.`
           )
         : (
             // General object prompt — gpt-image-1 edit
