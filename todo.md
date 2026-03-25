@@ -2357,3 +2357,9 @@
 
 - [x] זיהוי תמונת שחור-לבן בשרת (בדיקת saturation נמוך)
 - [x] prompt מחמיר לתמונות שחור-לבן: "trace existing lines exactly, do not add or remove details"
+
+## תיקון באגים - מרץ 2026 (דיווח משתמש)
+
+- [x] תיקון תצוגת דף רכישה על אייפון צר: padding, גריד, גדלי פונט מותאמים למסכים קטנים
+- [x] OAuth origin_mismatch: הוסבר למשתמש שיש להוסיף dxfai.ai ל-Authorized Origins ב-Google Cloud Console
+- [x] שם קובץ DXF ב-iOS Share Sheet: נבדק ונמצא תקין

@@ -458,7 +458,7 @@ export default function Buy() {
         >
           ← {t("back")}
         </button>
-        <h1 className="text-4xl md:text-5xl font-black mb-3 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-black mb-3 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
           {t("buyPageTitle")}
         </h1>
         <p className="text-blue-200 text-lg">{t("buyPageSubtitle")}</p>
@@ -490,7 +490,7 @@ export default function Buy() {
       </div>
 
       {/* Package cards */}
-      <div className="max-w-3xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+      <div className="max-w-3xl mx-auto px-3 sm:px-4 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-10">
         {packages.map((p) => {
           const pPrice = p.prices[currency] ?? p.prices["USD"];
           const pPerToken = (parseFloat(pPrice) / p.tokens).toFixed(2);
@@ -511,7 +511,7 @@ export default function Buy() {
             <div
               key={p.id}
               onClick={() => setSelectedPackage(p.id)}
-              className={`relative cursor-pointer rounded-2xl border-2 p-8 transition-all duration-200 select-none ${
+              className={`relative cursor-pointer rounded-2xl border-2 p-4 sm:p-8 transition-all duration-200 select-none ${
                 isSelected
                   ? "border-blue-400 bg-blue-600/20 shadow-xl shadow-blue-500/20 scale-[1.02]"
                   : "border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10"
@@ -547,15 +547,15 @@ export default function Buy() {
                     />
                   </div>
                 )}
-                <div className="text-6xl font-black mb-1 tabular-nums bg-gradient-to-b from-yellow-300 via-amber-400 to-orange-400 bg-clip-text text-transparent drop-shadow-lg">{p.tokens}</div>
+                <div className="text-5xl sm:text-6xl font-black mb-1 tabular-nums bg-gradient-to-b from-yellow-300 via-amber-400 to-orange-400 bg-clip-text text-transparent drop-shadow-lg">{p.tokens}</div>
                 <div className="text-blue-200 text-sm mb-5 uppercase tracking-widest">{t("buyTokensCount")}</div>
                 {discountedPrice ? (
                   <div className="mb-1">
-                    <span className="text-2xl text-blue-400/60 line-through mr-2">{symbol}{pPrice}</span>
-                    <span className="text-4xl font-bold text-green-300">{symbol}{discountedPrice}</span>
+                    <span className="text-xl sm:text-2xl text-blue-400/60 line-through mr-2">{symbol}{pPrice}</span>
+                    <span className="text-3xl sm:text-4xl font-bold text-green-300">{symbol}{discountedPrice}</span>
                   </div>
                 ) : (
-                  <div className="text-4xl font-bold mb-1">{symbol}{pPrice}</div>
+                  <div className="text-3xl sm:text-4xl font-bold mb-1">{symbol}{pPrice}</div>
                 )}
                 <div className="text-blue-300 text-xs mt-1">
                   {symbol}{discountedPrice ? (parseFloat(discountedPrice) / p.tokens).toFixed(2) : pPerToken} {t("buyPerToken")}
