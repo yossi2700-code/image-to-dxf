@@ -445,7 +445,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const { data: stats, isLoading: statsLoading } = trpc.admin.stats.useQuery();
   const { data: daily, isLoading: dailyLoading } = trpc.admin.dailyActivity.useQuery();
   const { data: recent, isLoading: recentLoading } = trpc.admin.recentEvents.useQuery();
-  const { data: visitorStats } = trpc.visitors.stats.useQuery();
+  const { data: visitorStats } = trpc.visitors.stats.useQuery({ days: 7 });
   const { data: registeredUsers, isLoading: usersLoading, refetch: refetchUsers } = trpc.admin.usersWithTokens.useQuery();
   const [activityTimeRange, setActivityTimeRange] = useState<"day" | "week" | "month" | "all">("day");
   const { data: userActionsData, isLoading: actionsLoading } = trpc.admin.userActions.useQuery({ timeRange: activityTimeRange });
@@ -546,8 +546,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email" | "campaign" | "bugs" | "subscriptions" | "news" | "failed_jobs" | "messages" | "issue_reports" | "analytics">("overview");
   const [analyticsDays, setAnalyticsDays] = useState(7);
   const { data: detailedVisitorStats, isLoading: analyticsLoading } = trpc.visitors.stats.useQuery(
-    { days: analyticsDays },
-    { enabled: activeSection === "analytics" || activeSection === "overview" }
+    { days: analyticsDays }
   );
 
   // ── Issue Reports ──
