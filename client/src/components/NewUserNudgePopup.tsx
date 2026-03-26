@@ -14,10 +14,11 @@ const DELAY_MS = 6000;
 
 interface NewUserNudgePopupProps {
   hasAnyAction: boolean;
+  hasPendingWelcomeBonus?: boolean;
   onSelectTab: (tab: string) => void;
 }
 
-export function NewUserNudgePopup({ hasAnyAction, onSelectTab }: NewUserNudgePopupProps) {
+export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSelectTab }: NewUserNudgePopupProps) {
   const { isRtl } = useLanguage();
   const [visible, setVisible] = useState(false);
   const [animIn, setAnimIn] = useState(false);
@@ -222,8 +223,14 @@ export function NewUserNudgePopup({ hasAnyAction, onSelectTab }: NewUserNudgePop
         </button>
       </div>
 
+      {/* Email bonus hint */}
+      {hasPendingWelcomeBonus && (
+        <p style={{ fontSize: 10, color: "rgba(251,191,36,0.85)", margin: "10px 0 0", textAlign: "center", lineHeight: 1.4 }}>
+          📧 {isHe ? "בדוק במייל — מחכים לך עוד 20 אסימונים" : "Check your email — 20 more tokens waiting"}
+        </p>
+      )}
       {/* Footer note */}
-      <p style={{ fontSize: 10, color: "rgba(196,181,253,0.6)", margin: "12px 0 0", textAlign: "center" }}>
+      <p style={{ fontSize: 10, color: "rgba(196,181,253,0.6)", margin: "6px 0 0", textAlign: "center" }}>
         {isHe ? "האסימונים לא פגים — השתמש בהם מתי שתרצה" : "Tokens never expire — use them whenever you want"}
       </p>
     </div>

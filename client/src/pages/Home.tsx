@@ -2717,15 +2717,7 @@ export default function Home() {
         {showWelcomeBanner && (
           <WelcomeBanner onDismiss={() => setShowWelcomeBanner(false)} />
         )}
-        {/* ── Pending Bonus Banner ── */}
-        {showBonusBanner && (
-          <p
-            className="text-center text-xs px-4 pt-2 pb-0"
-            style={{ color: 'rgba(99,102,241,0.85)' }}
-          >
-            📧 {isRtl ? 'היכנס למייל לקבל עוד 20 אסימונים' : 'Check your email to get 20 more tokens'}
-          </p>
-        )}
+        {/* ── Pending Bonus Banner — removed, shown inside nudge popup instead ── */}
         {/* ── Sale Banner ── */}
         <SaleBanner />
         {/* ── Announcement Banner ── */}
@@ -3169,10 +3161,11 @@ export default function Home() {
       <TokenPricingModal open={pricingModalOpen} onClose={() => setPricingModalOpen(false)} />
       {/* Onboarding Tour — only for logged-in users */}
       {!!appUser && <OnboardingTour />}
-      {/* New-user nudge popup — shows after 8s if user has never performed any action */}
+      {/* New-user nudge popup — shows after 6s if user has never performed any action */}
       {!!appUser && (
         <NewUserNudgePopup
           hasAnyAction={tokenData?.hasAnyAction ?? false}
+          hasPendingWelcomeBonus={tokenData?.hasPendingWelcomeBonus ?? false}
           onSelectTab={(tab) => {
             setActiveTab(tab);
             localStorage.setItem('active_tab', tab);

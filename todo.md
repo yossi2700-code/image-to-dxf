@@ -2436,3 +2436,5 @@
 - [x] Add new-user engagement popup: auto-show after 8s for users with full 10 tokens (never converted), with CTA to try the tool
 - [x] Remove "כל פעולה עולה אסימון אחד" text from nudge popup
 - [x] Replace welcome bonus banner with small subtle text "היכנס למייל לקבל עוד 20"
+- [x] Remove bonus banner entirely from Home.tsx (showBonusBanner section)
+- [x] Add small email bonus hint inside nudge popup for users with hasPendingWelcomeBonus
