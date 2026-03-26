@@ -2447,3 +2447,4 @@
 - [x] OnboardingTour: hide after 2 conversions (server-side actionCount)
 - [x] Nudge popup: show every login session until 1 action done (no localStorage, server-side only)
 - [x] Nudge popup mobile: smaller, centered on mobile
+- [x] Implement adaptive threshold preprocessing in aiTraceRoute for pencil/sketch images with non-uniform backgrounds
