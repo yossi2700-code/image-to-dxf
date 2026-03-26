@@ -19,6 +19,7 @@ import { FaceDetectTab } from "@/components/FaceDetectTab";
 import { CncReliefTab } from "@/components/CncReliefTab";
 import { AiProcessingAnimation } from "@/components/AiProcessingAnimation";
 import { OnboardingTour, resetOnboardingTour } from "@/components/OnboardingTour";
+import { NewUserNudgePopup } from "@/components/NewUserNudgePopup";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InsufficientTokensBanner } from "@/components/InsufficientTokensBanner";
 import { ReportIssueButton } from "@/components/ReportIssueButton";
@@ -3182,6 +3183,16 @@ export default function Home() {
       <TokenPricingModal open={pricingModalOpen} onClose={() => setPricingModalOpen(false)} />
       {/* Onboarding Tour — only for logged-in users */}
       {!!appUser && <OnboardingTour />}
+      {/* New-user nudge popup — shows after 8s if user has never converted */}
+      {!!appUser && (
+        <NewUserNudgePopup
+          tokenBalance={tokenBalance}
+          onSelectTab={(tab) => {
+            setActiveTab(tab);
+            localStorage.setItem('active_tab', tab);
+          }}
+        />
+      )}
     </div>
   );
 }

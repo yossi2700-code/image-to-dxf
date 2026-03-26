@@ -2433,3 +2433,4 @@
 ## באג: שגיאת SQL ב-visitors.stats (GROUP BY עם CASE)
 
 - [x] תיקון: MySQL לא תומך ב-GROUP BY עם COALESCE/CASE expressions — הוחלף ב-JavaScript aggregation
+- [x] Add new-user engagement popup: auto-show after 8s for users with full 10 tokens (never converted), with CTA to try the tool
