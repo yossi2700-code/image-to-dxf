@@ -2440,3 +2440,4 @@
 - [x] Add small email bonus hint inside nudge popup for users with hasPendingWelcomeBonus
 - [ ] Bug: nudge popup shows for users who already performed actions — fix hasAnyAction logic in tokens.balance procedure
 - [x] Bug: Portrait refunds tokens even when no tokens were charged (no face detected = refund without prior deduction)
+- [x] Improve AI Outline fidelity for B&W images: preserve small details (leaves, fine lines) by tuning Potrace turdSize and preprocessing

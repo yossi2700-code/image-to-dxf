@@ -659,13 +659,16 @@ async function runTraceJob(
           .png()
           .toBuffer();
       } else {
-        // Simple mode: standard pipeline
+        // Simple mode: minimal blur to preserve fine details (leaves, small shapes)
+        // blur(1.0) instead of 3.0 — just enough to remove single-pixel noise without merging nearby lines
+        // contrast boost first to make light grey lines visible before threshold
         processedBuffer = await sharp(rawBuffer)
           .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .grayscale()
-          .blur(3.0)
-          .threshold(160)
+          .linear(1.8, -30)            // mild contrast boost: darken lines without blowing out background
+          .blur(1.0)                   // minimal blur — removes single-pixel noise, preserves fine details
+          .threshold(155)              // slightly lower to catch more of the boosted dark pixels
           .png()
           .toBuffer();
       }
@@ -704,7 +707,7 @@ async function runTraceJob(
         // Detailed: lower turdSize keeps fine details; alphaMax 0.7 = rounder corners;
         // optTolerance 0.8 = more curve smoothing → smoother output lines
         ? { threshold: 128, turdSize: 32, alphaMax: 0.7, optCurve: true, optTolerance: 0.8 }
-        : { threshold: 128, turdSize: 160, alphaMax: 1.0, optCurve: true, optTolerance: 0.4 };
+        : { threshold: 128, turdSize: 48, alphaMax: 1.0, optCurve: true, optTolerance: 0.4 }; // reduced from 160 → preserves small details like individual leaves
 
       const rawSvg = await new Promise<string>((resolve, reject) => {
         potrace.trace(processedBuffer, potraceOptions, (err: Error | null, svg: string) => {
