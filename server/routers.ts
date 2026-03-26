@@ -1846,32 +1846,37 @@ export const appRouter = router({
 
   /** Visitor analytics */
   visitors: router({
-    /** Track a page visit (public, fire-and-forget) */
+    /** Track a page visit or behavior event (public, fire-and-forget) */
     track: publicProcedure
       .input(z.object({
         sessionId: z.string().max(64),
         page: z.string().max(256).default("/"),
         referrer: z.string().max(512).optional(),
         userAgent: z.string().max(256).optional(),
+        utmSource: z.string().max(128).optional(),
+        utmMedium: z.string().max(128).optional(),
+        utmCampaign: z.string().max(128).optional(),
+        device: z.string().max(16).optional(),
+        browser: z.string().max(32).optional(),
+        eventType: z.string().max(32).default("pageview"),
+        element: z.string().max(64).optional(),
+        timeOnPageSec: z.number().int().optional(),
+        bounced: z.number().int().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         try {
           const db = await getDb();
           if (!db) return { ok: true };
-          // Get app user if logged in
           const appUserCookie = getAppUserFromCookie((ctx.req as { cookies?: Record<string, string> }).cookies);
-          // Anonymize IP (keep first 3 octets)
           const rawIp = getClientIp(ctx.req as Parameters<typeof getClientIp>[0]);
           const ipParts = rawIp.split(".");
           const ipAnon = ipParts.length >= 3 ? ipParts.slice(0, 3).join(".") : rawIp.substring(0, 15);
-          // Detect country from IP — store 2-letter ISO code, display in Hebrew on read
           let country: string | null = null;
           try {
             const cfCountry = (ctx.req.headers as Record<string, string | string[] | undefined>)["cf-ipcountry"];
             if (cfCountry && typeof cfCountry === "string" && cfCountry.length === 2 && cfCountry !== "XX") {
               country = cfCountry.toUpperCase();
             } else if (rawIp && rawIp !== "unknown" && !rawIp.startsWith("127.") && !rawIp.startsWith("::1") && !rawIp.startsWith("10.") && !rawIp.startsWith("192.168.")) {
-              // Use ip-api.com free tier (45 req/min, no key needed) — only fetch countryCode
               const geoRes = await fetch(`http://ip-api.com/json/${encodeURIComponent(rawIp)}?fields=countryCode`, {
                 signal: AbortSignal.timeout(3000),
               });
@@ -1882,7 +1887,7 @@ export const appRouter = router({
                 }
               }
             }
-          } catch { /* ignore — geolocation is best-effort */ }
+          } catch { /* ignore */ }
           await db.insert(visitorEvents).values({
             sessionId: input.sessionId,
             appUserId: appUserCookie?.userId ?? null,
@@ -1891,60 +1896,182 @@ export const appRouter = router({
             ipAnon,
             referrer: input.referrer ?? null,
             userAgent: input.userAgent?.substring(0, 256) ?? null,
+            utmSource: input.utmSource ?? null,
+            utmMedium: input.utmMedium ?? null,
+            utmCampaign: input.utmCampaign ?? null,
+            device: input.device ?? null,
+            browser: input.browser ?? null,
+            eventType: input.eventType,
+            element: input.element ?? null,
+            timeOnPageSec: input.timeOnPageSec ?? null,
+            bounced: input.bounced ?? 0,
           });
         } catch { /* fire-and-forget, never throw */ }
         return { ok: true };
       }),
     /** Get visitor analytics (admin only) */
-    stats: adminProcedure.query(async () => {
-      const db = await getDb();
-      if (!db) return { total: 0, today: 0, byCountry: [], byPage: [], recentSessions: 0 };
-      const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const [totalRow] = await db.select({ count: sql<number>`COUNT(*)` }).from(visitorEvents);
-      const [todayRow] = await db.select({ count: sql<number>`COUNT(*)` }).from(visitorEvents)
-        .where(sql`${visitorEvents.createdAt} >= ${todayStart}`);
-      const byCountry = await db.select({
-        country: visitorEvents.country,
-        count: sql<number>`COUNT(*)`,
-      }).from(visitorEvents)
-        .where(sql`${visitorEvents.createdAt} >= ${weekStart}`)
-        .groupBy(visitorEvents.country)
-        .orderBy(sql`COUNT(*) DESC`)
-        .limit(20);
-      const byPage = await db.select({
-        page: visitorEvents.page,
-        count: sql<number>`COUNT(*)`,
-      }).from(visitorEvents)
-        .where(sql`${visitorEvents.createdAt} >= ${weekStart}`)
-        .groupBy(visitorEvents.page)
-        .orderBy(sql`COUNT(*) DESC`)
-        .limit(20);
-      const [uniqueSessionsRow] = await db.select({ count: sql<number>`COUNT(DISTINCT ${visitorEvents.sessionId})` })
-        .from(visitorEvents)
-        .where(sql`${visitorEvents.createdAt} >= ${weekStart}`);
-      return {
-        total: Number(totalRow?.count ?? 0),
-        today: Number(todayRow?.count ?? 0),
-        byCountry: byCountry.map(r => {
-          const raw = r.country ?? null;
-          if (!raw) return { country: "לא ידוע", count: Number(r.count) };
-          // 2-letter ISO code — convert to Hebrew name + flag emoji
-          if (raw.length === 2) {
-            return { country: getHebrewCountryDisplay(raw), count: Number(r.count) };
-          }
-          // Legacy "HE_NAME|CODE" format from previous version
-          if (raw.includes("|")) {
-            const [, code] = raw.split("|");
-            return { country: code ? getHebrewCountryDisplay(code) : raw, count: Number(r.count) };
-          }
-          return { country: raw, count: Number(r.count) };
-        }),
-        byPage: byPage.map(r => ({ page: r.page, count: Number(r.count) })),
-        recentSessions: Number(uniqueSessionsRow?.count ?? 0),
-      };
-    }),
+    stats: adminProcedure
+      .input(z.object({ days: z.number().int().min(1).max(90).default(7) }).optional())
+      .query(async ({ input }) => {
+        const db = await getDb();
+        const days = input?.days ?? 7;
+        if (!db) return { total: 0, today: 0, byCountry: [], byPage: [], recentSessions: 0, bySource: [], byDevice: [], byBrowser: [], bounceRate: 0, avgTimeOnPage: 0, funnelData: [], dailyVisits: [] };
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const rangeStart = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+        // Total pageviews
+        const [totalRow] = await db.select({ count: sql<number>`COUNT(*)` }).from(visitorEvents);
+        const [todayRow] = await db.select({ count: sql<number>`COUNT(*)` }).from(visitorEvents)
+          .where(sql`${visitorEvents.createdAt} >= ${todayStart}`);
+
+        // Unique sessions in range
+        const [uniqueSessionsRow] = await db.select({ count: sql<number>`COUNT(DISTINCT ${visitorEvents.sessionId})` })
+          .from(visitorEvents).where(sql`${visitorEvents.createdAt} >= ${rangeStart}`);
+
+        // By country
+        const byCountry = await db.select({
+          country: visitorEvents.country,
+          count: sql<number>`COUNT(DISTINCT ${visitorEvents.sessionId})`,
+        }).from(visitorEvents)
+          .where(sql`${visitorEvents.createdAt} >= ${rangeStart}`)
+          .groupBy(visitorEvents.country)
+          .orderBy(sql`COUNT(DISTINCT ${visitorEvents.sessionId}) DESC`).limit(20);
+
+        // By page
+        const byPage = await db.select({
+          page: visitorEvents.page,
+          count: sql<number>`COUNT(DISTINCT ${visitorEvents.sessionId})`,
+        }).from(visitorEvents)
+          .where(sql`${visitorEvents.createdAt} >= ${rangeStart} AND ${visitorEvents.eventType} = 'pageview'`)
+          .groupBy(visitorEvents.page)
+          .orderBy(sql`COUNT(DISTINCT ${visitorEvents.sessionId}) DESC`).limit(20);
+
+        // By traffic source (referrer/UTM)
+        const bySource = await db.select({
+          source: sql<string>`COALESCE(NULLIF(${visitorEvents.utmSource}, ''), 
+            CASE 
+              WHEN ${visitorEvents.referrer} LIKE '%google%' THEN 'Google'
+              WHEN ${visitorEvents.referrer} LIKE '%facebook%' OR ${visitorEvents.referrer} LIKE '%fb.com%' THEN 'Facebook'
+              WHEN ${visitorEvents.referrer} LIKE '%instagram%' THEN 'Instagram'
+              WHEN ${visitorEvents.referrer} LIKE '%whatsapp%' THEN 'WhatsApp'
+              WHEN ${visitorEvents.referrer} LIKE '%twitter%' OR ${visitorEvents.referrer} LIKE '%t.co%' THEN 'Twitter/X'
+              WHEN ${visitorEvents.referrer} LIKE '%linkedin%' THEN 'LinkedIn'
+              WHEN ${visitorEvents.referrer} LIKE '%youtube%' THEN 'YouTube'
+              WHEN ${visitorEvents.referrer} IS NULL OR ${visitorEvents.referrer} = '' THEN 'ישיר'
+              ELSE 'אחר'
+            END)`,
+          count: sql<number>`COUNT(DISTINCT ${visitorEvents.sessionId})`,
+        }).from(visitorEvents)
+          .where(sql`${visitorEvents.createdAt} >= ${rangeStart}`)
+          .groupBy(sql`COALESCE(NULLIF(${visitorEvents.utmSource}, ''), 
+            CASE 
+              WHEN ${visitorEvents.referrer} LIKE '%google%' THEN 'Google'
+              WHEN ${visitorEvents.referrer} LIKE '%facebook%' OR ${visitorEvents.referrer} LIKE '%fb.com%' THEN 'Facebook'
+              WHEN ${visitorEvents.referrer} LIKE '%instagram%' THEN 'Instagram'
+              WHEN ${visitorEvents.referrer} LIKE '%whatsapp%' THEN 'WhatsApp'
+              WHEN ${visitorEvents.referrer} LIKE '%twitter%' OR ${visitorEvents.referrer} LIKE '%t.co%' THEN 'Twitter/X'
+              WHEN ${visitorEvents.referrer} LIKE '%linkedin%' THEN 'LinkedIn'
+              WHEN ${visitorEvents.referrer} LIKE '%youtube%' THEN 'YouTube'
+              WHEN ${visitorEvents.referrer} IS NULL OR ${visitorEvents.referrer} = '' THEN 'ישיר'
+              ELSE 'אחר'
+            END)`)
+          .orderBy(sql`COUNT(DISTINCT ${visitorEvents.sessionId}) DESC`).limit(15);
+
+        // By device
+        const byDevice = await db.select({
+          device: visitorEvents.device,
+          count: sql<number>`COUNT(DISTINCT ${visitorEvents.sessionId})`,
+        }).from(visitorEvents)
+          .where(sql`${visitorEvents.createdAt} >= ${rangeStart}`)
+          .groupBy(visitorEvents.device)
+          .orderBy(sql`COUNT(DISTINCT ${visitorEvents.sessionId}) DESC`);
+
+        // By browser
+        const byBrowser = await db.select({
+          browser: visitorEvents.browser,
+          count: sql<number>`COUNT(DISTINCT ${visitorEvents.sessionId})`,
+        }).from(visitorEvents)
+          .where(sql`${visitorEvents.createdAt} >= ${rangeStart}`)
+          .groupBy(visitorEvents.browser)
+          .orderBy(sql`COUNT(DISTINCT ${visitorEvents.sessionId}) DESC`).limit(10);
+
+        // Bounce rate (sessions with bounced=1)
+        const [bouncedRow] = await db.select({ count: sql<number>`COUNT(DISTINCT ${visitorEvents.sessionId})` })
+          .from(visitorEvents)
+          .where(sql`${visitorEvents.createdAt} >= ${rangeStart} AND ${visitorEvents.bounced} = 1`);
+        const bounceRate = uniqueSessionsRow?.count > 0
+          ? Math.round((Number(bouncedRow?.count ?? 0) / Number(uniqueSessionsRow.count)) * 100)
+          : 0;
+
+        // Avg time on page (only non-null, non-zero)
+        const [avgTimeRow] = await db.select({ avg: sql<number>`AVG(${visitorEvents.timeOnPageSec})` })
+          .from(visitorEvents)
+          .where(sql`${visitorEvents.createdAt} >= ${rangeStart} AND ${visitorEvents.timeOnPageSec} IS NOT NULL AND ${visitorEvents.timeOnPageSec} > 0`);
+
+        // Funnel: count unique sessions that reached each step
+        const funnelSteps = ['pageview', 'upload', 'convert', 'download', 'buy_click', 'register'];
+        const funnelData = await Promise.all(funnelSteps.map(async (step) => {
+          const [row] = await db.select({ count: sql<number>`COUNT(DISTINCT ${visitorEvents.sessionId})` })
+            .from(visitorEvents)
+            .where(sql`${visitorEvents.createdAt} >= ${rangeStart} AND ${visitorEvents.eventType} = ${step}`);
+          return { step, count: Number(row?.count ?? 0) };
+        }));
+
+        // Daily visits (last N days)
+        const dailyVisits = await db.select({
+          date: sql<string>`DATE(${visitorEvents.createdAt})`,
+          sessions: sql<number>`COUNT(DISTINCT ${visitorEvents.sessionId})`,
+          pageviews: sql<number>`COUNT(*)`,
+        }).from(visitorEvents)
+          .where(sql`${visitorEvents.createdAt} >= ${rangeStart} AND ${visitorEvents.eventType} = 'pageview'`)
+          .groupBy(sql`DATE(${visitorEvents.createdAt})`)
+          .orderBy(sql`DATE(${visitorEvents.createdAt}) ASC`);
+
+        // Recent sessions list (last 50)
+        const recentSessionsList = await db.select({
+          sessionId: visitorEvents.sessionId,
+          country: visitorEvents.country,
+          device: visitorEvents.device,
+          browser: visitorEvents.browser,
+          referrer: visitorEvents.referrer,
+          utmSource: visitorEvents.utmSource,
+          page: visitorEvents.page,
+          timeOnPageSec: visitorEvents.timeOnPageSec,
+          bounced: visitorEvents.bounced,
+          appUserId: visitorEvents.appUserId,
+          createdAt: visitorEvents.createdAt,
+        }).from(visitorEvents)
+          .where(sql`${visitorEvents.createdAt} >= ${rangeStart} AND ${visitorEvents.eventType} = 'pageview'`)
+          .orderBy(desc(visitorEvents.createdAt))
+          .limit(50);
+
+        return {
+          total: Number(totalRow?.count ?? 0),
+          today: Number(todayRow?.count ?? 0),
+          recentSessions: Number(uniqueSessionsRow?.count ?? 0),
+          bounceRate,
+          avgTimeOnPage: Math.round(Number(avgTimeRow?.avg ?? 0)),
+          byCountry: byCountry.map(r => {
+            const raw = r.country ?? null;
+            if (!raw) return { country: 'לא ידוע', count: Number(r.count) };
+            if (raw.length === 2) return { country: getHebrewCountryDisplay(raw), count: Number(r.count) };
+            if (raw.includes('|')) { const [, code] = raw.split('|'); return { country: code ? getHebrewCountryDisplay(code) : raw, count: Number(r.count) }; }
+            return { country: raw, count: Number(r.count) };
+          }),
+          byPage: byPage.map(r => ({ page: r.page, count: Number(r.count) })),
+          bySource: bySource.map(r => ({ source: r.source ?? 'ישיר', count: Number(r.count) })),
+          byDevice: byDevice.map(r => ({ device: r.device ?? 'לא ידוע', count: Number(r.count) })),
+          byBrowser: byBrowser.map(r => ({ browser: r.browser ?? 'לא ידוע', count: Number(r.count) })),
+          funnelData,
+          dailyVisits: dailyVisits.map(r => ({ date: r.date, sessions: Number(r.sessions), pageviews: Number(r.pageviews) })),
+          recentSessionsList: recentSessionsList.map(r => ({
+            ...r,
+            country: r.country ? (r.country.length === 2 ? getHebrewCountryDisplay(r.country) : r.country) : 'לא ידוע',
+            createdAt: r.createdAt.toISOString(),
+          })),
+        };
+      }),
   }),
 
   // ── Issue Reports ─────────────────────────────────────────────────────────────

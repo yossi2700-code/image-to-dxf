@@ -1,0 +1,9 @@
+{
+  "query": "\nALTER TABLE visitor_events \n  ADD COLUMN IF NOT EXISTS utmSource varchar(128) NULL,\n  ADD COLUMN IF NOT EXISTS utmMedium varchar(128) NULL,\n  ADD COLUMN IF NOT EXISTS utmCampaign varchar(128) NULL,\n  ADD COLUMN IF NOT EXISTS device varchar(16) NULL,\n  ADD COLUMN IF NOT EXISTS browser varchar(32) NULL,\n  ADD COLUMN IF NOT EXISTS eventType varchar(32) NOT NULL DEFAULT 'pageview',\n  ADD COLUMN IF NOT EXISTS element varchar(64) NULL,\n  ADD COLUMN IF NOT EXISTS timeOnPageSec int NULL,\n  ADD COLUMN IF NOT EXISTS bounced int DEFAULT 0;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nALTER TABLE visitor_events \n  ADD COLUMN IF NOT EXISTS utmSource varchar(128) NULL,\n  ADD COLUMN IF NOT EXISTS utmMedium varchar(128) NULL,\n  ADD COLUMN IF NOT EXISTS utmCampaign varchar(128) NULL,\n  ADD COLUMN IF NOT EXISTS device varchar(16) NULL,\n  ADD COLUMN IF NOT EXISTS browser varchar(32) NULL,\n  ADD COLUMN IF NOT EXISTS eventType varchar(32) NOT NULL DEFAULT 'pageview',\n  ADD COLUMN IF NOT EXISTS element varchar(64) NULL,\n  ADD COLUMN IF NOT EXISTS timeOnPageSec int NULL,\n  ADD COLUMN IF NOT EXISTS bounced int DEFAULT 0;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 8403
+}

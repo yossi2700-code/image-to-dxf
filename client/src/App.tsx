@@ -50,25 +50,130 @@ function getOrCreateSessionId(): string {
   return id;
 }
 
+/** Detect device type from userAgent */
+function detectDevice(): string {
+  const ua = navigator.userAgent.toLowerCase();
+  if (/tablet|ipad|playbook|silk/.test(ua)) return 'tablet';
+  if (/mobile|iphone|ipod|android|blackberry|opera mini|windows phone/.test(ua)) return 'mobile';
+  return 'desktop';
+}
+
+/** Detect browser name */
+function detectBrowser(): string {
+  const ua = navigator.userAgent;
+  if (/Edg\//.test(ua)) return 'Edge';
+  if (/OPR\/|Opera/.test(ua)) return 'Opera';
+  if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) return 'Chrome';
+  if (/Firefox\//.test(ua)) return 'Firefox';
+  if (/Safari\//.test(ua) && !/Chrome/.test(ua)) return 'Safari';
+  return 'Other';
+}
+
+/** Parse UTM params from URL */
+function getUtmParams() {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    utmSource: params.get('utm_source') ?? undefined,
+    utmMedium: params.get('utm_medium') ?? undefined,
+    utmCampaign: params.get('utm_campaign') ?? undefined,
+  };
+}
+
 /** Tracks page visits for analytics — renders nothing */
 function VisitorTracker() {
   const [location] = useLocation();
   const trackMutation = trpc.visitors.track.useMutation();
   const lastTracked = useRef("");
+  const pageEntryTime = useRef<number>(Date.now());
+  const hasInteracted = useRef(false);
+
+  // Track clicks on key elements
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      hasInteracted.current = true;
+      const target = e.target as HTMLElement;
+      const btn = target.closest('[data-track]') as HTMLElement | null;
+      if (!btn) return;
+      const element = btn.getAttribute('data-track');
+      if (!element) return;
+      const sessionId = getOrCreateSessionId();
+      trackMutation.mutate({
+        sessionId,
+        page: window.location.pathname,
+        eventType: 'click',
+        element,
+        ...getUtmParams(),
+        device: detectDevice(),
+        browser: detectBrowser(),
+      });
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     // Don't track admin pages
     if (location.startsWith("/admin")) return;
     // Debounce: don't track same page twice in a row
     if (lastTracked.current === location) return;
+
+    // Record time-on-page for previous page before tracking new one
+    if (lastTracked.current) {
+      const timeOnPage = Math.round((Date.now() - pageEntryTime.current) / 1000);
+      const bounced = !hasInteracted.current ? 1 : 0;
+      const sessionId = getOrCreateSessionId();
+      trackMutation.mutate({
+        sessionId,
+        page: lastTracked.current,
+        eventType: 'bounce',
+        timeOnPageSec: timeOnPage,
+        bounced,
+        device: detectDevice(),
+        browser: detectBrowser(),
+      });
+    }
+
     lastTracked.current = location;
+    pageEntryTime.current = Date.now();
+    hasInteracted.current = false;
+
     const sessionId = getOrCreateSessionId();
     trackMutation.mutate({
       sessionId,
       page: location,
+      eventType: 'pageview',
       referrer: document.referrer ? document.referrer.substring(0, 512) : undefined,
       userAgent: navigator.userAgent.substring(0, 256),
+      device: detectDevice(),
+      browser: detectBrowser(),
+      ...getUtmParams(),
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location]);
+
+  // Track time-on-page when user leaves the site
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (location.startsWith("/admin")) return;
+      const timeOnPage = Math.round((Date.now() - pageEntryTime.current) / 1000);
+      const bounced = !hasInteracted.current ? 1 : 0;
+      const sessionId = getOrCreateSessionId();
+      // Use sendBeacon for reliability on page unload
+      const payload = JSON.stringify({
+        sessionId,
+        page: location,
+        eventType: 'bounce',
+        timeOnPageSec: timeOnPage,
+        bounced,
+        device: detectDevice(),
+        browser: detectBrowser(),
+      });
+      // Fire-and-forget via trpc mutation (best effort)
+      trackMutation.mutate(JSON.parse(payload));
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
 

@@ -262,6 +262,7 @@ export function ExportButtons({
         <button
           id="tour-download"
           onClick={onMoreOptions}
+          data-track="download"
           className="flex flex-col items-center justify-center gap-1.5 py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]"
           style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: "white", border: "none", boxShadow: "0 4px 14px rgba(5,150,105,0.35)" }}
         >

@@ -543,7 +543,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     return result;
   })();
 
-  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email" | "campaign" | "bugs" | "subscriptions" | "news" | "failed_jobs" | "messages" | "issue_reports">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email" | "campaign" | "bugs" | "subscriptions" | "news" | "failed_jobs" | "messages" | "issue_reports" | "analytics">("overview");
+  const [analyticsDays, setAnalyticsDays] = useState(7);
+  const { data: detailedVisitorStats, isLoading: analyticsLoading } = trpc.visitors.stats.useQuery(
+    { days: analyticsDays },
+    { enabled: activeSection === "analytics" || activeSection === "overview" }
+  );
 
   // ── Issue Reports ──
   const [issueStatusFilter, setIssueStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending");
@@ -811,6 +816,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
   const NAV_ITEMS = [
     { id: "overview", label: "סקירה כללית", shortLabel: "סקירה", icon: TrendingUp, color: "#3b82f6" },
+    { id: "analytics", label: "אנליטיקס", shortLabel: "אנליטיקס", icon: Globe, color: "#0891b2" },
     { id: "activity", label: "פעילות", shortLabel: "פעילות", icon: Activity, color: "#10b981" },
     { id: "users", label: "משתמשים", shortLabel: "משתמשים", icon: Users, color: "#8b5cf6" },
     { id: "subscriptions", label: "מנויים", shortLabel: "מנויים", icon: Crown, color: "#f59e0b" },
@@ -1178,6 +1184,209 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           </CardContent>
         </Card>
           </>
+        )}
+
+        {/* ── ANALYTICS SECTION ── */}
+        {activeSection === "analytics" && (
+          <div className="space-y-4">
+            {/* Header + Day Range Selector */}
+            <Card className="overflow-hidden" style={{ borderRadius: 16 }}>
+              <CardHeader className="pb-3" style={{ background: 'linear-gradient(135deg, #0c4a6e 0%, #0369a1 100%)' }}>
+                <CardTitle className="text-base font-semibold flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-white">
+                    <Globe className="w-4 h-4" />
+                    אנליטיקס מבקרים מפורטת
+                  </span>
+                  <div className="flex gap-1">
+                    {[7, 14, 30, 90].map(d => (
+                      <button key={d} onClick={() => setAnalyticsDays(d)}
+                        className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all"
+                        style={{
+                          background: analyticsDays === d ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)',
+                          color: analyticsDays === d ? 'white' : 'rgba(186,230,253,0.8)',
+                          border: `1px solid ${analyticsDays === d ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.15)'}`,
+                        }}
+                      >{d}י</button>
+                    ))}
+                  </div>
+                </CardTitle>
+              </CardHeader>
+            </Card>
+
+            {analyticsLoading ? (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {[...Array(4)].map((_, i) => <Card key={i}><CardContent className="p-5"><div className="h-16 bg-muted animate-pulse rounded-lg" /></CardContent></Card>)}
+              </div>
+            ) : detailedVisitorStats ? (
+              <>
+                {/* KPI Cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <StatCard icon={Globe} label="סשנות ייחודיות" value={detailedVisitorStats.recentSessions} sub={`ב-${analyticsDays} ימים אחרונים`} color="#0891b2" bgColor="#e0f2fe" />
+                  <StatCard icon={Activity} label="היום" value={detailedVisitorStats.today} sub="ביקורים היום" color="#2563eb" bgColor="#dbeafe" />
+                  <StatCard icon={Timer} label="זמן ממוצע בדף" value={`${detailedVisitorStats.avgTimeOnPage}ש"`} sub="שניות" color="#059669" bgColor="#d1fae5" />
+                  <StatCard icon={TrendingUp} label="שיעור נטישה" value={`${detailedVisitorStats.bounceRate}%`} sub="יצאו ללא פעולה" color={detailedVisitorStats.bounceRate > 70 ? "#ef4444" : detailedVisitorStats.bounceRate > 40 ? "#f59e0b" : "#10b981"} bgColor={detailedVisitorStats.bounceRate > 70 ? "#fee2e2" : detailedVisitorStats.bounceRate > 40 ? "#fef3c7" : "#d1fae5"} />
+                </div>
+
+                {/* Daily Visits Chart */}
+                {detailedVisitorStats.dailyVisits.length > 0 && (
+                  <Card style={{ borderRadius: 16 }}>
+                    <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">ביקורים יומיים</CardTitle></CardHeader>
+                    <CardContent className="p-4">
+                      <ResponsiveContainer width="100%" height={180}>
+                        <BarChart data={detailedVisitorStats.dailyVisits} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                          <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v: string) => v.slice(5)} />
+                          <YAxis tick={{ fontSize: 10 }} />
+                          <Tooltip formatter={(v: number, n: string) => [v, n === 'sessions' ? 'סשנות' : 'צפייות']} />
+                          <Legend formatter={(v: string) => v === 'sessions' ? 'סשנות ייחודיות' : 'צפייות דף'} />
+                          <Bar dataKey="sessions" fill="#0891b2" radius={[4,4,0,0]} />
+                          <Bar dataKey="pageviews" fill="#bae6fd" radius={[4,4,0,0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Funnel */}
+                {detailedVisitorStats.funnelData.length > 0 && (
+                  <Card style={{ borderRadius: 16 }}>
+                    <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">משפך המשתמש — סשנות ייחודיות</CardTitle></CardHeader>
+                    <CardContent className="p-4">
+                      {(() => {
+                        const labels: Record<string, string> = { pageview: 'כניסה לאתר', upload: 'העלאת תמונה', convert: 'המרה', download: 'הורדת DXF', buy_click: 'לחיצה על קנייה', register: 'הרשמה' };
+                        const maxVal = Math.max(...detailedVisitorStats.funnelData.map(f => f.count), 1);
+                        return detailedVisitorStats.funnelData.map((f, i) => (
+                          <div key={f.step} className="mb-2">
+                            <div className="flex items-center justify-between text-xs mb-1">
+                              <span className="font-medium text-slate-700">{i + 1}. {labels[f.step] ?? f.step}</span>
+                              <span className="font-bold text-slate-900">{f.count.toLocaleString()}</span>
+                            </div>
+                            <div className="h-6 bg-slate-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full rounded-full transition-all duration-500 flex items-center justify-end pr-2"
+                                style={{ width: `${Math.max((f.count / maxVal) * 100, 2)}%`, background: `hsl(${200 - i * 25}, 80%, ${50 + i * 5}%)` }}
+                              >
+                                {f.count > 0 && <span className="text-white text-xs font-bold">{maxVal > 0 ? Math.round((f.count / maxVal) * 100) : 0}%</span>}
+                              </div>
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Sources + Devices + Countries grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Traffic Sources */}
+                  <Card style={{ borderRadius: 16 }}>
+                    <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">מקורות תנועה</CardTitle></CardHeader>
+                    <CardContent className="p-4 space-y-2">
+                      {detailedVisitorStats.bySource.slice(0, 8).map(s => (
+                        <div key={s.source} className="flex items-center justify-between text-xs">
+                          <span className="font-medium text-slate-700 truncate max-w-[140px]">{s.source}</span>
+                          <span className="font-bold text-slate-900 shrink-0">{s.count}</span>
+                        </div>
+                      ))}
+                      {detailedVisitorStats.bySource.length === 0 && <p className="text-xs text-muted-foreground">אין נתונים</p>}
+                    </CardContent>
+                  </Card>
+
+                  {/* Devices */}
+                  <Card style={{ borderRadius: 16 }}>
+                    <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">מכשירים</CardTitle></CardHeader>
+                    <CardContent className="p-4 space-y-2">
+                      {detailedVisitorStats.byDevice.map(d => (
+                        <div key={d.device} className="flex items-center justify-between text-xs">
+                          <span className="font-medium text-slate-700">{d.device === 'desktop' ? 'מחשב' : d.device === 'mobile' ? 'פלאפון' : d.device === 'tablet' ? 'טאבלט' : d.device}</span>
+                          <span className="font-bold text-slate-900">{d.count}</span>
+                        </div>
+                      ))}
+                      {detailedVisitorStats.byDevice.length === 0 && <p className="text-xs text-muted-foreground">אין נתונים</p>}
+                    </CardContent>
+                  </Card>
+
+                  {/* Countries */}
+                  <Card style={{ borderRadius: 16 }}>
+                    <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">מדינות</CardTitle></CardHeader>
+                    <CardContent className="p-4 space-y-2">
+                      {detailedVisitorStats.byCountry.slice(0, 8).map(c => (
+                        <div key={c.country} className="flex items-center justify-between text-xs">
+                          <span className="font-medium text-slate-700 truncate max-w-[140px]">{c.country}</span>
+                          <span className="font-bold text-slate-900 shrink-0">{c.count}</span>
+                        </div>
+                      ))}
+                      {detailedVisitorStats.byCountry.length === 0 && <p className="text-xs text-muted-foreground">אין נתונים</p>}
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Browsers + Pages */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card style={{ borderRadius: 16 }}>
+                    <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">דפדפנים</CardTitle></CardHeader>
+                    <CardContent className="p-4 space-y-2">
+                      {detailedVisitorStats.byBrowser.map(b => (
+                        <div key={b.browser} className="flex items-center justify-between text-xs">
+                          <span className="font-medium text-slate-700">{b.browser}</span>
+                          <span className="font-bold text-slate-900">{b.count}</span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                  <Card style={{ borderRadius: 16 }}>
+                    <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">עמודים פופולריים</CardTitle></CardHeader>
+                    <CardContent className="p-4 space-y-2">
+                      {detailedVisitorStats.byPage.slice(0, 8).map(p => (
+                        <div key={p.page} className="flex items-center justify-between text-xs">
+                          <span className="font-mono text-slate-600 truncate max-w-[200px]">{p.page || '/'}</span>
+                          <span className="font-bold text-slate-900 shrink-0">{p.count}</span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Recent Sessions Table */}
+                {detailedVisitorStats.recentSessionsList && detailedVisitorStats.recentSessionsList.length > 0 && (
+                  <Card style={{ borderRadius: 16 }}>
+                    <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">סשנות אחרונות (50 אחרונות)</CardTitle></CardHeader>
+                    <CardContent className="p-0">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="border-b bg-slate-50">
+                              <th className="text-right p-2 font-semibold text-slate-600">זמן</th>
+                              <th className="text-right p-2 font-semibold text-slate-600">מדינה</th>
+                              <th className="text-right p-2 font-semibold text-slate-600">מכשיר</th>
+                              <th className="text-right p-2 font-semibold text-slate-600">דפדפן</th>
+                              <th className="text-right p-2 font-semibold text-slate-600">מקור</th>
+                              <th className="text-right p-2 font-semibold text-slate-600">עמוד</th>
+                              <th className="text-right p-2 font-semibold text-slate-600">זמן בדף</th>
+                              <th className="text-right p-2 font-semibold text-slate-600">נטש?</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {detailedVisitorStats.recentSessionsList.map((s, i) => (
+                              <tr key={`${s.sessionId}-${i}`} className="border-b hover:bg-slate-50 transition-colors">
+                                <td className="p-2 text-slate-500">{new Date(s.createdAt).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+                                <td className="p-2">{s.country}</td>
+                                <td className="p-2">{s.device === 'desktop' ? 'מחשב' : s.device === 'mobile' ? 'פלאפון' : s.device === 'tablet' ? 'טאבלט' : s.device ?? '-'}</td>
+                                <td className="p-2">{s.browser ?? '-'}</td>
+                                <td className="p-2 max-w-[100px] truncate" title={s.utmSource ?? s.referrer ?? ''}>{s.utmSource ?? (s.referrer ? (s.referrer.includes('google') ? 'Google' : s.referrer.includes('facebook') ? 'Facebook' : 'אחר') : 'ישיר')}</td>
+                                <td className="p-2 font-mono">{s.page}</td>
+                                <td className="p-2">{s.timeOnPageSec != null ? `${s.timeOnPageSec}ש"` : '-'}</td>
+                                <td className="p-2">{s.bounced ? <span className="text-red-500 font-bold">כן</span> : <span className="text-green-600">לא</span>}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            ) : null}
+          </div>
         )}
 
         {/* ── ACTIVITY SECTION ── */}

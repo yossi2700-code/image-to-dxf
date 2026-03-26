@@ -469,7 +469,7 @@ export const failedJobs = mysqlTable("failed_jobs", {
 export type FailedJob = typeof failedJobs.$inferSelect;
 export type InsertFailedJob = typeof failedJobs.$inferInsert;
 
-// Visitor analytics — tracks page visits by non-registered and registered users
+// Visitor analytics — tracks page visits and behavior events
 export const visitorEvents = mysqlTable("visitor_events", {
   id: int("id").autoincrement().primaryKey(),
   /** Session ID (random UUID, stored in localStorage) */
@@ -484,8 +484,26 @@ export const visitorEvents = mysqlTable("visitor_events", {
   ipAnon: varchar("ipAnon", { length: 20 }),
   /** Referrer URL (truncated) */
   referrer: varchar("referrer", { length: 512 }),
+  /** UTM source (e.g. google, facebook, email) */
+  utmSource: varchar("utmSource", { length: 128 }),
+  /** UTM medium (e.g. cpc, organic, social) */
+  utmMedium: varchar("utmMedium", { length: 128 }),
+  /** UTM campaign */
+  utmCampaign: varchar("utmCampaign", { length: 128 }),
   /** User-agent string (truncated) */
   userAgent: varchar("userAgent", { length: 256 }),
+  /** Device type: desktop | mobile | tablet */
+  device: varchar("device", { length: 16 }),
+  /** Browser name: Chrome | Firefox | Safari | Edge | Other */
+  browser: varchar("browser", { length: 32 }),
+  /** Event type: pageview | click | upload | convert | download | register | buy_click | bounce */
+  eventType: varchar("eventType", { length: 32 }).notNull().default("pageview"),
+  /** Element clicked or action taken (e.g. 'btn_upload', 'btn_buy') */
+  element: varchar("element", { length: 64 }),
+  /** Time spent on page in seconds (set on leave/bounce) */
+  timeOnPageSec: int("timeOnPageSec"),
+  /** Whether this was a bounce (left without any interaction) */
+  bounced: int("bounced").default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type VisitorEvent = typeof visitorEvents.$inferSelect;

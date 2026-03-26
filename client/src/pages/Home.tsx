@@ -506,6 +506,7 @@ function SaleBanner() {
       }}
       dir={isRtl ? 'rtl' : 'ltr'}
       onClick={() => window.location.href = '/buy'}
+      data-track="buy_click"
     >
       <span className="shrink-0 text-lg">🔥</span>
       <p className="flex-1 text-sm font-bold text-white leading-snug">
@@ -1024,6 +1025,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
+                  data-track="upload"
                   className="flex flex-col items-center gap-3 w-full py-4 rounded-xl hover:bg-muted/30 active:bg-muted/50 transition-colors"
                 >
                   <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -1133,7 +1135,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
           </CardContent>
         </Card>
 
-        <Button size="lg" className="w-full h-11 font-semibold" disabled={!imageFile || status === "loading"} onClick={handleConvert}>
+        <Button size="lg" className="w-full h-11 font-semibold" disabled={!imageFile || status === "loading"} onClick={handleConvert} data-track="convert">
           {status === "loading"
             ? <><Loader2 className="w-4 h-4 ml-2 animate-spin" />{t("processing")}</>
             : <><Upload className="w-4 h-4 ml-2" />{t("convertToDxf")}</>}

@@ -2397,3 +2397,23 @@
 - [x] הוספת לוגו שחור לנאב של דפי הפיצ'ר
 - [x] שיפור כפתורי לפני/אחרי — גדולים וברורים יותר
 - [ ] תיקון לינקים בדף נחיתה שפותחים דף ריק — להפנות לדף הרשמה
+
+## שילוב Stripe לתשלומי כרטיס אשראי
+
+- [ ] הפעלת Stripe feature ב-webdev
+- [ ] הוספת מפתחות Stripe (Secret Key + Publishable Key)
+- [ ] יצירת Stripe Checkout Session בשרת (server/stripe.ts)
+- [ ] הוספת tRPC procedure: stripe.createCheckoutSession
+- [ ] הוספת Stripe webhook handler ב-/api/stripe/webhook
+- [ ] עדכון Buy.tsx: הוספת כפתור תשלום Stripe לצד PayPal
+- [ ] עמוד /buy/stripe-success לאחר תשלום מוצלח
+- [ ] בדיקות vitest לשרת Stripe
+
+## דף אנליטיקס התנהגות מבקרים
+
+- [x] DB schema: טבלת visitor_events עם שדות מורחבים (sessionId, country, referrer, utmSource, device, browser, timeOnPageSec, bounced)
+- [x] Server: visitors.track procedure — שמירת pageview/click events
+- [x] Server: visitors.stats procedure — bySource, byDevice, byBrowser, bounceRate, avgTime, funnel, dailyVisits, recentSessions
+- [x] Client: tracking script — UTM, referrer, device, browser, time-on-page, bounce detection, data-track clicks
+- [x] דף אנליטיקס ב-Admin: סיכום KPIs, גרף יומי, funnel chart, מקורות, מכשירים, דפדפנים, מדינות, sessions
+- [x] data-track attributes: upload, convert, download, buy_click buttons
