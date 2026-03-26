@@ -130,20 +130,20 @@ export function OnboardingTour({ forceShow, actionCount = 0 }: OnboardingTourPro
       setTimeout(() => setVisible(true), 50);
       return;
     }
-    const done = localStorage.getItem(STORAGE_KEY);
-    // Hide permanently once user has 2+ conversions (server-side)
+    // Hide permanently once user has 2+ conversions (server-side) — ignore localStorage
     if (actionCount >= 2) {
       localStorage.setItem(STORAGE_KEY, "1");
       setActive(false);
+      setVisible(false);
       return;
     }
-    if (!done) {
-      const timer = setTimeout(() => {
-        setActive(true);
-        setTimeout(() => setVisible(true), 50);
-      }, 900);
-      return () => clearTimeout(timer);
-    }
+    // Always show for users with < 2 conversions, regardless of localStorage
+    const timer = setTimeout(() => {
+      setStep(0);
+      setActive(true);
+      setTimeout(() => setVisible(true), 50);
+    }, 900);
+    return () => clearTimeout(timer);
   }, [forceShow, actionCount]);
 
   // Listen for tour reset event from other components
