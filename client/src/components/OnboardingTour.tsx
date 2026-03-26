@@ -8,11 +8,14 @@
  *  4. Portrait card
  *  5. Download button
  *
- * Storage: localStorage key "onboarding_tour_done_v2" = "1" when dismissed.
- * Shows to all users who haven't completed it yet (per browser).
- * forceShow=true resets and re-shows the tour.
+ * Shows to users with < 2 server-side conversions (actionCount).
+ * Hides permanently once actionCount >= 2.
+ * Can be manually dismissed (localStorage) but resets on next visit if actionCount < 2.
+ *
+ * FIX: Uses a ref to ensure the tour activates only ONCE per session,
+ * regardless of how many times tokenData is re-fetched (every 30s).
  */
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { X, ChevronRight, ChevronLeft, Sparkles, ArrowDown } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { TranslationKey } from "@/lib/translations";
@@ -115,6 +118,9 @@ export function OnboardingTour({ forceShow, actionCount = 0 }: OnboardingTourPro
   const [active, setActive] = useState(false);
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
+  // Ref guard: prevents re-activating the tour on every tokenData refetch (every 30s).
+  // Once the tour has been activated (or suppressed) for this session, we don't re-run.
+  const initDone = useRef(false);
 
   const currentStep = TOUR_STEPS[step];
   const totalSteps = TOUR_STEPS.length;
@@ -123,21 +129,30 @@ export function OnboardingTour({ forceShow, actionCount = 0 }: OnboardingTourPro
 
   useEffect(() => {
     if (forceShow) {
-      // Reset and force show
+      // Force-show always overrides the ref guard
+      initDone.current = false;
       localStorage.removeItem(STORAGE_KEY);
       setStep(0);
       setActive(true);
       setTimeout(() => setVisible(true), 50);
+      initDone.current = true;
       return;
     }
-    // Hide permanently once user has 2+ conversions (server-side) — ignore localStorage
+
+    // Hide permanently once user has 2+ conversions (server-side)
     if (actionCount >= 2) {
       localStorage.setItem(STORAGE_KEY, "1");
       setActive(false);
       setVisible(false);
+      initDone.current = true;
       return;
     }
-    // Always show for users with < 2 conversions, regardless of localStorage
+
+    // Guard: only activate once per session — prevents re-triggering on refetch
+    if (initDone.current) return;
+    initDone.current = true;
+
+    // Show for users with < 2 conversions
     const timer = setTimeout(() => {
       setStep(0);
       setActive(true);
@@ -152,6 +167,7 @@ export function OnboardingTour({ forceShow, actionCount = 0 }: OnboardingTourPro
       if (e.key === 'tour_force_show' && e.newValue === '1') {
         localStorage.removeItem('tour_force_show');
         localStorage.removeItem(STORAGE_KEY);
+        initDone.current = false;
         setStep(0);
         setActive(true);
         setTimeout(() => setVisible(true), 50);
@@ -160,6 +176,7 @@ export function OnboardingTour({ forceShow, actionCount = 0 }: OnboardingTourPro
     // Also listen for custom event (same-tab)
     const customHandler = () => {
       localStorage.removeItem(STORAGE_KEY);
+      initDone.current = false;
       setStep(0);
       setActive(true);
       setVisible(false);

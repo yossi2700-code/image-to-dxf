@@ -2448,3 +2448,5 @@
 - [x] Nudge popup: show every login session until 1 action done (no localStorage, server-side only)
 - [x] Nudge popup mobile: smaller, centered on mobile
 - [x] Implement adaptive threshold preprocessing in aiTraceRoute for pencil/sketch images with non-uniform backgrounds
+- [ ] Bug: CLAHE preprocessing too slow — causes timeout with no result, need to optimize or revert
+- [ ] Bug: OnboardingTour and nudge popup reopen unexpectedly mid-work after being closed

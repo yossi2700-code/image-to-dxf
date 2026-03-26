@@ -7,8 +7,11 @@
  *
  * Mobile: centered on screen, smaller size.
  * Desktop: bottom corner.
+ *
+ * FIX: Uses a ref to ensure the 6-second timer fires only ONCE per session,
+ * regardless of how many times tokenData is re-fetched (every 30s).
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, Sparkles, Upload, User } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -25,6 +28,8 @@ export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSele
   const [visible, setVisible] = useState(false);
   const [animIn, setAnimIn] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  // Track whether the timer has already been scheduled this session
+  const timerScheduled = useRef(false);
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia("(max-width: 640px)").matches : false
   );
@@ -37,19 +42,31 @@ export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSele
     return () => mq.removeEventListener("change", handler);
   }, []);
 
+  // Schedule the popup timer ONCE when we first learn the user has no actions.
+  // The `tokenData` query refetches every 30s — without the ref guard, every
+  // refetch would re-run this effect and re-schedule the timer, causing the
+  // popup to reappear after being dismissed.
   useEffect(() => {
-    // Don't show if user already did an action (server-side) or manually dismissed this session
-    if (hasAnyAction || dismissed) return;
+    // If user already did an action, or was dismissed, or timer already scheduled — skip
+    if (hasAnyAction || dismissed || timerScheduled.current) return;
+
+    // Mark as scheduled so subsequent refetches don't re-trigger
+    timerScheduled.current = true;
 
     const timer = setTimeout(() => {
-      setVisible(true);
+      // Double-check: user may have acted during the 6-second wait
+      setVisible(prev => {
+        if (dismissed) return prev;
+        return true;
+      });
       requestAnimationFrame(() => {
         requestAnimationFrame(() => setAnimIn(true));
       });
     }, DELAY_MS);
 
     return () => clearTimeout(timer);
-  }, [hasAnyAction, dismissed]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasAnyAction]); // only depends on hasAnyAction — not dismissed, so refetches don't re-fire
 
   // Hide immediately if user performs an action mid-session
   useEffect(() => {
