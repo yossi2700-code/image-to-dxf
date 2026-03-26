@@ -488,6 +488,75 @@ router.post("/api/app-auth/logout", (_req, res) => {
   return res.json({ success: true });
 });
 
+// ─── Cross-domain SSO ─────────────────────────────────────────────────────────
+// In-memory store for short-lived SSO tokens (60 seconds TTL)
+const ssoTokenStore = new Map<string, { userId: number; email: string; expiresAt: number }>();
+
+// Cleanup expired tokens every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  Array.from(ssoTokenStore.entries()).forEach(([key, val]) => {
+    if (val.expiresAt < now) ssoTokenStore.delete(key);
+  });
+}, 5 * 60 * 1000);
+
+/**
+ * GET /api/app-auth/sso-token
+ * Called from the source domain when user is authenticated.
+ * Returns a short-lived one-time token that can be exchanged on another domain.
+ */
+router.get("/api/app-auth/sso-token", (req, res) => {
+  const appUser = getAppUserFromCookie(req.cookies);
+  if (!appUser) return res.status(401).json({ error: "not_authenticated" });
+
+  const token = randomBytes(32).toString("hex");
+  ssoTokenStore.set(token, {
+    userId: appUser.userId,
+    email: appUser.email,
+    expiresAt: Date.now() + 60_000, // 60 seconds
+  });
+
+  return res.json({ token });
+});
+
+/**
+ * GET /api/app-auth/sso-exchange?token=xxx&redirect=/
+ * Called on the target domain. Exchanges the SSO token for a session cookie.
+ */
+router.get("/api/app-auth/sso-exchange", (req, res) => {
+  const { token, redirect = "/" } = req.query as { token?: string; redirect?: string };
+  if (!token) return res.status(400).send("Missing token");
+
+  const entry = ssoTokenStore.get(token);
+  if (!entry || entry.expiresAt < Date.now()) {
+    ssoTokenStore.delete(token as string);
+    // Token expired or invalid — redirect to landing page
+    return res.redirect("/landing");
+  }
+
+  // Consume the token (one-time use)
+  ssoTokenStore.delete(token as string);
+
+  // Issue a new session cookie on this domain
+  const sessionToken = jwt.sign(
+    { userId: entry.userId, email: entry.email },
+    JWT_SECRET,
+    { expiresIn: "30d" }
+  );
+
+  res.cookie(APP_USER_COOKIE, sessionToken, {
+    httpOnly: true,
+    secure: ENV.isProduction,
+    sameSite: ENV.isProduction ? "none" : "lax",
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    path: "/",
+  });
+
+  // Sanitize redirect to prevent open redirect
+  const safeRedirect = redirect.startsWith("/") ? redirect : "/";
+  return res.redirect(safeRedirect);
+});
+
 // ─── Get user from request (cookie or Manus OAuth) ────────────────────────────────────────
 
 /** Get app user from request — checks cookie first, then Manus OAuth */

@@ -2417,3 +2417,15 @@
 - [x] Client: tracking script — UTM, referrer, device, browser, time-on-page, bounce detection, data-track clicks
 - [x] דף אנליטיקס ב-Admin: סיכום KPIs, גרף יומי, funnel chart, מקורות, מכשירים, דפדפנים, מדינות, sessions
 - [x] data-track attributes: upload, convert, download, buy_click buttons
+
+## באג: התנגשות דומיינים בהתחברות
+
+- [x] לקוח שנרשם דרך dxfai.net לא מצליח להיכנס דרך dxfai.ai (מדפדפן ישן) — מועף החוצה
+- [x] בדיקת הגדרות cookie domain (SameSite, Secure, domain)
+- [x] תיקון: SSO token endpoint - /api/app-auth/sso-token ו-/api/app-auth/sso-exchange
+- [ ] תיקון: client-side cross-domain redirect עם SSO token
+
+## באג: דף אנליטיקס לא נטען (skeleton בלבד)
+
+- [x] בדיקת tRPC visitors.stats procedure — מה מחזיר בפועל
+- [x] תיקון: הנתונים לא מגיעים לדף Admin → אנליטיקס (תוקן: error state + retry:false + הסרת query כפול)

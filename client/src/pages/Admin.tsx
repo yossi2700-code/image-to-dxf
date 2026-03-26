@@ -445,7 +445,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const { data: stats, isLoading: statsLoading } = trpc.admin.stats.useQuery();
   const { data: daily, isLoading: dailyLoading } = trpc.admin.dailyActivity.useQuery();
   const { data: recent, isLoading: recentLoading } = trpc.admin.recentEvents.useQuery();
-  const { data: visitorStats } = trpc.visitors.stats.useQuery({ days: 7 });
   const { data: registeredUsers, isLoading: usersLoading, refetch: refetchUsers } = trpc.admin.usersWithTokens.useQuery();
   const [activityTimeRange, setActivityTimeRange] = useState<"day" | "week" | "month" | "all">("day");
   const { data: userActionsData, isLoading: actionsLoading } = trpc.admin.userActions.useQuery({ timeRange: activityTimeRange });
@@ -545,8 +544,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
   const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email" | "campaign" | "bugs" | "subscriptions" | "news" | "failed_jobs" | "messages" | "issue_reports" | "analytics">("overview");
   const [analyticsDays, setAnalyticsDays] = useState(7);
-  const { data: detailedVisitorStats, isLoading: analyticsLoading } = trpc.visitors.stats.useQuery(
-    { days: analyticsDays }
+  const { data: detailedVisitorStats, isLoading: analyticsLoading, error: analyticsError } = trpc.visitors.stats.useQuery(
+    { days: analyticsDays },
+    { retry: false }
   );
 
   // ── Issue Reports ──
@@ -979,7 +979,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         ) : null}
 
         {/* ── VISITOR ANALYTICS WIDGET ── */}
-        {visitorStats && (
+        {detailedVisitorStats && (
           <Card className="overflow-hidden" style={{ borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
             <CardHeader className="pb-2" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)' }}>
               <CardTitle className="text-base font-semibold flex items-center justify-between">
@@ -988,30 +988,30 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   אנליטיקת מבקרים
                 </span>
                 <span className="text-xs font-normal" style={{ color: 'rgba(147,197,253,0.8)' }}>
-                  סה"כ: {visitorStats.total.toLocaleString()} ביקורים
+                  סה"כ: {detailedVisitorStats.total.toLocaleString()} ביקורים
                 </span>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4">
               <div className="grid grid-cols-3 gap-3 mb-4">
                 <div className="text-center p-3 bg-blue-50 rounded-xl">
-                  <div className="text-2xl font-bold text-blue-700">{visitorStats.today}</div>
+                  <div className="text-2xl font-bold text-blue-700">{detailedVisitorStats.today}</div>
                   <div className="text-xs text-blue-600 mt-0.5">היום</div>
                 </div>
                 <div className="text-center p-3 bg-indigo-50 rounded-xl">
-                  <div className="text-2xl font-bold text-indigo-700">{visitorStats.recentSessions}</div>
+                  <div className="text-2xl font-bold text-indigo-700">{detailedVisitorStats.recentSessions}</div>
                   <div className="text-xs text-indigo-600 mt-0.5">סשנות ייחודיות (7י)</div>
                 </div>
                 <div className="text-center p-3 bg-slate-50 rounded-xl">
-                  <div className="text-2xl font-bold text-slate-700">{visitorStats.total}</div>
+                  <div className="text-2xl font-bold text-slate-700">{detailedVisitorStats.total}</div>
                   <div className="text-xs text-slate-600 mt-0.5">סה"כ</div>
                 </div>
               </div>
-              {visitorStats.byCountry.length > 0 && (
+              {detailedVisitorStats.byCountry.length > 0 && (
                 <div className="mb-3">
                   <p className="text-xs font-semibold text-muted-foreground mb-2">לפי מדינה (7 ימים)</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {visitorStats.byCountry.slice(0, 10).map(c => (
+                    {detailedVisitorStats.byCountry.slice(0, 10).map(c => (
                       <span key={c.country} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-medium">
                         {c.country} <span className="font-bold">{c.count}</span>
                       </span>
@@ -1019,11 +1019,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   </div>
                 </div>
               )}
-              {visitorStats.byPage.length > 0 && (
+              {detailedVisitorStats.byPage.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground mb-2">עמודים פופולריים (7 ימים)</p>
                   <div className="space-y-1">
-                    {visitorStats.byPage.slice(0, 5).map(p => (
+                    {detailedVisitorStats.byPage.slice(0, 5).map(p => (
                       <div key={p.page} className="flex items-center justify-between text-xs">
                         <span className="font-mono text-slate-600 truncate max-w-[180px]">{p.page || "/"}</span>
                         <span className="font-bold text-slate-800">{p.count}</span>
@@ -1212,7 +1212,13 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               </CardHeader>
             </Card>
 
-            {analyticsLoading ? (
+            {analyticsError ? (
+              <Card><CardContent className="p-8 text-center text-muted-foreground">
+                <Globe className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p className="font-medium">לא ניתן לטעון נתוני אנליטיקס</p>
+                <p className="text-xs mt-1">{analyticsError.message}</p>
+              </CardContent></Card>
+            ) : analyticsLoading ? (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[...Array(4)].map((_, i) => <Card key={i}><CardContent className="p-5"><div className="h-16 bg-muted animate-pulse rounded-lg" /></CardContent></Card>)}
               </div>
