@@ -1292,29 +1292,44 @@ export const appRouter = router({
       const appUser = getAppUserFromCookie(
         (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
       );
+      // Helper: check if user has ever performed any action
+      async function hasAnyAction(userId: number): Promise<boolean> {
+        const db = await getDb();
+        if (!db) return false;
+        const [row] = await db
+          .select({ id: userActions.id })
+          .from(userActions)
+          .where(eq(userActions.appUserId, userId))
+          .limit(1);
+        return !!row;
+      }
       if (appUser) {
         const balance = await getTokenBalance(appUser.userId);
-        const [claimed, isEmailUser] = await Promise.all([
+        const [claimed, isEmailUser, hasAction] = await Promise.all([
           hasClaimedWelcome(appUser.userId),
           registeredWithEmail(appUser.userId),
+          hasAnyAction(appUser.userId),
         ]);
         // Only show pending bonus if: registered with email AND not yet claimed
-        return { balance, loggedIn: true, hasPendingWelcomeBonus: isEmailUser && !claimed };
+        return { balance, loggedIn: true, hasPendingWelcomeBonus: isEmailUser && !claimed, hasAnyAction: hasAction };
       }
       // Fallback: Manus OAuth user (no welcome email sent)
       if (ctx.user?.email) {
         const db = await getDb();
-        if (!db) return { balance: 0, loggedIn: false, hasPendingWelcomeBonus: false };
+        if (!db) return { balance: 0, loggedIn: false, hasPendingWelcomeBonus: false, hasAnyAction: false };
         const [existingAppUser] = await db
           .select({ id: appUsers.id })
           .from(appUsers)
           .where(eq(appUsers.email, ctx.user.email));
-        if (!existingAppUser) return { balance: 0, loggedIn: true, hasPendingWelcomeBonus: false };
-        const balance = await getTokenBalance(existingAppUser.id);
+        if (!existingAppUser) return { balance: 0, loggedIn: true, hasPendingWelcomeBonus: false, hasAnyAction: false };
+        const [balance, hasAction] = await Promise.all([
+          getTokenBalance(existingAppUser.id),
+          hasAnyAction(existingAppUser.id),
+        ]);
         // Manus OAuth users don't get the welcome email, so no pending bonus
-        return { balance, loggedIn: true, hasPendingWelcomeBonus: false };
+        return { balance, loggedIn: true, hasPendingWelcomeBonus: false, hasAnyAction: hasAction };
       }
-      return { balance: 0, loggedIn: false, hasPendingWelcomeBonus: false };
+      return { balance: 0, loggedIn: false, hasPendingWelcomeBonus: false, hasAnyAction: false };
     }),
     /** Transaction history for the logged-in user */
     history: publicProcedure.query(async ({ ctx }) => {

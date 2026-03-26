@@ -3183,10 +3183,10 @@ export default function Home() {
       <TokenPricingModal open={pricingModalOpen} onClose={() => setPricingModalOpen(false)} />
       {/* Onboarding Tour — only for logged-in users */}
       {!!appUser && <OnboardingTour />}
-      {/* New-user nudge popup — shows after 8s if user has never converted */}
+      {/* New-user nudge popup — shows after 8s if user has never performed any action */}
       {!!appUser && (
         <NewUserNudgePopup
-          tokenBalance={tokenBalance}
+          hasAnyAction={tokenData?.hasAnyAction ?? false}
           onSelectTab={(tab) => {
             setActiveTab(tab);
             localStorage.setItem('active_tab', tab);

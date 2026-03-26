@@ -13,18 +13,18 @@ const STORAGE_KEY = "nudge_popup_dismissed_v1";
 const DELAY_MS = 8000;
 
 interface NewUserNudgePopupProps {
-  tokenBalance: number;
+  hasAnyAction: boolean;
   onSelectTab: (tab: string) => void;
 }
 
-export function NewUserNudgePopup({ tokenBalance, onSelectTab }: NewUserNudgePopupProps) {
+export function NewUserNudgePopup({ hasAnyAction, onSelectTab }: NewUserNudgePopupProps) {
   const { isRtl } = useLanguage();
   const [visible, setVisible] = useState(false);
   const [animIn, setAnimIn] = useState(false);
 
   useEffect(() => {
-    // Only show if user has full 10 tokens (never used) and hasn't dismissed before
-    if (tokenBalance !== 10) return;
+    // Only show if user has never performed any action and hasn't dismissed before
+    if (hasAnyAction) return;
     const dismissed = localStorage.getItem(STORAGE_KEY);
     if (dismissed) return;
 
@@ -36,7 +36,7 @@ export function NewUserNudgePopup({ tokenBalance, onSelectTab }: NewUserNudgePop
     }, DELAY_MS);
 
     return () => clearTimeout(timer);
-  }, [tokenBalance]);
+  }, [hasAnyAction]);
 
   function dismiss() {
     setAnimIn(false);
@@ -117,7 +117,7 @@ export function NewUserNudgePopup({ tokenBalance, onSelectTab }: NewUserNudgePop
           gap: 4,
         }}>
           <Sparkles size={12} />
-          {isHe ? `${tokenBalance} אסימונים חינם` : `${tokenBalance} free tokens`}
+          {isHe ? "10 אסימונים חינם" : "10 free tokens"}
         </div>
       </div>
 
