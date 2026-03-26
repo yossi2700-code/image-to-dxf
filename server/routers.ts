@@ -1915,10 +1915,12 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const db = await getDb();
         const days = input?.days ?? 7;
-        if (!db) return { total: 0, today: 0, byCountry: [], byPage: [], recentSessions: 0, bySource: [], byDevice: [], byBrowser: [], bounceRate: 0, avgTimeOnPage: 0, funnelData: [], dailyVisits: [] };
+        const emptyResult = { total: 0, today: 0, byCountry: [] as {country:string,count:number}[], byPage: [] as {page:string,count:number}[], recentSessions: 0, bySource: [] as {source:string,count:number}[], byDevice: [] as {device:string,count:number}[], byBrowser: [] as {browser:string,count:number}[], bounceRate: 0, avgTimeOnPage: 0, funnelData: [] as {step:string,count:number}[], dailyVisits: [] as {date:string,sessions:number,pageviews:number}[], recentSessionsList: [] as {sessionId:string,country:string,device:string|null,browser:string|null,referrer:string|null,utmSource:string|null,page:string,timeOnPageSec:number|null,bounced:number|null,appUserId:number|null,createdAt:string}[] };
+        if (!db) return emptyResult;
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const rangeStart = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+        try {
 
         // Total pageviews
         const [totalRow] = await db.select({ count: sql<number>`COUNT(*)` }).from(visitorEvents);
@@ -2021,14 +2023,15 @@ export const appRouter = router({
         }));
 
         // Daily visits (last N days)
+        // Use DATE_FORMAT to return a string (not a Date object) to avoid serialization issues
         const dailyVisits = await db.select({
-          date: sql<string>`DATE(${visitorEvents.createdAt})`,
+          date: sql<string>`DATE_FORMAT(${visitorEvents.createdAt}, '%Y-%m-%d')`,
           sessions: sql<number>`COUNT(DISTINCT ${visitorEvents.sessionId})`,
           pageviews: sql<number>`COUNT(*)`,
         }).from(visitorEvents)
           .where(sql`${visitorEvents.createdAt} >= ${rangeStart} AND ${visitorEvents.eventType} = 'pageview'`)
-          .groupBy(sql`DATE(${visitorEvents.createdAt})`)
-          .orderBy(sql`DATE(${visitorEvents.createdAt}) ASC`);
+          .groupBy(sql`DATE_FORMAT(${visitorEvents.createdAt}, '%Y-%m-%d')`)
+          .orderBy(sql`DATE_FORMAT(${visitorEvents.createdAt}, '%Y-%m-%d') ASC`);
 
         // Recent sessions list (last 50)
         const recentSessionsList = await db.select({
@@ -2073,6 +2076,16 @@ export const appRouter = router({
             createdAt: r.createdAt.toISOString(),
           })),
         };
+        } catch (err: unknown) {
+          // Extract the root cause message, not the full DrizzleQueryError with SQL
+          let msg = err instanceof Error ? err.message : String(err);
+          // If it's a DrizzleQueryError, try to get the cause message
+          if (err instanceof Error && (err as {cause?: Error}).cause instanceof Error) {
+            msg = (err as {cause: Error}).cause.message;
+          }
+          console.error('[visitors.stats] query error:', msg);
+          throw new Error(msg);
+        }
       }),
   }),
 
