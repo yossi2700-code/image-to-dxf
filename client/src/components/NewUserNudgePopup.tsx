@@ -10,7 +10,7 @@ import { X, Sparkles, Upload, User } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const STORAGE_KEY = "nudge_popup_dismissed_v1";
-const DELAY_MS = 8000;
+const DELAY_MS = 6000;
 
 interface NewUserNudgePopupProps {
   hasAnyAction: boolean;
