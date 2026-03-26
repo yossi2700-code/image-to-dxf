@@ -2441,3 +2441,9 @@
 - [ ] Bug: nudge popup shows for users who already performed actions — fix hasAnyAction logic in tokens.balance procedure
 - [x] Bug: Portrait refunds tokens even when no tokens were charged (no face detected = refund without prior deduction)
 - [x] Improve AI Outline fidelity for B&W images: preserve small details (leaves, fine lines) by tuning Potrace turdSize and preprocessing
+- [ ] OnboardingTour: show until user has 2+ conversions (server-side count), then hide permanently
+- [ ] Nudge popup: show every login session until 1 conversion done — remove localStorage dependency, use server-side hasAnyAction per session
+- [ ] Nudge popup mobile: smaller, centered on mobile (not bottom-corner), full-width on desktop stays as is
+- [x] OnboardingTour: hide after 2 conversions (server-side actionCount)
+- [x] Nudge popup: show every login session until 1 action done (no localStorage, server-side only)
+- [x] Nudge popup mobile: smaller, centered on mobile

@@ -3159,8 +3159,8 @@ export default function Home() {
 
       {/* Token Pricing Modal */}
       <TokenPricingModal open={pricingModalOpen} onClose={() => setPricingModalOpen(false)} />
-      {/* Onboarding Tour — only for logged-in users */}
-      {!!appUser && <OnboardingTour />}
+      {/* Onboarding Tour — only for logged-in users, hides after 2 conversions */}
+      {!!appUser && <OnboardingTour actionCount={tokenData?.actionCount ?? 0} />}
       {/* New-user nudge popup — shows after 6s if user has never performed any action */}
       {!!appUser && (
         <NewUserNudgePopup

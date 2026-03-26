@@ -106,9 +106,11 @@ function removePulse() {
 export interface OnboardingTourProps {
   /** Force show the tour, even if it was already completed */
   forceShow?: boolean;
+  /** Number of conversions the user has done (server-side). Tour hides after 2. */
+  actionCount?: number;
 }
 
-export function OnboardingTour({ forceShow }: OnboardingTourProps) {
+export function OnboardingTour({ forceShow, actionCount = 0 }: OnboardingTourProps) {
   const { t, isRtl } = useLanguage();
   const [active, setActive] = useState(false);
   const [step, setStep] = useState(0);
@@ -129,6 +131,12 @@ export function OnboardingTour({ forceShow }: OnboardingTourProps) {
       return;
     }
     const done = localStorage.getItem(STORAGE_KEY);
+    // Hide permanently once user has 2+ conversions (server-side)
+    if (actionCount >= 2) {
+      localStorage.setItem(STORAGE_KEY, "1");
+      setActive(false);
+      return;
+    }
     if (!done) {
       const timer = setTimeout(() => {
         setActive(true);
@@ -136,7 +144,7 @@ export function OnboardingTour({ forceShow }: OnboardingTourProps) {
       }, 900);
       return () => clearTimeout(timer);
     }
-  }, [forceShow]);
+  }, [forceShow, actionCount]);
 
   // Listen for tour reset event from other components
   useEffect(() => {

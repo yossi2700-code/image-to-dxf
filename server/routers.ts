@@ -1292,44 +1292,44 @@ export const appRouter = router({
       const appUser = getAppUserFromCookie(
         (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
       );
-      // Helper: check if user has ever performed any action
-      async function hasAnyAction(userId: number): Promise<boolean> {
+      // Helper: count how many actions the user has performed (capped at 3 for efficiency)
+      async function getActionCount(userId: number): Promise<number> {
         const db = await getDb();
-        if (!db) return false;
-        const [row] = await db
+        if (!db) return 0;
+        const rows = await db
           .select({ id: userActions.id })
           .from(userActions)
           .where(eq(userActions.appUserId, userId))
-          .limit(1);
-        return !!row;
+          .limit(3);
+        return rows.length;
       }
       if (appUser) {
         const balance = await getTokenBalance(appUser.userId);
-        const [claimed, isEmailUser, hasAction] = await Promise.all([
+        const [claimed, isEmailUser, actionCount] = await Promise.all([
           hasClaimedWelcome(appUser.userId),
           registeredWithEmail(appUser.userId),
-          hasAnyAction(appUser.userId),
+          getActionCount(appUser.userId),
         ]);
         // Only show pending bonus if: registered with email AND not yet claimed
-        return { balance, loggedIn: true, hasPendingWelcomeBonus: isEmailUser && !claimed, hasAnyAction: hasAction };
+        return { balance, loggedIn: true, hasPendingWelcomeBonus: isEmailUser && !claimed, hasAnyAction: actionCount > 0, actionCount };
       }
       // Fallback: Manus OAuth user (no welcome email sent)
       if (ctx.user?.email) {
         const db = await getDb();
-        if (!db) return { balance: 0, loggedIn: false, hasPendingWelcomeBonus: false, hasAnyAction: false };
+        if (!db) return { balance: 0, loggedIn: false, hasPendingWelcomeBonus: false, hasAnyAction: false, actionCount: 0 };
         const [existingAppUser] = await db
           .select({ id: appUsers.id })
           .from(appUsers)
           .where(eq(appUsers.email, ctx.user.email));
-        if (!existingAppUser) return { balance: 0, loggedIn: true, hasPendingWelcomeBonus: false, hasAnyAction: false };
-        const [balance, hasAction] = await Promise.all([
+        if (!existingAppUser) return { balance: 0, loggedIn: true, hasPendingWelcomeBonus: false, hasAnyAction: false, actionCount: 0 };
+        const [balance, actionCount] = await Promise.all([
           getTokenBalance(existingAppUser.id),
-          hasAnyAction(existingAppUser.id),
+          getActionCount(existingAppUser.id),
         ]);
         // Manus OAuth users don't get the welcome email, so no pending bonus
-        return { balance, loggedIn: true, hasPendingWelcomeBonus: false, hasAnyAction: hasAction };
+        return { balance, loggedIn: true, hasPendingWelcomeBonus: false, hasAnyAction: actionCount > 0, actionCount };
       }
-      return { balance: 0, loggedIn: false, hasPendingWelcomeBonus: false, hasAnyAction: false };
+      return { balance: 0, loggedIn: false, hasPendingWelcomeBonus: false, hasAnyAction: false, actionCount: 0 };
     }),
     /** Transaction history for the logged-in user */
     history: publicProcedure.query(async ({ ctx }) => {
@@ -2066,7 +2066,7 @@ export const appRouter = router({
           .orderBy(desc(visitorEvents.createdAt))
           .limit(50);
 
-        return {
+        const result = {
           total: Number(totalRow?.count ?? 0),
           today: Number(todayRow?.count ?? 0),
           recentSessions: Number(uniqueSessionsRow?.count ?? 0),
@@ -2091,6 +2091,7 @@ export const appRouter = router({
             createdAt: r.createdAt.toISOString(),
           })),
         };
+        return result;
         } catch (err: unknown) {
           // Extract the root cause message, not the full DrizzleQueryError with SQL
           let msg = err instanceof Error ? err.message : String(err);

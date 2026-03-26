@@ -1,15 +1,17 @@
 /**
- * NewUserNudgePopup — auto-shows after 8 seconds for logged-in users
- * who still have their full 10 token balance (never converted anything).
+ * NewUserNudgePopup — auto-shows after 6 seconds for logged-in users
+ * who have never performed any action (server-side hasAnyAction check).
  *
- * Dismissed via localStorage key "nudge_popup_dismissed_v1".
- * Clicking a CTA scrolls to the relevant feature tab and activates it.
+ * Shows on EVERY login session until user performs 1 action.
+ * No localStorage — controlled entirely by server-side hasAnyAction.
+ *
+ * Mobile: centered on screen, smaller size.
+ * Desktop: bottom corner.
  */
 import { useState, useEffect } from "react";
 import { X, Sparkles, Upload, User } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const STORAGE_KEY = "nudge_popup_dismissed_v1";
 const DELAY_MS = 6000;
 
 interface NewUserNudgePopupProps {
@@ -22,12 +24,22 @@ export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSele
   const { isRtl } = useLanguage();
   const [visible, setVisible] = useState(false);
   const [animIn, setAnimIn] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 640px)").matches : false
+  );
+
+  // Track mobile breakpoint changes
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   useEffect(() => {
-    // Only show if user has never performed any action and hasn't dismissed before
-    if (hasAnyAction) return;
-    const dismissed = localStorage.getItem(STORAGE_KEY);
-    if (dismissed) return;
+    // Don't show if user already did an action (server-side) or manually dismissed this session
+    if (hasAnyAction || dismissed) return;
 
     const timer = setTimeout(() => {
       setVisible(true);
@@ -37,12 +49,20 @@ export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSele
     }, DELAY_MS);
 
     return () => clearTimeout(timer);
-  }, [hasAnyAction]);
+  }, [hasAnyAction, dismissed]);
+
+  // Hide immediately if user performs an action mid-session
+  useEffect(() => {
+    if (hasAnyAction && visible) {
+      setAnimIn(false);
+      setTimeout(() => setVisible(false), 350);
+    }
+  }, [hasAnyAction, visible]);
 
   function dismiss() {
     setAnimIn(false);
     setTimeout(() => setVisible(false), 350);
-    localStorage.setItem(STORAGE_KEY, "1");
+    setDismissed(true); // session-only dismiss
   }
 
   function handleCta(tab: string) {
@@ -57,24 +77,43 @@ export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSele
 
   const isHe = isRtl;
 
+  // Mobile: centered vertically & horizontally, smaller
+  // Desktop: bottom corner (RTL: right, LTR: left)
+  const mobileStyle = {
+    bottom: "50%",
+    left: "50%",
+    transform: animIn
+      ? "translate(-50%, 50%) scale(1)"
+      : "translate(-50%, 50%) scale(0.9)",
+    maxWidth: 290,
+    width: "calc(100vw - 40px)",
+    padding: "14px 12px 12px",
+  };
+
+  const desktopStyle = {
+    bottom: 24,
+    ...(isHe ? { right: 16 } : { left: 16 }),
+    transform: animIn ? "translateY(0) scale(1)" : "translateY(30px) scale(0.95)",
+    maxWidth: 340,
+    width: "calc(100vw - 32px)",
+    padding: "20px 18px 18px",
+  };
+
+  const posStyle = isMobile ? mobileStyle : desktopStyle;
+
   return (
     <div
       dir={isHe ? "rtl" : "ltr"}
       style={{
         position: "fixed",
-        bottom: 24,
-        ...(isHe ? { right: 16 } : { left: 16 }),
         zIndex: 9999,
-        maxWidth: 340,
-        width: "calc(100vw - 32px)",
+        ...posStyle,
         background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4c1d95 100%)",
         borderRadius: 20,
         boxShadow: "0 8px 40px rgba(99,102,241,0.45), 0 2px 12px rgba(0,0,0,0.3)",
-        padding: "20px 18px 18px",
         color: "white",
         transition: "opacity 0.35s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1)",
         opacity: animIn ? 1 : 0,
-        transform: animIn ? "translateY(0) scale(1)" : "translateY(30px) scale(0.95)",
         pointerEvents: animIn ? "auto" : "none",
       }}
     >
@@ -105,43 +144,43 @@ export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSele
       </button>
 
       {/* Token badge */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
         <div style={{
           background: "linear-gradient(135deg, #fbbf24, #f59e0b)",
           borderRadius: 10,
-          padding: "4px 10px",
-          fontSize: 12,
+          padding: "3px 9px",
+          fontSize: 11,
           fontWeight: 800,
           color: "#1e1b4b",
           display: "flex",
           alignItems: "center",
           gap: 4,
         }}>
-          <Sparkles size={12} />
-          {isHe ? "10 אסימונים חינם" : "10 free tokens"}
+          <Sparkles size={11} />
+          {isHe ? "אסימונים חינם" : "Free tokens"}
         </div>
       </div>
 
       {/* Headline */}
-      <p style={{ fontSize: 16, fontWeight: 800, margin: "0 0 6px", lineHeight: 1.3, color: "white" }}>
-        {isHe ? "יש לך 10 אסימונים — נסה עכשיו!" : "You have 10 tokens — try now!"}
+      <p style={{ fontSize: isMobile ? 14 : 16, fontWeight: 800, margin: "0 0 4px", lineHeight: 1.3, color: "white" }}>
+        {isHe ? "יש לך אסימונים — נסה עכשיו!" : "You have tokens — try now!"}
       </p>
-      <p style={{ fontSize: 12, color: "rgba(196,181,253,0.9)", margin: "0 0 14px", lineHeight: 1.5 }}>
+      <p style={{ fontSize: 11, color: "rgba(196,181,253,0.9)", margin: "0 0 10px", lineHeight: 1.5 }}>
         {isHe ? "בחר מה לנסות:" : "Choose what to try:"}
       </p>
 
       {/* CTA buttons */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
         {/* AI Create */}
         <button
           onClick={() => handleCta("ai")}
           style={{
             background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
             border: "none",
-            borderRadius: 12,
-            padding: "10px 14px",
+            borderRadius: 11,
+            padding: isMobile ? "8px 12px" : "10px 14px",
             color: "white",
-            fontSize: 13,
+            fontSize: isMobile ? 12 : 13,
             fontWeight: 700,
             cursor: "pointer",
             display: "flex",
@@ -153,7 +192,7 @@ export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSele
           onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.12)"; e.currentTarget.style.transform = "scale(1.02)"; }}
           onMouseLeave={e => { e.currentTarget.style.filter = "brightness(1)"; e.currentTarget.style.transform = "scale(1)"; }}
         >
-          <Sparkles size={15} style={{ flexShrink: 0 }} />
+          <Sparkles size={14} style={{ flexShrink: 0 }} />
           <div>
             <div>{isHe ? "AI יצירה — כתוב תיאור" : "AI Create — type a description"}</div>
             <div style={{ fontSize: 10, fontWeight: 400, opacity: 0.8 }}>
@@ -168,10 +207,10 @@ export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSele
           style={{
             background: "linear-gradient(135deg, #0d9488, #06b6d4)",
             border: "none",
-            borderRadius: 12,
-            padding: "10px 14px",
+            borderRadius: 11,
+            padding: isMobile ? "8px 12px" : "10px 14px",
             color: "white",
-            fontSize: 13,
+            fontSize: isMobile ? 12 : 13,
             fontWeight: 700,
             cursor: "pointer",
             display: "flex",
@@ -183,7 +222,7 @@ export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSele
           onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.12)"; e.currentTarget.style.transform = "scale(1.02)"; }}
           onMouseLeave={e => { e.currentTarget.style.filter = "brightness(1)"; e.currentTarget.style.transform = "scale(1)"; }}
         >
-          <Upload size={15} style={{ flexShrink: 0 }} />
+          <Upload size={14} style={{ flexShrink: 0 }} />
           <div>
             <div>{isHe ? "AI Outline — העלה תמונה" : "AI Outline — upload a photo"}</div>
             <div style={{ fontSize: 10, fontWeight: 400, opacity: 0.8 }}>
@@ -198,10 +237,10 @@ export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSele
           style={{
             background: "linear-gradient(135deg, #7c3aed, #a855f7)",
             border: "none",
-            borderRadius: 12,
-            padding: "10px 14px",
+            borderRadius: 11,
+            padding: isMobile ? "8px 12px" : "10px 14px",
             color: "white",
-            fontSize: 13,
+            fontSize: isMobile ? 12 : 13,
             fontWeight: 700,
             cursor: "pointer",
             display: "flex",
@@ -213,7 +252,7 @@ export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSele
           onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.12)"; e.currentTarget.style.transform = "scale(1.02)"; }}
           onMouseLeave={e => { e.currentTarget.style.filter = "brightness(1)"; e.currentTarget.style.transform = "scale(1)"; }}
         >
-          <User size={15} style={{ flexShrink: 0 }} />
+          <User size={14} style={{ flexShrink: 0 }} />
           <div>
             <div>{isHe ? "Portrait — העלה תמונת פנים" : "Portrait — upload a face photo"}</div>
             <div style={{ fontSize: 10, fontWeight: 400, opacity: 0.8 }}>
@@ -225,12 +264,12 @@ export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSele
 
       {/* Email bonus hint */}
       {hasPendingWelcomeBonus && (
-        <p style={{ fontSize: 10, color: "rgba(251,191,36,0.85)", margin: "10px 0 0", textAlign: "center", lineHeight: 1.4 }}>
+        <p style={{ fontSize: 10, color: "rgba(251,191,36,0.85)", margin: "8px 0 0", textAlign: "center", lineHeight: 1.4 }}>
           📧 {isHe ? "בדוק במייל — מחכים לך עוד 20 אסימונים" : "Check your email — 20 more tokens waiting"}
         </p>
       )}
       {/* Footer note */}
-      <p style={{ fontSize: 10, color: "rgba(196,181,253,0.6)", margin: "6px 0 0", textAlign: "center" }}>
+      <p style={{ fontSize: 10, color: "rgba(196,181,253,0.6)", margin: "5px 0 0", textAlign: "center" }}>
         {isHe ? "האסימונים לא פגים — השתמש בהם מתי שתרצה" : "Tokens never expire — use them whenever you want"}
       </p>
     </div>
