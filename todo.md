@@ -2429,3 +2429,7 @@
 
 - [x] בדיקת tRPC visitors.stats procedure — מה מחזיר בפועל
 - [x] תיקון: הנתונים לא מגיעים לדף Admin → אנליטיקס (תוקן: error state + retry:false + הסרת query כפול)
+
+## באג: שגיאת SQL ב-visitors.stats (GROUP BY עם CASE)
+
+- [x] תיקון: MySQL לא תומך ב-GROUP BY עם COALESCE/CASE expressions — הוחלף ב-JavaScript aggregation

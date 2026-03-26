@@ -1948,35 +1948,37 @@ export const appRouter = router({
           .orderBy(sql`COUNT(DISTINCT ${visitorEvents.sessionId}) DESC`).limit(20);
 
         // By traffic source (referrer/UTM)
-        const bySource = await db.select({
-          source: sql<string>`COALESCE(NULLIF(${visitorEvents.utmSource}, ''), 
-            CASE 
-              WHEN ${visitorEvents.referrer} LIKE '%google%' THEN 'Google'
-              WHEN ${visitorEvents.referrer} LIKE '%facebook%' OR ${visitorEvents.referrer} LIKE '%fb.com%' THEN 'Facebook'
-              WHEN ${visitorEvents.referrer} LIKE '%instagram%' THEN 'Instagram'
-              WHEN ${visitorEvents.referrer} LIKE '%whatsapp%' THEN 'WhatsApp'
-              WHEN ${visitorEvents.referrer} LIKE '%twitter%' OR ${visitorEvents.referrer} LIKE '%t.co%' THEN 'Twitter/X'
-              WHEN ${visitorEvents.referrer} LIKE '%linkedin%' THEN 'LinkedIn'
-              WHEN ${visitorEvents.referrer} LIKE '%youtube%' THEN 'YouTube'
-              WHEN ${visitorEvents.referrer} IS NULL OR ${visitorEvents.referrer} = '' THEN 'ישיר'
-              ELSE 'אחר'
-            END)`,
-          count: sql<number>`COUNT(DISTINCT ${visitorEvents.sessionId})`,
+        // Fetch raw source data and aggregate in JS to avoid MySQL GROUP BY CASE limitations
+        const rawSourceRows = await db.select({
+          utmSource: visitorEvents.utmSource,
+          referrer: visitorEvents.referrer,
+          sessionId: visitorEvents.sessionId,
         }).from(visitorEvents)
-          .where(sql`${visitorEvents.createdAt} >= ${rangeStart}`)
-          .groupBy(sql`COALESCE(NULLIF(${visitorEvents.utmSource}, ''), 
-            CASE 
-              WHEN ${visitorEvents.referrer} LIKE '%google%' THEN 'Google'
-              WHEN ${visitorEvents.referrer} LIKE '%facebook%' OR ${visitorEvents.referrer} LIKE '%fb.com%' THEN 'Facebook'
-              WHEN ${visitorEvents.referrer} LIKE '%instagram%' THEN 'Instagram'
-              WHEN ${visitorEvents.referrer} LIKE '%whatsapp%' THEN 'WhatsApp'
-              WHEN ${visitorEvents.referrer} LIKE '%twitter%' OR ${visitorEvents.referrer} LIKE '%t.co%' THEN 'Twitter/X'
-              WHEN ${visitorEvents.referrer} LIKE '%linkedin%' THEN 'LinkedIn'
-              WHEN ${visitorEvents.referrer} LIKE '%youtube%' THEN 'YouTube'
-              WHEN ${visitorEvents.referrer} IS NULL OR ${visitorEvents.referrer} = '' THEN 'ישיר'
-              ELSE 'אחר'
-            END)`)
-          .orderBy(sql`COUNT(DISTINCT ${visitorEvents.sessionId}) DESC`).limit(15);
+          .where(sql`${visitorEvents.createdAt} >= ${rangeStart}`);
+
+        const getSource = (utmSource: string | null, referrer: string | null): string => {
+          if (utmSource && utmSource.trim() !== '') return utmSource;
+          if (!referrer || referrer.trim() === '') return 'ישיר';
+          if (referrer.includes('google')) return 'Google';
+          if (referrer.includes('facebook') || referrer.includes('fb.com')) return 'Facebook';
+          if (referrer.includes('instagram')) return 'Instagram';
+          if (referrer.includes('whatsapp')) return 'WhatsApp';
+          if (referrer.includes('twitter') || referrer.includes('t.co')) return 'Twitter/X';
+          if (referrer.includes('linkedin')) return 'LinkedIn';
+          if (referrer.includes('youtube')) return 'YouTube';
+          return 'אחר';
+        };
+
+        const sourceMap = new Map<string, Set<string>>();
+        for (const row of rawSourceRows) {
+          const src = getSource(row.utmSource, row.referrer);
+          if (!sourceMap.has(src)) sourceMap.set(src, new Set());
+          if (row.sessionId) sourceMap.get(src)!.add(row.sessionId);
+        }
+        const bySource = Array.from(sourceMap.entries())
+          .map(([source, sessions]) => ({ source, count: sessions.size }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 15);
 
         // By device
         const byDevice = await db.select({
