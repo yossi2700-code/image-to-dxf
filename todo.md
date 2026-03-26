@@ -2450,3 +2450,8 @@
 - [x] Implement adaptive threshold preprocessing in aiTraceRoute for pencil/sketch images with non-uniform backgrounds
 - [ ] Bug: CLAHE preprocessing too slow — causes timeout with no result, need to optimize or revert
 - [ ] Bug: OnboardingTour and nudge popup reopen unexpectedly mid-work after being closed
+
+## תיקונים - מרץ 2026 (בקשה נוכחית)
+
+- [x] חזרה ל-Simple mode לפני CLAHE — blur(1.0) + linear(1.8,-30) + threshold(155) @ 3072px
+- [x] תיקון SvgMiniPreview בדיאלוג הורדה — SVG מוצג חצי בגלל width/height חסרים, תוקן ל-width="100%" height="100%"

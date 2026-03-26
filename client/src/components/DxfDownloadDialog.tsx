@@ -148,17 +148,21 @@ function canShareFiles(): boolean {
 // ─── SVG Mini Preview ─────────────────────────────────────────────────────────
 
 function SvgMiniPreview({ svg }: { svg: string }) {
-  const styledSvg = svg.replace(
-    /<svg /,
-    '<svg style="max-width:100%;max-height:100%;width:auto;height:auto;" '
-  );
+  // cleanSvgForPreview removes pixel width/height and keeps only viewBox.
+  // Without explicit dimensions the browser can't size the SVG correctly.
+  // We strip any leftover width/height then add width="100%" height="100%"
+  // so the SVG fills the fixed-height container properly.
+  const styledSvg = svg
+    .replace(/<svg([^>]*)\s+width="[^"]*"/i, '<svg$1')
+    .replace(/<svg([^>]*)\s+height="[^"]*"/i, '<svg$1')
+    .replace(/<svg/, '<svg width="100%" height="100%" style="display:block;" ');
   return (
     <div
-      className="border-2 border-border rounded-xl bg-white overflow-hidden flex items-center justify-center p-3"
-      style={{ height: 150 }}
+      className="border-2 border-border rounded-xl bg-white overflow-hidden"
+      style={{ height: 150, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px' }}
     >
       <div
-        className="w-full h-full flex items-center justify-center"
+        style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
         dangerouslySetInnerHTML={{ __html: styledSvg }}
       />
     </div>

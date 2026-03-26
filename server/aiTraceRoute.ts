@@ -659,18 +659,16 @@ async function runTraceJob(
           .png()
           .toBuffer();
       } else {
-        // Simple mode: CLAHE (Contrast Limited Adaptive Histogram Equalization)
-        // Divides image into 32x32 tiles at 1536px (4x faster than 64x64 at 3072px, same quality).
-        // CLAHE detects pencil lines on grey/uneven backgrounds where global threshold fails.
-        // Pipeline: grayscale → resize to 1536 → CLAHE → median → threshold → upscale to 3072
+        // Simple mode: minimal blur to preserve fine details (leaves, small shapes)
+        // blur(1.0) instead of 3.0 — just enough to remove single-pixel noise without merging nearby lines
+        // contrast boost first to make light grey lines visible before threshold
         processedBuffer = await sharp(rawBuffer)
-          .extend({ top: 80, bottom: 80, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-          .resize(1536, 1536, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .grayscale()
-          .clahe({ width: 32, height: 32, maxSlope: 3 }) // adaptive: 32×32 tiles at 1536px = same tile density as 64×64 at 3072px
-          .median(3)                   // 3×3 median filter removes salt-and-pepper noise without blurring edges
-          .threshold(140)              // lower threshold — CLAHE already boosted local contrast
-          .resize(3072, 3072, { fit: "inside", kernel: "nearest" }) // upscale to 3072 for potrace (nearest = no blur)
+          .linear(1.8, -30)            // mild contrast boost: darken lines without blowing out background
+          .blur(1.0)                   // minimal blur — removes single-pixel noise, preserves fine details
+          .threshold(155)              // slightly lower to catch more of the boosted dark pixels
           .png()
           .toBuffer();
       }
