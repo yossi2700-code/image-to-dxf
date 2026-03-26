@@ -2434,3 +2434,5 @@
 
 - [x] תיקון: MySQL לא תומך ב-GROUP BY עם COALESCE/CASE expressions — הוחלף ב-JavaScript aggregation
 - [x] Add new-user engagement popup: auto-show after 8s for users with full 10 tokens (never converted), with CTA to try the tool
+- [x] Remove "כל פעולה עולה אסימון אחד" text from nudge popup
+- [x] Replace welcome bonus banner with small subtle text "היכנס למייל לקבל עוד 20"

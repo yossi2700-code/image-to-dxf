@@ -2719,26 +2719,12 @@ export default function Home() {
         )}
         {/* ── Pending Bonus Banner ── */}
         {showBonusBanner && (
-          <div
-            className="mx-2 mt-2 mb-1 rounded-xl px-4 py-3 flex items-center justify-between gap-3"
-            style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', color: 'white' }}
+          <p
+            className="text-center text-xs px-4 pt-2 pb-0"
+            style={{ color: 'rgba(99,102,241,0.85)' }}
           >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <span className="text-lg shrink-0">📧</span>
-              <p className="text-sm font-medium leading-snug">
-                {isRtl
-                  ? 'מחכים לך 20 אסימונים בונוס במייל — לחץ על הקישור לקבלתם'
-                  : '20 bonus tokens waiting in your email — click the link to claim'}
-              </p>
-            </div>
-            <button
-              onClick={() => { setBonusBannerDismissed(true); localStorage.setItem('bonus_banner_dismissed', '1'); }}
-              className="shrink-0 text-white/70 hover:text-white transition-colors p-1 rounded"
-              aria-label="סגור"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-          </div>
+            📧 {isRtl ? 'היכנס למייל לקבל עוד 20 אסימונים' : 'Check your email to get 20 more tokens'}
+          </p>
         )}
         {/* ── Sale Banner ── */}
         <SaleBanner />

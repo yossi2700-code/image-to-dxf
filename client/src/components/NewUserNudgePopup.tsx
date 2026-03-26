@@ -126,9 +126,7 @@ export function NewUserNudgePopup({ hasAnyAction, onSelectTab }: NewUserNudgePop
         {isHe ? "יש לך 10 אסימונים — נסה עכשיו!" : "You have 10 tokens — try now!"}
       </p>
       <p style={{ fontSize: 12, color: "rgba(196,181,253,0.9)", margin: "0 0 14px", lineHeight: 1.5 }}>
-        {isHe
-          ? "כל פעולה עולה אסימון אחד. בחר מה לנסות:"
-          : "Each action costs 1 token. Choose what to try:"}
+        {isHe ? "בחר מה לנסות:" : "Choose what to try:"}
       </p>
 
       {/* CTA buttons */}
