@@ -2438,3 +2438,5 @@
 - [x] Replace welcome bonus banner with small subtle text "היכנס למייל לקבל עוד 20"
 - [x] Remove bonus banner entirely from Home.tsx (showBonusBanner section)
 - [x] Add small email bonus hint inside nudge popup for users with hasPendingWelcomeBonus
+- [ ] Bug: nudge popup shows for users who already performed actions — fix hasAnyAction logic in tokens.balance procedure
+- [x] Bug: Portrait refunds tokens even when no tokens were charged (no face detected = refund without prior deduction)

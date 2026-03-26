@@ -324,9 +324,10 @@ async function runFaceDetectJob(
     const faceCount = detectedFaces.length;
     
     if (faceCount === 0) {
-      // Refund tokens — no face found (guard against double refund)
+      // Only refund if tokens were already deducted — tokens are deducted AFTER success (Step D),
+      // so in normal flow no refund is needed here. Guard prevents phantom refunds.
       const jobForRefundCheck = getJob(jobId);
-      if (!jobForRefundCheck?.noFaceRefundSent) {
+      if (jobForRefundCheck?.tokenDeducted && !jobForRefundCheck?.noFaceRefundSent) {
         updateJob(jobId, { noFaceRefundSent: true });
         try {
           const noFaceRefundCost = await getTokenCostForAction("face_detect");

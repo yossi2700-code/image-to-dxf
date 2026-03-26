@@ -1,0 +1,62 @@
+{
+  "query": "\nSELECT * FROM token_costs ORDER BY updatedAt DESC LIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT * FROM token_costs ORDER BY updatedAt DESC LIMIT 20;\n",
+  "rows": [
+    {
+      "id": "2",
+      "action": "ai_generate",
+      "cost": "3",
+      "label": "AI Generate (Text to DXF)",
+      "isEnabled": "1",
+      "updatedAt": "2026-03-17 21:16:35",
+      "labelHe": "יצירת עיצוב AI",
+      "labelEn": "AI Design Creation",
+      "descriptionHe": "יצירת 3 גרסאות עיצוב מטקסט בעזרת בינה מלאכותית",
+      "descriptionEn": "Generate 3 design variations from text using AI",
+      "sortOrder": "2"
+    },
+    {
+      "id": "1",
+      "action": "ai_trace",
+      "cost": "5",
+      "label": "AI Trace (Image to DXF)",
+      "isEnabled": "1",
+      "updatedAt": "2026-03-15 16:44:49",
+      "labelHe": "AI Outline",
+      "labelEn": "AI Outline",
+      "descriptionHe": "המרת תמונה לעיצוב וקטורי DXF בעזרת AI",
+      "descriptionEn": "Convert a photo to a DXF vector design using AI",
+      "sortOrder": "3"
+    },
+    {
+      "id": "3",
+      "action": "ai_refine",
+      "cost": "2",
+      "label": "AI Refine (Edit DXF)",
+      "isEnabled": "1",
+      "updatedAt": "2026-03-15 16:44:49",
+      "labelHe": "תיקון עיצוב עם AI",
+      "labelEn": "AI Design Fix",
+      "descriptionHe": "תיקון ושיפור עיצוב קיים בעזרת בינה מלאכותית",
+      "descriptionEn": "Fix and improve an existing design using AI",
+      "sortOrder": "5"
+    },
+    {
+      "id": "4",
+      "action": "face_detect",
+      "cost": "4",
+      "label": "Face/Portrait Detection",
+      "isEnabled": "1",
+      "updatedAt": "2026-03-15 15:44:29",
+      "labelHe": "פורטרט AI",
+      "labelEn": "AI Portrait",
+      "descriptionHe": "יצירת פורטרט אמנותי מתמונת פנים",
+      "descriptionEn": "Create an artistic portrait from a face photo",
+      "sortOrder": "4"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\taction\tcost\tlabel\tisEnabled\tupdatedAt\tlabelHe\tlabelEn\tdescriptionHe\tdescriptionEn\tsortOrder\n2\tai_generate\t3\tAI Generate (Text to DXF)\t1\t2026-03-17 21:16:35\tיצירת עיצוב AI\tAI Design Creation\tיצירת 3 גרסאות עיצוב מטקסט בעזרת בינה מלאכותית\tGenerate 3 design variations from text using AI\t2\n1\tai_trace\t5\tAI Trace (Image to DXF)\t1\t2026-03-15 16:44:49\tAI Outline\tAI Outline\tהמרת תמונה לעיצוב וקטורי DXF בעזרת AI\tConvert a photo to a DXF vector design using AI\t3\n3\tai_refine\t2\tAI Refine (Edit DXF)\t1\t2026-03-15 16:44:49\tתיקון עיצוב עם AI\tAI Design Fix\tתיקון ושיפור עיצוב קיים בעזרת בינה מלאכותית\tFix and improve an existing design using AI\t5\n4\tface_detect\t4\tFace/Portrait Detection\t1\t2026-03-15 15:44:29\tפורטרט AI\tAI Portrait\tיצירת פורטרט אמנותי מתמונת פנים\tCreate an artistic portrait from a face photo\t4\n",
+  "stderr": "",
+  "execution_time_ms": 1585
+}

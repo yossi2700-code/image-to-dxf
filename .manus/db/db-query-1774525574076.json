@@ -1,0 +1,26 @@
+{
+  "query": "\nSELECT ua.id, ua.appUserId, ua.actionType, ua.feature, ua.createdAt, au.email\nFROM user_actions ua\nJOIN app_users au ON ua.appUserId = au.id\nWHERE au.email = 'oren263@gmail.com'\nORDER BY ua.createdAt DESC\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT ua.id, ua.appUserId, ua.actionType, ua.feature, ua.createdAt, au.email\nFROM user_actions ua\nJOIN app_users au ON ua.appUserId = au.id\nWHERE au.email = 'oren263@gmail.com'\nORDER BY ua.createdAt DESC\nLIMIT 10;\n",
+  "rows": [
+    {
+      "id": "4860001",
+      "appUserId": "1470001",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "createdAt": "2026-03-26 11:44:30",
+      "email": "oren263@gmail.com"
+    },
+    {
+      "id": "4830001",
+      "appUserId": "1470001",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "createdAt": "2026-03-26 10:43:34",
+      "email": "oren263@gmail.com"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tappUserId\tactionType\tfeature\tcreatedAt\temail\n4860001\t1470001\tai_generate\tai_trace\t2026-03-26 11:44:30\toren263@gmail.com\n4830001\t1470001\tai_generate\tai_trace\t2026-03-26 10:43:34\toren263@gmail.com\n",
+  "stderr": "",
+  "execution_time_ms": 1686
+}

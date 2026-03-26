@@ -1,0 +1,50 @@
+{
+  "query": "\nSELECT tt.*, au.email\nFROM token_transactions tt\nJOIN app_users au ON tt.appUserId = au.id\nWHERE au.email = 'oren263@gmail.com'\nORDER BY tt.createdAt ASC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT tt.*, au.email\nFROM token_transactions tt\nJOIN app_users au ON tt.appUserId = au.id\nWHERE au.email = 'oren263@gmail.com'\nORDER BY tt.createdAt ASC;\n",
+  "rows": [
+    {
+      "id": "4890001",
+      "appUserId": "1470001",
+      "amount": "4",
+      "reason": "refund",
+      "description": "No face detected — tokens refunded",
+      "balanceAfter": "14",
+      "createdAt": "2026-03-26 10:40:14",
+      "email": "oren263@gmail.com"
+    },
+    {
+      "id": "4890002",
+      "appUserId": "1470001",
+      "amount": "-5",
+      "reason": "ai_trace",
+      "description": "NULL",
+      "balanceAfter": "9",
+      "createdAt": "2026-03-26 10:43:33",
+      "email": "oren263@gmail.com"
+    },
+    {
+      "id": "4920001",
+      "appUserId": "1470001",
+      "amount": "-5",
+      "reason": "ai_trace",
+      "description": "NULL",
+      "balanceAfter": "4",
+      "createdAt": "2026-03-26 11:44:30",
+      "email": "oren263@gmail.com"
+    },
+    {
+      "id": "4920002",
+      "appUserId": "1470001",
+      "amount": "20",
+      "reason": "admin_add",
+      "description": "Admin added 20 tokens",
+      "balanceAfter": "24",
+      "createdAt": "2026-03-26 12:05:49",
+      "email": "oren263@gmail.com"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tappUserId\tamount\treason\tdescription\tbalanceAfter\tcreatedAt\temail\n4890001\t1470001\t4\trefund\tNo face detected — tokens refunded\t14\t2026-03-26 10:40:14\toren263@gmail.com\n4890002\t1470001\t-5\tai_trace\tNULL\t9\t2026-03-26 10:43:33\toren263@gmail.com\n4920001\t1470001\t-5\tai_trace\tNULL\t4\t2026-03-26 11:44:30\toren263@gmail.com\n4920002\t1470001\t20\tadmin_add\tAdmin added 20 tokens\t24\t2026-03-26 12:05:49\toren263@gmail.com\n",
+  "stderr": "",
+  "execution_time_ms": 1582
+}
