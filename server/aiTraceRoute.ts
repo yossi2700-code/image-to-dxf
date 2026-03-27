@@ -427,19 +427,36 @@ async function runTraceJob(
             `No text, no letters, no numbers, no logos, no watermarks anywhere.`
           );
 
-      // Use gpt-image-1 edit API for high-quality line art generation
-      // Pass signal so the request is aborted immediately when the 5-min timeout fires
-      if (singleLine) console.log(`[aiTraceRoute] Single-line job ${jobId}: sending prompt to gpt-image-1, length=${editPrompt.length}`);
-      const imageEditResponse = await openai.images.edit({
-        model: "gpt-image-1",
-        image: new File([editSourceBuffer as unknown as BlobPart], "source.png", { type: "image/png" }),
-        prompt: editPrompt,
-        n: 1,
-        size: aiOutputSize as "1024x1024" | "1536x1024" | "1024x1536",
-      } as Parameters<typeof openai.images.edit>[0], { signal: abortController.signal });
-
-      const b64 = (imageEditResponse as { data?: Array<{ b64_json?: string }> }).data?.[0]?.b64_json;
-      if (!b64) throw new Error("gpt-image-1 did not return image data");
+      // Use Forge ImageService for high-quality line art generation
+      // This produces cleaner results than OpenAI images.edit via proxy
+      if (singleLine) console.log(`[aiTraceRoute] Single-line job ${jobId}: sending prompt to Forge ImageService, length=${editPrompt.length}`);
+      const forgeApiUrl = process.env.BUILT_IN_FORGE_API_URL;
+      const forgeApiKey = process.env.BUILT_IN_FORGE_API_KEY;
+      if (!forgeApiUrl || !forgeApiKey) throw new Error("Forge API not configured");
+      const forgeBaseUrl = forgeApiUrl.endsWith("/") ? forgeApiUrl : `${forgeApiUrl}/`;
+      const forgeEndpoint = new URL("images.v1.ImageService/GenerateImage", forgeBaseUrl).toString();
+      const b64Input = editSourceBuffer.toString("base64");
+      const forgeResponse = await fetch(forgeEndpoint, {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          "connect-protocol-version": "1",
+          authorization: `Bearer ${forgeApiKey}`,
+        },
+        body: JSON.stringify({
+          prompt: editPrompt,
+          original_images: [{ b64Json: b64Input, mimeType: "image/png" }],
+        }),
+        signal: abortController.signal,
+      });
+      if (!forgeResponse.ok) {
+        const detail = await forgeResponse.text().catch(() => "");
+        throw new Error(`Forge ImageService failed (${forgeResponse.status}): ${detail}`);
+      }
+      const forgeResult = await forgeResponse.json() as { image: { b64Json: string; mimeType: string } };
+      const b64 = forgeResult.image?.b64Json;
+      if (!b64) throw new Error("Forge ImageService did not return image data");
       let rawBuffer = Buffer.from(b64, "base64");
 
       // Add white padding around the AI-generated image, then process at 3072px resolution
