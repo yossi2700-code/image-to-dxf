@@ -2491,3 +2491,8 @@
 ## שדה מיקוד ב-Popup זיהוי נוף — מרץ 2026
 - [x] הוספת שדה טקסט ב-popup זיהוי נוף/סצנה — "מה לצייר?" (לדוגמה: רק הכסאות, רק העצים)
 - [x] העברת הטקסט לפרומפט ה-AI כ-focusText
+
+## תיקון Google Ads — מעקב הרשמות OAuth — מרץ 2026
+- [x] שינוי oauth.ts: זיהוי משתמש חדש + הגדרת cookie זמני new_registration=1
+- [x] שינוי Home.tsx: קריאת cookie new_registration ושליחת gtag conversion
+- [x] בדיקת vitest לזיהוי משתמש חדש ב-OAuth

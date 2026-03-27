@@ -28,7 +28,7 @@ export function registerOAuthRoutes(app: Express) {
         return;
       }
 
-      await db.upsertUser({
+      const { isNew } = await db.upsertUser({
         openId: userInfo.openId,
         name: userInfo.name || null,
         email: userInfo.email ?? null,
@@ -43,6 +43,17 @@ export function registerOAuthRoutes(app: Express) {
 
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+
+      // Set a short-lived non-httpOnly cookie so the frontend can fire the
+      // Google Ads conversion event exactly once for new registrations.
+      if (isNew) {
+        res.cookie("new_registration", "1", {
+          ...cookieOptions,
+          httpOnly: false,   // must be readable by JS
+          maxAge: 5 * 60 * 1000, // 5 minutes — plenty of time for the page to load
+        });
+        console.log("[OAuth] New user registered:", userInfo.openId);
+      }
 
       res.redirect(302, "/");
     } catch (error) {

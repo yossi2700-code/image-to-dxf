@@ -2487,6 +2487,24 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
+  // Google Ads: fire sign_up conversion when user arrives after OAuth new registration
+  useEffect(() => {
+    const cookies = document.cookie.split(';').map(c => c.trim());
+    const hasNewReg = cookies.some(c => c.startsWith('new_registration='));
+    if (hasNewReg) {
+      // Delete the cookie immediately so it only fires once
+      document.cookie = 'new_registration=; Max-Age=0; path=/';
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('event', 'conversion', {
+          'send_to': 'AW-18000656977/FGBsCL_t8I4cENH0sIdD',
+          'value': 1.0,
+          'currency': 'ILS'
+        });
+        console.log('[Analytics] Google Ads sign_up conversion fired (OAuth new user)');
+      }
+    }
+  }, []);
+
   // Close user menu on outside click
   useEffect(() => {
     if (!userMenuOpen) return;
