@@ -855,7 +855,7 @@ async function runTraceJob(
         const { notifyOwner } = await import("./_core/notification");
         await notifyOwner({
           title: "🔴 שגיאת חיוב OpenAI — נדרש טעינת כרטיס",
-          content: `שגיאת billing ב-AI Outline:\n${message}\n\nנא להיכנס ל-OpenAI ולטעון את הכרטיס: https://platform.openai.com/settings/organization/billing`,
+          content: `שגיאת billing ב-תמונה לקווים:\n${message}\n\nנא להיכנס ל-OpenAI ולטעון את הכרטיס: https://platform.openai.com/settings/organization/billing`,
         });
       } catch (_) { /* ignore notification errors */ }
     }

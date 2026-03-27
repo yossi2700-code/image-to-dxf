@@ -191,7 +191,7 @@ export async function sendWelcomeEmail(opts: {
         <td width="4%"></td>
         <td width="48%" style="background:#f8f9ff;border:1px solid #e0e7ff;border-radius:12px;padding:16px;vertical-align:top;">
           <div style="font-size:24px;margin-bottom:8px;">📸</div>
-          <div style="font-size:13px;font-weight:700;color:#312e81;margin-bottom:5px;">AI Outline — המרת תמונה</div>
+          <div style="font-size:13px;font-weight:700;color:#312e81;margin-bottom:5px;">תמונה לקווים — המרת תמונה</div>
           <div style="font-size:12px;color:#6b7280;line-height:1.5;">העלה תמונה — ה-AI יחלץ קווים ויצור DXF מדויק ללייזר ו-CNC</div>
         </td>
       </tr>
@@ -299,7 +299,7 @@ export async function sendWelcomeEmail(opts: {
         <div style="background: #f8fafc; border-radius: 12px; padding: 20px 24px; margin-bottom: 28px; border: 1px solid #e2e8f0;">
           <p style="color: #1e293b; font-weight: 700; font-size: 14px; margin: 0 0 14px;">What you can do with tokens:</p>
           <table style="width: 100%; border-collapse: collapse;">
-            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; color: #374151; font-size: 14px;">🖼️ AI Outline — image to vector</td><td style="padding: 8px 0; color: #6366f1; font-weight: 700; font-size: 14px;">5 tokens</td></tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; color: #374151; font-size: 14px;">🖼️ Image to Lines — image to vector</td><td style="padding: 8px 0; color: #6366f1; font-weight: 700; font-size: 14px;">5 tokens</td></tr>
             <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; color: #374151; font-size: 14px;">✨ AI Create — text to DXF</td><td style="padding: 8px 0; color: #6366f1; font-weight: 700; font-size: 14px;">3 tokens</td></tr>
             <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; color: #374151; font-size: 14px;">👤 Portrait — portrait DXF</td><td style="padding: 8px 0; color: #6366f1; font-weight: 700; font-size: 14px;">4 tokens</td></tr>
             <tr><td style="padding: 8px 0; color: #374151; font-size: 14px;">🔄 AI Refine — smart editing</td><td style="padding: 8px 0; color: #6366f1; font-weight: 700; font-size: 14px;">2 tokens</td></tr>

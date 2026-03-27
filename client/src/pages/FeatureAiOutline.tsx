@@ -3,8 +3,8 @@ import { FeatureLandingPage, CDN } from "./FeatureLanding";
 const config = {
   slug: "trace",
   color: "bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50",
-  badge_he: "🖼️ AI Outline",
-  badge_en: "🖼️ AI Outline",
+  badge_he: "🖼️ תמונה לקווים",
+  badge_en: "🖼️ Image to Lines",
   title_he: "המר תמונה לקובץ DXF",
   title_en: "Convert Image to DXF",
   subtitle_he: "העלה תמונה — ה-AI יחלץ את הקווים ויצור קובץ וקטורי מדויק לחריטה ולייזר",
@@ -55,8 +55,8 @@ const config = {
     { icon: "🎨", title_he: "מצבים שונים", title_en: "Multiple modes", desc_he: "רגיל, מפורט, סקיצה — לכל סגנון", desc_en: "Normal, detailed, sketch — for every style" },
     { icon: "💾", title_he: "שמור היסטוריה", title_en: "Save history", desc_he: "כל הקבצים שלך נשמרים בחשבון", desc_en: "All your files are saved in your account" },
   ],
-  cta_he: "נסה AI Outline חינם",
-  cta_en: "Try AI Outline Free",
+  cta_he: "נסה תמונה לקווים חינם",
+  cta_en: "Try Image to Lines Free",
 };
 
 export default function FeatureAiOutline() {

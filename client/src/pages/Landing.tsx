@@ -453,7 +453,7 @@ function DemoVideoSection({ isRtl }: { isRtl: boolean }) {
           {isRtl ? "ראה איך זה עובד בפועל" : "See it in action"}
         </h2>
         <p style={{ color: "rgba(196,181,253,0.85)", fontSize: 16, marginBottom: 36, maxWidth: 500, margin: "0 auto 36px" }}>
-          {isRtl ? "AI Outline, AI Portrait, AI Create — הכל בסרטון אחד" : "AI Outline, AI Portrait, AI Create — all in one demo"}
+          {isRtl ? "תמונה לקווים, AI Portrait, AI Create — הכל בסרטון אחד" : "Image to Lines, AI Portrait, AI Create — all in one demo"}
         </p>
 
         {/* Video wrapper */}

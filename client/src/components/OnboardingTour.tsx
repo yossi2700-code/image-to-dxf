@@ -4,7 +4,7 @@
  * Steps:
  *  1. Welcome (no target)
  *  2. AI Create card
- *  3. AI Outline card
+ *  3. תמונה לקווים card
  *  4. Portrait card
  *  5. Download button
  *

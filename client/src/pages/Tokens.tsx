@@ -37,7 +37,7 @@ type Transaction = {
 function reasonLabel(reason: string, isRtl: boolean): string {
   const map: Record<string, [string, string]> = {
     ai_generate: ["יצירת AI", "AI Generate"],
-    ai_trace: ["AI Outline", "AI Outline"],
+    ai_trace: ["תמונה לקווים", "Image to Lines"],
     ai_refine: ["תיקון AI", "AI Refine"],
     admin_add: ["הוספה ע\"י מנהל", "Added by Admin"],
     signup_bonus: ["בונוס הרשמה", "Signup Bonus"],
@@ -72,7 +72,7 @@ export default function Tokens() {
   // Cost table
   const costs = [
     { action: isRtl ? "יצירת AI (3 תמונות)" : "AI Generate (3 images)", cost: 3, icon: <Image className="w-4 h-4 text-purple-500" /> },
-    { action: isRtl ? "AI Outline (3 ווריאציות)" : "AI Outline (3 variations)", cost: 5, icon: <Scan className="w-4 h-4 text-blue-500" /> },
+    { action: isRtl ? "תמונה לקווים (3 ווריאציות)" : "Image to Lines (3 variations)", cost: 5, icon: <Scan className="w-4 h-4 text-blue-500" /> },
     { action: isRtl ? "תיקון AI" : "AI Refine", cost: 2, icon: <Wand2 className="w-4 h-4 text-green-500" /> },
     { action: isRtl ? "המרת תמונה (העלאה)" : "Image Upload (Convert)", cost: 0, icon: <Zap className="w-4 h-4 text-yellow-500" /> },
   ];

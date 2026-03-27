@@ -28,7 +28,7 @@ export interface Job {
 const jobs = new Map<string, Job>();
 
 // Auto-clean jobs older than 2 hours; also mark stale "processing" jobs as error after 10 min
-// (AI Outline + AI Sketch can take 3-5 minutes for 3 images, so 10 min is a safe ceiling)
+// (תמונה לקווים + AI Sketch can take 3-5 minutes for 3 images, so 10 min is a safe ceiling)
 setInterval(() => {
   const cutoff = Date.now() - 2 * 60 * 60 * 1000;
   const staleCutoff = Date.now() - 10 * 60 * 1000; // 10 minutes

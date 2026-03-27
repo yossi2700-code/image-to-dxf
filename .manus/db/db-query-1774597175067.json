@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE token_costs SET labelHe = 'תמונה לקווים', labelEn = 'Image to Lines', descriptionHe = 'המרת תמונה לקווי וקטור DXF בעזרת AI', descriptionEn = 'Convert a photo to clean vector lines (DXF) using AI' WHERE action = 'ai_trace';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute UPDATE token_costs SET labelHe = 'תמונה לקווים', labelEn = 'Image to Lines', descriptionHe = 'המרת תמונה לקווי וקטור DXF בעזרת AI', descriptionEn = 'Convert a photo to clean vector lines (DXF) using AI' WHERE action = 'ai_trace';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1640
+}

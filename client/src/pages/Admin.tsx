@@ -236,7 +236,7 @@ function ActivitySection({ recent, recentLoading, timeRange = "day", onTimeRange
 
   const getActionLabel = (actionType: string, feature: string | null) => {
     if (actionType === "convert") return { label: "המרה", color: "bg-blue-100 text-blue-700" };
-    if (feature === "ai_trace") return { label: "AI Outline", color: "bg-teal-100 text-teal-700" };
+    if (feature === "ai_trace") return { label: "תמונה לקווים", color: "bg-teal-100 text-teal-700" };
     if (feature === "ai_generate") return { label: "AI Create", color: "bg-purple-100 text-purple-700" };
     if (feature === "portrait") return { label: "פורטרט", color: "bg-pink-100 text-pink-700" };
     if (feature === "document_redraw") return { label: "תיקון עיצוב", color: "bg-orange-100 text-orange-700" };
@@ -1460,7 +1460,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   const getFeatureLabel = (actionType: string, feature?: string | null) => {
                     if (actionType === "convert") return "המרה";
                     if (actionType === "download") return "הורדה";
-                    if (feature === "ai_trace") return "AI Outline";
+                    if (feature === "ai_trace") return "תמונה לקווים";
                     if (feature === "portrait") return "פורטרט AI";
                     if (feature === "document_redraw") return "AI Sketch";
                     if (feature === "ai_generate") return "AI Create";
@@ -1708,7 +1708,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                                 const f = (a as {feature?: string}).feature;
                                                 if (a.actionType === "convert") return "המרה";
                                                 if (a.actionType === "download") return "הורדה";
-                                                if (f === "ai_trace") return "AI Outline";
+                                                if (f === "ai_trace") return "תמונה לקווים";
                                                 if (f === "portrait") return "פורטרט AI";
                                                 if (f === "document_redraw") return "AI Sketch";
                                                 if (f === "ai_generate") return "AI Create";

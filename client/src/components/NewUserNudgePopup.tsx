@@ -218,7 +218,7 @@ export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSele
           </div>
         </button>
 
-        {/* AI Outline */}
+        {/* תמונה לקווים */}
         <button
           onClick={() => handleCta("trace")}
           style={{
@@ -241,7 +241,7 @@ export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSele
         >
           <Upload size={14} style={{ flexShrink: 0 }} />
           <div>
-            <div>{isHe ? "AI Outline — העלה תמונה" : "AI Outline — upload a photo"}</div>
+            <div>{isHe ? "תמונה לקווים — העלה תמונה" : "Image to Lines — upload a photo"}</div>
             <div style={{ fontSize: 10, fontWeight: 400, opacity: 0.8 }}>
               {isHe ? "ה-AI יהפוך אותה לקווי וקטור" : "AI converts it to vector lines"}
             </div>

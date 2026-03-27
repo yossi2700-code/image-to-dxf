@@ -216,7 +216,7 @@ async function runDocumentRedrawJob(
     const jobBeforeGen = getJob(jobId);
     if (!jobBeforeGen || jobBeforeGen.status === "cancelled") return;
 
-    // Step B: Generate with openai.images.generate (same as AI Outline — reliable, no timeout)
+    // Step B: Generate with openai.images.generate (same as תמונה לקווים — reliable, no timeout)
     const imagePrompt = buildDocumentLineArtPrompt(objectDescription + (userDesc ? `. User note: ${userDesc}` : ""));
 
     // Heartbeat every 30s to prevent stale-job timeout during image generation

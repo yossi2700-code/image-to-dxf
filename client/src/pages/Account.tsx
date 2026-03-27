@@ -45,7 +45,7 @@ interface TokenTx {
 function reasonLabel(reason: string, isRtl: boolean): string {
   const map: Record<string, [string, string]> = {
     signup_bonus: ["בונוס הרשמה", "Signup bonus"],
-    ai_trace: ["AI Outline", "AI Outline"],
+    ai_trace: ["תמונה לקווים", "Image to Lines"],
     ai_generate: ["AI יצירה", "AI Create"],
     ai_refine: ["תיקון AI", "AI Refine"],
     convert: ["המרה", "Convert"],

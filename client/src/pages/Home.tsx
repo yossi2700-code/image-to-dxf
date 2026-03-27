@@ -2101,7 +2101,7 @@ function TokenHistoryPopup({ onClose, isRtl, containerRef }: { onClose: () => vo
   const reasonLabel = (reason: string) => {
     const labels: Record<string, string> = {
       signup_bonus: isRtl ? 'בונוס הרשמה' : 'Signup Bonus',
-      ai_trace: isRtl ? 'AI Outline' : 'AI Outline',
+      ai_trace: isRtl ? 'תמונה לקווים' : 'Image to Lines',
       ai_generate: isRtl ? 'AI Create' : 'AI Create',
       ai_refine: isRtl ? 'שיפור AI' : 'AI Refine',
       convert: isRtl ? 'המרה' : 'Convert',
@@ -2857,7 +2857,7 @@ export default function Home() {
             </span>
           </button>
 
-          {/* AI Outline */}
+          {/* תמונה לקווים */}
           <button
             id="tour-ai-outline"
             onClick={() => { setActiveTab('trace'); localStorage.setItem('active_tab', 'trace'); document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
@@ -2865,13 +2865,13 @@ export default function Home() {
             style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', cursor: 'pointer' }}
           >
             <div className="w-full relative" style={{ background: '#f8f9ff', paddingBottom: '55%' }}>
-              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_618d6046.webp" alt="AI Outline" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: '5px' }} />
+              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_618d6046.webp" alt="תמונה לקווים" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: '5px' }} />
               {/* Upload badge */}
               <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full z-10 whitespace-nowrap" style={{ background: 'rgba(13,148,136,0.9)', color: 'white' }}>
                 <Upload className="w-2.5 h-2.5" />{isRtl ? 'העלה תמונה' : 'Upload image'}
               </span>
             </div>
-            <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #0d9488, #06b6d4)', color: 'white', letterSpacing: '0.02em' }}>AI Outline</span>
+            <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #0d9488, #06b6d4)', color: 'white', letterSpacing: '0.02em' }}>תמונה לקווים</span>
           </button>
 
           {/* Portrait */}
@@ -2948,7 +2948,7 @@ export default function Home() {
                 </span>
               )}
             </TabsTrigger>
-            {/* 2. AI Outline */}
+            {/* 2. תמונה לקווים */}
             <TabsTrigger
               value="trace"
               className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
@@ -2957,7 +2957,7 @@ export default function Home() {
               }}
             >
               <Scan className="w-4 h-4 shrink-0" />
-              <span className="truncate text-[11px]">AI Outline</span>
+              <span className="truncate text-[11px]">תמונה לקווים</span>
               {activeJobs.trace && (
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
@@ -3053,9 +3053,9 @@ export default function Home() {
               <DemoSlider
                 accentColor="#0d9488"
                 images={[
-                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_618d6046.webp', alt: 'AI Outline - Bicycle' },
-                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-sneaker_fa207b82.webp', alt: 'AI Outline - Sneaker' },
-                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-tools_02a638ad.webp', alt: 'AI Outline - Tools' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-bicycle_618d6046.webp', alt: 'תמונה לקווים - אופניים' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-sneaker_fa207b82.webp', alt: 'תמונה לקווים - נעל' },
+                  { src: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-v3-tools_02a638ad.webp', alt: 'תמונה לקווים - כלים' },
                 ]}
               />
             </div>
@@ -3087,8 +3087,8 @@ export default function Home() {
                 </p>
                 <p className="text-orange-600 text-xs leading-relaxed">
                   {isRtl
-                    ? "הפיצרות AI סקיצה זמנית אינה זמינה. אנו עובדים על שיפורים ונחזור בקרוב. בינתיים ניתן להשתמש ב-AI Outline ו-AI יצירה."
-                    : "AI Sketch is temporarily unavailable. We are working on improvements and will be back soon. In the meantime, use AI Outline or AI Create."}
+                    ? "הפיצרות AI סקיצה זמנית אינה זמינה. אנו עובדים על שיפורים ונחזור בקרוב. בינתיים ניתן להשתמש ב-תמונה לקווים ו-AI יצירה."
+                    : "AI Sketch is temporarily unavailable. We are working on improvements and will be back soon. In the meantime, use Image to Lines or AI Create."}
                 </p>
               </div>
             </div>

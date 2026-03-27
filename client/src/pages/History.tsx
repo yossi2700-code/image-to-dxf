@@ -98,7 +98,7 @@ const FEATURE_TABS: FeatureTab[] = [
   {
     id: "ai_trace",
     labelHe: "AI קווים",
-    labelEn: "AI Outline",
+    labelEn: "Image to Lines",
     features: ["ai_trace"],
     icon: <Wand2 className="w-3.5 h-3.5" />,
     color: "text-purple-600",
@@ -159,7 +159,7 @@ function cleanDesc(desc: string | null, fallback: string): string {
 function getFeatureLabel(feature: string | null, actionType: string, isRtl: boolean): string {
   switch (feature) {
     case "convert": return isRtl ? "המרה" : "Convert";
-    case "ai_trace": return "AI Outline";
+    case "ai_trace": return "תמונה לקווים";
     case "ai_generate": return isRtl ? "AI יצירה" : "AI Create";
     case "portrait": return isRtl ? "פורטרט" : "Portrait";
     case "document_redraw": return isRtl ? "מסמך" : "Document";

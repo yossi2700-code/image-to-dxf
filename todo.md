@@ -2477,3 +2477,6 @@
 - [x] CTA ברור ב-landing page — redirect ל-/#main-tabs אחרי רישום/כניסה
 - [x] כפתור FAB מובייל — floating "התחל עכשיו" שמגלגל ל-#main-tabs
 - [x] סדר נכון: push notification נקרא רק בזמן המרה (לא בכניסה)
+
+## שינוי שם AI Outline - מרץ 2026
+- [x] שינוי "AI Outline" ל-"תמונה לקווים" (עברית) ו-"Image to Lines" (אנגלית) בכל הקבצים

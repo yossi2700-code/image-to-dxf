@@ -828,14 +828,14 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
                 )}
               </ul>
             </div>
-            {/* Suggest AI Outline */}
+            {/* Suggest תמונה לקווים */}
             {onSwitchToAiOutline && (
               <button
                 className="w-full py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95"
                 style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}
                 onClick={() => { setStatus("idle"); setErrorMsg(""); onSwitchToAiOutline(imageFile); }}
               >
-                {isRtl ? "✨ נסה AI Outline במקום" : "✨ Try AI Outline Instead"}
+                {isRtl ? "✨ נסה תמונה לקווים במקום" : "✨ Try Image to Lines Instead"}
               </button>
             )}
             {/* Button */}
