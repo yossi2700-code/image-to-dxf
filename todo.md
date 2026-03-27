@@ -2500,3 +2500,4 @@
 ## שיפור פרומפטים - מרץ 2026
 
 - [x] עדכון כל הפרומפטים ב-aiTraceRoute.ts לפרומפט "קווי עט נקיים" — continuous pen strokes, suitable for laser engraving
+- [x] שינוי pipeline ב-aiTraceRoute.ts: פרומפט חדש שמבקש מ-AI לעקוב אחרי הקווים המדוייקים בתמונה (לא לצייר מחדש מזיכרון)

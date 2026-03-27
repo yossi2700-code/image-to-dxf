@@ -507,8 +507,8 @@ async function runTraceJob(
 
     // Update step: generating image
     updateJob(jobId, {
-      step: isHe ? `מייצר עיצוב מהתיאור: "${objectDescription.slice(0, 60)}..."` : `Generating design from: "${objectDescription.slice(0, 60)}..."`,
-      stepEn: `Generating design from: "${objectDescription.slice(0, 60)}..."`,
+      step: isHe ? "ממיר תמונה לקווי עט נקיים..." : "Converting image to clean pen strokes...",
+      stepEn: "Converting image to clean pen strokes...",
     });
 
     // Step B: Generate ONE line art variation using gpt-image-1 image editing
@@ -574,67 +574,16 @@ async function runTraceJob(
         ? buildLineArtPrompt(objectDescription, idx, true)
         : effectiveLandscapeMode
         ? buildFullImagePrompt(objectDescription, idx)
-        : (isPortrait && !isToyOrFigurine)
-        ? (
-            // Portrait prompt — preserve facial likeness
-            `This image will be converted to a vector file for laser engraving or CNC cutting. ` +
-            `Convert this portrait photo to clean black and white line art. ` +
-            `Draw ONLY clean continuous pen strokes — like drawing with a fine-tip pen on paper. Every line must be a single continuous stroke with no breaks, no gaps. ` +
-            `Preserve the EXACT facial likeness: face shape, eye shape, nose, mouth, jawline, hair style. ` +
-            `Keep the same pose, angle, and proportions. ` +
-            `Use only pure black lines on pure white background. No shading, no grey tones, no gradients. ` +
-            `${singleLine ? SINGLE_LINE_STYLE : variation.style} ` +
-            `No text, no letters, no numbers anywhere.`
-          )
-        : isToyOrFigurine
-        ? (
-            // Toy/figurine prompt
-            `This image will be converted to a vector file for laser engraving or CNC cutting. ` +
-            `Convert this toy/figurine/cartoon character to clean black and white line art. ` +
-            `Draw ONLY clean continuous pen strokes — like drawing with a fine-tip pen on paper. Every line must be a single continuous stroke with no breaks, no gaps. ` +
-            `Preserve the EXACT toy appearance: cartoon eyes, toy proportions, stylized features. ` +
-            `Do NOT humanize — keep it looking like a toy/cartoon, not a real person. ` +
-            `Use only pure black lines on pure white background. No shading, no grey tones. ` +
-            `${singleLine ? SINGLE_LINE_STYLE : variation.style} ` +
-            `No text, no letters, no numbers anywhere.`
-          )
-        : isAnimal
-        ? (
-            // Animal prompt — CRITICAL: preserve real animal proportions, NOT cartoon style
-            `This image will be converted to a vector file for laser engraving or CNC cutting. ` +
-            `Convert this animal photo to clean black and white line art. ` +
-            `Draw ONLY clean continuous pen strokes — like drawing with a fine-tip pen on paper. Every line must be a single continuous stroke with no breaks, no gaps. ` +
-            `CRITICAL: Preserve the EXACT real appearance of this specific animal: ` +
-            `the actual face shape, real eye shape and size, true nose/muzzle proportions, real fur texture direction, exact body pose. ` +
-            `DO NOT simplify, stylize, cartoonify, or make it look like a children's drawing. ` +
-            `DO NOT make the eyes large and round like a cartoon — keep the real eye shape from the photo. ` +
-            `This must look like a realistic illustration of THIS specific animal, not a generic cute cartoon animal. ` +
-            `Use only pure black (#000000) lines on pure white (#FFFFFF) background. No shading, no grey tones, no gradients. ` +
-            `${singleLine ? SINGLE_LINE_STYLE : variation.style} ` +
-            `No text, no letters, no numbers, no logos anywhere.`
-          )
-        : isMonochrome
-        ? (
-            // Monochrome/B&W source — strict tracing: preserve every line exactly as-is
-            `This image is already a black and white line drawing and will be converted to a vector file for laser engraving or CNC cutting. ` +
-            `CRITICAL: Trace and reproduce the EXACT lines from this drawing — do NOT add, remove, or change any detail. ` +
-            `Draw ONLY clean continuous pen strokes — every line must be a single continuous stroke with no breaks, no gaps, no rough edges. ` +
-            `Keep every branch, leaf, stroke, and shape EXACTLY as shown in the original. ` +
-            `Convert to clean pure black (#000000) lines on pure white (#FFFFFF) background. ` +
-            `Remove any grey tones — make all lines fully black. Remove the background completely. ` +
-            `${singleLine ? SINGLE_LINE_STYLE : variation.style} ` +
-            `No text, no letters, no numbers, no logos, no watermarks anywhere.`
-          )
         : (
-            // General object prompt — gpt-image-1 edit
+            // Direct image-to-line-art prompt — no text description, AI follows the image directly
             `This image will be converted to a vector file for laser engraving or CNC cutting. ` +
-            `Convert it to clean black and white line art. ` +
+            `Convert it to clean black and white line art by following the EXACT lines and shapes visible in this image. ` +
+            `DO NOT redraw from memory or imagination — trace what you actually see in the image. ` +
             `Draw ONLY clean continuous pen strokes — like drawing with a fine-tip pen on paper. ` +
             `Every line must be a single continuous stroke with no breaks, no gaps, no rough edges. ` +
-            `Draw ONLY the main subject on a pure white background — remove the background completely. ` +
-            `Use only pure black (#000000) lines on pure white (#FFFFFF). No shading, no grey tones, no gradients. ` +
+            `Preserve ALL details: every curve, shape, decoration, and element exactly as shown. ` +
+            `Pure white (#FFFFFF) background. Pure black (#000000) lines only. No shading, no grey tones, no gradients, no fills. ` +
             `The lines must be smooth, flowing, and connected — suitable for a laser to follow as a single path. ` +
-            `Preserve the exact proportions and shape of the original object. ` +
             `${singleLine ? SINGLE_LINE_STYLE : variation.style} ` +
             `No text, no letters, no numbers, no logos, no watermarks anywhere.`
           );
