@@ -308,8 +308,7 @@ async function runTraceJob(
   hairline = false,
   lineweightMm?: number,
   singleLine = false,
-  closePaths = false,
-  outlineMode = false
+  closePaths = false
 ) {
   const isHe = lang === "he";
   let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
@@ -505,101 +504,6 @@ async function runTraceJob(
       step: isHe ? `מייצר עיצוב מהתיאור: "${objectDescription.slice(0, 60)}..."` : `Generating design from: "${objectDescription.slice(0, 60)}..."`,
       stepEn: `Generating design from: "${objectDescription.slice(0, 60)}..."`,
     });
-
-    // ─── OUTLINE MODE: bypass AI entirely, use bilateral+Canny edge extraction ───
-    if (outlineMode) {
-      updateJob(jobId, {
-        status: "processing",
-        step: isHe ? "מחלץ קווי מתאר ישירות מהתמונה..." : "Extracting outlines directly from image...",
-        stepEn: "Extracting outlines directly from image...",
-      });
-      const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "outline-"));
-      try {
-        // Save original image buffer to temp file
-        const inPath = path.join(tmpDir, "in.png");
-        const outPath = path.join(tmpDir, "out.png");
-        // Resize to 2000px for consistent quality
-        const resizedBuf = await sharp(imageBuffer)
-          .resize(2000, 2000, { fit: "inside", withoutEnlargement: true })
-          .png()
-          .toBuffer();
-        await fs.writeFile(inPath, resizedBuf);
-
-        // Run bilateral+Canny outline extraction
-        await new Promise<void>((resolve, reject) => {
-          const scriptPath = path.join(__dirname, "outline_extract.py");
-          const proc = spawn("python3", [scriptPath, inPath, outPath]);
-          let stderr = "";
-          proc.stderr.on("data", (d: Buffer) => { stderr += d.toString(); });
-          proc.on("close", (code) => {
-            if (code === 0) resolve();
-            else reject(new Error(`outline_extract.py failed (code ${code}): ${stderr}`));
-          });
-          proc.on("error", reject);
-        });
-
-        const outlineBuffer = await fs.readFile(outPath);
-
-        // Scale up to 3072px for potrace quality
-        const processedBuffer = await sharp(outlineBuffer)
-          .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-          .png()
-          .toBuffer();
-
-        const potraceOptions = { threshold: 128, turdSize: 20, alphaMax: 1.0, optCurve: true, optTolerance: 0.4 };
-        const rawSvg = await new Promise<string>((resolve, reject) => {
-          potrace.trace(processedBuffer, potraceOptions, (err: Error | null, svg: string) => {
-            if (err) reject(err); else resolve(svg);
-          });
-        });
-        const cleanSvg = cleanSvgForPreview(rawSvg);
-        const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, 0, false, closePaths);
-
-        // Upload a preview of the outline PNG (not the AI image)
-        const imgKey = `ai-trace-generated/${nanoid()}.png`;
-        const { url: imageUrl } = await storagePut(imgKey, outlineBuffer, "image/png");
-        const dxfFilename = `${baseFilename}_outline.dxf`;
-        const dxfKey = `ai-trace-dxf/${nanoid()}-${dxfFilename}`;
-        const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
-
-        const imageResult = { imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight };
-        updateJob(jobId, {
-          partialImages: [imageResult],
-          step: isHe ? "הושלם" : "Done",
-          stepEn: "Done",
-        });
-        updateJob(jobId, { status: "done", result: { success: true, images: [imageResult], objectDescription: baseFilename, suggestions: [] } });
-
-        // Record usage
-        try {
-          await deductTokens(appUserId, "ai_trace");
-          updateJob(jobId, { tokenDeducted: true });
-        } catch (e) { console.warn("[outlineMode] token deduction failed:", e); }
-        void logUsageEvent({ type: "ai_generate", ipAnon: anonymizeIp(ipAnon), durationMs: Date.now() - jobStartTime });
-        void recordUserAction({
-          appUserId,
-          actionType: "ai_generate",
-          description: "outline mode — direct edge extraction",
-          dxfUrl: imageResult.dxfUrl,
-          imageUrl: imageResult.imageUrl,
-          svgPreview: imageResult.svgPreview,
-          feature: "ai_trace",
-          durationMs: Date.now() - jobStartTime,
-          ipAnon: ipAnon ?? undefined,
-        });
-        return;
-      } catch (outlineErr) {
-        console.error("[aiTraceRoute] Outline mode failed:", outlineErr);
-        updateJob(jobId, {
-          status: "error",
-          error: isHe ? "שגיאה בחילוץ קווי מתאר. נסה שוב." : "Outline extraction failed. Please try again.",
-        });
-        return;
-      } finally {
-        await fs.rm(tmpDir, { recursive: true, force: true });
-      }
-    }
-    // ─── END OUTLINE MODE ─────────────────────────────────────────────────────
 
     // Step B: Generate ONE line art variation using gpt-image-1 image editing
     // We pass the ORIGINAL image as reference so the AI preserves the exact shape/angle.
@@ -1032,7 +936,6 @@ router.post(
       const hairline = req.body?.hairline === "true" || req.body?.hairline === true;
       const singleLine = req.body?.singleLine === "true" || req.body?.singleLine === true;
       const closePaths = req.body?.closePaths === "true" || req.body?.closePaths === true;
-      const outlineMode = req.body?.outlineMode === "true" || req.body?.outlineMode === true;
       const lineweightMmRaw = parseFloat((req.body?.lineweightMm as string) ?? "");
       const lineweightMm = isNaN(lineweightMmRaw) ? undefined : Math.min(2.0, Math.max(0, lineweightMmRaw));
       const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
@@ -1063,7 +966,7 @@ router.post(
         setTimeout(() => reject(new Error("Job timed out after 5 minutes")), MAX_JOB_MS)
       );
       Promise.race([
-        runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline, lineweightMm, singleLine, closePaths, outlineMode),
+        runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline, lineweightMm, singleLine, closePaths),
         timeoutPromise,
       ]).catch((err) => {
         const msg = err instanceof Error ? err.message : String(err);
