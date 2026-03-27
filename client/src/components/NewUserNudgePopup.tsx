@@ -21,9 +21,10 @@ interface NewUserNudgePopupProps {
   hasAnyAction: boolean;
   hasPendingWelcomeBonus?: boolean;
   onSelectTab: (tab: string) => void;
+  onDismiss?: () => void;
 }
 
-export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSelectTab }: NewUserNudgePopupProps) {
+export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSelectTab, onDismiss }: NewUserNudgePopupProps) {
   const { isRtl } = useLanguage();
   const [visible, setVisible] = useState(false);
   const [animIn, setAnimIn] = useState(false);
@@ -78,7 +79,11 @@ export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSele
 
   function dismiss() {
     setAnimIn(false);
-    setTimeout(() => setVisible(false), 350);
+    setTimeout(() => {
+      setVisible(false);
+      // Trigger onboarding tour after popup closes
+      if (onDismiss) onDismiss();
+    }, 350);
     setDismissed(true); // session-only dismiss
   }
 

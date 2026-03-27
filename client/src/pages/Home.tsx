@@ -3276,6 +3276,10 @@ export default function Home() {
             setActiveTab(tab);
             localStorage.setItem('active_tab', tab);
           }}
+          onDismiss={() => {
+            // Open the onboarding tour immediately after the nudge popup closes
+            window.dispatchEvent(new CustomEvent('tour:reset'));
+          }}
         />
       )}
     </div>
