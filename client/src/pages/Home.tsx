@@ -2762,6 +2762,10 @@ export default function Home() {
           // Show welcome banner only for brand-new registrations
           if (isNewRegistration) {
             setShowWelcomeBanner(true);
+            // Scroll to tools section so new users immediately see what to do
+            setTimeout(() => {
+              document.getElementById("main-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 500);
             // Google Ads conversion tracking - sign_up
             if (typeof window !== 'undefined' && (window as any).gtag) {
               (window as any).gtag('event', 'conversion', {

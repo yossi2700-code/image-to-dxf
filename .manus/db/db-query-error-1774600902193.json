@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, email, name, createdAt, lastLoginAt, tokenBalance, role FROM app_users WHERE email = 'beeri.brestel@gmail.com';\n\nSELECT * FROM user_actions WHERE userId = (SELECT id FROM app_users WHERE email = 'beeri.brestel@gmail.com') ORDER BY createdAt DESC LIMIT 20;\n\nSELECT * FROM token_transactions WHERE userId = (SELECT id FROM app_users WHERE email = 'beeri.brestel@gmail.com') ORDER BY createdAt DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, email, name, createdAt, lastLoginAt, tokenBalance, role FROM app_users WHERE email = 'beeri.brestel@gmail.com';\n\nSELECT * FROM user_actions WHERE userId = (SELECT id FROM app_users WHERE email = 'beeri.brestel@gmail.com') ORDER BY createdAt DESC LIMIT 20;\n\nSELECT * FROM token_transactions WHERE userId = (SELECT id FROM app_users WHERE email = 'beeri.brestel@gmail.com') ORDER BY createdAt DESC LIMIT 20;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'role' in 'field list'"
+  ]
+}

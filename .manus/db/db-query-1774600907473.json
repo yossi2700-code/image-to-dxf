@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, email, name, createdAt, lastLoginAt, tokenBalance FROM app_users WHERE email = 'beeri.brestel@gmail.com';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, email, name, createdAt, lastLoginAt, tokenBalance FROM app_users WHERE email = 'beeri.brestel@gmail.com';",
+  "rows": [
+    {
+      "id": "1650002",
+      "email": "beeri.brestel@gmail.com",
+      "name": "Beeri brestel",
+      "createdAt": "2026-03-27 08:29:04",
+      "lastLoginAt": "2026-03-27 08:29:04",
+      "tokenBalance": "10"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\tcreatedAt\tlastLoginAt\ttokenBalance\n1650002\tbeeri.brestel@gmail.com\tBeeri brestel\t2026-03-27 08:29:04\t2026-03-27 08:29:04\t10\n",
+  "stderr": "",
+  "execution_time_ms": 1564
+}
