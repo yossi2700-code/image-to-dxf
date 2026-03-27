@@ -15,7 +15,7 @@ import { useState, useEffect, useRef } from "react";
 import { X, Sparkles, Upload, User } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const DELAY_MS = 6000;
+const DELAY_MS = 2000;
 
 interface NewUserNudgePopupProps {
   hasAnyAction: boolean;

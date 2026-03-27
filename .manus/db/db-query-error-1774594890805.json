@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT \n  ve.eventType, ve.page, ve.referrer, ve.country, ve.device, ve.browser, \n  ve.sessionId, ve.createdAt\nFROM visitor_events ve\nWHERE ve.userId = 1650001\nORDER BY ve.createdAt ASC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT \n  ve.eventType, ve.page, ve.referrer, ve.country, ve.device, ve.browser, \n  ve.sessionId, ve.createdAt\nFROM visitor_events ve\nWHERE ve.userId = 1650001\nORDER BY ve.createdAt ASC;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 've.userid' in 'where clause'"
+  ]
+}

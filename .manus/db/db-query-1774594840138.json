@@ -1,0 +1,17 @@
+{
+  "query": "\nSELECT id, name, email, createdAt, lastLoginAt \nFROM app_users \nWHERE email = 'fireflytust@gmail.com' OR name LIKE '%firefly%';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT id, name, email, createdAt, lastLoginAt \nFROM app_users \nWHERE email = 'fireflytust@gmail.com' OR name LIKE '%firefly%';\n",
+  "rows": [
+    {
+      "id": "1650001",
+      "name": "firefly Tust",
+      "email": "fireflytust@gmail.com",
+      "createdAt": "2026-03-27 06:29:05",
+      "lastLoginAt": "2026-03-27 06:29:05"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tcreatedAt\tlastLoginAt\n1650001\tfirefly Tust\tfireflytust@gmail.com\t2026-03-27 06:29:05\t2026-03-27 06:29:05\n",
+  "stderr": "",
+  "execution_time_ms": 1633
+}

@@ -2225,7 +2225,63 @@ function NewsWidget({ isRtl: _isRtl }: { isRtl: boolean }) {
   );
 }
 
-// ─── Main Page ──────────────────────────────────────────────────────────────────────────────────
+// ─── Mobile FAB ────────────────────────────────────────────────────────────────────────────────────────────────
+// Floating action button on mobile: visible only when user is above the main-tabs section
+function MobileFab() {
+  const { isRtl } = useLanguage();
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const check = () => {
+      const el = document.getElementById('main-tabs');
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      // Show FAB only when main-tabs is below the viewport (user hasn't scrolled to tools yet)
+      setVisible(rect.top > window.innerHeight);
+    };
+    check();
+    window.addEventListener('scroll', check, { passive: true });
+    return () => window.removeEventListener('scroll', check);
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <button
+      onClick={() => {
+        document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }}
+      style={{
+        position: 'fixed',
+        bottom: 80,
+        ...(isRtl ? { left: 16 } : { right: 16 }),
+        zIndex: 9990,
+        background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+        color: 'white',
+        border: 'none',
+        borderRadius: 28,
+        padding: '12px 20px',
+        fontWeight: 800,
+        fontSize: 14,
+        boxShadow: '0 4px 20px rgba(99,102,241,0.5)',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        transition: 'transform 0.15s',
+      }}
+      onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.05)')}
+      onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+      className="md:hidden"
+      aria-label={isRtl ? 'העלה תמונה' : 'Upload image'}
+    >
+      <span style={{ fontSize: 16 }}>📎</span>
+      {isRtl ? 'התחל עכשיו' : 'Start now'}
+    </button>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────────────────────────────────────
 export default function Home() {
   const { t, isRtl, language } = useLanguage();
   const [appUser, setAppUser] = useState<{ id: number; email: string; name: string | null } | null>(null);
@@ -2295,6 +2351,18 @@ export default function Home() {
     // Otherwise restore last visited tab
     return localStorage.getItem("active_tab") ?? "ai";
   });
+
+  // Scroll to #main-tabs anchor if URL hash is set (e.g. after redirect from landing)
+  useEffect(() => {
+    if (window.location.hash === '#main-tabs') {
+      const el = document.getElementById('main-tabs');
+      if (el) {
+        setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+      }
+      // Clean up the hash without triggering a reload
+      history.replaceState(null, '', window.location.pathname);
+    }
+  }, []);
 
   // Poll localStorage every 2s to detect job changes (even from child components)
   useEffect(() => {
@@ -3177,6 +3245,9 @@ export default function Home() {
       <TokenPricingModal open={pricingModalOpen} onClose={() => setPricingModalOpen(false)} />
       {/* Onboarding Tour — only for logged-in users, hides after 2 conversions */}
       {!!appUser && <OnboardingTour actionCount={tokenData?.actionCount ?? 0} />}
+      {/* Mobile FAB — scroll to tools, visible only on mobile when above main-tabs */}
+      <MobileFab />
+
       {/* New-user nudge popup — shows after 6s if user has never performed any action */}
       {!!appUser && (
         <NewUserNudgePopup

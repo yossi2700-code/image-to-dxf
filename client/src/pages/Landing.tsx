@@ -674,7 +674,7 @@ export default function Landing() {
       .then(d => {
         if (d.user) {
           setIsLoggedIn(true);
-          window.location.replace("/");
+          window.location.replace("/#main-tabs");
         }
       })
       .catch(() => {});
@@ -1205,7 +1205,7 @@ export default function Landing() {
         authReason="unregistered"
         initialMode={authMode}
         onSuccess={() => {
-          window.location.replace("/");
+          window.location.replace("/#main-tabs");
         }}
       />
 

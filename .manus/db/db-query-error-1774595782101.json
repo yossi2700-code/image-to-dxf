@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT \n  device_type,\n  COUNT(DISTINCT session_id) AS sessions,\n  COUNT(DISTINCT app_user_id) AS unique_users,\n  COUNT(*) AS total_events,\n  ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 1) AS pct\nFROM visitor_events\nWHERE created_at > DATE_SUB(NOW(), INTERVAL 30 DAY)\nGROUP BY device_type\nORDER BY sessions DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute \nSELECT \n  device_type,\n  COUNT(DISTINCT session_id) AS sessions,\n  COUNT(DISTINCT app_user_id) AS unique_users,\n  COUNT(*) AS total_events,\n  ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 1) AS pct\nFROM visitor_events\nWHERE created_at > DATE_SUB(NOW(), INTERVAL 30 DAY)\nGROUP BY device_type\nORDER BY sessions DESC;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'device_type' in 'group statement'"
+  ]
+}
