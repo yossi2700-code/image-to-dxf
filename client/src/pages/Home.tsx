@@ -3082,6 +3082,11 @@ export default function Home() {
               onOpenAuth={() => openAuthAs("unregistered")}
               onInsufficientTokens={() => setShowTokensBanner(true)}
               initialImageDataUrl={portraitInitialImage}
+              onSwitchToAiOutline={() => {
+                setActiveTab('ai');
+                localStorage.setItem('active_tab', 'ai');
+                document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
             />
           </TabsContent>
 

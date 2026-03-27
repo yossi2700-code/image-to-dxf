@@ -359,6 +359,34 @@ export const appRouter = router({
         return getTokenTransactions(input.userId, 50);
       }),
 
+    /** All download events across all users */
+    allDownloads: adminProcedure
+      .input(z.object({ limit: z.number().min(1).max(500).default(200) }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const rows = await db
+          .select({
+            id: userActions.id,
+            appUserId: userActions.appUserId,
+            description: userActions.description,
+            dxfUrl: userActions.dxfUrl,
+            imageUrl: userActions.imageUrl,
+            feature: userActions.feature,
+            createdAt: userActions.createdAt,
+            status: userActions.status,
+            errorMessage: userActions.errorMessage,
+            userName: appUsers.name,
+            userEmail: appUsers.email,
+          })
+          .from(userActions)
+          .leftJoin(appUsers, eq(appUsers.id, userActions.appUserId))
+          .where(eq(userActions.actionType, 'download'))
+          .orderBy(desc(userActions.createdAt))
+          .limit(input.limit);
+        return rows;
+      }),
+
     /** Add tokens to a user (admin action) */
     addTokens: adminProcedure
       .input(z.object({ userId: z.number(), amount: z.number().min(1).max(10000), note: z.string().optional() }))

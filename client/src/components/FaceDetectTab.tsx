@@ -167,6 +167,7 @@ interface FaceDetectTabProps {
   onOpenAuth?: () => void;
   onInsufficientTokens?: () => void;
   initialImageDataUrl?: string | null;
+  onSwitchToAiOutline?: () => void;
 }
 
 const PORTRAIT_DEMO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-comparison-v2-V3XEx63MMyZxexy2zzChhD.webp";
@@ -247,7 +248,7 @@ const STYLE_OPTIONS: { value: PortraitStyle; labelHe: string; labelEn: string; d
   },
 ];
 
-export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDataUrl }: FaceDetectTabProps) {
+export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDataUrl, onSwitchToAiOutline }: FaceDetectTabProps) {
   const { language } = useLanguage();
   const isRtl = language === "he";
   const { reportBug } = useBugReport();
@@ -827,6 +828,16 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
                 )}
               </ul>
             </div>
+            {/* Suggest AI Outline */}
+            {onSwitchToAiOutline && (
+              <button
+                className="w-full py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95"
+                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}
+                onClick={() => { setStatus("idle"); setErrorMsg(""); onSwitchToAiOutline(); }}
+              >
+                {isRtl ? "✨ נסה AI Outline במקום" : "✨ Try AI Outline Instead"}
+              </button>
+            )}
             {/* Button */}
             <button
               className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all active:scale-95"

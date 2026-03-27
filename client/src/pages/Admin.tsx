@@ -543,11 +543,17 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     return result;
   })();
 
-  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email" | "campaign" | "bugs" | "subscriptions" | "news" | "failed_jobs" | "messages" | "issue_reports" | "analytics">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "activity" | "users" | "consents" | "payments" | "settings" | "email" | "campaign" | "bugs" | "subscriptions" | "news" | "failed_jobs" | "messages" | "issue_reports" | "analytics" | "downloads">("overview");
   const [analyticsDays, setAnalyticsDays] = useState(7);
   const { data: detailedVisitorStats, isLoading: analyticsLoading, error: analyticsError } = trpc.visitors.stats.useQuery(
     { days: analyticsDays },
     { retry: false }
+  );
+
+  // ── Downloads ──
+  const { data: allDownloadsData, isLoading: downloadsLoading } = trpc.admin.allDownloads.useQuery(
+    { limit: 200 },
+    { enabled: activeSection === "downloads" }
   );
 
   // ── Issue Reports ──
@@ -828,6 +834,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     { id: "campaign", label: "קמפיין מייל", shortLabel: "קמפיין", icon: Gift, color: "#ec4899" },
     { id: "messages", label: "הודעות", shortLabel: "הודעות", icon: Mail, color: "#10b981" },
     { id: "issue_reports", label: "דיווחי בעיות", shortLabel: "דיווחים", icon: Flag, color: "#e11d48" },
+    { id: "downloads", label: "הורדות", shortLabel: "הורדות", icon: Download, color: "#0891b2" },
     { id: "failed_jobs", label: "כשלונות", shortLabel: "כשלונות", icon: AlertTriangle, color: "#f97316" },
     { id: "settings", label: "הגדרות", shortLabel: "הגדרות", icon: Settings, color: "#94a3b8" },
   ] as const;
@@ -3790,12 +3797,73 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           </div>
         )}
 
+         {activeSection === "downloads" && (
+          <div className="p-4 md:p-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Download className="w-4 h-4 text-cyan-600" />
+                  היסטוריית הורדות
+                  {allDownloadsData && <span className="text-sm font-normal text-muted-foreground">({allDownloadsData.length} הורדות)</span>}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {downloadsLoading ? (
+                  <div className="flex items-center justify-center py-8"><div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" /></div>
+                ) : !allDownloadsData || allDownloadsData.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm">אין הורדות עדיין</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b text-right">
+                          <th className="pb-2 font-medium text-muted-foreground">תאריך</th>
+                          <th className="pb-2 font-medium text-muted-foreground">משתמש</th>
+                          <th className="pb-2 font-medium text-muted-foreground">תיאור</th>
+                          <th className="pb-2 font-medium text-muted-foreground">פיצ'ר</th>
+                          <th className="pb-2 font-medium text-muted-foreground">סטטוס</th>
+                          <th className="pb-2 font-medium text-muted-foreground">קובץ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allDownloadsData.map((row) => (
+                          <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
+                            <td className="py-2 text-xs text-muted-foreground whitespace-nowrap">
+                              {new Date(row.createdAt).toLocaleString('he-IL', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })}
+                            </td>
+                            <td className="py-2">
+                              <div className="font-medium text-xs">{row.userName ?? 'אנונימי'}</div>
+                              {row.userEmail && <div className="text-xs text-muted-foreground">{row.userEmail}</div>}
+                            </td>
+                            <td className="py-2 text-xs max-w-[180px] truncate">{row.description ?? '-'}</td>
+                            <td className="py-2">
+                              <span className="text-xs bg-cyan-100 text-cyan-700 px-1.5 py-0.5 rounded">{row.feature ?? '-'}</span>
+                            </td>
+                            <td className="py-2">
+                              <span className={`text-xs px-1.5 py-0.5 rounded ${row.status === 'failed' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                {row.status === 'failed' ? 'שגיאה' : 'הצלחה'}
+                              </span>
+                            </td>
+                            <td className="py-2">
+                              {row.dxfUrl ? (
+                                <a href={row.dxfUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">הורד</a>
+                              ) : '-'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
         </main>
       </div>
     </div>
   );
 }
-
 // ─── Main Export ─────────────────────────────────────────────────────────────────────────────────
 export default function Admin() {
   const { data: checkData, isLoading } = trpc.admin.check.useQuery();
