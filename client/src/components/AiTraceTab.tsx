@@ -411,6 +411,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
   const [imagePreview, setImagePreview] = useState<string | null>(() => localStorage.getItem("ai_trace_imagePreview"));
   const [description, setDescription] = useState("");
   const [focusText, setFocusText] = useState("");
+  // sceneFocusText: temporary focus input inside the landscape detection popup
+  const [sceneFocusText, setSceneFocusText] = useState("");
   const [customImprovement, setCustomImprovement] = useState("");
   const [status, setStatus] = useState<Status>(() => {
     if (localStorage.getItem("ai_trace_jobId")) return "idle";
@@ -1639,7 +1641,41 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                   ? "התמונה שהעלית היא נוף, רחוב, חדר או סצנה. במצב נוף ה-AI מצייר את כל התמונה כולה — כל העצים, הבתים, השמים — כקווים שחורים."
                   : "The image you uploaded is a landscape, street, room, or scene. In landscape mode, the AI draws the entire image — all trees, buildings, sky — as black lines."}
               </p>
+
+              {/* Focus element input */}
+              <div className="mb-4">
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                  {isRtl ? "או — ציין מה לצייר בלבד (אופציונלי):" : "Or — specify what to draw only (optional):"}
+                </label>
+                <input
+                  type="text"
+                  placeholder={isRtl ? "לדוגמה: רק הכסאות, רק העציץ, הכלב בלבד..." : "e.g. only the chairs, just the tree, the dog only..."}
+                  className="w-full text-sm px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-gray-50"
+                  value={sceneFocusText}
+                  onChange={e => setSceneFocusText(e.target.value)}
+                  dir={isRtl ? "rtl" : "ltr"}
+                />
+              </div>
+
               <div className="flex gap-2 flex-wrap">
+                {/* Draw specific element button — shown when user typed something */}
+                {sceneFocusText.trim() && (
+                  <button
+                    className="flex-1 text-sm px-4 py-2.5 rounded-lg font-semibold text-white transition-all"
+                    style={{ background: 'linear-gradient(135deg, #7c3aed, #a78bfa)', boxShadow: '0 2px 8px rgba(124,58,237,0.35)' }}
+                    onClick={() => {
+                      const ft = sceneFocusText.trim();
+                      setSceneFocusText("");
+                      setIsSceneDetected(false);
+                      setStatus("idle");
+                      setFullImageMode(false);
+                      setFocusText(ft);
+                      setTimeout(() => handleTrace(ft, false), 50);
+                    }}
+                  >
+                    {isRtl ? `✓ צייר: ${sceneFocusText}` : `✓ Draw: ${sceneFocusText}`}
+                  </button>
+                )}
                 <button
                   className="flex-1 text-sm px-4 py-2.5 rounded-lg font-semibold text-white transition-all"
                   style={{ background: 'linear-gradient(135deg, #059669, #10b981)', boxShadow: '0 2px 8px rgba(5,150,105,0.35)' }}
