@@ -2496,3 +2496,7 @@
 - [x] שינוי oauth.ts: זיהוי משתמש חדש + הגדרת cookie זמני new_registration=1
 - [x] שינוי Home.tsx: קריאת cookie new_registration ושליחת gtag conversion
 - [x] בדיקת vitest לזיהוי משתמש חדש ב-OAuth
+
+## שיפור פרומפטים - מרץ 2026
+
+- [x] עדכון כל הפרומפטים ב-aiTraceRoute.ts לפרומפט "קווי עט נקיים" — continuous pen strokes, suitable for laser engraving

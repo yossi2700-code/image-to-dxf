@@ -113,33 +113,39 @@ const STYLE_VARIATIONS = [
   {
     label: "simple",
     style:
-      "STRICT LINE ART ONLY: pure black (#000000) lines on pure white (#FFFFFF) background. " +
+      "This output will be converted to a vector file for laser engraving or CNC cutting. " +
+      "Draw ONLY clean continuous pen strokes — like drawing with a fine-tip pen on paper. " +
       "Draw outer silhouette and 10-15 key structural interior lines. " +
-      "ABSOLUTELY NO: shading, shadows, gradients, grey tones, hatching, cross-hatching, stippling, texture fills, dark areas, filled regions. " +
+      "Every line must be a single continuous stroke with no breaks, no gaps, no rough edges. " +
+      "ABSOLUTELY NO: sketchy texture, hatching, cross-hatching, shading, shadows, gradients, grey tones, stippling, texture fills, dark areas, filled regions. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
-      "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
-      "Style: clean coloring-book outline drawing with smooth ink strokes.",
+      "Lines must be SMOOTH, CONTINUOUS, and FLOWING — suitable for a laser to follow as a single path. " +
+      "Style: clean coloring-book outline drawing with smooth continuous ink strokes.",
   },
   {
     label: "detailed",
     style:
-      "STRICT LINE ART ONLY: pure black (#000000) lines on pure white (#FFFFFF) background. " +
+      "This output will be converted to a vector file for laser engraving or CNC cutting. " +
+      "Draw ONLY clean continuous pen strokes — like drawing with a fine-tip pen on paper. " +
       "Draw the outer silhouette PLUS all visible interior structural lines: panel edges, component boundaries, mechanical parts, joints, openings, slots, buttons, seams, and surface divisions. " +
       "Include 25-40 interior lines that define the object's structure and form. " +
-      "ABSOLUTELY NO: texture, hatching, cross-hatching, shading, shadows, gradients, grey tones, stippling, filled regions, or any decorative marks. " +
+      "Every line must be a single continuous stroke with no breaks, no gaps, no rough edges. " +
+      "ABSOLUTELY NO: sketchy texture, hatching, cross-hatching, shading, shadows, gradients, grey tones, stippling, filled regions, or any decorative marks. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
-      "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
+      "Lines must be SMOOTH, CONTINUOUS, and FLOWING — suitable for a laser to follow as a single path. " +
       "Style: clean detailed technical line drawing — like a precise engineering illustration, outlines only, no fills.",
   },
   {
     label: "decorative",
     style:
-      "STRICT LINE ART ONLY: pure black (#000000) lines on pure white (#FFFFFF) background. " +
+      "This output will be converted to a vector file for laser engraving or CNC cutting. " +
+      "Draw ONLY clean continuous pen strokes — like drawing with a fine-tip pen on paper. " +
       "Draw bold outer contour with flowing decorative inner lines. " +
-      "ABSOLUTELY NO: shading, shadows, gradients, grey tones, hatching, cross-hatching, stippling, texture fills, dark areas, filled regions. " +
+      "Every line must be a single continuous stroke with no breaks, no gaps, no rough edges. " +
+      "ABSOLUTELY NO: sketchy texture, hatching, cross-hatching, shading, shadows, gradients, grey tones, stippling, texture fills, dark areas, filled regions. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
-      "Lines must be SMOOTH, CONTINUOUS, and FLOWING — no jagged edges, no broken lines, no rough strokes. " +
-      "Style: ornamental line art with smooth flowing lines, suitable for laser engraving.",
+      "Lines must be SMOOTH, CONTINUOUS, and FLOWING — suitable for a laser to follow as a single path. " +
+      "Style: ornamental line art with smooth flowing continuous lines, suitable for laser engraving.",
   },
 ];
 
@@ -571,7 +577,9 @@ async function runTraceJob(
         : (isPortrait && !isToyOrFigurine)
         ? (
             // Portrait prompt — preserve facial likeness
-            `Convert this portrait photo to clean black and white line art suitable for laser engraving. ` +
+            `This image will be converted to a vector file for laser engraving or CNC cutting. ` +
+            `Convert this portrait photo to clean black and white line art. ` +
+            `Draw ONLY clean continuous pen strokes — like drawing with a fine-tip pen on paper. Every line must be a single continuous stroke with no breaks, no gaps. ` +
             `Preserve the EXACT facial likeness: face shape, eye shape, nose, mouth, jawline, hair style. ` +
             `Keep the same pose, angle, and proportions. ` +
             `Use only pure black lines on pure white background. No shading, no grey tones, no gradients. ` +
@@ -581,7 +589,9 @@ async function runTraceJob(
         : isToyOrFigurine
         ? (
             // Toy/figurine prompt
-            `Convert this toy/figurine/cartoon character to clean black and white line art suitable for laser engraving. ` +
+            `This image will be converted to a vector file for laser engraving or CNC cutting. ` +
+            `Convert this toy/figurine/cartoon character to clean black and white line art. ` +
+            `Draw ONLY clean continuous pen strokes — like drawing with a fine-tip pen on paper. Every line must be a single continuous stroke with no breaks, no gaps. ` +
             `Preserve the EXACT toy appearance: cartoon eyes, toy proportions, stylized features. ` +
             `Do NOT humanize — keep it looking like a toy/cartoon, not a real person. ` +
             `Use only pure black lines on pure white background. No shading, no grey tones. ` +
@@ -591,7 +601,9 @@ async function runTraceJob(
         : isAnimal
         ? (
             // Animal prompt — CRITICAL: preserve real animal proportions, NOT cartoon style
-            `Convert this animal photo to clean black and white line art suitable for laser engraving. ` +
+            `This image will be converted to a vector file for laser engraving or CNC cutting. ` +
+            `Convert this animal photo to clean black and white line art. ` +
+            `Draw ONLY clean continuous pen strokes — like drawing with a fine-tip pen on paper. Every line must be a single continuous stroke with no breaks, no gaps. ` +
             `CRITICAL: Preserve the EXACT real appearance of this specific animal: ` +
             `the actual face shape, real eye shape and size, true nose/muzzle proportions, real fur texture direction, exact body pose. ` +
             `DO NOT simplify, stylize, cartoonify, or make it look like a children's drawing. ` +
@@ -604,8 +616,9 @@ async function runTraceJob(
         : isMonochrome
         ? (
             // Monochrome/B&W source — strict tracing: preserve every line exactly as-is
-            `This image is already a black and white line drawing. ` +
+            `This image is already a black and white line drawing and will be converted to a vector file for laser engraving or CNC cutting. ` +
             `CRITICAL: Trace and reproduce the EXACT lines from this drawing — do NOT add, remove, or change any detail. ` +
+            `Draw ONLY clean continuous pen strokes — every line must be a single continuous stroke with no breaks, no gaps, no rough edges. ` +
             `Keep every branch, leaf, stroke, and shape EXACTLY as shown in the original. ` +
             `Convert to clean pure black (#000000) lines on pure white (#FFFFFF) background. ` +
             `Remove any grey tones — make all lines fully black. Remove the background completely. ` +
@@ -614,9 +627,13 @@ async function runTraceJob(
           )
         : (
             // General object prompt — gpt-image-1 edit
-            `Convert this image to clean black and white line art suitable for CNC engraving or laser cutting. ` +
+            `This image will be converted to a vector file for laser engraving or CNC cutting. ` +
+            `Convert it to clean black and white line art. ` +
+            `Draw ONLY clean continuous pen strokes — like drawing with a fine-tip pen on paper. ` +
+            `Every line must be a single continuous stroke with no breaks, no gaps, no rough edges. ` +
             `Draw ONLY the main subject on a pure white background — remove the background completely. ` +
             `Use only pure black (#000000) lines on pure white (#FFFFFF). No shading, no grey tones, no gradients. ` +
+            `The lines must be smooth, flowing, and connected — suitable for a laser to follow as a single path. ` +
             `Preserve the exact proportions and shape of the original object. ` +
             `${singleLine ? SINGLE_LINE_STYLE : variation.style} ` +
             `No text, no letters, no numbers, no logos, no watermarks anywhere.`
