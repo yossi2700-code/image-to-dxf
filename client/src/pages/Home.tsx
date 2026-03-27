@@ -2403,6 +2403,8 @@ export default function Home() {
   const [showTokensBanner, setShowTokensBanner] = useState(false);
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
   const [highlightTabs, setHighlightTabs] = useState(false);
+  // Track whether the nudge popup has been dismissed — OnboardingTour waits until then.
+  const [nudgeDismissed, setNudgeDismissed] = useState(false);
   const [bonusBannerDismissed, setBonusBannerDismissed] = useState(() => localStorage.getItem('bonus_banner_dismissed') === '1');
 
   const openAuthAs = (reason: AuthReason) => {
@@ -2417,6 +2419,14 @@ export default function Home() {
   const tokenBalance = tokenData?.balance ?? 0;
   const hasPendingWelcomeBonus = tokenData?.hasPendingWelcomeBonus ?? false;
   const showBonusBanner = hasPendingWelcomeBonus && !bonusBannerDismissed && !showWelcomeBanner;
+
+  // If user already has actions, the nudge popup will never show — so allow OnboardingTour immediately.
+  // This runs once when tokenData first loads.
+  useEffect(() => {
+    if (tokenData?.hasAnyAction) {
+      setNudgeDismissed(true);
+    }
+  }, [tokenData?.hasAnyAction]);
 
   // Helper to claim a campaign code and show bonus animation
   const claimCampaignCode = (campaignCode: string) => {
@@ -3262,8 +3272,9 @@ export default function Home() {
 
       {/* Token Pricing Modal */}
       <TokenPricingModal open={pricingModalOpen} onClose={() => setPricingModalOpen(false)} />
-      {/* Onboarding Tour — only for logged-in users, hides after 2 conversions */}
-      {!!appUser && <OnboardingTour actionCount={tokenData?.actionCount ?? 0} />}
+      {/* Onboarding Tour — only for logged-in users, hides after 2 conversions.
+           Blocked while nudge popup is still visible (nudgeDismissed guards this). */}
+      {!!appUser && nudgeDismissed && <OnboardingTour actionCount={tokenData?.actionCount ?? 0} />}
       {/* Mobile FAB — scroll to tools, visible only on mobile when above main-tabs */}
       <MobileFab />
 
@@ -3277,8 +3288,8 @@ export default function Home() {
             localStorage.setItem('active_tab', tab);
           }}
           onDismiss={() => {
-            // Open the onboarding tour immediately after the nudge popup closes
-            window.dispatchEvent(new CustomEvent('tour:reset'));
+            // Mark nudge as dismissed — this unmounts/mounts OnboardingTour which auto-starts it
+            setNudgeDismissed(true);
           }}
         />
       )}
