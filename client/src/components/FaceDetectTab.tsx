@@ -167,7 +167,7 @@ interface FaceDetectTabProps {
   onOpenAuth?: () => void;
   onInsufficientTokens?: () => void;
   initialImageDataUrl?: string | null;
-  onSwitchToAiOutline?: () => void;
+  onSwitchToAiOutline?: (imageFile: File | null) => void;
 }
 
 const PORTRAIT_DEMO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/portrait-comparison-v2-V3XEx63MMyZxexy2zzChhD.webp";
@@ -833,7 +833,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
               <button
                 className="w-full py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95"
                 style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}
-                onClick={() => { setStatus("idle"); setErrorMsg(""); onSwitchToAiOutline(); }}
+                onClick={() => { setStatus("idle"); setErrorMsg(""); onSwitchToAiOutline(imageFile); }}
               >
                 {isRtl ? "✨ נסה AI Outline במקום" : "✨ Try AI Outline Instead"}
               </button>

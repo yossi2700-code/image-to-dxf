@@ -401,9 +401,9 @@ function MultiObjectDialog({
   );
 }
 
-interface AiTraceTabProps { onOpenAuth: () => void; onInsufficientTokens?: () => void; onSwitchToPortrait?: (imageDataUrl: string) => void; }
+interface AiTraceTabProps { onOpenAuth: () => void; onInsufficientTokens?: () => void; onSwitchToPortrait?: (imageDataUrl: string) => void; initialImageFile?: File | null; autoStart?: boolean; }
 
-export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrait }: AiTraceTabProps) {
+export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrait, initialImageFile, autoStart }: AiTraceTabProps) {
   const { t, isRtl, language } = useLanguage();
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
   const { reportBug } = useBugReport();
@@ -585,6 +585,28 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       } catch (_) { /* network error, keep trying */ }
     }, 3000);
   }, [isRtl, refetchTokens, setJobIdPersisted]);
+
+  // Handle initialImageFile prop — load file and optionally auto-start conversion
+  const autoStartedRef = useRef(false);
+  const autoStartPendingRef = useRef(false);
+  useEffect(() => {
+    if (!initialImageFile || autoStartedRef.current) return;
+    autoStartedRef.current = true;
+    if (autoStart) autoStartPendingRef.current = true;
+    // Load the file into the component state (async — image.onload sets previewRef)
+    handleFile(initialImageFile);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialImageFile]);
+
+  // When imagePreview updates AND autoStart is pending, trigger conversion
+  useEffect(() => {
+    if (!autoStartPendingRef.current) return;
+    if (!imagePreview && !previewRef.current) return;
+    autoStartPendingRef.current = false;
+    // Small delay to ensure imageFile state is also set
+    setTimeout(() => handleTrace(), 150);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imagePreview]);
 
   // On mount: resume polling if a jobId was saved (survived tab switch)
   useEffect(() => {

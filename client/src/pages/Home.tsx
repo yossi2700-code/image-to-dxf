@@ -2247,6 +2247,8 @@ export default function Home() {
   // Portrait initial image — set when user switches from AI Trace to Portrait tab
   const [portraitInitialImage, setPortraitInitialImage] = useState<string | null>(null);
   const [portraitImageKey, setPortraitImageKey] = useState(0);
+  const [aiTraceInitialFile, setAiTraceInitialFile] = useState<File | null>(null);
+  const [aiTraceKey, setAiTraceKey] = useState(0);
 
   // Typing animation for AI Create card
   const aiCreateWords = isRtl
@@ -2990,6 +2992,9 @@ export default function Home() {
               />
             </div>
             <AiTraceTab
+              key={aiTraceKey}
+              initialImageFile={aiTraceInitialFile}
+              autoStart={!!aiTraceInitialFile}
               onOpenAuth={() => openAuthAs("unregistered")}
               onInsufficientTokens={() => setShowTokensBanner(true)}
               onSwitchToPortrait={(imageDataUrl) => {
@@ -3082,10 +3087,16 @@ export default function Home() {
               onOpenAuth={() => openAuthAs("unregistered")}
               onInsufficientTokens={() => setShowTokensBanner(true)}
               initialImageDataUrl={portraitInitialImage}
-              onSwitchToAiOutline={() => {
+              onSwitchToAiOutline={(imageFile) => {
+                if (imageFile) {
+                  setAiTraceInitialFile(imageFile);
+                  setAiTraceKey(k => k + 1); // force AiTraceTab re-mount with fresh state
+                }
                 setActiveTab('ai');
                 localStorage.setItem('active_tab', 'ai');
-                document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                setTimeout(() => {
+                  document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
               }}
             />
           </TabsContent>
