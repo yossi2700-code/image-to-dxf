@@ -60,6 +60,7 @@ import {
   Timer,
   ImageIcon,
   Globe,
+  Download,
 } from "lucide-react";
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
@@ -1516,6 +1517,16 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             {lastPurchase && (
                               <span className="text-green-600 font-medium">רכישה: {lastPurchase.packageId} ({lastPurchase.priceAmount} {lastPurchase.currency})</span>
                             )}
+                            {(u as {downloadCount?: number}).downloadCount ? (
+                              <span className="text-blue-600 font-medium flex items-center gap-0.5">
+                                <Download className="w-3 h-3" />{(u as {downloadCount?: number}).downloadCount} הורדות
+                              </span>
+                            ) : null}
+                            {(u as {errorCount?: number}).errorCount ? (
+                              <span className="text-red-600 font-medium flex items-center gap-0.5">
+                                <AlertTriangle className="w-3 h-3" />{(u as {errorCount?: number}).errorCount} שגיאות
+                              </span>
+                            ) : null}
                           </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">

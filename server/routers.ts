@@ -230,6 +230,8 @@ export const appRouter = router({
             ipAnon: userActions.ipAnon,
             createdAt: userActions.createdAt,
             durationMs: userActions.durationMs,
+            status: userActions.status,
+            errorMessage: userActions.errorMessage,
             userName: appUsers.name,
             userEmail: appUsers.email,
           })
@@ -295,7 +297,7 @@ export const appRouter = router({
       if (rows.length === 0) return [];
       const userIds = rows.map(r => r.id);
       const idList = userIds.join(",");
-      // Last action per user
+      // Last action per user + download/error counts
       const allActions = await db
         .select({
           appUserId: userActions.appUserId,
@@ -305,11 +307,20 @@ export const appRouter = router({
           imageUrl: userActions.imageUrl,
           feature: userActions.feature,
           createdAt: userActions.createdAt,
+          status: userActions.status,
+          errorMessage: userActions.errorMessage,
         })
         .from(userActions)
         .where(sql`${userActions.appUserId} IN (${sql.raw(idList)})`)
         .orderBy(desc(userActions.createdAt))
-        .limit(500);
+        .limit(1000);
+      // Count downloads and errors per user
+      const downloadCountMap = new Map<number, number>();
+      const errorCountMap = new Map<number, number>();
+      for (const a of allActions) {
+        if (a.actionType === 'download') downloadCountMap.set(a.appUserId, (downloadCountMap.get(a.appUserId) ?? 0) + 1);
+        if (a.status === 'failed') errorCountMap.set(a.appUserId, (errorCountMap.get(a.appUserId) ?? 0) + 1);
+      }
       // Last purchase per user
       const allPurchases = await db
         .select({
@@ -336,6 +347,8 @@ export const appRouter = router({
         ...r,
         lastAction: lastActionMap.get(r.id) ?? null,
         lastPurchase: lastPurchaseMap.get(r.id) ?? null,
+        downloadCount: downloadCountMap.get(r.id) ?? 0,
+        errorCount: errorCountMap.get(r.id) ?? 0,
       }));
     }),
 
@@ -1858,6 +1871,51 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+
+  /** Track a file download — called from the frontend when user downloads DXF/PDF */
+  trackDownload: publicProcedure
+    .input(z.object({
+      /** The user action ID this download relates to (optional) */
+      userActionId: z.number().optional(),
+      /** Feature that produced the file: convert | ai_trace | ai_generate | portrait | document_redraw */
+      feature: z.string().max(32).optional(),
+      /** File format: dxf | dxf-legacy | pdf */
+      fileFormat: z.string().max(16).optional(),
+      /** DXF file URL */
+      dxfUrl: z.string().max(2048).optional(),
+      /** Source image URL */
+      imageUrl: z.string().max(2048).optional(),
+      /** Description / filename */
+      description: z.string().max(200).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const user = getAppUserFromCookie((ctx.req as {cookies?: Record<string, string>}).cookies);
+        if (!user) return { success: false }; // only log for authenticated users
+        const db = await getDb();
+        if (!db) return { success: false };
+        await db.insert(userActions).values({
+          appUserId: user.userId,
+          actionType: 'download',
+          description: input.description ?? input.fileFormat ?? 'download',
+          feature: input.feature ?? null,
+          dxfUrl: input.dxfUrl ?? null,
+          imageUrl: input.imageUrl ?? null,
+          status: 'success',
+          ipAnon: (() => {
+            const forwarded = ctx.req.headers['x-forwarded-for'];
+            const raw = Array.isArray(forwarded) ? forwarded[0] : (forwarded ?? (ctx.req as {socket?: {remoteAddress?: string}}).socket?.remoteAddress ?? '');
+            const ip = raw.split(',')[0].trim();
+            const parts = ip.split('.');
+            if (parts.length === 4) { parts[3] = '0'; return parts.join('.'); }
+            return ip.slice(0, ip.lastIndexOf(':') + 1) + '0';
+          })(),
+        });
+        return { success: true };
+      } catch {
+        return { success: false };
+      }
+    }),
 
   /** Visitor analytics */
   visitors: router({

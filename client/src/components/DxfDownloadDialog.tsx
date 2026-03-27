@@ -22,6 +22,7 @@ import { Slider } from "@/components/ui/slider";
 import { Download, X, FileCode2, FileText, Loader2, Share2, Settings2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { saveFileAs } from "@/lib/saveFileAs";
+import { trpc } from "@/lib/trpc";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -265,6 +266,7 @@ export function DxfDownloadDialog({
   })();
 
   const { t, isRtl } = useLanguage();
+  const trackDownloadMutation = trpc.trackDownload.useMutation();
 
   // ── Download handler ─────────────────────────────────────────────────────
 
@@ -279,9 +281,9 @@ export function DxfDownloadDialog({
         const originalDxf = await resp.text();
         const scaledDxf = scaleDxfContent(originalDxf, scaleFactor);
         const blob = new Blob([scaledDxf], { type: "application/octet-stream" });
-        await saveFileAs({ blob, filename: `${cleanFilename}.dxf`, mimeType: "application/octet-stream" });
+         await saveFileAs({ blob, filename: `${cleanFilename}.dxf`, mimeType: "application/octet-stream" });
+        void trackDownloadMutation.mutateAsync({ fileFormat: 'dxf', dxfUrl, description: cleanFilename });
         onClose();
-
       } else if (selectedFormat === "dxf-legacy") {
         // Legacy DXF (LINE entities / R12 — CAS WIN compatible)
         const legacyUrl = `/api/dxf-legacy?url=${encodeURIComponent(dxfUrl)}&scale=${scaleFactor}`;
@@ -291,15 +293,16 @@ export function DxfDownloadDialog({
           throw new Error((err.error as string) || `Error ${resp.status}`);
         }
         const blob = await resp.blob();
-        await saveFileAs({ blob, filename: `${cleanFilename}_caswin.dxf`, mimeType: "application/octet-stream" });
+         await saveFileAs({ blob, filename: `${cleanFilename}_caswin.dxf`, mimeType: "application/octet-stream" });
+        void trackDownloadMutation.mutateAsync({ fileFormat: 'dxf-legacy', dxfUrl, description: cleanFilename });
         onClose();
-
       } else if (selectedFormat === "pdf") {
         // PDF export
         if (!svgContent) return;
         const pdfBytes = await generatePdfBlob(svgContent, outputWidthMm, outputHeightMm);
         const blob = new Blob([pdfBytes], { type: "application/pdf" });
         await saveFileAs({ blob, filename: `${cleanFilename}.pdf`, mimeType: "application/pdf" });
+        void trackDownloadMutation.mutateAsync({ fileFormat: 'pdf', dxfUrl, description: cleanFilename });
         onClose();
       }
     } catch (err: unknown) {
