@@ -2402,6 +2402,7 @@ export default function Home() {
   const [authInitialMode, setAuthInitialMode] = useState<"login" | "register">("register");
   const [showTokensBanner, setShowTokensBanner] = useState(false);
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
+  const [highlightTabs, setHighlightTabs] = useState(false);
   const [bonusBannerDismissed, setBonusBannerDismissed] = useState(() => localStorage.getItem('bonus_banner_dismissed') === '1');
 
   const openAuthAs = (reason: AuthReason) => {
@@ -2532,6 +2533,13 @@ export default function Home() {
       style={{ background: '#f8f9fb' }}
       dir={isRtl ? "rtl" : "ltr"}
     >
+      <style>{`
+        @keyframes tabsPulse {
+          0%   { box-shadow: 0 0 0 0 rgba(99,102,241,0.5); }
+          50%  { box-shadow: 0 0 0 10px rgba(99,102,241,0); }
+          100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); }
+        }
+      `}</style>
       {/* Token Bonus Animation Overlay */}
       {bonusAnimation && (
         <TokenBonusAnimation
@@ -2765,6 +2773,9 @@ export default function Home() {
             // Scroll to tools section so new users immediately see what to do
             setTimeout(() => {
               document.getElementById("main-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              // Highlight the tabs panel to guide the new user
+              setHighlightTabs(true);
+              setTimeout(() => setHighlightTabs(false), 3000);
             }, 500);
             // Google Ads conversion tracking - sign_up
             if (typeof window !== 'undefined' && (window as any).gtag) {
@@ -2929,10 +2940,14 @@ export default function Home() {
               md:flex-col md:w-[130px] md:shrink-0 md:self-start md:sticky md:top-4"
             style={{
               background: '#ffffff',
-              border: '1px solid #e8eaf0',
+              border: highlightTabs ? '2px solid #6366f1' : '1px solid #e8eaf0',
               borderRadius: '1rem',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              boxShadow: highlightTabs
+                ? '0 0 0 4px rgba(99,102,241,0.18), 0 0 24px rgba(99,102,241,0.25)'
+                : '0 2px 8px rgba(0,0,0,0.06)',
               height: 'auto',
+              transition: 'box-shadow 0.4s ease, border-color 0.4s ease',
+              animation: highlightTabs ? 'tabsPulse 0.8s ease-in-out 3' : 'none',
             }}
           >
             {/* 1. AI Create */}
