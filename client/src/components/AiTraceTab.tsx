@@ -439,8 +439,6 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
   const [singleLine, setSingleLine] = useState(false);
   // Close paths: force all open paths to be closed in the DXF output
   const [closePaths, setClosePaths] = useState(false);
-  // Direct trace mode: skip AI, process image directly (100% faithful, no interpretation)
-  const [directTrace, setDirectTrace] = useState(false);
   const [lineweightMm, setLineweightMm] = useState<string>(""); // empty = default
   const [dragOver, setDragOver] = useState(false);
   const [fullImageMode, setFullImageMode] = useState(false);
@@ -789,7 +787,6 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       formData.append("variationIndex", String(detailLevel));
       if (singleLine) formData.append("singleLine", "true");
       if (singleLine && closePaths) formData.append("closePaths", "true");
-      if (directTrace) formData.append("directTrace", "true");
       const lwVal = parseFloat(lineweightMm);
       if (!isNaN(lwVal) && lwVal >= 0) formData.append("lineweightMm", String(lwVal));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
@@ -848,7 +845,6 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       formData.append("variationIndex", String(detailLevel));
       if (singleLine) formData.append("singleLine", "true");
       if (singleLine && closePaths) formData.append("closePaths", "true");
-      if (directTrace) formData.append("directTrace", "true");
       const lwVal = parseFloat(lineweightMm);
       if (!isNaN(lwVal) && lwVal >= 0) formData.append("lineweightMm", String(lwVal));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
@@ -1502,48 +1498,6 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                 </button>
               </div>
             )}
-
-            {/* Direct Trace toggle — skip AI, copy image 1:1 */}
-            <div className="mt-2 mb-1">
-              <button
-                type="button"
-                onClick={() => setDirectTrace(v => !v)}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all"
-                style={directTrace
-                  ? { background: 'linear-gradient(135deg, #d1fae522, #10b981 11)', border: '2px solid #10b981', boxShadow: '0 2px 8px rgba(16,185,129,0.2)' }
-                  : { background: '#f8fafc', border: '2px solid #e2e8f0' }
-                }
-              >
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
-                    style={{ background: directTrace ? '#10b981' : '#e2e8f0' }}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                      <rect x="2" y="2" width="14" height="14" rx="2" stroke={directTrace ? 'white' : '#9ca3af'} strokeWidth="1.5" fill="none"/>
-                      <path d="M5 9h8M9 5v8" stroke={directTrace ? 'white' : '#9ca3af'} strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-xs font-bold" style={{ color: directTrace ? '#065f46' : '#374151' }}>
-                      {isRtl ? 'העתק ישיר (ללא AI)' : 'Direct Copy (No AI)'}
-                    </p>
-                    <p className="text-xs" style={{ color: directTrace ? '#047857' : '#9ca3af', fontSize: '9px' }}>
-                      {isRtl ? 'מעתיק את הציור 1:1 ללא פירוש — מושלם לציורי עפרון/דיו' : '1:1 copy without interpretation — ideal for pencil/ink drawings'}
-                    </p>
-                  </div>
-                </div>
-                <div
-                  className="w-10 h-5 rounded-full relative transition-all shrink-0"
-                  style={{ background: directTrace ? '#10b981' : '#d1d5db' }}
-                >
-                  <div
-                    className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all"
-                    style={{ left: directTrace ? '22px' : '2px' }}
-                  />
-                </div>
-              </button>
-            </div>
 
             {/* Lineweight option */}
             <div className="flex items-center gap-2 pt-1 pb-1 flex-wrap">

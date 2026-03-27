@@ -308,8 +308,7 @@ async function runTraceJob(
   hairline = false,
   lineweightMm?: number,
   singleLine = false,
-  closePaths = false,
-  directTrace = false
+  closePaths = false
 ) {
   const isHe = lang === "he";
   let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
@@ -332,129 +331,6 @@ async function runTraceJob(
     }
   }, JOB_TIMEOUT_MS);
   try {
-    // ─── DIRECT TRACE MODE: No AI — process image directly with CV pipeline ────────
-    if (directTrace) {
-      updateJob(jobId, {
-        status: "processing",
-        step: isHe ? "מעבד תמונה ישירות..." : "Processing image directly...",
-        stepEn: "Processing image directly...",
-      });
-
-      const { spawn } = await import("child_process");
-      const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "direct-trace-"));
-      try {
-        // Write source image to temp dir
-        const srcPath = path.join(tmpDir, "source.jpg");
-        await fs.writeFile(srcPath, imageBuffer);
-        const outBmpPath = path.join(tmpDir, "binary.bmp");
-
-        // Python script: background normalization + Otsu threshold + morphological cleanup
-        const pyScript = `
-import sys, os, numpy as np, cv2
-src = sys.argv[1]
-out = sys.argv[2]
-img = cv2.imread(src)
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-# Resize to 2048px on longer side
-h, w = gray.shape
-scale = 2048 / max(h, w)
-new_w, new_h = int(w * scale), int(h * scale)
-gray = cv2.resize(gray, (new_w, new_h), interpolation=cv2.INTER_LANCZOS4)
-# Background normalization: divide by blurred background to remove uneven lighting
-bg = cv2.GaussianBlur(gray, (101, 101), 0)
-normalized = np.clip((gray.astype(np.float32) / bg.astype(np.float32)) * 220, 0, 255).astype(np.uint8)
-# Light blur to reduce scan grain
-blurred = cv2.GaussianBlur(normalized, (3, 3), 0)
-# Otsu threshold (automatically finds best threshold)
-_, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-# Morphological cleanup: remove isolated noise pixels
-kernel = np.ones((2, 2), np.uint8)
-cleaned = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, iterations=1)
-cv2.imwrite(out, cleaned)
-print(f'OK {new_w}x{new_h}')
-`;
-        const pyPath = path.join(tmpDir, "process.py");
-        await fs.writeFile(pyPath, pyScript);
-
-        await new Promise<void>((resolve, reject) => {
-          const proc = spawn("python3", [pyPath, srcPath, outBmpPath]);
-          let stderr = "";
-          proc.stderr?.on("data", (d: Buffer) => { stderr += d.toString(); });
-          proc.on("close", (code: number | null) => {
-            if (code === 0) resolve();
-            else reject(new Error(`Direct trace python failed (code ${code}): ${stderr.slice(0, 200)}`));
-          });
-          proc.on("error", reject);
-        });
-
-        const bmpBuffer = await fs.readFile(outBmpPath);
-
-        updateJob(jobId, {
-          step: isHe ? "ממיר לוקטור..." : "Vectorizing...",
-          stepEn: "Vectorizing...",
-        });
-
-        // Run potrace on the binary image
-        const rawSvg = await new Promise<string>((resolve, reject) => {
-          potrace.trace(bmpBuffer, {
-            threshold: 128,
-            turdSize: 4,        // keep small details (letters, dots)
-            alphaMax: 1.0,
-            optCurve: true,
-            optTolerance: 0.3,
-          }, (err: Error | null, svg: string) => {
-            if (err) reject(err); else resolve(svg);
-          });
-        });
-
-        const cleanSvg = cleanSvgForPreview(rawSvg);
-        const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm);
-
-        // Upload processed image + DXF to S3
-        const pngBuffer = await sharp(bmpBuffer).png().toBuffer();
-        const imgKey = `ai-trace-generated/${nanoid()}.png`;
-        const { url: imageUrl } = await storagePut(imgKey, pngBuffer, "image/png");
-        const baseFilename = "direct_trace";
-        const dxfFilename = `${baseFilename}.dxf`;
-        const dxfKey = `ai-trace-dxf/${nanoid()}-${dxfFilename}`;
-        const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
-
-        const imageResult = { imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight };
-        updateJob(jobId, { partialImages: [imageResult] });
-
-        // Deduct tokens
-        await deductTokens(appUserId, "ai_trace");
-        updateJob(jobId, { tokenDeducted: true });
-
-        // Record action
-        await recordUserAction({
-          appUserId,
-          actionType: "ai_generate",
-          description: "direct_trace — העתק ישיר",
-          segmentCount,
-          dxfUrl,
-          imageUrl,
-          svgPreview: cleanSvg,
-          groupId: nanoid(12),
-          variationLabel: "direct",
-          sourceImageUrl: sourceImageUrl ?? undefined,
-          feature: "ai_trace",
-          durationMs: Date.now() - jobStartTime,
-          ipAnon: ipAnon ?? undefined,
-        });
-
-        clearTimeout(internalTimeoutId);
-        updateJob(jobId, {
-          status: "done",
-          result: { success: true, images: [imageResult], objectDescription: "direct_trace", suggestions: [] },
-        });
-        return;
-      } finally {
-        await fs.rm(tmpDir, { recursive: true, force: true });
-      }
-    }
-    // ─── END DIRECT TRACE MODE ───────────────────────────────────────────────────
-
     updateJob(jobId, {
       status: "processing",
       step: isHe ? "מנתח תמונה עם AI..." : "Analyzing image with AI...",
@@ -1060,7 +936,6 @@ router.post(
       const hairline = req.body?.hairline === "true" || req.body?.hairline === true;
       const singleLine = req.body?.singleLine === "true" || req.body?.singleLine === true;
       const closePaths = req.body?.closePaths === "true" || req.body?.closePaths === true;
-      const directTrace = req.body?.directTrace === "true" || req.body?.directTrace === true;
       const lineweightMmRaw = parseFloat((req.body?.lineweightMm as string) ?? "");
       const lineweightMm = isNaN(lineweightMmRaw) ? undefined : Math.min(2.0, Math.max(0, lineweightMmRaw));
       const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
@@ -1091,7 +966,7 @@ router.post(
         setTimeout(() => reject(new Error("Job timed out after 5 minutes")), MAX_JOB_MS)
       );
       Promise.race([
-        runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline, lineweightMm, singleLine, closePaths, directTrace),
+        runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline, lineweightMm, singleLine, closePaths),
         timeoutPromise,
       ]).catch((err) => {
         const msg = err instanceof Error ? err.message : String(err);
