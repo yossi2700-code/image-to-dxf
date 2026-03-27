@@ -2487,3 +2487,12 @@
 - [x] הדגשה ויזואלית (pulse glow) על לוח הטאבים אחרי רישום חדש
 - [x] אחרי סגירת פופאפ הנאדג' — פתיחה אוטומטית של באנר ההדרכה (OnboardingTour)
 - [x] תיקון: OnboardingTour לא נפתח ביחד עם פופאפ הנאדג' — ממתין לסגירתו
+
+## Single-Line Coloring-Page Output from Pencil Drawings — מרץ 2026
+
+- [ ] Test pipeline: extract only outline edges from shaded pencil drawing (ignore fill/shading)
+- [ ] Update AI prompt to produce coloring-page style: single clean outline, no shading, no fill
+- [x] Add outlineMode (bilateral+Canny) pipeline to aiTraceRoute.ts — bypass AI entirely
+- [x] Add outlineMode parameter to route handler
+- [x] Add "מתאר קו אחד (ללא AI)" toggle in AiTraceTab UI
+- [x] Test on pencil drawings and shaded sketches — results confirmed
