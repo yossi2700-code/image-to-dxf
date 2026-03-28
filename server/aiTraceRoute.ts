@@ -247,7 +247,10 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
     `Think of it as: if you cut the shape out of paper, you would cut along ONE line only. ` +
     `SMALL DETAIL RULE: If a detail is too small to fit TWO clearly separated clean lines, draw ONE single line instead. ` +
     `If even ONE clean line is not possible without creating noise or clutter, OMIT that detail entirely. ` +
-    `A clean omission is always better than a noisy double-line. `;
+    `A clean omission is always better than a noisy double-line. ` +
+    `PARALLEL LINE RULE: If you see multiple parallel lines running close together (within 5px of each other), draw ONLY the single outermost line. ` +
+    `Do NOT trace every layer, groove, or edge of a manufactured object — pick the ONE most defining outline. ` +
+    `Industrial objects (appliances, machines, products) must be simplified to their essential silhouette + 2-3 key structural lines maximum. `;
 
   switch (classification.type) {
     case "landscape":
@@ -323,6 +326,7 @@ function buildFullImagePrompt(sceneDescription: string, variationIndex: number, 
     "SINGLE CONTOUR RULE: Every shape, letter, and object must have EXACTLY ONE contour line — the outermost boundary only. Do NOT draw both inner and outer edges. Do NOT create double-stroke or parallel outlines. ONE closed path per shape. " +
     "For text/letters: trace only the outer silhouette of each letter as a single closed line. For small shapes: ONE outline per shape, no inner lines parallel to the outer edge. " +
     "SMALL DETAIL RULE: If a detail is too small to fit two clearly separated clean lines, draw ONE single line instead. If even one clean line creates noise or clutter, OMIT that detail entirely. A clean omission is always better than a noisy double-line. " +
+    "PARALLEL LINE RULE: If multiple parallel lines run close together (within 5px), draw ONLY the outermost single line. Do NOT trace every groove or layer of manufactured objects — simplify to essential silhouette + 2-3 key structural lines maximum. " +
     "No grey tones."
   );
 }
@@ -430,6 +434,7 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number, s
     "SINGLE CONTOUR RULE: Every shape, letter, and object must have EXACTLY ONE contour line — the outermost boundary only. Do NOT draw both inner and outer edges. Do NOT create double-stroke or parallel outlines. ONE closed path per shape. " +
     "For text/letters: trace only the outer silhouette of each letter as a single closed line. For small shapes: ONE outline per shape, no inner lines parallel to the outer edge. " +
     "SMALL DETAIL RULE: If a detail is too small to fit two clearly separated clean lines, draw ONE single line instead. If even one clean line creates noise or clutter, OMIT that detail entirely. A clean omission is always better than a noisy double-line. " +
+    "PARALLEL LINE RULE: If multiple parallel lines run close together (within 5px), draw ONLY the outermost single line. Do NOT trace every groove or layer of manufactured objects — simplify to essential silhouette + 2-3 key structural lines maximum. " +
     "No background elements."
   );
 }

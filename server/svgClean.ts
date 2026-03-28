@@ -127,6 +127,88 @@ function trimViewBox(svg: string): string {
   return svg.replace(/<svg/i, `<svg ${newVb}`);
 }
 
+/**
+ * Filter out SVG paths whose bounding boxes are nearly identical to a previously-seen path.
+ * This removes the "parallel double-line" artefact where the AI draws two (or more) paths
+ * that trace almost the same edge at slightly different offsets.
+ *
+ * Strategy:
+ *  1. Extract every <path d="..."> element.
+ *  2. Compute each path's bounding box.
+ *  3. For each path, check whether a previously-kept path has a bbox that overlaps by
+ *     more than OVERLAP_THRESHOLD (default 85%) in both axes.
+ *  4. If so, keep only the LARGER (outermost) path and discard the inner duplicate.
+ *
+ * This is intentionally conservative — we only drop paths that are almost entirely
+ * contained within another path, so genuine detail lines are preserved.
+ */
+function filterNearbyParallelPaths(svg: string): string {
+  const OVERLAP_THRESHOLD = 0.82; // 82% overlap → considered a duplicate inner line
+  const MIN_PATH_SIZE = 4;        // ignore tiny noise paths (bbox < 4 units in both axes)
+
+  // Extract all path elements
+  const pathRe = /<path[^>]*\bd="([^"]+)"[^>]*\/?>/g;
+  const paths: Array<{ full: string; bbox: ReturnType<typeof pathBBox> }> = [];
+  let m: RegExpExecArray | null;
+  while ((m = pathRe.exec(svg)) !== null) {
+    paths.push({ full: m[0], bbox: pathBBox(m[1]) });
+  }
+
+  if (paths.length === 0) return svg;
+
+  // Sort largest → smallest so we keep outer paths first
+  paths.sort((a, b) => {
+    const areaA = a.bbox ? (a.bbox.maxX - a.bbox.minX) * (a.bbox.maxY - a.bbox.minY) : 0;
+    const areaB = b.bbox ? (b.bbox.maxX - b.bbox.minX) * (b.bbox.maxY - b.bbox.minY) : 0;
+    return areaB - areaA;
+  });
+
+  const kept: typeof paths = [];
+
+  for (const candidate of paths) {
+    const cb = candidate.bbox;
+    if (!cb) { kept.push(candidate); continue; }
+
+    const cw = cb.maxX - cb.minX;
+    const ch = cb.maxY - cb.minY;
+
+    // Always keep tiny paths (they are genuine small details, not duplicates)
+    if (cw < MIN_PATH_SIZE && ch < MIN_PATH_SIZE) { kept.push(candidate); continue; }
+
+    let isDuplicate = false;
+    for (const keeper of kept) {
+      const kb = keeper.bbox;
+      if (!kb) continue;
+
+      // Compute intersection
+      const ix = Math.max(0, Math.min(cb.maxX, kb.maxX) - Math.max(cb.minX, kb.minX));
+      const iy = Math.max(0, Math.min(cb.maxY, kb.maxY) - Math.max(cb.minY, kb.minY));
+
+      if (ix <= 0 || iy <= 0) continue;
+
+      // Overlap ratio relative to the CANDIDATE (smaller path)
+      const overlapRatioX = cw > 0 ? ix / cw : 0;
+      const overlapRatioY = ch > 0 ? iy / ch : 0;
+
+      if (overlapRatioX >= OVERLAP_THRESHOLD && overlapRatioY >= OVERLAP_THRESHOLD) {
+        isDuplicate = true;
+        break;
+      }
+    }
+
+    if (!isDuplicate) kept.push(candidate);
+  }
+
+  // Rebuild SVG: replace all original paths with only the kept ones
+  // We do this by removing all paths first, then re-inserting kept paths
+  const keptSet = new Set(kept.map(p => p.full));
+  // Remove all paths, then append kept paths before </svg>
+  let result = svg.replace(/<path[^>]*\bd="[^"]+"[^>]*\/?>/g, (match) =>
+    keptSet.has(match) ? match : ''
+  );
+  return result;
+}
+
 export function cleanSvgForPreview(rawSvg: string): string {
   const cleaned = rawSvg
     // Remove all <text>...</text> elements (watermarks like "dxfai.net")
@@ -156,6 +238,9 @@ export function cleanSvgForPreview(rawSvg: string): string {
     // Now add clean stroke attributes to all path elements
     .replace(/<path /g, '<path stroke="black" stroke-width="0.5" fill="none" ');
 
+  // Filter near-duplicate parallel paths (removes double-line artefacts from AI output)
+  const deduped = filterNearbyParallelPaths(cleaned);
+
   // Trim viewBox to tightly fit actual content — removes empty whitespace around drawing
-  return trimViewBox(cleaned);
+  return trimViewBox(deduped);
 }
