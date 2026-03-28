@@ -240,7 +240,7 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
     `No shading, no grey tones, no gradients, no fills. ` +
     `Every line must be a single continuous stroke with no breaks, no gaps, no rough edges. ` +
     `Draw ONLY clean continuous pen strokes — use BOLD THICK strokes, minimum 3px line width. ` +
-    `No text, no letters, no numbers, no logos, no watermarks anywhere. `;
+    `If text, letters, words, or numbers appear in the image, treat them as shapes: draw ONLY their outer outline/contour as clean black strokes, exactly like any other object. Do NOT fill letters. Do NOT skip or omit text — trace every letter outline. `;
 
   switch (classification.type) {
     case "landscape":
@@ -313,8 +313,8 @@ function buildFullImagePrompt(sceneDescription: string, variationIndex: number, 
     "=== MANDATORY FRAMING RULES === " +
     "The entire composition MUST fit completely inside the frame. Leave AT LEAST 15% white margin on every edge. All elements fully visible, NOTHING cropped or touching the border. " +
     "=== END FRAMING RULES === " +
-    "DO NOT include any text, letters, words, numbers, labels, or captions anywhere in the image. " +
-    "No watermarks, no grey tones."
+    "If text, letters, words, or numbers appear in the image, treat them as shapes: draw ONLY their outer outline/contour as clean black strokes, exactly like any other object. Do NOT fill letters. Do NOT skip or omit text — trace every letter outline. " +
+    "No grey tones."
   );
 }
 
@@ -418,8 +418,8 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number, s
     "Object must occupy NO MORE than 60% of image width AND 60% of image height. " +
     "=== END FRAMING RULES === " +
     "Single centered object, complete, fully inside the frame. " +
-    "DO NOT include any text, letters, words, numbers, labels, or captions. " +
-    "No watermarks, no background elements."
+    "If text, letters, words, or numbers appear in the image, treat them as shapes: draw ONLY their outer outline/contour as clean black strokes, exactly like any other object. Do NOT fill letters. Do NOT skip or omit text — trace every letter outline. " +
+    "No background elements."
   );
 }
 
