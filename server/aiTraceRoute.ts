@@ -526,10 +526,10 @@ async function runTraceJob(
       // turdSize scaled up for 3072px (4x area = ~4x turdSize)
       // Detailed: higher optTolerance (0.6) = smoother curves; lower alphaMax = rounder corners
       const potraceOptions = isDetailedMode
-        // Detailed: lower turdSize keeps fine details; alphaMax 0.7 = rounder corners;
-        // optTolerance 0.8 = more curve smoothing → smoother output lines
-        ? { threshold: 128, turdSize: 32, alphaMax: 0.7, optCurve: true, optTolerance: 0.8 }
-        : { threshold: 128, turdSize: 48, alphaMax: 1.0, optCurve: true, optTolerance: 0.4 }; // reduced from 160 → preserves small details like individual leaves
+        // Detailed: turdSize 8 keeps very fine details; alphaMax 1.0 = smooth corners;
+        // optTolerance 1.0 = maximum curve joining → connects broken lines in complex images
+        ? { threshold: 128, turdSize: 8, alphaMax: 1.0, optCurve: true, optTolerance: 1.0 }
+        : { threshold: 128, turdSize: 24, alphaMax: 1.0, optCurve: true, optTolerance: 0.6 }; // reduced turdSize → preserves small details like individual leaves
 
       const rawSvg = await new Promise<string>((resolve, reject) => {
         potrace.trace(processedBuffer, potraceOptions, (err: Error | null, svg: string) => {
