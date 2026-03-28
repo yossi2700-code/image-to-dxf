@@ -2518,3 +2518,11 @@
 ## שינוי גודל DXF - 200x200 ס"מ
 
 - [x] Scale DXF output coordinates to fit within 2000x2000mm (200x200cm), preserving aspect ratio
+
+## PWA - התקנה כאפליקציה
+
+- [x] יצירת manifest.json עם שם, צבעים, ואייקונים
+- [x] יצירת service worker לcaching בסיסי
+- [x] הוספת manifest ל-index.html
+- [x] יצירת אייקוני PWA (192x192, 512x512)
+- [x] הוספת meta tags למובייל (theme-color, apple-touch-icon)
