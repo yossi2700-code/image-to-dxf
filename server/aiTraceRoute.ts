@@ -416,11 +416,13 @@ async function runTraceJob(
         : (
             // Direct image-to-line-art prompt — no text description, AI follows the image directly
             `This image will be converted to a vector file for laser engraving or CNC cutting. ` +
-            `Convert it to clean black and white line art by following the EXACT lines and shapes visible in this image. ` +
+            `Convert it to clean black and white line art by following the main shapes and primary outlines visible in this image. ` +
             `DO NOT redraw from memory or imagination — trace what you actually see in the image. ` +
+            `Draw ONLY the most important structural lines: outer silhouettes, major shapes, and primary contours. ` +
+            `IGNORE and OMIT: small background details, fine textures, repetitive patterns, distant objects, busy backgrounds, and any element smaller than 5% of the image. ` +
+            `Simplify complex areas — merge nearby lines into single clean strokes. ` +
             `Draw ONLY clean continuous pen strokes — like drawing with a fine-tip pen on paper. ` +
             `Every line must be a single continuous stroke with no breaks, no gaps, no rough edges. ` +
-            `Preserve ALL details: every curve, shape, decoration, and element exactly as shown. ` +
             `Pure white (#FFFFFF) background. Pure black (#000000) lines only. No shading, no grey tones, no gradients, no fills. ` +
             `The lines must be smooth, flowing, and connected — suitable for a laser to follow as a single path. ` +
             `${singleLine ? SINGLE_LINE_STYLE : variation.style} ` +
