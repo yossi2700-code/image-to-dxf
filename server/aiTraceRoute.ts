@@ -242,7 +242,7 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
     `Draw ONLY clean continuous pen strokes — use BOLD THICK strokes, minimum 3px line width. ` +
     `SINGLE CONTOUR RULE — applies to ALL elements: Every shape, letter, and object must have EXACTLY ONE contour line — the outermost boundary only. ` +
     `Do NOT draw both an inner edge and an outer edge. Do NOT create double-stroke or parallel outlines. ONE closed path per shape. ` +
-    `For text and letters: trace only the outer silhouette of each letter as a single closed line — like tracing around a cut-out letter. ` +
+    `For text and letters: draw each letter as a SOLID SHAPE — trace the INNER boundary of the letter strokes themselves, as if the letter is cut out of paper and you are cutting THROUGH the letter, not around it. ONE single closed path per letter that follows the letter's own stroke edges from the inside. Do NOT draw an outline that goes around the outside of the letter leaving a gap. ` +
     `For small shapes (leaves, petals, small objects): ONE single outline per shape, no inner detail lines that run parallel to the outer edge. ` +
     `Think of it as: if you cut the shape out of paper, you would cut along ONE line only. ` +
     `SMALL DETAIL RULE: If a detail is too small to fit TWO clearly separated clean lines, draw ONE single line instead. ` +
@@ -324,7 +324,7 @@ function buildFullImagePrompt(sceneDescription: string, variationIndex: number, 
     "The entire composition MUST fit completely inside the frame. Leave AT LEAST 15% white margin on every edge. All elements fully visible, NOTHING cropped or touching the border. " +
     "=== END FRAMING RULES === " +
     "SINGLE CONTOUR RULE: Every shape, letter, and object must have EXACTLY ONE contour line — the outermost boundary only. Do NOT draw both inner and outer edges. Do NOT create double-stroke or parallel outlines. ONE closed path per shape. " +
-    "For text/letters: trace only the outer silhouette of each letter as a single closed line. For small shapes: ONE outline per shape, no inner lines parallel to the outer edge. " +
+    "For text/letters: draw each letter as a SOLID SHAPE — trace the INNER boundary of the letter strokes as if cutting THROUGH the letter, not around it. ONE closed path per letter. Do NOT draw an outline around the outside of the letter leaving a gap. " +
     "SMALL DETAIL RULE: If a detail is too small to fit two clearly separated clean lines, draw ONE single line instead. If even one clean line creates noise or clutter, OMIT that detail entirely. A clean omission is always better than a noisy double-line. " +
     "PARALLEL LINE RULE: If multiple parallel lines run close together (within 5px), draw ONLY the outermost single line. Do NOT trace every groove or layer of manufactured objects — simplify to essential silhouette + 2-3 key structural lines maximum. " +
     "No grey tones."
@@ -432,7 +432,7 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number, s
     "=== END FRAMING RULES === " +
     "Single centered object, complete, fully inside the frame. " +
     "SINGLE CONTOUR RULE: Every shape, letter, and object must have EXACTLY ONE contour line — the outermost boundary only. Do NOT draw both inner and outer edges. Do NOT create double-stroke or parallel outlines. ONE closed path per shape. " +
-    "For text/letters: trace only the outer silhouette of each letter as a single closed line. For small shapes: ONE outline per shape, no inner lines parallel to the outer edge. " +
+    "For text/letters: draw each letter as a SOLID SHAPE — trace the INNER boundary of the letter strokes as if cutting THROUGH the letter, not around it. ONE closed path per letter. Do NOT draw an outline around the outside of the letter leaving a gap. " +
     "SMALL DETAIL RULE: If a detail is too small to fit two clearly separated clean lines, draw ONE single line instead. If even one clean line creates noise or clutter, OMIT that detail entirely. A clean omission is always better than a noisy double-line. " +
     "PARALLEL LINE RULE: If multiple parallel lines run close together (within 5px), draw ONLY the outermost single line. Do NOT trace every groove or layer of manufactured objects — simplify to essential silhouette + 2-3 key structural lines maximum. " +
     "No background elements."
