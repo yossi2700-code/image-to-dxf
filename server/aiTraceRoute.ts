@@ -244,7 +244,10 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
     `Do NOT draw both an inner edge and an outer edge. Do NOT create double-stroke or parallel outlines. ONE closed path per shape. ` +
     `For text and letters: trace only the outer silhouette of each letter as a single closed line — like tracing around a cut-out letter. ` +
     `For small shapes (leaves, petals, small objects): ONE single outline per shape, no inner detail lines that run parallel to the outer edge. ` +
-    `Think of it as: if you cut the shape out of paper, you would cut along ONE line only. `;
+    `Think of it as: if you cut the shape out of paper, you would cut along ONE line only. ` +
+    `SMALL DETAIL RULE: If a detail is too small to fit TWO clearly separated clean lines, draw ONE single line instead. ` +
+    `If even ONE clean line is not possible without creating noise or clutter, OMIT that detail entirely. ` +
+    `A clean omission is always better than a noisy double-line. `;
 
   switch (classification.type) {
     case "landscape":
@@ -319,6 +322,7 @@ function buildFullImagePrompt(sceneDescription: string, variationIndex: number, 
     "=== END FRAMING RULES === " +
     "SINGLE CONTOUR RULE: Every shape, letter, and object must have EXACTLY ONE contour line — the outermost boundary only. Do NOT draw both inner and outer edges. Do NOT create double-stroke or parallel outlines. ONE closed path per shape. " +
     "For text/letters: trace only the outer silhouette of each letter as a single closed line. For small shapes: ONE outline per shape, no inner lines parallel to the outer edge. " +
+    "SMALL DETAIL RULE: If a detail is too small to fit two clearly separated clean lines, draw ONE single line instead. If even one clean line creates noise or clutter, OMIT that detail entirely. A clean omission is always better than a noisy double-line. " +
     "No grey tones."
   );
 }
@@ -425,6 +429,7 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number, s
     "Single centered object, complete, fully inside the frame. " +
     "SINGLE CONTOUR RULE: Every shape, letter, and object must have EXACTLY ONE contour line — the outermost boundary only. Do NOT draw both inner and outer edges. Do NOT create double-stroke or parallel outlines. ONE closed path per shape. " +
     "For text/letters: trace only the outer silhouette of each letter as a single closed line. For small shapes: ONE outline per shape, no inner lines parallel to the outer edge. " +
+    "SMALL DETAIL RULE: If a detail is too small to fit two clearly separated clean lines, draw ONE single line instead. If even one clean line creates noise or clutter, OMIT that detail entirely. A clean omission is always better than a noisy double-line. " +
     "No background elements."
   );
 }
