@@ -2914,7 +2914,7 @@ export default function Home() {
                 <Upload className="w-2.5 h-2.5" />{isRtl ? 'העלה תמונה' : 'Upload image'}
               </span>
             </div>
-            <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #0d9488, #06b6d4)', color: 'white', letterSpacing: '0.02em' }}>תמונה לקווים</span>
+            <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #0d9488, #06b6d4)', color: 'white', letterSpacing: '0.02em' }}>{t("aiTraceTabLabel")}</span>
           </button>
 
           {/* Portrait */}
@@ -3004,7 +3004,7 @@ export default function Home() {
               }}
             >
               <Scan className="w-4 h-4 shrink-0" />
-              <span className="truncate text-[11px]">תמונה לקווים</span>
+              <span className="truncate text-[11px]">{t("aiTraceTabLabel")}</span>
               {activeJobs.trace && (
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
