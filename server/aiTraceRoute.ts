@@ -239,17 +239,13 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
     `Pure white (#FFFFFF) background. Pure black (#000000) lines only. ` +
     `No shading, no grey tones, no gradients, no fills. ` +
     `Every line must be a single continuous stroke with no breaks, no gaps, no rough edges. ` +
-    `Draw ONLY clean continuous pen strokes — use BOLD THICK strokes, minimum 5px line width. ` +
+    `ADAPTIVE LINE WEIGHT RULE: Draw ONE single line per edge — NEVER two parallel lines to simulate thickness. Instead, vary the line weight itself: large/main elements use thick strokes (6-8px), medium elements use medium strokes (4-5px), small details and small text use thin strokes (2-3px). The line width communicates importance — do NOT use double-strokes to fill space. ` +
     `SINGLE CONTOUR RULE — applies to ALL elements: Every shape, letter, and object must have EXACTLY ONE contour line — the outermost boundary only. ` +
     `Do NOT draw both an inner edge and an outer edge. Do NOT create double-stroke or parallel outlines. ONE closed path per shape. ` +
-    `For text and letters: draw each letter as a SOLID SHAPE — trace the INNER boundary of the letter strokes themselves, as if the letter is cut out of paper and you are cutting THROUGH the letter, not around it. ONE single closed path per letter that follows the letter's own stroke edges from the inside. Do NOT draw an outline that goes around the outside of the letter leaving a gap. ` +
+    `For text and letters: draw each letter as a SOLID SHAPE — trace the INNER boundary of the letter strokes themselves, as if the letter is cut out of paper and you are cutting THROUGH the letter, not around it. ONE single closed path per letter. Do NOT draw an outline around the outside of the letter leaving a gap. ` +
     `For small shapes (leaves, petals, small objects): ONE single outline per shape, no inner detail lines that run parallel to the outer edge. ` +
-    `Think of it as: if you cut the shape out of paper, you would cut along ONE line only. ` +
-    `SMALL DETAIL RULE: If a detail is too small to fit TWO clearly separated clean lines, draw ONE single line instead. ` +
-    `If even ONE clean line is not possible without creating noise or clutter, OMIT that detail entirely. ` +
-    `A clean omission is always better than a noisy double-line. ` +
-    `PARALLEL LINE RULE: If you see multiple parallel lines running close together (within 5px of each other), draw ONLY the single outermost line. ` +
-    `Do NOT trace every layer, groove, or edge of a manufactured object — pick the ONE most defining outline. ` +
+    `SMALL DETAIL RULE: If a detail is too small to fit even ONE clean line, OMIT that detail entirely. A clean omission is always better than a noisy double-line. ` +
+    `PARALLEL LINE RULE: If you see multiple parallel lines running close together, draw ONLY the single outermost line — never trace every layer or groove. ` +
     `Industrial objects (appliances, machines, products) must be simplified to their essential silhouette + 2-3 key structural lines maximum. `;
 
   switch (classification.type) {
@@ -315,19 +311,18 @@ function buildFullImagePrompt(sceneDescription: string, variationIndex: number, 
   return (
     `Professional black and white line art of the following scene: ${sceneDescription}. ` +
     "Pure white background (#FFFFFF). " +
-    "Bold thick black outlines minimum 5px line width, no fill, no shading, no gradients. " +
-    "High contrast: only pure black (#000000) lines on white. " +
+    "ADAPTIVE LINE WEIGHT: ONE single line per edge — NEVER two parallel lines to simulate thickness. Vary line weight by element size: large/main elements 6-8px, medium elements 4-5px, small details and small text 2-3px. Line width communicates importance — do NOT use double-strokes to fill space. " +
+    "Pure black (#000000) lines on white (#FFFFFF) only. No fill, no shading, no gradients, no grey tones. " +
     "CRITICAL: Draw ALL elements visible in the image EXACTLY as described — every object, decoration, symbol, and detail in their correct positions and proportions. " +
     "Do NOT substitute or replace any element with a generic version. Draw the SPECIFIC items described. " +
     `${styleBlock} ` +
     "=== MANDATORY FRAMING RULES === " +
     "The entire composition MUST fit completely inside the frame. Leave AT LEAST 15% white margin on every edge. All elements fully visible, NOTHING cropped or touching the border. " +
     "=== END FRAMING RULES === " +
-    "SINGLE CONTOUR RULE: Every shape, letter, and object must have EXACTLY ONE contour line — the outermost boundary only. Do NOT draw both inner and outer edges. Do NOT create double-stroke or parallel outlines. ONE closed path per shape. " +
-    "For text/letters: draw each letter as a SOLID SHAPE — trace the INNER boundary of the letter strokes as if cutting THROUGH the letter, not around it. ONE closed path per letter. Do NOT draw an outline around the outside of the letter leaving a gap. " +
-    "SMALL DETAIL RULE: If a detail is too small to fit two clearly separated clean lines, draw ONE single line instead. If even one clean line creates noise or clutter, OMIT that detail entirely. A clean omission is always better than a noisy double-line. " +
-    "PARALLEL LINE RULE: If multiple parallel lines run close together (within 5px), draw ONLY the outermost single line. Do NOT trace every groove or layer of manufactured objects — simplify to essential silhouette + 2-3 key structural lines maximum. " +
-    "No grey tones."
+    "SINGLE CONTOUR RULE: Every shape, letter, and object must have EXACTLY ONE contour line — the outermost boundary only. Do NOT draw both inner and outer edges. ONE closed path per shape. " +
+    "For text/letters: draw each letter as a SOLID SHAPE — trace the INNER boundary of the letter strokes as if cutting THROUGH the letter, not around it. ONE closed path per letter. Do NOT draw an outline around the outside of the letter. " +
+    "SMALL DETAIL RULE: If a detail is too small for even ONE clean line, OMIT it entirely. A clean omission is always better than a noisy double-line. " +
+    "PARALLEL LINE RULE: If multiple parallel lines run close together, draw ONLY the outermost single line. Do NOT trace every groove or layer — simplify to essential silhouette + 2-3 key structural lines maximum."
   );
 }
 
@@ -422,8 +417,8 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number, s
     "=== END CAMERA ANGLE RULE === " +
     "\n=== STYLE === " +
     "Pure white background (#FFFFFF). " +
-    "Bold thick black outlines minimum 5px line width, no fill, no shading, no gradients, no grey tones. " +
-    "High contrast: only pure black (#000000) lines on white. " +
+    "ADAPTIVE LINE WEIGHT: ONE single line per edge — NEVER two parallel lines to simulate thickness. Vary line weight by element size: large/main elements 6-8px, medium elements 4-5px, small details and small text 2-3px. Line width communicates importance — do NOT use double-strokes to fill space. " +
+    "Pure black (#000000) lines on white (#FFFFFF) only. No fill, no shading, no gradients, no grey tones. " +
     `${styleBlock} ` +
     "\n=== FRAMING RULES (NEVER VIOLATE) === " +
     "The ENTIRE object MUST be 100% visible inside the frame with generous white margins. " +
@@ -431,10 +426,10 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number, s
     "Object must occupy NO MORE than 60% of image width AND 60% of image height. " +
     "=== END FRAMING RULES === " +
     "Single centered object, complete, fully inside the frame. " +
-    "SINGLE CONTOUR RULE: Every shape, letter, and object must have EXACTLY ONE contour line — the outermost boundary only. Do NOT draw both inner and outer edges. Do NOT create double-stroke or parallel outlines. ONE closed path per shape. " +
-    "For text/letters: draw each letter as a SOLID SHAPE — trace the INNER boundary of the letter strokes as if cutting THROUGH the letter, not around it. ONE closed path per letter. Do NOT draw an outline around the outside of the letter leaving a gap. " +
-    "SMALL DETAIL RULE: If a detail is too small to fit two clearly separated clean lines, draw ONE single line instead. If even one clean line creates noise or clutter, OMIT that detail entirely. A clean omission is always better than a noisy double-line. " +
-    "PARALLEL LINE RULE: If multiple parallel lines run close together (within 5px), draw ONLY the outermost single line. Do NOT trace every groove or layer of manufactured objects — simplify to essential silhouette + 2-3 key structural lines maximum. " +
+    "SINGLE CONTOUR RULE: Every shape, letter, and object must have EXACTLY ONE contour line — the outermost boundary only. Do NOT draw both inner and outer edges. ONE closed path per shape. " +
+    "For text/letters: draw each letter as a SOLID SHAPE — trace the INNER boundary of the letter strokes as if cutting THROUGH the letter, not around it. ONE closed path per letter. Do NOT draw an outline around the outside of the letter. " +
+    "SMALL DETAIL RULE: If a detail is too small for even ONE clean line, OMIT it entirely. A clean omission is always better than a noisy double-line. " +
+    "PARALLEL LINE RULE: If multiple parallel lines run close together, draw ONLY the outermost single line. Do NOT trace every groove or layer — simplify to essential silhouette + 2-3 key structural lines maximum. " +
     "No background elements."
   );
 }
