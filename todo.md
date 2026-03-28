@@ -2504,3 +2504,4 @@
 - [x] הסרת שלב ניתוח GPT-4o לגמרי — שליחה ישירה לגpt-image-1 ללא תיאור טקסטואלי
 - [x] החלפת OpenAI images.edit ב-Forge ImageService (generateImage) ב-aiTraceRoute.ts
 - [x] החלפת OpenAI images.edit ב-Forge ImageService (generateImage) ב-aiTraceRoute.ts
+- [x] החלפת OpenAI images.generate ב-Forge ImageService ב-generateRoute (AI Create מטקסט)

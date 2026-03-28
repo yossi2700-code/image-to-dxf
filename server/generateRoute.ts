@@ -299,27 +299,31 @@ async function runGenerateJob(
         ? buildLandscapePrompt(fullPrompt, idx)
         : buildLineArtPrompt(fullPrompt, idx);
 
-      const response = await openai.images.generate({
-        model: "gpt-image-1",
-        prompt: imagePrompt,
-        n: 1,
-        size: "1024x1024",
-        quality: "medium",
-      }, { signal: abortController.signal });
-
-      const imageData = response.data?.[0];
-      if (!imageData) throw new Error("לא הצלחנו לייצר תמונה");
-
-      let rawBuffer: Buffer;
-      if (imageData.b64_json) {
-        rawBuffer = Buffer.from(imageData.b64_json, "base64");
-      } else if (imageData.url) {
-        const imgResponse = await fetch(imageData.url);
-        if (!imgResponse.ok) throw new Error("שגיאה בהורדת התמונה שנוצרה");
-        rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
-      } else {
-        throw new Error("לא התקבלה תמונה מה-AI");
+      // Use Forge ImageService for text-to-image generation (same API as aiTraceRoute)
+      const forgeApiUrl = process.env.BUILT_IN_FORGE_API_URL;
+      const forgeApiKey = process.env.BUILT_IN_FORGE_API_KEY;
+      if (!forgeApiUrl || !forgeApiKey) throw new Error("Forge API not configured");
+      const forgeBaseUrl = forgeApiUrl.endsWith("/") ? forgeApiUrl : `${forgeApiUrl}/`;
+      const forgeEndpoint = new URL("images.v1.ImageService/GenerateImage", forgeBaseUrl).toString();
+      const forgeResponse = await fetch(forgeEndpoint, {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          "connect-protocol-version": "1",
+          authorization: `Bearer ${forgeApiKey}`,
+        },
+        body: JSON.stringify({ prompt: imagePrompt }),
+        signal: abortController.signal,
+      });
+      if (!forgeResponse.ok) {
+        const detail = await forgeResponse.text().catch(() => "");
+        throw new Error(`Forge ImageService failed (${forgeResponse.status}): ${detail}`);
       }
+      const forgeResult = await forgeResponse.json() as { image: { b64Json: string; mimeType: string } };
+      const b64 = forgeResult.image?.b64Json;
+      if (!b64) throw new Error("Forge ImageService did not return image data");
+      let rawBuffer = Buffer.from(b64, "base64");
 
       // blur(1.5) merges thick AI lines → eliminates double contours in potrace output
       const paddedBuffer = await sharp(rawBuffer)
