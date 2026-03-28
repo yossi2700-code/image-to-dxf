@@ -476,8 +476,8 @@ async function runTraceJob(
   const jobStartTime = Date.now();
   // AbortController for cancelling in-flight OpenAI requests when timeout fires
   const abortController = new AbortController();
-  // Hard 5-minute internal timeout: abort OpenAI calls and mark job as error
-  const JOB_TIMEOUT_MS = 5 * 60 * 1000;
+  // Hard 3-minute internal timeout: abort Forge calls and mark job as error
+  const JOB_TIMEOUT_MS = 3 * 60 * 1000;
   const internalTimeoutId = setTimeout(() => {
     abortController.abort();
     clearInterval(heartbeatInterval);
@@ -486,8 +486,8 @@ async function runTraceJob(
       updateJob(jobId, {
         status: "error",
         error: isHe
-          ? "העיבוד ארך יותר מ-5 דקות. נסה שוב עם תמונה פשוטה יותר."
-          : "Processing timed out after 5 minutes. Try a simpler image.",
+          ? "העיבוד ארך יותר מ-3 דקות. נסה שוב עם תמונה פשוטה יותר."
+          : "Processing timed out after 3 minutes. Try a simpler image.",
       });
     }
   }, JOB_TIMEOUT_MS);
@@ -614,7 +614,11 @@ async function runTraceJob(
           prompt: editPrompt,
           original_images: [{ b64Json: b64Input, mimeType: "image/png" }],
         }),
-        signal: abortController.signal,
+        // Combine abort signal with a 2.5-minute hard timeout on the Forge fetch itself
+        signal: AbortSignal.any([
+          abortController.signal,
+          AbortSignal.timeout(2.5 * 60 * 1000),
+        ]),
       });
       if (!forgeResponse.ok) {
         const detail = await forgeResponse.text().catch(() => "");
@@ -948,10 +952,10 @@ router.post(
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "ai_trace");
 
-      // 5-minute hard timeout — if job takes longer, mark as error and stop
-      const MAX_JOB_MS = 5 * 60 * 1000;
+      // 3-minute hard timeout — if job takes longer, mark as error and stop
+      const MAX_JOB_MS = 3 * 60 * 1000;
       const timeoutPromise = new Promise<void>((_, reject) =>
-        setTimeout(() => reject(new Error("Job timed out after 5 minutes")), MAX_JOB_MS)
+        setTimeout(() => reject(new Error("Job timed out after 3 minutes")), MAX_JOB_MS)
       );
       Promise.race([
         runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline, lineweightMm, singleLine, closePaths),
@@ -964,7 +968,7 @@ router.post(
           updateJob(jobId, {
             status: "error",
             error: msg.includes("timed out")
-              ? "העיבוד ארך יותר מדי. נסה שוב או נסה תמונה פשוטה יותר."
+              ? "העיבוד ארך יותר מ-3 דקות. נסה שוב — בדרך כלל הניסיון השני מהיר יותר."
               : msg,
           });
         }
@@ -1147,5 +1151,81 @@ router.post(
     }
   }
 );
+
+// ─── POST /api/ai-trace/warmup ──────────────────────────────────────────────
+// Called immediately when user uploads an image — wakes up Forge ImageService
+// so the first real Convert request is fast (~25s instead of ~120s cold start)
+router.post("/api/ai-trace/warmup", async (_req, res) => {
+  try {
+    const forgeApiUrl = process.env.BUILT_IN_FORGE_API_URL;
+    const forgeApiKey = process.env.BUILT_IN_FORGE_API_KEY;
+    if (!forgeApiUrl || !forgeApiKey) return res.json({ ok: false });
+    const forgeBaseUrl = forgeApiUrl.endsWith("/") ? forgeApiUrl : `${forgeApiUrl}/`;
+    const forgeEndpoint = new URL("images.v1.ImageService/GenerateImage", forgeBaseUrl).toString();
+    // Send a minimal 1x1 white pixel PNG — just enough to wake the service, costs nothing
+    const tinyPng = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==",
+      "base64"
+    );
+    const b64 = tinyPng.toString("base64");
+    // Fire-and-forget with 30s timeout — we don't wait for result
+    fetch(forgeEndpoint, {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        "connect-protocol-version": "1",
+        authorization: `Bearer ${forgeApiKey}`,
+      },
+      body: JSON.stringify({
+        prompt: "white blank canvas",
+        original_images: [{ b64Json: b64, mimeType: "image/png" }],
+      }),
+      signal: AbortSignal.timeout(30_000),
+    }).catch(() => { /* ignore warm-up errors */ });
+    console.log("[aiTraceRoute] Forge warm-up request sent");
+    return res.json({ ok: true });
+  } catch {
+    return res.json({ ok: false });
+  }
+});
+
+// ─── POST /api/ai-trace/warmup ──────────────────────────────────────────────
+// Called immediately when user uploads an image — wakes up Forge ImageService
+// so the first real Convert request is fast (~25s instead of ~120s cold start)
+router.post("/api/ai-trace/warmup", async (_req, res) => {
+  try {
+    const forgeApiUrl = process.env.BUILT_IN_FORGE_API_URL;
+    const forgeApiKey = process.env.BUILT_IN_FORGE_API_KEY;
+    if (!forgeApiUrl || !forgeApiKey) return res.json({ ok: false });
+    const forgeBaseUrl = forgeApiUrl.endsWith("/") ? forgeApiUrl : `${forgeApiUrl}/`;
+    const forgeEndpoint = new URL("images.v1.ImageService/GenerateImage", forgeBaseUrl).toString();
+    // Minimal 1x1 white pixel PNG — just enough to wake the service
+    const tinyPng = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==",
+      "base64"
+    );
+    const b64 = tinyPng.toString("base64");
+    // Fire-and-forget with 60s timeout — we don't wait for result, just wake the service
+    fetch(forgeEndpoint, {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        "connect-protocol-version": "1",
+        authorization: `Bearer ${forgeApiKey}`,
+      },
+      body: JSON.stringify({
+        prompt: "white blank canvas, no content",
+        original_images: [{ b64Json: b64, mimeType: "image/png" }],
+      }),
+      signal: AbortSignal.timeout(60_000),
+    }).catch(() => { /* ignore warm-up errors — best-effort only */ });
+    console.log("[aiTraceRoute] Forge warm-up request fired");
+    return res.json({ ok: true });
+  } catch {
+    return res.json({ ok: false });
+  }
+});
 
 export default router;
