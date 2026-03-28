@@ -483,6 +483,20 @@ export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: nu
     }
   }
 
+  // ── Scale to fit within 2000×2000 mm (200×200 cm) ─────────────────────────────
+  // SVG pixel coordinates are raw (0–3072). We scale them so the longest side
+  // equals at most 2000 mm, preserving aspect ratio. This makes the DXF open at
+  // a sensible real-world size in CorelDRAW / LightBurn / AutoCAD without any
+  // manual rescaling by the user.
+  const MAX_DXF_MM = 2000; // 200 cm
+  const mmScale = MAX_DXF_MM / Math.max(outputWidth, outputHeight, 1);
+  outputPolylines = outputPolylines.map(poly => ({
+    points: poly.points.map(([px, py]) => [px * mmScale, py * mmScale] as Point),
+    closed: poly.closed,
+  }));
+  outputWidth  = outputWidth  * mmScale;
+  outputHeight = outputHeight * mmScale;
+
   // Determine lineweight code
   const lwCode = lineweightMm != null
     ? svgMmToLwCode(lineweightMm)
