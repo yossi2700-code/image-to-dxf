@@ -164,10 +164,18 @@ export type ImageType =
   | "drawing"      // existing line art, sketch, diagram, blueprint
   | "unknown";     // fallback
 
+export interface BoundingBox {
+  x: number;  // left edge as fraction 0-1
+  y: number;  // top edge as fraction 0-1
+  w: number;  // width as fraction 0-1
+  h: number;  // height as fraction 0-1
+}
+
 export interface ImageClassification {
   type: ImageType;
   subject: string;   // short English description of main subject
   complexity: "simple" | "medium" | "complex";
+  bbox?: BoundingBox; // bounding box of main subject (optional, may be absent for landscape)
 }
 
 /**
@@ -187,7 +195,9 @@ async function classifyImage(imageBase64: string): Promise<ImageClassification> 
             "Fields: " +
             "type (one of: landscape, portrait, object, mandala, drawing), " +
             "subject (5-10 word English description of main subject), " +
-            "complexity (simple|medium|complex — how many distinct lines/details the image has).",
+            "complexity (simple|medium|complex — how many distinct lines/details the image has), " +
+            "bbox (bounding box of the main subject as {x,y,w,h} fractions 0-1; for landscape/scene set to full image {x:0,y:0,w:1,h:1}; " +
+            "for objects/portraits/mandalas/drawings set to the tightest box that contains the main subject).",
         },
         {
           role: "user",
@@ -211,8 +221,19 @@ async function classifyImage(imageBase64: string): Promise<ImageClassification> 
               type: { type: "string", enum: ["landscape", "portrait", "object", "mandala", "drawing"] },
               subject: { type: "string" },
               complexity: { type: "string", enum: ["simple", "medium", "complex"] },
+              bbox: {
+                type: "object",
+                properties: {
+                  x: { type: "number" },
+                  y: { type: "number" },
+                  w: { type: "number" },
+                  h: { type: "number" },
+                },
+                required: ["x", "y", "w", "h"],
+                additionalProperties: false,
+              },
             },
-            required: ["type", "subject", "complexity"],
+            required: ["type", "subject", "complexity", "bbox"],
             additionalProperties: false,
           },
         },
@@ -239,7 +260,9 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
     `Pure white (#FFFFFF) background. Pure black (#000000) lines only. ` +
     `No shading, no grey tones, no gradients, no fills. ` +
     `Every line must be a single continuous stroke with no breaks, no gaps, no rough edges. ` +
-    `Draw ONLY clean continuous pen strokes — use BOLD THICK strokes, minimum 3px line width. ` +
+    `Draw ONLY clean continuous pen strokes — use BOLD THICK strokes, minimum 4px line width. ` +
+    `CRITICAL LINE WIDTH RULE: Every single line in the output MUST be at least 4px thick, regardless of how many elements are in the scene or how zoomed out the view is. ` +
+    `Do NOT draw thin hairlines even for distant or small objects — scale up line thickness to compensate for zoom level. ` +
     `If text, letters, words, or numbers appear in the image, treat them as shapes: draw ONLY their outer outline/contour as clean black strokes, exactly like any other object. Do NOT fill letters. Do NOT skip or omit text — trace every letter outline. `;
 
   switch (classification.type) {
@@ -571,6 +594,49 @@ async function runTraceJob(
       });
     }
 
+    // Solution B: Smart auto-crop to main subject based on bounding box
+    // For objects/portraits/mandalas/drawings: crop to the subject area and upscale to fill the canvas
+    // This ensures the subject is large in the AI output → thicker lines after potrace
+    // Skip crop for landscapes (bbox covers full image) and when bbox is too large (>80% of image)
+    let finalSourceBuffer = editSourceBuffer;
+    const bbox = imageClassification.bbox;
+    const shouldCrop =
+      !effectiveLandscapeMode &&
+      !singleLine &&
+      bbox &&
+      imageClassification.type !== "landscape" &&
+      imageClassification.type !== "unknown" &&
+      // Only crop if subject is meaningfully smaller than the full image (less than 75% of area)
+      bbox.w * bbox.h < 0.75;
+
+    if (shouldCrop && bbox) {
+      try {
+        const PAD = 0.08; // 8% padding around the subject
+        const cropX = Math.max(0, bbox.x - PAD);
+        const cropY = Math.max(0, bbox.y - PAD);
+        const cropW = Math.min(1, bbox.x + bbox.w + PAD) - cropX;
+        const cropH = Math.min(1, bbox.y + bbox.h + PAD) - cropY;
+
+        // Convert fractions to pixel coordinates on the resized image
+        const px = Math.round(cropX * aiResizeW);
+        const py = Math.round(cropY * aiResizeH);
+        const pw = Math.round(cropW * aiResizeW);
+        const ph = Math.round(cropH * aiResizeH);
+
+        // Crop and upscale to fill the full AI canvas
+        finalSourceBuffer = await sharp(editSourceBuffer)
+          .extract({ left: px, top: py, width: Math.max(pw, 1), height: Math.max(ph, 1) })
+          .resize(aiResizeW, aiResizeH, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .png({ compressionLevel: 6 })
+          .toBuffer();
+
+        console.log(`[aiTraceRoute] Job ${jobId}: auto-cropped to bbox x=${cropX.toFixed(2)} y=${cropY.toFixed(2)} w=${cropW.toFixed(2)} h=${cropH.toFixed(2)} (subject area ${(bbox.w * bbox.h * 100).toFixed(0)}% → 100%)`);
+      } catch (cropErr) {
+        console.warn(`[aiTraceRoute] Job ${jobId}: auto-crop failed, using original:`, cropErr);
+        finalSourceBuffer = editSourceBuffer; // fallback to original
+      }
+    }
+
     // Generate only the selected variation (variationIndex: 0=simple, 1=detailed, 2=decorative)
     const generationPromises = [variationIndex].map(async (idx) => {
       const variation = STYLE_VARIATIONS[idx % STYLE_VARIATIONS.length];
@@ -590,7 +656,7 @@ async function runTraceJob(
       if (!forgeApiUrl || !forgeApiKey) throw new Error("Forge API not configured");
       const forgeBaseUrl = forgeApiUrl.endsWith("/") ? forgeApiUrl : `${forgeApiUrl}/`;
       const forgeEndpoint = new URL("images.v1.ImageService/GenerateImage", forgeBaseUrl).toString();
-      const b64Input = editSourceBuffer.toString("base64");
+      const b64Input = finalSourceBuffer.toString("base64");
       const forgeResponse = await fetch(forgeEndpoint, {
         method: "POST",
         headers: {
