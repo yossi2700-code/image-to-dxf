@@ -1522,13 +1522,13 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
               <button
                 className="flex-1 font-bold text-base h-13 rounded-xl flex items-center justify-center gap-2 transition-all hover:opacity-90"
                 style={{
-                  background: ((!imageFile && !imagePreview) || status === "loading") ? 'linear-gradient(135deg, #c4b5fd, #a5b4fc)' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                  background: ((!imageFile && !imagePreview) || status === "loading" || faceCheckLoading) ? 'linear-gradient(135deg, #c4b5fd, #a5b4fc)' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                   color: 'white',
                   border: 'none',
-                  boxShadow: ((!imageFile && !imagePreview) || status === "loading") ? 'none' : '0 4px 14px rgba(99,102,241,0.4)',
-                  cursor: ((!imageFile && !imagePreview) || status === "loading") ? 'not-allowed' : 'pointer',
+                  boxShadow: ((!imageFile && !imagePreview) || status === "loading" || faceCheckLoading) ? 'none' : '0 4px 14px rgba(99,102,241,0.4)',
+                  cursor: ((!imageFile && !imagePreview) || status === "loading" || faceCheckLoading) ? 'not-allowed' : 'pointer',
                 }}
-                disabled={(!imageFile && !imagePreview) || status === "loading"}
+                disabled={(!imageFile && !imagePreview) || status === "loading" || faceCheckLoading}
                 onClick={() => handleTrace()}
               >
                 {status === "loading" ? (

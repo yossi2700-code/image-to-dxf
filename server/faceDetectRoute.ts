@@ -726,8 +726,8 @@ router.post(
         // Try sharp first, fall back to raw buffer if it fails
         try {
           const resizedBuffer = await sharp(imageBuffer)
-            .resize(512, 512, { fit: "inside", withoutEnlargement: true })
-            .jpeg({ quality: 80 })
+            .resize(256, 256, { fit: "inside", withoutEnlargement: true })
+            .jpeg({ quality: 75 })
             .toBuffer();
           imageDataUrl = `data:image/jpeg;base64,${resizedBuffer.toString("base64")}`;
         } catch {
@@ -735,7 +735,9 @@ router.post(
         }
       }
 
-      const faceCheckResponse = await invokeLLM({
+      // 5-second timeout — if LLM is slow, skip face check and let user proceed
+      const faceCheckResponse = await Promise.race([
+        invokeLLM({
         messages: [
           {
             role: "system",
@@ -749,7 +751,11 @@ router.post(
             ],
           },
         ],
-      });
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("TIMEOUT")), 5000)
+        ),
+      ]);
 
       console.log("[quick-check] Full LLM response:", JSON.stringify(faceCheckResponse).substring(0, 500));
       const rawContent = (faceCheckResponse as { choices?: Array<{ message?: { content?: string } }> })
