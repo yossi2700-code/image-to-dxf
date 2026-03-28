@@ -1,0 +1,22 @@
+{
+  "query": "SELECT `key`, `value` FROM `system_settings` WHERE `key` IN ('support_email', 'whatsapp_number', 'contact_phone');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT `key`, `value` FROM `system_settings` WHERE `key` IN ('support_email', 'whatsapp_number', 'contact_phone');",
+  "rows": [
+    {
+      "key": "support_email",
+      "value": "dxfai@dxfai.ai"
+    },
+    {
+      "key": "whatsapp_number",
+      "value": "972545300456"
+    },
+    {
+      "key": "contact_phone",
+      "value": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "key\tvalue\nsupport_email\tdxfai@dxfai.ai\nwhatsapp_number\t972545300456\ncontact_phone\t\n",
+  "stderr": "",
+  "execution_time_ms": 1597
+}

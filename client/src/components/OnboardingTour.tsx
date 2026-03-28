@@ -77,6 +77,11 @@ const TOUR_STEPS: TourStep[] = [
     titleKey: "tour9Title",
     descKey: "tour9Desc",
   },
+  {
+    targetId: "tour-pwa-install",
+    titleKey: "installAppTitle",
+    descKey: "installAppDesc",
+  },
 ];
 
 const STORAGE_KEY = "onboarding_tour_done_v2";
@@ -257,7 +262,7 @@ export function OnboardingTour({ forceShow, actionCount = 0 }: OnboardingTourPro
     .replace("{total}", String(totalSteps));
 
   // Step icons
-  const stepIcons = ["👋", "✨", "🖼️", "🎨", "⬇️", "👤", "📋", "✨", "💎"];
+  const stepIcons = ["👋", "✨", "🖼️", "🎨", "⬇️", "👤", "📋", "✨", "💎", "💻"];
 
   return (
     <>

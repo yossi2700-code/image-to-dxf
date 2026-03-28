@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useBugReport } from "@/hooks/useBugReport";
+import { usePwaInstall } from "@/hooks/usePwaInstall";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -813,6 +814,22 @@ function ContactButtons() {
       {data?.supportEmail && (
         <a
           href={`mailto:${data.supportEmail}`}
+          onClick={(e) => {
+            // On desktop, try mailto first; if it fails open Gmail web
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (!isMobile) {
+              e.preventDefault();
+              const mailtoLink = `mailto:${data!.supportEmail}`;
+              const win = window.open(mailtoLink, '_self');
+              // Fallback to Gmail web after short delay if mailto didn't open
+              setTimeout(() => {
+                try {
+                  window.open(`https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(data!.supportEmail)}`, '_blank');
+                } catch {}
+              }, 500);
+              void win;
+            }
+          }}
           className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 transition-colors font-medium"
           title="שלח מייל"
         >
@@ -2284,6 +2301,10 @@ function MobileFab() {
 // ─── Main Page ────────────────────────────────────────────────────────────────────────────────────────────────
 export default function Home() {
   const { t, isRtl, language } = useLanguage();
+  const { isInstallable, triggerInstall } = usePwaInstall();
+  const [pwaBannerDismissed, setPwaBannerDismissed] = useState(() => localStorage.getItem('pwa_banner_dismissed') === '1');
+  const isDesktop = typeof window !== 'undefined' && !('ontouchstart' in window) && window.innerWidth >= 768;
+  const showPwaBanner = isInstallable && !pwaBannerDismissed && isDesktop;
   const [appUser, setAppUser] = useState<{ id: number; email: string; name: string | null } | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -2729,6 +2750,23 @@ export default function Home() {
                           </span>
                           <span>{isRtl ? '✨ קנה קרדיטים' : '✨ Buy Tokens'}</span>
                         </button>
+                        {/* Install App button — desktop only */}
+                        {isInstallable && isDesktop && (
+                          <button
+                            onClick={() => { setUserMenuOpen(false); triggerInstall(); }}
+                            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(16,185,129,0.25)', background: 'rgba(16,185,129,0.08)', cursor: 'pointer', width: '100%', color: '#6ee7b7', fontSize: 13, fontWeight: 600, textAlign: isRtl ? 'right' : 'left', transition: 'all 0.15s' }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.2)'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.08)'; }}
+                          >
+                            <span style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg, #059669, #10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(16,185,129,0.4)' }}>
+                              <span style={{ fontSize: 15 }}>💻</span>
+                            </span>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontWeight: 700, fontSize: 13 }}>{t('installAppBtn')}</div>
+                              <div style={{ fontSize: 10, color: 'rgba(110,231,183,0.65)', fontWeight: 400 }}>{isRtl ? 'פתח כאפליקציה ללא דפדפן' : 'Open as app without browser'}</div>
+                            </div>
+                          </button>
+                        )}
                         {/* Tour button */}
                         <button
                           onClick={() => { setUserMenuOpen(false); resetOnboardingTour(); window.dispatchEvent(new CustomEvent('tour:reset')); }}
@@ -2829,6 +2867,35 @@ export default function Home() {
          {/* ── Welcome Banner (new registrations only) ── */}
         {showWelcomeBanner && (
           <WelcomeBanner onDismiss={() => setShowWelcomeBanner(false)} />
+        )}
+        {/* ── PWA Install Banner — desktop only ── */}
+        {showPwaBanner && (
+          <div
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 16px', marginBottom: 8, borderRadius: 14, background: 'linear-gradient(135deg, rgba(16,185,129,0.12), rgba(5,150,105,0.08))', border: '1px solid rgba(16,185,129,0.25)', direction: isRtl ? 'rtl' : 'ltr' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 20 }}>💻</span>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 13, color: '#059669' }}>{t('installAppBannerTitle')}</div>
+                <div style={{ fontSize: 11, color: '#6b7280' }}>{t('installAppBannerDesc')}</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              <button
+                onClick={() => triggerInstall()}
+                style={{ padding: '6px 14px', borderRadius: 8, background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 8px rgba(16,185,129,0.35)' }}
+              >
+                {t('installAppBtn')}
+              </button>
+              <button
+                onClick={() => { setPwaBannerDismissed(true); localStorage.setItem('pwa_banner_dismissed', '1'); }}
+                style={{ padding: '4px 8px', borderRadius: 6, background: 'transparent', color: '#9ca3af', border: 'none', fontSize: 18, cursor: 'pointer', lineHeight: 1 }}
+                aria-label="Dismiss"
+              >
+                ×
+              </button>
+            </div>
+          </div>
         )}
         {/* ── Pending Bonus Banner — removed, shown inside nudge popup instead ── */}
         {/* ── Sale Banner ── */}
