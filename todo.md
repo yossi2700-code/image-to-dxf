@@ -2507,3 +2507,4 @@
 - [x] החלפת OpenAI images.generate ב-Forge ImageService ב-generateRoute (AI Create מטקסט)
 - - [x] כיוון פרמטרי potrace (alphamax, opttolerance, turdsize) לקווים רציפים בתמונות עם הרבה פרטים- [x] עדכון פרומפטים ב-STYLE_VARIATIONS: הוספת הנחייה לצייר רק קווים ראשיים ולהתעלם מפרטים קטנים
 - [x] הוספת הנחיית "bold thick strokes minimum 3px" לפרומפט כדי שקווים דקים ישרדו את ה-threshold
+- [x] הוספת dilate (עיבוי קווים) אחרי threshold לפני potrace ב-aiTraceRoute

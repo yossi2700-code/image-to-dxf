@@ -474,7 +474,7 @@ async function runTraceJob(
         // Pipeline: grayscale → contrast boost → resize (high res) → sharpen → threshold
         // NO blur before threshold — blur softens edges and makes potrace produce jagged curves.
         // Sharpen BEFORE threshold ensures crisp, hard edges → potrace traces smooth clean paths.
-        processedBuffer = await sharp(rawBuffer)
+        const rawDetailedBuffer = await sharp(rawBuffer)
           .grayscale()
           .linear(2.5, -80)           // aggressive contrast: push grey lines to black, bg to white
           .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
@@ -483,17 +483,29 @@ async function runTraceJob(
           .threshold(170)             // slightly lower threshold — catches more of the sharpened dark pixels
           .png()
           .toBuffer();
+        // Dilate: thicken black lines by 2px so thin lines survive potrace and produce continuous paths
+        processedBuffer = await sharp(rawDetailedBuffer)
+          .convolve({ width: 5, height: 5, kernel: [1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1], scale: 1, offset: 0 })
+          .threshold(1)               // any pixel touched by dilation becomes black
+          .png()
+          .toBuffer();
       } else {
         // Simple mode: minimal blur to preserve fine details (leaves, small shapes)
         // blur(1.0) instead of 3.0 — just enough to remove single-pixel noise without merging nearby lines
         // contrast boost first to make light grey lines visible before threshold
-        processedBuffer = await sharp(rawBuffer)
+        const rawSimpleBuffer = await sharp(rawBuffer)
           .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .grayscale()
           .linear(1.8, -30)            // mild contrast boost: darken lines without blowing out background
           .blur(1.0)                   // minimal blur — removes single-pixel noise, preserves fine details
           .threshold(155)              // slightly lower to catch more of the boosted dark pixels
+          .png()
+          .toBuffer();
+        // Dilate: thicken black lines by 2px so thin lines survive potrace and produce continuous paths
+        processedBuffer = await sharp(rawSimpleBuffer)
+          .convolve({ width: 5, height: 5, kernel: [1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1], scale: 1, offset: 0 })
+          .threshold(1)               // any pixel touched by dilation becomes black
           .png()
           .toBuffer();
       }
