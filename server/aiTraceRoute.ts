@@ -421,10 +421,11 @@ async function runTraceJob(
             `Draw ONLY the most important structural lines: outer silhouettes, major shapes, and primary contours. ` +
             `IGNORE and OMIT: small background details, fine textures, repetitive patterns, distant objects, busy backgrounds, and any element smaller than 5% of the image. ` +
             `Simplify complex areas — merge nearby lines into single clean strokes. ` +
-            `Draw ONLY clean continuous pen strokes — like drawing with a fine-tip pen on paper. ` +
+            `Draw ONLY clean continuous pen strokes — use BOLD THICK strokes, minimum 3px line width. ` +
             `Every line must be a single continuous stroke with no breaks, no gaps, no rough edges. ` +
+            `Lines must be thick and bold enough to be clearly visible — thin hairlines are NOT acceptable. ` +
             `Pure white (#FFFFFF) background. Pure black (#000000) lines only. No shading, no grey tones, no gradients, no fills. ` +
-            `The lines must be smooth, flowing, and connected — suitable for a laser to follow as a single path. ` +
+            `The lines must be smooth, flowing, connected, and THICK — suitable for a laser to follow as a single path. ` +
             `${singleLine ? SINGLE_LINE_STYLE : variation.style} ` +
             `No text, no letters, no numbers, no logos, no watermarks anywhere.`
           );
