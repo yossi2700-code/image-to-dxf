@@ -155,6 +155,150 @@ const SINGLE_LINE_STYLE =
   "Use the thinnest possible strokes. No fill, no shading, no gradients, no grey tones. " +
   "Style: minimal wire-frame line drawing, every stroke is a single thin line.";
 
+// ─── Image Classification Types ─────────────────────────────────────────────
+export type ImageType =
+  | "landscape"    // outdoor scene, cityscape, harbor, nature, wide view
+  | "portrait"     // human face / close-up person
+  | "object"       // single product, vehicle, animal, everyday item
+  | "mandala"      // mandala, geometric pattern, decorative symmetry
+  | "drawing"      // existing line art, sketch, diagram, blueprint
+  | "unknown";     // fallback
+
+export interface ImageClassification {
+  type: ImageType;
+  subject: string;   // short English description of main subject
+  complexity: "simple" | "medium" | "complex";
+}
+
+/**
+ * Classify the uploaded image using LLM vision.
+ * Returns the image type and a short subject description.
+ * Runs in parallel with image preparation — adds ~2-3s but improves prompt quality.
+ */
+async function classifyImage(imageBase64: string): Promise<ImageClassification> {
+  try {
+    const response = await invokeLLM({
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an image classifier for a laser engraving/CNC vectorization tool. " +
+            "Analyze the image and return JSON only — no extra text. " +
+            "Fields: " +
+            "type (one of: landscape, portrait, object, mandala, drawing), " +
+            "subject (5-10 word English description of main subject), " +
+            "complexity (simple|medium|complex — how many distinct lines/details the image has).",
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "image_url",
+              image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "low" },
+            },
+            { type: "text", text: "Classify this image. Return JSON only." },
+          ],
+        },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "image_classification",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              type: { type: "string", enum: ["landscape", "portrait", "object", "mandala", "drawing"] },
+              subject: { type: "string" },
+              complexity: { type: "string", enum: ["simple", "medium", "complex"] },
+            },
+            required: ["type", "subject", "complexity"],
+            additionalProperties: false,
+          },
+        },
+      },
+    });
+    const content = response?.choices?.[0]?.message?.content ?? "{}";
+    const parsed = JSON.parse(typeof content === "string" ? content : JSON.stringify(content)) as ImageClassification;
+    return parsed;
+  } catch (e) {
+    console.warn("[aiTraceRoute] classifyImage failed, using fallback:", e);
+    return { type: "unknown", subject: "the image", complexity: "medium" };
+  }
+}
+
+/**
+ * Build a type-specific direct-trace prompt based on image classification.
+ * Each type gets tailored instructions for best laser engraving output.
+ */
+function buildClassifiedPrompt(classification: ImageClassification, variationStyle: string): string {
+  const base =
+    `This image will be converted to a vector file for laser engraving or CNC cutting. ` +
+    `Convert it to clean black and white line art by following the shapes visible in this image. ` +
+    `DO NOT redraw from memory or imagination — trace what you actually see. ` +
+    `Pure white (#FFFFFF) background. Pure black (#000000) lines only. ` +
+    `No shading, no grey tones, no gradients, no fills. ` +
+    `Every line must be a single continuous stroke with no breaks, no gaps, no rough edges. ` +
+    `Draw ONLY clean continuous pen strokes — use BOLD THICK strokes, minimum 3px line width. ` +
+    `No text, no letters, no numbers, no logos, no watermarks anywhere. `;
+
+  switch (classification.type) {
+    case "landscape":
+      return (
+        base +
+        `LANDSCAPE/SCENE MODE: This is a scene with many elements. ` +
+        `Draw ONLY the 5-8 most dominant structural elements (horizon line, main buildings, large trees, prominent objects). ` +
+        `COMPLETELY IGNORE: sky details, water ripples, distant background objects, small figures, foliage texture, window details, cables, ropes, masts unless they are the main subject. ` +
+        `Simplify every complex area into 1-3 clean lines. Merge nearby parallel lines into one. ` +
+        `The result should look like a simple architectural sketch — minimal, clean, readable. ` +
+        variationStyle
+      );
+
+    case "portrait":
+      return (
+        base +
+        `PORTRAIT MODE: This is a human face or person. ` +
+        `Draw the face outline, main facial features (eyes, nose, mouth, eyebrows), hair silhouette, and neck/shoulder contour. ` +
+        `Focus on the most expressive lines that define the person's likeness. ` +
+        `IGNORE: skin texture, fine hair strands, background details, clothing patterns. ` +
+        `Keep lines smooth and flowing — portrait-style line art. ` +
+        variationStyle
+      );
+
+    case "mandala":
+      return (
+        base +
+        `MANDALA/PATTERN MODE: This is a decorative pattern or mandala. ` +
+        `Preserve ALL decorative lines, geometric shapes, and symmetrical elements. ` +
+        `Draw every petal, curve, circle, and ornamental detail visible. ` +
+        `Maintain perfect symmetry. Keep all fine decorative lines — they are the main content. ` +
+        `Do NOT simplify or omit any decorative elements. ` +
+        variationStyle
+      );
+
+    case "drawing":
+      return (
+        base +
+        `EXISTING DRAWING MODE: This is already a line drawing, sketch, or diagram. ` +
+        `Follow the existing lines EXACTLY as drawn. Preserve every stroke, curve, and detail. ` +
+        `Clean up any rough edges or pencil texture — make lines smooth and crisp. ` +
+        `Do NOT add or remove any elements — just clean up what is already there. ` +
+        variationStyle
+      );
+
+    case "object":
+    default:
+      return (
+        base +
+        `OBJECT MODE: This is a single subject (${classification.subject}). ` +
+        `Draw the outer silhouette and the most important structural interior lines. ` +
+        `${classification.complexity === "complex" ? "Include 20-30 interior lines for the main structural details." : "Include 10-15 key structural lines."}` +
+        `IGNORE: background, shadows, fine textures, small decorative details. ` +
+        variationStyle
+      );
+  }
+}
+
 function buildFullImagePrompt(sceneDescription: string, variationIndex: number, singleLine = false): string {
   const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
   const styleBlock = singleLine ? SINGLE_LINE_STYLE : variation.style;
@@ -394,41 +538,49 @@ async function runTraceJob(
           .png({ compressionLevel: 6 })
           .toBuffer();
 
+    // Classify the image in parallel with image preparation (adds ~2-3s, improves prompt quality)
+    // Use a 10s timeout so classification never blocks the main pipeline
+    const classificationPromise = Promise.race([
+      classifyImage(imageBase64),
+      new Promise<ImageClassification>((resolve) =>
+        setTimeout(() => resolve({ type: "unknown", subject: "the image", complexity: "medium" }), 10_000)
+      ),
+    ]);
+
     // Initialize partialImages array for streaming results to client as each image completes
     updateJob(jobId, { partialImages: [] });
+
+    // Wait for classification result (it runs in parallel with image prep above)
+    const imageClassification = await classificationPromise;
+    console.log(`[aiTraceRoute] Job ${jobId}: classified as type=${imageClassification.type}, complexity=${imageClassification.complexity}, subject="${imageClassification.subject}"`);
+
+    // Update job step to show what was detected
+    if (imageClassification.type !== "unknown") {
+      const typeLabel: Record<string, string> = {
+        landscape: isHe ? "נוף/סצנה" : "landscape/scene",
+        portrait: isHe ? "פורטרט" : "portrait",
+        object: isHe ? "אובייקט" : "object",
+        mandala: isHe ? "מנדלה/תבנית" : "mandala/pattern",
+        drawing: isHe ? "ציור/שרטוט" : "drawing/sketch",
+      };
+      updateJob(jobId, {
+        step: isHe
+          ? `זוהה: ${typeLabel[imageClassification.type] ?? imageClassification.type} — ממיר לקווים...`
+          : `Detected: ${typeLabel[imageClassification.type] ?? imageClassification.type} — converting to lines...`,
+        stepEn: `Detected: ${imageClassification.type} — converting to lines...`,
+      });
+    }
 
     // Generate only the selected variation (variationIndex: 0=simple, 1=detailed, 2=decorative)
     const generationPromises = [variationIndex].map(async (idx) => {
       const variation = STYLE_VARIATIONS[idx % STYLE_VARIATIONS.length];
 
-      // Build a focused edit prompt: keep the shape, convert to line art
-      // Detect if this is a portrait/face image from the LLM description
-      // IMPORTANT: exclude animals, engravings, and non-human subjects from portrait mode
-      const isAnimal = /\b(cat|dog|bird|fish|horse|lion|tiger|bear|rabbit|fox|wolf|deer|elephant|monkey|snake|turtle|frog|pig|cow|sheep|goat|chicken|duck|owl|eagle|parrot|hamster|mouse|rat|squirrel|animal|pet|kitten|puppy|paw|fur|feather|beak|tail|claw|mane|whisker|feline|canine|feline|bovine|equine|wildlife|zoo)\b/i.test(objectDescription);
-      const isEngraving = /\b(engraving|engraved|gravestone|tombstone|memorial|stone|marble|granite|inscription|carved|carving|plaque|monument|headstone|matzeva|grave)\b/i.test(objectDescription);
-      const isPortrait = !isAnimal && !isEngraving && /\b(face|portrait|person|man|woman|boy|girl|human|selfie|head|hair|eyes|nose|mouth|beard|cheek|forehead|chin|neck|ear)\b/i.test(objectDescription);
-      // Detect if this is a toy, cartoon figure, or character figurine
-      const isToyOrFigurine = /\b(toy|figurine|figure|doll|plush|stuffed|cartoon|character|action figure|miniature|statue|sculpture|puppet|mascot|anime|manga|bluey|lego|funko|pokemon|pikachu|sonic|mario|disney|pixar|robot|alien|monster|creature|animal figure)\b/i.test(objectDescription);
+      // Build prompt based on image classification
       const editPrompt = singleLine
         ? buildLineArtPrompt(objectDescription, idx, true)
         : effectiveLandscapeMode
         ? buildFullImagePrompt(objectDescription, idx)
-        : (
-            // Direct image-to-line-art prompt — no text description, AI follows the image directly
-            `This image will be converted to a vector file for laser engraving or CNC cutting. ` +
-            `Convert it to clean black and white line art by following the main shapes and primary outlines visible in this image. ` +
-            `DO NOT redraw from memory or imagination — trace what you actually see in the image. ` +
-            `Draw ONLY the most important structural lines: outer silhouettes, major shapes, and primary contours. ` +
-            `IGNORE and OMIT: small background details, fine textures, repetitive patterns, distant objects, busy backgrounds, and any element smaller than 5% of the image. ` +
-            `Simplify complex areas — merge nearby lines into single clean strokes. ` +
-            `Draw ONLY clean continuous pen strokes — use BOLD THICK strokes, minimum 3px line width. ` +
-            `Every line must be a single continuous stroke with no breaks, no gaps, no rough edges. ` +
-            `Lines must be thick and bold enough to be clearly visible — thin hairlines are NOT acceptable. ` +
-            `Pure white (#FFFFFF) background. Pure black (#000000) lines only. No shading, no grey tones, no gradients, no fills. ` +
-            `The lines must be smooth, flowing, connected, and THICK — suitable for a laser to follow as a single path. ` +
-            `${singleLine ? SINGLE_LINE_STYLE : variation.style} ` +
-            `No text, no letters, no numbers, no logos, no watermarks anywhere.`
-          );
+        : buildClassifiedPrompt(imageClassification, variation.style);
 
       // Use Forge ImageService for high-quality line art generation
       // This produces cleaner results than OpenAI images.edit via proxy
