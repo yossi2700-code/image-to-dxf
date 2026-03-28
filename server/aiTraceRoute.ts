@@ -239,7 +239,7 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
     `Pure white (#FFFFFF) background. Pure black (#000000) lines only. ` +
     `No shading, no grey tones, no gradients, no fills. ` +
     `Every line must be a single continuous stroke with no breaks, no gaps, no rough edges. ` +
-    `Draw ONLY clean continuous pen strokes — use BOLD THICK strokes, minimum 3px line width. ` +
+    `Draw ONLY clean continuous pen strokes — use BOLD THICK strokes, minimum 5px line width. ` +
     `SINGLE CONTOUR RULE — applies to ALL elements: Every shape, letter, and object must have EXACTLY ONE contour line — the outermost boundary only. ` +
     `Do NOT draw both an inner edge and an outer edge. Do NOT create double-stroke or parallel outlines. ONE closed path per shape. ` +
     `For text and letters: draw each letter as a SOLID SHAPE — trace the INNER boundary of the letter strokes themselves, as if the letter is cut out of paper and you are cutting THROUGH the letter, not around it. ONE single closed path per letter that follows the letter's own stroke edges from the inside. Do NOT draw an outline that goes around the outside of the letter leaving a gap. ` +
@@ -315,7 +315,7 @@ function buildFullImagePrompt(sceneDescription: string, variationIndex: number, 
   return (
     `Professional black and white line art of the following scene: ${sceneDescription}. ` +
     "Pure white background (#FFFFFF). " +
-    "Bold thick black outlines, no fill, no shading, no gradients. " +
+    "Bold thick black outlines minimum 5px line width, no fill, no shading, no gradients. " +
     "High contrast: only pure black (#000000) lines on white. " +
     "CRITICAL: Draw ALL elements visible in the image EXACTLY as described — every object, decoration, symbol, and detail in their correct positions and proportions. " +
     "Do NOT substitute or replace any element with a generic version. Draw the SPECIFIC items described. " +
@@ -422,7 +422,7 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number, s
     "=== END CAMERA ANGLE RULE === " +
     "\n=== STYLE === " +
     "Pure white background (#FFFFFF). " +
-    "Bold thick black outlines, no fill, no shading, no gradients, no grey tones. " +
+    "Bold thick black outlines minimum 5px line width, no fill, no shading, no gradients, no grey tones. " +
     "High contrast: only pure black (#000000) lines on white. " +
     `${styleBlock} ` +
     "\n=== FRAMING RULES (NEVER VIOLATE) === " +
