@@ -462,6 +462,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
   const [faceCheckLoading, setFaceCheckLoading] = useState(false);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const CLIENT_TIMEOUT_SEC = 240; // 4 minutes — auto-cancel if server hasn’t responded
   const fileInputRef = useRef<HTMLInputElement>(null);
   // previewRef holds the latest preview URL without causing re-renders when read inside handleTrace
   const previewRef = useRef<string | null>(localStorage.getItem("ai_trace_imagePreview"));
@@ -620,7 +621,25 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       const alreadyElapsed = savedStartMs > 0 ? Math.floor((Date.now() - savedStartMs) / 1000) : 0;
       setElapsedSeconds(alreadyElapsed);
       if (timerRef.current) clearInterval(timerRef.current);
-      timerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
+      timerRef.current = setInterval(() => setElapsedSeconds(s => {
+        const next = s + 1;
+        if (next >= CLIENT_TIMEOUT_SEC) {
+          // Client-side timeout: stop polling and auto-cancel
+          if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
+          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+          const savedJobId = localStorage.getItem('ai_trace_jobId');
+          if (savedJobId) {
+            fetch(`/api/ai-trace/cancel/${savedJobId}`, { method: 'POST', credentials: 'include' }).catch(() => {});
+          }
+          const msg = document.documentElement.lang === 'he'
+            ? 'העיבוד לקח יותר מדי — נסה שוב (הניסיון השני מהיר יותר)'
+            : 'Processing took too long — please try again (2nd attempt is faster)';
+          setErrorMsg(msg);
+          setStatus('error');
+          setJobIdPersisted(null);
+        }
+        return next;
+      }), 1000);
       startPolling(savedId);
     }
     // Handle "Try Again" from history — load source image URL and auto-submit
@@ -810,7 +829,23 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
         setJobIdPersisted(data.jobId);
         setElapsedSeconds(0);
         if (timerRef.current) clearInterval(timerRef.current);
-        timerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
+        const capturedJobId = data.jobId;
+        timerRef.current = setInterval(() => setElapsedSeconds(s => {
+          const next = s + 1;
+          if (next >= CLIENT_TIMEOUT_SEC) {
+            // Client-side timeout: stop polling and auto-cancel
+            if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
+            if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+            fetch(`/api/ai-trace/cancel/${capturedJobId}`, { method: 'POST', credentials: 'include' }).catch(() => {});
+            const msg = document.documentElement.lang === 'he'
+              ? 'העיבוד לקח יותר מדי — נסה שוב (הניסיון השני מהיר יותר)'
+              : 'Processing took too long — please try again (2nd attempt is faster)';
+            setErrorMsg(msg);
+            setStatus('error');
+            setJobIdPersisted(null);
+          }
+          return next;
+        }), 1000);
         startPolling(data.jobId);
         // Request push notification permission so we can notify when done
         if ("Notification" in window && Notification.permission === "default") {

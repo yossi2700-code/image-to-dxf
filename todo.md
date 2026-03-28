@@ -2526,3 +2526,7 @@
 - [x] הוספת manifest ל-index.html
 - [x] יצירת אייקוני PWA (192x192, 512x512)
 - [x] הוספת meta tags למובייל (theme-color, apple-touch-icon)
+
+## Client-side timeout
+
+- [x] הוספת timeout של 4 דקות בצד הלקוח — אם job לא הסתיים, מציג הודעה ומאפשר ביטול
