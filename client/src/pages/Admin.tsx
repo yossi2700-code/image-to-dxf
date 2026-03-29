@@ -235,7 +235,9 @@ function ActivitySection({ recent, recentLoading, timeRange = "day", onTimeRange
   };
 
   const getActionLabel = (actionType: string, feature: string | null) => {
+    if (actionType === "download") return { label: "הורדה", color: "bg-slate-100 text-slate-600" };
     if (actionType === "convert") return { label: "המרה", color: "bg-blue-100 text-blue-700" };
+    if (actionType === "ai_generate" && feature === "ai_trace") return { label: "תמונה לקווים", color: "bg-teal-100 text-teal-700" };
     if (feature === "ai_trace") return { label: "תמונה לקווים", color: "bg-teal-100 text-teal-700" };
     if (feature === "ai_generate") return { label: "AI Create", color: "bg-purple-100 text-purple-700" };
     if (feature === "portrait") return { label: "פורטרט", color: "bg-pink-100 text-pink-700" };
@@ -336,6 +338,10 @@ function ActivitySection({ recent, recentLoading, timeRange = "day", onTimeRange
                     <div className="shrink-0">
                       {ev.imageUrl ? (
                         <img src={ev.imageUrl} alt="" className="w-10 h-10 object-cover rounded-lg border shadow-sm" />
+                      ) : ev.actionType === "download" ? (
+                        <div className="w-10 h-10 rounded-lg border bg-slate-100 flex items-center justify-center">
+                          <svg className="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        </div>
                       ) : (
                         <div className="w-10 h-10 rounded-lg border bg-slate-100 flex items-center justify-center">
                           <Upload className="w-4 h-4 text-slate-400" />
@@ -347,7 +353,7 @@ function ActivitySection({ recent, recentLoading, timeRange = "day", onTimeRange
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-semibold text-slate-800 truncate">{displayName}</span>
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${typeColor}`}>
-                          {ev.actionType === "convert" ? <Upload className="w-3 h-3" /> : <Sparkles className="w-3 h-3" />}
+                          {ev.actionType === "download" ? <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> : ev.actionType === "convert" ? <Upload className="w-3 h-3" /> : <Sparkles className="w-3 h-3" />}
                           {typeLabel}
                         </span>
                       </div>

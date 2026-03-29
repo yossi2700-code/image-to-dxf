@@ -1,0 +1,90 @@
+{
+  "query": "SELECT id, actionType, feature, imageUrl, description, createdAt FROM user_actions WHERE actionType = 'ai_generate' ORDER BY createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT id, actionType, feature, imageUrl, description, createdAt FROM user_actions WHERE actionType = 'ai_generate' ORDER BY createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "5670001",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/x5pSbey77L7KhX0l7Sv0r.png",
+      "description": "the image",
+      "createdAt": "2026-03-29 09:54:17"
+    },
+    {
+      "id": "5640001",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/hzL4i2vKdyDSGhJGOvn2J.png",
+      "description": "the image",
+      "createdAt": "2026-03-29 08:46:17"
+    },
+    {
+      "id": "5580001",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/vUdC0kLNpYlJ-knTOrcrq.png",
+      "description": "the image",
+      "createdAt": "2026-03-29 05:12:28"
+    },
+    {
+      "id": "5550012",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/s8SX0V4YyzIcIJ7F1Rpd2.png",
+      "description": "the image",
+      "createdAt": "2026-03-28 21:48:38"
+    },
+    {
+      "id": "5550011",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/MKXm316bdX5cKCyxtzKOX.png",
+      "description": "the image",
+      "createdAt": "2026-03-28 21:23:43"
+    },
+    {
+      "id": "5550010",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/pS-4UAqQDYIAjQML8Xeqx.png",
+      "description": "the image",
+      "createdAt": "2026-03-28 21:18:38"
+    },
+    {
+      "id": "5550009",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/RGKRRyeNxD522omWFEXXj.png",
+      "description": "the image",
+      "createdAt": "2026-03-28 21:07:27"
+    },
+    {
+      "id": "5550008",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/Od7kKztvrDaRAN4xcTUSf.png",
+      "description": "the image",
+      "createdAt": "2026-03-28 21:04:40"
+    },
+    {
+      "id": "5550007",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/IE7nJ5_YTiXsZbo6FUf0h.png",
+      "description": "the image",
+      "createdAt": "2026-03-28 20:54:51"
+    },
+    {
+      "id": "5550006",
+      "actionType": "ai_generate",
+      "feature": "ai_trace",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/0t7wY93AHwLw0uwq75P_5.png",
+      "description": "the image",
+      "createdAt": "2026-03-28 20:52:40"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tactionType\tfeature\timageUrl\tdescription\tcreatedAt\n5670001\tai_generate\tai_trace\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/x5pSbey77L7KhX0l7Sv0r.png\tthe image\t2026-03-29 09:54:17\n5640001\tai_generate\tai_trace\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/hzL4i2vKdyDSGhJGOvn2J.png\tthe image\t2026-03-29 08:46:17\n5580001\tai_generate\tai_trace\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/vUdC0kLNpYlJ-knTOrcrq.png\tthe image\t2026-03-29 05:12:28\n5550012\tai_generate\tai_trace\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/s8SX0V4YyzIcIJ7F1Rpd2.png\tthe image\t2026-03-28 21:48:38\n5550011\tai_generate\tai_trace\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/MKXm316bdX5cKCyxtzKOX.png\tthe image\t2026-03-28 21:23:43\n5550010\tai_generate\tai_trace\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/pS-4UAqQDYIAjQML8Xeqx.png\tthe image\t2026-03-28 21:18:38\n5550009\tai_generate\tai_trace\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/RGKRRyeNxD522omWFEXXj.png\tthe image\t2026-03-28 21:07:27\n5550008\tai_generate\tai_trace\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/Od7kKztvrDaRAN4xcTUSf.png\tthe image\t2026-03-28 21:04:40\n5550007\tai_generate\tai_trace\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/IE7nJ5_YTiXsZbo6FUf0h.png\tthe image\t2026-03-28 20:54:51\n5550006\tai_generate\tai_trace\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/ai-trace-generated/0t7wY93AHwLw0uwq75P_5.png\tthe image\t2026-03-28 20:52:40\n",
+  "stderr": "",
+  "execution_time_ms": 2165
+}

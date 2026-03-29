@@ -1,0 +1,9 @@
+{
+  "query": "SELECT ua.id, ua.actionType, ua.feature, ua.imageUrl, ua.description, ua.createdAt, au.name FROM user_actions ua LEFT JOIN app_users au ON ua.appUserId = au.id WHERE ua.createdAt >= '2026-03-29 08:10:00' AND ua.createdAt <= '2026-03-29 08:20:00' ORDER BY ua.createdAt DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2iPU4hSPcEycCn3.57e4ec5aca90 --database hnDFdLkzVGYJYdws9hbnLw --execute SELECT ua.id, ua.actionType, ua.feature, ua.imageUrl, ua.description, ua.createdAt, au.name FROM user_actions ua LEFT JOIN app_users au ON ua.appUserId = au.id WHERE ua.createdAt >= '2026-03-29 08:10:00' AND ua.createdAt <= '2026-03-29 08:20:00' ORDER BY ua.createdAt DESC LIMIT 20;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2242
+}
