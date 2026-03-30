@@ -291,10 +291,16 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
     case "drawing":
       return (
         base +
-        `EXISTING DRAWING MODE: This is already a line drawing, sketch, or diagram. ` +
-        `Follow the existing lines EXACTLY as drawn. Preserve every stroke, curve, and detail. ` +
-        `Clean up any rough edges or pencil texture — make lines smooth and crisp. ` +
-        `Do NOT add or remove any elements — just clean up what is already there. ` +
+        `EXISTING DRAWING / BLACK & WHITE SILHOUETTE MODE: ` +
+        `CRITICAL — You are a TRACING TOOL, NOT a creative artist. ` +
+        `Your ONLY job is to output exactly what you see — nothing more, nothing less. ` +
+        `TRACE THE EXACT OUTLINE of every shape visible in the image. ` +
+        `If the image shows a branch → draw ONLY that branch with EXACTLY the same number of sub-branches, curves, and proportions as in the original. ` +
+        `If the image shows leaves → draw ONLY the leaves that are ACTUALLY VISIBLE in the image — do NOT add extra leaves, do NOT remove existing ones. ` +
+        `FORBIDDEN ACTIONS: adding any element not in the original, removing any element that IS in the original, changing proportions, beautifying, stylizing, simplifying, or interpreting. ` +
+        `ALLOWED ACTIONS: smoothing rough pixel edges, converting filled black areas to clean outlines, making lines crisp and continuous. ` +
+        `For black silhouettes (solid black shapes): trace the OUTER CONTOUR of each black shape as a single closed outline. ` +
+        `The result must be a 1:1 faithful outline trace — if someone overlays the result on the original, every shape must match perfectly. ` +
         variationStyle
       );
 
