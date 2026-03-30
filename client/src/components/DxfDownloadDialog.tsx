@@ -427,7 +427,7 @@ export function DxfDownloadDialog({
           <div>
             <label className="text-sm font-semibold block mb-2 flex items-center gap-1.5">
               <Settings2 className="w-4 h-4" />
-              {isRtl ? "בחר פורמט קובץ" : "Choose file format"}
+              {t("chooseFileFormat")}
             </label>
             <div className="flex gap-2">
               {/* DXF standard */}

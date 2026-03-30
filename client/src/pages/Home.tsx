@@ -1322,6 +1322,7 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
   const [downloadImg, setDownloadImg] = useState<AiImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   const [showVector, setShowVector] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState<Record<number, boolean>>({});
   const [landscapeMode, setLandscapeMode] = useState(false);
   const [genMinGapMm, setGenMinGapMm] = useState<string>("1.5"); // default 1.5mm min gap (recommended for CNC V-bit)
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("ai_generate_jobId"));
@@ -1765,13 +1766,23 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
                 >
                 <div
                   className="flex items-center justify-center p-3 relative overflow-hidden bg-gray-50"
-                  style={{ minHeight: 220 }}
+                  style={{ minHeight: imgLoaded[idx] ? 'auto' : 220 }}
                 >
+                  {!imgLoaded[idx] && (
+                    <div className="absolute inset-0 rounded-lg overflow-hidden">
+                      <div className="w-full h-full animate-pulse" style={{ background: 'linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%)', backgroundSize: '200% 100%' }} />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                        <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
+                        <div className="w-24 h-2 rounded bg-gray-200 animate-pulse" />
+                      </div>
+                    </div>
+                  )}
                   <img
                     src={img.imageUrl}
                     alt={`${t("design")} ${idx + 1}`}
-                    className="w-full h-auto object-contain rounded-lg"
-                    style={{ maxHeight: 280 }}
+                    className="w-full h-auto object-contain rounded-lg transition-opacity duration-500"
+                    style={{ maxHeight: 280, opacity: imgLoaded[idx] ? 1 : 0 }}
+                    onLoad={() => setImgLoaded(prev => ({ ...prev, [idx]: true }))}
                   />
                   <button
                     type="button"
