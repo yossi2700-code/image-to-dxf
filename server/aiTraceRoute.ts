@@ -187,7 +187,13 @@ async function classifyImage(imageBase64: string): Promise<ImageClassification> 
             "Fields: " +
             "type (one of: landscape, portrait, object, mandala, drawing), " +
             "subject (5-10 word English description of main subject), " +
-            "complexity (simple|medium|complex — how many distinct lines/details the image has).",
+            "complexity (simple|medium|complex — how many distinct lines/details the image has). " +
+            "CRITICAL classification rules: " +
+            "Use type='drawing' when the image is ALREADY a line drawing, sketch, illustration, doodle, or line art — even if it depicts a real object (branch, flower, animal, person). KEY INDICATOR: black lines on a white/light background, no photographic texture, no gradients, no shading, no realistic lighting. If the image looks hand-drawn or digitally illustrated rather than photographed, it is type='drawing'. " +
+            "Use type='object' ONLY when the image is a PHOTOGRAPH of a real-world object with photographic detail, texture, shading, or realistic color. " +
+            "Use type='portrait' when the image contains a human face (photo or drawing). " +
+            "Use type='landscape' when the image is a photographic scene/environment. " +
+            "Use type='mandala' when the image is a decorative symmetrical pattern.",
         },
         {
           role: "user",
