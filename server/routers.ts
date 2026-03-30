@@ -2189,6 +2189,55 @@ export const appRouter = router({
           throw new Error(msg);
         }
       }),
+
+    /** Pricing page visits — who visited /pricing, when, and how long they stayed */
+    pricingVisits: adminProcedure
+      .input(z.object({ days: z.number().int().min(1).max(365).default(30) }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return [];
+        const rangeStart = new Date(Date.now() - input.days * 24 * 60 * 60 * 1000);
+        const rows = await db
+          .select({
+            id: visitorEvents.id,
+            sessionId: visitorEvents.sessionId,
+            appUserId: visitorEvents.appUserId,
+            country: visitorEvents.country,
+            device: visitorEvents.device,
+            browser: visitorEvents.browser,
+            referrer: visitorEvents.referrer,
+            utmSource: visitorEvents.utmSource,
+            timeOnPageSec: visitorEvents.timeOnPageSec,
+            bounced: visitorEvents.bounced,
+            createdAt: visitorEvents.createdAt,
+            userName: appUsers.name,
+            userEmail: appUsers.email,
+          })
+          .from(visitorEvents)
+          .leftJoin(appUsers, eq(visitorEvents.appUserId, appUsers.id))
+          .where(
+            sql`${visitorEvents.page} = '/pricing'
+              AND ${visitorEvents.eventType} = 'pageview'
+              AND ${visitorEvents.createdAt} >= ${rangeStart}`
+          )
+          .orderBy(desc(visitorEvents.createdAt))
+          .limit(500);
+        return rows.map(r => ({
+          id: r.id,
+          sessionId: r.sessionId,
+          appUserId: r.appUserId ?? null,
+          userName: r.userName ?? null,
+          userEmail: r.userEmail ?? null,
+          country: r.country ? (r.country.length === 2 ? getHebrewCountryDisplay(r.country) : r.country) : null,
+          device: r.device ?? null,
+          browser: r.browser ?? null,
+          referrer: r.referrer ?? null,
+          utmSource: r.utmSource ?? null,
+          timeOnPageSec: r.timeOnPageSec ?? null,
+          bounced: r.bounced ?? 0,
+          createdAt: r.createdAt.toISOString(),
+        }));
+      }),
   }),
 
   // ── Issue Reports ─────────────────────────────────────────────────────────────
