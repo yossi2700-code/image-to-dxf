@@ -207,6 +207,7 @@ interface ResultCardProps {
 function ResultCard({ image, objectDescription, isRtl, onDownload, onZoom, onRefined, originalPreview }: ResultCardProps) {
   const [showVector, setShowVector] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
+  const { t } = useLanguage();
 
   return (
     <div
@@ -325,7 +326,7 @@ function ResultCard({ image, objectDescription, isRtl, onDownload, onZoom, onRef
         {/* Dimensions */}
         {(image.realWidth || image.realHeight) && (
           <div className="grid grid-cols-2 gap-2 mb-3 text-center">
-            {[{v: image.realWidth ? (image.realWidth / 3.7795).toFixed(0) + ' mm' : '—', l: isRtl ? 'רוחב' : 'Width'}, {v: image.realHeight ? (image.realHeight / 3.7795).toFixed(0) + ' mm' : '—', l: isRtl ? 'גובה' : 'Height'}].map(({v, l}, i) => (
+            {[{v: image.realWidth ? (image.realWidth / 3.7795).toFixed(0) + ' mm' : '—', l: t('widthLabel')}, {v: image.realHeight ? (image.realHeight / 3.7795).toFixed(0) + ' mm' : '—', l: t('heightLabel')}].map(({v, l}, i) => (
               <div key={i} className="rounded-lg p-1.5 bg-gray-50 border border-gray-100">
                 <p className="text-xs font-semibold" style={{color: '#a5b4fc'}}>{v}</p>
                 <p className="text-xs text-gray-400">{l}</p>

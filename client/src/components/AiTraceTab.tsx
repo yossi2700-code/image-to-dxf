@@ -129,7 +129,7 @@ function ImageCard({ image, index, isRtl, onDownload, onZoom, processingTime }: 
         )}
 
         <div className="grid grid-cols-2 gap-2 mb-3 text-center">
-          {[{v: image.realWidth ? (image.realWidth / 3.7795).toFixed(0) + ' mm' : '—', l: isRtl ? 'רוחב' : 'Width'}, {v: image.realHeight ? (image.realHeight / 3.7795).toFixed(0) + ' mm' : '—', l: isRtl ? 'גובה' : 'Height'}].map(({v, l}, i) => (
+          {[{v: image.realWidth ? (image.realWidth / 3.7795).toFixed(0) + ' mm' : '—', l: t('widthLabel')}, {v: image.realHeight ? (image.realHeight / 3.7795).toFixed(0) + ' mm' : '—', l: t('heightLabel')}].map(({v, l}, i) => (
             <div key={i} className="rounded-lg p-1.5 bg-gray-50 border border-gray-100">
               <p className="text-xs font-semibold text-indigo-600">{v}</p>
               <p className="text-xs text-gray-400">{l}</p>

@@ -84,6 +84,7 @@ interface AiImage {
 
 // ─── Image Zoom Modal ────────────────────────────────────────────────────────
 function ImageZoomModal({ src, alt, onClose }: { src: string; alt: string; onClose: () => void }) {
+  const { t } = useLanguage();
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -174,7 +175,7 @@ function ImageZoomModal({ src, alt, onClose }: { src: string; alt: string; onClo
           }}
         />
       </div>
-      <p className="text-center text-xs text-white/40 py-2 shrink-0">גרור להזזה • גלגלת/פינצ׳ לזום • לחץ מחוץ לתמונה לסגירה</p>
+      <p className="text-center text-xs text-white/40 py-2 shrink-0">{t('dragToPan')}</p>
     </div>
   );
 }

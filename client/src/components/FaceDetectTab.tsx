@@ -71,6 +71,7 @@ interface PortraitCardProps {
 }
 function PortraitCard({ image, index, isRtl, numFaces, onDownload, onZoom }: PortraitCardProps) {
   const [showVector, setShowVector] = useState(false);
+  const { t } = useLanguage();
 
   const isMultiFace = (numFaces ?? 1) >= 2;
   // For multi-face: use server-provided styleLabel (e.g. "פשוט (אדם 1)")
@@ -149,8 +150,8 @@ function PortraitCard({ image, index, isRtl, numFaces, onDownload, onZoom }: Por
       {/* Dimensions */}
       <div className="grid grid-cols-2 gap-2 text-center">
         {[
-          { v: image.realWidth ? (image.realWidth / 3.7795).toFixed(0) + ' mm' : '—', l: isRtl ? 'רוחב' : 'Width' },
-          { v: image.realHeight ? (image.realHeight / 3.7795).toFixed(0) + ' mm' : '—', l: isRtl ? 'גובה' : 'Height' },
+          { v: image.realWidth ? (image.realWidth / 3.7795).toFixed(0) + ' mm' : '—', l: t('widthLabel') },
+          { v: image.realHeight ? (image.realHeight / 3.7795).toFixed(0) + ' mm' : '—', l: t('heightLabel') },
         ].map(({ v, l }, i) => (
           <div key={i} className="rounded-lg p-1.5 bg-gray-50 border border-gray-100">
             <p className="text-xs font-semibold text-purple-600">{v}</p>
