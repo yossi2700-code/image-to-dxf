@@ -172,8 +172,8 @@ function SvgMiniPreview({ svg }: { svg: string }) {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatMm(mm: number) {
-  return `${mm.toFixed(0)} מ"מ`;
+function formatMm(mm: number, isRtl?: boolean) {
+  return `${mm.toFixed(0)} ${isRtl ? 'מ"מ' : 'mm'}`;
 }
 
 // ─── Format Card ──────────────────────────────────────────────────────────────
@@ -371,7 +371,7 @@ export function DxfDownloadDialog({
           <div className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-2 text-sm">
             <span className="text-muted-foreground">{segmentCount.toLocaleString()} {t("linesCount")}</span>
             <span className="font-semibold text-primary">
-              {formatMm(outputWidthMm)} × {formatMm(outputHeightMm)}
+              {formatMm(outputWidthMm, isRtl)} × {formatMm(outputHeightMm, isRtl)}
             </span>
           </div>
 
@@ -399,7 +399,7 @@ export function DxfDownloadDialog({
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-primary tabular-nums">{scalePercent}%</span>
                 <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                  {formatMm(outputWidthMm)} × {formatMm(outputHeightMm)}
+                  {formatMm(outputWidthMm, isRtl)} × {formatMm(outputHeightMm, isRtl)}
                 </span>
               </div>
             </div>
@@ -412,14 +412,14 @@ export function DxfDownloadDialog({
               className="mb-2"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>10% ({formatMm(realWidthMm * 0.1)})</span>
+              <span>10% ({formatMm(realWidthMm * 0.1, isRtl)})</span>
               <button
                 className="text-primary font-semibold underline underline-offset-2 cursor-pointer"
                 onClick={() => setScalePercent(100)}
               >
                 {t("realSize100")}
               </button>
-              <span>100% ({formatMm(realWidthMm)})</span>
+              <span>100% ({formatMm(realWidthMm, isRtl)})</span>
             </div>
           </div>
 
@@ -457,7 +457,7 @@ export function DxfDownloadDialog({
                   onClick={() => setSelectedFormat("pdf")}
                   icon={<FileText className={`w-4 h-4 ${selectedFormat === "pdf" ? "text-blue-700" : "text-muted-foreground"}`} />}
                   title="PDF"
-                  description={isRtl ? "הדפסה, שיתוף" : "Print, share"}
+                  description={t("pdfPrintShare")}
                   color="bg-blue-50"
                   borderColor="border-blue-500"
                 />

@@ -19,6 +19,7 @@ import { useState } from "react";
 import { Download, FileText, Eye, Loader2, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { saveFileAs } from "@/lib/saveFileAs";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export interface ExportButtonsProps {
   svgContent: string;
@@ -190,6 +191,7 @@ export function ExportButtons({
 }: ExportButtonsProps) {
   const [isDxfLoading, setIsDxfLoading] = useState(false);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const { t } = useLanguage();
   const handleDxf = async () => {
     if (isDxfLoading) return;
     setIsDxfLoading(true);
@@ -239,7 +241,7 @@ export function ExportButtons({
           style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: "white", border: "none", boxShadow: '0 2px 8px rgba(5,150,105,0.3)' }}
         >
           <Download className="w-3.5 h-3.5" />
-          {isRtl ? "הורד קובץ" : "Download"}
+          {t("downloadFileBtn")}
         </button>
         <button
           onClick={onToggleVector}
@@ -249,7 +251,7 @@ export function ExportButtons({
             : { background: '#f5f3ff', color: '#7c3aed', border: '1px solid #ddd6fe' }}
         >
           <Eye className="w-3.5 h-3.5" />
-          {showVector ? (isRtl ? "תמונה" : "Photo") : (isRtl ? "וקטור" : "Vector")}
+          {showVector ? t("photoBtn") : t("vectorBtn")}
         </button>
       </div>
     );
@@ -267,7 +269,7 @@ export function ExportButtons({
           style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: "white", border: "none", boxShadow: "0 4px 14px rgba(5,150,105,0.35)" }}
         >
           <Download className="w-5 h-5" />
-          <span className="text-xs font-black tracking-wide">{isRtl ? "הורד קובץ" : "Download"}</span>
+          <span className="text-xs font-black tracking-wide">{t("downloadFileBtn")}</span>
         </button>
         {/* Vector toggle */}
         <button
@@ -278,7 +280,7 @@ export function ExportButtons({
             : { background: "#f5f3ff", border: "1.5px solid #c4b5fd", color: "#6366f1" }}
         >
           <Eye className="w-5 h-5" />
-          <span className="text-xs font-black tracking-wide">{showVector ? (isRtl ? "תמונה" : "Photo") : (isRtl ? "וקטור" : "Vector")}</span>
+          <span className="text-xs font-black tracking-wide">{showVector ? t("photoBtn") : t("vectorBtn")}</span>
         </button>
       </div>
     </div>

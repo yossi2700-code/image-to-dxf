@@ -15,6 +15,7 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { ZoomIn, ZoomOut, Maximize2, X, Minimize2 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Props {
   svgContent: string;
@@ -76,6 +77,7 @@ export function SvgPanZoomViewer({
 }: Props) {
   const [fillMode, setFillMode] = useState<'fill' | 'outline'>(initialFillMode);
   const [fullscreen, setFullscreen] = useState(false);
+  const { t } = useLanguage();
 
   // Two separate container refs — one for normal, one for fullscreen
   const normalRef = useRef<HTMLDivElement>(null);
@@ -427,7 +429,7 @@ export function SvgPanZoomViewer({
           }}
         >
           <span style={{ fontSize: 11 }}>{fillMode === 'fill' ? '◼' : '◻'}</span>
-          <span>{fillMode === 'fill' ? (isRtl ? 'מילוי' : 'Fill') : (isRtl ? 'קווים' : 'Outline')}</span>
+          <span>{fillMode === 'fill' ? t('fillBtn') : t('outlineBtn')}</span>
         </button>
       )}
 
