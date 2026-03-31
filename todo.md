@@ -2554,3 +2554,7 @@
 ## תיקון סיווג תמונות - מרץ 2026
 
 - [x] שיפור classifyImage — ציורים פשוטים על רקע לבן יסווגו כ-"drawing" ולא כ-"object"
+
+## תיקון לולאת redirect על dxfai.ai - מרץ 2026
+
+- [x] תיקון: הסרת "dxfai.ai" מרשימת REDIRECT_DOMAINS בשרת — גרם ללולאת redirect אינסופית שמנעה login על חלק מהמחשבים

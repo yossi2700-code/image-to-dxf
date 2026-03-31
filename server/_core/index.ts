@@ -76,7 +76,6 @@ async function startServer() {
     "dxfai.net", "www.dxfai.net",
     "dxfai.org", "www.dxfai.org",
     "www.dxfai.ai",
-    "dxfai.ai",
   ]);
   app.use((req, res, next) => {
     if (process.env.NODE_ENV !== "production") return next();
