@@ -1,10 +1,13 @@
 /**
  * products.ts
  * Defines token packages and regional pricing for PayPal checkout.
+ * IMPORTANT: These are FALLBACK prices only — the server always prefers
+ * prices from the `packagePrices` DB table. Keep in sync with DB.
+ *
+ * Last updated: April 2026
  */
-
 export interface TokenPackage {
-  id: "tokens_50" | "tokens_100";
+  id: string;
   tokens: number;
   /** Price per region/currency */
   prices: Record<string, { amount: string; currency: string; symbol: string }>;
@@ -14,30 +17,43 @@ export interface TokenPackage {
 
 export const TOKEN_PACKAGES: TokenPackage[] = [
   {
-    id: "tokens_50",
-    tokens: 50,
+    id: "tokens_3",
+    tokens: 30,
     prices: {
-      USD: { amount: "29.00", currency: "USD", symbol: "$" },
-      EUR: { amount: "27.00", currency: "EUR", symbol: "€" },
-      GBP: { amount: "23.00", currency: "GBP", symbol: "£" },
-      ILS: { amount: "109.00", currency: "ILS", symbol: "₪" },
-      CAD: { amount: "40.00", currency: "CAD", symbol: "CA$" },
-      AUD: { amount: "45.00", currency: "AUD", symbol: "A$" },
-      DEFAULT: { amount: "29.00", currency: "USD", symbol: "$" },
+      USD: { amount: "7.83", currency: "USD", symbol: "$" },
+      EUR: { amount: "7.25", currency: "EUR", symbol: "€" },
+      GBP: { amount: "6.09", currency: "GBP", symbol: "£" },
+      ILS: { amount: "29", currency: "ILS", symbol: "₪" },
+      CAD: { amount: "10.73", currency: "CAD", symbol: "CA$" },
+      AUD: { amount: "12.18", currency: "AUD", symbol: "A$" },
+      DEFAULT: { amount: "7.83", currency: "USD", symbol: "$" },
     },
   },
   {
-    id: "tokens_100",
+    id: "tokens_1",
     tokens: 100,
     popular: true,
     prices: {
-      USD: { amount: "49.00", currency: "USD", symbol: "$" },
-      EUR: { amount: "45.00", currency: "EUR", symbol: "€" },
-      GBP: { amount: "39.00", currency: "GBP", symbol: "£" },
-      ILS: { amount: "185.00", currency: "ILS", symbol: "₪" },
-      CAD: { amount: "67.00", currency: "CAD", symbol: "CA$" },
-      AUD: { amount: "75.00", currency: "AUD", symbol: "A$" },
-      DEFAULT: { amount: "49.00", currency: "USD", symbol: "$" },
+      USD: { amount: "15.93", currency: "USD", symbol: "$" },
+      EUR: { amount: "14.75", currency: "EUR", symbol: "€" },
+      GBP: { amount: "12.39", currency: "GBP", symbol: "£" },
+      ILS: { amount: "59", currency: "ILS", symbol: "₪" },
+      CAD: { amount: "21.83", currency: "CAD", symbol: "CA$" },
+      AUD: { amount: "24.78", currency: "AUD", symbol: "A$" },
+      DEFAULT: { amount: "15.93", currency: "USD", symbol: "$" },
+    },
+  },
+  {
+    id: "tokens_300",
+    tokens: 300,
+    prices: {
+      USD: { amount: "34.83", currency: "USD", symbol: "$" },
+      EUR: { amount: "32.25", currency: "EUR", symbol: "€" },
+      GBP: { amount: "27.09", currency: "GBP", symbol: "£" },
+      ILS: { amount: "129", currency: "ILS", symbol: "₪" },
+      CAD: { amount: "47.73", currency: "CAD", symbol: "CA$" },
+      AUD: { amount: "54.18", currency: "AUD", symbol: "A$" },
+      DEFAULT: { amount: "34.83", currency: "USD", symbol: "$" },
     },
   },
 ];
