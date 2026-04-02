@@ -335,8 +335,8 @@ async function runFaceDetectJob(
         } catch { /* ignore */ }
       }
       const errorMsg = isHe
-        ? "לא זוהו פנים בתמונה זו. אנא העלה תמונה ברורה עם פנים אחד או יותר."
-        : "No face detected in this image. Please upload a clear photo with at least one visible face.";
+        ? "לא זוהו פנים בתמונה זו. טיפים: ✓ תמונה ישירה של הפנים ✓ תאורה טובה ✓ פנים מלאות (לא חתוכות) ✓ רזולוציה גבוהה"
+        : "No face detected. Tips: ✓ Face looking forward ✓ Good lighting ✓ Full face visible (not cropped) ✓ High resolution photo";
       updateJob(jobId, { status: "error", error: errorMsg });
       return;
     }
@@ -780,5 +780,23 @@ router.post(
     }
   }
 );
+
+// ─── POST /api/face-detect/warmup ──────────────────────────────────────────────
+// Called immediately when user uploads an image — wakes up the LLM service
+// so the first real face detection request is fast (avoids cold start delay)
+router.post("/api/face-detect/warmup", async (_req, res) => {
+  try {
+    // Fire-and-forget a minimal LLM call to wake up the service
+    invokeLLM({
+      messages: [
+        { role: "user", content: "hi" },
+      ],
+    }).catch(() => { /* ignore warm-up errors */ });
+    console.log("[faceDetectRoute] LLM warm-up request sent");
+    return res.json({ ok: true });
+  } catch {
+    return res.json({ ok: false });
+  }
+});
 
 export default router;

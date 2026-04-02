@@ -461,6 +461,8 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
     setProgressPct(5);
     setJobIdPersisted(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+    // Warm up LLM service so face detection is fast when user clicks submit
+    fetch("/api/face-detect/warmup", { method: "POST" }).catch(() => {});
     const canvas = document.createElement("canvas");
     const img = new Image();
     const objectUrl = URL.createObjectURL(file);
