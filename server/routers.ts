@@ -17,6 +17,7 @@ import { COUNTRY_NAMES_HE, countryCodeToFlag, getHebrewCountryDisplay } from "./
 import { getTokenBalance, addTokens, getTokenTransactions, invalidateTokenCostsCache } from "./tokenService";
 import { createPayPalOrder, capturePayPalOrder, createPayPalOrderForCardFields } from "./paypal";
 import { getPackageById, getPriceForCurrency } from "./products";
+import { storagePut } from "./storage";
 import { sendPurchaseConfirmationEmail, sendBulkEmail } from "./emailService";
 import { notifyOwner } from "./_core/notification";
 
@@ -2242,6 +2243,26 @@ export const appRouter = router({
 
   // ── Issue Reports ─────────────────────────────────────────────────────────────
   issueReports: router({
+    /** Upload a source image to S3 for issue reports */
+    uploadSourceImage: publicProcedure
+      .input(z.object({
+        base64: z.string(), // data:image/...;base64,...
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const appUser = getAppUserFromCookie(
+          (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
+        );
+        if (!appUser) throw new TRPCError({ code: "UNAUTHORIZED" });
+        // Strip data URL prefix
+        const matches = input.base64.match(/^data:([a-zA-Z0-9/+]+);base64,(.+)$/);
+        if (!matches) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid base64" });
+        const mimeType = matches[1];
+        const buffer = Buffer.from(matches[2], "base64");
+        const ext = mimeType.includes("png") ? "png" : "jpg";
+        const key = `issue-reports/${appUser.userId}-${Date.now()}.${ext}`;
+        const { url } = await storagePut(key, buffer, mimeType);
+        return { url };
+      }),
     /** Submit a new issue report (authenticated users only) */
     submit: publicProcedure
       .input(z.object({

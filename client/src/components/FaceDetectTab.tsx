@@ -536,7 +536,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
   const canSubmit = !!(imageFile || imagePreview) && status !== "loading";
 
   return (
-    <div className="space-y-4" dir={isRtl ? "rtl" : "ltr"}>
+    <div className="space-y-4 w-full overflow-hidden" dir={isRtl ? "rtl" : "ltr"}>
       {/* Upload area */}
       {(status === "idle" || status === "error") && !result && (
         <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #e2e8f0', background: '#ffffff' }}>
@@ -551,7 +551,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
                   {isRtl ? "פורטרט ל-DXF" : "Portrait to DXF"}
                 </h3>
                 <p className="text-xs text-gray-500">
-                  {isRtl ? "העלה תמונה עם פנים — ה-AI יצייר 3 פורטרטים לינארט" : "Upload a photo with faces — AI draws 3 portrait variations"}
+                  {isRtl ? "העלה תמונה עם פנים — ה-AI יצייר פורטרט לינארט" : "Upload a photo with faces — AI draws a portrait line art"}
                 </p>
               </div>
             </div>

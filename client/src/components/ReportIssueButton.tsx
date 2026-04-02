@@ -2,6 +2,7 @@
  * ReportIssueButton
  * A small button that opens a dialog for users to report a problem with an AI result.
  * After submission, explains that tokens will be refunded after review.
+ * If sourceImageUrl is a base64 data URL, it is uploaded to S3 first.
  */
 import { useState } from "react";
 import { Flag, CheckCircle, X, AlertCircle, Loader2 } from "lucide-react";
@@ -9,7 +10,7 @@ import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ReportIssueButtonProps {
-  /** URL of the original source image */
+  /** URL of the original source image (can be base64 data URL or S3 URL) */
   sourceImageUrl?: string;
   /** URL of the generated result image */
   resultImageUrl?: string;
@@ -32,6 +33,9 @@ export function ReportIssueButton({
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const uploadSourceMutation = trpc.issueReports.uploadSourceImage.useMutation();
 
   const submitMutation = trpc.issueReports.submit.useMutation({
     onSuccess: () => {
@@ -39,10 +43,27 @@ export function ReportIssueButton({
     },
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (description.trim().length < 5) return;
+
+    let finalSourceUrl = sourceImageUrl;
+
+    // If sourceImageUrl is a base64 data URL, upload it to S3 first
+    if (sourceImageUrl && sourceImageUrl.startsWith("data:")) {
+      try {
+        setUploading(true);
+        const result = await uploadSourceMutation.mutateAsync({ base64: sourceImageUrl });
+        finalSourceUrl = result.url;
+      } catch {
+        // If upload fails, proceed without source image
+        finalSourceUrl = undefined;
+      } finally {
+        setUploading(false);
+      }
+    }
+
     submitMutation.mutate({
-      sourceImageUrl,
+      sourceImageUrl: finalSourceUrl,
       resultImageUrl,
       feature,
       userActionId,
@@ -69,6 +90,8 @@ export function ReportIssueButton({
     };
     return map[feature] ?? feature;
   })();
+
+  const isPending = uploading || submitMutation.isPending;
 
   return (
     <>
@@ -251,7 +274,7 @@ export function ReportIssueButton({
                     </button>
                     <button
                       onClick={handleSubmit}
-                      disabled={description.trim().length < 5 || submitMutation.isPending}
+                      disabled={description.trim().length < 5 || isPending}
                       className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                       style={{
                         background: "linear-gradient(135deg, #dc2626, #ef4444)",
@@ -260,12 +283,17 @@ export function ReportIssueButton({
                         cursor: description.trim().length < 5 ? "not-allowed" : "pointer",
                       }}
                     >
-                      {submitMutation.isPending ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                      {isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>{isRtl ? "מעלה..." : "Uploading..."}</span>
+                        </>
                       ) : (
-                        <Flag className="w-4 h-4" />
+                        <>
+                          <Flag className="w-4 h-4" />
+                          <span>{isRtl ? "שלח דיווח" : "Submit Report"}</span>
+                        </>
                       )}
-                      <span>{isRtl ? "שלח דיווח" : "Submit Report"}</span>
                     </button>
                   </div>
                 </div>

@@ -8,33 +8,23 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
   USD: "$", EUR: "€", GBP: "£", ILS: "₪", CAD: "CA$", AUD: "A$",
 };
 
-// Fallback packages (used only if DB is unavailable) — must match DB packagePrices table
 const PACKAGES = [
   {
-    id: "tokens_3",
-    tokens: 30,
+    id: "tokens_50",
+    tokens: 50,
     popular: false,
     prices: {
-      USD: "7.83", EUR: "7.25", GBP: "6.09",
-      ILS: "29", CAD: "10.73", AUD: "12.18",
+      USD: "29.00", EUR: "27.00", GBP: "23.00",
+      ILS: "109.00", CAD: "40.00", AUD: "45.00",
     } as Record<string, string>,
   },
   {
-    id: "tokens_1",
+    id: "tokens_100",
     tokens: 100,
     popular: true,
     prices: {
-      USD: "15.93", EUR: "14.75", GBP: "12.39",
-      ILS: "59", CAD: "21.83", AUD: "24.78",
-    } as Record<string, string>,
-  },
-  {
-    id: "tokens_300",
-    tokens: 300,
-    popular: false,
-    prices: {
-      USD: "34.83", EUR: "32.25", GBP: "27.09",
-      ILS: "129", CAD: "47.73", AUD: "54.18",
+      USD: "49.00", EUR: "45.00", GBP: "39.00",
+      ILS: "185.00", CAD: "67.00", AUD: "75.00",
     } as Record<string, string>,
   },
 ];
@@ -214,7 +204,7 @@ export default function Buy() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
-  const [selectedPackage, setSelectedPackage] = useState("tokens_1");
+  const [selectedPackage, setSelectedPackage] = useState("tokens_100");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -408,7 +398,7 @@ export default function Buy() {
     ? dbPrices.map((p) => ({
         id: p.packageId,
         tokens: p.tokenAmount,
-        popular: p.badge === "recommended" || p.packageId === "tokens_1",
+        popular: p.packageId === "tokens_100",
         label: p.label,
         discountPercent: p.discountPercent ?? 0,
         badge: p.badge ?? null,
