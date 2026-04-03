@@ -836,7 +836,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
                     style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}
                     onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); onSwitchToAiOutline(imageFile); }}
                   >
-                    {isRtl ? "✨ נסה תמונה לקווים (חינם)" : "✨ Try Image to Lines (Free)"}
+                    {isRtl ? "✨ נסה תמונה לקווים" : "✨ Try Image to Lines"}
                   </button>
                 )}
                 <button
