@@ -118,7 +118,7 @@ function PortraitCard({ image, index, isRtl, numFaces, onDownload, onZoom }: Por
           src={image.imageUrl}
           alt={`Portrait ${index + 1}`}
           className="w-full block"
-          style={{ aspectRatio: '1', objectFit: 'contain', background: '#f8fafc' }}
+          style={{ objectFit: 'contain', background: '#f8fafc' }}
         />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
           <ZoomIn className="w-7 h-7 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
