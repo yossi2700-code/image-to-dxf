@@ -501,10 +501,10 @@ export default function Buy() {
           const discountedPrice = discount > 0 ? (parseFloat(pPrice) * (1 - discount / 100)).toFixed(2) : null;
 
           const badgeConfig: Record<string, { text: string; className: string }> = {
-            recommended: { text: "★ מומלץ", className: "bg-gradient-to-r from-blue-500 to-blue-600 text-white" },
-            best_value: { text: "💰 הכי משתלם", className: "bg-gradient-to-r from-green-500 to-emerald-600 text-white" },
-            sale: { text: "🔥 במבצע", className: "bg-gradient-to-r from-red-500 to-pink-500 text-white" },
-            trial: { text: "🌟 התנסות", className: "bg-gradient-to-r from-purple-500 to-violet-600 text-white" },
+            recommended: { text: isRtl ? "★ מומלץ" : "★ Recommended", className: "bg-gradient-to-r from-blue-500 to-blue-600 text-white" },
+            best_value: { text: isRtl ? "💰 הכי משתלם" : "💰 Best Value", className: "bg-gradient-to-r from-green-500 to-emerald-600 text-white" },
+            sale: { text: isRtl ? "🔥 במבצע" : "🔥 Sale", className: "bg-gradient-to-r from-red-500 to-pink-500 text-white" },
+            trial: { text: isRtl ? "🌟 התנסות" : "🌟 Starter", className: "bg-gradient-to-r from-purple-500 to-violet-600 text-white" },
           };
 
           return (
