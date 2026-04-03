@@ -170,21 +170,8 @@ router.post("/api/app-auth/register", async (req, res) => {
       console.warn("[register] Failed to save consent record:", e);
     }
 
-    // Send welcome email (fire-and-forget)
-    try {
-      // Always use the production domain for email links
-      const frontendOrigin = "https://dxfai.ai";
-      const lang = (req.headers["accept-language"] ?? "").startsWith("he") ? "he" : "en";
-      void sendWelcomeEmail({
-        to: email.toLowerCase(),
-        name: name?.trim() || null,
-        tokens: 10,
-        siteUrl: frontendOrigin,
-        language: lang,
-      });
-    } catch (e) {
-      console.warn("[register] Failed to send welcome email:", e);
-    }
+    // Welcome email disabled — will be re-enabled after email logic is redesigned
+    // void sendWelcomeEmail(...);
 
     const token = signToken(userId, email.toLowerCase());
     setSessionCookie(res, token);
@@ -671,19 +658,8 @@ router.post("/api/app-auth/google", async (req, res) => {
         .where(eq(appUsers.id, insertId));
       user = newUser;
 
-      // Send welcome email for new users
-      try {
-        const lang = (req.headers["accept-language"] ?? "").startsWith("he") ? "he" : "en";
-        void sendWelcomeEmail({
-          to: email,
-          name: name ?? null,
-          tokens: 10,
-          siteUrl: "https://dxfai.ai",
-          language: lang,
-        });
-      } catch (e) {
-        console.warn("[google-auth] Failed to send welcome email:", e);
-      }
+      // Welcome email disabled — will be re-enabled after email logic is redesigned
+      // void sendWelcomeEmail(...);
     } else {
       // Update last login and save googleId if not already set
       await db.update(appUsers)
