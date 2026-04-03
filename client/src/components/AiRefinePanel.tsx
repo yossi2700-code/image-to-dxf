@@ -24,9 +24,11 @@ interface AiRefinePanelProps {
   originalPrompt?: string;
   /** Called when refinement is complete */
   onRefined: (result: RefineResult) => void;
+  /** Called when tokens are insufficient */
+  onInsufficientTokens?: () => void;
 }
 
-export function AiRefinePanel({ imageUrl, originalPrompt, onRefined }: AiRefinePanelProps) {
+export function AiRefinePanel({ imageUrl, originalPrompt, onRefined, onInsufficientTokens }: AiRefinePanelProps) {
   const { t, isRtl } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [instruction, setInstruction] = useState("");
@@ -97,11 +99,7 @@ export function AiRefinePanel({ imageUrl, originalPrompt, onRefined }: AiRefineP
         if (data.error === "REGISTRATION_REQUIRED") {
           toast.error(t("registrationRequired"));
         } else if (data.error === "QUOTA_EXCEEDED" || data.error === "INSUFFICIENT_TOKENS") {
-          const msg = isRtl ? (data.message || t("quotaExceeded")) : (data.messageEn || data.message || t("quotaExceeded"));
-          toast.error(msg, {
-            action: { label: isRtl ? "רכוש אסימונים" : "Buy Tokens", onClick: () => { window.location.href = "/tokens"; } },
-            duration: 6000,
-          });
+          if (onInsufficientTokens) { onInsufficientTokens(); return; }
         } else if (data.error === "INVALID_REFINE_INSTRUCTION") {
           const msg = isRtl ? (data.message || t("refineError")) : (data.messageEn || data.message || t("refineError"));
           toast.error(msg, { duration: 6000 });

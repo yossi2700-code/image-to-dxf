@@ -82,7 +82,11 @@ function ImageZoomModal({ src, alt, onClose }: { src: string; alt: string; onClo
   );
 }
 
-export function CncReliefTab() {
+interface CncReliefTabProps {
+  onInsufficientTokens?: () => void;
+}
+
+export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
   const { t, language, isRtl } = useLanguage();
   const [mode, setMode] = useState<Mode>("image");
   const [material, setMaterial] = useState<ReliefMaterial>("wood");
@@ -221,8 +225,8 @@ export function CncReliefTab() {
 
         if (!res.ok) {
           if (data.error === "INSUFFICIENT_TOKENS") {
-            toast.error(t("insufficientTokensMsg"));
             setStatus("idle");
+            if (onInsufficientTokens) onInsufficientTokens();
             return;
           }
           if (data.error === "UNAUTHORIZED") {
@@ -246,8 +250,8 @@ export function CncReliefTab() {
 
         if (!res.ok) {
           if (data.error === "INSUFFICIENT_TOKENS") {
-            toast.error(t("insufficientTokensMsg"));
             setStatus("idle");
+            if (onInsufficientTokens) onInsufficientTokens();
             return;
           }
           if (data.error === "UNAUTHORIZED") {

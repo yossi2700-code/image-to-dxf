@@ -570,9 +570,10 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
           setElapsedSeconds(0);
           if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
           setJobIdPersisted(null);
-          if (!isTokenError) refetchTokens(); // Refresh balance to show refunded tokens
+          if (!isTokenError) refetchTokens();
           if (!isUnclear && !isScene) toast.error(msg);
           if (!isTokenError && !isUnclear && !isScene) reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "ai_trace" });
+          if (isTokenError && onInsufficientTokens) { onInsufficientTokens(); }
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
@@ -818,7 +819,9 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
         if (data.error === "UNAUTHORIZED") { onOpenAuth(); setStatus("idle"); return; }
         if (data.error === "QUOTA_EXCEEDED" || data.error === "INSUFFICIENT_TOKENS") {
           const msg = language === "he" ? (data.message || t("quotaExceeded")) : (data.messageEn || data.message || t("quotaExceeded"));
-          toast.error(msg); setErrorMsg(msg); setStatus("error"); refetchTokens(); return;
+          setErrorMsg(msg); setStatus("error"); refetchTokens();
+          if (onInsufficientTokens) onInsufficientTokens();
+          return;
         }
         throw new Error(isRtl ? (data.message || data.error) : (data.messageEn || data.error || "Error"));
       }
@@ -892,7 +895,9 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
         if (data.error === "UNAUTHORIZED") { onOpenAuth(); setStatus("idle"); return; }
         if (data.error === "QUOTA_EXCEEDED" || data.error === "INSUFFICIENT_TOKENS") {
           const msg = language === "he" ? (data.message || t("quotaExceeded")) : (data.messageEn || data.message || t("quotaExceeded"));
-          toast.error(msg); setErrorMsg(msg); setStatus("error"); refetchTokens(); return;
+          setErrorMsg(msg); setStatus("error"); refetchTokens();
+          if (onInsufficientTokens) onInsufficientTokens();
+          return;
         }
         throw new Error(isRtl ? (data.message || data.error) : (data.messageEn || data.error || "Error"));
       }

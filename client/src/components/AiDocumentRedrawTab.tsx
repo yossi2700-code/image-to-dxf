@@ -465,8 +465,9 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
           setStatus("error");
           setJobIdPersisted(null);
           refetchTokens();
-          toast.error(msg);
+          if (!isTokenError) toast.error(msg);
           if (!isTokenError) reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "ai_document_redraw" });
+          if (isTokenError && onInsufficientTokens) onInsufficientTokens();
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           stopScanAnimation();
@@ -564,13 +565,10 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
         }
         if (data.error === "INSUFFICIENT_TOKENS") {
           const msg = isRtl ? (data.message || "נגמרו האסימונים") : (data.messageEn || "Out of tokens");
-          toast.error(msg, {
-            action: { label: isRtl ? "רכוש אסימונים" : "Buy Tokens", onClick: () => { window.location.href = "/tokens"; } },
-            duration: 6000,
-          });
           setErrorMsg(msg);
           setStatus("error");
           refetchTokens();
+          if (onInsufficientTokens) onInsufficientTokens();
           return;
         }
         throw new Error(isRtl ? (data.message || data.error) : (data.messageEn || data.error || "Error"));

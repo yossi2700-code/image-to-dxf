@@ -1886,6 +1886,7 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
                       return next;
                     });
                   }}
+                  onInsufficientTokens={onInsufficientTokens}
                 />
                 <div className="flex gap-2 mt-2">
                   <button
@@ -3332,7 +3333,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <CncReliefTab />
+            <CncReliefTab onInsufficientTokens={() => setShowTokensBanner(true)} />
           </TabsContent>
         </Tabs>
         </div>{/* end centering wrapper */}
