@@ -170,8 +170,14 @@ router.post("/api/app-auth/register", async (req, res) => {
       console.warn("[register] Failed to save consent record:", e);
     }
 
-    // Welcome email disabled — will be re-enabled after email logic is redesigned
-    // void sendWelcomeEmail(...);
+    // Send welcome email (fire-and-forget)
+    void sendWelcomeEmail({
+      to: email.toLowerCase(),
+      name: name?.trim() || null,
+      tokens: 10,
+      siteUrl: "https://dxfai.ai",
+      language: "he",
+    });
 
     const token = signToken(userId, email.toLowerCase());
     setSessionCookie(res, token);
@@ -658,8 +664,14 @@ router.post("/api/app-auth/google", async (req, res) => {
         .where(eq(appUsers.id, insertId));
       user = newUser;
 
-      // Welcome email disabled — will be re-enabled after email logic is redesigned
-      // void sendWelcomeEmail(...);
+      // Send welcome email (fire-and-forget)
+      void sendWelcomeEmail({
+        to: email,
+        name: name ?? null,
+        tokens: 10,
+        siteUrl: "https://dxfai.ai",
+        language: "en",
+      });
     } else {
       // Update last login and save googleId if not already set
       await db.update(appUsers)
