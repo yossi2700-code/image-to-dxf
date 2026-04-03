@@ -228,7 +228,7 @@ export default function Buy() {
   // קריאת מחירים דינמיים מה-DB
   const { data: dbPrices, isLoading: pricesLoading } = trpc.packages.prices.useQuery();
   // קריאת הגדרות יצירת קשר
-  const { data: contactSettings } = trpc.admin.getContactSettings.useQuery();
+  const { data: contactSettings } = trpc.contact.info.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
   // Manus OAuth auth check (primary)
   const { data: manusUser } = trpc.auth.me.useQuery();
   // tRPC mutations for PayPal

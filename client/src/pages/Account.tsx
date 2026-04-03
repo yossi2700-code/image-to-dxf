@@ -118,6 +118,10 @@ export default function Account() {
   const { data: purchaseHistory } = trpc.purchases.list.useQuery();
   const [purchasesExpanded, setPurchasesExpanded] = useState(false);
 
+  // Contact info (admin-managed)
+  const { data: contactInfo } = trpc.contact.info.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
+  const supportEmail = contactInfo?.supportEmail || "support@dxfai.ai";
+
   // Load user on mount
   useEffect(() => {
     fetch("/api/app-auth/me", { credentials: "include" })
@@ -526,12 +530,12 @@ export default function Account() {
                     : "Having an issue? Send us an email and we'll get back to you shortly."}
                 </p>
                 <a
-                  href="mailto:support@dxfai.ai"
+                  href={`mailto:${supportEmail}`}
                   className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
                   style={{ background: "linear-gradient(135deg, #374151, #6b7280)", boxShadow: "0 2px 8px rgba(55,65,81,0.25)", display: "inline-flex" }}
                 >
                   <Mail className="w-4 h-4" />
-                  support@dxfai.ai
+                  {supportEmail}
                 </a>
                 <p className="text-xs text-gray-400">
                   {isRtl ? "זמן מענה ממוצע: עד 24 שעות" : "Average response time: up to 24 hours"}
