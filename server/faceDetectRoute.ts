@@ -373,13 +373,13 @@ async function runFaceDetectJob(
     };
 
     // Helper: generate portrait from a cropped face buffer
-    const generatePortraitFromCrop = async (cropBuffer: Buffer, faceLabel: string): Promise<PortraitResult> => {
+    const generatePortraitFromCrop = async (cropBuffer: Buffer, faceLabel: string, customPrompt?: string): Promise<PortraitResult> => {
       const { toFile } = await import("openai");
       const editFile = await toFile(cropBuffer, "face.png", { type: "image/png" });
       const response = await openai.images.edit({
         model: "gpt-image-1",
         image: editFile,
-        prompt: PORTRAIT_STYLE_PROMPTS[style],
+        prompt: customPrompt ?? PORTRAIT_STYLE_PROMPTS[style],
         n: 1,
         size: "1024x1024",  // 512x512 not supported with quality param
         quality: "medium",
@@ -414,45 +414,51 @@ async function runFaceDetectJob(
       };
     };
 
-    // ── Step C: Crop each face & generate portraits in parallel ───────────────
+    // ── Step C: Generate portrait(s) ─────────────────────────────────────────
     heartbeatInterval = setInterval(() => heartbeatJob(jobId), 30_000);
 
     const isMultiFace = faceCount >= 2;
 
     if (isMultiFace) {
       updateJob(jobId, {
-        step: isHe ? `זוהו ${faceCount} פנים — מצייר פורטרט לכל אחד...` : `Detected ${faceCount} faces — drawing portrait for each...`,
-        stepEn: `Detected ${faceCount} faces — drawing portrait for each...`,
+        step: isHe ? `זוהו ${faceCount} פנים — מצייר פורטרט...` : `Detected ${faceCount} faces — drawing portrait...`,
+        stepEn: `Detected ${faceCount} faces — drawing portrait...`,
       });
     }
 
-    // Sort faces left-to-right by x_min so ordering is consistent
-    const sortedFaces = [...detectedFaces].sort((a, b) => a.x_min - b.x_min);
+    let portraitResults: PortraitResult[];
+    let suggestions: string[];
 
-    // Crop and generate portrait for each face in parallel
-    const faceLabels = isMultiFace
-      ? sortedFaces.map((_, i) => isHe ? `אדם ${i + 1}` : `Person ${i + 1}`)
-      : [""];
+    if (isMultiFace) {
+      // For multi-face: send the full image to AI so all faces appear together in one portrait
+      const fullImageBuffer = await sharp(imageBuffer)
+        .resize(1024, 1024, { fit: "inside", withoutEnlargement: true, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .png({ compressionLevel: 1 })
+        .toBuffer();
 
-    // Pre-crop all faces first (fast), then fire all AI calls simultaneously
-    const cropBuffers = await Promise.all(sortedFaces.map(box => cropFace(box)));
+      // Build a multi-face specific prompt
+      const multiFacePrompt = PORTRAIT_STYLE_PROMPTS[style]
+        .replace("Composition: head fills 70-80% of canvas. No clothing, no background.",
+          `Composition: all ${faceCount} faces must be fully visible and fit within the canvas. Show all people. No background.`);
 
-    const [portraitResults, suggestions] = await Promise.all([
-      Promise.all(
-        cropBuffers.map(async (cropBuffer, i) => {
-          if (isMultiFace) {
-            updateJob(jobId, {
-              step: isHe
-                ? `מצייר פורטרט ${i + 1} מתוך ${sortedFaces.length}...`
-                : `Drawing portrait ${i + 1} of ${sortedFaces.length}...`,
-              stepEn: `Drawing portrait ${i + 1} of ${sortedFaces.length}...`,
-            });
-          }
-          return generatePortraitFromCrop(cropBuffer, faceLabels[i] ?? "");
-        })
-      ),
-      generateAiSuggestions(style, lang),
-    ]);
+      const [singleResult, sugg] = await Promise.all([
+        generatePortraitFromCrop(fullImageBuffer, "", multiFacePrompt),
+        generateAiSuggestions(style, lang),
+      ]);
+      // Override the prompt used — patch the result label
+      singleResult.styleLabel = STYLE_LABELS[style].he;
+      singleResult.styleLabelEn = STYLE_LABELS[style].en;
+      portraitResults = [singleResult];
+      suggestions = sugg;
+    } else {
+      // Single face: crop and generate
+      const sortedFaces = [...detectedFaces].sort((a, b) => a.x_min - b.x_min);
+      const cropBuffers = await Promise.all(sortedFaces.map(box => cropFace(box)));
+      [portraitResults, suggestions] = await Promise.all([
+        Promise.all(cropBuffers.map((cropBuffer, i) => generatePortraitFromCrop(cropBuffer, ""))),
+        generateAiSuggestions(style, lang),
+      ]);
+    }
 
     if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = undefined; }
 
