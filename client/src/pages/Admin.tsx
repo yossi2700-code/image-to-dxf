@@ -64,6 +64,7 @@ import {
   ShoppingCart,
   UserCheck,
   Clock3,
+  X,
 } from "lucide-react";
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
@@ -459,6 +460,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [activityTimeRange, setActivityTimeRange] = useState<"day" | "week" | "month" | "all">("day");
   const { data: userActionsData, isLoading: actionsLoading } = trpc.admin.userActions.useQuery({ timeRange: activityTimeRange });
   const [expandedUser, setExpandedUser] = useState<number | null>(null);
+  const [userSearch, setUserSearch] = useState("");
   const [editingLimit, setEditingLimit] = useState<number | null>(null);
   const [limitInput, setLimitInput] = useState("");
   const [addingTokensUser, setAddingTokensUser] = useState<number | null>(null);
@@ -1428,11 +1430,20 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Users className="w-4 h-4 text-primary" />
               משתמשים רשומים
-              {(enhancedUsers ?? registeredUsers) && (
-                <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                  {(enhancedUsers ?? registeredUsers)!.length} משתמשים
-                </span>
-              )}
+              {(enhancedUsers ?? registeredUsers) && (() => {
+                const total = (enhancedUsers ?? registeredUsers)!.length;
+                const filteredCount = userSearch
+                  ? (enhancedUsers ?? registeredUsers)!.filter((u) => {
+                      const q = userSearch.toLowerCase();
+                      return (u.name ?? "").toLowerCase().includes(q) || (u.email ?? "").toLowerCase().includes(q);
+                    }).length
+                  : total;
+                return (
+                  <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                    {userSearch ? `${filteredCount} / ${total}` : total} משתמשים
+                  </span>
+                );
+              })()}
               <button
                 className="mr-auto text-muted-foreground hover:text-primary transition-colors"
                 onClick={() => { refetchUsers(); refetchEnhanced(); }}
@@ -1441,6 +1452,25 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 <RefreshCw className="w-3.5 h-3.5" />
               </button>
             </CardTitle>
+            {/* Search box */}
+            <div className="relative mt-2" dir="rtl">
+              <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
+                placeholder="חיפוש לפי שם או מייל..."
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                className="w-full pr-8 pl-3 py-1.5 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              {userSearch && (
+                <button
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setUserSearch("")}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
             {/* Dot legend */}
             <div className="flex items-center gap-3 flex-wrap mt-1" dir="rtl">
               <span className="text-xs text-muted-foreground font-medium">מקרא:</span>
@@ -1467,7 +1497,22 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               <div className="space-y-2">{[...Array(3)].map((_, i) => <div key={i} className="h-10 bg-muted animate-pulse rounded-lg" />)}</div>
             ) : (enhancedUsers ?? registeredUsers) && (enhancedUsers ?? registeredUsers)!.length > 0 ? (
               <div className="space-y-2">
-                {(enhancedUsers ?? registeredUsers)!.map((u) => {
+                {(() => {
+                  const allUsers = (enhancedUsers ?? registeredUsers)!;
+                  const filtered = userSearch
+                    ? allUsers.filter((u) => {
+                        const q = userSearch.toLowerCase();
+                        return (u.name ?? "").toLowerCase().includes(q) || (u.email ?? "").toLowerCase().includes(q);
+                      })
+                    : allUsers;
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="py-6 text-center text-muted-foreground text-sm">
+                        לא נמצאו משתמשים עבור &ldquo;{userSearch}&rdquo;
+                      </div>
+                    );
+                  }
+                  return filtered.map((u) => {
                   const isExpanded = expandedUser === u.id;
                   const lastAction = u.lastAction;
                   const lastPurchase = (u as { lastPurchase?: { packageId: string; priceAmount: number; currency: string } }).lastPurchase;
@@ -1830,11 +1875,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       })()}
                     </div>
                   );
-                })}
+                  });
+                })()}
               </div>
             ) : (
               <div className="py-8 text-center text-muted-foreground text-sm">
-                אין משתמשים רשומים עדיין.
+                {userSearch ? `לא נמצאו משתמשים עבור "${userSearch}"` : "אין משתמשים רשומים עדיין."}
               </div>
             )}
           </CardContent>
