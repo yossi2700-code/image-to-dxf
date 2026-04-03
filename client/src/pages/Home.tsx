@@ -25,6 +25,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InsufficientTokensBanner } from "@/components/InsufficientTokensBanner";
 import { ReportIssueButton } from "@/components/ReportIssueButton";
 import { convertPdfToImage, isPdf } from "@/lib/pdfToImage";
+import { useTokenCost } from "@/hooks/useTokenCost";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Upload,
@@ -859,6 +860,8 @@ interface UploadTabProps {
 function UploadTab({ onOpenAuth }: UploadTabProps) {
   const { t, isRtl } = useLanguage();
   const { reportBug } = useBugReport();
+  const { getCost } = useTokenCost();
+  const convertCost = getCost("convert");
   const [dragOver, setDragOver] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -1157,7 +1160,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
         <Button size="lg" className="w-full h-11 font-semibold" disabled={!imageFile || status === "loading"} onClick={handleConvert} data-track="convert">
           {status === "loading"
             ? <><Loader2 className="w-4 h-4 ml-2 animate-spin" />{t("processing")}</>
-            : <><Upload className="w-4 h-4 ml-2" />{t("convertToDxf")}</>}
+            : <><Upload className="w-4 h-4 ml-2" />{t("convertToDxf")}{convertCost > 0 && <span style={{ fontSize: '0.72em', opacity: 0.8, marginInlineStart: 6 }}>({convertCost} {isRtl ? 'אסימונים' : 'tokens'})</span>}</>}
         </Button>
       </div>
 
@@ -1291,6 +1294,8 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
   const { t, isRtl, language } = useLanguage();
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
   const { reportBug } = useBugReport();
+  const { getCost } = useTokenCost();
+  const aiGenerateCost = getCost("ai_generate");
   const [prompt, setPrompt] = useState(() => localStorage.getItem("ai_generate_prompt") ?? "");
 
   const setPromptPersisted = useCallback((v: string) => {
@@ -1694,7 +1699,7 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
           >
             {status === "loading"
               ? <><Loader2 className="w-4 h-4 animate-spin" />{t("creating")}</>
-              : <><Wand2 className="w-4 h-4" />{t("create3Designs")}</>}
+              : <><Wand2 className="w-4 h-4" />{t("create3Designs")}{aiGenerateCost > 0 && <span style={{ fontSize: '0.72em', opacity: 0.8, marginInlineStart: 6 }}>({aiGenerateCost} {isRtl ? 'אסימונים' : 'tokens'})</span>}</>}
           </button>
       </div>
 

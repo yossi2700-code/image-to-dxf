@@ -30,6 +30,7 @@ import {
   Cpu,
 } from "lucide-react";
 import { ReportIssueButton } from "@/components/ReportIssueButton";
+import { useTokenCost } from "@/hooks/useTokenCost";
 
 type ReliefMaterial = "wood" | "aluminum" | "mdf" | "stone" | "brass";
 type Mode = "image" | "prompt";
@@ -108,7 +109,8 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
   const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { data: _tokenData } = trpc.tokens.balance.useQuery(undefined, { refetchInterval: 30000 });
-  const reliefCost = 5; // default cost
+  const { getCost } = useTokenCost();
+  const reliefCost = getCost("cnc_relief");
 
   // Start/stop elapsed timer
   const startTimer = useCallback(() => {

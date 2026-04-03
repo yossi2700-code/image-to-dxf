@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { convertPdfToImage, isPdf } from "@/lib/pdfToImage";
+import { useTokenCost } from "@/hooks/useTokenCost";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface RedrawImage {
@@ -357,6 +358,8 @@ const LS_KEY_DOC_IMG = "doc_redraw_imagePreview";
 
 export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocumentRedrawTabProps) {
   const { isRtl } = useLanguage();
+  const { getCost } = useTokenCost();
+  const redrawCost = getCost("ai_trace");
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
   const { reportBug } = useBugReport();
 
@@ -792,7 +795,7 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
           disabled={!imageFile && !imagePreview}
           onClick={handleRedraw}
         >
-          <><Wand2 className="w-5 h-5" />{isRtl ? "צייר מחדש עם AI" : "Redraw with AI"}</>
+          <><Wand2 className="w-5 h-5" />{isRtl ? "צייר מחדש עם AI" : "Redraw with AI"}{redrawCost > 0 && <span style={{ fontSize: '0.72em', opacity: 0.8, marginInlineStart: 6 }}>({redrawCost} {isRtl ? 'אסימונים' : 'tokens'})</span>}</>
         </button>
       </div>
 

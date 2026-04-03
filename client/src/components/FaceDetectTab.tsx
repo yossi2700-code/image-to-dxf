@@ -29,6 +29,7 @@ import {
 import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { ReportIssueButton } from "@/components/ReportIssueButton";
 import { convertPdfToImage, isPdf } from "@/lib/pdfToImage";
+import { useTokenCost } from "@/hooks/useTokenCost";
 
 interface GeneratedImage {
   imageUrl: string;
@@ -252,6 +253,8 @@ const STYLE_OPTIONS: { value: PortraitStyle; labelHe: string; labelEn: string; d
 export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDataUrl, onSwitchToAiOutline }: FaceDetectTabProps) {
   const { language } = useLanguage();
   const isRtl = language === "he";
+  const { getCost } = useTokenCost();
+  const faceDetectCost = getCost("face_detect");
   const { reportBug } = useBugReport();
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -750,7 +753,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
               data-face-submit
             >
               <Scan className="w-4 h-4" />
-              {isRtl ? "צור פורטרט DXF (4 אסימונים)" : "Create Portrait DXF (4 tokens)"}
+              {isRtl ? `צור פורטרט DXF (${faceDetectCost} אסימונים)` : `Create Portrait DXF (${faceDetectCost} tokens)`}
             </button>
           </div>
         </div>

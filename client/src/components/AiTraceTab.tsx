@@ -32,6 +32,7 @@ import {
 import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { ReportIssueButton } from "@/components/ReportIssueButton";
 import { convertPdfToImage, isPdf } from "@/lib/pdfToImage";
+import { useTokenCost } from "@/hooks/useTokenCost";
 
 interface GeneratedImage {
   imageUrl: string;
@@ -405,6 +406,8 @@ interface AiTraceTabProps { onOpenAuth: () => void; onInsufficientTokens?: () =>
 
 export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrait, initialImageFile, autoStart }: AiTraceTabProps) {
   const { t, isRtl, language } = useLanguage();
+  const { getCost } = useTokenCost();
+  const aiTraceCost = getCost("ai_trace");
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
   const { reportBug } = useBugReport();
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -1576,7 +1579,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                 {status === "loading" ? (
                   <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />{t("aiAnalyzing")}</>
                 ) : (
-                  <><Wand2 className="w-4 h-4" />{t("createAiOutline")}</>
+                  <><Wand2 className="w-4 h-4" />{t("createAiOutline")}{aiTraceCost > 0 && <span style={{ fontSize: '0.72em', opacity: 0.8, marginInlineStart: 6 }}>({aiTraceCost} {isRtl ? 'אסימונים' : 'tokens'})</span>}</>
                 )}
               </button>
               {tryAgainUrl && status !== "loading" && (

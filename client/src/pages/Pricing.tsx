@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
 import {
   Check, X, Sparkles, Zap, Star, ArrowLeft, ArrowRight,
   ShoppingCart, Gift, Users, TrendingUp, Shield, Clock,
-  ChevronDown, ChevronUp, Layers
+  ChevronDown, ChevronUp, Layers, Coins, ImageIcon, Scan, User, Wand2, FileCode2
 } from "lucide-react";
 
 // ─── Currency: ILS only ───────────────────────────────────────────────────────
@@ -177,6 +177,7 @@ export default function Pricing() {
   const [statsVisible, setStatsVisible] = useState(false);
 
   const { data: dbPrices } = trpc.packages.prices.useQuery();
+  const { data: tokenCosts } = trpc.tokenCosts.list.useQuery();
 
   const packages = dbPrices && dbPrices.length > 0
     ? dbPrices.map((p) => ({
@@ -584,6 +585,107 @@ export default function Pricing() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── Token Cost Table ── */}
+      <section style={{ maxWidth: 860, margin: "0 auto 72px", padding: "0 20px" }}>
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <h2 style={{ fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 900, color: "#111827", margin: "0 0 12px", letterSpacing: "-0.02em" }}>
+            {isRtl ? "כמה עולה כל פעולה?" : "How many tokens per action?"}
+          </h2>
+          <p style={{ fontSize: 16, color: "#6b7280", margin: 0 }}>
+            {isRtl ? "מחיר האסימונים מנוהל ועשוי להשתנות" : "Token costs are admin-managed and may change"}
+          </p>
+        </div>
+        <div style={{ background: "#fff", borderRadius: 20, overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
+          {/* Table header */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", background: "linear-gradient(135deg, #0f766e, #0d9488)", padding: "16px 24px" }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.8)" }}>{isRtl ? "פעולה" : "Action"}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", textAlign: "center", minWidth: 100 }}>{isRtl ? "עלות" : "Cost"}</div>
+          </div>
+          {/* Table rows */}
+          {tokenCosts && tokenCosts.length > 0 ? (
+            [...tokenCosts].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)).map((item, i) => {
+              const label = isRtl ? (item.labelHe || item.label || item.action) : (item.labelEn || item.label || item.action);
+              const description = isRtl ? item.descriptionHe : item.descriptionEn;
+              const iconMap: Record<string, React.ReactNode> = {
+                convert: <FileCode2 size={18} color="#0d9488" />,
+                ai_generate: <Zap size={18} color="#8b5cf6" />,
+                ai_trace: <Scan size={18} color="#3b82f6" />,
+                face_detect: <User size={18} color="#ec4899" />,
+                ai_refine: <Wand2 size={18} color="#f59e0b" />,
+              };
+              const icon = iconMap[item.action] ?? <Coins size={18} color="#6b7280" />;
+              return (
+                <div
+                  key={item.action}
+                  style={{
+                    display: "grid", gridTemplateColumns: "1fr auto",
+                    padding: "16px 24px",
+                    background: i % 2 === 0 ? "#fff" : "#f9fafb",
+                    borderBottom: i < tokenCosts.length - 1 ? "1px solid #f3f4f6" : "none",
+                    alignItems: "center",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      {icon}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{label}</div>
+                      {description && <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>{description}</div>}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: "center", minWidth: 100 }}>
+                    {item.cost === 0 ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#d1fae5", color: "#065f46", borderRadius: 100, padding: "4px 12px", fontSize: 13, fontWeight: 700, border: "1px solid #a7f3d0" }}>
+                        {isRtl ? "חינם" : "Free"}
+                      </span>
+                    ) : (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#fef3c7", color: "#92400e", borderRadius: 100, padding: "4px 14px", fontSize: 14, fontWeight: 800, border: "1px solid #fde68a" }}>
+                        <Coins size={14} />
+                        {item.cost}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            // Fallback static table if DB not loaded
+            [
+              { action: "convert", labelHe: "המרת תמונה ל-DXF", labelEn: "Image to DXF", cost: 5, icon: <FileCode2 size={18} color="#0d9488" /> },
+              { action: "ai_generate", labelHe: "יצירת עיצוב AI", labelEn: "AI Design Create", cost: 5, icon: <Zap size={18} color="#8b5cf6" /> },
+              { action: "ai_trace", labelHe: "AI Trace — ציור מחדש", labelEn: "AI Trace — Redraw", cost: 5, icon: <Scan size={18} color="#3b82f6" /> },
+              { action: "face_detect", labelHe: "פורטרט AI", labelEn: "AI Portrait", cost: 4, icon: <User size={18} color="#ec4899" /> },
+              { action: "ai_refine", labelHe: "שיפור AI", labelEn: "AI Refine", cost: 2, icon: <Wand2 size={18} color="#f59e0b" /> },
+            ].map((item, i) => (
+              <div
+                key={item.action}
+                style={{
+                  display: "grid", gridTemplateColumns: "1fr auto",
+                  padding: "16px 24px",
+                  background: i % 2 === 0 ? "#fff" : "#f9fafb",
+                  borderBottom: i < 4 ? "1px solid #f3f4f6" : "none",
+                  alignItems: "center",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    {item.icon}
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{isRtl ? item.labelHe : item.labelEn}</div>
+                </div>
+                <div style={{ textAlign: "center", minWidth: 100 }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#fef3c7", color: "#92400e", borderRadius: 100, padding: "4px 14px", fontSize: 14, fontWeight: 800, border: "1px solid #fde68a" }}>
+                    <Coins size={14} />
+                    {item.cost}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </section>
 

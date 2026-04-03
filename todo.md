@@ -2580,3 +2580,8 @@
 - [ ] Portrait: show all face portraits side by side (e.g. 3 faces = 3 cards in a row)
 - [x] Portrait: improve AI prompt for better face accuracy (preserve face angle, features, likeness)
 - [x] Portrait: fix error message when tokens run out — show buy-tokens link instead of 'no face detected'
+
+## עדכונים - אפריל 2026
+
+- [ ] Add token cost table to /pricing page (public, no login required)
+- [ ] Show live token cost badge on each feature action button (connected to admin token costs)
