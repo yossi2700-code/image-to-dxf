@@ -36,37 +36,39 @@ export type PortraitStyle = "simple" | "detailed";
 
 const PORTRAIT_STYLE_PROMPTS: Record<PortraitStyle, string> = {
   simple:
-    "TASK: Trace this face photo as clean black-and-white line art. DO NOT invent or imagine any features — only draw what is literally visible in the photo. " +
-    "ABSOLUTE RULE: Every line you draw must correspond to something actually visible in this photo. If you cannot see it clearly, do not draw it. " +
-    "CRITICAL: Draw ONLY the face and head. Do NOT add any objects, accessories, or items that are not clearly part of the face itself. " +
-    "IDENTITY FIDELITY — trace these features EXACTLY as they appear: " +
-    "(1) FACE OUTLINE: trace the exact silhouette of the face, jaw, chin, and forehead as seen in the photo. " +
-    "(2) EYES: trace the actual eye shape, eyelids, and brows exactly as positioned in the photo — do not make them larger or more symmetrical than they are. " +
-    "(3) NOSE: trace the actual nose shape visible in the photo — bridge, tip, nostrils exactly as they are. " +
-    "(4) MOUTH: trace ONLY the lips as they appear — closed or open. Do NOT add any object near or in the mouth unless it is unmistakably and clearly visible in the photo. " +
-    "(5) HAIR: trace the actual hair shape and direction visible in the photo. " +
-    "(6) GLASSES ONLY: if the person is clearly wearing glasses, include them. Do not add any other objects. " +
-    "FORBIDDEN: Do not smooth features, do not make the face more attractive, do not add features not visible, do not add objects that are not clearly on the face. " +
+    "TASK: Convert this face photo into clean black-and-white line art for laser/CNC engraving. " +
+    "FACE ANGLE — CRITICAL: Preserve the EXACT head angle and pose from the photo. If the face is turned, tilted, or at any angle — reproduce that exact angle. Do NOT straighten, front-face, or rotate the portrait. " +
+    "IDENTITY — CRITICAL: Every feature must match this specific person. Do not generalize, beautify, or idealize. " +
+    "ABSOLUTE RULE: Only draw what is literally visible in the photo. Do not invent anything. " +
+    "TRACE EXACTLY: " +
+    "(1) FACE SHAPE: exact jaw line, chin shape, forehead, cheekbones — as seen from this specific angle including any asymmetry. " +
+    "(2) EYES: exact eye shape, spacing between eyes, eyelids, brow shape — their actual size and position, not idealized. " +
+    "(3) NOSE: exact nose shape from this angle — bridge width, tip shape, nostrils as visible. " +
+    "(4) MOUTH: exact lip shape and proportions. Closed or open exactly as in photo. " +
+    "(5) HAIR: exact hairline, hair volume and direction as visible. " +
+    "(6) EARS: include if visible from this angle. " +
+    "(7) GLASSES: include only if clearly worn. " +
+    "FORBIDDEN: Do not front-face a profile. Do not add symmetry that is not there. Do not smooth or idealize. " +
     "Style: clean minimal line art, pure black strokes on white background, no shading, no grey tones. " +
-    "Composition: head and face fills 65-75% of canvas. No clothing, no background. " +
-    "No text, no watermarks.",
+    "Composition: head fills 70-80% of canvas. No clothing, no background. No text, no watermarks.",
 
   detailed:
-    "TASK: Trace this face photo as detailed black-and-white line art. DO NOT invent or imagine any features — only draw what is literally visible in the photo. " +
-    "ABSOLUTE RULE: Every line must correspond to something actually visible in this specific photo. Trace, do not create. " +
-    "CRITICAL: Draw ONLY the face and head. Do NOT add any objects, accessories, or items that are not clearly part of the face itself. " +
-    "MAXIMUM IDENTITY FIDELITY — trace every visible detail: " +
-    "(1) FACE OUTLINE: exact silhouette of the face, jaw, chin, forehead, cheekbones as visible in the photo. " +
-    "(2) EYES: exact shape of eyelids, iris, lashes, brows — trace their actual position and size, not idealized versions. " +
-    "(3) NOSE: trace every visible detail — bridge, tip shape, nostrils, columella — exactly as they appear. " +
-    "(4) MOUTH: trace the actual lips and philtrum exactly as visible. Do NOT add any object near or in the mouth unless it is unmistakably and clearly present in the photo. " +
-    "(5) HAIR: trace individual hair strands and the overall hair shape as visible in the photo. " +
-    "(6) GLASSES ONLY: if the person is clearly wearing glasses, include them with full detail. Do not add any other objects. " +
-    "(7) SKIN TEXTURE: fine lines for visible wrinkles, folds, dimples only where actually visible. " +
-    "FORBIDDEN: Do not smooth features, do not idealize, do not add features not visible, do not add objects that are not clearly on the face. " +
+    "TASK: Convert this face photo into detailed black-and-white line art for laser/CNC engraving. " +
+    "FACE ANGLE — CRITICAL: Preserve the EXACT head angle and pose from the photo. If the face is turned, tilted, or at any angle — reproduce that exact angle faithfully. Do NOT straighten, front-face, or rotate the portrait. " +
+    "IDENTITY — CRITICAL: Every detail must match this specific person. Trace, do not create. " +
+    "ABSOLUTE RULE: Only draw what is literally visible. Do not invent anything. " +
+    "TRACE EVERY VISIBLE DETAIL: " +
+    "(1) FACE SHAPE: exact jaw line, chin, forehead, cheekbones from this specific angle — including any asymmetry. " +
+    "(2) EYES: exact eyelid shape, iris size, lash line, brow shape and arch — their actual position and spacing. " +
+    "(3) NOSE: full nose detail from this angle — bridge, tip, nostrils, columella exactly as visible. " +
+    "(4) MOUTH: exact lip shape, philtrum, cupid's bow as visible. " +
+    "(5) HAIR: individual strands, hairline, volume and direction as visible. " +
+    "(6) EARS: full detail if visible from this angle. " +
+    "(7) GLASSES: full detail only if clearly worn. " +
+    "(8) SKIN TEXTURE: wrinkles, folds, dimples only where actually visible. " +
+    "FORBIDDEN: Do not front-face a profile. Do not add symmetry that is not there. Do not smooth or idealize. " +
     "Style: detailed line art, pure black lines on white, no shading, no grey. " +
-    "Composition: head and face fills 65-75% of canvas. No clothing, no background. " +
-    "No text, no watermarks.",
+    "Composition: head fills 70-80% of canvas. No clothing, no background. No text, no watermarks.",
 };
 
 const STYLE_ORDER: PortraitStyle[] = ["simple", "detailed"];

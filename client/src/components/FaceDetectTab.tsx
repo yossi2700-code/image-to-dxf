@@ -266,6 +266,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
     return null;
   });
   const [errorMsg, setErrorMsg] = useState("");
+  const [errorKind, setErrorKind] = useState<"token" | "general">("general");
   const [downloadTarget, setDownloadTarget] = useState<GeneratedImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   const [lineweightMm, setLineweightMm] = useState<string>("");
@@ -389,6 +390,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
           const isTokenError = data.error === "INSUFFICIENT_TOKENS" || data.error === "QUOTA_EXCEEDED";
           const msg = data.message || data.error || (isRtl ? "שגיאה בעיבוד" : "Processing error");
           setErrorMsg(msg);
+          setErrorKind(isTokenError ? "token" : "general");
           setStatus("error");
           setCurrentStep("");
           setJobIdPersisted(null);
@@ -515,7 +517,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
         if (data.error === "UNAUTHORIZED") { if (onOpenAuth) onOpenAuth(); setStatus("idle"); return; }
         if (data.error === "INSUFFICIENT_TOKENS") {
           const msg = isRtl ? (data.message || "נגמרו האסימונים") : (data.messageEn || data.message || "Out of tokens");
-          toast.error(msg); setErrorMsg(msg); setStatus("error"); refetchTokens(); return;
+          toast.error(msg); setErrorMsg(msg); setErrorKind("token"); setStatus("error"); refetchTokens(); return;
         }
         throw new Error(isRtl ? (data.message || data.error) : (data.messageEn || data.error || "Error"));
       }
@@ -783,70 +785,108 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
-          onClick={() => { setStatus("idle"); setErrorMsg(""); }}
+          onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); }}
         >
           <div
             className="rounded-2xl p-7 flex flex-col items-center gap-4 text-center max-w-sm w-full shadow-2xl"
-            style={{ background: '#fff', border: '2px solid #fca5a5' }}
+            style={{ background: '#fff', border: errorKind === "token" ? '2px solid #fbbf24' : '2px solid #fca5a5' }}
             onClick={e => e.stopPropagation()}
           >
             {/* Icon */}
-            <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: '#fee2e2' }}>
-              <AlertCircle className="w-9 h-9 text-red-500" />
+            <div className="w-16 h-16 rounded-full flex items-center justify-center"
+              style={{ background: errorKind === "token" ? '#fef3c7' : '#fee2e2' }}>
+              {errorKind === "token"
+                ? <span style={{ fontSize: 36 }}>🪙</span>
+                : <AlertCircle className="w-9 h-9 text-red-500" />}
             </div>
             {/* Title */}
-            <p className="text-lg font-bold text-red-600">
-              {isRtl ? "לא זוהו פנים בתמונה" : "No Face Detected"}
+            <p className="text-lg font-bold" style={{ color: errorKind === "token" ? '#d97706' : '#dc2626' }}>
+              {errorKind === "token"
+                ? (isRtl ? "נגמרו האסימונים" : "Out of Tokens")
+                : (isRtl ? "לא זוהו פנים בתמונה" : "No Face Detected")}
             </p>
             {/* Message */}
             <p className="text-sm text-gray-600 leading-relaxed">
-              {errorMsg
-                ? errorMsg
-                    .replace(/לא זויינו/g, "לא זוהו")
-                    .replace(/לא זוהה/g, "לא זוהו")
-                : (isRtl
-                    ? "לא זוהו פנים בתמונה זו. אנא העלה תמונה ברורה עם פנים אחד או יותר."
-                    : "No face detected in this image. Please upload a clear photo with at least one visible face."
+              {errorKind === "token"
+                ? (isRtl ? "נגמרו לך האסימונים. רכוש אסימונים נוספים כדי להמשיך ליצור פורטרטים." : "You've run out of tokens. Purchase more tokens to continue creating portraits.")
+                : (errorMsg
+                    ? errorMsg.replace(/לא זויינו/g, "לא זוהו").replace(/לא זוהה/g, "לא זוהו")
+                    : (isRtl
+                        ? "לא זוהו פנים בתמונה זו. אנא העלה תמונה ברורה עם פנים אחד או יותר."
+                        : "No face detected in this image. Please upload a clear photo with at least one visible face."
+                      )
                   )
               }
             </p>
-            {/* Tips */}
-            <div className="w-full rounded-xl p-3 text-right" style={{ background: '#fef9c3', border: '1px solid #fde68a' }}>
-              <p className="text-xs font-semibold text-yellow-800 mb-1">{isRtl ? "💡 טיפים:" : "💡 Tips:"}</p>
-              <ul className="text-xs text-yellow-700 space-y-0.5" style={{ listStyle: 'disc', paddingInlineStart: '1rem' }}>
-                {isRtl ? (
-                  <>
-                    <li>תמונה ברורה עם פנים גלויים</li>
-                    <li>תאורה טובה, ללא חסימות</li>
-                    <li>פנים צד, חצי פנים — עובד גם כן</li>
-                  </>
-                ) : (
-                  <>
-                    <li>Clear photo with visible face</li>
-                    <li>Good lighting, no obstructions</li>
-                    <li>Side profiles also work</li>
-                  </>
+
+            {errorKind === "token" ? (
+              <>
+                {/* Buy tokens button */}
+                <button
+                  className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all active:scale-95"
+                  style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 4px 14px rgba(245,158,11,0.4)' }}
+                  onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); window.location.href = "/buy"; }}
+                >
+                  {isRtl ? "🛒 רכוש אסימונים" : "🛒 Buy Tokens"}
+                </button>
+                {/* Try free tool */}
+                {onSwitchToAiOutline && (
+                  <button
+                    className="w-full py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95"
+                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}
+                    onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); onSwitchToAiOutline(imageFile); }}
+                  >
+                    {isRtl ? "✨ נסה תמונה לקווים (חינם)" : "✨ Try Image to Lines (Free)"}
+                  </button>
                 )}
-              </ul>
-            </div>
-            {/* Suggest תמונה לקווים */}
-            {onSwitchToAiOutline && (
-              <button
-                className="w-full py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95"
-                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}
-                onClick={() => { setStatus("idle"); setErrorMsg(""); onSwitchToAiOutline(imageFile); }}
-              >
-                {isRtl ? "✨ נסה תמונה לקווים במקום" : "✨ Try Image to Lines Instead"}
-              </button>
+                <button
+                  className="w-full py-2 rounded-xl text-sm text-gray-400 transition-all active:scale-95"
+                  onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); }}
+                >
+                  {isRtl ? "סגור" : "Close"}
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Tips */}
+                <div className="w-full rounded-xl p-3 text-right" style={{ background: '#fef9c3', border: '1px solid #fde68a' }}>
+                  <p className="text-xs font-semibold text-yellow-800 mb-1">{isRtl ? "💡 טיפים:" : "💡 Tips:"}</p>
+                  <ul className="text-xs text-yellow-700 space-y-0.5" style={{ listStyle: 'disc', paddingInlineStart: '1rem' }}>
+                    {isRtl ? (
+                      <>
+                        <li>תמונה ברורה עם פנים גלויים</li>
+                        <li>תאורה טובה, ללא חסימות</li>
+                        <li>פנים צד, חצי פנים — עובד גם כן</li>
+                      </>
+                    ) : (
+                      <>
+                        <li>Clear photo with visible face</li>
+                        <li>Good lighting, no obstructions</li>
+                        <li>Side profiles also work</li>
+                      </>
+                    )}
+                  </ul>
+                </div>
+                {/* Suggest image to lines */}
+                {onSwitchToAiOutline && (
+                  <button
+                    className="w-full py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95"
+                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}
+                    onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); onSwitchToAiOutline(imageFile); }}
+                  >
+                    {isRtl ? "✨ נסה תמונה לקווים במקום" : "✨ Try Image to Lines Instead"}
+                  </button>
+                )}
+                {/* Upload another */}
+                <button
+                  className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all active:scale-95"
+                  style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', boxShadow: '0 4px 14px rgba(124,58,237,0.4)' }}
+                  onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); }}
+                >
+                  {isRtl ? "📷 העלה תמונה אחרת" : "📷 Upload Another Photo"}
+                </button>
+              </>
             )}
-            {/* Button */}
-            <button
-              className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all active:scale-95"
-              style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', boxShadow: '0 4px 14px rgba(124,58,237,0.4)' }}
-              onClick={() => { setStatus("idle"); setErrorMsg(""); }}
-            >
-              {isRtl ? "📷 העלה תמונה אחרת" : "📷 Upload Another Photo"}
-            </button>
           </div>
         </div>
       )}

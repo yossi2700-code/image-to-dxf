@@ -2577,3 +2577,6 @@
 - [ ] שליחת מייל טסט ל-dxfai@dxfai.ai
 - [ ] הפעלה מחדש של שליחת מייל ברוכים הבאים
 - [x] Add search by name/email in admin users list
+- [ ] Portrait: show all face portraits side by side (e.g. 3 faces = 3 cards in a row)
+- [x] Portrait: improve AI prompt for better face accuracy (preserve face angle, features, likeness)
+- [x] Portrait: fix error message when tokens run out — show buy-tokens link instead of 'no face detected'
