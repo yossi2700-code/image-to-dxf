@@ -654,46 +654,7 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* ── FAQ ── */}
-      <section style={{ maxWidth: 700, margin: "0 auto", padding: "72px 20px 60px" }}>
-        <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <h2 style={{ fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 900, color: "#111827", margin: "0 0 12px", letterSpacing: "-0.02em" }}>
-            {isRtl ? "שאלות נפוצות" : "Frequently asked questions"}
-          </h2>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {faq.map((item, i) => (
-            <div
-              key={i}
-              style={{
-                background: "#fff", borderRadius: 14, border: openFaq === i ? "1px solid #c7d2fe" : "1px solid #e5e7eb",
-                overflow: "hidden", boxShadow: openFaq === i ? "0 4px 20px rgba(99,102,241,0.1)" : "0 2px 8px rgba(0,0,0,0.04)",
-                transition: "all 0.2s",
-              }}
-            >
-              <button
-                onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                style={{
-                  width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "18px 22px", background: "none", border: "none", cursor: "pointer",
-                  textAlign: isRtl ? "right" : "left",
-                }}
-              >
-                <span style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>{item.q}</span>
-                {openFaq === i
-                  ? <ChevronUp size={18} color="#6366f1" />
-                  : <ChevronDown size={18} color="#9ca3af" />
-                }
-              </button>
-              {openFaq === i && (
-                <div style={{ padding: "0 22px 18px", fontSize: 14, color: "#6b7280", lineHeight: 1.7 }}>
-                  {item.a}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
+
 
       {/* ── Business Plan Teaser ── */}
       <section style={{ maxWidth: 860, margin: "0 auto 60px", padding: "0 20px" }}>
