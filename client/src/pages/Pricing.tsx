@@ -412,44 +412,7 @@ export default function Pricing() {
 
 
 
-      {/* ── What can you do with one token ── */}
-      <section style={{ maxWidth: 900, margin: "0 auto", padding: "72px 20px 60px" }}>
-        <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <h2 style={{ fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 900, color: "#111827", margin: "0 0 12px", letterSpacing: "-0.02em" }}>
-            {isRtl ? "מה אפשר לעשות עם אסימון אחד?" : "What can you do with one token?"}
-          </h2>
-          <p style={{ fontSize: 16, color: "#6b7280", margin: 0 }}>
-            {isRtl ? "כל הפיצ'רים — אותו מחיר" : "All features — same price"}
-          </p>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 20 }}>
-          {[
-            { icon: "🖼️", he: "המרת תמונה ל-DXF", en: "Image to DXF", desc_he: "JPG/PNG → קובץ וקטורי", desc_en: "JPG/PNG → vector file", color: "#eef2ff", border: "#c7d2fe" },
-            { icon: "✨", he: "יצירת עיצוב AI", en: "AI Design", desc_he: "תיאור טקסטואלי → עיצוב", desc_en: "Text description → design", color: "#f5f3ff", border: "#ddd6fe" },
-            { icon: "🔍", he: "AI Trace", en: "AI Trace", desc_he: "תמונה → קווים נקיים", desc_en: "Image → clean lines", color: "#ecfeff", border: "#a5f3fc" },
-            { icon: "👤", he: "פורטרט AI", en: "Portrait AI", desc_he: "פנים → חריטה", desc_en: "Face → engraving", color: "#f0fdf4", border: "#bbf7d0" },
-          ].map((item, i) => (
-            <div key={i} style={{
-              background: item.color, borderRadius: 16, padding: "24px 20px", textAlign: "center",
-              border: `1px solid ${item.border}`, transition: "transform 0.2s, box-shadow 0.2s",
-            }}
-              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(-4px)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 12px 32px rgba(0,0,0,0.1)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = "none"; (e.currentTarget as HTMLDivElement).style.boxShadow = "none"; }}
-            >
-              <div style={{ fontSize: 36, marginBottom: 12 }}>{item.icon}</div>
-              <p style={{ fontSize: 15, fontWeight: 700, color: "#111827", margin: "0 0 4px" }}>
-                {isRtl ? item.he : item.en}
-              </p>
-              <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 10px" }}>
-                {isRtl ? item.desc_he : item.desc_en}
-              </p>
-              <div style={{ display: "inline-block", background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, padding: "3px 12px", fontSize: 12, fontWeight: 700, color: "#6366f1" }}>
-                = 1 {isRtl ? "אסימון" : "token"}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+
 
       {/* ── Welcome bonus ── */}
       <section style={{ maxWidth: 860, margin: "0 auto 60px", padding: "0 20px" }}>
