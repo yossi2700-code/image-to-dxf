@@ -430,8 +430,8 @@ export default function Pricing() {
             </p>
             <p style={{ fontSize: 14, color: "#a16207", margin: 0, lineHeight: 1.5 }}>
               {isRtl
-                ? "משתמשים חדשים מקבלים 10 אסימונים מיד + 20 נוספים בלינק שנשלח למייל — סה\"כ 30 אסימונים בחינם"
-                : "New users get 10 tokens immediately + 20 more via email link — 30 free tokens total"}
+                ? "משתמשים חדשים מקבלים 10 אסימונים מיד לאחר הרשמה"
+                : "New users get 10 tokens immediately after registration"}
             </p>
           </div>
           <button
