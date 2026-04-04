@@ -154,15 +154,16 @@ router.post("/api/ai-refine", async (req, res) => {
 
     const refinePrompt =
       `${baseDescription} ` +
-      "CRITICAL RULE: You MUST keep the SAME MAIN SUBJECT/OBJECT from the original image. " +
-      "Do NOT replace, swap, or remove the main subject. Only apply modifications TO the existing subject. " +
-      "If the instruction asks to draw a completely different object (e.g. 'draw a bicycle' when the original is a table), " +
-      "IGNORE that and instead apply the instruction as a style/detail modification to the existing subject. " +
-      `Apply the following specific changes to the existing design: ${instruction}. ` +
-      "Keep the same overall style: clean black and white line art, bold outlines, no fill, no shading, no gradients. " +
-      "Pure white background. Only black lines on white. " +
-      "Maintain the same general composition and main subject but apply the requested modifications precisely. " +
-      "The result must be suitable for laser cutting or CNC engraving.";
+      `INSTRUCTION TO EXECUTE EXACTLY: "${instruction}" ` +
+      "RULES: " +
+      "(1) Apply the instruction above LITERALLY and PRECISELY — do not interpret loosely or ignore any part of it. " +
+      "(2) Keep the same main subject/object — do NOT replace or remove it. " +
+      "(3) If the instruction says 'add X', make X clearly visible in the output. " +
+      "(4) If the instruction says 'remove X', X must be completely absent. " +
+      "(5) If the instruction says 'make X thinner/thicker/larger/smaller', change X proportionally and visibly. " +
+      "(6) Style: clean black and white line art, bold outlines, NO fill, NO shading, NO gradients, NO text, NO watermarks. " +
+      "(7) Pure white background. Only black lines on white. " +
+      "(8) All lines must be clean, precise and closed — suitable for laser cutting or CNC engraving.";
 
     // Use GPT-image-1 with image editing (inpainting/variation with instruction)
     // We upload the source image and ask for modifications

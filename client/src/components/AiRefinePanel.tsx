@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Wand2, Loader2, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import { Wand2, Loader2, ChevronDown, ChevronUp, Sparkles, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTokenCost } from "@/hooks/useTokenCost";
 
 export interface RefineResult {
   imageUrl: string;
@@ -30,6 +31,8 @@ interface AiRefinePanelProps {
 
 export function AiRefinePanel({ imageUrl, originalPrompt, onRefined, onInsufficientTokens }: AiRefinePanelProps) {
   const { t, isRtl } = useLanguage();
+  const { getCost } = useTokenCost();
+  const refineCost = getCost("ai_refine");
   const [isOpen, setIsOpen] = useState(false);
   const [instruction, setInstruction] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -136,6 +139,11 @@ export function AiRefinePanel({ imageUrl, originalPrompt, onRefined, onInsuffici
       >
         <Sparkles className="w-4 h-4 shrink-0" />
         <span className="flex-1 text-start">{t("refineWithAi")}</span>
+        {refineCost > 0 && (
+          <span className="flex items-center gap-1 text-xs text-muted-foreground font-normal">
+            <Coins className="w-3 h-3" />{refineCost}
+          </span>
+        )}
         {isOpen ? (
           <ChevronUp className="w-4 h-4 shrink-0 text-muted-foreground" />
         ) : (
@@ -196,6 +204,11 @@ export function AiRefinePanel({ imageUrl, originalPrompt, onRefined, onInsuffici
               <>
                 <Wand2 className="w-4 h-4" />
                 {t("refineApply")}
+                {refineCost > 0 && (
+                  <span style={{ fontSize: "0.72em", opacity: 0.8, marginInlineStart: 4, display: "inline-flex", alignItems: "center", gap: 2 }}>
+                    <Coins className="w-3 h-3" />{refineCost}
+                  </span>
+                )}
               </>
             )}
           </Button>
