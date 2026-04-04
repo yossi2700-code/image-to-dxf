@@ -261,11 +261,7 @@ export default function Pricing() {
           <h1 style={{ fontSize: "clamp(32px, 5vw, 56px)", fontWeight: 900, color: "#fff", margin: "0 0 16px", lineHeight: 1.1, letterSpacing: "-0.02em" }}>
             {isRtl ? "בחר את החבילה שלך" : "Choose your package"}
           </h1>
-          <p style={{ fontSize: "clamp(16px, 2vw, 20px)", color: "rgba(199,210,254,0.85)", maxWidth: 560, margin: "0 auto 40px", lineHeight: 1.6 }}>
-            {isRtl
-              ? "המר תמונות ל-DXF, צור עיצובים עם AI, ועקוב אחרי קווים — הכל עם אסימון אחד לפעולה"
-              : "Convert images to DXF, generate AI designs, and trace outlines — all for one token per action"}
-          </p>
+
 
           {/* Currency badge */}
           <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 100, padding: "6px 16px" }}>
