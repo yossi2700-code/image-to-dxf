@@ -9,9 +9,8 @@ import {
   ChevronDown, ChevronUp, Layers, Coins, ImageIcon, Scan, User, Wand2, FileCode2
 } from "lucide-react";
 
-// ─── Currency: ILS only ───────────────────────────────────────────────────────
-const CURRENCY = "ILS";
-const CURRENCY_SYMBOL = "₪";
+// ─── Currency helpers ────────────────────────────────────────────────────────
+const CURRENCY_SYMBOLS: Record<string, string> = { ILS: "₪", USD: "$", EUR: "€", GBP: "£" };
 
 const FALLBACK_PACKAGES = [
   {
@@ -19,21 +18,21 @@ const FALLBACK_PACKAGES = [
     tokens: 30,
     popular: false,
     badge: "trial",
-    prices: { ILS: "29" } as Record<string, string>,
+    prices: { ILS: "29", USD: "7.99" } as Record<string, string>,
   },
   {
     id: "tokens_1",
     tokens: 100,
     popular: true,
     badge: "recommended",
-    prices: { ILS: "59" } as Record<string, string>,
+    prices: { ILS: "59", USD: "15.99" } as Record<string, string>,
   },
   {
     id: "tokens_300",
     tokens: 300,
     popular: false,
     badge: "sale",
-    prices: { ILS: "129" } as Record<string, string>,
+    prices: { ILS: "129", USD: "33.99" } as Record<string, string>,
   },
 ];
 
@@ -172,13 +171,17 @@ function AnimatedNumber({ target, suffix = "" }: { target: number; suffix?: stri
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function Pricing() {
-  const { isRtl } = useLanguage();
+  const { isRtl, language } = useLanguage();
   const [, navigate] = useLocation();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [statsVisible, setStatsVisible] = useState(false);
 
   const { data: dbPrices } = trpc.packages.prices.useQuery();
   const { data: tokenCosts } = trpc.tokenCosts.list.useQuery();
+
+  // Currency: ILS for Hebrew, USD for everything else
+  const currency = language === "he" ? "ILS" : "USD";
+  const symbol = CURRENCY_SYMBOLS[currency] ?? "$";
 
   const packages = dbPrices && dbPrices.length > 0
     ? dbPrices.map((p) => ({
@@ -188,14 +191,13 @@ export default function Pricing() {
         label: p.label,
         badge: p.badge ?? null,
         discountPercent: p.discountPercent ?? 0,
-        prices: { ILS: p.priceILS } as Record<string, string>,
+        prices: { ILS: p.priceILS, USD: p.priceUSD } as Record<string, string>,
       }))
     : FALLBACK_PACKAGES;
 
   const testimonials = isRtl ? TESTIMONIALS_HE : TESTIMONIALS_EN;
   const comparison = isRtl ? COMPARISON_HE : COMPARISON_EN;
   const faq = isRtl ? FAQ_HE : FAQ_EN;
-  const symbol = CURRENCY_SYMBOL;
 
   // Trigger stats animation on scroll
   useEffect(() => {
@@ -267,7 +269,7 @@ export default function Pricing() {
 
           {/* Currency badge */}
           <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 100, padding: "6px 16px" }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{isRtl ? "₪ מחירים בשקל ישראלי" : "$ Prices in USD"}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{currency === "ILS" ? "₪ מחירים בשקל ישראלי" : "$ Prices in USD"}</span>
           </div>
         </div>
       </section>
@@ -275,7 +277,7 @@ export default function Pricing() {
       {/* ── Packages ── */}
       <section style={{ maxWidth: 900, margin: "-40px auto 0", padding: "0 20px 60px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24, position: "relative", zIndex: 2 }}>
         {packages.map((pkg) => {
-          const price = pkg.prices[CURRENCY] ?? "—";
+          const price = pkg.prices[currency] ?? pkg.prices["ILS"] ?? "—";
           const perToken = price !== "—" ? (parseFloat(price) / pkg.tokens).toFixed(2) : "—";
           const discount = (pkg as { discountPercent?: number }).discountPercent ?? 0;
           const badge = (pkg as { badge?: string | null }).badge ?? null;
@@ -364,12 +366,10 @@ export default function Pricing() {
                 )}
               </div>
 
-              <p style={{ fontSize: 13, color: pkg.popular ? "rgba(255,255,255,0.55)" : "#9ca3af", marginBottom: 28 }}>
-                {symbol}{perToken} {isRtl ? "לפעולה" : "per action"}
-              </p>
+              <div style={{ marginBottom: 28 }} />
 
               <button
-                onClick={() => navigate(`/buy?package=${pkg.id}&currency=ILS`)}
+                onClick={() => navigate(`/buy?package=${pkg.id}&currency=${currency}`)}
                 style={{
                   width: "100%", padding: "15px 0", borderRadius: 14, fontWeight: 800, fontSize: 16, cursor: "pointer",
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 0.2s",
