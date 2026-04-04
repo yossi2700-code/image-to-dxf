@@ -38,6 +38,7 @@ import {
   FileCode2,
   FileText,
   X,
+  Coins,
 } from "lucide-react";
 import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { convertPdfToImage, isPdf } from "@/lib/pdfToImage";
@@ -82,6 +83,8 @@ function CorrectionPanel({ imageUrl, objectDescription, onRefined, isRtl }: Corr
   const [isLoading, setIsLoading] = useState(false);
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
   const { reportBug } = useBugReport();
+  const { getCost } = useTokenCost();
+  const refineCost = getCost("ai_refine");
 
   const examples = isRtl
     ? ["הוסף מסגרת מסביב", "הפוך את הכתב לגדול יותר", "הסר את הרקע", "הוסף פרטים לציור"]
@@ -139,6 +142,11 @@ function CorrectionPanel({ imageUrl, objectDescription, onRefined, isRtl }: Corr
       >
         <Wand2 className="w-4 h-4 shrink-0" />
         <span className="flex-1 text-start">{isRtl ? "בקש תיקון מה-AI" : "Request AI Correction"}</span>
+        {refineCost > 0 && (
+          <span className="flex items-center gap-1 text-xs text-gray-400 font-normal">
+            <Coins className="w-3 h-3" />{refineCost}
+          </span>
+        )}
         {isOpen ? <ChevronUp className="w-4 h-4 shrink-0 text-gray-400" /> : <ChevronDown className="w-4 h-4 shrink-0 text-gray-400" />}
       </button>
       {isOpen && (
@@ -183,7 +191,15 @@ function CorrectionPanel({ imageUrl, objectDescription, onRefined, isRtl }: Corr
             {isLoading ? (
               <><Loader2 className="w-4 h-4 animate-spin" />{isRtl ? "מחיל תיקון..." : "Applying correction..."}</>
             ) : (
-              <><Wand2 className="w-4 h-4" />{isRtl ? "החל תיקון" : "Apply Correction"}</>
+              <>
+                <Wand2 className="w-4 h-4" />
+                {isRtl ? "החל תיקון" : "Apply Correction"}
+                {refineCost > 0 && (
+                  <span style={{ fontSize: "0.72em", opacity: 0.8, marginInlineStart: 4, display: "inline-flex", alignItems: "center", gap: 2 }}>
+                    <Coins className="w-3 h-3" />{refineCost}
+                  </span>
+                )}
+              </>
             )}
           </button>
           <p className="text-xs text-center text-gray-400">
