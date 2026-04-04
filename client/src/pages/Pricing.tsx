@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import {
   Check, X, Sparkles, Zap, Star, ArrowLeft, ArrowRight,
   ShoppingCart, Gift, Users, TrendingUp, Shield, Clock,
@@ -219,7 +220,8 @@ export default function Pricing() {
             {isRtl ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
             {isRtl ? "חזרה לאתר" : "Back to site"}
           </button>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginInlineStart: "auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginInlineStart: "auto" }}>
+            <LanguageSwitcher />
             <div style={{ width: 28, height: 28, borderRadius: 8, background: "linear-gradient(135deg, #6366f1, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
                 <path d="M4 16 Q7 7 10 10 Q13 13 16 4" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
