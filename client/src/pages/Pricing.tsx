@@ -453,57 +453,7 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* ── Comparison table ── */}
-      <section style={{ maxWidth: 860, margin: "0 auto 72px", padding: "0 20px" }}>
-        <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <h2 style={{ fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 900, color: "#111827", margin: "0 0 12px", letterSpacing: "-0.02em" }}>
-            {isRtl ? "מה ההבדל?" : "What's the difference?"}
-          </h2>
-          <p style={{ fontSize: 16, color: "#6b7280", margin: 0 }}>
-            {isRtl ? "חינמי מול חבילת אסימונים" : "Free vs. token package"}
-          </p>
-        </div>
-        <div style={{ background: "#fff", borderRadius: 20, overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
-          {/* Table header */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", background: "linear-gradient(135deg, #6366f1, #8b5cf6)", padding: "16px 24px" }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.7)" }}>{isRtl ? "תכונה" : "Feature"}</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.7)", textAlign: "center" }}>{isRtl ? "חינמי" : "Free"}</div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: "#fff", textAlign: "center" }}>{isRtl ? "עם אסימונים" : "With tokens"}</div>
-          </div>
-          {/* Table rows */}
-          {comparison.map((row, i) => (
-            <div
-              key={i}
-              style={{
-                display: "grid", gridTemplateColumns: "1fr 1fr 1fr",
-                padding: "14px 24px",
-                background: i % 2 === 0 ? "#fff" : "#fafafa",
-                borderBottom: i < comparison.length - 1 ? "1px solid #f3f4f6" : "none",
-              }}
-            >
-              <div style={{ fontSize: 14, fontWeight: 500, color: "#374151" }}>{row.feature}</div>
-              <div style={{ textAlign: "center" }}>
-                {typeof row.free === "boolean" ? (
-                  row.free
-                    ? <Check size={18} color="#10b981" strokeWidth={3} style={{ display: "inline" }} />
-                    : <X size={18} color="#d1d5db" strokeWidth={3} style={{ display: "inline" }} />
-                ) : (
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#6b7280" }}>{row.free}</span>
-                )}
-              </div>
-              <div style={{ textAlign: "center" }}>
-                {typeof row.paid === "boolean" ? (
-                  row.paid
-                    ? <Check size={18} color="#6366f1" strokeWidth={3} style={{ display: "inline" }} />
-                    : <X size={18} color="#d1d5db" strokeWidth={3} style={{ display: "inline" }} />
-                ) : (
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "#6366f1" }}>{row.paid}</span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+
 
       {/* ── Testimonials ── */}
       <section style={{ background: "linear-gradient(160deg, #f5f3ff, #ede9fe)", padding: "72px 20px", borderTop: "1px solid #ddd6fe" }}>
