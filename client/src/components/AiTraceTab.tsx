@@ -548,8 +548,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
             };
           });
           setStatus("success"); // Show result panel immediately with partial images
-          const stepMsg = isRtl ? (data.step || data.stepEn) : (data.stepEn || data.step);
-          if (stepMsg) setCurrentStep(stepMsg);
+          const stepMsg = isRtl ? (data.step || data.stepEn || "") : (data.stepEn || "");
+          setCurrentStep(stepMsg);
         } else if (data.status === "error") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           const isTokenError = data.error === "INSUFFICIENT_TOKENS" || data.error === "QUOTA_EXCEEDED";
@@ -585,9 +585,9 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
           setElapsedSeconds(0);
           setJobIdPersisted(null);
         } else if (data.step || data.stepEn) {
-          // Update current step message
-          const stepMsg = isRtl ? (data.step || data.stepEn) : (data.stepEn || data.step);
-          if (stepMsg) setCurrentStep(stepMsg);
+          // Update current step message — never show Hebrew in EN mode
+          const stepMsg = isRtl ? (data.step || data.stepEn || "") : (data.stepEn || "");
+          setCurrentStep(stepMsg);
         }
       } catch (_) { /* network error, keep trying */ }
     }, 3000);

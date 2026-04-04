@@ -409,9 +409,11 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
           setElapsedSeconds(0);
           setJobIdPersisted(null);
         } else {
-          // Update step label from server
-          const stepMsg = isRtl ? (data.step || data.stepEn) : (data.stepEn || data.step);
-          if (stepMsg) setCurrentStep(stepMsg);
+          // Update step label from server — never show Hebrew text in EN mode
+          const stepMsg = isRtl
+            ? (data.step || data.stepEn || "")
+            : (data.stepEn || ""); // don't fall back to Hebrew step when in EN mode
+          setCurrentStep(stepMsg);
           // Progress is handled by smooth timer above
         }
       } catch { /* network error, keep trying */ }
