@@ -182,8 +182,20 @@ const STEPS_HE = [
 ];
 const STEPS_EN = [
   { until: 10,       label: "Analyzing",       desc: "AI scanning the image" },
-  { until: 22,       label: "Detecting",        desc: "Finding lines, shapes & objects" },
+  { until: 22,       label: "Detecting",        desc: "Detecting faces & drawing lines" },
   { until: 34,       label: "Vectorizing",      desc: "Converting to crisp vector paths" },
+  { until: Infinity, label: "Exporting DXF",   desc: "Preparing your file for download" },
+];
+const PORTRAIT_STEPS_HE = [
+  { until: 10,       label: "ניתוח תמונה",    desc: "AI מזהה פנים בתמונה" },
+  { until: 22,       label: "זיהוי פנים",     desc: "ממפה תווי פנים ומבנה" },
+  { until: 34,       label: "ציור פורטרט",    desc: "מצייר קווים מדויקים" },
+  { until: Infinity, label: "ייצוא DXF",      desc: "מכין את הקובץ להורדה" },
+];
+const PORTRAIT_STEPS_EN = [
+  { until: 10,       label: "Analyzing",       desc: "AI detecting faces in image" },
+  { until: 22,       label: "Detecting",        desc: "Mapping facial features & structure" },
+  { until: 34,       label: "Drawing",          desc: "Drawing precise portrait lines" },
   { until: Infinity, label: "Exporting DXF",   desc: "Preparing your file for download" },
 ];
 
@@ -401,10 +413,12 @@ export function AiProcessingAnimation({
   featureLabel = "AI",
 }: AiProcessingAnimationProps) {
 
-  const steps = isRtl ? STEPS_HE : STEPS_EN;
+  const feature = detectFeature(featureLabel);
+  const steps = feature === "portrait"
+    ? (isRtl ? PORTRAIT_STEPS_HE : PORTRAIT_STEPS_EN)
+    : (isRtl ? STEPS_HE : STEPS_EN);
   const stepIndex = steps.findIndex(s => elapsedSeconds < s.until);
   const activeStep = stepIndex === -1 ? steps.length - 1 : stepIndex;
-  const feature = detectFeature(featureLabel);
 
   // Entrance animation
   const [mounted, setMounted] = useState(false);
