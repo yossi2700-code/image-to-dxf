@@ -6,7 +6,7 @@
  * POST /api/face-detect/cancel/:jobId — Cancel a running job
  *
  * Pipeline:
- *   A. Resize source image for gpt-image-1 edit API
+ *   A. Detect faces using LLM vision
  *   B. Generate 3 portrait variations in parallel (chosen style + 2 adjacent)
  *   C. For each: potrace → SVG → DXF
  *   D. Generate AI suggestions for refinement
@@ -24,12 +24,12 @@ import { createJob, getJob, updateJob, cancelJob, heartbeatJob } from "./jobStor
 import { svgToDxf } from "./svgToDxf";
 import { cleanSvgForPreview } from "./svgClean";
 import { invokeLLM } from "./_core/llm";
-import OpenAI from "openai";
+import { generateImage } from "./_core/imageGeneration";
 import potrace from "potrace";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
+// Using Manus Forge built-in image generation (no OpenAI key needed)
 
 // ─── Portrait styles ──────────────────────────────────────────────────────────
 export type PortraitStyle = "simple" | "detailed";
@@ -117,33 +117,23 @@ async function generatePortraitVariation(
   lineweightMm: number | undefined,
   minGapMm: number
 ): Promise<PortraitResult> {
-  const { toFile } = await import("openai");
-  const editFile = await toFile(editSourceBuffer, "face.png", { type: "image/png" });
   const editPrompt = PORTRAIT_STYLE_PROMPTS[style];
 
-  // gpt-image-1 with quality:medium gives better face likeness (identity preservation)
-  const response = await openai.images.edit({
-    model: "gpt-image-1",
-    image: editFile,
+  // Upload buffer to S3 so Forge can access it via URL
+  const tempKey = `face-detect-temp/${nanoid()}.png`;
+  const { url: tempUrl } = await storagePut(tempKey, editSourceBuffer, "image/png");
+
+  // Use Manus Forge built-in image generation with the original image as reference
+  const { url: generatedUrl } = await generateImage({
     prompt: editPrompt,
-    n: 1,
-    size: "1024x1024",
-    quality: "medium",
+    originalImages: [{ url: tempUrl, mimeType: "image/png" }],
   });
 
-  const imageData = response.data?.[0];
-  if (!imageData) throw new Error("Failed to generate image for style: " + style);
+  if (!generatedUrl) throw new Error("Failed to generate image for style: " + style);
 
-  let rawBuffer: Buffer;
-  if (imageData.b64_json) {
-    rawBuffer = Buffer.from(imageData.b64_json, "base64");
-  } else if (imageData.url) {
-    const imgResponse = await fetch(imageData.url);
-    if (!imgResponse.ok) throw new Error("Failed to download generated image");
-    rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
-  } else {
-    throw new Error("No image returned from AI");
-  }
+  const imgResponse = await fetch(generatedUrl);
+  if (!imgResponse.ok) throw new Error("Failed to download generated image");
+  let rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
 
   // Potrace → SVG → DXF
   const processedBuffer = await sharp(rawBuffer)
@@ -374,26 +364,20 @@ async function runFaceDetectJob(
 
     // Helper: generate portrait from a cropped face buffer
     const generatePortraitFromCrop = async (cropBuffer: Buffer, faceLabel: string, customPrompt?: string): Promise<PortraitResult> => {
-      const { toFile } = await import("openai");
-      const editFile = await toFile(cropBuffer, "face.png", { type: "image/png" });
-      const response = await openai.images.edit({
-        model: "gpt-image-1",
-        image: editFile,
+      // Upload buffer to S3 so Forge can access it via URL
+      const tempKey = `face-detect-temp/${nanoid()}.png`;
+      const { url: tempUrl } = await storagePut(tempKey, cropBuffer, "image/png");
+
+      // Use Manus Forge built-in image generation with the original image as reference
+      const { url: generatedUrl } = await generateImage({
         prompt: customPrompt ?? PORTRAIT_STYLE_PROMPTS[style],
-        n: 1,
-        size: "1024x1024",  // 512x512 not supported with quality param
-        quality: "medium",
+        originalImages: [{ url: tempUrl, mimeType: "image/png" }],
       });
-      const imageData = response.data?.[0];
-      if (!imageData) throw new Error("Failed to generate portrait");
-      let rawBuffer: Buffer;
-      if (imageData.b64_json) {
-        rawBuffer = Buffer.from(imageData.b64_json, "base64");
-      } else if (imageData.url) {
-        const imgRes = await fetch(imageData.url);
-        if (!imgRes.ok) throw new Error("Failed to download generated image");
-        rawBuffer = Buffer.from(await imgRes.arrayBuffer());
-      } else throw new Error("No image returned from AI");
+
+      if (!generatedUrl) throw new Error("Failed to generate portrait");
+      const imgRes = await fetch(generatedUrl);
+      if (!imgRes.ok) throw new Error("Failed to download generated image");
+      let rawBuffer = Buffer.from(await imgRes.arrayBuffer());
       const processedBuffer = await sharp(rawBuffer)
         .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
