@@ -38,6 +38,9 @@ const FeatureAiOutline = lazy(() => import("./pages/FeatureAiOutline"));
 const FeaturePortrait = lazy(() => import("./pages/FeaturePortrait"));
 const FeatureCncRelief = lazy(() => import("./pages/FeatureCncRelief"));
 const FeatureDocRedraw = lazy(() => import("./pages/FeatureDocRedraw"));
+const FreeDxfHome = lazy(() => import("./pages/FreeDxfHome"));
+const FreeDxfBrowse = lazy(() => import("./pages/FreeDxfBrowse"));
+const FreeDxfFileDetail = lazy(() => import("./pages/FreeDxfFileDetail"));
 
 /** Generates or retrieves a persistent session ID from localStorage */
 function getOrCreateSessionId(): string {
@@ -228,6 +231,9 @@ function Router() {
         <Route path={"/feature/portrait"} component={FeaturePortrait} />
         <Route path={"/feature/cnc-relief"} component={FeatureCncRelief} />
         <Route path={"/feature/document-redraw"} component={FeatureDocRedraw} />
+        <Route path={"/free"} component={FreeDxfHome} />
+        <Route path={"/free/browse"} component={FreeDxfBrowse} />
+        <Route path={"/free/file/:id"} component={FreeDxfFileDetail} />
         <Route path={"/404"} component={NotFound} />
         {/* Final fallback route */}
         <Route component={NotFound} />

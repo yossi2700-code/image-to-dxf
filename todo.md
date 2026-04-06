@@ -2595,12 +2595,17 @@
 - [x] יצירת FreeDXF REST API (רישום, לוגין, קבצים, הורדה)
 - [x] הוספת CORS middleware לגישה cross-domain
 - [x] הוספת sharedFiles tRPC router (submit, list, approve, reject, admin)
-- [ ] בניית אתר FreeDXF - דף בית עם hero ו-search
-- [ ] בניית אתר FreeDXF - דף עיון בקבצים עם סינון קטגוריות
-- [ ] בניית אתר FreeDXF - דף פרטי קובץ עם SVG preview
-- [ ] בניית אתר FreeDXF - דפי הרשמה ולוגין
-- [ ] בניית אתר FreeDXF - חיבור API והורדת קבצים
-- [ ] הוספת תפריט ניהול קבצים משותפים (Shared Files) לפאנל הניהול של dxfai.ai
-- [ ] אפשרות לקבוע קטגוריה בעת אישור קובץ בניהול
+- [x] בניית אתר FreeDXF - דף בית עם hero ו-search
+- [x] בניית אתר FreeDXF - דף עיון בקבצים עם סינון קטגוריות
+- [x] בניית אתר FreeDXF - דף פרטי קובץ עם SVG preview
+- [x] בניית אתר FreeDXF - דפי הרשמה ולוגין (uses existing dxfai.ai auth)
+- [x] בניית אתר FreeDXF - חיבור API והורדת קבצים
+- [x] הוספת תפריט ניהול קבצים משותפים (Shared Files) לפאנל הניהול של dxfai.ai
+- [x] אפשרות לקבוע קטגוריה בעת אישור קובץ בניהול
 - [ ] הוספת כפתור "שתף לקהילה" בדפי תוצאות dxfai.ai
 - [x] Add CNC Relief (תבליט) as a category in FreeDXF shared files
+- [x] Integrate FreeDXF as /free route inside dxfai.ai (not separate project)
+- [x] Create FreeDXF Home page at /free with hero, categories, file grid
+- [x] Create FreeDXF Browse page at /free/browse with filters and search
+- [x] Create FreeDXF File Detail page at /free/file/:id with preview and download
+- [x] Add "Free DXF Files" link in main site navigation

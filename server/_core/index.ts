@@ -17,6 +17,7 @@ import aiDocumentRedrawRoute from "../aiDocumentRedrawRoute";
 import svgToPngRoute from "../svgToPngRoute";
 import faceDetectRoute from "../faceDetectRoute";
 import paypalRoute from "../paypalRoute";
+import freedxfRouter from "../freedxfApi";
 import cncReliefRoute from "../cncReliefRoute";
 import dxfLegacyRoute from "../dxfLegacyRoute";
 import pdfConvertRoute from "../pdfConvertRoute";
@@ -165,9 +166,7 @@ async function startServer() {
   app.use("/api", pdfConvertRoute);
   app.use("/api/pdf-to-image", uploadLimiter);
 
-   // ── FreeDXF REST API (cross-domain) ───────────────────────────────────────
-  // These REST endpoints are consumed by the FreeDXF website
-  const freedxfRouter = (await import("../freedxfApi")).default;
+  // ── FreeDXF REST API ───────────────────────────────────────────────────
   app.use(freedxfRouter);
 
   // ── tRPC API ───────────────────────────────────────────────────────────────

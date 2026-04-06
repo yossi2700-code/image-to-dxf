@@ -2635,6 +2635,14 @@ export default function Home() {
 
           {/* Right side nav */}
           <div className="flex items-center gap-2 ms-auto">
+            {/* Free DXF Files link */}
+            <a
+              href="/free"
+              className="hidden sm:flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-80 shrink-0"
+              style={{ color: '#7c3aed', background: '#f5f3ff', border: '1px solid #ddd6fe', whiteSpace: 'nowrap' }}
+            >
+              {isRtl ? '🆓 קבצים בחינם' : '🆓 Free Files'}
+            </a>
             {/* Pricing button — opens token pricing modal */}
             <button
               id="tour-pricing"
