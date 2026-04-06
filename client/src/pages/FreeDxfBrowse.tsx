@@ -1,10 +1,10 @@
 /**
  * FreeDXF Browse — browse/search community DXF files at /free/browse
+ * Premium design with filters, search, and responsive grid
  */
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link, useLocation, useSearch } from "wouter";
-import { Search, Layers, X, ArrowLeft } from "lucide-react";
-import { Download } from "lucide-react";
+import { Search, Layers, X, ArrowLeft, Download, Eye, SlidersHorizontal } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface SharedFile {
@@ -29,8 +29,16 @@ interface Category {
 
 const PAGE_SIZE = 24;
 
+const CATEGORY_ICONS: Record<string, string> = {
+  "Decorative": "\ud83c\udfa8", "Signs": "\ud83e\udea7", "Logos": "\u2728", "Mechanical": "\u2699\ufe0f",
+  "Animals": "\ud83e\udd81", "Nature": "\ud83c\udf3f", "Geometric": "\ud83d\udd37", "Text & Letters": "\ud83d\udd24",
+  "CNC Relief": "\ud83c\udfd4\ufe0f", "Jewish & Holiday": "\u2721\ufe0f", "Architecture": "\ud83c\udfdb\ufe0f",
+  "Automotive": "\ud83d\ude97", "Other": "\ud83d\udcc1",
+};
+
 export default function FreeDxfBrowse() {
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
+  const isRtl = language === "he";
   const [, navigate] = useLocation();
   const searchString = useSearch();
   const params = useMemo(() => new URLSearchParams(searchString), [searchString]);
@@ -70,12 +78,10 @@ export default function FreeDxfBrowse() {
     }
   }, [activeCategory, search, files.length]);
 
-  // Load categories once
   useEffect(() => {
     fetch("/api/freedxf/categories").then(r => r.json()).then(res => setCategories(res.categories || [])).catch(console.error);
   }, []);
 
-  // Load files when category changes
   useEffect(() => {
     loadFiles(true);
   }, [activeCategory]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -112,182 +118,302 @@ export default function FreeDxfBrowse() {
     (language === "he" && file.titleHe) ? file.titleHe : (file.title || "Untitled");
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="bg-gray-50 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Link href="/free" className="text-gray-400 hover:text-purple-600 transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {t("freeBrowseTitle" as any)}
-            </h1>
-          </div>
+    <div className="min-h-screen" style={{ background: "#fafafa" }} dir={isRtl ? "rtl" : "ltr"}>
+      {/* ── Header ── */}
+      <div style={{
+        background: "linear-gradient(160deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%)",
+        padding: "0 0 32px",
+      }}>
+        {/* Top bar */}
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "12px 20px", display: "flex", alignItems: "center", gap: 12 }}>
+          <Link href="/free" style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.6)", fontSize: 13, textDecoration: "none" }}>
+            <ArrowLeft style={{ width: 16, height: 16 }} />
+            {isRtl ? "חזרה" : "Back"}
+          </Link>
+        </div>
+
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "8px 20px 0" }}>
+          <h1 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: 800, color: "#fff", marginBottom: 6, letterSpacing: "-0.02em" }}>
+            {isRtl ? "עיון בקבצי DXF" : "Browse DXF Files"}
+          </h1>
+          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.55)", marginBottom: 20 }}>
+            {isRtl
+              ? `${total} קבצים זמינים להורדה בחינם`
+              : `${total} files available for free download`}
+          </p>
 
           {/* Search */}
-          <form onSubmit={handleSearch} className="flex gap-2 max-w-lg">
-            <div className="relative flex-1">
-              <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <form onSubmit={handleSearch} style={{ display: "flex", gap: 8, maxWidth: 520 }}>
+            <div style={{ position: "relative", flex: 1 }}>
+              <Search style={{ position: "absolute", [isRtl ? "right" : "left"]: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#9ca3af" }} />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder={t("freeSearchPlaceholder" as any)}
-                className="w-full ps-10 pe-4 py-2.5 rounded-lg bg-white border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400"
+                placeholder={isRtl ? "חפשו עיצובים..." : "Search designs..."}
+                style={{
+                  width: "100%",
+                  [isRtl ? "paddingRight" : "paddingLeft"]: 38,
+                  ...(isRtl ? { paddingRight: 38, paddingLeft: 14 } : { paddingLeft: 38, paddingRight: 14 }),
+                  paddingTop: 10, paddingBottom: 10,
+                  borderRadius: 10, background: "rgba(255,255,255,0.1)",
+                  backdropFilter: "blur(8px)",
+                  color: "#fff", fontSize: 13,
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  outline: "none",
+                  direction: isRtl ? "rtl" : "ltr",
+                }}
               />
             </div>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-90 transition-opacity"
+              style={{
+                padding: "10px 20px", borderRadius: 10,
+                background: "rgba(255,255,255,0.15)", color: "#fff",
+                fontSize: 13, fontWeight: 600, border: "1px solid rgba(255,255,255,0.2)",
+                cursor: "pointer", backdropFilter: "blur(8px)",
+              }}
             >
-              {t("freeSearch" as any)}
+              {isRtl ? "חיפוש" : "Search"}
             </button>
           </form>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Categories */}
-        <div className="flex flex-wrap gap-2 mb-6">
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 20px 60px" }}>
+        {/* ── Categories ── */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
           <button
             onClick={() => handleCategoryClick("")}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              !activeCategory
-                ? "bg-purple-600 text-white"
-                : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-purple-50 hover:text-purple-600"
-            }`}
+            style={{
+              padding: "6px 14px", borderRadius: 16,
+              fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer",
+              background: !activeCategory ? "linear-gradient(135deg, #7c3aed, #6366f1)" : "#fff",
+              color: !activeCategory ? "#fff" : "#4b5563",
+              boxShadow: !activeCategory ? "0 2px 8px rgba(124,58,237,0.2)" : "0 1px 3px rgba(0,0,0,0.06)",
+              transition: "all 0.15s",
+            }}
           >
-            {t("freeCatAll" as any)}
+            {isRtl ? "הכל" : "All"}
           </button>
           {categories.map((cat) => (
             <button
               key={cat.name}
               onClick={() => handleCategoryClick(cat.name)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                activeCategory === cat.name
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-purple-50 hover:text-purple-600"
-              }`}
+              style={{
+                padding: "6px 14px", borderRadius: 16,
+                fontSize: 12, fontWeight: 500, border: "none", cursor: "pointer",
+                background: activeCategory === cat.name ? "linear-gradient(135deg, #7c3aed, #6366f1)" : "#fff",
+                color: activeCategory === cat.name ? "#fff" : "#4b5563",
+                boxShadow: activeCategory === cat.name ? "0 2px 8px rgba(124,58,237,0.2)" : "0 1px 3px rgba(0,0,0,0.06)",
+                transition: "all 0.15s",
+              }}
             >
-              {cat.name} ({cat.count})
+              {CATEGORY_ICONS[cat.name] || "📁"} {cat.name} ({cat.count})
             </button>
           ))}
         </div>
 
-        {/* Active filters & count */}
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-sm text-gray-400">
-            {t("freeShowing" as any)} {files.length} {t("freeOf" as any)} {total} {t("freeFiles" as any)}
+        {/* ── Active filters & count ── */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <p style={{ fontSize: 13, color: "#9ca3af" }}>
+            {isRtl
+              ? `מציג ${files.length} מתוך ${total} קבצים`
+              : `Showing ${files.length} of ${total} files`}
           </p>
           {hasFilters && (
             <button
               onClick={clearFilters}
-              className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-600 transition-colors"
+              style={{
+                display: "flex", alignItems: "center", gap: 4,
+                fontSize: 12, color: "#7c3aed", background: "#f5f3ff",
+                border: "1px solid #ddd6fe", borderRadius: 8,
+                padding: "4px 10px", cursor: "pointer",
+              }}
             >
-              <X className="w-3 h-3" />
-              {t("freeClearFilters" as any)}
+              <X style={{ width: 12, height: 12 }} />
+              {isRtl ? "נקה סינון" : "Clear filters"}
             </button>
           )}
         </div>
 
-        {/* Files grid */}
+        {/* ── Files grid ── */}
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 }}>
             {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="bg-gray-50 rounded-xl animate-pulse aspect-square" />
+              <div key={i} style={{ background: "#f3f4f6", borderRadius: 14, aspectRatio: "1", animation: "pulse 1.5s ease-in-out infinite" }} />
             ))}
           </div>
         ) : files.length > 0 ? (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 }}>
               {files.map((file) => (
-                <Link
-                  key={file.id}
-                  href={`/free/file/${file.id}`}
-                  className="group block bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-                >
-                  <div className="relative aspect-square bg-gray-50 overflow-hidden">
-                    {file.previewImageUrl ? (
-                      <img
-                        src={file.previewImageUrl}
-                        alt={getTitle(file)}
-                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Layers className="w-12 h-12 text-gray-200" />
-                      </div>
-                    )}
-                    <div className="absolute top-3 start-3">
-                      <span className="px-2 py-0.5 rounded-md text-xs font-semibold text-white bg-green-500">
-                        {t("freeFree" as any)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-3">
-                    <h3 className="text-sm font-semibold text-gray-900 line-clamp-1 group-hover:text-purple-600 transition-colors">
-                      {getTitle(file)}
-                    </h3>
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center gap-3 text-xs text-gray-400">
-                        {file.lineCount != null && file.lineCount > 0 && (
-                          <span className="flex items-center gap-1">
-                            <Layers className="w-3 h-3" />
-                            {file.lineCount.toLocaleString()}
-                          </span>
-                        )}
-                        {file.downloadCount != null && file.downloadCount > 0 && (
-                          <span className="flex items-center gap-1">
-                            <Download className="w-3 h-3" />
-                            {file.downloadCount}
-                          </span>
-                        )}
-                      </div>
-                      {file.category && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 font-medium">
-                          {file.category}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
+                <BrowseCard key={file.id} file={file} getTitle={getTitle} isRtl={isRtl} />
               ))}
             </div>
 
             {hasMore && (
-              <div className="text-center mt-8">
+              <div style={{ textAlign: "center", marginTop: 32 }}>
                 <button
                   onClick={() => loadFiles(false)}
                   disabled={loadingMore}
-                  className="px-8 py-3 rounded-xl text-sm font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors disabled:opacity-50"
+                  style={{
+                    padding: "12px 32px", borderRadius: 12,
+                    fontSize: 13, fontWeight: 600,
+                    color: "#7c3aed", background: "#fff",
+                    border: "1.5px solid #ddd6fe", cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(124,58,237,0.08)",
+                    opacity: loadingMore ? 0.5 : 1,
+                  }}
                 >
-                  {loadingMore ? "..." : t("freeLoadMore" as any)}
+                  {loadingMore ? "..." : (isRtl ? "טען עוד" : "Load More")}
                 </button>
               </div>
             )}
           </>
         ) : (
-          <div className="text-center py-20">
-            <Layers className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-600 mb-2">
-              {t("freeNoResults" as any)}
+          <div style={{ textAlign: "center", padding: "60px 20px" }}>
+            <div style={{
+              width: 72, height: 72, borderRadius: 18,
+              background: "linear-gradient(135deg, #f5f3ff, #ede9fe)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              margin: "0 auto 16px",
+            }}>
+              <SlidersHorizontal style={{ width: 32, height: 32, color: "#c4b5fd" }} />
+            </div>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: "#1e1b4b", marginBottom: 6 }}>
+              {isRtl ? "לא נמצאו תוצאות" : "No results found"}
             </h3>
-            <p className="text-sm text-gray-400 mb-4">
-              {t("freeNoResultsDesc" as any)}
+            <p style={{ fontSize: 13, color: "#9ca3af", marginBottom: 20 }}>
+              {isRtl ? "נסו לשנות את מילות החיפוש או הסינון" : "Try changing your search terms or filters"}
             </p>
             {hasFilters && (
               <button
                 onClick={clearFilters}
-                className="px-6 py-2.5 rounded-lg text-sm font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 transition-colors"
+                style={{
+                  padding: "10px 24px", borderRadius: 10,
+                  fontSize: 13, fontWeight: 600,
+                  color: "#fff", background: "linear-gradient(135deg, #7c3aed, #6366f1)",
+                  border: "none", cursor: "pointer",
+                  boxShadow: "0 2px 8px rgba(124,58,237,0.2)",
+                }}
               >
-                {t("freeClearAll" as any)}
+                {isRtl ? "נקה הכל" : "Clear All"}
               </button>
             )}
           </div>
         )}
       </div>
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+      `}</style>
     </div>
+  );
+}
+
+/* ── Browse Card Component ── */
+function BrowseCard({ file, getTitle, isRtl }: {
+  file: SharedFile;
+  getTitle: (f: SharedFile) => string;
+  isRtl: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const title = getTitle(file);
+
+  return (
+    <Link
+      href={`/free/file/${file.id}`}
+      style={{
+        display: "block",
+        background: "#fff",
+        borderRadius: 12,
+        overflow: "hidden",
+        textDecoration: "none",
+        transition: "all 0.2s ease",
+        transform: hovered ? "translateY(-2px)" : "none",
+        boxShadow: hovered ? "0 8px 24px rgba(0,0,0,0.1)" : "0 1px 3px rgba(0,0,0,0.04)",
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div style={{ position: "relative", aspectRatio: "1", background: "#f9fafb", overflow: "hidden" }}>
+        {file.previewImageUrl ? (
+          <img
+            src={file.previewImageUrl}
+            alt={title}
+            style={{
+              width: "100%", height: "100%", objectFit: "contain", padding: 14,
+              transition: "transform 0.3s ease",
+              transform: hovered ? "scale(1.05)" : "scale(1)",
+            }}
+            loading="lazy"
+          />
+        ) : (
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Layers style={{ width: 40, height: 40, color: "#e5e7eb" }} />
+          </div>
+        )}
+        <div style={{ position: "absolute", top: 8, [isRtl ? "right" : "left"]: 8 }}>
+          <span style={{
+            padding: "2px 6px", borderRadius: 5,
+            fontSize: 9, fontWeight: 700, color: "#fff",
+            background: "linear-gradient(135deg, #10b981, #059669)",
+          }}>
+            {isRtl ? "חינם" : "FREE"}
+          </span>
+        </div>
+        <div style={{
+          position: "absolute", inset: 0,
+          background: "rgba(124,58,237,0.05)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          opacity: hovered ? 1 : 0,
+          transition: "opacity 0.2s",
+        }}>
+          <span style={{
+            padding: "6px 12px", borderRadius: 8,
+            background: "rgba(255,255,255,0.95)", color: "#7c3aed",
+            fontSize: 11, fontWeight: 600,
+            display: "flex", alignItems: "center", gap: 4,
+          }}>
+            <Eye style={{ width: 12, height: 12 }} />
+            {isRtl ? "צפייה" : "View"}
+          </span>
+        </div>
+      </div>
+      <div style={{ padding: 10 }}>
+        <h3 style={{
+          fontSize: 12, fontWeight: 600, color: hovered ? "#7c3aed" : "#1f2937",
+          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          transition: "color 0.15s",
+        }}>
+          {title}
+        </h3>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 10, color: "#9ca3af" }}>
+            {file.lineCount != null && file.lineCount > 0 && (
+              <span style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Layers style={{ width: 10, height: 10 }} />
+                {file.lineCount.toLocaleString()}
+              </span>
+            )}
+            {file.downloadCount != null && file.downloadCount > 0 && (
+              <span style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Download style={{ width: 10, height: 10 }} />
+                {file.downloadCount}
+              </span>
+            )}
+          </div>
+          {file.category && (
+            <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 3, background: "#f5f3ff", color: "#7c3aed", fontWeight: 500 }}>
+              {file.category}
+            </span>
+          )}
+        </div>
+      </div>
+    </Link>
   );
 }

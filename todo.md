@@ -2609,3 +2609,12 @@
 - [x] Create FreeDXF Browse page at /free/browse with filters and search
 - [x] Create FreeDXF File Detail page at /free/file/:id with preview and download
 - [x] Add "Free DXF Files" link in main site navigation
+
+## שיפור עיצוב FreeDXF /free
+
+- [x] Redesign FreeDXF Home page with premium visual design (gradients, animations, cards)
+- [x] Redesign FreeDXF Browse page with better layout and filters
+- [x] Redesign FreeDXF FileDetail page with improved preview and download UX
+- [x] Fix FreeDXF link in admin panel - currently links to external site, should link to /free
+- [x] Add "Free DXF Files" link/section to the main homepage (landing page)
+- [x] Add "Free DXF Files" link to the site navigation (inside the app) (already existed)

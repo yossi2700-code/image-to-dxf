@@ -711,6 +711,20 @@ export default function Landing() {
             />
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            {/* Free DXF Files link */}
+            <a
+              href="/free"
+              style={{
+                display: "flex", alignItems: "center", gap: 5,
+                padding: "6px 14px", borderRadius: 10,
+                background: "#f5f3ff", border: "1.5px solid #ddd6fe",
+                color: "#7c3aed", fontWeight: 700, fontSize: 13,
+                textDecoration: "none", whiteSpace: "nowrap",
+                transition: "all 0.18s",
+              }}
+            >
+              {isRtl ? "קבצים בחינם" : "Free Files"}
+            </a>
             {/* Language toggle He / En */}
             <div style={{ display: "flex", alignItems: "center", background: "#f3f4f6", borderRadius: 10, padding: 3, gap: 2 }}>
               <button
@@ -1167,6 +1181,38 @@ export default function Landing() {
               </a>
             )}
           </div>
+        </div>
+      </section>
+
+      {/* ── FREE DXF FILES BANNER ── */}
+      <section style={{ padding: "60px 24px", background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #e0e7ff 100%)", textAlign: "center" }}>
+        <div style={{ maxWidth: 700, margin: "0 auto" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#fff", borderRadius: 20, padding: "6px 16px", marginBottom: 20, border: "1.5px solid #ddd6fe", boxShadow: "0 2px 8px rgba(124,58,237,0.08)" }}>
+            <span style={{ fontSize: 18 }}>🎁</span>
+            <span style={{ color: "#7c3aed", fontWeight: 700, fontSize: 13 }}>{isRtl ? "חדש!" : "New!"}</span>
+          </div>
+          <h2 style={{ color: "#1e1b4b", fontSize: "clamp(1.5rem,3.5vw,2.2rem)", fontWeight: 900, marginBottom: 14, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+            {isRtl ? "קבצי DXF בחינם לקהילה" : "Free DXF Files for the Community"}
+          </h2>
+          <p style={{ color: "#6b7280", fontSize: 16, marginBottom: 28, lineHeight: 1.7, maxWidth: 520, margin: "0 auto 28px" }}>
+            {isRtl
+              ? "הורידו קבצי DXF מוכנים לחיתוך — עיצובים, לוגואים, דקורציה ועוד. הכל בחינם!"
+              : "Download ready-to-cut DXF files — designs, logos, decorations and more. All free!"}
+          </p>
+          <a
+            href="/free"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              background: "linear-gradient(135deg,#7c3aed,#6366f1)", color: "#fff",
+              border: "none", borderRadius: 12, padding: "14px 36px",
+              fontWeight: 700, fontSize: 16, cursor: "pointer",
+              textDecoration: "none",
+              boxShadow: "0 4px 16px rgba(124,58,237,0.3)",
+              transition: "transform 0.15s, box-shadow 0.15s",
+            }}
+          >
+            {isRtl ? "לדף הקבצים בחינם →" : "Browse Free Files →"}
+          </a>
         </div>
       </section>
 

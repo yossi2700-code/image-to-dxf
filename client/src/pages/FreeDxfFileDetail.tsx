@@ -1,9 +1,10 @@
 /**
  * FreeDXF File Detail — view and download a shared DXF file at /free/file/:id
+ * Premium design with large preview, metadata, and download CTA
  */
 import { useState, useEffect } from "react";
 import { Link, useParams, useLocation } from "wouter";
-import { Download, ArrowLeft, Layers, ExternalLink, Lock, Tag, Calendar } from "lucide-react";
+import { Download, ArrowLeft, Layers, Lock, Tag, Calendar, Zap, Eye, Share2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface SharedFile {
@@ -25,7 +26,8 @@ interface SharedFile {
 
 export default function FreeDxfFileDetail() {
   const { id } = useParams<{ id: string }>();
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
+  const isRtl = language === "he";
   const [, navigate] = useLocation();
   const [file, setFile] = useState<SharedFile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,7 +35,6 @@ export default function FreeDxfFileDetail() {
   const [error, setError] = useState<string | null>(null);
   const [appUser, setAppUser] = useState<{ id: number; email: string } | null>(null);
 
-  // Check if user is logged in
   useEffect(() => {
     fetch("/api/app-auth/me", { credentials: "include" })
       .then(r => r.json())
@@ -41,7 +42,6 @@ export default function FreeDxfFileDetail() {
       .catch(() => {});
   }, []);
 
-  // Load file details
   useEffect(() => {
     if (!id) return;
     setLoading(true);
@@ -58,7 +58,6 @@ export default function FreeDxfFileDetail() {
   const handleDownload = async () => {
     if (!file) return;
     if (!appUser) {
-      // Redirect to login — user needs to be logged in
       navigate(`/?login=1&redirect=/free/file/${file.id}`);
       return;
     }
@@ -78,7 +77,6 @@ export default function FreeDxfFileDetail() {
         throw new Error(data.message || "Download failed");
       }
       const data = await res.json();
-      // Trigger download
       const a = document.createElement("a");
       a.href = data.dxfUrl;
       a.download = (data.title || `freedxf-${file.id}`) + ".dxf";
@@ -86,208 +84,325 @@ export default function FreeDxfFileDetail() {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-    } catch (err) {
-      alert(t("freeDownloadFailed" as any));
+    } catch {
+      alert(isRtl ? "ההורדה נכשלה" : "Download failed");
     } finally {
       setDownloading(false);
     }
   };
 
+  const handleShare = () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: file ? getTitle() : "FreeDXF", url });
+    } else {
+      navigator.clipboard.writeText(url);
+      alert(isRtl ? "הקישור הועתק!" : "Link copied!");
+    }
+  };
+
+  const getTitle = () => {
+    if (!file) return "";
+    return (language === "he" && file.titleHe) ? file.titleHe : (file.title || "Untitled");
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#fafafa" }}>
+        <div style={{ width: 40, height: 40, border: "3px solid #e5e7eb", borderTopColor: "#7c3aed", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
   if (error || !file) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <Layers className="w-16 h-16 text-gray-200" />
-        <h2 className="text-lg font-medium text-gray-600">{error || "File not found"}</h2>
+      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, background: "#fafafa" }}>
+        <div style={{
+          width: 72, height: 72, borderRadius: 18,
+          background: "linear-gradient(135deg, #f5f3ff, #ede9fe)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <Layers style={{ width: 32, height: 32, color: "#c4b5fd" }} />
+        </div>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e1b4b" }}>{error || "File not found"}</h2>
         <Link
           href="/free/browse"
-          className="px-6 py-2.5 rounded-lg text-sm font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 transition-colors"
+          style={{
+            padding: "10px 24px", borderRadius: 10,
+            background: "linear-gradient(135deg, #7c3aed, #6366f1)", color: "#fff",
+            fontSize: 13, fontWeight: 600, textDecoration: "none",
+          }}
         >
-          {t("freeBrowseAll" as any)}
+          {isRtl ? "לכל הקבצים" : "Browse All Files"}
         </Link>
       </div>
     );
   }
 
-  const title = (language === "he" && file.titleHe) ? file.titleHe : (file.title || "Untitled");
+  const title = getTitle();
   const description = (language === "he" && file.descriptionHe) ? file.descriptionHe : file.description;
   const tags = file.tags?.split(",").map(t => t.trim()).filter(Boolean) || [];
   const date = new Date(file.createdAt).toLocaleDateString(language === "he" ? "he-IL" : "en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
+    year: "numeric", month: "short", day: "numeric",
   });
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Breadcrumb */}
-      <div className="bg-gray-50 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <Link href="/free/browse" className="hover:text-purple-600 flex items-center gap-1 transition-colors">
-              <ArrowLeft className="w-4 h-4" />
-              {t("freeBack" as any)}
-            </Link>
-            <span>/</span>
-            {file.category && (
-              <>
-                <Link
-                  href={`/free/browse?category=${encodeURIComponent(file.category)}`}
-                  className="hover:text-purple-600 transition-colors"
-                >
-                  {file.category}
-                </Link>
-                <span>/</span>
-              </>
-            )}
-            <span className="text-gray-700 font-medium truncate">{title}</span>
-          </div>
+    <div style={{ minHeight: "100vh", background: "#fafafa" }} dir={isRtl ? "rtl" : "ltr"}>
+      {/* ── Breadcrumb ── */}
+      <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f5" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "10px 20px", display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#9ca3af" }}>
+          <Link href="/free/browse" style={{ display: "flex", alignItems: "center", gap: 4, color: "#9ca3af", textDecoration: "none" }}>
+            <ArrowLeft style={{ width: 14, height: 14 }} />
+            {isRtl ? "חזרה" : "Back"}
+          </Link>
+          <span style={{ color: "#d1d5db" }}>/</span>
+          {file.category && (
+            <>
+              <Link
+                href={`/free/browse?category=${encodeURIComponent(file.category)}`}
+                style={{ color: "#9ca3af", textDecoration: "none" }}
+              >
+                {file.category}
+              </Link>
+              <span style={{ color: "#d1d5db" }}>/</span>
+            </>
+          )}
+          <span style={{ color: "#4b5563", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</span>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Preview */}
-          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-            <div className="aspect-square bg-gray-50 flex items-center justify-center p-8">
-              {file.svgPreview ? (
-                <div
-                  className="w-full h-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-full"
-                  dangerouslySetInnerHTML={{ __html: file.svgPreview }}
-                />
-              ) : file.previewImageUrl ? (
-                <img
-                  src={file.previewImageUrl}
-                  alt={title}
-                  className="max-w-full max-h-full object-contain"
-                />
-              ) : (
-                <Layers className="w-24 h-24 text-gray-200" />
-              )}
-            </div>
-          </div>
-
-          {/* Details */}
-          <div>
-            <div className="mb-2">
-              <span className="px-2.5 py-1 rounded-md text-xs font-semibold text-white bg-green-500">
-                {t("freeFree" as any)}
-              </span>
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">{title}</h1>
-
-            {description && (
-              <p className="text-gray-600 mb-4 leading-relaxed">{description}</p>
-            )}
-
-            {/* Meta info */}
-            <div className="flex flex-wrap gap-4 mb-6 text-sm text-gray-400">
-              {file.category && (
-                <Link
-                  href={`/free/browse?category=${encodeURIComponent(file.category)}`}
-                  className="flex items-center gap-1.5 hover:text-purple-600 transition-colors"
-                >
-                  <Tag className="w-4 h-4" />
-                  {file.category}
-                </Link>
-              )}
-              {file.lineCount != null && file.lineCount > 0 && (
-                <span className="flex items-center gap-1.5">
-                  <Layers className="w-4 h-4" />
-                  {file.lineCount.toLocaleString()} {t("freeLines" as any)}
-                </span>
-              )}
-              {file.downloadCount != null && file.downloadCount > 0 && (
-                <span className="flex items-center gap-1.5">
-                  <Download className="w-4 h-4" />
-                  {file.downloadCount} {t("freeDownloads" as any)}
-                </span>
-              )}
-              <span className="flex items-center gap-1.5">
-                <Calendar className="w-4 h-4" />
-                {date}
-              </span>
-            </div>
-
-            {/* Tags */}
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-6">
-                {tags.map((tag) => (
-                  <Link
-                    key={tag}
-                    href={`/free/browse?search=${encodeURIComponent(tag)}`}
-                    className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors"
-                  >
-                    {tag}
-                  </Link>
-                ))}
-              </div>
-            )}
-
-            {/* Download button */}
-            <div className="space-y-3">
-              <button
-                onClick={handleDownload}
-                disabled={downloading}
-                className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-base font-semibold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-90 transition-opacity disabled:opacity-50 shadow-lg"
-              >
-                {downloading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    {language === "he" ? "מוריד..." : "Downloading..."}
-                  </>
-                ) : appUser ? (
-                  <>
-                    <Download className="w-5 h-5" />
-                    {t("freeDownloadDxf" as any)}
-                  </>
+      {/* ── Main Content ── */}
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 20px 60px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 32 }}>
+          {/* For larger screens, use side-by-side layout */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 400px), 1fr))", gap: 32 }}>
+            {/* ── Preview ── */}
+            <div style={{
+              background: "#fff",
+              borderRadius: 20,
+              overflow: "hidden",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+              border: "1px solid #f0f0f5",
+            }}>
+              <div style={{
+                aspectRatio: "1",
+                background: "linear-gradient(135deg, #fafafa, #f3f4f6)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                padding: 32,
+                position: "relative",
+              }}>
+                {file.svgPreview ? (
+                  <div
+                    style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    dangerouslySetInnerHTML={{ __html: file.svgPreview }}
+                  />
+                ) : file.previewImageUrl ? (
+                  <img
+                    src={file.previewImageUrl}
+                    alt={title}
+                    style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+                  />
                 ) : (
-                  <>
-                    <Lock className="w-5 h-5" />
-                    {t("freeLoginToDownload" as any)}
-                  </>
+                  <Layers style={{ width: 80, height: 80, color: "#e5e7eb" }} />
                 )}
-              </button>
 
-              {!appUser && (
-                <p className="text-xs text-gray-400 text-center">
-                  {t("freeRegRequired" as any)}
+                {/* Free badge */}
+                <div style={{ position: "absolute", top: 16, [isRtl ? "right" : "left"]: 16 }}>
+                  <span style={{
+                    padding: "4px 12px", borderRadius: 8,
+                    fontSize: 11, fontWeight: 700, color: "#fff",
+                    background: "linear-gradient(135deg, #10b981, #059669)",
+                    boxShadow: "0 2px 8px rgba(16,185,129,0.3)",
+                  }}>
+                    {isRtl ? "חינם" : "FREE"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Details ── */}
+            <div>
+              <h1 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 12, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+                {title}
+              </h1>
+
+              {description && (
+                <p style={{ fontSize: 15, color: "#6b7280", marginBottom: 20, lineHeight: 1.7 }}>
+                  {description}
                 </p>
               )}
-            </div>
 
-            {/* Created with dxfai.ai */}
-            <div className="mt-8 p-4 rounded-xl bg-gray-50 border border-gray-200">
-              <p className="text-sm text-gray-400 mb-2">
-                {t("freeCreatedWith" as any)}
-              </p>
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors"
-              >
-                <div className="w-6 h-6 rounded-md bg-gradient-to-r from-purple-600 to-indigo-600 flex items-center justify-center">
-                  <span className="text-white font-bold text-[8px]">AI</span>
+              {/* Meta info cards */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+                {file.category && (
+                  <Link
+                    href={`/free/browse?category=${encodeURIComponent(file.category)}`}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 6,
+                      padding: "6px 12px", borderRadius: 8,
+                      background: "#f5f3ff", color: "#7c3aed",
+                      fontSize: 12, fontWeight: 600, textDecoration: "none",
+                      border: "1px solid #ede9fe",
+                    }}
+                  >
+                    <Tag style={{ width: 12, height: 12 }} />
+                    {file.category}
+                  </Link>
+                )}
+                {file.lineCount != null && file.lineCount > 0 && (
+                  <span style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "6px 12px", borderRadius: 8,
+                    background: "#f9fafb", color: "#6b7280",
+                    fontSize: 12, fontWeight: 500,
+                    border: "1px solid #f0f0f5",
+                  }}>
+                    <Layers style={{ width: 12, height: 12 }} />
+                    {file.lineCount.toLocaleString()} {isRtl ? "קווים" : "lines"}
+                  </span>
+                )}
+                {file.downloadCount != null && file.downloadCount > 0 && (
+                  <span style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "6px 12px", borderRadius: 8,
+                    background: "#f9fafb", color: "#6b7280",
+                    fontSize: 12, fontWeight: 500,
+                    border: "1px solid #f0f0f5",
+                  }}>
+                    <Download style={{ width: 12, height: 12 }} />
+                    {file.downloadCount} {isRtl ? "הורדות" : "downloads"}
+                  </span>
+                )}
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "6px 12px", borderRadius: 8,
+                  background: "#f9fafb", color: "#6b7280",
+                  fontSize: 12, fontWeight: 500,
+                  border: "1px solid #f0f0f5",
+                }}>
+                  <Calendar style={{ width: 12, height: 12 }} />
+                  {date}
+                </span>
+              </div>
+
+              {/* Tags */}
+              {tags.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 24 }}>
+                  {tags.map((tag) => (
+                    <Link
+                      key={tag}
+                      href={`/free/browse?search=${encodeURIComponent(tag)}`}
+                      style={{
+                        padding: "4px 10px", borderRadius: 12,
+                        fontSize: 11, fontWeight: 500,
+                        background: "#f9fafb", color: "#6b7280",
+                        textDecoration: "none",
+                        border: "1px solid #e5e7eb",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      #{tag}
+                    </Link>
+                  ))}
                 </div>
-                dxfai.ai — AI-Powered DXF Creation
-                <ExternalLink className="w-3.5 h-3.5" />
-              </Link>
-              <p className="text-xs text-gray-400 mt-2">
-                {language === "he"
-                  ? "צרו קבצי DXF משלכם עם AI. המרת תמונות, יצירת עיצובים ועוד."
-                  : "Create your own DXF files with AI. Convert images, generate designs, and more."}
-              </p>
+              )}
+
+              {/* Download button */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <button
+                  onClick={handleDownload}
+                  disabled={downloading}
+                  style={{
+                    width: "100%",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                    padding: "16px 24px", borderRadius: 14,
+                    fontSize: 16, fontWeight: 700, color: "#fff",
+                    background: "linear-gradient(135deg, #7c3aed, #6366f1)",
+                    border: "none", cursor: "pointer",
+                    boxShadow: "0 4px 20px rgba(124,58,237,0.3)",
+                    opacity: downloading ? 0.6 : 1,
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {downloading ? (
+                    <>
+                      <div style={{ width: 20, height: 20, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                      {isRtl ? "מוריד..." : "Downloading..."}
+                    </>
+                  ) : appUser ? (
+                    <>
+                      <Download style={{ width: 20, height: 20 }} />
+                      {isRtl ? "הורד קובץ DXF" : "Download DXF File"}
+                    </>
+                  ) : (
+                    <>
+                      <Lock style={{ width: 20, height: 20 }} />
+                      {isRtl ? "התחבר כדי להוריד" : "Login to Download"}
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleShare}
+                  style={{
+                    width: "100%",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    padding: "12px 24px", borderRadius: 12,
+                    fontSize: 13, fontWeight: 600, color: "#6b7280",
+                    background: "#fff", border: "1.5px solid #e5e7eb",
+                    cursor: "pointer", transition: "all 0.15s",
+                  }}
+                >
+                  <Share2 style={{ width: 16, height: 16 }} />
+                  {isRtl ? "שתף" : "Share"}
+                </button>
+
+                {!appUser && (
+                  <p style={{ fontSize: 12, color: "#9ca3af", textAlign: "center" }}>
+                    {isRtl ? "נדרשת הרשמה חינמית להורדת קבצים" : "Free registration required to download files"}
+                  </p>
+                )}
+              </div>
+
+              {/* Created with dxfai.ai */}
+              <div style={{
+                marginTop: 28, padding: 16, borderRadius: 14,
+                background: "linear-gradient(135deg, #f5f3ff, #ede9fe)",
+                border: "1px solid #ddd6fe",
+              }}>
+                <p style={{ fontSize: 12, color: "#7c3aed", fontWeight: 600, marginBottom: 8 }}>
+                  {isRtl ? "נוצר עם" : "Created with"}
+                </p>
+                <Link
+                  href="/"
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                    fontSize: 14, fontWeight: 700, color: "#1e1b4b",
+                    textDecoration: "none",
+                  }}
+                >
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 7,
+                    background: "linear-gradient(135deg, #7c3aed, #6366f1)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Zap style={{ width: 14, height: 14, color: "#fff" }} />
+                  </div>
+                  dxfai.ai — AI-Powered DXF Creation
+                </Link>
+                <p style={{ fontSize: 12, color: "#6b7280", marginTop: 8, lineHeight: 1.5 }}>
+                  {isRtl
+                    ? "צרו קבצי DXF משלכם עם AI. המרת תמונות, יצירת עיצובים ועוד."
+                    : "Create your own DXF files with AI. Convert images, generate designs, and more."}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

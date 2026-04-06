@@ -4119,9 +4119,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                     ))}
                   </div>
                   <a
-                    href="https://freedxf.com"
+                    href="/free"
                     target="_blank"
-                    rel="noopener noreferrer"
                     className="mr-auto flex items-center gap-1 text-xs text-purple-500 hover:text-purple-700"
                   >
                     <ExternalLink className="w-3 h-3" />
