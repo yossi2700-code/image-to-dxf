@@ -10,47 +10,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai-final_6d4eec74.png";
 
-// Detect Facebook/Instagram in-app browser (WebView)
-// Google OAuth does not work inside Facebook/Instagram WebView
-function isFacebookWebView(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const ua = navigator.userAgent || "";
-  return /FBAN|FBAV|FBIOS|FBSS|Instagram|FB_IAB/.test(ua);
-}
-
-// Banner shown when user is inside Facebook/Instagram WebView
-function FacebookWebViewBanner({ isRtl }: { isRtl: boolean }) {
-  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center">
-        <div className="text-5xl mb-4">🌐</div>
-        <h2 className="text-lg font-bold text-gray-900 mb-2">
-          {isRtl ? "פתח בדפדפן חיצוני" : "Open in Browser"}
-        </h2>
-        <p className="text-sm text-gray-600 mb-4">
-          {isRtl
-            ? "כניסה עם Google לא עובדת בתוך אפליקציית פייסבוק. אנא פתח את הדף בדפדפן Chrome או Safari."
-            : "Google Sign-In doesn't work inside the Facebook app. Please open this page in Chrome or Safari."}
-        </p>
-        <a
-          href={currentUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block w-full py-3 px-4 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition-colors mb-3"
-        >
-          {isRtl ? "פתח בדפדפן" : "Open in Browser"}
-        </a>
-        <p className="text-xs text-gray-400">
-          {isRtl
-            ? "לחץ על שלוש הנקודות (...) ובחר \"פתח בדפדפן\""
-            : "Tap the 3 dots (...) and choose \"Open in browser\""}
-        </p>
-      </div>
-    </div>
-  );
-}
-
 // Google GSI type accessor (avoids conflict with @types/google.maps)
 type GoogleGSI = {
   accounts: {
@@ -337,11 +296,6 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, initi
   };
 
   const showGoogleButton = mode !== "forgot" && !!import.meta.env.VITE_GOOGLE_CLIENT_ID;
-
-  // Show Facebook WebView banner if user is inside Facebook/Instagram in-app browser
-  if (open && isFacebookWebView()) {
-    return <FacebookWebViewBanner isRtl={isRtl} />;
-  }
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>

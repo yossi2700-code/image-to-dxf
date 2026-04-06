@@ -4,7 +4,7 @@ import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense } from "react";
 import { trpc } from "./lib/trpc";
 import { useEffect, useRef } from "react";
 
@@ -38,61 +38,6 @@ const FeatureAiOutline = lazy(() => import("./pages/FeatureAiOutline"));
 const FeaturePortrait = lazy(() => import("./pages/FeaturePortrait"));
 const FeatureCncRelief = lazy(() => import("./pages/FeatureCncRelief"));
 const FeatureDocRedraw = lazy(() => import("./pages/FeatureDocRedraw"));
-
-// Detect Facebook/Instagram in-app browser
-function isFacebookWebView(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const ua = navigator.userAgent || "";
-  return /FBAN|FBAV|FBIOS|FBSS|Instagram|FB_IAB/.test(ua);
-}
-
-/** Global banner shown when user opens the site from Facebook/Instagram in-app browser */
-function FacebookBrowserBanner() {
-  const [dismissed, setDismissed] = useState(false);
-  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
-  const isHe = typeof navigator !== "undefined" && (navigator.language || "").startsWith("he");
-
-  if (dismissed) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/70 p-4"
-      style={{ backdropFilter: "blur(4px)" }}
-    >
-      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center">
-        <div className="text-5xl mb-3">🌐</div>
-        <h2 className="text-lg font-bold text-gray-900 mb-2">
-          {isHe ? "פתח בדפדפן Chrome או Safari" : "Open in Chrome or Safari"}
-        </h2>
-        <p className="text-sm text-gray-600 mb-5">
-          {isHe
-            ? "כדי להתחבר עם Google, יש לפתוח את הדף בדפדפן הרגיל ולא בתוך אפליקציית פייסבוק."
-            : "To sign in with Google, please open this page in your regular browser, not inside the Facebook app."}
-        </p>
-        <a
-          href={currentUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block w-full py-3 px-4 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors mb-3"
-          onClick={() => setDismissed(true)}
-        >
-          {isHe ? "פתח בדפדפן" : "Open in Browser"}
-        </a>
-        <p className="text-xs text-gray-400 mb-3">
-          {isHe
-            ? "או לחץ על שלוש הנקודות (⋯) בפייסבוק ובחר \"פתח בדפדפן\""
-            : "Or tap the 3 dots (⋯) in Facebook and choose \"Open in browser\""}
-        </p>
-        <button
-          onClick={() => setDismissed(true)}
-          className="text-xs text-gray-400 underline"
-        >
-          {isHe ? "המשך בכל זאת" : "Continue anyway"}
-        </button>
-      </div>
-    </div>
-  );
-}
 
 /** Generates or retrieves a persistent session ID from localStorage */
 function getOrCreateSessionId(): string {
@@ -299,7 +244,6 @@ function App() {
         <ThemeProvider defaultTheme="light">
           <TooltipProvider>
             <Toaster />
-            {isFacebookWebView() && <FacebookBrowserBanner />}
             <Router />
           </TooltipProvider>
         </ThemeProvider>
