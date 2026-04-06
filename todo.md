@@ -2585,3 +2585,5 @@
 
 - [ ] Add token cost table to /pricing page (public, no login required)
 - [ ] Show live token cost badge on each feature action button (connected to admin token costs)
+
+- [x] Fix Google OAuth origin_mismatch error for users coming from Facebook ads (client-side redirect to HTTPS + primary domain)

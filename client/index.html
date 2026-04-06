@@ -76,6 +76,21 @@
   </head>
 
   <body>
+    <!-- Client-side redirect: force HTTPS + primary domain (dxfai.ai) -->
+    <!-- This catches cases where server-side redirect fails (e.g., Facebook in-app browser) -->
+    <script>
+      (function() {
+        var h = location.hostname.toLowerCase();
+        var p = location.protocol;
+        var PRIMARY = 'dxfai.ai';
+        var SECONDARY = ['dxfai.net','www.dxfai.net','dxfai.org','www.dxfai.org','www.dxfai.ai'];
+        // Skip redirect for localhost / dev / manus.space
+        if (h === 'localhost' || h === '127.0.0.1' || h.indexOf('manus.') !== -1) { /* noop */ }
+        else if (p === 'http:' || SECONDARY.indexOf(h) !== -1) {
+          location.replace('https://' + PRIMARY + location.pathname + location.search + location.hash);
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <!-- Service Worker registration -->
