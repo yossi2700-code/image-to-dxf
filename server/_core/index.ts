@@ -88,6 +88,27 @@ async function startServer() {
     return next();
   });
 
+  // ── CORS for FreeDXF cross-domain access ────────────────────────────────────
+  app.use((req, res, next) => {
+    const origin = req.headers.origin ?? "";
+    // Allow FreeDXF domains and local dev
+    const allowedOrigins = [
+      /^https?:\/\/localhost(:\d+)?$/,
+      /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
+      /\.manus\.computer$/,
+      /\.manus\.space$/,
+      /freedxf\./,
+    ];
+    if (allowedOrigins.some(p => p.test(origin))) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+      res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization,X-FreeDXF-API-Key");
+    }
+    if (req.method === "OPTIONS") return res.sendStatus(204);
+    return next();
+  });
+
   // ── Body parsers ─────────────────────────────────────────────────────────────
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -144,14 +165,19 @@ async function startServer() {
   app.use("/api", pdfConvertRoute);
   app.use("/api/pdf-to-image", uploadLimiter);
 
-  // ── tRPC API ─────────────────────────────────────────────────────────────────
+   // ── FreeDXF REST API (cross-domain) ───────────────────────────────────────
+  // These REST endpoints are consumed by the FreeDXF website
+  const freedxfRouter = (await import("../freedxfApi")).default;
+  app.use(freedxfRouter);
+
+  // ── tRPC API ───────────────────────────────────────────────────────────────
   app.use(
     "/api/trpc",
     createExpressMiddleware({
       router: appRouter,
       createContext,
     })
-  );
+  );;
 
   // ── Frontend ─────────────────────────────────────────────────────────────────
   if (process.env.NODE_ENV === "development") {

@@ -1,0 +1,1 @@
+ALTER TABLE `app_users` ADD `registrationSource` varchar(32) DEFAULT 'direct';

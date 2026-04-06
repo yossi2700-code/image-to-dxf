@@ -302,6 +302,20 @@
       "when": 1774508395341,
       "tag": "0042_noisy_fat_cobra",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "5",
+      "when": 1775508957462,
+      "tag": "0043_lyrical_mentor",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "5",
+      "when": 1775509442818,
+      "tag": "0044_hot_bloodstrike",
+      "breakpoints": true
     }
   ]
 }

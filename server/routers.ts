@@ -8,10 +8,10 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats, TimeRange } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks, emailVerifications, failedJobs, visitorEvents, contactMessages, issueReports } from "../drizzle/schema";
+import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks, emailVerifications, failedJobs, visitorEvents, contactMessages, issueReports, sharedFiles } from "../drizzle/schema";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "./emailService";
-import { desc, eq, and, sql, gte } from "drizzle-orm";
+import { desc, eq, and, sql, gte, like, inArray } from "drizzle-orm";
 import { getAppUserFromCookie } from "./appAuth";
 import { COUNTRY_NAMES_HE, countryCodeToFlag, getHebrewCountryDisplay } from "./countryNames";
 import { getTokenBalance, addTokens, getTokenTransactions, invalidateTokenCostsCache } from "./tokenService";
@@ -2398,6 +2398,294 @@ export const appRouter = router({
         result.total += n;
       }
       return result;
+    }),
+  }),
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Shared Files (FreeDXF Community)
+  // ═══════════════════════════════════════════════════════════════════════════
+  sharedFiles: router({
+    /** Submit a file for sharing (authenticated user) */
+    submit: publicProcedure
+      .input(z.object({
+        userActionId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const appUser = getAppUserFromCookie((ctx.req as any).cookies);
+        if (!appUser) throw new TRPCError({ code: "UNAUTHORIZED", message: "יש להתחבר כדי לשתף" });
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        // Get the user action
+        const [action] = await db
+          .select()
+          .from(userActions)
+          .where(and(eq(userActions.id, input.userActionId), eq(userActions.appUserId, appUser.userId)))
+          .limit(1);
+        if (!action) throw new TRPCError({ code: "NOT_FOUND", message: "פעולה לא נמצאה" });
+        if (!action.dxfUrl) throw new TRPCError({ code: "BAD_REQUEST", message: "אין קובץ DXF לשיתוף" });
+
+        // Check if already shared
+        const [existing] = await db
+          .select({ id: sharedFiles.id })
+          .from(sharedFiles)
+          .where(eq(sharedFiles.userActionId, input.userActionId))
+          .limit(1);
+        if (existing) throw new TRPCError({ code: "CONFLICT", message: "הקובץ כבר נשלח לשיתוף" });
+
+        await db.insert(sharedFiles).values({
+          appUserId: appUser.userId,
+          userActionId: input.userActionId,
+          feature: action.feature ?? "convert",
+          dxfUrl: action.dxfUrl,
+          previewImageUrl: action.imageUrl ?? null,
+          svgPreview: action.svgPreview ?? null,
+          sourceImageUrl: action.sourceImageUrl ?? null,
+          lineCount: action.segmentCount ?? 0,
+        });
+
+        return { success: true };
+      }),
+
+    /** Public: list approved shared files (for FreeDXF) */
+    list: publicProcedure
+      .input(z.object({
+        category: z.string().optional(),
+        search: z.string().optional(),
+        limit: z.number().min(1).max(100).default(24),
+        offset: z.number().min(0).default(0),
+      }).optional())
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { files: [], total: 0, categories: [] };
+        const { category, search, limit = 24, offset = 0 } = input ?? {};
+
+        // Build conditions
+        const conditions = [eq(sharedFiles.status, "approved")];
+        if (category) conditions.push(eq(sharedFiles.category, category));
+        if (search) conditions.push(like(sharedFiles.title, `%${search}%`));
+
+        const whereClause = conditions.length === 1 ? conditions[0] : and(...conditions);
+
+        // Get total count
+        const [countRow] = await db
+          .select({ count: sql<number>`COUNT(*)` })
+          .from(sharedFiles)
+          .where(whereClause!);
+        const total = Number(countRow?.count ?? 0);
+
+        // Get files
+        const files = await db
+          .select({
+            id: sharedFiles.id,
+            title: sharedFiles.title,
+            titleHe: sharedFiles.titleHe,
+            description: sharedFiles.description,
+            descriptionHe: sharedFiles.descriptionHe,
+            category: sharedFiles.category,
+            tags: sharedFiles.tags,
+            feature: sharedFiles.feature,
+            previewImageUrl: sharedFiles.previewImageUrl,
+            lineCount: sharedFiles.lineCount,
+            downloadCount: sharedFiles.downloadCount,
+            createdAt: sharedFiles.createdAt,
+            userName: appUsers.name,
+          })
+          .from(sharedFiles)
+          .leftJoin(appUsers, eq(sharedFiles.appUserId, appUsers.id))
+          .where(whereClause!)
+          .orderBy(desc(sharedFiles.createdAt))
+          .limit(limit)
+          .offset(offset);
+
+        // Get all categories
+        const catRows = await db
+          .select({ category: sharedFiles.category, count: sql<number>`COUNT(*)` })
+          .from(sharedFiles)
+          .where(eq(sharedFiles.status, "approved"))
+          .groupBy(sharedFiles.category);
+        const categories = catRows
+          .filter(r => r.category)
+          .map(r => ({ name: r.category!, count: Number(r.count) }));
+
+        return { files, total, categories };
+      }),
+
+    /** Public: get single file details (for FreeDXF file page) */
+    getById: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const [file] = await db
+          .select({
+            id: sharedFiles.id,
+            title: sharedFiles.title,
+            titleHe: sharedFiles.titleHe,
+            description: sharedFiles.description,
+            descriptionHe: sharedFiles.descriptionHe,
+            category: sharedFiles.category,
+            tags: sharedFiles.tags,
+            feature: sharedFiles.feature,
+            dxfUrl: sharedFiles.dxfUrl,
+            previewImageUrl: sharedFiles.previewImageUrl,
+            svgPreview: sharedFiles.svgPreview,
+            lineCount: sharedFiles.lineCount,
+            downloadCount: sharedFiles.downloadCount,
+            createdAt: sharedFiles.createdAt,
+            userName: appUsers.name,
+          })
+          .from(sharedFiles)
+          .leftJoin(appUsers, eq(sharedFiles.appUserId, appUsers.id))
+          .where(and(eq(sharedFiles.id, input.id), eq(sharedFiles.status, "approved")))
+          .limit(1);
+        if (!file) throw new TRPCError({ code: "NOT_FOUND", message: "File not found" });
+        return file;
+      }),
+
+    /** Public: increment download count */
+    recordDownload: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { success: false };
+        await db
+          .update(sharedFiles)
+          .set({ downloadCount: sql`${sharedFiles.downloadCount} + 1` })
+          .where(eq(sharedFiles.id, input.id));
+        return { success: true };
+      }),
+
+    /** Admin: list all shared files (pending, approved, rejected) */
+    adminList: adminProcedure
+      .input(z.object({
+        status: z.enum(["pending", "approved", "rejected", "all"]).default("pending"),
+      }).optional())
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return [];
+        const statusFilter = input?.status ?? "pending";
+        const conditions = statusFilter !== "all"
+          ? [eq(sharedFiles.status, statusFilter as "pending" | "approved" | "rejected")]
+          : [];
+
+        const query = db
+          .select({
+            id: sharedFiles.id,
+            appUserId: sharedFiles.appUserId,
+            userActionId: sharedFiles.userActionId,
+            title: sharedFiles.title,
+            titleHe: sharedFiles.titleHe,
+            description: sharedFiles.description,
+            descriptionHe: sharedFiles.descriptionHe,
+            category: sharedFiles.category,
+            tags: sharedFiles.tags,
+            feature: sharedFiles.feature,
+            dxfUrl: sharedFiles.dxfUrl,
+            previewImageUrl: sharedFiles.previewImageUrl,
+            lineCount: sharedFiles.lineCount,
+            downloadCount: sharedFiles.downloadCount,
+            status: sharedFiles.status,
+            adminNote: sharedFiles.adminNote,
+            createdAt: sharedFiles.createdAt,
+            userName: appUsers.name,
+            userEmail: appUsers.email,
+          })
+          .from(sharedFiles)
+          .leftJoin(appUsers, eq(sharedFiles.appUserId, appUsers.id));
+
+        if (conditions.length > 0) {
+          return query.where(conditions[0]).orderBy(desc(sharedFiles.createdAt)).limit(200);
+        }
+        return query.orderBy(desc(sharedFiles.createdAt)).limit(200);
+      }),
+
+    /** Admin: approve a shared file (set title, category, tags) */
+    approve: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().min(1),
+        titleHe: z.string().optional(),
+        description: z.string().optional(),
+        descriptionHe: z.string().optional(),
+        category: z.string().min(1),
+        tags: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db
+          .update(sharedFiles)
+          .set({
+            status: "approved",
+            title: input.title,
+            titleHe: input.titleHe ?? null,
+            description: input.description ?? null,
+            descriptionHe: input.descriptionHe ?? null,
+            category: input.category,
+            tags: input.tags ?? null,
+            reviewedAt: new Date(),
+          })
+          .where(eq(sharedFiles.id, input.id));
+        return { success: true };
+      }),
+
+    /** Admin: reject a shared file */
+    reject: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        adminNote: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db
+          .update(sharedFiles)
+          .set({
+            status: "rejected",
+            adminNote: input.adminNote ?? null,
+            reviewedAt: new Date(),
+          })
+          .where(eq(sharedFiles.id, input.id));
+        return { success: true };
+      }),
+
+    /** Admin: update an already approved file */
+    adminUpdate: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().optional(),
+        titleHe: z.string().optional(),
+        description: z.string().optional(),
+        descriptionHe: z.string().optional(),
+        category: z.string().optional(),
+        tags: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const { id, ...updates } = input;
+        const setObj: Record<string, unknown> = {};
+        if (updates.title !== undefined) setObj.title = updates.title;
+        if (updates.titleHe !== undefined) setObj.titleHe = updates.titleHe;
+        if (updates.description !== undefined) setObj.description = updates.description;
+        if (updates.descriptionHe !== undefined) setObj.descriptionHe = updates.descriptionHe;
+        if (updates.category !== undefined) setObj.category = updates.category;
+        if (updates.tags !== undefined) setObj.tags = updates.tags;
+        if (Object.keys(setObj).length === 0) return { success: true };
+        await db.update(sharedFiles).set(setObj).where(eq(sharedFiles.id, id));
+        return { success: true };
+      }),
+
+    /** Admin: get pending count */
+    pendingCount: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return { count: 0 };
+      const [row] = await db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(sharedFiles)
+        .where(eq(sharedFiles.status, "pending"));
+      return { count: Number(row?.count ?? 0) };
     }),
   }),
 });

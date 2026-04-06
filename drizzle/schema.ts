@@ -75,6 +75,8 @@ export const appUsers = mysqlTable("app_users", {
   reminderSentAt: bigint("reminderSentAt", { mode: "number" }),
   /** Preferred language for emails: he or en */
   language: varchar("language", { length: 8 }).default("he"),
+  /** Registration source: direct | freedxf */
+  registrationSource: varchar("registrationSource", { length: 32 }).default("direct"),
 });
 
 export type AppUser = typeof appUsers.$inferSelect;
@@ -538,3 +540,50 @@ export const issueReports = mysqlTable("issue_reports", {
 });
 export type IssueReport = typeof issueReports.$inferSelect;
 export type InsertIssueReport = typeof issueReports.$inferInsert;
+
+// Shared files — community DXF files shared by users for FreeDXF gallery
+export const sharedFiles = mysqlTable("shared_files", {
+  id: int("id").autoincrement().primaryKey(),
+  /** App user who shared the file */
+  appUserId: int("appUserId").notNull(),
+  /** Reference to the original userAction */
+  userActionId: int("userActionId"),
+  /** Title/name given by admin */
+  title: varchar("title", { length: 200 }),
+  /** Title in Hebrew */
+  titleHe: varchar("titleHe", { length: 200 }),
+  /** Description for SEO */
+  description: text("description"),
+  /** Description in Hebrew */
+  descriptionHe: text("descriptionHe"),
+  /** Category assigned by admin */
+  category: varchar("category", { length: 64 }),
+  /** Comma-separated tags for search */
+  tags: varchar("tags", { length: 500 }),
+  /** Feature used to create: ai_trace | ai_generate | convert | portrait | document_redraw */
+  feature: varchar("feature", { length: 32 }),
+  /** URL of the DXF file in S3 */
+  dxfUrl: text("dxfUrl").notNull(),
+  /** URL of the preview image (SVG rendered to PNG or original image) */
+  previewImageUrl: text("previewImageUrl"),
+  /** SVG preview string */
+  svgPreview: mediumtext("svgPreview"),
+  /** URL of the original source image */
+  sourceImageUrl: text("sourceImageUrl"),
+  /** Number of lines/segments in the DXF */
+  lineCount: int("lineCount").default(0),
+  /** Number of downloads */
+  downloadCount: int("downloadCount").default(0),
+  /** Status: pending | approved | rejected */
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).notNull().default("pending"),
+  /** Admin note */
+  adminNote: text("adminNote"),
+  /** Admin who approved/rejected */
+  reviewedByAdminId: int("reviewedByAdminId"),
+  /** When the file was reviewed */
+  reviewedAt: timestamp("reviewedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type SharedFile = typeof sharedFiles.$inferSelect;
+export type InsertSharedFile = typeof sharedFiles.$inferInsert;
