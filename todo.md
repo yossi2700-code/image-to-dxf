@@ -2587,3 +2587,20 @@
 - [ ] Show live token cost badge on each feature action button (connected to admin token costs)
 
 - [x] Fix Google OAuth origin_mismatch error for users coming from Facebook ads (client-side redirect to HTTPS + primary domain)
+
+## FreeDXF - אתר שיתוף קבצי DXF בחינם
+
+- [x] יצירת טבלת shared_files ב-DB
+- [x] הוספת עמודת registrationSource ל-app_users
+- [x] יצירת FreeDXF REST API (רישום, לוגין, קבצים, הורדה)
+- [x] הוספת CORS middleware לגישה cross-domain
+- [x] הוספת sharedFiles tRPC router (submit, list, approve, reject, admin)
+- [ ] בניית אתר FreeDXF - דף בית עם hero ו-search
+- [ ] בניית אתר FreeDXF - דף עיון בקבצים עם סינון קטגוריות
+- [ ] בניית אתר FreeDXF - דף פרטי קובץ עם SVG preview
+- [ ] בניית אתר FreeDXF - דפי הרשמה ולוגין
+- [ ] בניית אתר FreeDXF - חיבור API והורדת קבצים
+- [ ] הוספת תפריט ניהול קבצים משותפים (Shared Files) לפאנל הניהול של dxfai.ai
+- [ ] אפשרות לקבוע קטגוריה בעת אישור קובץ בניהול
+- [ ] הוספת כפתור "שתף לקהילה" בדפי תוצאות dxfai.ai
+- [x] Add CNC Relief (תבליט) as a category in FreeDXF shared files
