@@ -731,20 +731,6 @@ export default function Landing() {
             />
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            {/* Free DXF Files link */}
-            <a
-              href="/free"
-              style={{
-                display: "flex", alignItems: "center", gap: 5,
-                padding: "6px 14px", borderRadius: 10,
-                background: "#f5f3ff", border: "1.5px solid #ddd6fe",
-                color: "#7c3aed", fontWeight: 700, fontSize: 13,
-                textDecoration: "none", whiteSpace: "nowrap",
-                transition: "all 0.18s",
-              }}
-            >
-              {isRtl ? "קבצים בחינם" : "Free Files"}
-            </a>
             {/* Language toggle He / En */}
             <div style={{ display: "flex", alignItems: "center", background: "#f3f4f6", borderRadius: 10, padding: 3, gap: 2 }}>
               <button
@@ -789,45 +775,7 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* ── TOPIC NAV BAR ── */}
-      <nav style={{
-        position: "sticky", top: 57, zIndex: 29,
-        background: "rgba(255,255,255,0.97)",
-        backdropFilter: "blur(8px)",
-        borderBottom: "1px solid #e8eaf0",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-        overflowX: "auto",
-        scrollbarWidth: "none",
-      }}>
-        <div style={{
-          maxWidth: 1100, margin: "0 auto",
-          padding: "0 16px",
-          display: "flex", alignItems: "center", gap: 2,
-          whiteSpace: "nowrap",
-        }}>
-          {NAV_TOPICS.map(item => (
-            <button
-              key={item.id}
-              onClick={() => scrollTo(item.id)}
-              style={{
-                background: "none", border: "none",
-                padding: "10px 14px",
-                fontSize: 13, fontWeight: 600,
-                color: "#4b5563",
-                cursor: "pointer",
-                borderBottom: "2px solid transparent",
-                transition: "color 0.15s, border-color 0.15s",
-                whiteSpace: "nowrap",
-                flexShrink: 0,
-              }}
-              onMouseEnter={e => { e.currentTarget.style.color = "#6366f1"; e.currentTarget.style.borderBottomColor = "#6366f1"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "#4b5563"; e.currentTarget.style.borderBottomColor = "transparent"; }}
-            >
-              {isRtl ? item.label_he : item.label_en}
-            </button>
-          ))}
-        </div>
-      </nav>
+
 
       {/* ── HERO ── */}
       <section style={{
@@ -1250,34 +1198,49 @@ export default function Landing() {
       <div id="section-pricing" style={{ scrollMarginTop: 100 }} />
 
       {/* ── FREE DXF FILES BANNER ── */}
-      <section id="section-freedxf" style={{ padding: "60px 24px", background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #e0e7ff 100%)", textAlign: "center", scrollMarginTop: 100 }}>
-        <div style={{ maxWidth: 700, margin: "0 auto" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#fff", borderRadius: 20, padding: "6px 16px", marginBottom: 20, border: "1.5px solid #ddd6fe", boxShadow: "0 2px 8px rgba(124,58,237,0.08)" }}>
-            <span style={{ fontSize: 18 }}>🎁</span>
-            <span style={{ color: "#7c3aed", fontWeight: 700, fontSize: 13 }}>{isRtl ? "חדש!" : "New!"}</span>
+      <section id="section-freedxf" style={{
+        padding: "80px 24px",
+        background: "linear-gradient(135deg, #4c1d95 0%, #5b21b6 30%, #6d28d9 60%, #7c3aed 100%)",
+        textAlign: "center",
+        position: "relative",
+        overflow: "hidden",
+      }}>
+        {/* Decorative blobs */}
+        <div style={{ position: "absolute", top: -60, left: -60, width: 200, height: 200, borderRadius: "50%", background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", bottom: -40, right: -40, width: 160, height: 160, borderRadius: "50%", background: "rgba(255,255,255,0.05)", pointerEvents: "none" }} />
+        <div style={{ maxWidth: 700, margin: "0 auto", position: "relative", zIndex: 1 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.15)", borderRadius: 20, padding: "8px 20px", marginBottom: 24, border: "1.5px solid rgba(255,255,255,0.25)", backdropFilter: "blur(8px)" }}>
+            <span style={{ fontSize: 20 }}>🎁</span>
+            <span style={{ color: "#fff", fontWeight: 700, fontSize: 14, letterSpacing: "0.05em", textTransform: "uppercase" }}>{isRtl ? "חדש!" : "New!"}</span>
           </div>
-          <h2 style={{ color: "#1e1b4b", fontSize: "clamp(1.5rem,3.5vw,2.2rem)", fontWeight: 900, marginBottom: 14, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
-            {isRtl ? "קבצי DXF בחינם לקהילה" : "Free DXF Files for the Community"}
+          <h2 style={{ color: "#fff", fontSize: "clamp(1.8rem,4vw,2.8rem)", fontWeight: 900, marginBottom: 16, letterSpacing: "-0.03em", lineHeight: 1.15, textShadow: "0 2px 12px rgba(0,0,0,0.2)" }}>
+            {isRtl ? "📂 קבצי DXF בחינם לקהילה" : "📂 Free DXF Files for the Community"}
           </h2>
-          <p style={{ color: "#6b7280", fontSize: 16, marginBottom: 28, lineHeight: 1.7, maxWidth: 520, margin: "0 auto 28px" }}>
+          <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 17, marginBottom: 32, lineHeight: 1.7, maxWidth: 520, margin: "0 auto 32px" }}>
             {isRtl
-              ? "הורידו קבצי DXF מוכנים לחיתוך — עיצובים, לוגואים, דקורציה ועוד. הכל בחינם!"
-              : "Download ready-to-cut DXF files — designs, logos, decorations and more. All free!"}
+              ? "הורידו קבצי DXF מוכנים לחיתוך לייזר ו-CNC — עיצובים, לוגואים, דקורציה ועוד. הכל בחינם!"
+              : "Download ready-to-cut DXF files for laser & CNC — designs, logos, decorations and more. All free!"}
           </p>
           <a
             href="/free"
             style={{
-              display: "inline-flex", alignItems: "center", gap: 8,
-              background: "linear-gradient(135deg,#7c3aed,#6366f1)", color: "#fff",
-              border: "none", borderRadius: 12, padding: "14px 36px",
-              fontWeight: 700, fontSize: 16, cursor: "pointer",
+              display: "inline-flex", alignItems: "center", gap: 10,
+              background: "#fff", color: "#7c3aed",
+              border: "none", borderRadius: 14, padding: "16px 44px",
+              fontWeight: 800, fontSize: 17, cursor: "pointer",
               textDecoration: "none",
-              boxShadow: "0 4px 16px rgba(124,58,237,0.3)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
               transition: "transform 0.15s, box-shadow 0.15s",
             }}
+            onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1.04)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1)"; }}
           >
+            <span style={{ fontSize: 18 }}>📂</span>
             {isRtl ? "לדף הקבצים בחינם →" : "Browse Free Files →"}
           </a>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, marginTop: 14 }}>
+            {isRtl ? "אין צורך בהרשמה להורדה" : "No registration required to browse"}
+          </p>
         </div>
       </section>
 
