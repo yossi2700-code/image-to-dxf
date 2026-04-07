@@ -66,30 +66,20 @@ export default function FreeDxfFileDetail() {
 
     setDownloading(true);
     try {
-      const res = await fetch(`/api/freedxf/files/${file.id}/download`, {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        if (data.error === "AUTH_REQUIRED") {
-          setAuthOpen(true);
-          return;
-        }
-        throw new Error(data.message || "Download failed");
-      }
-      const data = await res.json();
+      // Use the server-side proxy endpoint which streams the file with
+      // Content-Disposition: attachment — works reliably on all devices
+      const proxyUrl = `/api/freedxf/files/${file.id}/download-file`;
       const a = document.createElement("a");
-      a.href = data.dxfUrl;
-      a.download = (data.title || `freedxf-${file.id}`) + ".dxf";
-      a.target = "_blank";
+      a.href = proxyUrl;
+      a.download = (file.title || `freedxf-${file.id}`) + ".dxf";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
     } catch {
       alert(isRtl ? "ההורדה נכשלה" : "Download failed");
     } finally {
-      setDownloading(false);
+      // Small delay so the spinner shows briefly
+      setTimeout(() => setDownloading(false), 1500);
     }
   };
 

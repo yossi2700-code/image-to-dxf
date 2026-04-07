@@ -19,6 +19,7 @@ import jwt from "jsonwebtoken";
 import { eq, and, sql, desc, like } from "drizzle-orm";
 import { getDb } from "./db";
 import { appUsers, sharedFiles, consentRecords, emailVerifications } from "../drizzle/schema";
+import { getAppUserFromCookie } from "./appAuth";
 import { ENV } from "./_core/env";
 import { addTokens } from "./tokenService";
 import { sendWelcomeEmail } from "./emailService";
@@ -182,10 +183,13 @@ router.get("/api/freedxf/files/:id", async (req, res) => {
 });
 
 // ─── Download file (authenticated only) ──────────────────────────────────────
-router.get("/api/freedxf/files/:id/download", async (req, res) => {
+// Accept both GET and POST (client uses POST, legacy GET also supported)
+async function handleFreeDxfDownload(req: import("express").Request, res: import("express").Response) {
   try {
-    const user = getFreeDXFUser(req);
-    if (!user) return res.status(401).json({ error: "Authentication required", code: "AUTH_REQUIRED" });
+    // Accept either FreeDXF session cookie OR main app session cookie
+    const freedxfUser = getFreeDXFUser(req);
+    const appUser = getAppUserFromCookie(req.cookies);
+    if (!freedxfUser && !appUser) return res.status(401).json({ error: "Authentication required", code: "AUTH_REQUIRED" });
 
     const db = await getDb();
     if (!db) return res.status(500).json({ error: "DB unavailable" });
@@ -210,6 +214,48 @@ router.get("/api/freedxf/files/:id/download", async (req, res) => {
     return res.json({ dxfUrl: file.dxfUrl, title: file.title });
   } catch (err) {
     console.error("[freedxf/download]", err);
+    return res.status(500).json({ error: "Internal error" });
+  }
+}
+router.get("/api/freedxf/files/:id/download", handleFreeDxfDownload);
+router.post("/api/freedxf/files/:id/download", handleFreeDxfDownload);
+
+// ─── Proxy download — streams DXF file with Content-Disposition: attachment ────
+// This ensures a save dialog on all devices (iOS, Android, desktop)
+router.get("/api/freedxf/files/:id/download-file", async (req, res) => {
+  try {
+    const freedxfUser = getFreeDXFUser(req);
+    const appUser = getAppUserFromCookie(req.cookies);
+    if (!freedxfUser && !appUser) return res.status(401).json({ error: "Authentication required", code: "AUTH_REQUIRED" });
+    const db = await getDb();
+    if (!db) return res.status(500).json({ error: "DB unavailable" });
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: "Invalid ID" });
+    const [file] = await db
+      .select({ id: sharedFiles.id, dxfUrl: sharedFiles.dxfUrl, title: sharedFiles.title })
+      .from(sharedFiles)
+      .where(and(eq(sharedFiles.id, id), eq(sharedFiles.status, "approved")))
+      .limit(1);
+    if (!file || !file.dxfUrl) return res.status(404).json({ error: "File not found" });
+    // Increment download count
+    await db.update(sharedFiles).set({ downloadCount: sql`${sharedFiles.downloadCount} + 1` }).where(eq(sharedFiles.id, id));
+    // Proxy the file with proper download headers
+    const upstream = await fetch(file.dxfUrl);
+    if (!upstream.ok) return res.status(502).json({ error: "Failed to fetch file" });
+    const filename = encodeURIComponent((file.title || `freedxf-${id}`) + ".dxf");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"; filename*=UTF-8''${filename}`);
+    res.setHeader("Content-Type", "application/dxf");
+    const contentLength = upstream.headers.get("content-length");
+    if (contentLength) res.setHeader("Content-Length", contentLength);
+    const body = upstream.body as unknown as import("stream").Readable;
+    if (body && typeof body.pipe === "function") {
+      body.pipe(res);
+    } else {
+      const buf = Buffer.from(await upstream.arrayBuffer());
+      res.send(buf);
+    }
+  } catch (err) {
+    console.error("[freedxf/download-file]", err);
     return res.status(500).json({ error: "Internal error" });
   }
 });
