@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { Link, useParams, useLocation } from "wouter";
 import { Download, ArrowLeft, Layers, Lock, Tag, Calendar, Zap, Eye, Share2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { AuthDialog } from "@/components/AuthDialog";
 
 interface SharedFile {
   id: number;
@@ -34,6 +35,7 @@ export default function FreeDxfFileDetail() {
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [appUser, setAppUser] = useState<{ id: number; email: string } | null>(null);
+  const [authOpen, setAuthOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/app-auth/me", { credentials: "include" })
@@ -58,7 +60,7 @@ export default function FreeDxfFileDetail() {
   const handleDownload = async () => {
     if (!file) return;
     if (!appUser) {
-      navigate(`/?login=1&redirect=/free/file/${file.id}`);
+      setAuthOpen(true);
       return;
     }
 
@@ -71,7 +73,7 @@ export default function FreeDxfFileDetail() {
       if (!res.ok) {
         const data = await res.json();
         if (data.error === "AUTH_REQUIRED") {
-          navigate(`/?login=1&redirect=/free/file/${file.id}`);
+          setAuthOpen(true);
           return;
         }
         throw new Error(data.message || "Download failed");
@@ -403,6 +405,20 @@ export default function FreeDxfFileDetail() {
       </div>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+      {/* ── Auth Dialog ── */}
+      <AuthDialog
+        open={authOpen}
+        onOpenChange={setAuthOpen}
+        authReason="unregistered"
+        initialMode="register"
+        onSuccess={(user) => {
+          setAppUser({ id: user.id, email: user.email });
+          setAuthOpen(false);
+          // Retry download after login
+          setTimeout(() => handleDownload(), 300);
+        }}
+      />
     </div>
   );
 }

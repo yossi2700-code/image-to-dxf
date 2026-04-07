@@ -6,6 +6,8 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Search, ArrowRight, Download, Layers, Sparkles, ArrowLeft, Eye, Gift, Zap } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { AuthDialog } from "@/components/AuthDialog";
 
 interface SharedFile {
   id: number;
@@ -80,6 +82,8 @@ export default function FreeDxfHome() {
   const { language, t } = useLanguage();
   const isRtl = language === "he";
   const [, navigate] = useLocation();
+  const { isAuthenticated } = useAuth();
+  const [authOpen, setAuthOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [files, setFiles] = useState<SharedFile[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -385,24 +389,58 @@ export default function FreeDxfHome() {
               ? "השתמשו בכלי AI להמרת תמונות, יצירת עיצובים ויצירת קבצי DXF מקצועיים ל-CNC וחיתוך לייזר."
               : "Use AI-powered tools to convert images, generate designs, and create professional DXF files for CNC and laser cutting."}
           </p>
-          <Link
-            href="/"
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "14px 32px", borderRadius: 12,
-              background: `linear-gradient(135deg, ${C.btnFrom}, ${C.btnTo})`, color: "#fff",
-              fontSize: 15, fontWeight: 700, textDecoration: "none",
-              boxShadow: `0 4px 20px ${C.shadowDeep}`,
-              transition: "transform 0.15s, box-shadow 0.15s",
-            }}
-          >
-            {isRtl ? "נסו את dxfai.ai בחינם" : "Try dxfai.ai Free"}
-          </Link>
-          <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 12 }}>
-            {isRtl ? "10 אסימונים חינם בהרשמה" : "10 free tokens on signup"}
-          </p>
+          {isAuthenticated ? (
+            <Link
+              href="/"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "14px 32px", borderRadius: 12,
+                background: `linear-gradient(135deg, ${C.btnFrom}, ${C.btnTo})`, color: "#fff",
+                fontSize: 15, fontWeight: 700, textDecoration: "none",
+                boxShadow: `0 4px 20px ${C.shadowDeep}`,
+                transition: "transform 0.15s, box-shadow 0.15s",
+              }}
+            >
+              <Zap style={{ width: 18, height: 18 }} />
+              {isRtl ? "צרו DXF עכשיו" : "Create DXF Now"}
+            </Link>
+          ) : (
+            <>
+              <button
+                onClick={() => setAuthOpen(true)}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  padding: "14px 32px", borderRadius: 12,
+                  background: `linear-gradient(135deg, ${C.btnFrom}, ${C.btnTo})`, color: "#fff",
+                  fontSize: 15, fontWeight: 700, border: "none", cursor: "pointer",
+                  boxShadow: `0 4px 20px ${C.shadowDeep}`,
+                  transition: "transform 0.15s, box-shadow 0.15s",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.03)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
+              >
+                <Zap style={{ width: 18, height: 18 }} />
+                {isRtl ? "הרשמה חינם" : "Sign Up Free"}
+              </button>
+              <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 12 }}>
+                {isRtl ? "10 אסימונים חינם בהרשמה · ללא כרטיס אשראי" : "10 free tokens on signup · No credit card"}
+              </p>
+            </>
+          )}
         </div>
       </section>
+
+      {/* ── Auth Dialog ── */}
+      <AuthDialog
+        open={authOpen}
+        onOpenChange={setAuthOpen}
+        authReason="unregistered"
+        initialMode="register"
+        onSuccess={() => {
+          setAuthOpen(false);
+          // Stay on /free after login — no redirect needed
+        }}
+      />
 
       {/* ── Footer ── */}
       <footer style={{ background: "#111827", padding: "24px 20px", textAlign: "center" }}>
