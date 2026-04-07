@@ -6,8 +6,9 @@ import { AuthDialog } from "@/components/AuthDialog";
 import {
   Zap, Shield, Clock, Download, Star,
   ChevronLeft, ChevronRight, Check, Sparkles, Cpu, FileDown,
-  Lock, MessageCircle, Mail, Phone, Camera, Keyboard, Scissors, Wand2, Upload
+  Lock, MessageCircle, Mail, Phone, Camera, Keyboard, Scissors, Wand2, Upload, Gift
 } from "lucide-react";
+
 
 // ─── CDN base ────────────────────────────────────────────────────────────────
 const CDN = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw";
@@ -697,6 +698,25 @@ export default function Landing() {
   const dir = isRtl ? "rtl" : "ltr";
   const t = isRtl ? he : en;
 
+  // Smooth scroll helper
+  const scrollTo = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  // Topic nav items
+  const NAV_TOPICS = [
+    { id: "section-how",      label_he: "איך זה עובד",    label_en: "How It Works" },
+    { id: "section-gallery",  label_he: "גלריה",          label_en: "Gallery" },
+    { id: "section-portrait", label_he: "פורטרט AI",     label_en: "AI Portrait" },
+    { id: "section-ai-create",label_he: "יצירה מטקסט",   label_en: "AI Create" },
+    { id: "section-relief",   label_he: "תבליט CNC",     label_en: "CNC Relief" },
+    { id: "section-testimonials", label_he: "ביקורות",      label_en: "Reviews" },
+    { id: "section-pricing",  label_he: "מחירים",        label_en: "Pricing" },
+    { id: "section-freedxf",  label_he: "קבצים חינם 🎁", label_en: "Free Files 🎁" },
+    { id: "section-contact",  label_he: "צור קשר",       label_en: "Contact" },
+  ];
+
   return (
     <div dir={dir} style={{ minHeight: "100vh", background: "#fff", fontFamily: "'Inter','Segoe UI',sans-serif", overflowX: "hidden" }}>
 
@@ -768,6 +788,46 @@ export default function Landing() {
           </div>
         </div>
       </header>
+
+      {/* ── TOPIC NAV BAR ── */}
+      <nav style={{
+        position: "sticky", top: 57, zIndex: 29,
+        background: "rgba(255,255,255,0.97)",
+        backdropFilter: "blur(8px)",
+        borderBottom: "1px solid #e8eaf0",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+        overflowX: "auto",
+        scrollbarWidth: "none",
+      }}>
+        <div style={{
+          maxWidth: 1100, margin: "0 auto",
+          padding: "0 16px",
+          display: "flex", alignItems: "center", gap: 2,
+          whiteSpace: "nowrap",
+        }}>
+          {NAV_TOPICS.map(item => (
+            <button
+              key={item.id}
+              onClick={() => scrollTo(item.id)}
+              style={{
+                background: "none", border: "none",
+                padding: "10px 14px",
+                fontSize: 13, fontWeight: 600,
+                color: "#4b5563",
+                cursor: "pointer",
+                borderBottom: "2px solid transparent",
+                transition: "color 0.15s, border-color 0.15s",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = "#6366f1"; e.currentTarget.style.borderBottomColor = "#6366f1"; }}
+              onMouseLeave={e => { e.currentTarget.style.color = "#4b5563"; e.currentTarget.style.borderBottomColor = "transparent"; }}
+            >
+              {isRtl ? item.label_he : item.label_en}
+            </button>
+          ))}
+        </div>
+      </nav>
 
       {/* ── HERO ── */}
       <section style={{
@@ -889,7 +949,7 @@ export default function Landing() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section style={{ padding: "72px 24px", background: "#fafafa" }}>
+      <section id="section-how" style={{ padding: "72px 24px", background: "#fafafa", scrollMarginTop: 100 }}>
         <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
           <h2 style={{ fontSize: "clamp(1.5rem,3vw,2.2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 12 }}>{t.howTitle}</h2>
           <p style={{ color: "#6b7280", fontSize: 16, marginBottom: 52 }}>{t.howSubtitle}</p>
@@ -1012,7 +1072,7 @@ export default function Landing() {
       {/* ── DEMO VIDEO ── */}
       <DemoVideoSection isRtl={isRtl} />
       {/* ── BEFORE / AFTER GALLERY ── */}
-      <section style={{ padding: "72px 24px", background: "#fff" }}>
+      <section id="section-gallery" style={{ padding: "72px 24px", background: "#fff", scrollMarginTop: 100 }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 48 }}>
             <h2 style={{ fontSize: "clamp(1.5rem,3vw,2.2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 12 }}>{t.galleryTitle}</h2>
@@ -1028,7 +1088,7 @@ export default function Landing() {
       </section>
 
       {/* ── PORTRAIT EXAMPLES ── */}
-      <section style={{ padding: "72px 24px", background: "linear-gradient(160deg,#faf5ff 0%,#f3e8ff 100%)" }}>
+      <section id="section-portrait" style={{ padding: "72px 24px", background: "linear-gradient(160deg,#faf5ff 0%,#f3e8ff 100%)", scrollMarginTop: 100 }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 48 }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.25)", borderRadius: 20, padding: "5px 14px", marginBottom: 16 }}>
@@ -1063,7 +1123,7 @@ export default function Landing() {
       </section>
 
       {/* ── AI CREATE EXAMPLES ── */}
-      <section style={{ padding: "72px 24px", background: "linear-gradient(160deg,#f5f3ff 0%,#ede9fe 100%)" }}>
+      <section id="section-ai-create" style={{ padding: "72px 24px", background: "linear-gradient(160deg,#f5f3ff 0%,#ede9fe 100%)", scrollMarginTop: 100 }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 48 }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.25)", borderRadius: 20, padding: "5px 14px", marginBottom: 16 }}>
@@ -1093,7 +1153,9 @@ export default function Landing() {
       </section>
 
       {/* ── CNC RELIEF SECTION ── */}
-      <ReliefSection isRtl={isRtl} onCta={() => handleOpenAuth("register")} />
+      <div id="section-relief" style={{ scrollMarginTop: 100 }}>
+        <ReliefSection isRtl={isRtl} onCta={() => handleOpenAuth("register")} />
+      </div>
 
       {/* ── BENEFITS ── */}
       <section style={{ padding: "72px 24px", background: "#fff" }}>
@@ -1119,7 +1181,7 @@ export default function Landing() {
       </section>
 
       {/* ── TESTIMONIALS ── */}
-      <section style={{ padding: "72px 24px", background: "#fafafa" }}>
+      <section id="section-testimonials" style={{ padding: "72px 24px", background: "#fafafa", scrollMarginTop: 100 }}>
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 48 }}>
             <h2 style={{ fontSize: "clamp(1.5rem,3vw,2.2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 12 }}>{t.testimonialsTitle}</h2>
@@ -1145,7 +1207,7 @@ export default function Landing() {
       </section>
 
       {/* ── CONTACT CTA ── */}
-      <section style={{ padding: "72px 24px", background: "#f8f7ff" }}>
+      <section id="section-contact" style={{ padding: "72px 24px", background: "#f8f7ff", scrollMarginTop: 100 }}>
         <div style={{ maxWidth: 700, margin: "0 auto", textAlign: "center" }}>
           <h2 style={{ fontSize: "clamp(1.4rem,3vw,2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 12 }}>{t.contactTitle}</h2>
           <p style={{ color: "#6b7280", fontSize: 16, marginBottom: 36, lineHeight: 1.7 }}>{t.contactSubtitle}</p>
@@ -1184,8 +1246,11 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── PRICING (anchor) ── */}
+      <div id="section-pricing" style={{ scrollMarginTop: 100 }} />
+
       {/* ── FREE DXF FILES BANNER ── */}
-      <section style={{ padding: "60px 24px", background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #e0e7ff 100%)", textAlign: "center" }}>
+      <section id="section-freedxf" style={{ padding: "60px 24px", background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #e0e7ff 100%)", textAlign: "center", scrollMarginTop: 100 }}>
         <div style={{ maxWidth: 700, margin: "0 auto" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#fff", borderRadius: 20, padding: "6px 16px", marginBottom: 20, border: "1.5px solid #ddd6fe", boxShadow: "0 2px 8px rgba(124,58,237,0.08)" }}>
             <span style={{ fontSize: 18 }}>🎁</span>

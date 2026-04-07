@@ -460,6 +460,17 @@ function FileCard({ file, getTitle, isRtl }: {
             }}
             loading="lazy"
           />
+        ) : file.svgPreview ? (
+          <img
+            src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(file.svgPreview.replace(/stroke-width="[^"]*"/g, 'stroke-width="2"'))}`}
+            alt={file.title || file.titleHe || "DXF Preview"}
+            style={{
+              width: "100%", height: "100%", objectFit: "contain",
+              padding: 16,
+              transition: "transform 0.3s ease",
+              transform: hovered ? "scale(1.05)" : "scale(1)",
+            }}
+          />
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Layers style={{ width: 48, height: 48, color: "#e5e7eb" }} />

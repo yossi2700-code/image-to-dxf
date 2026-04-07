@@ -20,6 +20,7 @@ import { getPackageById, getPriceForCurrency } from "./products";
 import { storagePut } from "./storage";
 import { sendPurchaseConfirmationEmail, sendBulkEmail } from "./emailService";
 import { notifyOwner } from "./_core/notification";
+import { generatePreviewFromSvg } from "./svgPreviewGenerator";
 
 const ADMIN_COOKIE = "admin_session";
 
@@ -2431,12 +2432,22 @@ export const appRouter = router({
           .limit(1);
         if (existing) throw new TRPCError({ code: "CONFLICT", message: "הקובץ כבר נשלח לשיתוף" });
 
+        // Generate a PNG preview from SVG if no preview image exists
+        let previewImageUrl = action.imageUrl ?? null;
+        if (!previewImageUrl && action.svgPreview) {
+          const generatedUrl = await generatePreviewFromSvg(
+            action.svgPreview,
+            `action-${input.userActionId}`
+          );
+          if (generatedUrl) previewImageUrl = generatedUrl;
+        }
+
         await db.insert(sharedFiles).values({
           appUserId: appUser.userId,
           userActionId: input.userActionId,
           feature: action.feature ?? "convert",
           dxfUrl: action.dxfUrl,
-          previewImageUrl: action.imageUrl ?? null,
+          previewImageUrl,
           svgPreview: action.svgPreview ?? null,
           sourceImageUrl: action.sourceImageUrl ?? null,
           lineCount: action.segmentCount ?? 0,
@@ -2469,11 +2480,21 @@ export const appRouter = router({
           .limit(1);
         if (existing) throw new TRPCError({ code: "CONFLICT", message: "הקובץ כבר נשלח לשיתוף" });
 
+        // Generate a PNG preview from SVG if no preview image URL provided
+        let previewImageUrl = input.previewImageUrl ?? null;
+        if (!previewImageUrl && input.svgPreview) {
+          const generatedUrl = await generatePreviewFromSvg(
+            input.svgPreview,
+            `direct-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+          );
+          if (generatedUrl) previewImageUrl = generatedUrl;
+        }
+
         await db.insert(sharedFiles).values({
           appUserId: appUser.userId,
           feature: input.feature ?? "convert",
           dxfUrl: input.dxfUrl,
-          previewImageUrl: input.previewImageUrl ?? null,
+          previewImageUrl,
           svgPreview: input.svgPreview ?? null,
           lineCount: input.lineCount ?? 0,
           title: input.filename ?? null,
@@ -2649,18 +2670,34 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        // Check if the file needs a preview image generated
+        const [file] = await db
+          .select({ previewImageUrl: sharedFiles.previewImageUrl, svgPreview: sharedFiles.svgPreview })
+          .from(sharedFiles)
+          .where(eq(sharedFiles.id, input.id))
+          .limit(1);
+
+        const updateSet: Record<string, unknown> = {
+          status: "approved",
+          title: input.title,
+          titleHe: input.titleHe ?? null,
+          description: input.description ?? null,
+          descriptionHe: input.descriptionHe ?? null,
+          category: input.category,
+          tags: input.tags ?? null,
+          reviewedAt: new Date(),
+        };
+
+        // Generate preview image if missing
+        if (file && !file.previewImageUrl && file.svgPreview) {
+          const generatedUrl = await generatePreviewFromSvg(file.svgPreview, `shared-${input.id}`);
+          if (generatedUrl) updateSet.previewImageUrl = generatedUrl;
+        }
+
         await db
           .update(sharedFiles)
-          .set({
-            status: "approved",
-            title: input.title,
-            titleHe: input.titleHe ?? null,
-            description: input.description ?? null,
-            descriptionHe: input.descriptionHe ?? null,
-            category: input.category,
-            tags: input.tags ?? null,
-            reviewedAt: new Date(),
-          })
+          .set(updateSet)
           .where(eq(sharedFiles.id, input.id));
         return { success: true };
       }),
@@ -2710,6 +2747,25 @@ export const appRouter = router({
         if (Object.keys(setObj).length === 0) return { success: true };
         await db.update(sharedFiles).set(setObj).where(eq(sharedFiles.id, id));
         return { success: true };
+      }),
+
+    /** Admin: regenerate preview image for a shared file from its SVG data */
+    regeneratePreview: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const [file] = await db
+          .select({ svgPreview: sharedFiles.svgPreview, previewImageUrl: sharedFiles.previewImageUrl })
+          .from(sharedFiles)
+          .where(eq(sharedFiles.id, input.id))
+          .limit(1);
+        if (!file) throw new TRPCError({ code: "NOT_FOUND" });
+        if (!file.svgPreview) throw new TRPCError({ code: "BAD_REQUEST", message: "No SVG data available" });
+        const url = await generatePreviewFromSvg(file.svgPreview, `regen-${input.id}-${Date.now()}`);
+        if (!url) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to generate preview" });
+        await db.update(sharedFiles).set({ previewImageUrl: url }).where(eq(sharedFiles.id, input.id));
+        return { success: true, previewImageUrl: url };
       }),
 
     /** Admin: get pending count */

@@ -437,6 +437,12 @@
 - [x] תיקון overflow בתמונות בכרטיסי תוצאה (object-contain + aspect-ratio)
 - [x] הוספת zoom/fullscreen על תמונות AI בלחיצה (modal עם ZoomIn/ZoomOut/pan)
 
+## כפתורי ערוך מחדש/עצב מחדש בהיסטוריה
+
+- [ ] הוספת כפתור "ערוך מחדש" בכרטיסי היסטוריה
+- [ ] הוספת כפתור "עצב מחדש" בכרטיסי היסטוריה
+- [ ] תיקון תצוגת תמונת preview ב-FreeDXF
+
 ## תיקון תצוגת וקטור
 
 - [x] תיקון zoom בתצוגת וקטור — כפתורים גדולים (44px), SVG כ-data URL, pan תקין
@@ -2623,3 +2629,12 @@
 
 - [x] Add "Share to Community" button on result pages after DXF creation
 - [x] Update FreeDXF /free color scheme - distinct from main site but same brand style (teal/green gradient)
+
+## באגים FreeDXF
+
+- [ ] Fix FreeDXF file cards not showing preview images
+
+## שיפורי דף נחיתה - אפריל 2026
+
+- [x] הוספת שורת נושאים sticky בדף נחיתה עם עוגנים לאזורים בדף
+- [x] הוספת קטע פרסום לדף FreeDXF (מאגר קבצים משותפים בחינם) עם לינק ל-/free

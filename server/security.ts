@@ -160,6 +160,11 @@ export function inputSanitizer(req: Request, _res: Response, next: NextFunction)
   if (req.path === "/api/svg-to-png") {
     return next();
   }
+  // Exempt tRPC routes — they have their own zod validation, and SVG preview data
+  // in shared files can exceed 10k chars and must not be truncated
+  if (req.path.startsWith("/api/trpc")) {
+    return next();
+  }
   if (req.body && typeof req.body === "object") {
     req.body = sanitizeValue(req.body) as Record<string, unknown>;
   }
