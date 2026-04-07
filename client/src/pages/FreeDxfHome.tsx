@@ -4,10 +4,10 @@
  */
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Search, ArrowRight, Download, Layers, Sparkles, ArrowLeft, Eye, Gift, Zap } from "lucide-react";
+import { Search, Download, Layers, Sparkles, Eye, Gift, Zap, LogOut, User, Clock, ExternalLink } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/_core/hooks/useAuth";
 import { AuthDialog } from "@/components/AuthDialog";
+import { trpc } from "@/lib/trpc";
 
 interface SharedFile {
   id: number;
@@ -79,16 +79,47 @@ const C = {
 };
 
 export default function FreeDxfHome() {
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
   const isRtl = language === "he";
   const [, navigate] = useLocation();
-  const { isAuthenticated } = useAuth();
+  const [appUser, setAppUser] = useState<{ id: number; email: string; name?: string } | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [files, setFiles] = useState<SharedFile[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalFiles, setTotalFiles] = useState(0);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Check app auth status
+  useEffect(() => {
+    fetch("/api/app-auth/me", { credentials: "include" })
+      .then(r => r.json())
+      .then(d => setAppUser(d.user ?? null))
+      .catch(() => setAppUser(null));
+  }, []);
+
+  // Auto-close auth dialog when user logs in
+  const handleAuthSuccess = () => {
+    setAuthOpen(false);
+    // Re-check auth status
+    fetch("/api/app-auth/me", { credentials: "include" })
+      .then(r => r.json())
+      .then(d => setAppUser(d.user ?? null))
+      .catch(() => {});
+  };
+
+  const handleLogout = async () => {
+    await fetch("/api/app-auth/logout", { method: "POST", credentials: "include" });
+    setAppUser(null);
+    setShowHistory(false);
+  };
+
+  // Fetch download history when authenticated
+  const { data: downloadHistory } = trpc.sharedFiles.myDownloads.useQuery(
+    undefined,
+    { enabled: !!appUser }
+  );
 
   useEffect(() => {
     async function load() {
@@ -123,18 +154,134 @@ export default function FreeDxfHome() {
     <div className="min-h-screen bg-white" dir={isRtl ? "rtl" : "ltr"}>
       {/* ── Top Bar ── */}
       <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f5" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", color: "#6b7280", fontSize: 13, fontWeight: 500 }}>
-            <ArrowLeft style={{ width: 16, height: 16 }} />
-            {isRtl ? "חזרה לכלי העיצוב" : "Back to Design Tools"}
-          </Link>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          {/* Logo */}
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ width: 24, height: 24, borderRadius: 6, background: `linear-gradient(135deg, ${C.accent}, ${C.btnTo})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ color: "#fff", fontWeight: 800, fontSize: 8 }}>DXF</span>
+            <div style={{ width: 28, height: 28, borderRadius: 7, background: `linear-gradient(135deg, ${C.accent}, ${C.btnTo})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: "#fff", fontWeight: 800, fontSize: 9 }}>DXF</span>
             </div>
-            <span style={{ fontSize: 13, fontWeight: 700, color: C.heroFrom }}>FreeDXF</span>
+            <span style={{ fontSize: 15, fontWeight: 800, color: C.heroFrom }}>FreeDXF</span>
+          </div>
+
+          {/* Right side: user area or login */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {/* "Create your own" CTA */}
+            <Link
+              href="/"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                padding: "7px 14px", borderRadius: 8,
+                background: `linear-gradient(135deg, ${C.btnFrom}, ${C.btnTo})`, color: "#fff",
+                fontSize: 12, fontWeight: 600, textDecoration: "none",
+                boxShadow: `0 2px 8px ${C.shadow}`,
+              }}
+            >
+              <Zap style={{ width: 12, height: 12 }} />
+              {isRtl ? "צרו DXF משלכם" : "Create Your Own"}
+              <ExternalLink style={{ width: 11, height: 11, opacity: 0.7 }} />
+            </Link>
+
+            {!!appUser ? (
+              <>
+                {/* Download history button */}
+                <button
+                  onClick={() => setShowHistory(h => !h)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 5,
+                    padding: "7px 12px", borderRadius: 8,
+                    background: showHistory ? C.accentBg2 : C.accentBg,
+                    border: `1px solid ${C.accentBorder}`,
+                    color: C.accentText, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                  }}
+                >
+                  <Clock style={{ width: 13, height: 13 }} />
+                  {isRtl ? "היסטוריה" : "History"}
+                  {downloadHistory && downloadHistory.length > 0 && (
+                    <span style={{ background: C.accent, color: "#fff", borderRadius: 10, padding: "1px 6px", fontSize: 10 }}>
+                      {downloadHistory.length}
+                    </span>
+                  )}
+                </button>
+
+                {/* User name + logout */}
+                <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", borderRadius: 8, background: "#f9fafb", border: "1px solid #e5e7eb" }}>
+                  <User style={{ width: 13, height: 13, color: "#6b7280" }} />
+                  <span style={{ fontSize: 12, color: "#374151", fontWeight: 500, maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {appUser?.name || appUser?.email || (isRtl ? "משתמש" : "User")}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    title={isRtl ? "התנתק" : "Logout"}
+                    style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "#9ca3af", display: "flex" }}
+                  >
+                    <LogOut style={{ width: 13, height: 13 }} />
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button
+                onClick={() => setAuthOpen(true)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 5,
+                  padding: "7px 14px", borderRadius: 8,
+                  background: "#fff", border: `1px solid ${C.accentBorder}`,
+                  color: C.accentText, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                }}
+              >
+                <User style={{ width: 13, height: 13 }} />
+                {isRtl ? "התחברות" : "Sign In"}
+              </button>
+            )}
           </div>
         </div>
+
+        {/* ── Download History Panel ── */}
+        {showHistory && !!appUser && (
+          <div style={{ borderTop: `1px solid ${C.accentBorder}`, background: C.accentBg, padding: "16px 20px" }}>
+            <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: C.accentText, marginBottom: 12 }}>
+                {isRtl ? "היסטוריית הורדות" : "Download History"}
+              </h3>
+              {!downloadHistory || downloadHistory.length === 0 ? (
+                <p style={{ fontSize: 13, color: "#9ca3af" }}>
+                  {isRtl ? "עדיין לא הורדת קבצים" : "No downloads yet"}
+                </p>
+              ) : (
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  {downloadHistory.map(dl => {
+                    const title = (language === "he" && dl.currentTitleHe) ? dl.currentTitleHe : (dl.currentTitle || dl.fileTitle || "Untitled");
+                    const preview = dl.currentPreview || dl.previewImageUrl;
+                    return (
+                      <Link
+                        key={dl.id}
+                        href={`/free/file/${dl.sharedFileId}`}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 8,
+                          padding: "8px 12px", borderRadius: 10,
+                          background: "#fff", border: `1px solid ${C.accentBorder}`,
+                          textDecoration: "none", minWidth: 140, maxWidth: 200,
+                          transition: "box-shadow 0.15s",
+                        }}
+                      >
+                        {preview ? (
+                          <img src={preview} alt={title} style={{ width: 32, height: 32, objectFit: "contain", borderRadius: 4, flexShrink: 0 }} />
+                        ) : (
+                          <div style={{ width: 32, height: 32, borderRadius: 4, background: C.accentBg2, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            <Layers style={{ width: 16, height: 16, color: C.accent }} />
+                          </div>
+                        )}
+                        <div style={{ overflow: "hidden" }}>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: "#1f2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</div>
+                          {dl.fileCategory && <div style={{ fontSize: 10, color: "#9ca3af" }}>{dl.fileCategory}</div>}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Hero Section ── */}
@@ -313,7 +460,7 @@ export default function FreeDxfHome() {
             style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 600, color: C.accent, textDecoration: "none" }}
           >
             {isRtl ? "לכל הקבצים" : "Browse All"}
-            <ArrowRight style={{ width: 14, height: 14 }} />
+            <ExternalLink style={{ width: 14, height: 14 }} />
           </Link>
         </div>
 
@@ -389,7 +536,7 @@ export default function FreeDxfHome() {
               ? "השתמשו בכלי AI להמרת תמונות, יצירת עיצובים ויצירת קבצי DXF מקצועיים ל-CNC וחיתוך לייזר."
               : "Use AI-powered tools to convert images, generate designs, and create professional DXF files for CNC and laser cutting."}
           </p>
-          {isAuthenticated ? (
+          {!!appUser ? (
             <Link
               href="/"
               style={{
@@ -436,10 +583,7 @@ export default function FreeDxfHome() {
         onOpenChange={setAuthOpen}
         authReason="unregistered"
         initialMode="register"
-        onSuccess={() => {
-          setAuthOpen(false);
-          // Stay on /free after login — no redirect needed
-        }}
+        onSuccess={handleAuthSuccess}
       />
 
       {/* ── Footer ── */}

@@ -587,3 +587,15 @@ export const sharedFiles = mysqlTable("shared_files", {
 });
 export type SharedFile = typeof sharedFiles.$inferSelect;
 export type InsertSharedFile = typeof sharedFiles.$inferInsert;
+
+/** Track which users downloaded which FreeDXF files */
+export const freedxfDownloads = mysqlTable("freedxf_downloads", {
+  id: int("id").autoincrement().primaryKey(),
+  appUserId: int("appUserId").notNull(),
+  sharedFileId: int("sharedFileId").notNull(),
+  fileTitle: varchar("fileTitle", { length: 200 }),
+  fileCategory: varchar("fileCategory", { length: 64 }),
+  previewImageUrl: text("previewImageUrl"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type FreedxfDownload = typeof freedxfDownloads.$inferSelect;

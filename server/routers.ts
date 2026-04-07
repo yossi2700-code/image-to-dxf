@@ -5,10 +5,10 @@ import jwt from "jsonwebtoken";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { ENV } from "./_core/env";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats, TimeRange } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks, emailVerifications, failedJobs, visitorEvents, contactMessages, issueReports, sharedFiles } from "../drizzle/schema";
+import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks, emailVerifications, failedJobs, visitorEvents, contactMessages, issueReports, sharedFiles, freedxfDownloads } from "../drizzle/schema";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "./emailService";
 import { desc, eq, and, sql, gte, like, inArray } from "drizzle-orm";
@@ -2778,6 +2778,65 @@ export const appRouter = router({
         .where(eq(sharedFiles.status, "pending"));
       return { count: Number(row?.count ?? 0) };
     }),
+
+    /** Protected: record a user download of a FreeDXF file (for history) */
+    recordUserDownload: protectedProcedure
+      .input(z.object({
+        sharedFileId: z.number(),
+        fileTitle: z.string().optional(),
+        fileCategory: z.string().optional(),
+        previewImageUrl: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const db = await getDb();
+        if (!db) return { success: false };
+        const appUser = getAppUserFromCookie(
+          (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
+        );
+        if (!appUser) return { success: false };
+        await db
+          .update(sharedFiles)
+          .set({ downloadCount: sql`${sharedFiles.downloadCount} + 1` })
+          .where(eq(sharedFiles.id, input.sharedFileId));
+        await db.insert(freedxfDownloads).values({
+          appUserId: appUser.userId,
+          sharedFileId: input.sharedFileId,
+          fileTitle: input.fileTitle ?? null,
+          fileCategory: input.fileCategory ?? null,
+          previewImageUrl: input.previewImageUrl ?? null,
+        });
+        return { success: true };
+      }),
+
+    /** Protected: get current user's FreeDXF download history */
+    myDownloads: protectedProcedure
+      .input(z.object({ limit: z.number().min(1).max(50).default(20) }).optional())
+      .query(async ({ input, ctx }) => {
+        const db = await getDb();
+        if (!db) return [];
+        const appUser = getAppUserFromCookie(
+          (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
+        );
+        if (!appUser) return [];
+        const limit = input?.limit ?? 20;
+        return db
+          .select({
+            id: freedxfDownloads.id,
+            sharedFileId: freedxfDownloads.sharedFileId,
+            fileTitle: freedxfDownloads.fileTitle,
+            fileCategory: freedxfDownloads.fileCategory,
+            previewImageUrl: freedxfDownloads.previewImageUrl,
+            createdAt: freedxfDownloads.createdAt,
+            currentTitle: sharedFiles.title,
+            currentTitleHe: sharedFiles.titleHe,
+            currentPreview: sharedFiles.previewImageUrl,
+          })
+          .from(freedxfDownloads)
+          .leftJoin(sharedFiles, eq(freedxfDownloads.sharedFileId, sharedFiles.id))
+          .where(eq(freedxfDownloads.appUserId, appUser.userId))
+          .orderBy(desc(freedxfDownloads.createdAt))
+          .limit(limit);
+      }),
   }),
 });
 export type AppRouter = typeof appRouter;
