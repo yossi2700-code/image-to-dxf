@@ -113,6 +113,8 @@ export default function FreeDxfHome() {
     await fetch("/api/app-auth/logout", { method: "POST", credentials: "include" });
     setAppUser(null);
     setShowHistory(false);
+    // Reload the page to reset state cleanly without triggering Manus OAuth redirect
+    window.location.reload();
   };
 
   // Fetch download history when authenticated

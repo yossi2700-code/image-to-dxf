@@ -723,12 +723,29 @@ export default function Landing() {
       {/* ── Sticky nav ── */}
       <header style={{ position: "sticky", top: 0, zIndex: 30, background: "rgba(255,255,255,0.95)", backdropFilter: "blur(8px)", borderBottom: "1px solid #e8eaf0", boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => navigate("/")}>
-            <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai_99079d72.webp"
-              alt="dxfai logo"
-              style={{ width: 36, height: 36, borderRadius: 9, objectFit: "cover" }}
-            />
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => navigate("/")}>
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai_99079d72.webp"
+                alt="dxfai logo"
+                style={{ width: 36, height: 36, borderRadius: 9, objectFit: "cover" }}
+              />
+            </div>
+            {/* Free Files badge */}
+            <a
+              href="/free"
+              style={{
+                display: "flex", alignItems: "center", gap: 5,
+                padding: "5px 11px", borderRadius: 20,
+                background: "linear-gradient(135deg, #0d9488, #0891b2)",
+                color: "#fff", fontSize: 12, fontWeight: 700,
+                textDecoration: "none", boxShadow: "0 2px 8px rgba(13,148,136,0.35)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <span style={{ fontSize: 14 }}>🎁</span>
+              {isRtl ? "קבצים בחינם" : "Free Files"}
+            </a>
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             {/* Language toggle He / En */}
