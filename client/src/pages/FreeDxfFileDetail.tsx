@@ -1,10 +1,11 @@
 /**
  * FreeDXF File Detail — view and download a shared DXF file at /free/file/:id
- * Premium design with large preview, metadata, and download CTA
+ * Fixes: (1) auth dialog closes after login, (2) download opens save dialog on all devices,
+ *        (3) back button is large enough on mobile
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useParams, useLocation } from "wouter";
-import { Download, ArrowLeft, Layers, Lock, Tag, Calendar, Zap, Eye, Share2 } from "lucide-react";
+import { Download, ArrowLeft, Layers, Lock, Tag, Calendar, Zap, Share2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AuthDialog } from "@/components/AuthDialog";
 
@@ -36,6 +37,8 @@ export default function FreeDxfFileDetail() {
   const [error, setError] = useState<string | null>(null);
   const [appUser, setAppUser] = useState<{ id: number; email: string } | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
+  // Ref to trigger download after auth completes (avoids stale closure)
+  const pendingDownload = useRef(false);
 
   useEffect(() => {
     fetch("/api/app-auth/me", { credentials: "include" })
@@ -57,28 +60,35 @@ export default function FreeDxfFileDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  // Trigger download via a hidden <a> pointing to the server proxy.
+  // The server sends Content-Disposition: attachment so the browser
+  // always shows a "Save As" dialog instead of opening the file.
+  const triggerDownload = (fileId: number, fileTitle: string | null) => {
+    const proxyUrl = `/api/freedxf/files/${fileId}/download-file`;
+    const a = document.createElement("a");
+    a.href = proxyUrl;
+    a.download = (fileTitle || `freedxf-${fileId}`) + ".dxf";
+    // For iOS/Safari: open in new tab as fallback (they ignore a.download for cross-origin)
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   const handleDownload = async () => {
     if (!file) return;
     if (!appUser) {
+      pendingDownload.current = true;
       setAuthOpen(true);
       return;
     }
-
     setDownloading(true);
     try {
-      // Use the server-side proxy endpoint which streams the file with
-      // Content-Disposition: attachment — works reliably on all devices
-      const proxyUrl = `/api/freedxf/files/${file.id}/download-file`;
-      const a = document.createElement("a");
-      a.href = proxyUrl;
-      a.download = (file.title || `freedxf-${file.id}`) + ".dxf";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      triggerDownload(file.id, file.title);
     } catch {
       alert(isRtl ? "ההורדה נכשלה" : "Download failed");
     } finally {
-      // Small delay so the spinner shows briefly
       setTimeout(() => setDownloading(false), 1500);
     }
   };
@@ -141,135 +151,133 @@ export default function FreeDxfFileDetail() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#fafafa" }} dir={isRtl ? "rtl" : "ltr"}>
-      {/* ── Breadcrumb ── */}
+      {/* ── Breadcrumb / Back bar ── */}
       <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f5" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "10px 20px", display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#9ca3af" }}>
-          <Link href="/free/browse" style={{ display: "flex", alignItems: "center", gap: 4, color: "#9ca3af", textDecoration: "none" }}>
-            <ArrowLeft style={{ width: 14, height: 14 }} />
-            {isRtl ? "חזרה" : "Back"}
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 16px", display: "flex", alignItems: "stretch" }}>
+          {/* Back button — large tap target (min 48px height) */}
+          <Link
+            href="/free/browse"
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              minHeight: 52, padding: "0 16px 0 4px",
+              color: "#374151", textDecoration: "none",
+              fontSize: 14, fontWeight: 600,
+              borderRight: isRtl ? "none" : "1px solid #f0f0f5",
+              borderLeft: isRtl ? "1px solid #f0f0f5" : "none",
+              flexShrink: 0,
+            }}
+          >
+            <div style={{
+              width: 34, height: 34, borderRadius: 10,
+              background: "#f3f4f6",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <ArrowLeft style={{ width: 18, height: 18 }} />
+            </div>
+            <span style={{ display: "none", "@media (min-width: 480px)": { display: "inline" } } as React.CSSProperties}>
+              {isRtl ? "חזרה" : "Back"}
+            </span>
           </Link>
-          <span style={{ color: "#d1d5db" }}>/</span>
-          {file.category && (
-            <>
-              <Link
-                href={`/free/browse?category=${encodeURIComponent(file.category)}`}
-                style={{ color: "#9ca3af", textDecoration: "none" }}
-              >
-                {file.category}
-              </Link>
-              <span style={{ color: "#d1d5db" }}>/</span>
-            </>
-          )}
-          <span style={{ color: "#4b5563", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</span>
+
+          {/* Breadcrumb trail */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 16px", fontSize: 13, color: "#9ca3af", overflow: "hidden", flex: 1 }}>
+            {file.category && (
+              <>
+                <Link
+                  href={`/free/browse?category=${encodeURIComponent(file.category)}`}
+                  style={{ color: "#9ca3af", textDecoration: "none", whiteSpace: "nowrap" }}
+                >
+                  {file.category}
+                </Link>
+                <span style={{ color: "#d1d5db" }}>/</span>
+              </>
+            )}
+            <span style={{ color: "#4b5563", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</span>
+          </div>
         </div>
       </div>
 
       {/* ── Main Content ── */}
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 20px 60px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 32 }}>
-          {/* For larger screens, use side-by-side layout */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 400px), 1fr))", gap: 32 }}>
-            {/* ── Preview ── */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 400px), 1fr))", gap: 32 }}>
+          {/* ── Preview ── */}
+          <div style={{
+            background: "#fff",
+            borderRadius: 20,
+            overflow: "hidden",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+            border: "1px solid #f0f0f5",
+          }}>
             <div style={{
-              background: "#fff",
-              borderRadius: 20,
-              overflow: "hidden",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-              border: "1px solid #f0f0f5",
+              aspectRatio: "1",
+              background: "linear-gradient(135deg, #fafafa, #f3f4f6)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: 32,
+              position: "relative",
             }}>
-              <div style={{
-                aspectRatio: "1",
-                background: "linear-gradient(135deg, #fafafa, #f3f4f6)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                padding: 32,
-                position: "relative",
-              }}>
-                {file.previewImageUrl ? (
-                  <img
-                    src={`/api/freedxf/image-proxy?url=${encodeURIComponent(file.previewImageUrl)}`}
-                    alt={title}
-                    style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
-                  />
-                ) : file.svgPreview ? (
-                  <div
-                    style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
-                    dangerouslySetInnerHTML={{ __html:
-                      (file.svgPreview.includes('</svg>') ? file.svgPreview : file.svgPreview + '</svg>')
-                        .replace(/stroke-width="[^"]*"/g, 'stroke-width="1.5"')
-                        .replace(/<svg([^>]*)>/, '<svg$1 width="100%" height="100%" preserveAspectRatio="xMidYMid meet">')
-                    }}
-                  />
-                ) : (
-                  <Layers style={{ width: 80, height: 80, color: "#e5e7eb" }} />
-                )}
-
-                {/* Free badge */}
-                <div style={{ position: "absolute", top: 16, [isRtl ? "right" : "left"]: 16 }}>
-                  <span style={{
-                    padding: "4px 12px", borderRadius: 8,
-                    fontSize: 11, fontWeight: 700, color: "#fff",
-                    background: "linear-gradient(135deg, #0d9488, #14b8a6)",
-                    boxShadow: "0 2px 8px rgba(13,148,136,0.3)",
-                  }}>
-                    {isRtl ? "חינם" : "FREE"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* ── Details ── */}
-            <div>
-              <h1 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: 800, color: "#042f2e", marginBottom: 12, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
-                {title}
-              </h1>
-
-              {description && (
-                <p style={{ fontSize: 15, color: "#6b7280", marginBottom: 20, lineHeight: 1.7 }}>
-                  {description}
-                </p>
+              {file.previewImageUrl ? (
+                <img
+                  src={`/api/freedxf/image-proxy?url=${encodeURIComponent(file.previewImageUrl)}`}
+                  alt={title}
+                  style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+                />
+              ) : file.svgPreview ? (
+                <div
+                  style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+                  dangerouslySetInnerHTML={{ __html:
+                    (file.svgPreview.includes('</svg>') ? file.svgPreview : file.svgPreview + '</svg>')
+                      .replace(/stroke-width="[^"]*"/g, 'stroke-width="1.5"')
+                      .replace(/<svg([^>]*)>/, '<svg$1 width="100%" height="100%" preserveAspectRatio="xMidYMid meet">')
+                  }}
+                />
+              ) : (
+                <Layers style={{ width: 80, height: 80, color: "#e5e7eb" }} />
               )}
 
-              {/* Meta info cards */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
-                {file.category && (
-                  <Link
-                    href={`/free/browse?category=${encodeURIComponent(file.category)}`}
-                    style={{
-                      display: "inline-flex", alignItems: "center", gap: 6,
-                      padding: "6px 12px", borderRadius: 8,
-                      background: "#f0fdfa", color: "#0d9488",
-                      fontSize: 12, fontWeight: 600, textDecoration: "none",
-                      border: "1px solid #ccfbf1",
-                    }}
-                  >
-                    <Tag style={{ width: 12, height: 12 }} />
-                    {file.category}
-                  </Link>
-                )}
-                {file.lineCount != null && file.lineCount > 0 && (
-                  <span style={{
+              {/* Free badge */}
+              <div style={{ position: "absolute", top: 16, [isRtl ? "right" : "left"]: 16 }}>
+                <span style={{
+                  padding: "4px 12px", borderRadius: 8,
+                  fontSize: 11, fontWeight: 700, color: "#fff",
+                  background: "linear-gradient(135deg, #0d9488, #14b8a6)",
+                  boxShadow: "0 2px 8px rgba(13,148,136,0.3)",
+                }}>
+                  {isRtl ? "חינם" : "FREE"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Details ── */}
+          <div>
+            <h1 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: 800, color: "#042f2e", marginBottom: 12, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+              {title}
+            </h1>
+
+            {description && (
+              <p style={{ fontSize: 15, color: "#6b7280", marginBottom: 20, lineHeight: 1.7 }}>
+                {description}
+              </p>
+            )}
+
+            {/* Meta info chips */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+              {file.category && (
+                <Link
+                  href={`/free/browse?category=${encodeURIComponent(file.category)}`}
+                  style={{
                     display: "inline-flex", alignItems: "center", gap: 6,
                     padding: "6px 12px", borderRadius: 8,
-                    background: "#f9fafb", color: "#6b7280",
-                    fontSize: 12, fontWeight: 500,
-                    border: "1px solid #f0f0f5",
-                  }}>
-                    <Layers style={{ width: 12, height: 12 }} />
-                    {file.lineCount.toLocaleString()} {isRtl ? "קווים" : "lines"}
-                  </span>
-                )}
-                {file.downloadCount != null && file.downloadCount > 0 && (
-                  <span style={{
-                    display: "inline-flex", alignItems: "center", gap: 6,
-                    padding: "6px 12px", borderRadius: 8,
-                    background: "#f9fafb", color: "#6b7280",
-                    fontSize: 12, fontWeight: 500,
-                    border: "1px solid #f0f0f5",
-                  }}>
-                    <Download style={{ width: 12, height: 12 }} />
-                    {file.downloadCount} {isRtl ? "הורדות" : "downloads"}
-                  </span>
-                )}
+                    background: "#f0fdfa", color: "#0d9488",
+                    fontSize: 12, fontWeight: 600, textDecoration: "none",
+                    border: "1px solid #ccfbf1",
+                  }}
+                >
+                  <Tag style={{ width: 12, height: 12 }} />
+                  {file.category}
+                </Link>
+              )}
+              {file.lineCount != null && file.lineCount > 0 && (
                 <span style={{
                   display: "inline-flex", alignItems: "center", gap: 6,
                   padding: "6px 12px", borderRadius: 8,
@@ -277,122 +285,143 @@ export default function FreeDxfFileDetail() {
                   fontSize: 12, fontWeight: 500,
                   border: "1px solid #f0f0f5",
                 }}>
-                  <Calendar style={{ width: 12, height: 12 }} />
-                  {date}
+                  <Layers style={{ width: 12, height: 12 }} />
+                  {file.lineCount.toLocaleString()} {isRtl ? "קווים" : "lines"}
                 </span>
-              </div>
-
-              {/* Tags */}
-              {tags.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 24 }}>
-                  {tags.map((tag) => (
-                    <Link
-                      key={tag}
-                      href={`/free/browse?search=${encodeURIComponent(tag)}`}
-                      style={{
-                        padding: "4px 10px", borderRadius: 12,
-                        fontSize: 11, fontWeight: 500,
-                        background: "#f9fafb", color: "#6b7280",
-                        textDecoration: "none",
-                        border: "1px solid #e5e7eb",
-                        transition: "all 0.15s",
-                      }}
-                    >
-                      #{tag}
-                    </Link>
-                  ))}
-                </div>
               )}
-
-              {/* Download button */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <button
-                  onClick={handleDownload}
-                  disabled={downloading}
-                  style={{
-                    width: "100%",
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-                    padding: "16px 24px", borderRadius: 14,
-                    fontSize: 16, fontWeight: 700, color: "#fff",
-                    background: "linear-gradient(135deg, #0d9488, #0891b2)",
-                    border: "none", cursor: "pointer",
-                    boxShadow: "0 4px 20px rgba(13,148,136,0.3)",
-                    opacity: downloading ? 0.6 : 1,
-                    transition: "all 0.15s",
-                  }}
-                >
-                  {downloading ? (
-                    <>
-                      <div style={{ width: 20, height: 20, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-                      {isRtl ? "מוריד..." : "Downloading..."}
-                    </>
-                  ) : appUser ? (
-                    <>
-                      <Download style={{ width: 20, height: 20 }} />
-                      {isRtl ? "הורד קובץ DXF" : "Download DXF File"}
-                    </>
-                  ) : (
-                    <>
-                      <Lock style={{ width: 20, height: 20 }} />
-                      {isRtl ? "התחבר כדי להוריד" : "Login to Download"}
-                    </>
-                  )}
-                </button>
-
-                <button
-                  onClick={handleShare}
-                  style={{
-                    width: "100%",
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                    padding: "12px 24px", borderRadius: 12,
-                    fontSize: 13, fontWeight: 600, color: "#6b7280",
-                    background: "#fff", border: "1.5px solid #e5e7eb",
-                    cursor: "pointer", transition: "all 0.15s",
-                  }}
-                >
-                  <Share2 style={{ width: 16, height: 16 }} />
-                  {isRtl ? "שתף" : "Share"}
-                </button>
-
-                {!appUser && (
-                  <p style={{ fontSize: 12, color: "#9ca3af", textAlign: "center" }}>
-                    {isRtl ? "נדרשת הרשמה חינמית להורדת קבצים" : "Free registration required to download files"}
-                  </p>
-                )}
-              </div>
-
-              {/* Created with dxfai.ai */}
-              <div style={{
-                marginTop: 28, padding: 16, borderRadius: 14,
-                background: "linear-gradient(135deg, #f0fdfa, #ccfbf1)",
-                border: "1px solid #99f6e4",
+              {file.downloadCount != null && file.downloadCount > 0 && (
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "6px 12px", borderRadius: 8,
+                  background: "#f9fafb", color: "#6b7280",
+                  fontSize: 12, fontWeight: 500,
+                  border: "1px solid #f0f0f5",
+                }}>
+                  <Download style={{ width: 12, height: 12 }} />
+                  {file.downloadCount} {isRtl ? "הורדות" : "downloads"}
+                </span>
+              )}
+              <span style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                padding: "6px 12px", borderRadius: 8,
+                background: "#f9fafb", color: "#6b7280",
+                fontSize: 12, fontWeight: 500,
+                border: "1px solid #f0f0f5",
               }}>
-                <p style={{ fontSize: 12, color: "#0d9488", fontWeight: 600, marginBottom: 8 }}>
-                  {isRtl ? "נוצר עם" : "Created with"}
-                </p>
-                <Link
-                  href="/"
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: 8,
-                    fontSize: 14, fontWeight: 700, color: "#042f2e",
-                    textDecoration: "none",
-                  }}
-                >
-                  <div style={{
-                    width: 28, height: 28, borderRadius: 7,
-                    background: "linear-gradient(135deg, #0d9488, #0891b2)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    <Zap style={{ width: 14, height: 14, color: "#fff" }} />
-                  </div>
-                  dxfai.ai — AI-Powered DXF Creation
-                </Link>
-                <p style={{ fontSize: 12, color: "#6b7280", marginTop: 8, lineHeight: 1.5 }}>
-                  {isRtl
-                    ? "צרו קבצי DXF משלכם עם AI. המרת תמונות, יצירת עיצובים ועוד."
-                    : "Create your own DXF files with AI. Convert images, generate designs, and more."}
-                </p>
+                <Calendar style={{ width: 12, height: 12 }} />
+                {date}
+              </span>
+            </div>
+
+            {/* Tags */}
+            {tags.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 24 }}>
+                {tags.map((tag) => (
+                  <Link
+                    key={tag}
+                    href={`/free/browse?search=${encodeURIComponent(tag)}`}
+                    style={{
+                      padding: "4px 10px", borderRadius: 12,
+                      fontSize: 11, fontWeight: 500,
+                      background: "#f9fafb", color: "#6b7280",
+                      textDecoration: "none",
+                      border: "1px solid #e5e7eb",
+                    }}
+                  >
+                    #{tag}
+                  </Link>
+                ))}
               </div>
+            )}
+
+            {/* Download button */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <button
+                onClick={handleDownload}
+                disabled={downloading}
+                style={{
+                  width: "100%",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                  padding: "16px 24px", borderRadius: 14,
+                  fontSize: 16, fontWeight: 700, color: "#fff",
+                  background: "linear-gradient(135deg, #0d9488, #0891b2)",
+                  border: "none", cursor: "pointer",
+                  boxShadow: "0 4px 20px rgba(13,148,136,0.3)",
+                  opacity: downloading ? 0.6 : 1,
+                  transition: "all 0.15s",
+                }}
+              >
+                {downloading ? (
+                  <>
+                    <div style={{ width: 20, height: 20, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                    {isRtl ? "מוריד..." : "Downloading..."}
+                  </>
+                ) : appUser ? (
+                  <>
+                    <Download style={{ width: 20, height: 20 }} />
+                    {isRtl ? "הורד קובץ DXF" : "Download DXF File"}
+                  </>
+                ) : (
+                  <>
+                    <Lock style={{ width: 20, height: 20 }} />
+                    {isRtl ? "התחבר כדי להוריד" : "Login to Download"}
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={handleShare}
+                style={{
+                  width: "100%",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  padding: "12px 24px", borderRadius: 12,
+                  fontSize: 13, fontWeight: 600, color: "#6b7280",
+                  background: "#fff", border: "1.5px solid #e5e7eb",
+                  cursor: "pointer", transition: "all 0.15s",
+                }}
+              >
+                <Share2 style={{ width: 16, height: 16 }} />
+                {isRtl ? "שתף" : "Share"}
+              </button>
+
+              {!appUser && (
+                <p style={{ fontSize: 12, color: "#9ca3af", textAlign: "center" }}>
+                  {isRtl ? "נדרשת הרשמה חינמית להורדת קבצים" : "Free registration required to download files"}
+                </p>
+              )}
+            </div>
+
+            {/* Created with dxfai.ai */}
+            <div style={{
+              marginTop: 28, padding: 16, borderRadius: 14,
+              background: "linear-gradient(135deg, #f0fdfa, #ccfbf1)",
+              border: "1px solid #99f6e4",
+            }}>
+              <p style={{ fontSize: 12, color: "#0d9488", fontWeight: 600, marginBottom: 8 }}>
+                {isRtl ? "נוצר עם" : "Created with"}
+              </p>
+              <Link
+                href="/"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  fontSize: 14, fontWeight: 700, color: "#042f2e",
+                  textDecoration: "none",
+                }}
+              >
+                <div style={{
+                  width: 28, height: 28, borderRadius: 7,
+                  background: "linear-gradient(135deg, #0d9488, #0891b2)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <Zap style={{ width: 14, height: 14, color: "#fff" }} />
+                </div>
+                dxfai.ai — AI-Powered DXF Creation
+              </Link>
+              <p style={{ fontSize: 12, color: "#6b7280", marginTop: 8, lineHeight: 1.5 }}>
+                {isRtl
+                  ? "צרו קבצי DXF משלכם עם AI. המרת תמונות, יצירת עיצובים ועוד."
+                  : "Create your own DXF files with AI. Convert images, generate designs, and more."}
+              </p>
             </div>
           </div>
         </div>
@@ -403,14 +432,31 @@ export default function FreeDxfFileDetail() {
       {/* ── Auth Dialog ── */}
       <AuthDialog
         open={authOpen}
-        onOpenChange={setAuthOpen}
+        onOpenChange={(open) => {
+          setAuthOpen(open);
+          // If user closed dialog without logging in, cancel pending download
+          if (!open) pendingDownload.current = false;
+        }}
         authReason="unregistered"
         initialMode="register"
         onSuccess={(user) => {
+          // 1. Update local auth state
           setAppUser({ id: user.id, email: user.email });
+          // 2. Close dialog — AuthDialog already calls onOpenChange(false) before onSuccess,
+          //    but we call it again here as a safety net
           setAuthOpen(false);
-          // Retry download after login
-          setTimeout(() => handleDownload(), 300);
+          // 3. If download was pending, trigger it after state settles
+          if (pendingDownload.current && file) {
+            pendingDownload.current = false;
+            setTimeout(() => {
+              setDownloading(true);
+              try {
+                triggerDownload(file.id, file.title);
+              } finally {
+                setTimeout(() => setDownloading(false), 1500);
+              }
+            }, 400);
+          }
         }}
       />
     </div>
