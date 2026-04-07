@@ -422,10 +422,33 @@ router.get("/api/freedxf/me", async (req, res) => {
   }
 });
 
-// ─── Logout ──────────────────────────────────────────────────────────────────
+/// ─── Logout ──────────────────────────────────────────────────────────────────
 router.post("/api/freedxf/logout", (_req, res) => {
   res.clearCookie(FREEDXF_COOKIE, { path: "/", sameSite: "none", secure: true });
   return res.json({ success: true });
+});
+
+// ─── Image proxy (for CloudFront preview images) ─────────────────────────────
+// Proxies preview images through the server to avoid browser CORS/network issues
+router.get("/api/freedxf/image-proxy", async (req, res) => {
+  const url = req.query.url as string;
+  if (!url) return res.status(400).json({ error: "Missing url" });
+  // Only allow our CloudFront domain
+  if (!url.startsWith("https://d2xsxph8kpxj0f.cloudfront.net/")) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return res.status(response.status).end();
+    const contentType = response.headers.get("content-type") || "image/png";
+    const buffer = await response.arrayBuffer();
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    return res.send(Buffer.from(buffer));
+  } catch (err) {
+    console.error("[image-proxy]", err);
+    return res.status(500).end();
+  }
 });
 
 export default router;

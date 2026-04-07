@@ -194,16 +194,20 @@ export default function FreeDxfFileDetail() {
                 padding: 32,
                 position: "relative",
               }}>
-                {file.svgPreview ? (
-                  <div
-                    style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
-                    dangerouslySetInnerHTML={{ __html: file.svgPreview }}
-                  />
-                ) : file.previewImageUrl ? (
+                {file.previewImageUrl ? (
                   <img
-                    src={file.previewImageUrl}
+                    src={`/api/freedxf/image-proxy?url=${encodeURIComponent(file.previewImageUrl)}`}
                     alt={title}
                     style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+                  />
+                ) : file.svgPreview ? (
+                  <div
+                    style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    dangerouslySetInnerHTML={{ __html:
+                      (file.svgPreview.includes('</svg>') ? file.svgPreview : file.svgPreview + '</svg>')
+                        .replace(/stroke-width="[^"]*"/g, 'stroke-width="1.5"')
+                        .replace(/<svg([^>]*)>/, '<svg$1 width="100%" height="100%" preserveAspectRatio="xMidYMid meet">')
+                    }}
                   />
                 ) : (
                   <Layers style={{ width: 80, height: 80, color: "#e5e7eb" }} />

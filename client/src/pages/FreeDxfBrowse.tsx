@@ -344,7 +344,7 @@ function BrowseCard({ file, getTitle, isRtl }: {
       <div style={{ position: "relative", aspectRatio: "1", background: "#f9fafb", overflow: "hidden" }}>
         {file.previewImageUrl ? (
           <img
-            src={file.previewImageUrl}
+            src={`/api/freedxf/image-proxy?url=${encodeURIComponent(file.previewImageUrl)}`}
             alt={title}
             style={{
               width: "100%", height: "100%", objectFit: "contain", padding: 14,
@@ -354,15 +354,13 @@ function BrowseCard({ file, getTitle, isRtl }: {
             loading="lazy"
           />
         ) : file.svgPreview ? (
-          <img
-            src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(file.svgPreview.replace(/stroke-width="[^"]*"/g, 'stroke-width="2"'))}`}
-            alt={title}
-            style={{
-              width: "100%", height: "100%", objectFit: "contain",
-              padding: 14,
-              transition: "transform 0.3s ease",
-              transform: hovered ? "scale(1.05)" : "scale(1)",
+          <div
+            dangerouslySetInnerHTML={{ __html:
+              (file.svgPreview.includes('</svg>') ? file.svgPreview : file.svgPreview + '</svg>')
+                .replace(/stroke-width="[^"]*"/g, 'stroke-width="1.5"')
+                .replace(/<svg([^>]*)>/, '<svg$1 width="100%" height="100%" preserveAspectRatio="xMidYMid meet">')
             }}
+            style={{ width: "calc(100% - 28px)", height: "calc(100% - 28px)", margin: 14, transition: "transform 0.3s ease", transform: hovered ? "scale(1.05)" : "scale(1)" }}
           />
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
