@@ -2405,7 +2405,7 @@ export const appRouter = router({
   // Shared Files (FreeDXF Community)
   // ═══════════════════════════════════════════════════════════════════════════
   sharedFiles: router({
-    /** Submit a file for sharing (authenticated user) */
+    /** Submit a file for sharing (authenticated user) — by userActionId */
     submit: publicProcedure
       .input(z.object({
         userActionId: z.number(),
@@ -2416,7 +2416,6 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        // Get the user action
         const [action] = await db
           .select()
           .from(userActions)
@@ -2425,7 +2424,6 @@ export const appRouter = router({
         if (!action) throw new TRPCError({ code: "NOT_FOUND", message: "פעולה לא נמצאה" });
         if (!action.dxfUrl) throw new TRPCError({ code: "BAD_REQUEST", message: "אין קובץ DXF לשיתוף" });
 
-        // Check if already shared
         const [existing] = await db
           .select({ id: sharedFiles.id })
           .from(sharedFiles)
@@ -2442,6 +2440,43 @@ export const appRouter = router({
           svgPreview: action.svgPreview ?? null,
           sourceImageUrl: action.sourceImageUrl ?? null,
           lineCount: action.segmentCount ?? 0,
+        });
+
+        return { success: true };
+      }),
+
+    /** Submit a file for sharing directly (from DxfDownloadDialog) */
+    submitDirect: publicProcedure
+      .input(z.object({
+        dxfUrl: z.string(),
+        svgPreview: z.string().optional(),
+        previewImageUrl: z.string().optional(),
+        feature: z.string().optional(),
+        lineCount: z.number().optional(),
+        filename: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const appUser = getAppUserFromCookie((ctx.req as any).cookies);
+        if (!appUser) throw new TRPCError({ code: "UNAUTHORIZED", message: "יש להתחבר כדי לשתף" });
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        // Check if this DXF URL was already shared by this user
+        const [existing] = await db
+          .select({ id: sharedFiles.id })
+          .from(sharedFiles)
+          .where(and(eq(sharedFiles.dxfUrl, input.dxfUrl), eq(sharedFiles.appUserId, appUser.userId)))
+          .limit(1);
+        if (existing) throw new TRPCError({ code: "CONFLICT", message: "הקובץ כבר נשלח לשיתוף" });
+
+        await db.insert(sharedFiles).values({
+          appUserId: appUser.userId,
+          feature: input.feature ?? "convert",
+          dxfUrl: input.dxfUrl,
+          previewImageUrl: input.previewImageUrl ?? null,
+          svgPreview: input.svgPreview ?? null,
+          lineCount: input.lineCount ?? 0,
+          title: input.filename ?? null,
         });
 
         return { success: true };

@@ -121,7 +121,7 @@ export default function FreeDxfBrowse() {
     <div className="min-h-screen" style={{ background: "#fafafa" }} dir={isRtl ? "rtl" : "ltr"}>
       {/* ── Header ── */}
       <div style={{
-        background: "linear-gradient(160deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%)",
+        background: "linear-gradient(160deg, #042f2e 0%, #134e4a 50%, #0f766e 100%)",
         padding: "0 0 32px",
       }}>
         {/* Top bar */}
@@ -188,9 +188,9 @@ export default function FreeDxfBrowse() {
             style={{
               padding: "6px 14px", borderRadius: 16,
               fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer",
-              background: !activeCategory ? "linear-gradient(135deg, #7c3aed, #6366f1)" : "#fff",
+              background: !activeCategory ? "linear-gradient(135deg, #0d9488, #0891b2)" : "#fff",
               color: !activeCategory ? "#fff" : "#4b5563",
-              boxShadow: !activeCategory ? "0 2px 8px rgba(124,58,237,0.2)" : "0 1px 3px rgba(0,0,0,0.06)",
+              boxShadow: !activeCategory ? "0 2px 8px rgba(13,148,136,0.2)" : "0 1px 3px rgba(0,0,0,0.06)",
               transition: "all 0.15s",
             }}
           >
@@ -203,9 +203,9 @@ export default function FreeDxfBrowse() {
               style={{
                 padding: "6px 14px", borderRadius: 16,
                 fontSize: 12, fontWeight: 500, border: "none", cursor: "pointer",
-                background: activeCategory === cat.name ? "linear-gradient(135deg, #7c3aed, #6366f1)" : "#fff",
+                background: activeCategory === cat.name ? "linear-gradient(135deg, #0d9488, #0891b2)" : "#fff",
                 color: activeCategory === cat.name ? "#fff" : "#4b5563",
-                boxShadow: activeCategory === cat.name ? "0 2px 8px rgba(124,58,237,0.2)" : "0 1px 3px rgba(0,0,0,0.06)",
+                boxShadow: activeCategory === cat.name ? "0 2px 8px rgba(13,148,136,0.2)" : "0 1px 3px rgba(0,0,0,0.06)",
                 transition: "all 0.15s",
               }}
             >
@@ -226,8 +226,8 @@ export default function FreeDxfBrowse() {
               onClick={clearFilters}
               style={{
                 display: "flex", alignItems: "center", gap: 4,
-                fontSize: 12, color: "#7c3aed", background: "#f5f3ff",
-                border: "1px solid #ddd6fe", borderRadius: 8,
+                        color: "#0d9488", background: "#f0fdfa",
+                border: "1px solid #99f6e4", borderRadius: 8,
                 padding: "4px 10px", cursor: "pointer",
               }}
             >
@@ -260,9 +260,9 @@ export default function FreeDxfBrowse() {
                   style={{
                     padding: "12px 32px", borderRadius: 12,
                     fontSize: 13, fontWeight: 600,
-                    color: "#7c3aed", background: "#fff",
-                    border: "1.5px solid #ddd6fe", cursor: "pointer",
-                    boxShadow: "0 2px 8px rgba(124,58,237,0.08)",
+                    color: "#0d9488", background: "#fff",
+                    border: "1.5px solid #99f6e4", cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(13,148,136,0.08)",
                     opacity: loadingMore ? 0.5 : 1,
                   }}
                 >
@@ -275,13 +275,13 @@ export default function FreeDxfBrowse() {
           <div style={{ textAlign: "center", padding: "60px 20px" }}>
             <div style={{
               width: 72, height: 72, borderRadius: 18,
-              background: "linear-gradient(135deg, #f5f3ff, #ede9fe)",
+              background: "linear-gradient(135deg, #f0fdfa, #ccfbf1)",
               display: "flex", alignItems: "center", justifyContent: "center",
               margin: "0 auto 16px",
             }}>
-              <SlidersHorizontal style={{ width: 32, height: 32, color: "#c4b5fd" }} />
+              <SlidersHorizontal style={{ width: 32, height: 32, color: "#99f6e4" }} />
             </div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: "#1e1b4b", marginBottom: 6 }}>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: "#042f2e", marginBottom: 6 }}>
               {isRtl ? "לא נמצאו תוצאות" : "No results found"}
             </h3>
             <p style={{ fontSize: 13, color: "#9ca3af", marginBottom: 20 }}>
@@ -293,9 +293,9 @@ export default function FreeDxfBrowse() {
                 style={{
                   padding: "10px 24px", borderRadius: 10,
                   fontSize: 13, fontWeight: 600,
-                  color: "#fff", background: "linear-gradient(135deg, #7c3aed, #6366f1)",
+                  color: "#fff", background: "linear-gradient(135deg, #0d9488, #0891b2)",
                   border: "none", cursor: "pointer",
-                  boxShadow: "0 2px 8px rgba(124,58,237,0.2)",
+                  boxShadow: "0 2px 8px rgba(13,148,136,0.2)",
                 }}
               >
                 {isRtl ? "נקה הכל" : "Clear All"}
@@ -361,21 +361,21 @@ function BrowseCard({ file, getTitle, isRtl }: {
           <span style={{
             padding: "2px 6px", borderRadius: 5,
             fontSize: 9, fontWeight: 700, color: "#fff",
-            background: "linear-gradient(135deg, #10b981, #059669)",
+            background: "linear-gradient(135deg, #0d9488, #14b8a6)",
           }}>
             {isRtl ? "חינם" : "FREE"}
           </span>
         </div>
         <div style={{
           position: "absolute", inset: 0,
-          background: "rgba(124,58,237,0.05)",
+          background: "rgba(13,148,136,0.05)",
           display: "flex", alignItems: "center", justifyContent: "center",
           opacity: hovered ? 1 : 0,
           transition: "opacity 0.2s",
         }}>
           <span style={{
             padding: "6px 12px", borderRadius: 8,
-            background: "rgba(255,255,255,0.95)", color: "#7c3aed",
+            background: "rgba(255,255,255,0.95)", color: "#0d9488",
             fontSize: 11, fontWeight: 600,
             display: "flex", alignItems: "center", gap: 4,
           }}>
@@ -386,7 +386,7 @@ function BrowseCard({ file, getTitle, isRtl }: {
       </div>
       <div style={{ padding: 10 }}>
         <h3 style={{
-          fontSize: 12, fontWeight: 600, color: hovered ? "#7c3aed" : "#1f2937",
+          fontSize: 12, fontWeight: 600, color: hovered ? "#0d9488" : "#1f2937",
           overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
           transition: "color 0.15s",
         }}>
@@ -408,7 +408,7 @@ function BrowseCard({ file, getTitle, isRtl }: {
             )}
           </div>
           {file.category && (
-            <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 3, background: "#f5f3ff", color: "#7c3aed", fontWeight: 500 }}>
+            <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 3, background: "#f0fdfa", color: "#0d9488", fontWeight: 500 }}>
               {file.category}
             </span>
           )}

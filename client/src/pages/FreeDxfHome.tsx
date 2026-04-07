@@ -1,6 +1,6 @@
 /**
  * FreeDXF Home — community free DXF files page at /free
- * Premium design with gradients, animations, hover effects
+ * Teal/Emerald color scheme — distinct from main site purple but same brand style
  */
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
@@ -43,6 +43,37 @@ const CATEGORY_ICONS: Record<string, string> = {
   "Architecture": "🏛️",
   "Automotive": "🚗",
   "Other": "📁",
+};
+
+/* ── Color Palette (Teal/Emerald) ── */
+const C = {
+  // Hero gradient
+  heroFrom: "#042f2e",     // teal-950
+  heroMid: "#134e4a",      // teal-900
+  heroTo: "#0d9488",       // teal-600
+  // Accents
+  accent: "#0d9488",       // teal-600
+  accentLight: "#14b8a6",  // teal-500
+  accentDark: "#0f766e",   // teal-700
+  accentBg: "#f0fdfa",     // teal-50
+  accentBg2: "#ccfbf1",    // teal-100
+  accentBorder: "#99f6e4",  // teal-200
+  accentText: "#115e59",   // teal-800
+  // Glow
+  glow1: "rgba(20,184,166,0.3)",
+  glow2: "rgba(13,148,136,0.25)",
+  // Shadows
+  shadow: "rgba(13,148,136,0.25)",
+  shadowDeep: "rgba(13,148,136,0.3)",
+  // Hover overlay
+  overlay: "rgba(13,148,136,0.06)",
+  // CTA gradient
+  ctaFrom: "#f0fdfa",
+  ctaMid: "#ccfbf1",
+  ctaTo: "#e0f2fe",
+  // Button gradient
+  btnFrom: "#0d9488",
+  btnTo: "#0891b2",        // cyan-600
 };
 
 export default function FreeDxfHome() {
@@ -94,17 +125,17 @@ export default function FreeDxfHome() {
             {isRtl ? "חזרה לכלי העיצוב" : "Back to Design Tools"}
           </Link>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ width: 24, height: 24, borderRadius: 6, background: "linear-gradient(135deg,#7c3aed,#6366f1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ color: "#fff", fontWeight: 800, fontSize: 8 }}>AI</span>
+            <div style={{ width: 24, height: 24, borderRadius: 6, background: `linear-gradient(135deg, ${C.accent}, ${C.btnTo})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: "#fff", fontWeight: 800, fontSize: 8 }}>DXF</span>
             </div>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b" }}>FreeDXF</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: C.heroFrom }}>FreeDXF</span>
           </div>
         </div>
       </div>
 
       {/* ── Hero Section ── */}
       <section style={{
-        background: "linear-gradient(160deg, #1e1b4b 0%, #312e81 30%, #4c1d95 60%, #6d28d9 100%)",
+        background: `linear-gradient(160deg, ${C.heroFrom} 0%, ${C.heroMid} 30%, ${C.accentDark} 60%, ${C.heroTo} 100%)`,
         position: "relative",
         overflow: "hidden",
       }}>
@@ -117,15 +148,15 @@ export default function FreeDxfHome() {
         </div>
 
         {/* Glowing orbs */}
-        <div style={{ position: "absolute", top: -80, left: "20%", width: 250, height: 250, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%)" }} />
-        <div style={{ position: "absolute", bottom: -60, right: "10%", width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%)" }} />
+        <div style={{ position: "absolute", top: -80, left: "20%", width: 250, height: 250, borderRadius: "50%", background: `radial-gradient(circle, ${C.glow1} 0%, transparent 70%)` }} />
+        <div style={{ position: "absolute", bottom: -60, right: "10%", width: 200, height: 200, borderRadius: "50%", background: `radial-gradient(circle, ${C.glow2} 0%, transparent 70%)` }} />
 
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "60px 20px 70px", position: "relative" }}>
           <div style={{ textAlign: "center", maxWidth: 700, margin: "0 auto" }}>
             {/* Badge */}
             <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.1)", backdropFilter: "blur(10px)", borderRadius: 20, padding: "6px 16px", marginBottom: 20, border: "1px solid rgba(255,255,255,0.15)" }}>
-              <Gift style={{ width: 14, height: 14, color: "#c4b5fd" }} />
-              <span style={{ color: "#e9d5ff", fontWeight: 600, fontSize: 12, letterSpacing: "0.02em" }}>
+              <Gift style={{ width: 14, height: 14, color: C.accentBorder }} />
+              <span style={{ color: C.accentBorder, fontWeight: 600, fontSize: 12, letterSpacing: "0.02em" }}>
                 {isRtl ? "100% חינם — ללא הגבלה" : "100% Free — No Limits"}
               </span>
             </div>
@@ -173,17 +204,14 @@ export default function FreeDxfHome() {
                   placeholder={isRtl ? "חפשו עיצובים, לוגואים, דקורציה..." : "Search designs, logos, decorations..."}
                   style={{
                     width: "100%",
-                    [isRtl ? "paddingRight" : "paddingLeft"]: 48,
-                    [isRtl ? "paddingLeft" : "paddingRight"]: 120,
-                    padding: "16px 120px 16px 48px",
-                    ...(isRtl ? { paddingRight: 48, paddingLeft: 120 } : {}),
+                    padding: isRtl ? "16px 48px 16px 120px" : "16px 120px 16px 48px",
                     borderRadius: 16,
                     background: "#fff",
                     color: "#1f2937",
                     fontSize: 15,
                     border: "none",
                     outline: "none",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.1)",
+                    boxShadow: `0 8px 32px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.1)`,
                     direction: isRtl ? "rtl" : "ltr",
                   }}
                 />
@@ -196,13 +224,13 @@ export default function FreeDxfHome() {
                     transform: "translateY(-50%)",
                     padding: "10px 20px",
                     borderRadius: 12,
-                    background: "linear-gradient(135deg, #7c3aed, #6366f1)",
+                    background: `linear-gradient(135deg, ${C.btnFrom}, ${C.btnTo})`,
                     color: "#fff",
                     fontSize: 13,
                     fontWeight: 600,
                     border: "none",
                     cursor: "pointer",
-                    boxShadow: "0 2px 8px rgba(124,58,237,0.3)",
+                    boxShadow: `0 2px 8px ${C.shadow}`,
                   }}
                 >
                   {isRtl ? "חיפוש" : "Search"}
@@ -230,7 +258,7 @@ export default function FreeDxfHome() {
       {/* ── Categories Grid ── */}
       {categories.length > 0 && (
         <section style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 20px 20px" }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e1b4b", marginBottom: 16 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: C.heroFrom, marginBottom: 16 }}>
             {isRtl ? "קטגוריות" : "Categories"}
           </h2>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -239,9 +267,9 @@ export default function FreeDxfHome() {
               style={{
                 display: "inline-flex", alignItems: "center", gap: 6,
                 padding: "8px 18px", borderRadius: 20,
-                background: "linear-gradient(135deg, #7c3aed, #6366f1)", color: "#fff",
+                background: `linear-gradient(135deg, ${C.btnFrom}, ${C.btnTo})`, color: "#fff",
                 fontSize: 13, fontWeight: 600, textDecoration: "none",
-                boxShadow: "0 2px 8px rgba(124,58,237,0.2)",
+                boxShadow: `0 2px 8px ${C.shadow}`,
                 transition: "all 0.15s",
               }}
             >
@@ -259,7 +287,7 @@ export default function FreeDxfHome() {
                   border: "1px solid #e5e7eb",
                   transition: "all 0.15s",
                 }}
-                onMouseEnter={e => { e.currentTarget.style.background = "#f5f3ff"; e.currentTarget.style.color = "#7c3aed"; e.currentTarget.style.borderColor = "#ddd6fe"; }}
+                onMouseEnter={e => { e.currentTarget.style.background = C.accentBg; e.currentTarget.style.color = C.accent; e.currentTarget.style.borderColor = C.accentBorder; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "#f9fafb"; e.currentTarget.style.color = "#4b5563"; e.currentTarget.style.borderColor = "#e5e7eb"; }}
               >
                 <span>{CATEGORY_ICONS[cat.name] || "📁"}</span>
@@ -273,12 +301,12 @@ export default function FreeDxfHome() {
       {/* ── Latest Files Grid ── */}
       <section style={{ maxWidth: 1200, margin: "0 auto", padding: "20px 20px 60px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e1b4b" }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: C.heroFrom }}>
             {isRtl ? "קבצים אחרונים" : "Latest Files"}
           </h2>
           <Link
             href="/free/browse"
-            style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 600, color: "#7c3aed", textDecoration: "none" }}
+            style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 600, color: C.accent, textDecoration: "none" }}
           >
             {isRtl ? "לכל הקבצים" : "Browse All"}
             <ArrowRight style={{ width: 14, height: 14 }} />
@@ -302,13 +330,13 @@ export default function FreeDxfHome() {
           <div style={{ textAlign: "center", padding: "60px 20px" }}>
             <div style={{
               width: 80, height: 80, borderRadius: 20,
-              background: "linear-gradient(135deg, #f5f3ff, #ede9fe)",
+              background: `linear-gradient(135deg, ${C.accentBg}, ${C.accentBg2})`,
               display: "flex", alignItems: "center", justifyContent: "center",
               margin: "0 auto 20px",
             }}>
-              <Layers style={{ width: 36, height: 36, color: "#c4b5fd" }} />
+              <Layers style={{ width: 36, height: 36, color: C.accentBorder }} />
             </div>
-            <h3 style={{ fontSize: 20, fontWeight: 700, color: "#1e1b4b", marginBottom: 8 }}>
+            <h3 style={{ fontSize: 20, fontWeight: 700, color: C.heroFrom, marginBottom: 8 }}>
               {isRtl ? "אין קבצים עדיין" : "No files yet"}
             </h3>
             <p style={{ fontSize: 14, color: "#9ca3af", marginBottom: 24, maxWidth: 400, margin: "0 auto 24px", lineHeight: 1.6 }}>
@@ -321,9 +349,9 @@ export default function FreeDxfHome() {
               style={{
                 display: "inline-flex", alignItems: "center", gap: 8,
                 padding: "12px 28px", borderRadius: 12,
-                background: "linear-gradient(135deg, #7c3aed, #6366f1)", color: "#fff",
+                background: `linear-gradient(135deg, ${C.btnFrom}, ${C.btnTo})`, color: "#fff",
                 fontSize: 14, fontWeight: 600, textDecoration: "none",
-                boxShadow: "0 4px 16px rgba(124,58,237,0.25)",
+                boxShadow: `0 4px 16px ${C.shadow}`,
               }}
             >
               <Zap style={{ width: 16, height: 16 }} />
@@ -335,21 +363,21 @@ export default function FreeDxfHome() {
 
       {/* ── CTA Banner ── */}
       <section style={{
-        background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 40%, #e0e7ff 100%)",
+        background: `linear-gradient(135deg, ${C.ctaFrom} 0%, ${C.ctaMid} 40%, ${C.ctaTo} 100%)`,
         padding: "60px 20px",
         textAlign: "center",
       }}>
         <div style={{ maxWidth: 600, margin: "0 auto" }}>
           <div style={{
             width: 56, height: 56, borderRadius: 14,
-            background: "linear-gradient(135deg, #7c3aed, #6366f1)",
+            background: `linear-gradient(135deg, ${C.btnFrom}, ${C.btnTo})`,
             display: "flex", alignItems: "center", justifyContent: "center",
             margin: "0 auto 20px",
-            boxShadow: "0 4px 16px rgba(124,58,237,0.25)",
+            boxShadow: `0 4px 16px ${C.shadow}`,
           }}>
             <Zap style={{ width: 24, height: 24, color: "#fff" }} />
           </div>
-          <h2 style={{ fontSize: "clamp(1.3rem, 3vw, 2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 10, letterSpacing: "-0.02em" }}>
+          <h2 style={{ fontSize: "clamp(1.3rem, 3vw, 2rem)", fontWeight: 800, color: C.heroFrom, marginBottom: 10, letterSpacing: "-0.02em" }}>
             {isRtl ? "צרו קבצי DXF משלכם" : "Create Your Own DXF Files"}
           </h2>
           <p style={{ fontSize: 15, color: "#6b7280", marginBottom: 24, lineHeight: 1.7, maxWidth: 450, margin: "0 auto 24px" }}>
@@ -362,9 +390,9 @@ export default function FreeDxfHome() {
             style={{
               display: "inline-flex", alignItems: "center", gap: 8,
               padding: "14px 32px", borderRadius: 12,
-              background: "linear-gradient(135deg, #7c3aed, #6366f1)", color: "#fff",
+              background: `linear-gradient(135deg, ${C.btnFrom}, ${C.btnTo})`, color: "#fff",
               fontSize: 15, fontWeight: 700, textDecoration: "none",
-              boxShadow: "0 4px 20px rgba(124,58,237,0.3)",
+              boxShadow: `0 4px 20px ${C.shadowDeep}`,
               transition: "transform 0.15s, box-shadow 0.15s",
             }}
           >
@@ -443,8 +471,8 @@ function FileCard({ file, getTitle, isRtl }: {
           <span style={{
             padding: "3px 8px", borderRadius: 6,
             fontSize: 10, fontWeight: 700, color: "#fff",
-            background: "linear-gradient(135deg, #10b981, #059669)",
-            boxShadow: "0 2px 6px rgba(16,185,129,0.3)",
+            background: `linear-gradient(135deg, ${C.accent}, ${C.accentLight})`,
+            boxShadow: `0 2px 6px ${C.shadow}`,
           }}>
             {isRtl ? "חינם" : "FREE"}
           </span>
@@ -453,14 +481,14 @@ function FileCard({ file, getTitle, isRtl }: {
         {/* Hover overlay */}
         <div style={{
           position: "absolute", inset: 0,
-          background: "rgba(124,58,237,0.06)",
+          background: C.overlay,
           display: "flex", alignItems: "center", justifyContent: "center",
           opacity: hovered ? 1 : 0,
           transition: "opacity 0.2s ease",
         }}>
           <span style={{
             padding: "8px 16px", borderRadius: 10,
-            background: "rgba(255,255,255,0.95)", color: "#7c3aed",
+            background: "rgba(255,255,255,0.95)", color: C.accent,
             fontSize: 12, fontWeight: 600,
             boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
             display: "flex", alignItems: "center", gap: 4,
@@ -474,7 +502,7 @@ function FileCard({ file, getTitle, isRtl }: {
       {/* Info */}
       <div style={{ padding: 12 }}>
         <h3 style={{
-          fontSize: 13, fontWeight: 600, color: hovered ? "#7c3aed" : "#1f2937",
+          fontSize: 13, fontWeight: 600, color: hovered ? C.accent : "#1f2937",
           overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
           transition: "color 0.15s",
         }}>
@@ -498,7 +526,7 @@ function FileCard({ file, getTitle, isRtl }: {
           {file.category && (
             <span style={{
               fontSize: 10, padding: "2px 6px", borderRadius: 4,
-              background: "#f5f3ff", color: "#7c3aed", fontWeight: 500,
+              background: C.accentBg, color: C.accent, fontWeight: 500,
             }}>
               {file.category}
             </span>

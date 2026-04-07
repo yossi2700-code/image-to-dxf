@@ -19,7 +19,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Download, X, FileCode2, FileText, Loader2, Share2, Settings2 } from "lucide-react";
+import { Download, X, FileCode2, FileText, Loader2, Share2, Settings2, Heart } from "lucide-react";
+import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { saveFileAs } from "@/lib/saveFileAs";
 import { trpc } from "@/lib/trpc";
@@ -233,6 +234,27 @@ export function DxfDownloadDialog({
   const [selectedFormat, setSelectedFormat] = useState<FileFormat>("dxf");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
+  const [hasShared, setHasShared] = useState(false);
+
+  const shareMutation = trpc.sharedFiles.submitDirect.useMutation({
+    onSuccess: () => {
+      setHasShared(true);
+      toast.success(t("shareSubmitted"));
+    },
+    onError: (err) => {
+      if (err.message.includes("כבר נשלח") || err.message.includes("already")) {
+        setHasShared(true);
+        toast.info(t("shareAlreadyShared"));
+      } else if (err.message.includes("להתחבר") || err.message.includes("UNAUTHORIZED")) {
+        toast.error(t("shareLoginRequired"));
+      } else {
+        toast.error(err.message);
+      }
+    },
+  });
+
+  // handleShareToCommunity is defined below after cleanFilename
 
   const isMobile = isMobileDevice();
   const supportsShare = canShareFiles();
@@ -268,7 +290,22 @@ export function DxfDownloadDialog({
   const { t, isRtl } = useLanguage();
   const trackDownloadMutation = trpc.trackDownload.useMutation();
 
-  // ── Download handler ─────────────────────────────────────────────────────
+  const handleShareToCommunity = async () => {
+    setIsSharing(true);
+    try {
+      await shareMutation.mutateAsync({
+        dxfUrl,
+        svgPreview: svgContent || undefined,
+        feature: "convert",
+        lineCount: segmentCount,
+        filename: cleanFilename || defaultFilename,
+      });
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  // ── Download handler ─────────────────────────────────────────────────────────────
 
   const handleDownload = async () => {
     setIsLoading(true);
@@ -496,6 +533,24 @@ export function DxfDownloadDialog({
               )}
               {getButtonLabel()}
             </Button>
+
+            {/* Share to Community */}
+            <button
+              onClick={handleShareToCommunity}
+              disabled={isSharing || hasShared}
+              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                hasShared
+                  ? "bg-pink-50 text-pink-400 border border-pink-200 cursor-default"
+                  : "bg-pink-50 hover:bg-pink-100 text-pink-600 border border-pink-200 hover:border-pink-300 cursor-pointer"
+              }`}
+            >
+              {isSharing ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Heart className={`w-4 h-4 ${hasShared ? "fill-pink-400" : ""}`} />
+              )}
+              {hasShared ? (isRtl ? "נשלח לשיתוף ❤" : "Shared ❤") : t("shareToCommunity")}
+            </button>
 
             {/* Cancel */}
             <Button

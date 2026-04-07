@@ -109,7 +109,7 @@ export default function FreeDxfFileDetail() {
   if (loading) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#fafafa" }}>
-        <div style={{ width: 40, height: 40, border: "3px solid #e5e7eb", borderTopColor: "#7c3aed", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+        <div style={{ width: 40, height: 40, border: "3px solid #e5e7eb", borderTopColor: "#0d9488", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -120,17 +120,17 @@ export default function FreeDxfFileDetail() {
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, background: "#fafafa" }}>
         <div style={{
           width: 72, height: 72, borderRadius: 18,
-          background: "linear-gradient(135deg, #f5f3ff, #ede9fe)",
+          background: "linear-gradient(135deg, #f0fdfa, #ccfbf1)",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
-          <Layers style={{ width: 32, height: 32, color: "#c4b5fd" }} />
+          <Layers style={{ width: 32, height: 32, color: "#99f6e4" }} />
         </div>
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e1b4b" }}>{error || "File not found"}</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: "#042f2e" }}>{error || "File not found"}</h2>
         <Link
           href="/free/browse"
           style={{
             padding: "10px 24px", borderRadius: 10,
-            background: "linear-gradient(135deg, #7c3aed, #6366f1)", color: "#fff",
+            background: "linear-gradient(135deg, #0d9488, #0891b2)", color: "#fff",
             fontSize: 13, fontWeight: 600, textDecoration: "none",
           }}
         >
@@ -212,8 +212,8 @@ export default function FreeDxfFileDetail() {
                   <span style={{
                     padding: "4px 12px", borderRadius: 8,
                     fontSize: 11, fontWeight: 700, color: "#fff",
-                    background: "linear-gradient(135deg, #10b981, #059669)",
-                    boxShadow: "0 2px 8px rgba(16,185,129,0.3)",
+                    background: "linear-gradient(135deg, #0d9488, #14b8a6)",
+                    boxShadow: "0 2px 8px rgba(13,148,136,0.3)",
                   }}>
                     {isRtl ? "חינם" : "FREE"}
                   </span>
@@ -223,7 +223,7 @@ export default function FreeDxfFileDetail() {
 
             {/* ── Details ── */}
             <div>
-              <h1 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: 800, color: "#1e1b4b", marginBottom: 12, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+              <h1 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: 800, color: "#042f2e", marginBottom: 12, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
                 {title}
               </h1>
 
@@ -241,9 +241,9 @@ export default function FreeDxfFileDetail() {
                     style={{
                       display: "inline-flex", alignItems: "center", gap: 6,
                       padding: "6px 12px", borderRadius: 8,
-                      background: "#f5f3ff", color: "#7c3aed",
+                      background: "#f0fdfa", color: "#0d9488",
                       fontSize: 12, fontWeight: 600, textDecoration: "none",
-                      border: "1px solid #ede9fe",
+                      border: "1px solid #ccfbf1",
                     }}
                   >
                     <Tag style={{ width: 12, height: 12 }} />
@@ -318,9 +318,9 @@ export default function FreeDxfFileDetail() {
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
                     padding: "16px 24px", borderRadius: 14,
                     fontSize: 16, fontWeight: 700, color: "#fff",
-                    background: "linear-gradient(135deg, #7c3aed, #6366f1)",
+                    background: "linear-gradient(135deg, #0d9488, #0891b2)",
                     border: "none", cursor: "pointer",
-                    boxShadow: "0 4px 20px rgba(124,58,237,0.3)",
+                    boxShadow: "0 4px 20px rgba(13,148,136,0.3)",
                     opacity: downloading ? 0.6 : 1,
                     transition: "all 0.15s",
                   }}
@@ -368,23 +368,23 @@ export default function FreeDxfFileDetail() {
               {/* Created with dxfai.ai */}
               <div style={{
                 marginTop: 28, padding: 16, borderRadius: 14,
-                background: "linear-gradient(135deg, #f5f3ff, #ede9fe)",
-                border: "1px solid #ddd6fe",
+                background: "linear-gradient(135deg, #f0fdfa, #ccfbf1)",
+                border: "1px solid #99f6e4",
               }}>
-                <p style={{ fontSize: 12, color: "#7c3aed", fontWeight: 600, marginBottom: 8 }}>
+                <p style={{ fontSize: 12, color: "#0d9488", fontWeight: 600, marginBottom: 8 }}>
                   {isRtl ? "נוצר עם" : "Created with"}
                 </p>
                 <Link
                   href="/"
                   style={{
                     display: "inline-flex", alignItems: "center", gap: 8,
-                    fontSize: 14, fontWeight: 700, color: "#1e1b4b",
+                    fontSize: 14, fontWeight: 700, color: "#042f2e",
                     textDecoration: "none",
                   }}
                 >
                   <div style={{
                     width: 28, height: 28, borderRadius: 7,
-                    background: "linear-gradient(135deg, #7c3aed, #6366f1)",
+                    background: "linear-gradient(135deg, #0d9488, #0891b2)",
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}>
                     <Zap style={{ width: 14, height: 14, color: "#fff" }} />

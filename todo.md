@@ -2602,7 +2602,7 @@
 - [x] בניית אתר FreeDXF - חיבור API והורדת קבצים
 - [x] הוספת תפריט ניהול קבצים משותפים (Shared Files) לפאנל הניהול של dxfai.ai
 - [x] אפשרות לקבוע קטגוריה בעת אישור קובץ בניהול
-- [ ] הוספת כפתור "שתף לקהילה" בדפי תוצאות dxfai.ai
+- [x] הוספת כפתור "שתף לקהילה" בדפי תוצאות dxfai.ai
 - [x] Add CNC Relief (תבליט) as a category in FreeDXF shared files
 - [x] Integrate FreeDXF as /free route inside dxfai.ai (not separate project)
 - [x] Create FreeDXF Home page at /free with hero, categories, file grid
@@ -2618,3 +2618,8 @@
 - [x] Fix FreeDXF link in admin panel - currently links to external site, should link to /free
 - [x] Add "Free DXF Files" link/section to the main homepage (landing page)
 - [x] Add "Free DXF Files" link to the site navigation (inside the app) (already existed)
+
+## כפתור שיתוף לקהילה + צבעים FreeDXF
+
+- [x] Add "Share to Community" button on result pages after DXF creation
+- [x] Update FreeDXF /free color scheme - distinct from main site but same brand style (teal/green gradient)
