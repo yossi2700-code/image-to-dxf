@@ -248,16 +248,20 @@ export default function FreeDxfFileDetail() {
               </span>
             </div>
 
-            {/* Creator credit — prominent teal highlight */}
+            {/* Creator credit — gold premium highlight */}
             {file.creatorName && (
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, padding: "12px 16px", borderRadius: 12, background: "linear-gradient(135deg, #0d9488, #0891b2)", boxShadow: "0 4px 12px rgba(13,148,136,0.25)" }}>
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.2)", border: "2px solid rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <span style={{ color: "#fff", fontSize: 15, fontWeight: 900 }}>{file.creatorName.charAt(0).toUpperCase()}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, padding: "13px 16px", borderRadius: 14, background: "linear-gradient(135deg, #b45309, #d97706, #f59e0b)", boxShadow: "0 4px 16px rgba(180,83,9,0.35)", position: "relative", overflow: "hidden" }}>
+                {/* shimmer overlay */}
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%)", pointerEvents: "none" }} />
+                {/* avatar */}
+                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.25)", border: "2px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>
+                  <span style={{ color: "#fff", fontSize: 16, fontWeight: 900, textShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{file.creatorName.charAt(0).toUpperCase()}</span>
                 </div>
-                <div>
-                  <p style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", margin: 0, letterSpacing: "0.03em", fontWeight: 500 }}>{isRtl ? "עוצב על ידי" : "Designed by"}</p>
-                  <p style={{ fontSize: 15, fontWeight: 800, color: "#fff", margin: 0, letterSpacing: "-0.02em" }}>{file.creatorName}</p>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 10, color: "rgba(255,255,255,0.85)", margin: 0, letterSpacing: "0.08em", fontWeight: 600, textTransform: "uppercase" }}>{isRtl ? "✦ עוצב על ידי" : "✦ Designed by"}</p>
+                  <p style={{ fontSize: 16, fontWeight: 900, color: "#fff", margin: 0, letterSpacing: "-0.02em", textShadow: "0 1px 4px rgba(0,0,0,0.2)" }}>{file.creatorName}</p>
                 </div>
+                <span style={{ fontSize: 20, opacity: 0.9 }}>⭐</span>
               </div>
             )}
 
