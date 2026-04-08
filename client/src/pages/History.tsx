@@ -301,18 +301,6 @@ function GroupCard({
         </div>
 
         <div className="flex gap-1.5 flex-wrap pt-0.5">
-          {isAi && activeItem?.svgPreview && (
-            <button onClick={() => onEditAgain(activeItem)} className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold transition-colors">
-              <Wand2 className="w-3.5 h-3.5" />
-              {isRtl ? "ערוך מחדש" : "Re-edit"}
-            </button>
-          )}
-          {isAi && hasSource && (
-            <button onClick={() => onTryAgain(activeItem)} className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold transition-colors">
-              <Sparkles className="w-3.5 h-3.5" />
-              {isRtl ? "נסה שוב" : "Try Again"}
-            </button>
-          )}
           {(activeItem?.dxfUrl || activeItem?.svgPreview) && (
             <button onClick={() => onDownload(activeItem)} className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md bg-green-600 hover:bg-green-700 text-white text-xs font-semibold transition-colors">
               <Download className="w-3.5 h-3.5" />
