@@ -105,33 +105,32 @@ export default function FreeDxfHome() {
 
       {/* ── Header ── */}
       <header style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", position: "sticky", top: 0, zIndex: 50 }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 20px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 12px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, overflow: "hidden" }}>
 
           {/* Logo */}
-          <Link href="/free" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-            <div style={{ width: 30, height: 30, borderRadius: 8, background: "linear-gradient(135deg, #0d9488, #0891b2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ color: "#fff", fontWeight: 900, fontSize: 9, letterSpacing: "-0.5px" }}>DXF</span>
+          <Link href="/free" style={{ display: "flex", alignItems: "center", gap: 6, textDecoration: "none", flexShrink: 0 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 7, background: "linear-gradient(135deg, #0d9488, #0891b2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: "#fff", fontWeight: 900, fontSize: 8, letterSpacing: "-0.5px" }}>DXF</span>
             </div>
-            <span style={{ fontSize: 16, fontWeight: 800, color: "#042f2e", letterSpacing: "-0.02em" }}>FreeDXF</span>
+            <span style={{ fontSize: 15, fontWeight: 800, color: "#042f2e", letterSpacing: "-0.02em" }}>FreeDXF</span>
           </Link>
 
-          {/* dxfai logo button */}
-          <a
-            href="/"
-            style={{ display: "flex", alignItems: "center", gap: 6, textDecoration: "none", flexShrink: 0 }}
-            title={isRtl ? "צור DXF עם AI" : "Create DXF with AI"}
-          >
-            <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai_99079d72.webp"
-              alt="dxfai"
-              style={{ width: 30, height: 30, borderRadius: 8, objectFit: "cover", flexShrink: 0 }}
-            />
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#4f46e5", letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>dxfai</span>
-          </a>
-
           {/* Right actions */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
             <LanguageSwitcher />
+            {/* dxfai logo button */}
+            <a
+              href="/"
+              style={{ display: "flex", alignItems: "center", gap: 4, textDecoration: "none", flexShrink: 0 }}
+              title={isRtl ? "צור DXF עם AI" : "Create DXF with AI"}
+            >
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai_99079d72.webp"
+                alt="dxfai"
+                style={{ width: 28, height: 28, borderRadius: 7, objectFit: "cover", flexShrink: 0 }}
+              />
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#4f46e5", letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>dxfai</span>
+            </a>
             <Link
               href="/"
               style={{
@@ -450,19 +449,19 @@ function FileCard({ file, title, isRtl }: {
   const [hovered, setHovered] = useState(false);
   const [imgError, setImgError] = useState(false);
 
-  // Use image proxy to avoid CORS/network issues with CloudFront
+  // Prefer SVG inline over image proxy for better visual quality with fill
   const proxyUrl = file.previewImageUrl
     ? `/api/freedxf/image-proxy?url=${encodeURIComponent(file.previewImageUrl)}`
     : null;
-  const preview = !imgError && proxyUrl ? proxyUrl : null;
-  // Make SVG lines thicker, add fill, and ensure proper sizing for thumbnail display
-  const inlineSvg = !preview && file.svgPreview
+  // Always prefer SVG if available; fall back to image only if no SVG
+  const inlineSvg = file.svgPreview
     ? file.svgPreview
         .replace(/stroke-width="[^"]*"/g, 'stroke-width="1.5"')
         .replace(/stroke="[^"]*"/g, 'stroke="#1a1a1a"')
         .replace(/fill="none"/g, 'fill="#2d2d2d"')
         .replace(/<svg([^>]*)>/, '<svg$1 width="100%" height="100%" preserveAspectRatio="xMidYMid meet">')
     : null;
+  const preview = !inlineSvg && !imgError && proxyUrl ? proxyUrl : null;
 
   return (
     <Link
@@ -482,7 +481,7 @@ function FileCard({ file, title, isRtl }: {
       onMouseLeave={() => setHovered(false)}
     >
       {/* Preview area */}
-      <div style={{ position: "relative", aspectRatio: "1", background: "#f9fafb", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ position: "relative", aspectRatio: "1", background: inlineSvg ? "#e6faf8" : "#f9fafb", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {preview ? (
           <img
             src={preview}
