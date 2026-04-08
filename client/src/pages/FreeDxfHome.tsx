@@ -18,6 +18,8 @@ interface SharedFile {
   svgPreview?: string | null;
   downloadCount: number | null;
   createdAt: string;
+  creatorName?: string | null;
+  userName?: string | null;
 }
 
 interface Category {
@@ -509,8 +511,8 @@ function FileCard({ file, title, isRtl }: {
         )}
       </div>
 
-      {/* Title + category */}
-      <div style={{ padding: "10px 12px 12px" }}>
+      {/* Title + category + creator */}
+      <div style={{ padding: "10px 12px 10px" }}>
         <p style={{ fontSize: 13, fontWeight: 600, color: hovered ? "#0d9488" : "#111827", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", transition: "color 0.15s" }}>
           {title}
         </p>
@@ -518,6 +520,17 @@ function FileCard({ file, title, isRtl }: {
           <p style={{ fontSize: 11, color: "#9ca3af", margin: "3px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {file.category}
           </p>
+        )}
+        {/* Creator credit */}
+        {(file.creatorName || file.userName) && (
+          <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 6, padding: "3px 7px", background: "linear-gradient(135deg, #f0fdfa, #e6faf8)", borderRadius: 20, width: "fit-content", maxWidth: "100%" }}>
+            <div style={{ width: 14, height: 14, borderRadius: "50%", background: "linear-gradient(135deg, #0d9488, #0891b2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <span style={{ fontSize: 7, color: "#fff", fontWeight: 900, lineHeight: 1 }}>✦</span>
+            </div>
+            <span style={{ fontSize: 10, color: "#0d9488", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {file.creatorName || file.userName}
+            </span>
+          </div>
         )}
       </div>
     </Link>

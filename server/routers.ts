@@ -2554,6 +2554,8 @@ export const appRouter = router({
             downloadCount: sharedFiles.downloadCount,
             createdAt: sharedFiles.createdAt,
             userName: appUsers.name,
+            creatorName: sharedFiles.creatorName,
+            svgPreview: sharedFiles.svgPreview,
           })
           .from(sharedFiles)
           .leftJoin(appUsers, eq(sharedFiles.appUserId, appUsers.id))
