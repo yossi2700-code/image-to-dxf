@@ -38,6 +38,8 @@ export interface DxfDownloadDialogProps {
   svgWidth?: number;
   /** Original SVG height in px */
   svgHeight?: number;
+  /** Hide the "Share to Community" button (e.g. already in community) */
+  hideCommunityShare?: boolean;
 }
 
 type FileFormat = "dxf" | "dxf-legacy" | "pdf";
@@ -228,6 +230,7 @@ export function DxfDownloadDialog({
   segmentCount,
   svgWidth = 500,
   svgHeight = 500,
+  hideCommunityShare = false,
 }: DxfDownloadDialogProps) {
   const [filename, setFilename] = useState(defaultFilename.replace(/\.dxf$/i, "").slice(0, 30).trimEnd());
   const [scalePercent, setScalePercent] = useState(100);
@@ -532,7 +535,7 @@ export function DxfDownloadDialog({
           <div className="flex flex-col gap-2 pt-1">
 
             {/* Share to Community - BEFORE download */}
-            <button
+            {!hideCommunityShare && <button
               onClick={handleShareToCommunity}
               disabled={hasShared}
               className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
@@ -543,7 +546,7 @@ export function DxfDownloadDialog({
             >
               <Heart className={`w-4 h-4 ${hasShared ? "fill-emerald-400" : "fill-white/80"}`} />
               {hasShared ? (isRtl ? "✅ נשלח לקהילה!" : "✅ Shared!") : (isRtl ? "🎁 שתף לקהילה בחינם" : "🎁 Share to Community")}
-            </button>
+            </button>}
 
             <Button
               size="lg"

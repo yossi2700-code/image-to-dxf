@@ -2665,3 +2665,10 @@
 - [x] API: הוספת creatorName לתגובת /api/freedxf/files/:id
 - [x] FreeDXF navbar: הסרת כפתור חיפוש מהנאבר, הוספת לוגו dxfai עם שם "dxfai" בסגול
 - [ ] דיאלוג הורדה (DxfDownloadDialog): הוספת כפתור "שתף לקהילה" ושדה שם יוצר בתחתית הדיאלוג
+
+## עדכונים - אפריל 2026 (סשן 3)
+
+- [x] FreeDxfFileDetail: תצוגת SVG עם מילוי (fill) בצבעי טורקיז - מעדיף svgPreview על previewImageUrl
+- [x] FreeDxfFileDetail: כפתור הורדה פותח DxfDownloadDialog המלא (slider גודל, בחירת פורמט) ללא כפתור "שתף לקהילה"
+- [x] DxfDownloadDialog: הוספת prop hideCommunityShare להסתרת כפתור השיתוף
+- [x] DxfDownloadDialog: כפתור "שתף לקהילה" עם דיאלוג קרדיט יפה (גרדיאנט, תצוגה מקדימה, שדה שם יוצר)
