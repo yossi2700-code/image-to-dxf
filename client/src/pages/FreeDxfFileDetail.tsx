@@ -2,7 +2,7 @@
  * FreeDXF File Detail — view and download a shared DXF file at /free/file/:id
  * Uses DxfDownloadDialog for a full-featured download experience.
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useParams, useLocation } from "wouter";
 import { ArrowLeft, Layers, Tag, Calendar, Download, Share2, Zap } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -47,6 +47,7 @@ export default function FreeDxfFileDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [appUser, setAppUser] = useState<{ id: number; email: string } | null>(null);
+  const appUserRef = useRef<{ id: number; email: string } | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
 
   // Download dialog state
@@ -57,7 +58,7 @@ export default function FreeDxfFileDetail() {
   useEffect(() => {
     fetch("/api/app-auth/me", { credentials: "include" })
       .then(r => r.json())
-      .then(d => { if (d.user) setAppUser(d.user); })
+      .then(d => { if (d.user) { appUserRef.current = d.user; setAppUser(d.user); } })
       .catch(() => {});
   }, []);
 
@@ -81,9 +82,10 @@ export default function FreeDxfFileDetail() {
     return title.replace(/[^\w\s\u0590-\u05FF._-]/g, "_").replace(/\s+/g, "_").slice(0, 40);
   };
 
-  const handleDownloadClick = async () => {
+  const handleDownloadClick = async (overrideUser?: { id: number; email: string }) => {
     if (!file) return;
-    if (!appUser) {
+    const currentUser = overrideUser ?? appUserRef.current ?? appUser;
+    if (!currentUser) {
       setAuthOpen(true);
       return;
     }
@@ -274,7 +276,7 @@ export default function FreeDxfFileDetail() {
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {/* Main download button — opens DxfDownloadDialog */}
               <button
-                onClick={handleDownloadClick}
+                onClick={() => handleDownloadClick()}
                 disabled={dlFetching}
                 style={{
                   width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
@@ -356,10 +358,12 @@ export default function FreeDxfFileDetail() {
         authReason="unregistered"
         initialMode="register"
         onSuccess={(user) => {
-          setAppUser({ id: user.id, email: user.email });
+          const u = { id: user.id, email: user.email };
+          appUserRef.current = u;
+          setAppUser(u);
           setAuthOpen(false);
-          // Auto-open download after login
-          setTimeout(() => handleDownloadClick(), 400);
+          // Pass user directly to avoid stale closure
+          setTimeout(() => handleDownloadClick(u), 400);
         }}
       />
 
