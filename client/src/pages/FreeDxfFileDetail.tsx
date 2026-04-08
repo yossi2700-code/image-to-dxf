@@ -296,6 +296,8 @@ export default function FreeDxfFileDetail() {
                   dangerouslySetInnerHTML={{ __html:
                     (file.svgPreview.includes('</svg>') ? file.svgPreview : file.svgPreview + '</svg>')
                       .replace(/stroke-width="[^"]*"/g, 'stroke-width="1.5"')
+                      .replace(/stroke="[^"]*"/g, 'stroke="#0f766e"')
+                      .replace(/fill="none"/g, 'fill="#ccfbf1"')
                       .replace(/<svg([^>]*)>/, '<svg$1 width="100%" height="100%" preserveAspectRatio="xMidYMid meet">')
                   }}
                 />

@@ -444,10 +444,12 @@ function FileCard({ file, title, isRtl }: {
     ? `/api/freedxf/image-proxy?url=${encodeURIComponent(file.previewImageUrl)}`
     : null;
   const preview = !imgError && proxyUrl ? proxyUrl : null;
-  // Make SVG lines thicker and ensure proper sizing for thumbnail display
+  // Make SVG lines thicker, add fill, and ensure proper sizing for thumbnail display
   const inlineSvg = !preview && file.svgPreview
     ? file.svgPreview
         .replace(/stroke-width="[^"]*"/g, 'stroke-width="1.5"')
+        .replace(/stroke="[^"]*"/g, 'stroke="#0f766e"')
+        .replace(/fill="none"/g, 'fill="#ccfbf1"')
         .replace(/<svg([^>]*)>/, '<svg$1 width="100%" height="100%" preserveAspectRatio="xMidYMid meet">')
     : null;
 

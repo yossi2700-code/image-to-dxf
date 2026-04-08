@@ -812,53 +812,97 @@ export default function History() {
 
       {/* Share to Community Dialog */}
       <Dialog open={!!shareTarget} onOpenChange={(open) => { if (!open) { setShareTarget(null); setShareSubmitted(false); } }}>
-        <DialogContent dir={isRtl ? "rtl" : "ltr"} className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Share2 className="w-5 h-5 text-teal-600" />
-              {isRtl ? "שתף לקהילת FreeDXF" : "Share to FreeDXF Community"}
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent dir={isRtl ? "rtl" : "ltr"} className="max-w-md p-0 overflow-hidden">
           {shareSubmitted ? (
-            <div className="py-6 text-center space-y-3">
-              <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center mx-auto">
-                <Share2 className="w-6 h-6 text-teal-600" />
+            /* ── Success State ── */
+            <div className="flex flex-col items-center justify-center py-12 px-8 text-center gap-4" style={{ background: 'linear-gradient(135deg, #042f2e 0%, #0f766e 60%, #0891b2 100%)' }}>
+              <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center" style={{ animation: 'pulse 1.5s ease-in-out infinite' }}>
+                <span style={{ fontSize: 40 }}>🎉</span>
               </div>
-              <p className="font-semibold text-sm">{isRtl ? "נשלח בהצלחה!" : "Submitted successfully!"}</p>
-              <p className="text-xs text-muted-foreground">{isRtl ? "הקובץ יפורסם לאחר אישור מנהל" : "The file will be published after admin approval"}</p>
-              <Button size="sm" onClick={() => { setShareTarget(null); setShareSubmitted(false); }}>{isRtl ? "סגור" : "Close"}</Button>
+              <div className="space-y-1">
+                <p className="text-2xl font-black text-white">{isRtl ? "נשלח בהצלחה!" : "Submitted!"}</p>
+                <p className="text-sm text-teal-100">{isRtl ? "הקובץ יפורסם לאחר אישור מנהל" : "Your file will be published after admin review"}</p>
+                {shareCreatorName && <p className="text-xs text-teal-200 mt-2">{isRtl ? `קרדיט: ${shareCreatorName}` : `Credit: ${shareCreatorName}`}</p>}
+              </div>
+              <Button
+                onClick={() => { setShareTarget(null); setShareSubmitted(false); }}
+                className="mt-2 bg-white text-teal-700 hover:bg-teal-50 font-bold px-8"
+              >
+                {isRtl ? "סגור" : "Close"}
+              </Button>
             </div>
           ) : (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">{isRtl ? "שתף את הקובץ שלך עם הקהילה בחינם. הקובץ יפורסם לאחר אישור." : "Share your file with the community for free. It will be published after approval."}</p>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium">{isRtl ? "שם היוצר (אופציונלי)" : "Your name (optional)"}</label>
-                <Input
-                  value={shareCreatorName}
-                  onChange={(e) => setShareCreatorName(e.target.value)}
-                  placeholder={isRtl ? "שם או כינוי" : "Name or nickname"}
-                  dir={isRtl ? "rtl" : "ltr"}
-                  maxLength={100}
-                />
+            <>
+              {/* ── Gradient Header ── */}
+              <div style={{ background: 'linear-gradient(135deg, #042f2e 0%, #0f766e 60%, #0891b2 100%)', padding: '20px 24px 16px' }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                    <Share2 className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-white font-black text-base leading-tight">{isRtl ? "שתף לקהילת FreeDXF" : "Share to FreeDXF Community"}</p>
+                    <p className="text-teal-200 text-xs">{isRtl ? "100% חינם · ללא הגבלה" : "100% Free · No Limits"}</p>
+                  </div>
+                </div>
               </div>
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" size="sm" onClick={() => setShareTarget(null)}>{isRtl ? "ביטול" : "Cancel"}</Button>
-                <Button
-                  size="sm"
-                  className="bg-teal-600 hover:bg-teal-700"
-                  disabled={submitShareMutation.isPending || !shareTarget?.id}
-                  onClick={() => {
-                    if (!shareTarget?.id) return;
-                    submitShareMutation.mutate({
-                      userActionId: shareTarget.id,
-                      creatorName: shareCreatorName.trim() || undefined,
-                    });
-                  }}
-                >
-                  {submitShareMutation.isPending ? (isRtl ? "שולח..." : "Sending...") : (isRtl ? "שלח לשיתוף" : "Submit for sharing")}
-                </Button>
+
+              {/* ── SVG Preview ── */}
+              {shareTarget?.svgPreview && (
+                <div className="mx-4 mt-4 rounded-xl overflow-hidden border border-teal-100 bg-gradient-to-br from-teal-50 to-cyan-50" style={{ height: 160 }}>
+                  <div
+                    className="w-full h-full flex items-center justify-center p-2"
+                    dangerouslySetInnerHTML={{
+                      __html: shareTarget.svgPreview
+                        .replace(/<svg /, '<svg style="width:100%;height:100%;display:block;" ')
+                        .replace(/stroke="[^"]*"/g, 'stroke="#0f766e"')
+                        .replace(/fill="none"/g, 'fill="#ccfbf1"')
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* ── Form ── */}
+              <div className="px-4 pb-4 pt-3 space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-bold text-slate-700">
+                    {isRtl ? "✍️ למי לתת קרדיט?" : "✍️ Who gets the credit?"}
+                  </label>
+                  <Input
+                    value={shareCreatorName}
+                    onChange={(e) => setShareCreatorName(e.target.value)}
+                    placeholder={isRtl ? "שם, כינוי, או השאר ריק לאנונימי" : "Name, nickname, or leave blank for anonymous"}
+                    dir={isRtl ? "rtl" : "ltr"}
+                    maxLength={100}
+                    className="border-teal-200 focus:border-teal-400 text-base"
+                    autoFocus
+                  />
+                  <p className="text-xs text-muted-foreground">{isRtl ? "השם יוצג על הקובץ בספריית FreeDXF" : "Your name will appear on the file in FreeDXF library"}</p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={() => setShareTarget(null)}>
+                    {isRtl ? "ביטול" : "Cancel"}
+                  </Button>
+                  <Button
+                    className="flex-1 font-bold gap-2"
+                    style={{ background: 'linear-gradient(135deg, #0d9488, #0891b2)', color: 'white' }}
+                    disabled={submitShareMutation.isPending || !shareTarget?.id}
+                    onClick={() => {
+                      if (!shareTarget?.id) return;
+                      submitShareMutation.mutate({
+                        userActionId: shareTarget.id,
+                        creatorName: shareCreatorName.trim() || undefined,
+                      });
+                    }}
+                  >
+                    <Share2 className="w-4 h-4" />
+                    {submitShareMutation.isPending
+                      ? (isRtl ? "שולח..." : "Sending...")
+                      : (isRtl ? "שתף עכשיו" : "Share Now")}
+                  </Button>
+                </div>
               </div>
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
