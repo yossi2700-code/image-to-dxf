@@ -117,32 +117,34 @@ export default function FreeDxfHome() {
           {/* Right actions */}
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
             <LanguageSwitcher />
-            {/* dxfai logo button */}
-            <a
-              href="/"
-              style={{ display: "flex", alignItems: "center", gap: 4, textDecoration: "none", flexShrink: 0 }}
-              title={isRtl ? "צור DXF עם AI" : "Create DXF with AI"}
-            >
-              <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai_99079d72.webp"
-                alt="dxfai"
-                style={{ width: 28, height: 28, borderRadius: 7, objectFit: "cover", flexShrink: 0 }}
-              />
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#4f46e5", letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>dxfai</span>
-            </a>
-            <Link
-              href="/"
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 5,
-                padding: "7px 14px", borderRadius: 8,
-                background: "linear-gradient(135deg, #0d9488, #0891b2)", color: "#fff",
-                fontSize: 13, fontWeight: 600, textDecoration: "none",
-                whiteSpace: "nowrap",
-              }}
-            >
-              <Zap style={{ width: 13, height: 13 }} />
-              {isRtl ? "צרו DXF" : "Create DXF"}
-            </Link>
+            {/* dxfai logo + create DXF button grouped together */}
+            <div style={{ display: "flex", alignItems: "center", gap: 0, flexShrink: 0 }}>
+              <Link
+                href="/"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 5,
+                  padding: "7px 14px", borderRadius: "8px 0 0 8px",
+                  background: "linear-gradient(135deg, #0d9488, #0891b2)", color: "#fff",
+                  fontSize: 13, fontWeight: 600, textDecoration: "none",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <Zap style={{ width: 13, height: 13 }} />
+                {isRtl ? "צרו DXF" : "Create DXF"}
+              </Link>
+              {/* dxfai logo button — right next to the teal button */}
+              <a
+                href="/"
+                style={{ display: "flex", alignItems: "center", textDecoration: "none", flexShrink: 0 }}
+                title={isRtl ? "צור DXF עם AI" : "Create DXF with AI"}
+              >
+                <img
+                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai_99079d72.webp"
+                  alt="dxfai"
+                  style={{ width: 32, height: 32, borderRadius: "0 8px 8px 0", objectFit: "cover", flexShrink: 0 }}
+                />
+              </a>
+            </div>
 
             {appUser ? (
               <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", borderRadius: 8, background: "#f9fafb", border: "1px solid #e5e7eb" }}>
@@ -319,13 +321,13 @@ export default function FreeDxfHome() {
         </div>
 
         {loading ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12 }}>
             {Array.from({ length: 12 }).map((_, i) => (
               <div key={i} style={{ background: "#e5e7eb", borderRadius: 12, aspectRatio: "1", animation: "pulse 1.5s ease-in-out infinite" }} />
             ))}
           </div>
         ) : files.length > 0 ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12 }}>
             {files.map(file => (
               <FileCard key={file.id} file={file} title={getTitle(file)} isRtl={isRtl} />
             ))}
