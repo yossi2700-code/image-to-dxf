@@ -109,44 +109,39 @@ export default function FreeDxfHome() {
       <header style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", position: "sticky", top: 0, zIndex: 9990, overflow: "visible" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 12px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, overflow: "visible" }}>
 
-          {/* Logo */}
-          <Link href="/free" style={{ display: "flex", alignItems: "center", gap: 6, textDecoration: "none", flexShrink: 0 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg, #0d9488, #0891b2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ color: "#fff", fontWeight: 900, fontSize: 9, letterSpacing: "-0.5px" }}>DXF</span>
-            </div>
-          </Link>
+          {/* Logo — two rounded app icons side by side */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            <Link href="/free" style={{ textDecoration: "none", flexShrink: 0 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg, #0d9488, #0891b2)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(13,148,136,0.25)" }}>
+                <span style={{ color: "#fff", fontWeight: 900, fontSize: 11, letterSpacing: "-0.5px" }}>free</span>
+              </div>
+            </Link>
+            <a href="/" style={{ textDecoration: "none", flexShrink: 0 }} title={isRtl ? "צור DXF עם AI" : "Create DXF with AI"}>
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai_99079d72.webp"
+                alt="dxfai"
+                style={{ width: 40, height: 40, borderRadius: 12, objectFit: "cover", flexShrink: 0, boxShadow: "0 2px 8px rgba(0,0,0,0.18)" }}
+              />
+            </a>
+          </div>
 
           {/* Right actions */}
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
             <LanguageSwitcher />
-            {/* dxfai logo + create DXF button grouped together */}
-            <div style={{ display: "flex", alignItems: "center", gap: 0, flexShrink: 0 }}>
-              <Link
-                href="/"
-                style={{
-                  display: "inline-flex", alignItems: "center", gap: 5,
-                  padding: "7px 14px", borderRadius: "8px 0 0 8px",
-                  background: "linear-gradient(135deg, #0d9488, #0891b2)", color: "#fff",
-                  fontSize: 13, fontWeight: 600, textDecoration: "none",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                <Zap style={{ width: 13, height: 13 }} />
-                {isRtl ? "צרו DXF" : "Create DXF"}
-              </Link>
-              {/* dxfai logo button — right next to the teal button */}
-              <a
-                href="/"
-                style={{ display: "flex", alignItems: "center", textDecoration: "none", flexShrink: 0 }}
-                title={isRtl ? "צור DXF עם AI" : "Create DXF with AI"}
-              >
-                <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai_99079d72.webp"
-                  alt="dxfai"
-                  style={{ width: 32, height: 32, borderRadius: "0 8px 8px 0", objectFit: "cover", flexShrink: 0 }}
-                />
-              </a>
-            </div>
+            {/* Create DXF button */}
+            <Link
+              href="/"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                padding: "7px 14px", borderRadius: 8,
+                background: "linear-gradient(135deg, #0d9488, #0891b2)", color: "#fff",
+                fontSize: 13, fontWeight: 600, textDecoration: "none",
+                whiteSpace: "nowrap", flexShrink: 0,
+              }}
+            >
+              <Zap style={{ width: 13, height: 13 }} />
+              {isRtl ? "צרו DXF" : "Create DXF"}
+            </Link>
 
             {appUser ? (
               <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", borderRadius: 8, background: "#f9fafb", border: "1px solid #e5e7eb" }}>
@@ -521,13 +516,14 @@ function FileCard({ file, title, isRtl }: {
             {file.category}
           </p>
         )}
-        {/* Creator credit */}
+        {/* Creator credit — classic teal accent */}
         {(file.creatorName || file.userName) && (
-          <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 6, padding: "3px 7px", background: "linear-gradient(135deg, #f0fdfa, #e6faf8)", borderRadius: 20, width: "fit-content", maxWidth: "100%" }}>
-            <div style={{ width: 14, height: 14, borderRadius: "50%", background: "linear-gradient(135deg, #0d9488, #0891b2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <span style={{ fontSize: 7, color: "#fff", fontWeight: 900, lineHeight: 1 }}>✦</span>
-            </div>
-            <span style={{ fontSize: 10, color: "#0d9488", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 6 }}>
+            <div style={{ width: 2, height: 14, borderRadius: 2, background: "linear-gradient(180deg, #0d9488, #0891b2)", flexShrink: 0 }} />
+            <span style={{ fontSize: 10, color: "#6b7280", fontWeight: 500, letterSpacing: "0.01em" }}>
+              {isRtl ? "עוצב על ידי" : "by"}
+            </span>
+            <span style={{ fontSize: 11, color: "#0d9488", fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "-0.01em" }}>
               {file.creatorName || file.userName}
             </span>
           </div>

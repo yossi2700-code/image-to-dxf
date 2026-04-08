@@ -246,15 +246,15 @@ export default function FreeDxfFileDetail() {
               </span>
             </div>
 
-            {/* Creator credit */}
+            {/* Creator credit — prominent teal highlight */}
             {file.creatorName && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, padding: "10px 14px", borderRadius: 10, background: "#f0fdfa", border: "1px solid #ccfbf1" }}>
-                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg, #0d9488, #0891b2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <span style={{ color: "#fff", fontSize: 12, fontWeight: 800 }}>{file.creatorName.charAt(0).toUpperCase()}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, padding: "12px 16px", borderRadius: 12, background: "linear-gradient(135deg, #0d9488, #0891b2)", boxShadow: "0 4px 12px rgba(13,148,136,0.25)" }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.2)", border: "2px solid rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <span style={{ color: "#fff", fontSize: 15, fontWeight: 900 }}>{file.creatorName.charAt(0).toUpperCase()}</span>
                 </div>
                 <div>
-                  <p style={{ fontSize: 11, color: "#6b7280", margin: 0 }}>{isRtl ? "עוצב על ידי" : "Designed by"}</p>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "#042f2e", margin: 0 }}>{file.creatorName}</p>
+                  <p style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", margin: 0, letterSpacing: "0.03em", fontWeight: 500 }}>{isRtl ? "עוצב על ידי" : "Designed by"}</p>
+                  <p style={{ fontSize: 15, fontWeight: 800, color: "#fff", margin: 0, letterSpacing: "-0.02em" }}>{file.creatorName}</p>
                 </div>
               </div>
             )}
