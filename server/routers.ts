@@ -2529,7 +2529,12 @@ export const appRouter = router({
         // Build conditions
         const conditions = [eq(sharedFiles.status, "approved")];
         if (category) conditions.push(eq(sharedFiles.category, category));
-        if (search) conditions.push(like(sharedFiles.title, `%${search}%`));
+        if (search) {
+          const s = `%${search}%`;
+          conditions.push(
+            sql`(${sharedFiles.title} LIKE ${s} OR ${sharedFiles.titleHe} LIKE ${s} OR ${sharedFiles.tags} LIKE ${s} OR ${sharedFiles.creatorName} LIKE ${s} OR ${sharedFiles.description} LIKE ${s} OR ${sharedFiles.descriptionHe} LIKE ${s})`
+          );
+        }
 
         const whereClause = conditions.length === 1 ? conditions[0] : and(...conditions);
 
