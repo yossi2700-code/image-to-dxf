@@ -47,7 +47,7 @@ export function LanguageSwitcher() {
 
       {open && (
         <div
-          className="absolute z-50 mt-1 w-36 rounded-md border border-border bg-popover text-popover-foreground shadow-md py-1"
+          className="absolute z-[9999] mt-1 w-36 rounded-md border border-border bg-popover text-popover-foreground shadow-md py-1"
           style={{ [(language === "he" || language === "ar") ? "right" : "left"]: 0 }}
           role="listbox"
         >

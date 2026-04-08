@@ -104,15 +104,14 @@ export default function FreeDxfHome() {
     <div className="min-h-screen bg-gray-50" dir={isRtl ? "rtl" : "ltr"} style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
 
       {/* ── Header ── */}
-      <header style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", position: "sticky", top: 0, zIndex: 50 }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 12px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, overflow: "hidden" }}>
+      <header style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", position: "sticky", top: 0, zIndex: 9990, overflow: "visible" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 12px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, overflow: "visible" }}>
 
           {/* Logo */}
           <Link href="/free" style={{ display: "flex", alignItems: "center", gap: 6, textDecoration: "none", flexShrink: 0 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 7, background: "linear-gradient(135deg, #0d9488, #0891b2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ color: "#fff", fontWeight: 900, fontSize: 8, letterSpacing: "-0.5px" }}>DXF</span>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg, #0d9488, #0891b2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: "#fff", fontWeight: 900, fontSize: 9, letterSpacing: "-0.5px" }}>DXF</span>
             </div>
-            <span style={{ fontSize: 15, fontWeight: 800, color: "#042f2e", letterSpacing: "-0.02em" }}>FreeDXF</span>
           </Link>
 
           {/* Right actions */}
