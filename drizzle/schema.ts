@@ -576,6 +576,8 @@ export const sharedFiles = mysqlTable("shared_files", {
   downloadCount: int("downloadCount").default(0),
   /** Status: pending | approved | rejected */
   status: mysqlEnum("status", ["pending", "approved", "rejected"]).notNull().default("pending"),
+  /** Creator name (credit) provided by the user who shared */
+  creatorName: varchar("creatorName", { length: 200 }),
   /** Admin note */
   adminNote: text("adminNote"),
   /** Admin who approved/rejected */

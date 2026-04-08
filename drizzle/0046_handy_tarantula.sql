@@ -1,0 +1,1 @@
+ALTER TABLE `shared_files` ADD `creatorName` varchar(200);

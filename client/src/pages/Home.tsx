@@ -2633,16 +2633,25 @@ export default function Home() {
             />
           </a>
 
+          {/* FreeDXF Logo Button */}
+          <a
+            href="/free"
+            className="flex items-center justify-center shrink-0 rounded-lg"
+            style={{
+              width: 32,
+              height: 32,
+              background: 'linear-gradient(135deg, #0d9488, #0891b2)',
+              textDecoration: 'none',
+              boxShadow: '0 2px 8px rgba(8,145,178,0.35)',
+            }}
+            title="קבצי DXF בחינם"
+          >
+            <span style={{ color: 'white', fontSize: 10, fontWeight: 900, letterSpacing: '-0.5px', lineHeight: 1, fontFamily: 'sans-serif' }}>free</span>
+          </a>
+
           {/* Right side nav */}
           <div className="flex items-center gap-2 ms-auto">
-            {/* Free DXF Files link */}
-            <a
-              href="/free"
-              className="hidden sm:flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-80 shrink-0"
-              style={{ color: '#7c3aed', background: '#f5f3ff', border: '1px solid #ddd6fe', whiteSpace: 'nowrap' }}
-            >
-              {isRtl ? '🆓 קבצים בחינם' : '🆓 Free Files'}
-            </a>
+
             {/* Pricing button — opens token pricing modal */}
             <button
               id="tour-pricing"

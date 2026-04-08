@@ -167,6 +167,7 @@ router.get("/api/freedxf/files/:id", async (req, res) => {
         svgPreview: sharedFiles.svgPreview,
         lineCount: sharedFiles.lineCount,
         downloadCount: sharedFiles.downloadCount,
+        creatorName: sharedFiles.creatorName,
         createdAt: sharedFiles.createdAt,
       })
       .from(sharedFiles)

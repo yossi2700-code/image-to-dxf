@@ -2410,6 +2410,8 @@ export const appRouter = router({
     submit: publicProcedure
       .input(z.object({
         userActionId: z.number(),
+        creatorName: z.string().max(200).optional(),
+        description: z.string().max(1000).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const appUser = getAppUserFromCookie((ctx.req as any).cookies);
@@ -2451,6 +2453,8 @@ export const appRouter = router({
           svgPreview: action.svgPreview ?? null,
           sourceImageUrl: action.sourceImageUrl ?? null,
           lineCount: action.segmentCount ?? 0,
+          creatorName: input.creatorName ?? null,
+          descriptionHe: input.description ?? null,
         });
 
         return { success: true };
@@ -2465,6 +2469,8 @@ export const appRouter = router({
         feature: z.string().optional(),
         lineCount: z.number().optional(),
         filename: z.string().optional(),
+        creatorName: z.string().max(200).optional(),
+        description: z.string().max(1000).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const appUser = getAppUserFromCookie((ctx.req as any).cookies);
@@ -2498,6 +2504,8 @@ export const appRouter = router({
           svgPreview: input.svgPreview ?? null,
           lineCount: input.lineCount ?? 0,
           title: input.filename ?? null,
+          creatorName: input.creatorName ?? null,
+          descriptionHe: input.description ?? null,
         });
 
         return { success: true };
@@ -2643,6 +2651,7 @@ export const appRouter = router({
             downloadCount: sharedFiles.downloadCount,
             status: sharedFiles.status,
             adminNote: sharedFiles.adminNote,
+            creatorName: sharedFiles.creatorName,
             createdAt: sharedFiles.createdAt,
             userName: appUsers.name,
             userEmail: appUsers.email,
@@ -2660,11 +2669,11 @@ export const appRouter = router({
     approve: adminProcedure
       .input(z.object({
         id: z.number(),
-        title: z.string().min(1),
+        title: z.string().optional(),
         titleHe: z.string().optional(),
         description: z.string().optional(),
         descriptionHe: z.string().optional(),
-        category: z.string().min(1),
+        category: z.string().optional(),
         tags: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
@@ -2673,18 +2682,18 @@ export const appRouter = router({
 
         // Check if the file needs a preview image generated
         const [file] = await db
-          .select({ previewImageUrl: sharedFiles.previewImageUrl, svgPreview: sharedFiles.svgPreview })
+          .select({ previewImageUrl: sharedFiles.previewImageUrl, svgPreview: sharedFiles.svgPreview, title: sharedFiles.title })
           .from(sharedFiles)
           .where(eq(sharedFiles.id, input.id))
           .limit(1);
 
         const updateSet: Record<string, unknown> = {
           status: "approved",
-          title: input.title,
+          title: input.title ?? file?.title ?? `קובץ #${input.id}`,
           titleHe: input.titleHe ?? null,
           description: input.description ?? null,
           descriptionHe: input.descriptionHe ?? null,
-          category: input.category,
+          category: input.category ?? "Other",
           tags: input.tags ?? null,
           reviewedAt: new Date(),
         };

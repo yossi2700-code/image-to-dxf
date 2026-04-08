@@ -40,6 +40,7 @@ import {
   FileText,
   Layers,
   ZoomIn,
+  Share2,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -194,7 +195,7 @@ function getFeatureIcon(feature: string | null, actionType: string): React.React
 
 // ─── Group Card ───────────────────────────────────────────────────────────────
 function GroupCard({
-  group, onViewVariation, onDelete, onEditAgain, onDownload, onTryAgain, onPdf,
+  group, onViewVariation, onDelete, onEditAgain, onDownload, onTryAgain, onPdf, onShare,
 }: {
   group: HistoryGroup;
   onViewVariation: (item: HistoryItem) => void;
@@ -203,6 +204,7 @@ function GroupCard({
   onDownload: (item: HistoryItem) => void;
   onTryAgain: (item: HistoryItem) => void;
   onPdf: (item: HistoryItem) => void;
+  onShare?: (item: HistoryItem) => void;
 }) {
   const { isRtl, language } = useLanguage();
   const [activeIdx, setActiveIdx] = useState(0);
@@ -317,6 +319,11 @@ function GroupCard({
               {isRtl ? "הורד קובץ" : "Download"}
             </button>
           )}
+          {onShare && (activeItem?.dxfUrl || activeItem?.svgPreview) && (
+            <button onClick={() => onShare(activeItem)} className="w-8 h-8 flex items-center justify-center rounded-md border border-teal-200 text-teal-600 hover:bg-teal-50 transition-colors" title={isRtl ? "שתף לקהילה" : "Share to Community"}>
+              <Share2 className="w-3.5 h-3.5" />
+            </button>
+          )}
           <button onClick={() => onDelete(group)} className="w-8 h-8 flex items-center justify-center rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -409,6 +416,7 @@ function GroupGrid({
   onDownload,
   onTryAgain,
   onPdf,
+  onShare,
   isRtl,
   emptyLabel,
 }: {
@@ -419,6 +427,7 @@ function GroupGrid({
   onDownload: (item: HistoryItem) => void;
   onTryAgain: (item: HistoryItem) => void;
   onPdf: (item: HistoryItem) => void;
+  onShare?: (item: HistoryItem) => void;
   isRtl: boolean;
   emptyLabel: string;
 }) {
@@ -442,6 +451,7 @@ function GroupGrid({
           onDownload={onDownload}
           onTryAgain={onTryAgain}
           onPdf={onPdf}
+          onShare={onShare}
         />
       ))}
     </div>
@@ -465,6 +475,13 @@ export default function History() {
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [shareTarget, setShareTarget] = useState<HistoryItem | null>(null);
+  const [shareCreatorName, setShareCreatorName] = useState("");
+  const [shareSubmitted, setShareSubmitted] = useState(false);
+  const submitShareMutation = trpc.sharedFiles.submit.useMutation({
+    onSuccess: () => { setShareSubmitted(true); },
+    onError: (e) => { alert(e.message || (isRtl ? "שגיאה בשיתוף" : "Share failed")); },
+  });
 
   // Reset page when period changes
   const handlePeriodChange = (p: "day" | "week" | "month" | "all") => {
@@ -572,6 +589,12 @@ export default function History() {
       }));
     }
     navigate("/");
+  };
+
+  const handleShare = (item: HistoryItem) => {
+    setShareTarget(item);
+    setShareCreatorName("");
+    setShareSubmitted(false);
   };
 
   const handlePdf = async (item: HistoryItem) => {
@@ -728,6 +751,7 @@ export default function History() {
                       onDownload={handleDownload}
                       onTryAgain={handleTryAgain}
                       onPdf={handlePdf}
+                      onShare={handleShare}
                       isRtl={isRtl}
                       emptyLabel={isRtl ? "אין עיצובים בקטגוריה זו" : "No designs in this category"}
                     />
@@ -785,6 +809,59 @@ export default function History() {
         defaultFilename={`${downloadTarget?.description ?? "design"}.dxf`}
         segmentCount={downloadTarget?.segmentCount ?? 0}
       />
+
+      {/* Share to Community Dialog */}
+      <Dialog open={!!shareTarget} onOpenChange={(open) => { if (!open) { setShareTarget(null); setShareSubmitted(false); } }}>
+        <DialogContent dir={isRtl ? "rtl" : "ltr"} className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Share2 className="w-5 h-5 text-teal-600" />
+              {isRtl ? "שתף לקהילת FreeDXF" : "Share to FreeDXF Community"}
+            </DialogTitle>
+          </DialogHeader>
+          {shareSubmitted ? (
+            <div className="py-6 text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center mx-auto">
+                <Share2 className="w-6 h-6 text-teal-600" />
+              </div>
+              <p className="font-semibold text-sm">{isRtl ? "נשלח בהצלחה!" : "Submitted successfully!"}</p>
+              <p className="text-xs text-muted-foreground">{isRtl ? "הקובץ יפורסם לאחר אישור מנהל" : "The file will be published after admin approval"}</p>
+              <Button size="sm" onClick={() => { setShareTarget(null); setShareSubmitted(false); }}>{isRtl ? "סגור" : "Close"}</Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">{isRtl ? "שתף את הקובץ שלך עם הקהילה בחינם. הקובץ יפורסם לאחר אישור." : "Share your file with the community for free. It will be published after approval."}</p>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium">{isRtl ? "שם היוצר (אופציונלי)" : "Your name (optional)"}</label>
+                <Input
+                  value={shareCreatorName}
+                  onChange={(e) => setShareCreatorName(e.target.value)}
+                  placeholder={isRtl ? "שם או כינוי" : "Name or nickname"}
+                  dir={isRtl ? "rtl" : "ltr"}
+                  maxLength={100}
+                />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" size="sm" onClick={() => setShareTarget(null)}>{isRtl ? "ביטול" : "Cancel"}</Button>
+                <Button
+                  size="sm"
+                  className="bg-teal-600 hover:bg-teal-700"
+                  disabled={submitShareMutation.isPending || !shareTarget?.id}
+                  onClick={() => {
+                    if (!shareTarget?.id) return;
+                    submitShareMutation.mutate({
+                      userActionId: shareTarget.id,
+                      creatorName: shareCreatorName.trim() || undefined,
+                    });
+                  }}
+                >
+                  {submitShareMutation.isPending ? (isRtl ? "שולח..." : "Sending...") : (isRtl ? "שלח לשיתוף" : "Submit for sharing")}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent dir={isRtl ? "rtl" : "ltr"}>
