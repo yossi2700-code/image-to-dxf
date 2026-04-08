@@ -7,6 +7,7 @@ import { Link, useLocation } from "wouter";
 import { Search, Download, Layers, Zap, LogOut, User, X, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AuthDialog } from "@/components/AuthDialog";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 interface SharedFile {
   id: number;
@@ -23,6 +24,15 @@ interface Category {
   name: string;
   count: number;
 }
+
+const CATEGORY_HE: Record<string, string> = {
+  "Animals": "בעלי חיים", "Nature": "טבע", "Geometric": "גיאומטרי",
+  "Text & Letters": "טקסט ואותיות", "Vehicles": "כלי רכב", "Buildings": "מבנים",
+  "People": "אנשים", "Art & Decor": "אמנות ועיצוב", "Tools": "כלים",
+  "Holiday": "חגים", "Mandala": "מנדלה", "Music": "מוזיקה",
+  "Sports": "ספורט", "Food": "אוכל", "Technology": "טכנולוגיה",
+  "CNC Relief": "תבליט CNC", "Other": "אחר"
+};
 
 export default function FreeDxfHome() {
   const { language } = useLanguage();
@@ -121,6 +131,7 @@ export default function FreeDxfHome() {
 
           {/* Right actions */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <LanguageSwitcher />
             <Link
               href="/"
               style={{
@@ -284,7 +295,7 @@ export default function FreeDxfHome() {
                   whiteSpace: "nowrap",
                 }}
               >
-                {cat.name} ({cat.count})
+                {isRtl ? (CATEGORY_HE[cat.name] || cat.name) : cat.name} ({cat.count})
               </button>
             ))}
           </div>
@@ -448,8 +459,8 @@ function FileCard({ file, title, isRtl }: {
   const inlineSvg = !preview && file.svgPreview
     ? file.svgPreview
         .replace(/stroke-width="[^"]*"/g, 'stroke-width="1.5"')
-        .replace(/stroke="[^"]*"/g, 'stroke="#0f766e"')
-        .replace(/fill="none"/g, 'fill="#ccfbf1"')
+        .replace(/stroke="[^"]*"/g, 'stroke="#1a1a1a"')
+        .replace(/fill="none"/g, 'fill="#2d2d2d"')
         .replace(/<svg([^>]*)>/, '<svg$1 width="100%" height="100%" preserveAspectRatio="xMidYMid meet">')
     : null;
 

@@ -2675,6 +2675,7 @@ export const appRouter = router({
         descriptionHe: z.string().optional(),
         category: z.string().optional(),
         tags: z.string().optional(),
+        creatorName: z.string().max(200).optional(),
       }))
       .mutation(async ({ input }) => {
         const db = await getDb();
@@ -2695,6 +2696,7 @@ export const appRouter = router({
           descriptionHe: input.descriptionHe ?? null,
           category: input.category ?? "Other",
           tags: input.tags ?? null,
+          creatorName: input.creatorName ?? null,
           reviewedAt: new Date(),
         };
 

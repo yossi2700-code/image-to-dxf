@@ -631,7 +631,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   // ── Shared Files (FreeDXF) ──
   const [sharedStatusFilter, setSharedStatusFilter] = useState<"pending" | "approved" | "rejected" | "all">("pending");
   const [editingSharedFile, setEditingSharedFile] = useState<number | null>(null);
-  const [sharedEditForm, setSharedEditForm] = useState({ title: "", titleHe: "", description: "", descriptionHe: "", category: "", tags: "" });
+  const [sharedEditForm, setSharedEditForm] = useState({ title: "", titleHe: "", description: "", descriptionHe: "", category: "", tags: "", creatorName: "" });
   const { data: sharedFilesData, isLoading: sharedFilesLoading, refetch: refetchSharedFiles } = trpc.sharedFiles.adminList.useQuery(
     { status: sharedStatusFilter },
     { enabled: activeSection === "shared_files" }
@@ -657,6 +657,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     "Buildings", "People", "Art & Decor", "Tools", "Holiday", "Mandala",
     "Music", "Sports", "Food", "Technology", "CNC Relief", "Other"
   ];
+  const SHARED_CATEGORIES_HE: Record<string, string> = {
+    "Animals": "בעלי חיים", "Nature": "טבע", "Geometric": "גיאומטרי",
+    "Text & Letters": "טקסט ואותיות", "Vehicles": "כלי רכב", "Buildings": "מבנים",
+    "People": "אנשים", "Art & Decor": "אמנות ועיצוב", "Tools": "כלים",
+    "Holiday": "חגים", "Mandala": "מנדלה", "Music": "מוזיקה",
+    "Sports": "ספורט", "Food": "אוכל", "Technology": "טכנולוגיה",
+    "CNC Relief": "תבליט CNC", "Other": "אחר"
+  };
 
   // ── Enhanced users (with subscription info) ──
   const { data: enhancedUsers, isLoading: enhancedUsersLoading, refetch: refetchEnhanced } = trpc.admin.usersEnhanced.useQuery(
@@ -4184,56 +4192,113 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                           </div>
                         </div>
 
-                        {/* Actions - simple direct buttons */}
+                        {/* Actions */}
                         <div className="flex flex-col gap-1 shrink-0">
-                          {file.status === 'pending' && (
-                            <>
-                              <Button
-                                size="sm"
-                                className="text-xs bg-green-500 hover:bg-green-600 text-white h-8 px-3"
-                                disabled={approveSharedMutation.isPending}
-                                onClick={() => approveSharedMutation.mutate({ id: file.id })}
-                              >
-                                <FileCheck className="w-3 h-3 ml-1" />
-                                אשר
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-xs text-red-500 border-red-200 hover:bg-red-50 h-8 px-3"
-                                disabled={rejectSharedMutation.isPending}
-                                onClick={() => { if (confirm('לדחות קובץ זה?')) rejectSharedMutation.mutate({ id: file.id }); }}
-                              >
-                                <FileX className="w-3 h-3 ml-1" />
-                                דחה
-                              </Button>
-                            </>
-                          )}
-                          {file.status === 'approved' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-xs text-red-500 border-red-200 hover:bg-red-50 h-8 px-3"
-                              disabled={rejectSharedMutation.isPending}
-                              onClick={() => { if (confirm('להסיר קובץ מאושר?')) rejectSharedMutation.mutate({ id: file.id }); }}
-                            >
-                              <FileX className="w-3 h-3 ml-1" />
-                              הסר
-                            </Button>
-                          )}
-                          {file.status === 'rejected' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs h-8 px-3"
+                            onClick={() => {
+                              if (editingSharedFile === file.id) { setEditingSharedFile(null); return; }
+                              setEditingSharedFile(file.id);
+                              setSharedEditForm({ title: file.title || '', titleHe: file.titleHe || '', description: file.description || '', descriptionHe: file.descriptionHe || '', category: file.category || '', tags: file.tags || '', creatorName: file.creatorName || '' });
+                            }}
+                          >
+                            {editingSharedFile === file.id ? 'סגור' : 'ערוך'}
+                          </Button>
+                          {file.status !== 'approved' && (
                             <Button
                               size="sm"
                               className="text-xs bg-green-500 hover:bg-green-600 text-white h-8 px-3"
                               disabled={approveSharedMutation.isPending}
-                              onClick={() => approveSharedMutation.mutate({ id: file.id })}
+                              onClick={() => approveSharedMutation.mutate({ id: file.id, creatorName: file.creatorName || undefined, category: file.category || undefined })}
                             >
                               <FileCheck className="w-3 h-3 ml-1" />
                               אשר
                             </Button>
                           )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs text-red-500 border-red-200 hover:bg-red-50 h-8 px-3"
+                            disabled={rejectSharedMutation.isPending}
+                            onClick={() => { if (confirm('לדחות/להסיר קובץ זה?')) rejectSharedMutation.mutate({ id: file.id }); }}
+                          >
+                            <FileX className="w-3 h-3 ml-1" />
+                            דחה
+                          </Button>
                         </div>
                       </div>
+
+                      {/* Inline edit form */}
+                      {editingSharedFile === file.id && (
+                        <div className="border-t border-slate-100 pt-3 mt-1 space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">שם קובץ (EN)</label>
+                              <input
+                                className="w-full text-xs border border-slate-200 rounded-md px-2 py-1.5 bg-white"
+                                value={sharedEditForm.title}
+                                onChange={e => setSharedEditForm(f => ({ ...f, title: e.target.value }))}
+                                placeholder="שם באנגלית"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">שם קובץ (עברית)</label>
+                              <input
+                                className="w-full text-xs border border-slate-200 rounded-md px-2 py-1.5 bg-white"
+                                value={sharedEditForm.titleHe}
+                                onChange={e => setSharedEditForm(f => ({ ...f, titleHe: e.target.value }))}
+                                placeholder="שם בעברית"
+                                dir="rtl"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">קטגוריה</label>
+                              <select
+                                className="w-full text-xs border border-slate-200 rounded-md px-2 py-1.5 bg-white"
+                                value={sharedEditForm.category}
+                                onChange={e => setSharedEditForm(f => ({ ...f, category: e.target.value }))}
+                              >
+                                <option value="">בחר קטגוריה...</option>
+                                {SHARED_CATEGORIES.map(cat => (
+                                  <option key={cat} value={cat}>{SHARED_CATEGORIES_HE[cat] || cat}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">קרדיט ליוצר</label>
+                              <input
+                                className="w-full text-xs border border-slate-200 rounded-md px-2 py-1.5 bg-white"
+                                value={sharedEditForm.creatorName}
+                                onChange={e => setSharedEditForm(f => ({ ...f, creatorName: e.target.value }))}
+                                placeholder="שם היוצר"
+                                dir="rtl"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex gap-2 pt-1">
+                            <Button
+                              size="sm"
+                              className="text-xs h-7 px-3 flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                              disabled={updateSharedMutation.isPending}
+                              onClick={() => updateSharedMutation.mutate({ id: file.id, title: sharedEditForm.title || undefined, titleHe: sharedEditForm.titleHe || undefined, category: sharedEditForm.category || undefined, tags: sharedEditForm.tags || undefined })}
+                            >
+                              שמור עדכון
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="text-xs h-7 px-3 flex-1 bg-green-500 hover:bg-green-600 text-white"
+                              disabled={approveSharedMutation.isPending}
+                              onClick={() => approveSharedMutation.mutate({ id: file.id, title: sharedEditForm.title || undefined, titleHe: sharedEditForm.titleHe || undefined, category: sharedEditForm.category || undefined, tags: sharedEditForm.tags || undefined, creatorName: sharedEditForm.creatorName || undefined })}
+                            >
+                              <FileCheck className="w-3 h-3 ml-1" />אשר ופרסם
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}

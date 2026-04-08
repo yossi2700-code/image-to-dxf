@@ -33,8 +33,8 @@ function applyFillToSvg(svg: string): string {
   if (!s.endsWith("</svg>")) s += "\n</svg>";
   return s
     .replace(/stroke-width="[^"]*"/g, 'stroke-width="1.5"')
-    .replace(/stroke="[^"]*"/g, 'stroke="#0f766e"')
-    .replace(/fill="none"/g, 'fill="#ccfbf1"')
+    .replace(/stroke="[^"]*"/g, 'stroke="#1a1a1a"')
+    .replace(/fill="none"/g, 'fill="#2d2d2d"')
     .replace(/<svg([^>]*)>/, '<svg$1 width="100%" height="100%" preserveAspectRatio="xMidYMid meet">');
 }
 
