@@ -651,6 +651,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     onSuccess: () => { toast.success("הקובץ עודכן"); refetchSharedFiles(); setEditingSharedFile(null); },
     onError: (e: any) => toast.error(e.message),
   });
+  const deleteSharedMutation = trpc.sharedFiles.adminDelete.useMutation({
+    onSuccess: () => { toast.success("הקובץ נמחק לצמיתות"); refetchSharedFiles(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const { data: downloadLogData, isLoading: downloadLogLoading } = trpc.sharedFiles.adminDownloadLog.useQuery(
+    undefined,
+    { enabled: activeSection === "shared_files" }
+  );
 
   const SHARED_CATEGORIES = [
     "Animals", "Nature", "Geometric", "Text & Letters", "Vehicles",
@@ -1590,6 +1598,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             <span className="font-medium text-sm">{u.name ?? <span className="text-muted-foreground">ללא שם</span>}</span>
                             <span className="text-xs text-muted-foreground font-mono">{u.email}</span>
                             {u.isBlocked ? <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">חסום</span> : null}
+                            {(u as any).registrationSource === 'freedxf' && (
+                              <span className="text-xs bg-teal-50 text-teal-700 border border-teal-200 px-1.5 py-0.5 rounded-full flex items-center gap-1" title="נרשם דרך FreeDXF">
+                                <Globe className="w-2.5 h-2.5" />
+                                FreeDXF
+                              </span>
+                            )}
                             {u.googleId ? (
                               <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-1.5 py-0.5 rounded-full flex items-center gap-1" title="התחבר דרך Google">
                                 <svg className="w-3 h-3" viewBox="0 0 24 24">
@@ -4227,6 +4241,16 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             <FileX className="w-3 h-3 ml-1" />
                             דחה
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs text-red-600 border-red-300 bg-red-50 hover:bg-red-100 h-8 px-3 font-bold"
+                            disabled={deleteSharedMutation.isPending}
+                            onClick={() => { if (confirm('למחוק קובץ זה לצמיתות? פעולה זו אינה הפיכה!')) deleteSharedMutation.mutate({ id: file.id }); }}
+                          >
+                            <Trash2 className="w-3 h-3 ml-1" />
+                            מחק
+                          </Button>
                         </div>
                       </div>
 
@@ -4304,6 +4328,54 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 ))}
               </div>
             )}
+          {/* Download Log */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold text-teal-700 flex items-center gap-2">
+                <Download className="w-4 h-4" />
+                יומן הורדות FreeDXF
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {downloadLogLoading ? (
+                <div className="flex justify-center py-6"><div className="w-5 h-5 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" /></div>
+              ) : !downloadLogData || downloadLogData.length === 0 ? (
+                <p className="text-xs text-slate-400 text-center py-6">אין הורדות עדיין</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b bg-slate-50">
+                        <th className="text-right px-3 py-2 font-semibold text-slate-600">משתמש</th>
+                        <th className="text-right px-3 py-2 font-semibold text-slate-600">קובץ</th>
+                        <th className="text-right px-3 py-2 font-semibold text-slate-600">קטגוריה</th>
+                        <th className="text-right px-3 py-2 font-semibold text-slate-600">תאריך</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(downloadLogData as any[]).map((d: any) => (
+                        <tr key={d.id} className="border-b hover:bg-slate-50 transition-colors">
+                          <td className="px-3 py-2">
+                            <div className="font-medium text-slate-700">{d.userName || 'אנונימי'}</div>
+                            <div className="text-slate-400 text-[10px]">{d.userEmail}</div>
+                          </td>
+                          <td className="px-3 py-2 max-w-[160px]">
+                            <span className="truncate block text-slate-600">{d.currentTitle || d.fileTitle || `#${d.sharedFileId}`}</span>
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className="bg-teal-50 text-teal-700 px-1.5 py-0.5 rounded-full">{d.fileCategory || '—'}</span>
+                          </td>
+                          <td className="px-3 py-2 text-slate-400 whitespace-nowrap">
+                            {new Date(d.createdAt).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
           </div>
         )}
         </main>

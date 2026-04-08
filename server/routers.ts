@@ -975,6 +975,7 @@ export const appRouter = router({
           createdAt: appUsers.createdAt,
           lastLoginAt: appUsers.lastLoginAt,
           googleId: appUsers.googleId,
+          registrationSource: appUsers.registrationSource,
         })
         .from(appUsers)
         .orderBy(desc(appUsers.createdAt))
@@ -1020,6 +1021,7 @@ export const appRouter = router({
       }
       return rows.map(r => ({
         ...r,
+        registrationSource: r.registrationSource ?? 'direct',
         lastAction: lastActionMap.get(r.id) ?? null,
         subscription: subMap.get(r.id) ?? null,
       }));
@@ -2782,6 +2784,42 @@ export const appRouter = router({
       }),
 
     /** Admin: get pending count */
+    /** Admin: permanently delete a shared file */
+    adminDelete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db.delete(sharedFiles).where(eq(sharedFiles.id, input.id));
+        return { success: true };
+      }),
+
+    /** Admin: list all FreeDXF downloads (who downloaded what) */
+    adminDownloadLog: adminProcedure
+      .input(z.object({ limit: z.number().min(1).max(200).default(100) }).optional())
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return [];
+        const limit = input?.limit ?? 100;
+        return db
+          .select({
+            id: freedxfDownloads.id,
+            sharedFileId: freedxfDownloads.sharedFileId,
+            fileTitle: freedxfDownloads.fileTitle,
+            fileCategory: freedxfDownloads.fileCategory,
+            createdAt: freedxfDownloads.createdAt,
+            userName: appUsers.name,
+            userEmail: appUsers.email,
+            currentTitle: sharedFiles.title,
+            currentTitleHe: sharedFiles.titleHe,
+          })
+          .from(freedxfDownloads)
+          .leftJoin(appUsers, eq(freedxfDownloads.appUserId, appUsers.id))
+          .leftJoin(sharedFiles, eq(freedxfDownloads.sharedFileId, sharedFiles.id))
+          .orderBy(desc(freedxfDownloads.createdAt))
+          .limit(limit);
+      }),
+
     pendingCount: adminProcedure.query(async () => {
       const db = await getDb();
       if (!db) return { count: 0 };
