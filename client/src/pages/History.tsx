@@ -320,8 +320,14 @@ function GroupCard({
             </button>
           )}
           {onShare && (activeItem?.dxfUrl || activeItem?.svgPreview) && (
-            <button onClick={() => onShare(activeItem)} className="w-8 h-8 flex items-center justify-center rounded-md border border-teal-200 text-teal-600 hover:bg-teal-50 transition-colors" title={isRtl ? "שתף לקהילה" : "Share to Community"}>
+            <button
+              onClick={() => onShare(activeItem)}
+              className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-white text-xs font-bold transition-all hover:opacity-90 active:scale-95"
+              style={{ background: 'linear-gradient(135deg, #0d9488 0%, #0891b2 100%)', boxShadow: '0 1px 4px rgba(13,148,136,0.4)' }}
+              title={isRtl ? "שתף לקהילה" : "Share to Community"}
+            >
               <Share2 className="w-3.5 h-3.5" />
+              {isRtl ? "שתף" : "Share"}
             </button>
           )}
           <button onClick={() => onDelete(group)} className="w-8 h-8 flex items-center justify-center rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
