@@ -60,17 +60,46 @@ export default function FreeDxfFileDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // Trigger download via a hidden <a> pointing to the server proxy.
-  // The server sends Content-Disposition: attachment so the browser
-  // always shows a "Save As" dialog instead of opening the file.
-  const triggerDownload = (fileId: number, fileTitle: string | null) => {
+  // Detect iOS Safari (iPhone/iPad)
+  const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as unknown as { MSStream?: unknown }).MSStream;
+
+  /**
+   * Trigger download:
+   * - iOS: fetch the file as a Blob, then use Web Share API (files) to open
+   *   the native iOS share sheet — the user can "Save to Files", AirDrop, etc.
+   * - Android / Desktop: use a hidden <a download> pointing to the server proxy
+   *   which sends Content-Disposition: attachment → browser save dialog.
+   */
+  const triggerDownload = async (fileId: number, fileTitle: string | null) => {
+    const filename = (fileTitle || `freedxf-${fileId}`) + ".dxf";
     const proxyUrl = `/api/freedxf/files/${fileId}/download-file`;
+
+    if (isIOS() && navigator.canShare) {
+      // iOS path — fetch blob then share
+      const response = await fetch(proxyUrl, { credentials: "include" });
+      if (!response.ok) throw new Error("Download failed");
+      const blob = await response.blob();
+      const file = new File([blob], filename, { type: "application/dxf" });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: filename });
+        return;
+      }
+      // Fallback: blob URL download
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      return;
+    }
+
+    // Android / Desktop path — hidden anchor with download attribute
     const a = document.createElement("a");
     a.href = proxyUrl;
-    a.download = (fileTitle || `freedxf-${fileId}`) + ".dxf";
-    // For iOS/Safari: open in new tab as fallback (they ignore a.download for cross-origin)
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -85,11 +114,13 @@ export default function FreeDxfFileDetail() {
     }
     setDownloading(true);
     try {
-      triggerDownload(file.id, file.title);
-    } catch {
+      await triggerDownload(file.id, file.title);
+    } catch (err: unknown) {
+      // User cancelled share sheet — not an error
+      if (err instanceof Error && err.name === "AbortError") return;
       alert(isRtl ? "ההורדה נכשלה" : "Download failed");
     } finally {
-      setTimeout(() => setDownloading(false), 1500);
+      setDownloading(false);
     }
   };
 
