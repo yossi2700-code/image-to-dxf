@@ -723,29 +723,30 @@ export default function Landing() {
       {/* ── Sticky nav ── */}
       <header style={{ position: "sticky", top: 0, zIndex: 30, background: "rgba(255,255,255,0.95)", backdropFilter: "blur(8px)", borderBottom: "1px solid #e8eaf0", boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => navigate("/")}>
-              <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai_99079d72.webp"
-                alt="dxfai logo"
-                style={{ width: 36, height: 36, borderRadius: 9, objectFit: "cover" }}
-              />
-            </div>
-            {/* Free Files badge */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {/* free teal logo button */}
             <a
               href="/free"
               style={{
-                display: "flex", alignItems: "center", gap: 5,
-                padding: "5px 11px", borderRadius: 20,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                width: 44, height: 44, borderRadius: 12,
                 background: "linear-gradient(135deg, #0d9488, #0891b2)",
-                color: "#fff", fontSize: 12, fontWeight: 700,
+                color: "#fff", fontSize: 13, fontWeight: 800,
                 textDecoration: "none", boxShadow: "0 2px 8px rgba(13,148,136,0.35)",
-                whiteSpace: "nowrap",
+                flexShrink: 0, letterSpacing: "-0.5px",
               }}
+              title={isRtl ? "קבצי DXF בחינם" : "Free DXF Files"}
             >
-              <span style={{ fontSize: 14 }}>🎁</span>
-              {isRtl ? "קבצים בחינם" : "Free Files"}
+              free
             </a>
+            {/* dxfai black logo button */}
+            <div style={{ cursor: "pointer", flexShrink: 0 }} onClick={() => navigate("/")}>
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai_99079d72.webp"
+                alt="dxfai logo"
+                style={{ width: 44, height: 44, borderRadius: 12, objectFit: "cover", display: "block" }}
+              />
+            </div>
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             {/* Language toggle He / En */}
