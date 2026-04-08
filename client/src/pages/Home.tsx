@@ -634,6 +634,16 @@ function CtaSection() {
             {isRtl ? 'לייזר, CNC ועיצוב וקטורי באיכות מקצועית בעזרת AI' : 'Professional vector files for laser, CNC, and design — powered by AI'}
           </p>
           {/* Contact buttons */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-3">
+            <a
+              href="/free"
+              className="inline-flex items-center gap-2 font-bold px-5 py-2.5 rounded-xl transition-all hover:opacity-90 hover:scale-105"
+              style={{ background: 'linear-gradient(135deg, #0ea5e9, #06b6d4)', color: 'white', boxShadow: '0 4px 16px rgba(6,182,212,0.4)', fontSize: '0.9rem' }}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+              {isRtl ? 'מאגר קבצים חינם לקהילה' : 'Free Community Files'}
+            </a>
+          </div>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <button
               onClick={() => { setShowMsgModal(true); setMsgSent(false); }}
