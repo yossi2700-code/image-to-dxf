@@ -105,33 +105,19 @@ export default function FreeDxfHome() {
             <span style={{ fontSize: 16, fontWeight: 800, color: "#042f2e", letterSpacing: "-0.02em" }}>FreeDXF</span>
           </Link>
 
-          {/* Center search (desktop) */}
-          <form onSubmit={handleSearch} style={{ flex: 1, maxWidth: 400, display: "flex" }}>
-            <div style={{ position: "relative", width: "100%" }}>
-              <Search style={{ position: "absolute", [isRtl ? "right" : "left"]: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#9ca3af" }} />
-              <input
-                ref={searchRef}
-                type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder={isRtl ? "חיפוש קבצים..." : "Search files..."}
-                style={{
-                  width: "100%",
-                  padding: isRtl ? "9px 40px 9px 12px" : "9px 12px 9px 40px",
-                  borderRadius: 10,
-                  border: "1.5px solid #e5e7eb",
-                  fontSize: 14,
-                  background: "#f9fafb",
-                  color: "#1f2937",
-                  outline: "none",
-                  direction: isRtl ? "rtl" : "ltr",
-                  transition: "border-color 0.15s",
-                }}
-                onFocus={e => { e.target.style.borderColor = "#0d9488"; e.target.style.background = "#fff"; }}
-                onBlur={e => { e.target.style.borderColor = "#e5e7eb"; e.target.style.background = "#f9fafb"; }}
-              />
-            </div>
-          </form>
+          {/* dxfai logo button */}
+          <a
+            href="/"
+            style={{ display: "flex", alignItems: "center", gap: 6, textDecoration: "none", flexShrink: 0 }}
+            title={isRtl ? "צור DXF עם AI" : "Create DXF with AI"}
+          >
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai_99079d72.webp"
+              alt="dxfai"
+              style={{ width: 30, height: 30, borderRadius: 8, objectFit: "cover", flexShrink: 0 }}
+            />
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#4f46e5", letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>dxfai</span>
+          </a>
 
           {/* Right actions */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
