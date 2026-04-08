@@ -335,19 +335,38 @@ export default function FreeDxfFileDetail() {
             </div>
 
             {/* Created with dxfai.ai */}
-            <div style={{ marginTop: 28, padding: 16, borderRadius: 14, background: "linear-gradient(135deg, #f0fdfa, #ccfbf1)", border: "1px solid #99f6e4" }}>
-              <p style={{ fontSize: 12, color: "#0d9488", fontWeight: 600, marginBottom: 8 }}>
+            <div style={{
+              marginTop: 28, borderRadius: 16,
+              background: "linear-gradient(135deg, #4c1d95 0%, #6d28d9 60%, #7c3aed 100%)",
+              padding: 20, position: "relative", overflow: "hidden",
+            }}>
+              <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, borderRadius: "50%", background: "rgba(255,255,255,0.07)" }} />
+              <p style={{ fontSize: 11, color: "#c4b5fd", fontWeight: 600, marginBottom: 10, letterSpacing: "0.05em", textTransform: "uppercase" }}>
                 {isRtl ? "נוצר עם" : "Created with"}
               </p>
-              <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 700, color: "#042f2e", textDecoration: "none" }}>
-                <div style={{ width: 28, height: 28, borderRadius: 7, background: "linear-gradient(135deg, #0d9488, #0891b2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Zap style={{ width: 14, height: 14, color: "#fff" }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Zap style={{ width: 16, height: 16, color: "#fbbf24" }} />
                 </div>
-                dxfai.ai — AI-Powered DXF Creation
-              </Link>
-              <p style={{ fontSize: 12, color: "#6b7280", marginTop: 8, lineHeight: 1.5 }}>
+                <span style={{ fontSize: 15, fontWeight: 800, color: "#fff" }}>dxfai.ai</span>
+                <span style={{ fontSize: 12, color: "#ddd6fe" }}>— AI-Powered DXF</span>
+              </div>
+              <p style={{ fontSize: 12, color: "#ddd6fe", lineHeight: 1.6, marginBottom: 14 }}>
                 {isRtl ? "צרו קבצי DXF משלכם עם AI. המרת תמונות, יצירת עיצובים ועוד." : "Create your own DXF files with AI. Convert images, generate designs, and more."}
               </p>
+              <Link
+                href="/"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 7,
+                  padding: "10px 20px", borderRadius: 10,
+                  background: "#fff", color: "#6d28d9",
+                  fontSize: 13, fontWeight: 800, textDecoration: "none",
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.2)",
+                }}
+              >
+                <Zap style={{ width: 14, height: 14 }} />
+                {isRtl ? "נסה בעצמך" : "Try It Yourself"}
+              </Link>
             </div>
           </div>
         </div>

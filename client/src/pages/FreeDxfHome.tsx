@@ -373,31 +373,40 @@ export default function FreeDxfHome() {
       </main>
 
       {/* ── CTA Banner ── */}
-      <div style={{ background: "#fff", borderTop: "1px solid #e5e7eb", padding: "40px 20px", textAlign: "center" }}>
-        <div style={{ maxWidth: 500, margin: "0 auto" }}>
-          <h2 style={{ fontSize: "clamp(1.2rem, 2.5vw, 1.6rem)", fontWeight: 800, color: "#042f2e", marginBottom: 8, letterSpacing: "-0.02em" }}>
+      <div style={{
+        background: "linear-gradient(135deg, #4c1d95 0%, #6d28d9 50%, #7c3aed 100%)",
+        padding: "48px 20px", textAlign: "center",
+        position: "relative", overflow: "hidden",
+      }}>
+        {/* decorative circles */}
+        <div style={{ position: "absolute", top: -40, right: -40, width: 160, height: 160, borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
+        <div style={{ position: "absolute", bottom: -30, left: -30, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
+        <div style={{ maxWidth: 500, margin: "0 auto", position: "relative", zIndex: 1 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", borderRadius: 20, padding: "4px 12px", marginBottom: 14 }}>
+            <Zap style={{ width: 13, height: 13, color: "#fbbf24" }} />
+            <span style={{ fontSize: 11, color: "#e9d5ff", fontWeight: 600 }}>{isRtl ? "תוכנת AI מתקדמת" : "Advanced AI Tool"}</span>
+          </div>
+          <h2 style={{ fontSize: "clamp(1.3rem, 3vw, 1.8rem)", fontWeight: 800, color: "#fff", marginBottom: 10, letterSpacing: "-0.02em", textShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>
             {isRtl ? "צרו קבצי DXF משלכם" : "Create Your Own DXF Files"}
           </h2>
-          <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 20, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 14, color: "#ddd6fe", marginBottom: 24, lineHeight: 1.7 }}>
             {isRtl
               ? "השתמשו ב-AI להמרת תמונות ויצירת עיצובים מקצועיים לחיתוך CNC ולייזר."
               : "Use AI to convert images and create professional designs for CNC and laser cutting."}
           </p>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-            <p style={{ fontSize: 12, color: "#9ca3af", marginBottom: 4 }}>
-              {isRtl ? "כניסה לתוכנה ליצירת קבצי DXF בעזרת AI" : "Enter the AI-powered DXF creation tool"}
-            </p>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
             {appUser ? (
               <Link
                 href="/"
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 8,
-                  padding: "12px 28px", borderRadius: 12,
-                  background: "linear-gradient(135deg, #0d9488, #0891b2)", color: "#fff",
-                  fontSize: 14, fontWeight: 700, textDecoration: "none",
+                  padding: "14px 36px", borderRadius: 14,
+                  background: "#fff", color: "#6d28d9",
+                  fontSize: 15, fontWeight: 800, textDecoration: "none",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
                 }}
               >
-                <Zap style={{ width: 16, height: 16 }} />
+                <Zap style={{ width: 17, height: 17 }} />
                 {isRtl ? "כניסה לתוכנה" : "Enter Tool"}
               </Link>
             ) : (
@@ -405,15 +414,19 @@ export default function FreeDxfHome() {
                 onClick={() => setAuthOpen(true)}
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 8,
-                  padding: "12px 28px", borderRadius: 12,
-                  background: "linear-gradient(135deg, #0d9488, #0891b2)", color: "#fff",
-                  fontSize: 14, fontWeight: 700, border: "none", cursor: "pointer",
+                  padding: "14px 36px", borderRadius: 14,
+                  background: "#fff", color: "#6d28d9",
+                  fontSize: 15, fontWeight: 800, border: "none", cursor: "pointer",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
                 }}
               >
-                <Zap style={{ width: 16, height: 16 }} />
-                {isRtl ? "כניסה לתוכנה" : "Enter Tool"}
+                <Zap style={{ width: 17, height: 17 }} />
+                {isRtl ? "נסה בעצמך — כניסה לתוכנה" : "Try It — Enter Tool"}
               </button>
             )}
+            <p style={{ fontSize: 11, color: "#c4b5fd", margin: 0 }}>
+              {isRtl ? "כניסה לתוכנה ליצירת קבצי DXF בעזרת AI" : "AI-powered DXF creation tool"}
+            </p>
           </div>
         </div>
       </div>
