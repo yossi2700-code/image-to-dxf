@@ -383,33 +383,47 @@ export default function FreeDxfHome() {
               ? "השתמשו ב-AI להמרת תמונות ויצירת עיצובים מקצועיים לחיתוך CNC ולייזר."
               : "Use AI to convert images and create professional designs for CNC and laser cutting."}
           </p>
-          {appUser ? (
-            <Link
-              href="/"
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+            {appUser ? (
+              <Link
+                href="/"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  padding: "12px 28px", borderRadius: 12,
+                  background: "linear-gradient(135deg, #0d9488, #0891b2)", color: "#fff",
+                  fontSize: 14, fontWeight: 700, textDecoration: "none",
+                }}
+              >
+                <Zap style={{ width: 16, height: 16 }} />
+                {isRtl ? "צרו DXF עכשיו" : "Create DXF Now"}
+              </Link>
+            ) : (
+              <button
+                onClick={() => setAuthOpen(true)}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  padding: "12px 28px", borderRadius: 12,
+                  background: "linear-gradient(135deg, #0d9488, #0891b2)", color: "#fff",
+                  fontSize: 14, fontWeight: 700, border: "none", cursor: "pointer",
+                }}
+              >
+                <Zap style={{ width: 16, height: 16 }} />
+                {isRtl ? "לחץ כאן להתנסות" : "Try It Now"}
+              </button>
+            )}
+            <a
+              href="/free"
               style={{
                 display: "inline-flex", alignItems: "center", gap: 8,
-                padding: "12px 28px", borderRadius: 12,
-                background: "linear-gradient(135deg, #0d9488, #0891b2)", color: "#fff",
-                fontSize: 14, fontWeight: 700, textDecoration: "none",
+                padding: "11px 24px", borderRadius: 12,
+                background: "linear-gradient(135deg, #7c3aed, #6d28d9)", color: "#fff",
+                fontSize: 13, fontWeight: 700, textDecoration: "none",
               }}
             >
-              <Zap style={{ width: 16, height: 16 }} />
-              {isRtl ? "צרו DXF עכשיו" : "Create DXF Now"}
-            </Link>
-          ) : (
-            <button
-              onClick={() => setAuthOpen(true)}
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 8,
-                padding: "12px 28px", borderRadius: 12,
-                background: "linear-gradient(135deg, #0d9488, #0891b2)", color: "#fff",
-                fontSize: 14, fontWeight: 700, border: "none", cursor: "pointer",
-              }}
-            >
-              <Zap style={{ width: 16, height: 16 }} />
-              {isRtl ? "הרשמה חינם" : "Sign Up Free"}
-            </button>
-          )}
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+              {isRtl ? "מאגר קבצים חינם לקהילה" : "Free Community Files"}
+            </a>
+          </div>
         </div>
       </div>
 
