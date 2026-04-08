@@ -383,7 +383,10 @@ export default function FreeDxfHome() {
               ? "השתמשו ב-AI להמרת תמונות ויצירת עיצובים מקצועיים לחיתוך CNC ולייזר."
               : "Use AI to convert images and create professional designs for CNC and laser cutting."}
           </p>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+            <p style={{ fontSize: 12, color: "#9ca3af", marginBottom: 4 }}>
+              {isRtl ? "כניסה לתוכנה ליצירת קבצי DXF בעזרת AI" : "Enter the AI-powered DXF creation tool"}
+            </p>
             {appUser ? (
               <Link
                 href="/"
@@ -395,7 +398,7 @@ export default function FreeDxfHome() {
                 }}
               >
                 <Zap style={{ width: 16, height: 16 }} />
-                {isRtl ? "צרו DXF עכשיו" : "Create DXF Now"}
+                {isRtl ? "כניסה לתוכנה" : "Enter Tool"}
               </Link>
             ) : (
               <button
@@ -408,21 +411,9 @@ export default function FreeDxfHome() {
                 }}
               >
                 <Zap style={{ width: 16, height: 16 }} />
-                {isRtl ? "לחץ כאן להתנסות" : "Try It Now"}
+                {isRtl ? "כניסה לתוכנה" : "Enter Tool"}
               </button>
             )}
-            <a
-              href="/free"
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 8,
-                padding: "11px 24px", borderRadius: 12,
-                background: "linear-gradient(135deg, #7c3aed, #6d28d9)", color: "#fff",
-                fontSize: 13, fontWeight: 700, textDecoration: "none",
-              }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
-              {isRtl ? "מאגר קבצים חינם לקהילה" : "Free Community Files"}
-            </a>
           </div>
         </div>
       </div>
