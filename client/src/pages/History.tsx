@@ -300,28 +300,29 @@ function GroupCard({
           )}
         </div>
 
-        <div className="flex gap-1.5 flex-wrap pt-0.5">
+        {/* Row 1: Download + Delete */}
+        <div className="flex gap-1.5 pt-0.5">
           {(activeItem?.dxfUrl || activeItem?.svgPreview) && (
-            <button onClick={() => onDownload(activeItem)} className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md bg-green-600 hover:bg-green-700 text-white text-xs font-semibold transition-colors">
+            <button onClick={() => onDownload(activeItem)} className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold transition-colors">
               <Download className="w-3.5 h-3.5" />
               {isRtl ? "הורד קובץ" : "Download"}
             </button>
           )}
-          {onShare && (activeItem?.dxfUrl || activeItem?.svgPreview) && (
-            <button
-              onClick={() => onShare(activeItem)}
-              className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-white text-xs font-bold transition-all hover:opacity-90 active:scale-95"
-              style={{ background: 'linear-gradient(135deg, #0d9488 0%, #0891b2 100%)', boxShadow: '0 1px 4px rgba(13,148,136,0.4)' }}
-              title={isRtl ? "שתף לקהילה" : "Share to Community"}
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              {isRtl ? "שתף" : "Share"}
-            </button>
-          )}
-          <button onClick={() => onDelete(group)} className="w-8 h-8 flex items-center justify-center rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
+          <button onClick={() => onDelete(group)} className="w-8 h-8 flex items-center justify-center rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-colors flex-shrink-0">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
+        {/* Row 2: Share to Community — full width */}
+        {onShare && (activeItem?.dxfUrl || activeItem?.svgPreview) && (
+          <button
+            onClick={() => onShare(activeItem)}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-white text-xs font-bold transition-all hover:opacity-90 active:scale-[0.98] mt-1"
+            style={{ background: 'linear-gradient(135deg, #0d9488 0%, #0891b2 100%)', boxShadow: '0 2px 6px rgba(13,148,136,0.35)' }}
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            {isRtl ? "שתף לקהילת FreeDXF ♥" : "Share to FreeDXF Community ♥"}
+          </button>
+        )}
       </CardContent>
     </Card>
   );
