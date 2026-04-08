@@ -236,18 +236,22 @@ export function DxfDownloadDialog({
   const [error, setError] = useState<string | null>(null);
   const [isSharing, setIsSharing] = useState(false);
   const [hasShared, setHasShared] = useState(false);
+  const [showCreditDialog, setShowCreditDialog] = useState(false);
+  const [creditName, setCreditName] = useState("");
+  const [creditSubmitted, setCreditSubmitted] = useState(false);
 
   const shareMutation = trpc.sharedFiles.submitDirect.useMutation({
     onSuccess: () => {
       setHasShared(true);
-      toast.success(t("shareSubmitted"));
+      setCreditSubmitted(true);
     },
     onError: (err) => {
       if (err.message.includes("כבר נשלח") || err.message.includes("already")) {
         setHasShared(true);
-        toast.info(t("shareAlreadyShared"));
+        setCreditSubmitted(true);
       } else if (err.message.includes("להתחבר") || err.message.includes("UNAUTHORIZED")) {
         toast.error(t("shareLoginRequired"));
+        setShowCreditDialog(false);
       } else {
         toast.error(err.message);
       }
@@ -290,7 +294,14 @@ export function DxfDownloadDialog({
   const { t, isRtl } = useLanguage();
   const trackDownloadMutation = trpc.trackDownload.useMutation();
 
-  const handleShareToCommunity = async () => {
+  const handleShareToCommunity = () => {
+    // Open credit dialog instead of submitting directly
+    setCreditName("");
+    setCreditSubmitted(false);
+    setShowCreditDialog(true);
+  };
+
+  const handleSubmitCredit = async () => {
     setIsSharing(true);
     try {
       await shareMutation.mutateAsync({
@@ -299,6 +310,7 @@ export function DxfDownloadDialog({
         feature: "convert",
         lineCount: segmentCount,
         filename: cleanFilename || defaultFilename,
+        creatorName: creditName.trim() || undefined,
       });
     } finally {
       setIsSharing(false);
@@ -391,6 +403,7 @@ export function DxfDownloadDialog({
   const hasPdf = !!svgContent;
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(o) => !o && !isLoading && onClose()}>
       <DialogContent className="max-w-sm w-full" dir={isRtl ? "rtl" : "ltr"}>
         <DialogHeader>
@@ -517,6 +530,21 @@ export function DxfDownloadDialog({
 
           {/* Action buttons */}
           <div className="flex flex-col gap-2 pt-1">
+
+            {/* Share to Community - BEFORE download */}
+            <button
+              onClick={handleShareToCommunity}
+              disabled={hasShared}
+              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
+                hasShared
+                  ? "bg-emerald-50 text-emerald-400 border border-emerald-200 cursor-default"
+                  : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white border-0 cursor-pointer hover:shadow-md hover:scale-[1.01]"
+              }`}
+            >
+              <Heart className={`w-4 h-4 ${hasShared ? "fill-emerald-400" : "fill-white/80"}`} />
+              {hasShared ? (isRtl ? "✅ נשלח לקהילה!" : "✅ Shared!") : (isRtl ? "🎁 שתף לקהילה בחינם" : "🎁 Share to Community")}
+            </button>
+
             <Button
               size="lg"
               className="w-full font-bold text-base h-12 text-white hover:opacity-90 transition-all"
@@ -534,24 +562,6 @@ export function DxfDownloadDialog({
               {getButtonLabel()}
             </Button>
 
-            {/* Share to Community */}
-            <button
-              onClick={handleShareToCommunity}
-              disabled={isSharing || hasShared}
-              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                hasShared
-                  ? "bg-pink-50 text-pink-400 border border-pink-200 cursor-default"
-                  : "bg-pink-50 hover:bg-pink-100 text-pink-600 border border-pink-200 hover:border-pink-300 cursor-pointer"
-              }`}
-            >
-              {isSharing ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Heart className={`w-4 h-4 ${hasShared ? "fill-pink-400" : ""}`} />
-              )}
-              {hasShared ? (isRtl ? "נשלח לשיתוף ❤" : "Shared ❤") : t("shareToCommunity")}
-            </button>
-
             {/* Cancel */}
             <Button
               variant="ghost"
@@ -567,5 +577,87 @@ export function DxfDownloadDialog({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* ── Credit Dialog ── */}
+    <Dialog open={showCreditDialog} onOpenChange={(v) => { if (!v && !isSharing) setShowCreditDialog(false); }}>
+      <DialogContent className="max-w-sm mx-auto p-0 overflow-hidden rounded-2xl" dir={isRtl ? "rtl" : "ltr"}>
+        {creditSubmitted ? (
+          /* Success screen */
+          <div className="flex flex-col items-center justify-center py-10 px-6 text-center gap-4">
+            <div className="text-5xl">🎉</div>
+            <h3 className="text-xl font-bold text-emerald-700">{isRtl ? "תודה! הקובץ נשלח לבדיקה" : "Thank you! File sent for review"}</h3>
+            <p className="text-sm text-gray-500">{isRtl ? "לאחר אישור הוא יופיע בספריית הקבצים החינמיים" : "After approval it will appear in the free files library"}</p>
+            <button
+              onClick={() => setShowCreditDialog(false)}
+              className="mt-2 px-6 py-2 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 transition-all"
+            >
+              {isRtl ? "סגור" : "Close"}
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Header */}
+            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-6 pt-6 pb-8 text-white text-center relative">
+              <button
+                onClick={() => setShowCreditDialog(false)}
+                className="absolute top-3 left-3 text-white/70 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <div className="text-3xl mb-2">🎁</div>
+              <h3 className="text-lg font-bold">{isRtl ? "שתף לקהילה" : "Share to Community"}</h3>
+              <p className="text-xs text-white/80 mt-1">{isRtl ? "הקובץ יופיע בספריית הקבצים החינמיים לאחר אישור" : "File will appear in the free library after approval"}</p>
+            </div>
+
+            {/* SVG mini preview */}
+            {svgContent && (
+              <div className="-mt-4 mx-6 bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden" style={{ height: 120 }}>
+                <div
+                  className="w-full h-full flex items-center justify-center p-3"
+                  dangerouslySetInnerHTML={{ __html:
+                    svgContent
+                      .replace(/stroke-width="[^"]*"/g, 'stroke-width="1.5"')
+                      .replace(/stroke="[^"]*"/g, 'stroke="#0f766e"')
+                      .replace(/fill="none"/g, 'fill="#ccfbf1"')
+                      .replace(/<svg([^>]*)>/, '<svg$1 width="100%" height="100%" preserveAspectRatio="xMidYMid meet">')
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Creator name field */}
+            <div className="px-6 pt-4 pb-6 flex flex-col gap-4">
+              <div>
+                <label className="text-sm font-semibold text-gray-700 block mb-1.5">
+                  {isRtl ? "✍️ למי לתת קרדיט? (אופציונלי)" : "✍️ Who gets credit? (optional)"}
+                </label>
+                <input
+                  type="text"
+                  value={creditName}
+                  onChange={(e) => setCreditName(e.target.value)}
+                  placeholder={isRtl ? "שמך או שם העסק..." : "Your name or business..."}
+                  maxLength={60}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all"
+                  dir={isRtl ? "rtl" : "ltr"}
+                />
+              </div>
+              <button
+                onClick={handleSubmitCredit}
+                disabled={isSharing}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-sm hover:from-emerald-600 hover:to-teal-600 transition-all shadow-sm hover:shadow-md disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {isSharing ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Heart className="w-4 h-4 fill-white/80" />
+                )}
+                {isRtl ? "שתף עכשיו" : "Share Now"}
+              </button>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
