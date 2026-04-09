@@ -416,6 +416,30 @@ function ActivitySection({ recent, recentLoading, timeRange = "day", onTimeRange
                         <span className="text-slate-500 w-20 shrink-0 text-xs pt-0.5">שעה</span>
                         <span className="text-slate-700">{timeStr}</span>
                       </div>
+                      {/* Source + Result images */}
+                      {(ev.sourceImageUrl || ev.imageUrl) && (
+                        <div className="flex items-start gap-2">
+                          <span className="text-slate-500 w-20 shrink-0 text-xs pt-0.5">תמונות</span>
+                          <div className="flex gap-3 flex-wrap">
+                            {ev.sourceImageUrl && (
+                              <div className="text-center">
+                                <p className="text-xs text-slate-400 mb-1">לפני (מקור)</p>
+                                <a href={ev.sourceImageUrl} target="_blank" rel="noopener noreferrer">
+                                  <img src={ev.sourceImageUrl} alt="מקור" className="w-20 h-20 object-cover rounded-lg border border-blue-200 hover:opacity-80 transition-opacity shadow-sm" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
+                                </a>
+                              </div>
+                            )}
+                            {ev.imageUrl && (
+                              <div className="text-center">
+                                <p className="text-xs text-slate-400 mb-1">אחרי (תוצאה)</p>
+                                <a href={ev.imageUrl} target="_blank" rel="noopener noreferrer">
+                                  <img src={ev.imageUrl} alt="תוצאה" className="w-20 h-20 object-cover rounded-lg border border-teal-200 hover:opacity-80 transition-opacity shadow-sm" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       {/* IP — always shown, hidden by default */}
                       <div className="flex items-center gap-2">
                         <span className="text-slate-500 w-20 shrink-0 text-xs">IP</span>
