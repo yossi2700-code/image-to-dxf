@@ -41,10 +41,11 @@ type Mode = "login" | "register" | "forgot";
 
 // Google Sign-In Button — uses renderButton (iframe) for cross-browser/mobile compatibility
 // The iframe is rendered inside a centered wrapper. We use CSS to stretch it to full width.
-function GoogleSignInButton({ onSuccess, onError, disabled }: {
+function GoogleSignInButton({ onSuccess, onError, disabled, locale }: {
   onSuccess: (credential: string) => void;
   onError: (msg: string) => void;
   disabled?: boolean;
+  locale?: string;
 }) {
   const btnRef = useRef<HTMLDivElement>(null);
   const [loaded, setLoaded] = useState(false);
@@ -90,7 +91,7 @@ function GoogleSignInButton({ onSuccess, onError, disabled }: {
         text: "continue_with",
         size: "large",
         width: String(Math.min(width, 400)),
-        locale: "he",
+        locale: locale ?? "he",
       });
       setLoaded(true);
     };
@@ -121,7 +122,7 @@ function GoogleSignInButton({ onSuccess, onError, disabled }: {
       {!loaded && (
         <div className="w-full h-11 rounded-md border border-gray-200 bg-white flex items-center justify-center gap-2 text-sm text-gray-600">
           <Loader2 className="w-4 h-4 animate-spin" />
-          <span>טוען...</span>
+          <span>{locale === "en" ? "Loading..." : "טוען..."}</span>
         </div>
       )}
     </div>
@@ -351,10 +352,11 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, initi
                     onSuccess={handleGoogleSuccess}
                     onError={(msg) => setInlineError(msg)}
                     disabled={loading}
+                    locale={language === "he" ? "he" : "en"}
                   />
                   <div className="flex items-center gap-3 my-4">
                     <div className="flex-1 h-px bg-gray-200" />
-                    <span className="text-xs text-gray-400 shrink-0">או המשך עם אימייל</span>
+                    <span className="text-xs text-gray-400 shrink-0">{isRtl ? "או המשך עם אימייל" : "or continue with email"}</span>
                     <div className="flex-1 h-px bg-gray-200" />
                   </div>
                 </div>
