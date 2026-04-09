@@ -199,6 +199,7 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
 
 /// ─── Activity Section ─────────────────────────────────────────────────────
 type RecentEvent = {
+  sourceImageUrl?: string | null;
   id: number;
   actionType: string;
   feature: string | null;
