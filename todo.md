@@ -2718,3 +2718,6 @@
 - [x] שיפור prompt: SINGLE STROKE ONLY, NO double lines, NO parallel pairs בכל 3 וריאציות
 - [x] threshold הועלה מ-160 ל-200 (מסנן hatching אפור)
 - [x] turdSize הועלה מ-40 ל-80 (מסיר יותר noise)
+
+## שיפור רזולוציה arch_ai - אפריל 2026
+- [x] הגדלת תמונה ל-2048x2048 (לנצדרוס lanczos3) לפני potrace לשרטוטים אדריכליים

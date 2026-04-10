@@ -447,15 +447,16 @@ async function runGenerateJob(
 
       if (isArchitectural) {
         // Architectural floor plan pipeline:
-        // 1. High threshold → only very dark structural lines survive (hatching is lighter)
-        // 2. Median-like blur to merge double-wall lines into single lines
-        // 3. Second threshold pass to sharpen
-        // 4. Negate → invert → negate trick: dilate then erode to thin lines
+        // STEP 1: Upscale to 2048x2048 BEFORE threshold — more pixels = thinner, sharper lines in potrace
+        // STEP 2: High threshold → only very dark structural lines survive (hatching is lighter gray)
+        // STEP 3: Blur to merge double-wall lines into single lines
+        // STEP 4: Second threshold pass to sharpen merged lines
         sharpPipeline = sharpPipeline
+          .resize(2048, 2048, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 }, kernel: "lanczos3" })
           .threshold(210)   // very high: only darkest structural lines (hatching ≈ gray, filtered out)
-          .blur(1.0)        // merge adjacent double-wall pixels into single line
-          .threshold(190)   // second pass: sharpen merged lines
-          .blur(0.4);       // final smooth to remove jagged potrace artifacts
+          .blur(1.5)        // merge adjacent double-wall pixels into single line (scaled up, so slightly more blur)
+          .threshold(185)   // second pass: sharpen merged lines
+          .blur(0.5);       // final smooth to remove jagged potrace artifacts
       } else {
         // Higher threshold (200) filters out gray hatching/shading, keeps only darkest lines
         sharpPipeline = sharpPipeline
