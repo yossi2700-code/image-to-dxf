@@ -324,8 +324,12 @@ async function runGenerateJob(
 
       const rawBuffer = await forgeGenerateImage(imagePrompt, abortController.signal);
 
+      // Detect floor plan prompts — need special thinning to avoid thick double-wall lines
+      const isFloorPlan = /floor plan|floorplan|architectural|\u05ea\u05d5\u05db\u05e0\u05d9\u05ea \u05e7\u05d5\u05de\u05d4|floor layout|room layout|apartment plan|house plan|2D.*plan|DXF format/i.test(fullPrompt);
+
       // blur(1.5) merges thick AI lines → eliminates double contours in potrace output
-      const paddedBuffer = await sharp(rawBuffer)
+      // For floor plans: use higher threshold + erode to thin double walls into single lines
+      let sharpPipeline = sharp(rawBuffer)
         .extend({
           top: 140,
           bottom: 140,
@@ -334,11 +338,21 @@ async function runGenerateJob(
           background: { r: 255, g: 255, b: 255, alpha: 1 },
         })
         .resize(1024, 1024, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-        .grayscale()
-        .blur(1.5)
-        .threshold(160)
-        .png()
-        .toBuffer();
+        .grayscale();
+
+      if (isFloorPlan) {
+        // Floor plan: threshold high to get clean black lines, then erode to thin walls
+        sharpPipeline = sharpPipeline
+          .threshold(200)  // high threshold: only very dark pixels become black
+          .blur(0.5)       // slight blur to smooth jagged edges
+          .threshold(180); // second pass to clean up
+      } else {
+        sharpPipeline = sharpPipeline
+          .blur(1.5)
+          .threshold(160);
+      }
+
+      const paddedBuffer = await sharpPipeline.png().toBuffer();
 
       const rawSvg = await pngToSvg(paddedBuffer);
       const cleanSvg = cleanSvgForPreview(rawSvg);
