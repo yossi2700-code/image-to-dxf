@@ -1868,7 +1868,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                           </div>
                                         </td>
                                         <td className="py-1.5 pr-2 text-muted-foreground max-w-[120px]">
-                                          <div className="truncate">{a.description ?? "—"}</div>
+                                          <div className="truncate" title={a.description ?? ''}>{a.description ?? "—"}</div>
                                           {(a as {errorMessage?: string}).errorMessage && (
                                             <div className="text-xs text-red-600 font-mono truncate mt-0.5" title={(a as {errorMessage?: string}).errorMessage ?? ''}>
                                               {((a as {errorMessage?: string}).errorMessage ?? '').slice(0, 60)}{((a as {errorMessage?: string}).errorMessage ?? '').length > 60 ? '...' : ''}
