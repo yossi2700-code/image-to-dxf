@@ -41,6 +41,7 @@ const FeatureDocRedraw = lazy(() => import("./pages/FeatureDocRedraw"));
 const FreeDxfHome = lazy(() => import("./pages/FreeDxfHome"));
 const FreeDxfBrowse = lazy(() => import("./pages/FreeDxfBrowse"));
 const FreeDxfFileDetail = lazy(() => import("./pages/FreeDxfFileDetail"));
+const SketchTest = lazy(() => import("./pages/SketchTest"));
 
 /** Generates or retrieves a persistent session ID from localStorage */
 function getOrCreateSessionId(): string {
@@ -234,6 +235,7 @@ function Router() {
         <Route path={"/free"} component={FreeDxfHome} />
         <Route path={"/free/browse"} component={FreeDxfBrowse} />
         <Route path={"/free/file/:id"} component={FreeDxfFileDetail} />
+        <Route path={"/sketch-test"} component={SketchTest} />
         <Route path={"/404"} component={NotFound} />
         {/* Final fallback route */}
         <Route component={NotFound} />
