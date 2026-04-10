@@ -3056,22 +3056,11 @@ export default function Home() {
             style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', cursor: 'pointer' }}
           >
             <div className="w-full relative" style={{ background: '#f0fdfa', paddingBottom: '55%' }}>
-              {/* Blueprint grid background */}
-              <div className="absolute inset-0" style={{
-                backgroundImage: 'linear-gradient(rgba(6,182,212,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(6,182,212,0.08) 1px, transparent 1px)',
-                backgroundSize: '12px 12px'
-              }} />
-              {/* Building icon */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-1">
-                  <Building2 className="w-10 h-10" style={{ color: '#0891b2', opacity: 0.85 }} />
-                  <div className="flex gap-1">
-                    {[1,2,3].map(i => (
-                      <div key={i} className="rounded-sm" style={{ width: 14, height: 4, background: 'rgba(8,145,178,0.3)' }} />
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/arch-floor-plan-demo_b0429773.jpg"
+                alt="Architectural floor plan"
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+              />
               {/* CAD badge */}
               <span className="absolute top-1.5 right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full z-10" style={{ background: 'rgba(8,145,178,0.9)', color: 'white', whiteSpace: 'nowrap' }}>
                 AutoCAD

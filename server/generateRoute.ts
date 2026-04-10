@@ -358,6 +358,25 @@ function pngToSvg(pngBuffer: Buffer): Promise<string> {
 }
 
 /**
+ * Architectural-specific potrace: higher turdSize removes hatching remnants,
+ * lower optTolerance keeps straight wall lines sharp and angular.
+ */
+function pngToSvgArchitectural(pngBuffer: Buffer): Promise<string> {
+  return new Promise((resolve, reject) => {
+    potrace.trace(pngBuffer, {
+      threshold: 128,
+      turdSize: 120,      // remove hatching dots/remnants (much larger than default 40)
+      alphaMax: 0.2,      // sharp corners for walls (architectural lines are straight)
+      optCurve: true,
+      optTolerance: 0.2,  // tight tolerance: straight walls stay straight
+    }, (err: Error | null, svg: string) => {
+      if (err) reject(err);
+      else resolve(svg);
+    });
+  });
+}
+
+/**
  * Core processing function — runs in background after job is created.
  */
 async function runGenerateJob(
@@ -406,11 +425,8 @@ async function runGenerateJob(
 
       const rawBuffer = await forgeGenerateImage(imagePrompt, abortController.signal);
 
-      // Detect floor plan prompts — need special thinning to avoid thick double-wall lines
-      const isFloorPlan = /floor plan|floorplan|architectural|\u05ea\u05d5\u05db\u05e0\u05d9\u05ea \u05e7\u05d5\u05de\u05d4|floor layout|room layout|apartment plan|house plan|2D.*plan|DXF format/i.test(fullPrompt);
-
       // blur(1.5) merges thick AI lines → eliminates double contours in potrace output
-      // For floor plans: use higher threshold + erode to thin double walls into single lines
+      // For architectural: aggressive cleanup — remove hatching, thin walls, keep structural lines only
       let sharpPipeline = sharp(rawBuffer)
         .extend({
           top: 140,
@@ -422,12 +438,17 @@ async function runGenerateJob(
         .resize(1024, 1024, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .grayscale();
 
-      if (isFloorPlan) {
-        // Floor plan: threshold high to get clean black lines, then erode to thin walls
+      if (isArchitectural) {
+        // Architectural floor plan pipeline:
+        // 1. High threshold → only very dark structural lines survive (hatching is lighter)
+        // 2. Median-like blur to merge double-wall lines into single lines
+        // 3. Second threshold pass to sharpen
+        // 4. Negate → invert → negate trick: dilate then erode to thin lines
         sharpPipeline = sharpPipeline
-          .threshold(200)  // high threshold: only very dark pixels become black
-          .blur(0.5)       // slight blur to smooth jagged edges
-          .threshold(180); // second pass to clean up
+          .threshold(210)   // very high: only darkest structural lines (hatching ≈ gray, filtered out)
+          .blur(1.0)        // merge adjacent double-wall pixels into single line
+          .threshold(190)   // second pass: sharpen merged lines
+          .blur(0.4);       // final smooth to remove jagged potrace artifacts
       } else {
         sharpPipeline = sharpPipeline
           .blur(1.5)
@@ -436,7 +457,9 @@ async function runGenerateJob(
 
       const paddedBuffer = await sharpPipeline.png().toBuffer();
 
-      const rawSvg = await pngToSvg(paddedBuffer);
+      const rawSvg = isArchitectural
+        ? await pngToSvgArchitectural(paddedBuffer)
+        : await pngToSvg(paddedBuffer);
       const cleanSvg = cleanSvgForPreview(rawSvg);
 
       const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, minGapMm);
