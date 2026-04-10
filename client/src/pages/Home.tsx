@@ -3049,27 +3049,7 @@ export default function Home() {
             <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: 'white', letterSpacing: '0.02em' }}>{isRtl ? 'פורטרט' : 'Portrait'}</span>
           </button>
 
-          {/* Architectural AI Drawing */}
-          <button
-            onClick={() => { setActiveTab('arch-ai'); localStorage.setItem('active_tab', 'arch-ai'); document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
-            className="flex flex-col items-center gap-0 rounded-xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
-            style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', cursor: 'pointer' }}
-          >
-            <div className="w-full relative" style={{ background: '#f0fdfa', paddingBottom: '55%' }}>
-              <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/arch-floor-plan-demo_b0429773.jpg"
-                alt="Architectural floor plan"
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
-              />
-              {/* CAD badge */}
-              <span className="absolute top-1.5 right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full z-10" style={{ background: 'rgba(8,145,178,0.9)', color: 'white', whiteSpace: 'nowrap' }}>
-                AutoCAD
-              </span>
-            </div>
-            <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #0891b2, #0d9488)', color: 'white', letterSpacing: '0.02em' }}>
-              {isRtl ? 'שרטוט אדריכלי' : 'Architectural'}
-            </span>
-          </button>
+          {/* Architectural AI — hidden until ready */}
 
           {/* CNC Relief — disabled */}
           <button
@@ -3166,29 +3146,7 @@ export default function Home() {
                 </span>
               )}
             </TabsTrigger>
-            {/* 4. Architectural AI */}
-            <TabsTrigger
-              value="arch-ai"
-              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
-              style={{
-                background: activeTab === 'arch-ai' ? 'linear-gradient(135deg, #0d9488, #0891b2)' : 'transparent',
-              }}
-            >
-              <Building2 className="w-4 h-4 shrink-0" />
-              <span className="truncate text-[11px]">{isRtl ? 'שרטוט AI' : 'Arch AI'}</span>
-            </TabsTrigger>
-            {/* 5. AI Sketch (maintenance) */}
-            <TabsTrigger
-              value="redraw"
-              disabled
-              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-300 opacity-50 cursor-not-allowed relative px-1"
-            >
-              <FileEdit className="w-4 h-4 shrink-0" />
-              <span className="truncate text-[11px]">{t("aiSketch")}</span>
-              <span className="absolute -top-1.5 -right-1 text-[9px] font-bold bg-orange-400 text-white px-1 rounded-full leading-4">
-                {t("maintenance")}
-              </span>
-            </TabsTrigger>
+            {/* arch-ai and sketch tabs hidden until ready */}
             {/* 5. CNC Relief (coming soon) */}
             <TabsTrigger
               value="cnc-relief"
