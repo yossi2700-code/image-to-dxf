@@ -110,11 +110,21 @@ const WALL_THICKNESS_EN = [
   { value: "thick", label: "Thick — 30 cm (Load-bearing wall)" },
 ];
 
+const ROOM_COUNT_OPTIONS = [
+  { value: "", label: "---" },
+  { value: "1", label: "1" },
+  { value: "2", label: "2" },
+  { value: "3", label: "3" },
+  { value: "4", label: "4" },
+  { value: "5", label: "5" },
+  { value: "6+", label: "6+" },
+];
+
 const STYLE_OPTIONS_HE = [
   { value: "clean", label: "נקי — קווים בלבד" },
   { value: "with_dimensions", label: "עם מידות וסימנים" },
   { value: "with_furniture", label: "עם ריהוט" },
-  { value: "detailed", label: "מפורט — חומרים ומרקמים" },
+  { value: "detailed", label: "מפורט — חומרים ומרקטים" },
 ];
 const STYLE_OPTIONS_EN = [
   { value: "clean", label: "Clean — Lines only" },
@@ -226,6 +236,7 @@ export function ArchitecturalAiTab({ onOpenAuth, onInsufficientTokens }: Archite
   const [widthVal, setWidthVal] = useState("");
   const [lengthVal, setLengthVal] = useState("");
   const [heightVal, setHeightVal] = useState(""); // for elevation/section
+  const [roomCount, setRoomCount] = useState(""); // for floor plans only
   // Optional
   const [wallThickness, setWallThickness] = useState("");
   const [style, setStyle] = useState("clean");
@@ -392,6 +403,7 @@ export function ArchitecturalAiTab({ onOpenAuth, onInsufficientTokens }: Archite
 
   // ── Validation ─────────────────────────────────────────────────────────────
   const isElevationOrSection = drawingType === "elevation" || drawingType === "section";
+  const isFloorPlan = drawingType === "floor_plan" || drawingType === "site_plan";
   const effectiveScale = scale === "custom" ? customScale : scale;
 
   const isValid = () => {
@@ -420,6 +432,13 @@ export function ArchitecturalAiTab({ onOpenAuth, onInsufficientTokens }: Archite
 
     if (wallThickness && wallLabel) {
       archPrompt += isRtl ? `, עובי קירות: ${wallLabel}` : `, wall thickness: ${wallLabel}`;
+    }
+
+    // Add room count for floor plans
+    if (isFloorPlan && roomCount) {
+      archPrompt += isRtl
+        ? `, מספר חדרי שינה: ${roomCount}`
+        : `, number of bedrooms: ${roomCount}`;
     }
 
     if (prompt.trim()) {
@@ -601,7 +620,19 @@ export function ArchitecturalAiTab({ onOpenAuth, onInsufficientTokens }: Archite
                 </div>
               )}
 
-              {/* Row 3: Dimensions */}
+              {/* Row 3: Room count — floor plans only */}
+              {isFloorPlan && (
+                <ParamRow label={isRtl ? "מספר חדרי שינה" : "Number of Bedrooms"} isRtl={isRtl}>
+                  <SelectField
+                    value={roomCount}
+                    onChange={setRoomCount}
+                    options={ROOM_COUNT_OPTIONS}
+                    disabled={status === "loading"}
+                  />
+                </ParamRow>
+              )}
+
+              {/* Row 4: Dimensions */}
               <ParamRow
                 label={
                   isRtl

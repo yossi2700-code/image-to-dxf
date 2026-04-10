@@ -41,6 +41,7 @@ import {
   Layers,
   ZoomIn,
   Share2,
+  Building2,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -128,6 +129,14 @@ const FEATURE_TABS: FeatureTab[] = [
     icon: <FileText className="w-3.5 h-3.5" />,
     color: "text-teal-600",
   },
+  {
+    id: "arch_ai",
+    labelHe: "שרטוט אדריכלי",
+    labelEn: "Architectural",
+    features: ["arch_ai"],
+    icon: <Building2 className="w-3.5 h-3.5" />,
+    color: "text-cyan-600",
+  },
 ];
 
 // ─── SVG Zoom Viewer ─────────────────────────────────────────────────────────
@@ -168,6 +177,7 @@ function getFeatureLabel(feature: string | null, actionType: string, isRtl: bool
     case "ai_generate": return isRtl ? "AI יצירה" : "AI Create";
     case "portrait": return isRtl ? "פורטרט" : "Portrait";
     case "document_redraw": return isRtl ? "מסמך" : "Document";
+    case "arch_ai": return isRtl ? "שרטוט אדריכלי" : "Architectural";
     default: return actionType === "ai_generate" ? (isRtl ? "AI יצירה" : "AI Create") : (isRtl ? "המרה" : "Convert");
   }
 }
@@ -179,6 +189,7 @@ function getFeatureBadgeClass(feature: string | null, actionType: string): strin
     case "ai_generate": return "bg-amber-100 text-amber-700 border-amber-200";
     case "portrait": return "bg-rose-100 text-rose-700 border-rose-200";
     case "document_redraw": return "bg-teal-100 text-teal-700 border-teal-200";
+    case "arch_ai": return "bg-cyan-100 text-cyan-700 border-cyan-200";
     default: return actionType === "ai_generate" ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-blue-100 text-blue-700 border-blue-200";
   }
 }
@@ -190,6 +201,7 @@ function getFeatureIcon(feature: string | null, actionType: string): React.React
     case "ai_generate": return <Sparkles className="w-3.5 h-3.5 text-amber-500" />;
     case "portrait": return <ScanFace className="w-3.5 h-3.5 text-rose-500" />;
     case "document_redraw": return <FileText className="w-3.5 h-3.5 text-teal-500" />;
+    case "arch_ai": return <Building2 className="w-3.5 h-3.5 text-cyan-500" />;
     default:
       return actionType === "ai_generate"
         ? <Sparkles className="w-3.5 h-3.5 text-purple-500" />

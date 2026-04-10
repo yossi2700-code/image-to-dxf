@@ -219,6 +219,85 @@ const HE_TO_EN_GEN: Record<string, string> = {
   "לוגו": "logo", "סמל": "symbol", "עיצוב": "design",
 };
 
+/**
+ * Three professional AutoCAD-style variations for architectural drawings.
+ * Each variation includes English room labels, dimension lines, and CAD conventions.
+ */
+const ARCH_STYLE_VARIATIONS = [
+  {
+    label: "schematic",
+    style:
+      "VARIATION 1 — SCHEMATIC WITH LABELS: Draw a clean AutoCAD-style floor plan schematic. " +
+      "WALLS: Outer walls as thick double parallel lines (30cm gap). Interior partition walls as thinner double lines (15cm gap). " +
+      "DOORS: Show door swing arcs (quarter-circle arc with a straight door line). " +
+      "WINDOWS: Show as three parallel lines in wall openings. " +
+      "ROOM LABELS: Write the room name in ALL CAPS English inside each room (e.g. BEDROOM, LIVING ROOM, KITCHEN, BATHROOM, CORRIDOR, BALCONY, STORAGE). " +
+      "Use a clean sans-serif CAD font. Labels centered in each room space. " +
+      "No furniture, no dimension lines, no hatching, no fill, no shading. " +
+      "Pure white background (#FFFFFF), pure black (#000000) lines and text only.",
+  },
+  {
+    label: "standard",
+    style:
+      "VARIATION 2 — STANDARD PLAN WITH DIMENSIONS: Draw a professional AutoCAD-style floor plan. " +
+      "WALLS: Outer walls as thick double parallel lines (30cm gap). Interior walls as thinner double lines (15cm gap). " +
+      "DOORS: Door swing arcs showing opening direction. " +
+      "WINDOWS: Three parallel lines in wall openings. " +
+      "ROOM LABELS: Write room names in ALL CAPS English inside each room (BEDROOM, LIVING ROOM, KITCHEN, BATHROOM, etc.). " +
+      "DIMENSIONS: Add dimension lines along the outer perimeter of the building. " +
+      "Dimension lines use the standard AutoCAD style: a thin line with tick marks or arrows at each end, " +
+      "and the measurement number written above the line in English (e.g. '5.00 m', '3.50 m'). " +
+      "Show at least 4 overall dimensions (width and length of each side). " +
+      "No furniture, no hatching, no fill, no shading. " +
+      "Pure white background (#FFFFFF), pure black (#000000) lines and text only.",
+  },
+  {
+    label: "furnished",
+    style:
+      "VARIATION 3 — FURNISHED PLAN WITH LABELS AND DIMENSIONS: Draw a complete AutoCAD-style floor plan. " +
+      "WALLS: Outer walls as thick double parallel lines (30cm gap). Interior walls as thinner double lines (15cm gap). " +
+      "DOORS: Door swing arcs. WINDOWS: Three parallel lines in wall openings. " +
+      "ROOM LABELS: Write room names in ALL CAPS English inside each room (BEDROOM, LIVING ROOM, KITCHEN, BATHROOM, etc.). " +
+      "DIMENSIONS: Add dimension lines along the outer perimeter with measurements in English (e.g. '5.00 m'). " +
+      "FURNITURE: Add simple furniture outlines as thin single lines: " +
+      "rectangles for beds/sofas/tables, circles for chairs/stools, " +
+      "L-shape counter for kitchen, toilet + sink symbols in bathrooms. " +
+      "All furniture as thin single-line outlines only — no fill, no shading, no hatching. " +
+      "Pure white background (#FFFFFF), pure black (#000000) lines and text only.",
+  },
+];
+
+/**
+ * Build an architectural-specific prompt for AutoCAD-quality drawings.
+ * Generates professional floor plans with English room labels, dimension lines,
+ * and proper CAD drafting conventions.
+ */
+function buildArchitecturalDrawingPrompt(userPrompt: string, variationIndex: number): string {
+  const variation = ARCH_STYLE_VARIATIONS[variationIndex % ARCH_STYLE_VARIATIONS.length];
+  return (
+    // Core drawing type instruction
+    "Professional AutoCAD architectural drawing. " +
+    "This image must look exactly like a technical drawing exported from AutoCAD or similar CAD software. " +
+    // Critical CAD style rules
+    "CRITICAL CAD STYLE RULES: " +
+    "(1) ALL wall lines must be DOUBLE PARALLEL lines (two lines with a gap = wall thickness). " +
+    "(2) NO single-line walls — every wall must show both faces as two parallel lines. " +
+    "(3) NO fill, NO shading, NO gradients, NO gray areas, NO hatching patterns. " +
+    "(4) Pure white background (#FFFFFF) with pure black (#000000) lines only. " +
+    "(5) Clean sharp 90-degree corners where walls meet — walls must connect properly. " +
+    "(6) Line weights: outer walls = thicker lines, interior walls = medium lines, furniture = thin lines. " +
+    "(7) All text must be in English, clean sans-serif CAD font (like AutoCAD's standard font). " +
+    // User's architectural parameters
+    `Drawing specification: ${userPrompt}. ` +
+    // Variation-specific style
+    `${variation.style} ` +
+    // Framing
+    "CRITICAL FRAMING: The entire drawing must fit within 75% of the image canvas. " +
+    "Leave at least 12% white margin on every edge (top, bottom, left, right) for dimension lines. " +
+    "Nothing must touch or exceed the image border. All elements fully visible."
+  );
+}
+
 function promptToFilename(prompt: string): string {
   // First try English/ASCII words
   const englishWords = prompt
@@ -291,7 +370,8 @@ async function runGenerateJob(
   hairline = false,
   lineweightMm?: number,
   minGapMm = 0,
-  preGroupId?: string
+  preGroupId?: string,
+  isArchitectural = false
 ) {
   const jobStartTime = Date.now();
   // AbortController for cancelling in-flight OpenAI requests when timeout fires
@@ -318,7 +398,9 @@ async function runGenerateJob(
     const baseFilename = promptToFilename(prompt);
 
     const generationPromises = Array.from({ length: 3 }, async (_, idx) => {
-      const imagePrompt = landscapeMode
+      const imagePrompt = isArchitectural
+        ? buildArchitecturalDrawingPrompt(fullPrompt, idx)
+        : landscapeMode
         ? buildLandscapePrompt(fullPrompt, idx)
         : buildLineArtPrompt(fullPrompt, idx);
 
@@ -400,7 +482,9 @@ async function runGenerateJob(
 
     // Record user actions — use pre-generated groupId so all 3 variations share the same group
     const groupId = preGroupId ?? nanoid(12);
-    const variationLabels = landscapeMode
+    const variationLabels = isArchitectural
+      ? ["schematic", "standard", "furnished"]
+      : landscapeMode
       ? ["simple", "detailed", "decorative"]
       : ["simple", "detailed", "complex"];
     for (let i = 0; i < images.length; i++) {
@@ -557,8 +641,9 @@ router.post("/api/generate-images", async (req, res) => {
     const genTimeoutPromise = new Promise<void>((_, reject) =>
       setTimeout(() => reject(new Error("Job timed out after 5 minutes")), MAX_GEN_JOB_MS)
     );
+    const isArchitecturalReq = !!(req.body as { isArchitectural?: boolean }).isArchitectural;
     Promise.race([
-      runGenerateJob(jobId, prompt.trim(), modifications, !!landscapeMode, appUser.userId, ipAnon ?? "", !!hairline, lineweightMmGen, minGapMmGen, jobGroupId),
+      runGenerateJob(jobId, prompt.trim(), modifications, !!landscapeMode, appUser.userId, ipAnon ?? "", !!hairline, lineweightMmGen, minGapMmGen, jobGroupId, isArchitecturalReq),
       genTimeoutPromise,
     ]).catch((err) => {
       const msg = err instanceof Error ? err.message : "Unknown error";

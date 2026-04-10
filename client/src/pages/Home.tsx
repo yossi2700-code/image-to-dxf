@@ -3049,6 +3049,39 @@ export default function Home() {
             <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: 'white', letterSpacing: '0.02em' }}>{isRtl ? 'פורטרט' : 'Portrait'}</span>
           </button>
 
+          {/* Architectural AI Drawing */}
+          <button
+            onClick={() => { setActiveTab('arch-ai'); localStorage.setItem('active_tab', 'arch-ai'); document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+            className="flex flex-col items-center gap-0 rounded-xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
+            style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', cursor: 'pointer' }}
+          >
+            <div className="w-full relative" style={{ background: '#f0fdfa', paddingBottom: '55%' }}>
+              {/* Blueprint grid background */}
+              <div className="absolute inset-0" style={{
+                backgroundImage: 'linear-gradient(rgba(6,182,212,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(6,182,212,0.08) 1px, transparent 1px)',
+                backgroundSize: '12px 12px'
+              }} />
+              {/* Building icon */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-1">
+                  <Building2 className="w-10 h-10" style={{ color: '#0891b2', opacity: 0.85 }} />
+                  <div className="flex gap-1">
+                    {[1,2,3].map(i => (
+                      <div key={i} className="rounded-sm" style={{ width: 14, height: 4, background: 'rgba(8,145,178,0.3)' }} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              {/* CAD badge */}
+              <span className="absolute top-1.5 right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full z-10" style={{ background: 'rgba(8,145,178,0.9)', color: 'white', whiteSpace: 'nowrap' }}>
+                AutoCAD
+              </span>
+            </div>
+            <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #0891b2, #0d9488)', color: 'white', letterSpacing: '0.02em' }}>
+              {isRtl ? 'שרטוט אדריכלי' : 'Architectural'}
+            </span>
+          </button>
+
           {/* CNC Relief — disabled */}
           <button
             disabled
@@ -3356,10 +3389,43 @@ export default function Home() {
                   {isRtl ? 'שרטוט אדריכלי AI → DXF' : 'Architectural AI Drawing → DXF'}
                 </span>
               </div>
+              {/* Demo gallery — 3 architectural drawing examples */}
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                <div className="text-center">
+                  <p className="text-[10px] text-gray-400 mb-1">{isRtl ? 'תוכנית קומה' : 'Floor Plan'}</p>
+                  <img
+                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/arch-demo-floor-plan_e573a25c.jpg"
+                    alt="Floor plan example"
+                    className="w-full rounded-lg object-cover bg-gray-50"
+                    style={{ aspectRatio: '1', maxHeight: '90px', objectFit: 'cover' }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                </div>
+                <div className="text-center">
+                  <p className="text-[10px] text-gray-400 mb-1">{isRtl ? 'חזית / חתך' : 'Elevation / Section'}</p>
+                  <img
+                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/arch-demo-elevation_87aa6375.jpg"
+                    alt="Elevation drawing example"
+                    className="w-full rounded-lg object-cover bg-gray-50"
+                    style={{ aspectRatio: '1', maxHeight: '90px', objectFit: 'cover' }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                </div>
+                <div className="text-center">
+                  <p className="text-[10px] text-gray-400 mb-1">{isRtl ? 'פרט בינוי' : 'Construction Detail'}</p>
+                  <img
+                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/arch-demo-detail_7929d449.png"
+                    alt="Construction detail example"
+                    className="w-full rounded-lg object-cover bg-gray-50"
+                    style={{ aspectRatio: '1', maxHeight: '90px', objectFit: 'cover' }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                </div>
+              </div>
               <p className="text-xs text-gray-500 leading-relaxed">
                 {isRtl
-                  ? 'מלא פרמטרים אדריכליים (סוג שרטוט, קנה מידה, מידות) וה-AI ייצר 3 וריאציות שרטוט מקצועי מוכן לייצוא ב-CAD'
-                  : 'Fill architectural parameters (drawing type, scale, dimensions) and AI generates 3 professional drawing variations ready for CAD'}
+                  ? 'מלא פרמטרים אדריכליים (סוג שרטוט, קנה מידה, מידות) וה-AI ייצר 3 וריאציות: סכמטי, סטנדרטי, עם ריהוט'
+                  : 'Fill architectural parameters (drawing type, scale, dimensions) and AI generates 3 variations: schematic, standard, furnished'}
               </p>
             </div>
             <ArchitecturalAiTab
