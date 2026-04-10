@@ -600,15 +600,18 @@ async function runTraceJob(
       });
     }
 
-    // ── B&W BYPASS: if image is already a monochrome line drawing, skip AI entirely ──
+    // ── B&W BYPASS: if image is already a line drawing/logo, skip AI entirely ──
     // This gives 100% faithful output — no creative interpretation by the AI model.
-    // Condition: classified as "drawing" AND isMonochrome (channelDiff < 15)
-    const isBwDrawing = imageClassification.type === "drawing" && isMonochrome;
+    // Condition: classified as "drawing" AND (isMonochrome OR dark background)
+    // Dark background logos (e.g. green on black) are also bypassed — they get inverted before potrace.
+    const isDarkBackground = avgBrightness < 80; // dark bg logo (e.g. black bg with colored lines)
+    const isBwDrawing = imageClassification.type === "drawing" && (isMonochrome || isDarkBackground);
     if (isBwDrawing) {
-      console.log(`[aiTraceRoute] Job ${jobId}: B&W drawing detected — bypassing AI, going directly to Potrace`);
+      const reason = isDarkBackground && !isMonochrome ? "dark-bg logo" : "B&W drawing";
+      console.log(`[aiTraceRoute] Job ${jobId}: ${reason} detected — bypassing AI, going directly to Potrace`);
       updateJob(jobId, {
-        step: isHe ? "ציור שחור-לבן זוהה — ממיר ישירות לוקטור..." : "B&W drawing detected — converting directly to vector...",
-        stepEn: "B&W drawing detected — converting directly to vector...",
+        step: isHe ? "לוגו/ציור זוהה — ממיר ישירות לוקטור..." : "Logo/drawing detected — converting directly to vector...",
+        stepEn: "Logo/drawing detected — converting directly to vector...",
       });
     }
 
@@ -621,8 +624,14 @@ async function runTraceJob(
       if (isBwDrawing) {
         // ── DIRECT POTRACE PATH: use the source image as-is, no AI ──
         // Apply sharp contrast + threshold to clean up the B&W image before Potrace
-        rawBuffer = await sharp(editSourceBuffer)
-          .grayscale()
+        // If dark background (logo on black), invert first so lines become black on white
+        const needsInvert = isDarkBackground && !isMonochrome;
+        let bwPipeline = sharp(editSourceBuffer).grayscale();
+        if (needsInvert) {
+          // Dark bg logo: invert so colored/white lines become black on white background
+          bwPipeline = bwPipeline.negate() as typeof bwPipeline;
+        }
+        rawBuffer = await (bwPipeline as sharp.Sharp)
           .linear(2.0, -40)           // boost contrast: push lines to black, bg to white
           .sharpen({ sigma: 1.5, m1: 1.0, m2: 0.5, x1: 2, y2: 10, y3: 20 })
           .threshold(160)
@@ -630,6 +639,7 @@ async function runTraceJob(
           .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .png()
           .toBuffer();
+        if (needsInvert) console.log(`[aiTraceRoute] Job ${jobId}: inverted dark-bg logo for potrace`);
       } else {
         // ── AI PATH: send to Forge ImageService ──
         // Build prompt based on image classification

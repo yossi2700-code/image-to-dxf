@@ -2731,3 +2731,12 @@
 - [x] הסרת arch-ai מסרגל הכלים ומכרטיסי דף הבית
 - [x] הסרת sketch (AI סקיצה) מסרגל הכלים
 - [x] הדפים נשארים נגישים דרך TabsContent בלבד (URL ישיר לא קיים)
+
+## הפרדת pipeline Image to Lines - אפריל 2026
+- [ ] הסרת blur מ-Image to Lines — threshold ישיר לנאמנות לצורה המקורית
+
+## שיפור זיהוי לוגואים - אפריל 2026
+- [x] שיפור B&W bypass — זיהוי לוגואים עם רקע כהה (avgBrightness<80) + negate() לפני potrace
+
+## שיפור זיהוי לוגואים - אפריל 2026
+- [x] שיפור B&W bypass — זיהוי לוגואים עם רקע כהה (avgBrightness<80) + negate() לפני potrace
