@@ -600,52 +600,79 @@ async function runTraceJob(
       });
     }
 
+    // ── B&W BYPASS: if image is already a monochrome line drawing, skip AI entirely ──
+    // This gives 100% faithful output — no creative interpretation by the AI model.
+    // Condition: classified as "drawing" AND isMonochrome (channelDiff < 15)
+    const isBwDrawing = imageClassification.type === "drawing" && isMonochrome;
+    if (isBwDrawing) {
+      console.log(`[aiTraceRoute] Job ${jobId}: B&W drawing detected — bypassing AI, going directly to Potrace`);
+      updateJob(jobId, {
+        step: isHe ? "ציור שחור-לבן זוהה — ממיר ישירות לוקטור..." : "B&W drawing detected — converting directly to vector...",
+        stepEn: "B&W drawing detected — converting directly to vector...",
+      });
+    }
+
     // Generate only the selected variation (variationIndex: 0=simple, 1=detailed, 2=decorative)
     const generationPromises = [variationIndex].map(async (idx) => {
       const variation = STYLE_VARIATIONS[idx % STYLE_VARIATIONS.length];
 
-      // Build prompt based on image classification
-      const editPrompt = singleLine
-        ? buildLineArtPrompt(objectDescription, idx, true)
-        : effectiveLandscapeMode
-        ? buildFullImagePrompt(objectDescription, idx)
-        : buildClassifiedPrompt(imageClassification, variation.style);
+      let rawBuffer: Buffer;
 
-      // Use Forge ImageService for high-quality line art generation
-      // This produces cleaner results than OpenAI images.edit via proxy
-      if (singleLine) console.log(`[aiTraceRoute] Single-line job ${jobId}: sending prompt to Forge ImageService, length=${editPrompt.length}`);
-      const forgeApiUrl = process.env.BUILT_IN_FORGE_API_URL;
-      const forgeApiKey = process.env.BUILT_IN_FORGE_API_KEY;
-      if (!forgeApiUrl || !forgeApiKey) throw new Error("Forge API not configured");
-      const forgeBaseUrl = forgeApiUrl.endsWith("/") ? forgeApiUrl : `${forgeApiUrl}/`;
-      const forgeEndpoint = new URL("images.v1.ImageService/GenerateImage", forgeBaseUrl).toString();
-      const b64Input = editSourceBuffer.toString("base64");
-      const forgeResponse = await fetch(forgeEndpoint, {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          "content-type": "application/json",
-          "connect-protocol-version": "1",
-          authorization: `Bearer ${forgeApiKey}`,
-        },
-        body: JSON.stringify({
-          prompt: editPrompt,
-          original_images: [{ b64Json: b64Input, mimeType: "image/png" }],
-        }),
-        // Combine abort signal with a 2.5-minute hard timeout on the Forge fetch itself
-        signal: AbortSignal.any([
-          abortController.signal,
-          AbortSignal.timeout(2.5 * 60 * 1000),
-        ]),
-      });
-      if (!forgeResponse.ok) {
-        const detail = await forgeResponse.text().catch(() => "");
-        throw new Error(`Forge ImageService failed (${forgeResponse.status}): ${detail}`);
+      if (isBwDrawing) {
+        // ── DIRECT POTRACE PATH: use the source image as-is, no AI ──
+        // Apply sharp contrast + threshold to clean up the B&W image before Potrace
+        rawBuffer = await sharp(editSourceBuffer)
+          .grayscale()
+          .linear(2.0, -40)           // boost contrast: push lines to black, bg to white
+          .sharpen({ sigma: 1.5, m1: 1.0, m2: 0.5, x1: 2, y2: 10, y3: 20 })
+          .threshold(160)
+          .extend({ top: 80, bottom: 80, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .png()
+          .toBuffer();
+      } else {
+        // ── AI PATH: send to Forge ImageService ──
+        // Build prompt based on image classification
+        const editPrompt = singleLine
+          ? buildLineArtPrompt(objectDescription, idx, true)
+          : effectiveLandscapeMode
+          ? buildFullImagePrompt(objectDescription, idx)
+          : buildClassifiedPrompt(imageClassification, variation.style);
+
+        // Use Forge ImageService for high-quality line art generation
+        if (singleLine) console.log(`[aiTraceRoute] Single-line job ${jobId}: sending prompt to Forge ImageService, length=${editPrompt.length}`);
+        const forgeApiUrl = process.env.BUILT_IN_FORGE_API_URL;
+        const forgeApiKey = process.env.BUILT_IN_FORGE_API_KEY;
+        if (!forgeApiUrl || !forgeApiKey) throw new Error("Forge API not configured");
+        const forgeBaseUrl = forgeApiUrl.endsWith("/") ? forgeApiUrl : `${forgeApiUrl}/`;
+        const forgeEndpoint = new URL("images.v1.ImageService/GenerateImage", forgeBaseUrl).toString();
+        const b64Input = editSourceBuffer.toString("base64");
+        const forgeResponse = await fetch(forgeEndpoint, {
+          method: "POST",
+          headers: {
+            accept: "application/json",
+            "content-type": "application/json",
+            "connect-protocol-version": "1",
+            authorization: `Bearer ${forgeApiKey}`,
+          },
+          body: JSON.stringify({
+            prompt: editPrompt,
+            original_images: [{ b64Json: b64Input, mimeType: "image/png" }],
+          }),
+          signal: AbortSignal.any([
+            abortController.signal,
+            AbortSignal.timeout(2.5 * 60 * 1000),
+          ]),
+        });
+        if (!forgeResponse.ok) {
+          const detail = await forgeResponse.text().catch(() => "");
+          throw new Error(`Forge ImageService failed (${forgeResponse.status}): ${detail}`);
+        }
+        const forgeResult = await forgeResponse.json() as { image: { b64Json: string; mimeType: string } };
+        const b64 = forgeResult.image?.b64Json;
+        if (!b64) throw new Error("Forge ImageService did not return image data");
+        rawBuffer = Buffer.from(b64, "base64");
       }
-      const forgeResult = await forgeResponse.json() as { image: { b64Json: string; mimeType: string } };
-      const b64 = forgeResult.image?.b64Json;
-      if (!b64) throw new Error("Forge ImageService did not return image data");
-      let rawBuffer = Buffer.from(b64, "base64");
 
       // Add white padding around the AI-generated image, then process at 3072px resolution
       // Higher resolution = more pixels for potrace → smoother curves, less jagged edges
@@ -654,7 +681,11 @@ async function runTraceJob(
       const isDetailedMode = idx === 1;
 
       let processedBuffer: Buffer;
-      if (isDetailedMode) {
+      if (isBwDrawing) {
+        // B&W bypass: rawBuffer is already processed (grayscale + contrast + threshold + resize)
+        // No further processing needed — use as-is for Potrace
+        processedBuffer = rawBuffer;
+      } else if (isDetailedMode) {
         // Detailed mode: AI often generates thin/grey lines.
         // Pipeline: grayscale → contrast boost → resize (high res) → sharpen → threshold
         // NO blur before threshold — blur softens edges and makes potrace produce jagged curves.
