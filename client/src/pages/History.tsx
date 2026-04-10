@@ -151,10 +151,14 @@ function varLabel(label: string | null, isRtl: boolean): string {
   return isRtl ? (map[label]?.he ?? label) : (map[label]?.en ?? label);
 }
 
-function cleanDesc(desc: string | null, fallback: string): string {
+function cleanDesc(desc: string | null, fallback: string, maxLen = 120): string {
   if (!desc) return fallback;
   const clean = desc.replace(/^(Professional black and white line art illustration of |Clean black and white line art of a landscape scene: )/i, "");
-  return clean.length > 55 ? clean.slice(0, 55) + "…" : clean;
+  return clean.length > maxLen ? clean.slice(0, maxLen) + "…" : clean;
+}
+function fullDesc(desc: string | null, fallback: string): string {
+  if (!desc) return fallback;
+  return desc.replace(/^(Professional black and white line art illustration of |Clean black and white line art of a landscape scene: )/i, "");
 }
 
 function getFeatureLabel(feature: string | null, actionType: string, isRtl: boolean): string {
@@ -280,7 +284,7 @@ function GroupCard({
             {getFeatureLabel(group.feature, group.actionType, isRtl)}
           </span>
         </div>
-        <p className="text-xs font-medium leading-snug break-words">{shortDesc}</p>
+        <p className="text-xs font-medium leading-snug break-words" title={fullDesc(group.description, isRtl ? "עיצוב" : "Design")}>{shortDesc}</p>
 
         {isGroup && (
           <div className="flex gap-1 flex-wrap">
@@ -342,7 +346,7 @@ function DetailDialog({
   if (!item) return null;
   const isAi = item.actionType === "ai_generate" || item.feature === "ai_trace" || item.feature === "portrait" || item.feature === "document_redraw";
   const date = new Date(item.createdAt).toLocaleString(language === "he" ? "he-IL" : "en-US", { dateStyle: "long", timeStyle: "short" });
-  const displayDesc = cleanDesc(item.description, isRtl ? "עיצוב AI" : "AI Design");
+  const displayDesc = fullDesc(item.description, isRtl ? "עיצוב AI" : "AI Design");
 
   return (
     <Dialog open={!!item} onOpenChange={(open) => !open && onClose()}>
