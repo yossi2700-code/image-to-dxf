@@ -21,6 +21,7 @@ import freedxfRouter from "../freedxfApi";
 import cncReliefRoute from "../cncReliefRoute";
 import dxfLegacyRoute from "../dxfLegacyRoute";
 import pdfConvertRoute from "../pdfConvertRoute";
+import architecturalSketchRoute from "../architecturalSketchRoute";
 import {
   helmetMiddleware,
   permissionsPolicyMiddleware,
@@ -165,6 +166,9 @@ async function startServer() {
   // PDF → Image conversion route (first page of PDF → PNG base64)
   app.use("/api", pdfConvertRoute);
   app.use("/api/pdf-to-image", uploadLimiter);
+  // Architectural Sketch → DXF route
+  app.use("/api/architectural-sketch", uploadLimiter);
+  app.use(architecturalSketchRoute);
 
   // ── FreeDXF REST API ───────────────────────────────────────────────────
   app.use(freedxfRouter);

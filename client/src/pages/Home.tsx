@@ -15,6 +15,7 @@ import { ExportButtons } from "@/components/ExportButtons";
 import { AiTraceTab } from "@/components/AiTraceTab";
 import { TokenPricingModal } from "@/components/TokenPricingModal";
 import { AiDocumentRedrawTab } from "@/components/AiDocumentRedrawTab";
+import { ArchitecturalSketchTab } from "@/components/ArchitecturalSketchTab";
 import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { FaceDetectTab } from "@/components/FaceDetectTab";
 import { CncReliefTab } from "@/components/CncReliefTab";
@@ -57,6 +58,7 @@ import {
   User,
   CreditCard,
   Mountain,
+  Building2,
 } from "lucide-react";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -3153,7 +3155,18 @@ export default function Home() {
                 {t("maintenance")}
               </span>
             </TabsTrigger>
-            {/* 5. CNC Relief (coming soon) */}
+            {/* 5. Architectural Sketch */}
+            <TabsTrigger
+              value="arch"
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
+              style={{
+                background: activeTab === 'arch' ? 'linear-gradient(135deg, #0369a1, #0ea5e9)' : 'transparent',
+              }}
+            >
+              <Building2 className="w-4 h-4 shrink-0" />
+              <span className="truncate text-[11px]">{isRtl ? "שרטוט" : "Sketch"}</span>
+            </TabsTrigger>
+            {/* 6. CNC Relief (coming soon) */}
             <TabsTrigger
               value="cnc-relief"
               disabled
@@ -3284,6 +3297,10 @@ export default function Home() {
               </div>
             </div>
             <AiDocumentRedrawTab onOpenAuth={() => openAuthAs("unregistered")} onInsufficientTokens={() => setShowTokensBanner(true)} />
+          </TabsContent>
+
+          <TabsContent value="arch">
+            <ArchitecturalSketchTab onOpenAuth={() => openAuthAs("unregistered")} onInsufficientTokens={() => setShowTokensBanner(true)} />
           </TabsContent>
 
           <TabsContent value="face">
