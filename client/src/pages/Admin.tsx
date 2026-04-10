@@ -490,6 +490,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [activityTimeRange, setActivityTimeRange] = useState<"day" | "week" | "month" | "all">("day");
   const { data: userActionsData, isLoading: actionsLoading } = trpc.admin.userActions.useQuery({ timeRange: activityTimeRange });
   const [expandedUser, setExpandedUser] = useState<number | null>(null);
+  const [expandedDescIds, setExpandedDescIds] = useState<Set<number>>(new Set());
+  const toggleDescExpanded = (id: number) => setExpandedDescIds(prev => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
   const [userSearch, setUserSearch] = useState("");
   const [editingLimit, setEditingLimit] = useState<number | null>(null);
   const [limitInput, setLimitInput] = useState("");
@@ -1829,7 +1835,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                   </thead>
                                   <tbody>
                                     {userActs.map((a) => {
-                                      const [descExpanded, setDescExpanded] = useState(false);
+                                      const descExpanded = expandedDescIds.has(a.id);
                                       return (
                                       <tr key={a.id} className={`border-b last:border-0 ${
                                         (a as {status?: string}).status === 'failed' ? 'bg-red-50 hover:bg-red-100/60' :
@@ -1869,7 +1875,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                             )}
                                           </div>
                                         </td>
-                                        <td className="py-1.5 pr-2 text-muted-foreground max-w-[150px]" onClick={() => setDescExpanded(v => !v)} style={{cursor: 'pointer'}}>
+                                        <td className="py-1.5 pr-2 text-muted-foreground max-w-[150px]" onClick={() => toggleDescExpanded(a.id)} style={{cursor: 'pointer'}}>
                                           {descExpanded ? (
                                             <div className="text-xs whitespace-pre-wrap break-words">{a.description ?? "—"}</div>
                                           ) : (
