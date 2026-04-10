@@ -48,6 +48,7 @@ interface SketchImage {
   height: number;
   scaleApplied: boolean;
   scaleDescription?: string;
+  ocrText?: string;
 }
 
 interface SketchResult {
@@ -234,6 +235,25 @@ function ResultCard({ image, isRtl, onDownload, onZoom, originalPreview }: Resul
           <Ruler className="w-3.5 h-3.5 shrink-0" />
           <span>{image.scaleDescription}</span>
         </div>
+      )}
+
+      {/* OCR text extracted from drawing */}
+      {image.ocrText && (
+        <details className="mb-3">
+          <summary
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs cursor-pointer select-none"
+            style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", color: "#6366f1" }}
+          >
+            <ZoomIn className="w-3.5 h-3.5 shrink-0" />
+            <span className="font-semibold">{isRtl ? "טקסט ומידות שזוהו מהשרטוט" : "Text & dimensions detected from drawing"}</span>
+          </summary>
+          <div
+            className="mt-1 px-3 py-2 rounded-xl text-xs whitespace-pre-wrap"
+            style={{ background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.1)", color: "#4f46e5", direction: "ltr" }}
+          >
+            {image.ocrText}
+          </div>
+        </details>
       )}
 
       {/* Before/After toggle */}
