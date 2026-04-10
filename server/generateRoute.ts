@@ -458,10 +458,16 @@ async function runGenerateJob(
           .threshold(185)   // second pass: sharpen merged lines
           .blur(0.5);       // final smooth to remove jagged potrace artifacts
       } else {
-        // Higher threshold (200) filters out gray hatching/shading, keeps only darkest lines
+        // STEP 1: Upscale to 2048x2048 — more pixels = small details (letters, fine lines) survive blur
+        // STEP 2: blur(1.5) — merges thick outline stroke edges into single centerline WITHOUT destroying small details
+        // STEP 3: threshold(200) — removes gray, keeps only merged dark lines
+        // STEP 4: blur(0.4) + threshold(185) — final sharpening pass for clean single strokes
         sharpPipeline = sharpPipeline
-          .blur(1.2)
-          .threshold(200);
+          .resize(2048, 2048, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 }, kernel: "lanczos3" })
+          .blur(1.5)
+          .threshold(200)
+          .blur(0.4)
+          .threshold(185);
       }
 
       const paddedBuffer = await sharpPipeline.png().toBuffer();
