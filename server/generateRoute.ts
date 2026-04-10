@@ -6,16 +6,39 @@ import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { deductTokens } from "./tokenService";
 import { createJob, getJob, updateJob, cancelJob } from "./jobStore";
-import OpenAI from "openai";
 import { svgToDxf } from "./svgToDxf";
 import { cleanSvgForPreview } from "./svgClean";
 import potrace from "potrace";
 import sharp from "sharp";
 import { notifyOwner } from "./_core/notification";
-
+import { ENV } from "./_core/env";
 const router = Router();
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
+/**
+ * Call Manus Forge ImageService to generate an image from a text prompt.
+ * Returns raw image buffer (base64 decoded).
+ */
+async function forgeGenerateImage(prompt: string, signal?: AbortSignal): Promise<Buffer> {
+  const baseUrl = ENV.forgeApiUrl?.endsWith("/") ? ENV.forgeApiUrl : `${ENV.forgeApiUrl}/`;
+  const fullUrl = new URL("images.v1.ImageService/GenerateImage", baseUrl).toString();
+  const response = await fetch(fullUrl, {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+      "connect-protocol-version": "1",
+      authorization: `Bearer ${ENV.forgeApiKey}`,
+    },
+    body: JSON.stringify({ prompt, original_images: [] }),
+    signal,
+  });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Forge ImageService error (${response.status}): ${detail}`);
+  }
+  const result = (await response.json()) as { image: { b64Json: string; mimeType: string } };
+  return Buffer.from(result.image.b64Json, "base64");
+};
 
 /**
  * Three distinct style variations for the same subject.
@@ -299,27 +322,7 @@ async function runGenerateJob(
         ? buildLandscapePrompt(fullPrompt, idx)
         : buildLineArtPrompt(fullPrompt, idx);
 
-      const response = await openai.images.generate({
-        model: "gpt-image-1",
-        prompt: imagePrompt,
-        n: 1,
-        size: "1024x1024",
-        quality: "medium",
-      }, { signal: abortController.signal });
-
-      const imageData = response.data?.[0];
-      if (!imageData) throw new Error("לא הצלחנו לייצר תמונה");
-
-      let rawBuffer: Buffer;
-      if (imageData.b64_json) {
-        rawBuffer = Buffer.from(imageData.b64_json, "base64");
-      } else if (imageData.url) {
-        const imgResponse = await fetch(imageData.url);
-        if (!imgResponse.ok) throw new Error("שגיאה בהורדת התמונה שנוצרה");
-        rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
-      } else {
-        throw new Error("לא התקבלה תמונה מה-AI");
-      }
+      const rawBuffer = await forgeGenerateImage(imagePrompt, abortController.signal);
 
       // blur(1.5) merges thick AI lines → eliminates double contours in potrace output
       const paddedBuffer = await sharp(rawBuffer)
@@ -436,8 +439,8 @@ async function runGenerateJob(
     if (isBillingError) {
       try {
         await notifyOwner({
-          title: "🔴 שגיאת חיוב OpenAI — נדרש טעינת כרטיס",
-          content: `שגיאת billing ב-AI Create:\n${message}\n\nנא להיכנס ל-OpenAI ולטעון את הכרטיס: https://platform.openai.com/settings/organization/billing`,
+          title: "🔴 שגיאת חיוב Forge — בדוק הגדרות API",
+          content: `שגיאת billing ב-AI Create:\n${message}\n\nבדוק את הגדרות BUILT_IN_FORGE_API_KEY`,
         });
       } catch (_) { /* ignore notification errors */ }
     }
