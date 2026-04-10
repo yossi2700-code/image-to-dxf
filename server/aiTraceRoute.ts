@@ -189,11 +189,14 @@ async function classifyImage(imageBase64: string): Promise<ImageClassification> 
             "subject (5-10 word English description of main subject), " +
             "complexity (simple|medium|complex — how many distinct lines/details the image has). " +
             "CRITICAL classification rules: " +
-            "Use type='drawing' when the image is ALREADY a line drawing, sketch, illustration, doodle, or line art — even if it depicts a real object (branch, flower, animal, person). KEY INDICATOR: black lines on a white/light background, no photographic texture, no gradients, no shading, no realistic lighting. If the image looks hand-drawn or digitally illustrated rather than photographed, it is type='drawing'. " +
-            "Use type='object' ONLY when the image is a PHOTOGRAPH of a real-world object with photographic detail, texture, shading, or realistic color. " +
+            "Use type='drawing' WHENEVER the image contains black lines/outlines on a white or light background — this includes: existing line art, sketches, illustrations, coloring book pages, technical drawings, logos, blueprints, diagrams, or any image that appears hand-drawn or digitally illustrated. " +
+            "KEY INDICATOR for 'drawing': black or dark lines on white/light background, no photographic texture, no gradients, no realistic lighting or shading, no depth-of-field. " +
+            "The presence of text labels or annotations in the image does NOT change the classification — if the main content is line art or illustration, it is type='drawing'. " +
+            "Use type='object' ONLY when the image is a PHOTOGRAPH of a real-world object with photographic detail, realistic texture, shading, or realistic color — NOT a drawing or illustration of an object. " +
             "Use type='portrait' when the image contains a human face (photo or drawing). " +
-            "Use type='landscape' when the image is a photographic scene/environment. " +
-            "Use type='mandala' when the image is a decorative symmetrical pattern.",
+            "Use type='landscape' when the image is a photographic scene/environment with realistic lighting. " +
+            "Use type='mandala' when the image is a decorative symmetrical pattern. " +
+            "IMPORTANT: When in doubt between 'drawing' and 'object', always choose 'drawing' if there are visible black outlines on a light background.",
         },
         {
           role: "user",
@@ -291,16 +294,19 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
     case "drawing":
       return (
         base +
-        `EXISTING DRAWING / BLACK & WHITE SILHOUETTE MODE: ` +
-        `CRITICAL — You are a TRACING TOOL, NOT a creative artist. ` +
-        `Your ONLY job is to output exactly what you see — nothing more, nothing less. ` +
+        `EXISTING DRAWING / LINE ART TRACE MODE: ` +
+        `CRITICAL — You are a PIXEL-PERFECT TRACING TOOL, NOT a creative artist. ` +
+        `Your ONLY job is to output EXACTLY what you see in the image — nothing more, nothing less. ` +
+        `PRESERVE THE EXACT COMPOSITION: same orientation, same layout, same proportions, same position of every element. ` +
         `TRACE THE EXACT OUTLINE of every shape visible in the image. ` +
+        `If the image shows a tree leaning left → draw a tree leaning left. If branches go right → draw branches going right. ` +
         `If the image shows a branch → draw ONLY that branch with EXACTLY the same number of sub-branches, curves, and proportions as in the original. ` +
         `If the image shows leaves → draw ONLY the leaves that are ACTUALLY VISIBLE in the image — do NOT add extra leaves, do NOT remove existing ones. ` +
-        `FORBIDDEN ACTIONS: adding any element not in the original, removing any element that IS in the original, changing proportions, beautifying, stylizing, simplifying, or interpreting. ` +
-        `ALLOWED ACTIONS: smoothing rough pixel edges, converting filled black areas to clean outlines, making lines crisp and continuous. ` +
+        `STRICTLY FORBIDDEN: rotating or flipping the composition, changing the orientation, adding any element not in the original, removing any element that IS in the original, changing proportions, beautifying, stylizing, simplifying, or interpreting creatively. ` +
+        `ALLOWED: smoothing rough pixel edges, converting filled black areas to clean outlines, making lines crisp and continuous. ` +
         `For black silhouettes (solid black shapes): trace the OUTER CONTOUR of each black shape as a single closed outline. ` +
-        `The result must be a 1:1 faithful outline trace — if someone overlays the result on the original, every shape must match perfectly. ` +
+        `For text/labels visible in the image: reproduce them faithfully as clean outlined letters in the same position. ` +
+        `The result must be a 1:1 faithful outline trace — if someone overlays the result on the original, every shape must match perfectly in position, size, and orientation. ` +
         variationStyle
       );
 
