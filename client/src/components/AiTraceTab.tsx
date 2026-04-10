@@ -1326,10 +1326,9 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                   ? ["קווי מתאר נקיים ומהירים", "עשיר בפרטים, מדויק יותר"]
                   : ["Clean outlines, faster", "Rich detail, more precise"];
                 const demoImages = [
-                  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo_simple_mode_a882788e.png",
-                  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo_detailed_mode_014e2ad2.png",
+                  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-simple-drill_1b894e4d.png",
+                  "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/demo-detailed-drill_9db37b01.png",
                 ];
-                const tokenCosts = [aiTraceCost, 6];
                 const borderColors = ["#6366f1", "#0d9488"];
                 const gradients = [
                   "linear-gradient(135deg, #6366f1, #818cf8)",
@@ -1372,19 +1371,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                     <div className="w-full px-2 py-1.5 flex flex-col gap-0.5"
                       style={{ color: isSelected ? borderColors[v] : "#374151" }}
                     >
-                      <div className="flex items-center justify-between gap-1">
-                        <span className="font-bold text-xs">{labels[v]}</span>
-                        <span
-                          className="text-xs font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
-                          style={{
-                            background: isSelected ? borderColors[v] : '#e5e7eb',
-                            color: isSelected ? 'white' : '#6b7280',
-                            fontSize: '8px',
-                          }}
-                        >
-                          {tokenCosts[v]} {isRtl ? 'אסימונים' : 'tokens'}
-                        </span>
-                      </div>
+                      <span className="font-bold text-xs">{labels[v]}</span>
                       <span style={{ fontSize: "9px", opacity: 0.7 }}>{descs[v]}</span>
                     </div>
                     {isSelected && (
@@ -1592,7 +1579,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                 {status === "loading" ? (
                   <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />{t("aiAnalyzing")}</>
                 ) : (
-                  <><Wand2 className="w-4 h-4" />{t("createAiOutline")}{(detailLevel === 1 ? 6 : aiTraceCost) > 0 && <span style={{ fontSize: '0.72em', opacity: 0.8, marginInlineStart: 6 }}>({detailLevel === 1 ? 6 : aiTraceCost} {isRtl ? 'אסימונים' : 'tokens'})</span>}</>
+                  <><Wand2 className="w-4 h-4" />{t("createAiOutline")}{aiTraceCost > 0 && <span style={{ fontSize: '0.72em', opacity: 0.8, marginInlineStart: 6 }}>({aiTraceCost} {isRtl ? 'אסימונים' : 'tokens'})</span>}</>
                 )}
               </button>
               {tryAgainUrl && status !== "loading" && (

@@ -127,13 +127,13 @@ const STYLE_VARIATIONS = [
     style:
       "This output will be converted to a vector file for laser engraving or CNC cutting. " +
       "Draw ONLY clean continuous pen strokes — like drawing with a fine-tip pen on paper. " +
-      "Draw the outer silhouette PLUS rich interior structural lines: all visible edges, panel divisions, component boundaries, mechanical parts, joints, slots, buttons, seams, surface divisions, and fine inner details. " +
-      "Include 40-80 interior lines that define every structural detail of the object. " +
+      "Draw the outer silhouette PLUS all visible interior structural lines: panel edges, component boundaries, mechanical parts, joints, openings, slots, buttons, seams, and surface divisions. " +
+      "Include 25-40 interior lines that define the object's structure and form. " +
       "Every line must be a single continuous stroke with no breaks, no gaps, no rough edges. " +
-      "ABSOLUTELY NO: sketchy texture, hatching, cross-hatching, shading, shadows, gradients, grey tones, stippling, filled regions, dark areas, or any texture marks. " +
+      "ABSOLUTELY NO: sketchy texture, hatching, cross-hatching, shading, shadows, gradients, grey tones, stippling, filled regions, or any decorative marks. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
       "Lines must be SMOOTH, CONTINUOUS, and FLOWING — suitable for a laser to follow as a single path. " +
-      "Style: highly detailed technical line drawing — like a precise engineering blueprint with all internal structure visible, pure clean lines only, no fills, no textures.",
+      "Style: clean detailed technical line drawing — like a precise engineering illustration, outlines only, no fills.",
   },
   {
     label: "decorative",
@@ -487,8 +487,7 @@ async function runTraceJob(
   hairline = false,
   lineweightMm?: number,
   singleLine = false,
-  closePaths = false,
-  tokenAction: string = "ai_trace"
+  closePaths = false
 ) {
   const isHe = lang === "he";
   let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
@@ -814,7 +813,7 @@ async function runTraceJob(
     });
 
     // Deduct tokens NOW — only after successful job completion
-    await deductTokens(appUserId, tokenAction as any);
+    await deductTokens(appUserId, "ai_trace");
     updateJob(jobId, { tokenDeducted: true });
 
     // Record user actions
@@ -938,9 +937,7 @@ router.post(
       }
 
       // ── Token check (balance only — deduction happens after successful job) ────
-      const variationIndexForCheck = Math.min(2, Math.max(0, parseInt((req.body?.variationIndex as string) ?? "0", 10)));
-      const tokenActionForCheck = variationIndexForCheck === 1 ? "ai_trace_detailed" : "ai_trace";
-      const tokenResult = await deductTokens(appUser.userId, tokenActionForCheck, { checkOnly: true });
+      const tokenResult = await deductTokens(appUser.userId, "ai_trace", { checkOnly: true });
       if (!tokenResult.success) {
         return res.status(402).json({
           error: "INSUFFICIENT_TOKENS",
@@ -1002,8 +999,7 @@ router.post(
       // Create job and start background processing
       // Token deduction happens INSIDE the job after successful completion.
       const jobId = nanoid(12);
-      const tokenAction = variationIndex === 1 ? "ai_trace_detailed" : "ai_trace";
-      createJob(jobId, appUser.userId, tokenAction);
+      createJob(jobId, appUser.userId, "ai_trace");
 
       // 3-minute hard timeout — if job takes longer, mark as error and stop
       const MAX_JOB_MS = 3 * 60 * 1000;
@@ -1011,7 +1007,7 @@ router.post(
         setTimeout(() => reject(new Error("Job timed out after 3 minutes")), MAX_JOB_MS)
       );
       Promise.race([
-        runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline, lineweightMm, singleLine, closePaths, tokenAction),
+        runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline, lineweightMm, singleLine, closePaths),
         timeoutPromise,
       ]).catch((err) => {
         const msg = err instanceof Error ? err.message : String(err);

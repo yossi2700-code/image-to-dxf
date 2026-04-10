@@ -18,7 +18,6 @@ import { eq, sql } from "drizzle-orm";
 /** Default fallback costs (used if DB is unavailable) */
 export const TOKEN_COSTS_DEFAULT = {
   ai_trace: 5,
-  ai_trace_detailed: 6,
   ai_generate: 3,
   ai_refine: 2,
   face_detect: 4,
