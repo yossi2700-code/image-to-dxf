@@ -51,8 +51,11 @@ const STYLE_VARIATIONS = [
       "Bold confident outer contour with 5-8 key structural lines that define the form. " +
       "The style should look like a skilled artist's clean sketch — NOT a child's coloring book. " +
       "Think of a high-end brand logo or a professional product illustration. " +
-      "Minimal but sophisticated. NO texture, NO hatching, NO shading, NO fill. " +
-      "PRESERVE the exact shape and proportions. Pure black lines on white background only. " +
+      "Minimal but sophisticated. " +
+      "CRITICAL VECTOR RULES: Each line MUST be a SINGLE STROKE — absolutely NO double lines, NO parallel line pairs, NO outlined strokes. " +
+      "Every line is one pixel wide at its core. NO texture, NO hatching, NO crosshatching, NO shading, NO fill, NO gray areas. " +
+      "ONLY pure black (#000000) single-stroke lines on pure white (#FFFFFF) background. " +
+      "PRESERVE the exact shape and proportions. " +
       "CRITICAL FRAMING: The object must occupy NO MORE than 65% of the image width AND height. " +
       "Leave at least 17% white margin on EVERY side (left, right, top, bottom). " +
       "The object must be FULLY VISIBLE — nothing cut off, nothing touching or near the border.",
@@ -64,7 +67,9 @@ const STYLE_VARIATIONS = [
       "and key details, but keep the line count moderate — not too sparse, not too dense. " +
       "Bold outer contour with clean inner lines showing the main components and surfaces. " +
       "Like a professional product catalog illustration. " +
-      "NO texture, NO hatching, NO shading, NO fill. PRESERVE the exact shape. Clean sharp lines only. " +
+      "CRITICAL VECTOR RULES: Each line MUST be a SINGLE STROKE — absolutely NO double lines, NO parallel line pairs, NO outlined strokes. " +
+      "Every line is one pixel wide at its core. NO texture, NO hatching, NO crosshatching, NO shading, NO fill, NO gray areas. " +
+      "ONLY pure black (#000000) single-stroke lines on pure white (#FFFFFF) background. PRESERVE the exact shape. " +
       "CRITICAL FRAMING: The object must occupy NO MORE than 65% of the image width AND height. " +
       "Leave at least 17% white margin on EVERY side (left, right, top, bottom). " +
       "The object must be FULLY VISIBLE — nothing cut off, nothing touching or near the border.",
@@ -76,7 +81,9 @@ const STYLE_VARIATIONS = [
       "than variation 2 — add secondary features and subtle structural elements. " +
       "A bit richer and more elaborate, but still clean and controlled — not overwhelming. " +
       "Like a detailed technical product illustration with extra refinement. " +
-      "NO hatching, NO shading, NO fill, NO crosshatching, NO texture fills. PRESERVE the exact shape. All lines clean and precise. " +
+      "CRITICAL VECTOR RULES: Each line MUST be a SINGLE STROKE — absolutely NO double lines, NO parallel line pairs, NO outlined strokes. " +
+      "Every line is one pixel wide at its core. NO hatching, NO crosshatching, NO shading, NO fill, NO gray areas, NO texture fills. " +
+      "ONLY pure black (#000000) single-stroke lines on pure white (#FFFFFF) background. PRESERVE the exact shape. All lines clean and precise. " +
       "CRITICAL FRAMING: The object must occupy NO MORE than 65% of the image width AND height. " +
       "Leave at least 17% white margin on EVERY side (left, right, top, bottom). " +
       "The object must be FULLY VISIBLE — nothing cut off, nothing touching or near the border.",
@@ -346,7 +353,7 @@ function pngToSvg(pngBuffer: Buffer): Promise<string> {
   return new Promise((resolve, reject) => {
     potrace.trace(pngBuffer, {
       threshold: 128,
-      turdSize: 40,       // aggressively remove small noise/specks
+      turdSize: 80,       // increased from 40 → removes more noise/hatching remnants
       alphaMax: 1.0,      // smoother corners
       optCurve: true,
       optTolerance: 0.4,  // balanced smoothness
@@ -450,9 +457,10 @@ async function runGenerateJob(
           .threshold(190)   // second pass: sharpen merged lines
           .blur(0.4);       // final smooth to remove jagged potrace artifacts
       } else {
+        // Higher threshold (200) filters out gray hatching/shading, keeps only darkest lines
         sharpPipeline = sharpPipeline
-          .blur(1.5)
-          .threshold(160);
+          .blur(1.2)
+          .threshold(200);
       }
 
       const paddedBuffer = await sharpPipeline.png().toBuffer();

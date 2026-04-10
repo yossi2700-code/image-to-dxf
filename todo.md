@@ -2713,3 +2713,8 @@
 ## תיקון וקטור אדריכלי - אפריל 2026
 - [x] הוספת pre-processing לarch_ai: threshold 210, blur+threshold שני, pngToSvgArchitectural עם turdSize=120
 - [x] החלפת תמונת דמו בכרטיס דף הבית בתמונת שרטוט אדריכלי אמיתי
+
+## שיפור חדות תמונת AI - אפריל 2026
+- [x] שיפור prompt: SINGLE STROKE ONLY, NO double lines, NO parallel pairs בכל 3 וריאציות
+- [x] threshold הועלה מ-160 ל-200 (מסנן hatching אפור)
+- [x] turdSize הועלה מ-40 ל-80 (מסיר יותר noise)
