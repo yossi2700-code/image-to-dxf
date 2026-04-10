@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1828,7 +1828,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {userActs.map((a) => (
+                                    {userActs.map((a) => {
+                                      const [descExpanded, setDescExpanded] = useState(false);
+                                      return (
                                       <tr key={a.id} className={`border-b last:border-0 ${
                                         (a as {status?: string}).status === 'failed' ? 'bg-red-50 hover:bg-red-100/60' :
                                         (a as {status?: string}).status === 'cancelled' ? 'bg-amber-50 hover:bg-amber-100/60' :
@@ -1867,13 +1869,18 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                             )}
                                           </div>
                                         </td>
-                                        <td className="py-1.5 pr-2 text-muted-foreground max-w-[120px]">
-                                          <div className="truncate" title={a.description ?? ''}>{a.description ?? "—"}</div>
+                                        <td className="py-1.5 pr-2 text-muted-foreground max-w-[150px]" onClick={() => setDescExpanded(v => !v)} style={{cursor: 'pointer'}}>
+                                          {descExpanded ? (
+                                            <div className="text-xs whitespace-pre-wrap break-words">{a.description ?? "—"}</div>
+                                          ) : (
+                                            <div className="truncate text-xs">{a.description ?? "—"}</div>
+                                          )}
                                           {(a as {errorMessage?: string}).errorMessage && (
-                                            <div className="text-xs text-red-600 font-mono truncate mt-0.5" title={(a as {errorMessage?: string}).errorMessage ?? ''}>
-                                              {((a as {errorMessage?: string}).errorMessage ?? '').slice(0, 60)}{((a as {errorMessage?: string}).errorMessage ?? '').length > 60 ? '...' : ''}
+                                            <div className="text-xs text-red-600 font-mono mt-0.5" style={{wordBreak:'break-all'}}>
+                                              {descExpanded ? ((a as {errorMessage?: string}).errorMessage ?? '') : (((a as {errorMessage?: string}).errorMessage ?? '').slice(0, 40) + (((a as {errorMessage?: string}).errorMessage ?? '').length > 40 ? '...' : ''))}
                                             </div>
                                           )}
+                                          {(a.description ?? '').length > 20 && <span className="text-[10px] text-blue-400">{descExpanded ? ' ▲' : ' ▼'}</span>}
                                         </td>
                                         <td className="py-1.5 font-mono text-xs">
                                           {a.durationMs != null ? (
@@ -1905,7 +1912,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                           </div>
                                         </td>
                                       </tr>
-                                    ))}
+                                      );
+                                    })}
                                   </tbody>
                                 </table>
                               )}
