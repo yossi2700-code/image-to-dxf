@@ -16,6 +16,7 @@ import { AiTraceTab } from "@/components/AiTraceTab";
 import { TokenPricingModal } from "@/components/TokenPricingModal";
 import { AiDocumentRedrawTab } from "@/components/AiDocumentRedrawTab";
 import { ArchitecturalSketchTab } from "@/components/ArchitecturalSketchTab";
+import { ArchitecturalAiTab } from "@/components/ArchitecturalAiTab";
 import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { FaceDetectTab } from "@/components/FaceDetectTab";
 import { CncReliefTab } from "@/components/CncReliefTab";
@@ -3143,7 +3144,18 @@ export default function Home() {
                 </span>
               )}
             </TabsTrigger>
-            {/* 4. AI Sketch (maintenance) */}
+            {/* 4. Architectural AI */}
+            <TabsTrigger
+              value="arch-ai"
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
+              style={{
+                background: activeTab === 'arch-ai' ? 'linear-gradient(135deg, #0d9488, #0891b2)' : 'transparent',
+              }}
+            >
+              <Building2 className="w-4 h-4 shrink-0" />
+              <span className="truncate text-[11px]">{isRtl ? 'שרטוט AI' : 'Arch AI'}</span>
+            </TabsTrigger>
+            {/* 5. AI Sketch (maintenance) */}
             <TabsTrigger
               value="redraw"
               disabled
@@ -3327,6 +3339,32 @@ export default function Home() {
                   document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 100);
               }}
+            />
+          </TabsContent>
+
+          <TabsContent value="arch-ai">
+            {/* Demo banner — Architectural AI */}
+            <div
+              className="mb-5 rounded-2xl overflow-hidden p-4"
+              style={{ background: '#ffffff', border: '1px solid #ccfbf1', boxShadow: '0 2px 8px rgba(13,148,136,0.08)' }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #0d9488, #0891b2)'}}>
+                  <Building2 className="w-3.5 h-3.5 text-white" />
+                </div>
+                <span className="text-sm font-bold text-gray-800">
+                  {isRtl ? 'שרטוט אדריכלי AI → DXF' : 'Architectural AI Drawing → DXF'}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                {isRtl
+                  ? 'מלא פרמטרים אדריכליים (סוג שרטוט, קנה מידה, מידות) וה-AI ייצר 3 וריאציות שרטוט מקצועי מוכן לייצוא ב-CAD'
+                  : 'Fill architectural parameters (drawing type, scale, dimensions) and AI generates 3 professional drawing variations ready for CAD'}
+              </p>
+            </div>
+            <ArchitecturalAiTab
+              onOpenAuth={() => openAuthAs('unregistered')}
+              onInsufficientTokens={() => setShowTokensBanner(true)}
             />
           </TabsContent>
 
