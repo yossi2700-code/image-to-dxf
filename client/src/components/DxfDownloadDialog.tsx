@@ -197,14 +197,14 @@ function FormatCard({ selected, onClick, icon, title, description, color, border
       type="button"
       onClick={onClick}
       className={`
-        flex-1 flex flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-3 text-center transition-all cursor-pointer
+        flex-1 flex flex-col items-center gap-1 rounded-xl border-2 px-1.5 py-2 text-center transition-all cursor-pointer
         ${selected
           ? `${color} ${borderColor} shadow-sm`
           : "border-border bg-muted/30 hover:bg-muted/60"
         }
       `}
     >
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${selected ? "bg-white/60" : "bg-muted"}`}>
+      <div className={`w-6 h-6 rounded-md flex items-center justify-center ${selected ? "bg-white/60" : "bg-muted"}`}>
         {icon}
       </div>
       <span className={`text-xs font-bold leading-tight ${selected ? "text-foreground" : "text-muted-foreground"}`}>
@@ -462,44 +462,41 @@ export function DxfDownloadDialog({
           </div>
         </DialogHeader>
 
-        <div className="space-y-3">
-          {/* SVG Preview */}
-          {svgContent && <SvgMiniPreview svg={svgContent} />}
+        <div className="space-y-2.5">
+          {/* Stats + Filename row */}
+          <div className="flex items-center gap-1.5">
+            <Input
+              value={filename}
+              onChange={(e) => setFilename(e.target.value)}
+              placeholder={t("fileNamePlaceholder")}
+              className="text-right flex-1 text-sm h-8"
+              dir="rtl"
+            />
+            <span className="text-xs font-mono bg-muted px-1.5 py-1 rounded shrink-0">
+              {selectedFormat === "pdf" ? ".pdf" : selectedFormat === "png" ? ".png" : ".dxf"}
+            </span>
+          </div>
 
           {/* Stats row */}
-          <div className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-1.5 text-sm">
+          <div className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-1 text-xs">
             <span className="text-muted-foreground">{segmentCount.toLocaleString()} {t("linesCount")}</span>
             <span className="font-semibold text-primary">
               {formatMm(outputWidthMm, isRtl)} × {formatMm(outputHeightMm, isRtl)}
             </span>
           </div>
 
-          {/* Filename */}
-          <div>
-            <label className="text-sm font-semibold block mb-1.5">{t("fileNameLabel")}</label>
-            <div className="flex items-center gap-1.5">
-              <Input
-                value={filename}
-                onChange={(e) => setFilename(e.target.value)}
-                placeholder={t("fileNamePlaceholder")}
-                className="text-right flex-1 text-sm"
-                dir="rtl"
-              />
-              <span className="text-xs font-mono bg-muted px-1.5 py-1 rounded">
-                {selectedFormat === "pdf" ? ".pdf" : selectedFormat === "png" ? ".png" : ".dxf"}
-              </span>
-            </div>
-          </div>
-
           {/* Scale slider */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-sm font-semibold">{t("outputSizeLabel")}</label>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-primary tabular-nums">{scalePercent}%</span>
-                <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                  {formatMm(outputWidthMm, isRtl)} × {formatMm(outputHeightMm, isRtl)}
-                </span>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-semibold text-muted-foreground">{t("outputSizeLabel")}</label>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-bold text-primary tabular-nums">{scalePercent}%</span>
+                <button
+                  className="text-xs text-primary font-semibold underline underline-offset-2 cursor-pointer"
+                  onClick={() => setScalePercent(100)}
+                >
+                  {t("realSize100")}
+                </button>
               </div>
             </div>
             <Slider
@@ -508,27 +505,16 @@ export function DxfDownloadDialog({
               step={5}
               value={[scalePercent]}
               onValueChange={([v]) => setScalePercent(v)}
-              className="mb-2"
             />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>10% ({formatMm(realWidthMm * 0.1, isRtl)})</span>
-              <button
-                className="text-primary font-semibold underline underline-offset-2 cursor-pointer"
-                onClick={() => setScalePercent(100)}
-              >
-                {t("realSize100")}
-              </button>
-              <span>100% ({formatMm(realWidthMm, isRtl)})</span>
-            </div>
           </div>
 
           {/* Format selector */}
           <div>
-            <label className="text-sm font-semibold block mb-2 flex items-center gap-1.5">
-              <Settings2 className="w-4 h-4" />
+            <label className="text-xs font-semibold text-muted-foreground block mb-1.5 flex items-center gap-1">
+              <Settings2 className="w-3.5 h-3.5" />
               {t("chooseFileFormat")}
             </label>
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               {/* DXF standard */}
               <FormatCard
                 selected={selectedFormat === "dxf"}
@@ -578,11 +564,11 @@ export function DxfDownloadDialog({
 
           {/* PNG options: fill toggle + resolution selector */}
           {selectedFormat === "png" && (
-            <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
               {/* Fill toggle */}
-              <div className="flex items-center justify-between bg-pink-50 border border-pink-200 rounded-lg px-3 py-1.5">
+              <div className="flex-1 flex items-center justify-between bg-pink-50 border border-pink-200 rounded-lg px-2 py-1.5">
                 <span className="text-xs font-semibold text-pink-700">{isRtl ? "סגנון:" : "Style:"}</span>
-                <div className="flex gap-1.5">
+                <div className="flex gap-1">
                   <button
                     onClick={() => setPngFilled(true)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
@@ -606,9 +592,9 @@ export function DxfDownloadDialog({
                 </div>
               </div>
               {/* Resolution selector */}
-              <div className="flex items-center justify-between bg-pink-50 border border-pink-200 rounded-lg px-3 py-1.5">
-                <span className="text-xs font-semibold text-pink-700">{isRtl ? "רזולוציה:" : "Resolution:"}</span>
-                <div className="flex gap-1.5">
+              <div className="flex-1 flex items-center justify-between bg-pink-50 border border-pink-200 rounded-lg px-2 py-1.5">
+                <span className="text-xs font-semibold text-pink-700">{isRtl ? "רזולוציה:" : "Res:"}</span>
+                <div className="flex gap-1">
                   {[1, 2, 3].map((r) => (
                     <button
                       key={r}
@@ -647,7 +633,7 @@ export function DxfDownloadDialog({
             {!hideCommunityShare && <button
               onClick={handleShareToCommunity}
               disabled={hasShared}
-              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm ${
+              className={`w-full flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-bold transition-all shadow-sm ${
                 hasShared
                   ? "bg-emerald-50 text-emerald-400 border border-emerald-200 cursor-default"
                   : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white border-0 cursor-pointer hover:shadow-md hover:scale-[1.01]"
@@ -659,7 +645,7 @@ export function DxfDownloadDialog({
 
             <Button
               size="lg"
-              className="w-full font-bold text-base h-11 text-white hover:opacity-90 transition-all"
+              className="w-full font-bold text-sm h-10 text-white hover:opacity-90 transition-all"
               style={getButtonStyle()}
               onClick={handleDownload}
               disabled={isLoading}
