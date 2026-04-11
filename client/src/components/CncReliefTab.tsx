@@ -6,6 +6,7 @@
  *   2. From Prompt — type a description → AI generates heightmap + engraving simulation
  *
  * Material selector: Wood / Aluminum / MDF / Stone / Brass
+ * Size selector: 512 / 768 / 1024 / 1536 / 2048 px
  * Results: Heightmap PNG (for CNC software) + Simulation PNG (realistic preview)
  */
 
@@ -36,11 +37,15 @@ type ReliefMaterial = "wood" | "aluminum" | "mdf" | "stone" | "brass";
 type Mode = "image" | "prompt";
 type Status = "idle" | "loading" | "success" | "error";
 
+const VALID_SIZES = [512, 768, 1024, 1536, 2048] as const;
+type ReliefSize = typeof VALID_SIZES[number];
+
 interface ReliefResult {
   heightmapUrl: string;
   simulationUrl: string;
   subject: string;
   material: ReliefMaterial;
+  outputSize?: ReliefSize;
 }
 
 interface MaterialOption {
@@ -91,6 +96,7 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
   const { t, language, isRtl } = useLanguage();
   const [mode, setMode] = useState<Mode>("image");
   const [material, setMaterial] = useState<ReliefMaterial>("wood");
+  const [outputSize, setOutputSize] = useState<ReliefSize>(1024);
   const [prompt, setPrompt] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -152,6 +158,7 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
           simulationUrl: data.result.simulationUrl,
           subject: data.result.subject,
           material: data.result.material,
+          outputSize: data.result.outputSize,
         });
         setStatus("success");
         toast.success(t("cncReliefSuccess"));
@@ -216,6 +223,7 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
         formData.append("image", imageFile);
         formData.append("material", material);
         formData.append("lang", language);
+        formData.append("outputSize", String(outputSize));
 
         const res = await fetch("/api/cnc-relief/from-image", {
           method: "POST",
@@ -244,7 +252,7 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
         const res = await fetch("/api/cnc-relief/from-prompt", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: prompt.trim(), material, lang: language }),
+          body: JSON.stringify({ prompt: prompt.trim(), material, lang: language, outputSize }),
           credentials: "include",
         });
 
@@ -359,7 +367,7 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
       </div>
 
       {/* Material Selector */}
-      <div className="mb-5">
+      <div className="mb-4">
         <label className="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
           {t("cncReliefMaterialLabel")}
         </label>
@@ -379,6 +387,41 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Output Size Selector */}
+      <div className="mb-5">
+        <label className="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+          {isRtl ? "גודל תמונה פלט" : "Output Image Size"}
+          <span className="ml-2 normal-case font-normal text-gray-400 text-[11px]">
+            ({isRtl ? "מינ׳ 512 — מקס׳ 2048 פיקסל" : "min 512 — max 2048 px"})
+          </span>
+        </label>
+        <div className="flex gap-2 flex-wrap">
+          {VALID_SIZES.map((size) => (
+            <button
+              key={size}
+              onClick={() => setOutputSize(size)}
+              className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-all ${
+                outputSize === size
+                  ? "border-violet-500 bg-violet-50 text-violet-700 shadow-sm"
+                  : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+              }`}
+            >
+              {size}×{size}
+              {size === 1024 && (
+                <span className="ml-1 text-[10px] text-violet-400 font-normal">
+                  {isRtl ? "(ברירת מחדל)" : "(default)"}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+        {outputSize >= 1536 && (
+          <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
+            ⚠️ {isRtl ? "גדלים גדולים עלולים לקחת יותר זמן לעיבוד" : "Large sizes may take longer to process"}
+          </p>
+        )}
       </div>
 
       {/* Input Area */}
@@ -490,6 +533,14 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
       {/* Results */}
       {status === "success" && result && (
         <div className="mb-5">
+          {/* Size badge */}
+          {result.outputSize && (
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full font-medium">
+                {result.outputSize}×{result.outputSize}px
+              </span>
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             {/* Heightmap */}
             <div className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
@@ -516,7 +567,7 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
                   size="sm"
                   variant="outline"
                   className="w-full text-xs"
-                  onClick={() => handleDownload(result.heightmapUrl, `heightmap-${result.material}.png`)}
+                  onClick={() => handleDownload(result.heightmapUrl, `heightmap-${result.material}-${result.outputSize ?? 1024}px.png`)}
                 >
                   <Download className="w-3.5 h-3.5 mr-1.5" />
                   {t("cncReliefDownloadHeightmap")}
@@ -557,7 +608,7 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
                   size="sm"
                   variant="outline"
                   className="w-full text-xs"
-                  onClick={() => handleDownload(result.simulationUrl, `simulation-${result.material}.png`)}
+                  onClick={() => handleDownload(result.simulationUrl, `simulation-${result.material}-${result.outputSize ?? 1024}px.png`)}
                 >
                   <Download className="w-3.5 h-3.5 mr-1.5" />
                   {t("cncReliefDownloadSimulation")}

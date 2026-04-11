@@ -29,6 +29,10 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 
 
 export type ReliefMaterial = "wood" | "aluminum" | "mdf" | "stone" | "brass";
 
+// Valid output sizes (px) — min 512, max 2048
+export const VALID_SIZES = [512, 768, 1024, 1536, 2048] as const;
+export type ReliefSize = typeof VALID_SIZES[number];
+
 // ─── Prompt builders ──────────────────────────────────────────────────────────
 
 function buildHeightmapPrompt(subject: string): string {
@@ -50,7 +54,7 @@ function buildHeightmapPrompt(subject: string): string {
 
 function buildSimulationPrompt(subject: string, material: ReliefMaterial): string {
   const materialDescriptions: Record<ReliefMaterial, string> = {
-    wood: "warm walnut wood with natural grain texture, golden-brown tones, realistic wood fiber detail, professional CNC carved wood relief panel with smooth tool paths visible",
+    wood: "warm walnut wood with natural grain texture, golden-brown tones, realistic wood fiber detail, professional CNC carved wood relief panel",
     aluminum: "brushed aluminum metal surface, silver-grey metallic sheen, machined finish, professional CNC milled aluminum relief with subtle tool marks",
     mdf: "smooth MDF board surface, light beige/cream color, fine uniform texture, CNC carved MDF relief with clean sharp edges",
     stone: "dark grey granite stone surface, natural stone texture with subtle crystalline flecks, hand-carved stone relief effect",
@@ -60,17 +64,19 @@ function buildSimulationPrompt(subject: string, material: ReliefMaterial): strin
   const materialDesc = materialDescriptions[material] || materialDescriptions.wood;
 
   return (
-    "Create a photorealistic 3D visualization showing a CNC carved relief of the following subject: " + subject + ". " +
+    "Create a photorealistic 3D visualization of a CNC carved relief panel. " +
+    "The carving subject is EXACTLY: " + subject + ". " +
+    "CRITICAL: The shape, composition, and all details of the carving MUST match the provided heightmap image EXACTLY — same subject, same pose, same proportions. " +
     "MATERIAL: " + materialDesc + ". " +
-    "CRITICAL VISUAL REQUIREMENTS: " +
-    "1. Show the relief as a physical 3D carved panel — the subject rises out of the flat background surface. " +
-    "2. Realistic lighting with dramatic side-lighting to emphasize the 3D depth and shadows in the carved areas. " +
-    "3. The panel should have a clean rectangular border/frame. " +
-    "4. Show realistic depth shadows — recessed areas are darker, raised areas catch the light. " +
-    "5. Professional studio photography style — clean background, dramatic lighting from upper-left. " +
-    "6. The carving should look like it was professionally made by a CNC machine — smooth, precise, high quality. " +
+    "VISUAL REQUIREMENTS: " +
+    "1. The relief panel is a flat square/rectangular piece of " + material + " material. " +
+    "2. The carved subject rises from the flat surface — same shape as the heightmap. " +
+    "3. Dramatic side-lighting from upper-left to emphasize 3D depth and cast realistic shadows. " +
+    "4. Recessed areas are darker, raised areas catch the light — matching the heightmap depth. " +
+    "5. Close-up macro photography style — fill the frame with the panel, slight angle to show depth. " +
+    "6. Realistic CNC tool marks on the carved surface — smooth, precise, high quality. " +
     "7. NO text, NO labels, NO watermarks. Pure photorealistic product visualization only. " +
-    "8. The relief panel should fill 80% of the image, centered, with slight perspective/angle to show depth."
+    "8. The carved shape MUST be identical to the heightmap — do not change or simplify the subject."
   );
 }
 
@@ -82,6 +88,7 @@ async function runReliefJob(
   material: ReliefMaterial,
   appUserId: number,
   ipAnon: string,
+  outputSize: ReliefSize,
   sourceImageUrl?: string,
   lang: "he" | "en" = "en"
 ) {
@@ -121,11 +128,12 @@ async function runReliefJob(
     });
     if (!heightmapResult.url) throw new Error("Forge ImageService did not return heightmap URL");
 
-    // Download the image, post-process to grayscale + normalise, re-upload
+    // Download the image, post-process to grayscale + normalise + resize, re-upload
     const heightmapRaw = await fetch(heightmapResult.url).then(r => r.arrayBuffer());
     const processedHeightmap = await sharp(Buffer.from(heightmapRaw))
       .grayscale()
       .normalise()  // stretch histogram to full 0-255 range for maximum depth
+      .resize(outputSize, outputSize, { fit: "contain", background: { r: 0, g: 0, b: 0 } })
       .png()
       .toBuffer();
 
@@ -142,14 +150,24 @@ async function runReliefJob(
       stepEn: "Generating engraving simulation...",
     });
 
-    // ── Step 2: Generate simulation ───────────────────────────────────────────
+    // ── Step 2: Generate simulation — based on the heightmap image ────────────
+    // Pass the heightmap as reference so the simulation matches exactly
     const simulationPrompt = buildSimulationPrompt(subject, material);
     const simulationResult = await generateImage({
       prompt: simulationPrompt,
-      ...(sourceImageUrl ? { originalImages: [{ url: sourceImageUrl, mimeType: "image/jpeg" }] } : {}),
+      // Use the processed heightmap as reference so the simulation matches the carving shape
+      originalImages: [{ url: heightmapUrl, mimeType: "image/png" }],
     });
     if (!simulationResult.url) throw new Error("Forge ImageService did not return simulation URL");
-    const simulationUrl = simulationResult.url;
+
+    // Resize simulation to match output size
+    const simRaw = await fetch(simulationResult.url).then(r => r.arrayBuffer());
+    const processedSim = await sharp(Buffer.from(simRaw))
+      .resize(outputSize, outputSize, { fit: "cover" })
+      .png()
+      .toBuffer();
+    const simKey = `cnc-relief/simulation-${nanoid()}.png`;
+    const { url: simulationUrl } = await storagePut(simKey, processedSim, "image/png");
 
     // ── Deduct tokens after success ───────────────────────────────────────────
     await deductTokens(appUserId, "cnc_relief");
@@ -187,6 +205,7 @@ async function runReliefJob(
         material,
         heightmapUrl,
         simulationUrl,
+        outputSize,
       },
     });
 
@@ -267,6 +286,14 @@ async function checkAuthAndTokens(req: import("express").Request, res: import("e
   return { appUser, ipAnon: anonymizeIp(rawIp) ?? "unknown" };
 }
 
+// ─── Helper: parse and validate output size ───────────────────────────────────
+
+function parseOutputSize(raw: unknown): ReliefSize {
+  const n = Number(raw);
+  if (VALID_SIZES.includes(n as ReliefSize)) return n as ReliefSize;
+  return 1024; // default
+}
+
 // ─── POST /api/cnc-relief/from-image ─────────────────────────────────────────
 
 router.post(
@@ -284,6 +311,7 @@ router.post(
 
       const material = ((req.body?.material as string) || "wood") as ReliefMaterial;
       const lang = ((req.body?.lang as string) || "en") === "he" ? "he" : "en";
+      const outputSize = parseOutputSize(req.body?.outputSize);
       const isHe = lang === "he";
 
       // Auto-correct EXIF orientation
@@ -339,7 +367,7 @@ router.post(
 
       const MAX_JOB_MS = 5 * 60 * 1000;
       Promise.race([
-        runReliefJob(jobId, subject, material, appUser.userId, ipAnon, sourceImageUrl, lang),
+        runReliefJob(jobId, subject, material, appUser.userId, ipAnon, outputSize, sourceImageUrl, lang),
         new Promise<void>((_, reject) => setTimeout(() => reject(new Error("Job timed out")), MAX_JOB_MS)),
       ]).catch((err) => {
         const msg = err instanceof Error ? err.message : String(err);
@@ -375,13 +403,14 @@ router.post(
       }
       const material = ((req.body?.material as string) || "wood") as ReliefMaterial;
       const lang = ((req.body?.lang as string) || "en") === "he" ? "he" : "en";
+      const outputSize = parseOutputSize(req.body?.outputSize);
 
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "cnc_relief");
 
       const MAX_JOB_MS = 5 * 60 * 1000;
       Promise.race([
-        runReliefJob(jobId, prompt, material, appUser.userId, ipAnon, undefined, lang),
+        runReliefJob(jobId, prompt, material, appUser.userId, ipAnon, outputSize, undefined, lang),
         new Promise<void>((_, reject) => setTimeout(() => reject(new Error("Job timed out")), MAX_JOB_MS)),
       ]).catch((err) => {
         const msg = err instanceof Error ? err.message : String(err);
