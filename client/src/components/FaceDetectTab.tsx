@@ -796,64 +796,86 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
       {status === "error" && !result && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
+          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)' }}
           onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); }}
         >
           <div
-            className="relative rounded-2xl p-7 flex flex-col items-center gap-4 text-center max-w-sm w-full shadow-2xl"
-            style={{ background: '#fff', border: errorKind === "token" ? '2px solid #fbbf24' : errorKind === "too_many_faces" ? '2px solid #bfdbfe' : '2px solid #fde68a' }}
+            className="relative rounded-3xl overflow-hidden max-w-sm w-full shadow-2xl"
+            style={{ background: '#fff' }}
             onClick={e => e.stopPropagation()}
           >
-            {/* X close button */}
-            <button
-              className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:bg-gray-100 active:scale-90"
-              onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); }}
-              aria-label="Close"
+            {/* Colored header band */}
+            <div
+              className="relative px-6 pt-8 pb-10 flex flex-col items-center text-center"
+              style={{
+                background: errorKind === "token"
+                  ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                  : errorKind === "too_many_faces"
+                  ? 'linear-gradient(135deg, #6366f1, #8b5cf6)'
+                  : 'linear-gradient(135deg, #f97316, #ef4444)',
+              }}
             >
-              <X className="w-4 h-4 text-gray-400" />
-            </button>
+              {/* X close button */}
+              <button
+                className="absolute top-3 left-3 w-8 h-8 rounded-full flex items-center justify-center transition-all"
+                style={{ background: 'rgba(255,255,255,0.2)', color: 'white' }}
+                onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); }}
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
 
-            {/* Icon */}
-            <div className="w-16 h-16 rounded-full flex items-center justify-center"
-              style={{ background: errorKind === "token" ? '#fef3c7' : errorKind === "too_many_faces" ? '#dbeafe' : '#fef9c3' }}>
-              {errorKind === "token"
-                ? <span style={{ fontSize: 36 }}>🪙</span>
-                : errorKind === "too_many_faces"
-                ? <span style={{ fontSize: 36 }}>👥</span>
-                : <span style={{ fontSize: 36 }}>🔍</span>}
+              {/* Big emoji icon */}
+              <div className="text-5xl mb-3">
+                {errorKind === "token" ? '🪙' : errorKind === "too_many_faces" ? '👨‍👩‍👧‍👦' : '🔍'}
+              </div>
+
+              {/* Title */}
+              <p className="text-xl font-bold text-white leading-tight">
+                {errorKind === "token"
+                  ? (isRtl ? "נגמרו האסימונים" : "Out of Tokens")
+                  : errorKind === "too_many_faces"
+                  ? (isRtl ? `זוהו ${tooManyFacesCount} פנים בתמונה` : `${tooManyFacesCount} Faces Detected`)
+                  : (isRtl ? "לא זוהו פנים בתמונה" : "No Face Detected")}
+              </p>
+              {/* Subtitle */}
+              <p className="text-sm mt-1.5" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                {errorKind === "token"
+                  ? (isRtl ? "נדרשים אסימונים ליצירת פורטרט" : "Tokens required to create portrait")
+                  : errorKind === "too_many_faces"
+                  ? (isRtl ? "מצב פורטרט תומך עד 2 אנשים בלבד" : "Portrait mode supports up to 2 people")
+                  : (isRtl ? "לא נמצאו פנים ברורים בתמונה" : "No clear faces found in the image")}
+              </p>
             </div>
-            {/* Title */}
-            <p className="text-lg font-bold" style={{ color: errorKind === "token" ? '#d97706' : errorKind === "too_many_faces" ? '#1d4ed8' : '#92400e' }}>
-              {errorKind === "token"
-                ? (isRtl ? "נגמרו האסימונים" : "Out of Tokens")
-                : errorKind === "too_many_faces"
-                ? (isRtl ? `מגבלה: עד 2 פנים בפורטרט` : `Portrait Limit: Max 2 Faces`)
-                : (isRtl ? "לא זוהו פנים בתמונה" : "No Face Detected")}
-            </p>
-            {/* Message */}
-            <p className="text-sm text-gray-600 leading-relaxed">
-              {errorKind === "token"
-                ? (isRtl ? "נגמרו לך האסימונים. רכוש אסימונים נוספים כדי להמשיך ליצור פורטרטים." : "You've run out of tokens. Purchase more tokens to continue creating portraits.")
-                : errorKind === "too_many_faces"
-                ? (isRtl
-                    ? `זוהו ${tooManyFacesCount} פנים בתמונה — מצב פורטרט תומך עד 2 אנשים בלבד. תוכל לעבד את התמונה במצב "תמונה לקווים" שתומך בכל כמות אנשים.`
-                    : `Detected ${tooManyFacesCount} faces — Portrait mode supports up to 2 people. You can process this image in "Image to Lines" mode which supports any number of people.`)
-                : (errorMsg
-                    ? errorMsg.replace(/לא זויינו/g, "לא זוהו").replace(/לא זוהה/g, "לא זוהו")
-                    : (isRtl
-                        ? "לא זוהו פנים בתמונה זו. אנא העלה תמונה ברורה עם פנים אחד או יותר."
-                        : "No face detected in this image. Please upload a clear photo with at least one visible face."
-                      )
-                  )
-              }
-            </p>
+
+            {/* White card pulled up over header */}
+            <div className="-mt-4 mx-4 mb-4 bg-white rounded-2xl shadow-lg p-5 flex flex-col gap-3">
+              {/* Info box */}
+              <div
+                className="rounded-xl px-4 py-3 text-sm leading-relaxed"
+                style={{
+                  background: errorKind === "too_many_faces" ? '#f0f0ff' : '#fff7ed',
+                  color: errorKind === "too_many_faces" ? '#4338ca' : '#92400e',
+                  border: errorKind === "too_many_faces" ? '1px solid #c7d2fe' : '1px solid #fed7aa',
+                }}
+              >
+                {errorKind === "token"
+                  ? (isRtl ? "רכוש אסימונים נוספים כדי להמשיך ליצור פורטרטים. האסימונים לא פגים!" : "Purchase more tokens to continue creating portraits. Tokens never expire!")
+                  : errorKind === "too_many_faces"
+                  ? (isRtl
+                      ? `תמונה זו מכילה ${tooManyFacesCount} פנים. ניתן לעבד אותה במצב "תמונה לקווים" שתומך בכל מספר אנשים.`
+                      : `This image has ${tooManyFacesCount} faces. You can process it in "Image to Lines" mode which supports any number of people.`)
+                  : (isRtl
+                      ? "ודא שהפנים ברורים, מוארים היטב ולא מכוסים. פרופיל צד עובד גם כן."
+                      : "Make sure the face is clear, well-lit, and not covered. Side profiles work too.")}
+              </div>
 
             {errorKind === "token" ? (
               <>
                 {/* Buy tokens button */}
                 <button
-                  className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all active:scale-95"
-                  style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 4px 14px rgba(245,158,11,0.4)' }}
+                  className="w-full py-3.5 rounded-xl font-bold text-white text-sm transition-all active:scale-95"
+                  style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 4px 14px rgba(245,158,11,0.35)' }}
                   onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); window.location.href = "/buy"; }}
                 >
                   {isRtl ? "🛒 רכוש אסימונים" : "🛒 Buy Tokens"}
@@ -861,8 +883,8 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
                 {/* Try free tool */}
                 {onSwitchToAiOutline && (
                   <button
-                    className="w-full py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95"
-                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}
+                    className="w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-95"
+                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', boxShadow: '0 4px 14px rgba(99,102,241,0.3)' }}
                     onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); onSwitchToAiOutline(imageFile); }}
                   >
                     {isRtl ? "✨ נסה תמונה לקווים" : "✨ Try Image to Lines"}
@@ -877,25 +899,25 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
               </>
             ) : errorKind === "too_many_faces" ? (
               <>
-                {/* Switch to Image to Lines — primary vibrant button */}
+                {/* Switch to Image to Lines — primary CTA */}
                 {onSwitchToAiOutline && (
                   <button
-                    className="w-full py-3.5 rounded-xl font-bold text-white text-sm transition-all active:scale-95 flex items-center justify-center gap-2"
-                    style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', boxShadow: '0 4px 18px rgba(124,58,237,0.45)', fontSize: '15px' }}
+                    className="w-full py-4 rounded-xl font-bold text-white text-base transition-all active:scale-95 flex items-center justify-center gap-2"
+                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 4px 18px rgba(99,102,241,0.4)' }}
                     onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); onSwitchToAiOutline(imageFile); }}
                   >
-                    <span style={{ fontSize: 18 }}>✨</span>
-                    <span>{isRtl ? "עבור לפיצ'ר תמונה לקווים" : "Switch to Image to Lines"}</span>
+                    <span style={{ fontSize: 20 }}>✨</span>
+                    <span>{isRtl ? "המר לקווים — כל הפנים" : "Convert to Lines — All Faces"}</span>
                   </button>
                 )}
-                {/* Upload new photo — secondary outlined button */}
+                {/* Upload new photo */}
                 <button
-                  className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 flex items-center justify-center gap-2"
-                  style={{ background: 'transparent', border: '2px solid #d1d5db', color: '#374151', fontSize: '14px' }}
+                  className="w-full py-3.5 rounded-xl font-semibold text-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+                  style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', color: '#475569' }}
                   onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); setImageFile(null); setImagePreview(null); localStorage.removeItem("face_detect_imagePreview"); }}
                 >
-                  <span style={{ fontSize: 16 }}>📷</span>
-                  <span>{isRtl ? "העלה תמונה חדשה (1-2 אנשים)" : "Upload New Photo (1-2 People)"}</span>
+                  <span style={{ fontSize: 18 }}>📷</span>
+                  <span>{isRtl ? "העלה תמונה עם 1-2 אנשים" : "Upload Photo with 1-2 People"}</span>
                 </button>
               </>
             ) : (
@@ -939,6 +961,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
                 </button>
               </>
             )}
+            </div>
           </div>
         </div>
       )}
