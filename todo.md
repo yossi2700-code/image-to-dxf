@@ -2746,3 +2746,8 @@
 
 ## PayPal Guest Checkout - אפריל 2026
 - [x] PayPal Standalone CARD Button (תשלום בכרטיס ללא חשבון PayPal)
+
+## תיקון PayPal Guest Checkout - אפריל 2026
+- [x] שכתוב טעינת PayPal SDK — טעינה אחת עם cleanup נכון
+- [x] הוספת fallback button כשה-Card SDK button לא eligible
+- [x] כפתור redirect ל-PayPal עם landing_page BILLING כ-fallback

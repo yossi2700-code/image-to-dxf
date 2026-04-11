@@ -220,6 +220,7 @@ export default function Buy() {
   const [cardSuccess, setCardSuccess] = useState(false);
   const [cardButtonReady, setCardButtonReady] = useState(false);
   const [cardButtonRendered, setCardButtonRendered] = useState(false);
+  const [cardUseFallback, setCardUseFallback] = useState(false);
   const cardFormRef = useRef<HTMLDivElement>(null);
   const cardButtonContainerRef = useRef<HTMLDivElement>(null);
 
@@ -272,21 +273,24 @@ export default function Buy() {
     }
   }, [manusUser]);
 
-  // Mount PayPal Standalone CARD Button when card tab is selected
+  // Track which currency the SDK was loaded with
+  const sdkCurrencyRef = useRef<string>("");
+
+  // Load PayPal SDK once and render CARD button
   useEffect(() => {
-    if (paymentMethod !== "card" || !termsAccepted || isLoggedIn === false || !paypalClientId || cardButtonRendered) return;
+    if (paymentMethod !== "card" || !termsAccepted || isLoggedIn === false || !paypalClientId) return;
     if (!cardButtonContainerRef.current) return;
 
-    // Remove any existing PayPal SDK scripts to reload with correct currency
-    const existingScript = document.getElementById("paypal-sdk-buttons");
+    let cancelled = false;
 
-    const initCardButton = () => {
+    const renderCardButton = () => {
+      if (cancelled) return;
       const paypal = (window as unknown as { paypal?: {
         FUNDING: { CARD: string };
-        Buttons: (config: Record<string, unknown>) => { isEligible: () => boolean; render: (el: HTMLElement) => Promise<void> };
+        Buttons: (config: Record<string, unknown>) => { isEligible: () => boolean; render: (el: HTMLElement) => Promise<void>; close: () => Promise<void> };
       } }).paypal;
       if (!paypal?.Buttons || !paypal?.FUNDING) {
-        setCardError("שגיאה בטעינת PayPal SDK");
+        setCardError(isRtl ? "שגיאה בטעינת PayPal SDK" : "Error loading PayPal SDK");
         return;
       }
 
@@ -311,7 +315,7 @@ export default function Buy() {
             });
             return data.orderId;
           } catch (e: unknown) {
-            setCardError(e instanceof Error ? e.message : "שגיאה ביצירת הזמנה");
+            setCardError(e instanceof Error ? e.message : (isRtl ? "שגיאה ביצירת הזמנה" : "Error creating order"));
             setCardLoading(false);
             throw e;
           }
@@ -325,7 +329,7 @@ export default function Buy() {
               setTimeout(() => navigate("/buy/success?orderId=" + data.orderID), 1500);
             }
           } catch (e: unknown) {
-            setCardError(e instanceof Error ? e.message : "שגיאה בעיבוד התשלום");
+            setCardError(e instanceof Error ? e.message : (isRtl ? "שגיאה בעיבוד התשלום" : "Error processing payment"));
           } finally {
             setCardLoading(false);
           }
@@ -335,7 +339,7 @@ export default function Buy() {
         },
         onError: (err: unknown) => {
           console.error("PayPal Card Button error", err);
-          setCardError("שגיאה בתשלום — נסה שוב");
+          setCardError(isRtl ? "שגיאה בתשלום — נסה שוב" : "Payment error — please try again");
           setCardLoading(false);
         },
       });
@@ -343,42 +347,66 @@ export default function Buy() {
       if (cardButton.isEligible() && cardButtonContainerRef.current) {
         cardButtonContainerRef.current.innerHTML = "";
         cardButton.render(cardButtonContainerRef.current).then(() => {
-          setCardButtonReady(true);
-          setCardButtonRendered(true);
+          if (!cancelled) {
+            setCardButtonReady(true);
+            setCardButtonRendered(true);
+          }
         }).catch((err: unknown) => {
-          console.error("Card button render error", err);
-          setCardError("לא ניתן לטעון כפתור תשלום — נסה שוב");
+          if (!cancelled) {
+            console.error("Card button render error", err);
+            setCardError(isRtl ? "לא ניתן לטעון כפתור תשלום — נסה שוב" : "Cannot load payment button — try again");
+          }
         });
       } else {
-        setCardError("תשלום בכרטיס אשראי אינו זמין כרגע");
+        // Card not eligible via SDK — fall back to PayPal redirect with BILLING landing page
+        console.log("Card button not eligible, using redirect fallback");
+        setCardUseFallback(true);
+        setCardButtonReady(true);
+        setCardButtonRendered(true);
       }
     };
 
-    if (existingScript && (window as unknown as { paypal?: unknown }).paypal) {
-      initCardButton();
-    } else {
-      // Remove old script if exists
-      existingScript?.remove();
-      const script = document.createElement("script");
-      script.id = "paypal-sdk-buttons";
-      script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&components=buttons,funding-eligibility&currency=${currency}`;
-      script.onload = initCardButton;
-      script.onerror = () => setCardError("שגיאה בטעינת PayPal SDK");
-      document.head.appendChild(script);
-    }
-  }, [paymentMethod, termsAccepted, isLoggedIn, paypalClientId, cardButtonRendered]);
+    const loadAndRender = () => {
+      // If SDK already loaded with correct currency, just render
+      const existingPaypal = (window as unknown as { paypal?: unknown }).paypal;
+      if (existingPaypal && sdkCurrencyRef.current === currency) {
+        renderCardButton();
+        return;
+      }
 
-  // Reset card button when package/currency changes
-  useEffect(() => {
-    setCardButtonRendered(false);
-    setCardButtonReady(false);
-    // Remove old SDK script so it reloads with new currency
-    const oldScript = document.getElementById("paypal-sdk-buttons");
-    if (oldScript) {
-      oldScript.remove();
+      // Remove old script and paypal global
+      const oldScript = document.getElementById("paypal-sdk-card");
+      if (oldScript) {
+        oldScript.remove();
+      }
       delete (window as unknown as { paypal?: unknown }).paypal;
-    }
-  }, [selectedPackage, currency]);
+
+      // Load fresh SDK
+      const script = document.createElement("script");
+      script.id = "paypal-sdk-card";
+      script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&components=buttons,funding-eligibility&currency=${currency}&enable-funding=card`;
+      script.async = true;
+      script.onload = () => {
+        sdkCurrencyRef.current = currency;
+        renderCardButton();
+      };
+      script.onerror = () => {
+        if (!cancelled) {
+          setCardError(isRtl ? "שגיאה בטעינת PayPal SDK" : "Error loading PayPal SDK");
+        }
+      };
+      document.head.appendChild(script);
+    };
+
+    // Reset state before loading
+    setCardButtonReady(false);
+    setCardButtonRendered(false);
+    setCardUseFallback(false);
+    setCardError(null);
+    loadAndRender();
+
+    return () => { cancelled = true; };
+  }, [paymentMethod, termsAccepted, isLoggedIn, paypalClientId, selectedPackage, currency]);
 
   // handleCardSubmit is no longer needed — PayPal Buttons SDK handles everything
 
@@ -713,7 +741,53 @@ export default function Buy() {
 
                 {/* PayPal Standalone CARD Button container */}
                 <div className="mb-4">
-                  <div ref={cardButtonContainerRef} className="min-h-[55px]" />
+                  {!cardUseFallback && <div ref={cardButtonContainerRef} className="min-h-[55px]" />}
+                  {cardUseFallback && cardButtonReady && (
+                    <button
+                      onClick={async () => {
+                        setCardLoading(true);
+                        setCardError(null);
+                        try {
+                          const data = await createOrderMutation.mutateAsync({
+                            packageId: selectedPackage,
+                            currency,
+                            termsAccepted: true,
+                            origin: window.location.origin,
+                            useCard: true,
+                          });
+                          if (data.approvalUrl) {
+                            window.location.href = data.approvalUrl;
+                          } else {
+                            setCardError(isRtl ? "שגיאה ביצירת הזמנה" : "Error creating order");
+                          }
+                        } catch (e: unknown) {
+                          setCardError(e instanceof Error ? e.message : (isRtl ? "שגיאה ביצירת הזמנה" : "Error creating order"));
+                        } finally {
+                          setCardLoading(false);
+                        }
+                      }}
+                      disabled={cardLoading}
+                      className="w-full py-4 rounded-xl font-bold text-lg transition-all duration-200 flex items-center justify-center gap-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {cardLoading ? (
+                        <>
+                          <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          {isRtl ? "מעבד..." : "Processing..."}
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                            <line x1="1" y1="10" x2="23" y2="10" />
+                          </svg>
+                          {isRtl ? "שלם בכרטיס אשראי" : "Pay with Credit Card"}
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
 
                 {/* Loading indicator while card button initializes */}
