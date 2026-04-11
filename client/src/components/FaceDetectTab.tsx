@@ -800,25 +800,34 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
           onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); }}
         >
           <div
-            className="rounded-2xl p-7 flex flex-col items-center gap-4 text-center max-w-sm w-full shadow-2xl"
-            style={{ background: '#fff', border: errorKind === "token" ? '2px solid #fbbf24' : errorKind === "too_many_faces" ? '2px solid #a78bfa' : '2px solid #fca5a5' }}
+            className="relative rounded-2xl p-7 flex flex-col items-center gap-4 text-center max-w-sm w-full shadow-2xl"
+            style={{ background: '#fff', border: errorKind === "token" ? '2px solid #fbbf24' : errorKind === "too_many_faces" ? '2px solid #bfdbfe' : '2px solid #fde68a' }}
             onClick={e => e.stopPropagation()}
           >
+            {/* X close button */}
+            <button
+              className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:bg-gray-100 active:scale-90"
+              onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); }}
+              aria-label="Close"
+            >
+              <X className="w-4 h-4 text-gray-400" />
+            </button>
+
             {/* Icon */}
             <div className="w-16 h-16 rounded-full flex items-center justify-center"
-              style={{ background: errorKind === "token" ? '#fef3c7' : errorKind === "too_many_faces" ? '#ede9fe' : '#fee2e2' }}>
+              style={{ background: errorKind === "token" ? '#fef3c7' : errorKind === "too_many_faces" ? '#dbeafe' : '#fef9c3' }}>
               {errorKind === "token"
                 ? <span style={{ fontSize: 36 }}>🪙</span>
                 : errorKind === "too_many_faces"
                 ? <span style={{ fontSize: 36 }}>👥</span>
-                : <AlertCircle className="w-9 h-9 text-red-500" />}
+                : <span style={{ fontSize: 36 }}>🔍</span>}
             </div>
             {/* Title */}
-            <p className="text-lg font-bold" style={{ color: errorKind === "token" ? '#d97706' : errorKind === "too_many_faces" ? '#7c3aed' : '#dc2626' }}>
+            <p className="text-lg font-bold" style={{ color: errorKind === "token" ? '#d97706' : errorKind === "too_many_faces" ? '#1d4ed8' : '#92400e' }}>
               {errorKind === "token"
                 ? (isRtl ? "נגמרו האסימונים" : "Out of Tokens")
                 : errorKind === "too_many_faces"
-                ? (isRtl ? "יותר מדי אנשים בתמונה" : "Too Many People")
+                ? (isRtl ? `זוהו ${tooManyFacesCount} אנשים בתמונה` : `${tooManyFacesCount} People Detected`)
                 : (isRtl ? "לא זוהו פנים בתמונה" : "No Face Detected")}
             </p>
             {/* Message */}
@@ -827,8 +836,8 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
                 ? (isRtl ? "נגמרו לך האסימונים. רכוש אסימונים נוספים כדי להמשיך ליצור פורטרטים." : "You've run out of tokens. Purchase more tokens to continue creating portraits.")
                 : errorKind === "too_many_faces"
                 ? (isRtl
-                    ? `זוהו ${tooManyFacesCount} פנים בתמונה. מצב פורטרט תומך עד 2 אנשים. אפשר לעלות תמונה עם 1-2 אנשים, או לעבד את התמונה במצב AI מתמונה.`
-                    : `Detected ${tooManyFacesCount} faces. Portrait mode supports up to 2 people. Upload a photo with 1-2 people, or process this image in AI from Image mode.`)
+                    ? `מצב פורטרט תומך עד 2 אנשים. תוכל לעבד את התמונה במצב "תמונה לקווים" שתומך בכל כמות אנשים, או להעלות תמונה חדשה עם 1-2 אנשים.`
+                    : `Portrait mode supports up to 2 people. You can process this image in "Image to Lines" mode which supports any number of people, or upload a new photo with 1-2 people.`)
                 : (errorMsg
                     ? errorMsg.replace(/לא זויינו/g, "לא זוהו").replace(/לא זוהה/g, "לא זוהו")
                     : (isRtl
@@ -868,23 +877,23 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
               </>
             ) : errorKind === "too_many_faces" ? (
               <>
-                {/* Switch to AI from image */}
+                {/* Switch to Image to Lines — primary green button */}
                 {onSwitchToAiOutline && (
                   <button
                     className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all active:scale-95"
-                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}
+                    style={{ background: 'linear-gradient(135deg, #059669, #10b981)', boxShadow: '0 4px 14px rgba(5,150,105,0.4)' }}
                     onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); onSwitchToAiOutline(imageFile); }}
                   >
-                    {isRtl ? "✨ עבור ל-AI מתמונה (עם אותה תמונה)" : "✨ Switch to AI from Image (same photo)"}
+                    {isRtl ? "🖼️ עבור לפיצ'ר תמונה לקווים" : "🖼️ Switch to Image to Lines"}
                   </button>
                 )}
-                {/* Upload new photo */}
+                {/* Upload new photo — secondary blue button */}
                 <button
                   className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all active:scale-95"
-                  style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', boxShadow: '0 4px 14px rgba(124,58,237,0.4)' }}
+                  style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)', boxShadow: '0 4px 14px rgba(59,130,246,0.4)' }}
                   onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); setImageFile(null); setImagePreview(null); localStorage.removeItem("face_detect_imagePreview"); }}
                 >
-                  {isRtl ? "📷 העלה תמונה עם 1-2 אנשים" : "📷 Upload Photo with 1-2 People"}
+                  {isRtl ? "📷 העלה תמונה חדשה (1-2 אנשים)" : "📷 Upload New Photo (1-2 People)"}
                 </button>
               </>
             ) : (

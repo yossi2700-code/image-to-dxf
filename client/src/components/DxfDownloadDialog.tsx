@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Download, X, FileCode2, FileText, Loader2, Share2, Settings2, Heart } from "lucide-react";
+import { Download, X, FileCode2, FileText, Loader2, Share2, Settings2, Heart, Image } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { saveFileAs } from "@/lib/saveFileAs";
@@ -42,7 +42,7 @@ export interface DxfDownloadDialogProps {
   hideCommunityShare?: boolean;
 }
 
-type FileFormat = "dxf" | "dxf-legacy" | "pdf";
+type FileFormat = "dxf" | "dxf-legacy" | "pdf" | "png";
 
 // ─── Scale DXF content ────────────────────────────────────────────────────────
 
@@ -235,6 +235,7 @@ export function DxfDownloadDialog({
   const [filename, setFilename] = useState(defaultFilename.replace(/\.dxf$/i, "").slice(0, 30).trimEnd());
   const [scalePercent, setScalePercent] = useState(100);
   const [selectedFormat, setSelectedFormat] = useState<FileFormat>("dxf");
+  const [pngResolution, setPngResolution] = useState(2); // 1x, 2x, 3x
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSharing, setIsSharing] = useState(false);
@@ -273,6 +274,7 @@ export function DxfDownloadDialog({
       setScalePercent(100);
       setError(null);
       setSelectedFormat("dxf");
+      setPngResolution(2);
     }
   }, [open, defaultFilename]);
 
@@ -356,6 +358,22 @@ export function DxfDownloadDialog({
         await saveFileAs({ blob, filename: `${cleanFilename}.pdf`, mimeType: "application/pdf" });
         void trackDownloadMutation.mutateAsync({ fileFormat: 'pdf', dxfUrl, description: cleanFilename });
         onClose();
+      } else if (selectedFormat === "png") {
+        // PNG export via server SVG-to-PNG
+        if (!svgContent) return;
+        const widthPx = Math.min(Math.round(outputWidthMm * (96 / 25.4) * pngResolution), 4000);
+        const heightPx = Math.min(Math.round(outputHeightMm * (96 / 25.4) * pngResolution), 4000);
+        const pngRes = await fetch("/api/svg-to-png", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ svgContent, widthPx, heightPx }),
+        });
+        if (!pngRes.ok) throw new Error(`PNG export failed: ${pngRes.status}`);
+        const pngBlob = await pngRes.blob();
+        await saveFileAs({ blob: pngBlob, filename: `${cleanFilename}.png`, mimeType: "application/octet-stream" });
+        void trackDownloadMutation.mutateAsync({ fileFormat: 'png', dxfUrl, description: cleanFilename });
+        onClose();
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") return;
@@ -382,14 +400,17 @@ export function DxfDownloadDialog({
     if (isLoading) {
       if (selectedFormat === "pdf") return t("exportingPdf");
       if (selectedFormat === "dxf-legacy") return t("preparingLegacyDxf");
+      if (selectedFormat === "png") return isRtl ? "מייצא PNG..." : "Exporting PNG...";
       return t("preparingDxf");
     }
     if (useShareSheet) {
       if (selectedFormat === "pdf") return t("shareOrSavePdf");
+      if (selectedFormat === "png") return isRtl ? "שתף / שמור PNG" : "Share / Save PNG";
       return t("shareOrSaveDxf");
     }
     if (selectedFormat === "pdf") return t("downloadPdfBtn");
     if (selectedFormat === "dxf-legacy") return t("downloadLegacyDxfBtn");
+    if (selectedFormat === "png") return isRtl ? "הורד PNG" : "Download PNG";
     return t("downloadDxfBtn");
   };
 
@@ -400,10 +421,14 @@ export function DxfDownloadDialog({
     if (selectedFormat === "dxf-legacy") {
       return { background: "linear-gradient(135deg, #7c3aed, #a855f7)", border: "none", boxShadow: "0 3px 10px rgba(124,58,237,0.3)" };
     }
+    if (selectedFormat === "png") {
+      return { background: "linear-gradient(135deg, #db2777, #ec4899)", border: "none", boxShadow: "0 3px 10px rgba(219,39,119,0.3)" };
+    }
     return { background: "linear-gradient(135deg, #059669, #10b981)", border: "none", boxShadow: "0 3px 10px rgba(5,150,105,0.3)" };
   };
 
   const hasPdf = !!svgContent;
+  const hasPng = !!svgContent;
 
   return (
     <>
@@ -439,8 +464,8 @@ export function DxfDownloadDialog({
                 className="text-right flex-1 text-sm"
                 dir="rtl"
               />
-              <span className="text-xs text-muted-foreground shrink-0 font-mono bg-muted px-1.5 py-1 rounded">
-                {selectedFormat === "pdf" ? ".pdf" : ".dxf"}
+              <span className="text-xs font-mono bg-muted px-1.5 py-1 rounded">
+                {selectedFormat === "pdf" ? ".pdf" : selectedFormat === "png" ? ".png" : ".dxf"}
               </span>
             </div>
           </div>
@@ -515,8 +540,42 @@ export function DxfDownloadDialog({
                   borderColor="border-blue-500"
                 />
               )}
+              {/* PNG */}
+              {hasPng && (
+                <FormatCard
+                  selected={selectedFormat === "png"}
+                  onClick={() => setSelectedFormat("png")}
+                  icon={<Image className={`w-4 h-4 ${selectedFormat === "png" ? "text-pink-700" : "text-muted-foreground"}`} />}
+                  title="PNG"
+                  description={isRtl ? "תמונה לשיתוף" : "Image file"}
+                  color="bg-pink-50"
+                  borderColor="border-pink-500"
+                />
+              )}
             </div>
           </div>
+
+          {/* PNG resolution selector */}
+          {selectedFormat === "png" && (
+            <div className="flex items-center justify-between bg-pink-50 border border-pink-200 rounded-lg px-3 py-2">
+              <span className="text-xs font-semibold text-pink-700">{isRtl ? "רזולוציה:" : "Resolution:"}</span>
+              <div className="flex gap-1.5">
+                {[1, 2, 3].map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setPngResolution(r)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                      pngResolution === r
+                        ? "bg-pink-500 text-white shadow-sm"
+                        : "bg-white text-pink-600 border border-pink-200 hover:bg-pink-100"
+                    }`}
+                  >
+                    {r}x
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Mobile share hint */}
           {useShareSheet && (

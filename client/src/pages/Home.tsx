@@ -2357,6 +2357,7 @@ export default function Home() {
   const [portraitImageKey, setPortraitImageKey] = useState(0);
   const [aiTraceInitialFile, setAiTraceInitialFile] = useState<File | null>(null);
   const [aiTraceKey, setAiTraceKey] = useState(0);
+  const [aiTraceFromPortrait, setAiTraceFromPortrait] = useState(false);
 
   // Typing animation for AI Create card
   const aiCreateWords = isRtl
@@ -3216,6 +3217,7 @@ export default function Home() {
               key={aiTraceKey}
               initialImageFile={aiTraceInitialFile}
               autoStart={!!aiTraceInitialFile}
+              fromPortrait={aiTraceFromPortrait}
               onOpenAuth={() => openAuthAs("unregistered")}
               onInsufficientTokens={() => setShowTokensBanner(true)}
               onSwitchToPortrait={(imageDataUrl) => {
@@ -3311,6 +3313,7 @@ export default function Home() {
               onSwitchToAiOutline={(imageFile) => {
                 if (imageFile) {
                   setAiTraceInitialFile(imageFile);
+                  setAiTraceFromPortrait(true);
                   setAiTraceKey(k => k + 1); // force AiTraceTab re-mount with fresh state
                 }
                 setActiveTab('ai');

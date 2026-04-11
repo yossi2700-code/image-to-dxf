@@ -402,9 +402,9 @@ function MultiObjectDialog({
   );
 }
 
-interface AiTraceTabProps { onOpenAuth: () => void; onInsufficientTokens?: () => void; onSwitchToPortrait?: (imageDataUrl: string) => void; initialImageFile?: File | null; autoStart?: boolean; }
+interface AiTraceTabProps { onOpenAuth: () => void; onInsufficientTokens?: () => void; onSwitchToPortrait?: (imageDataUrl: string) => void; initialImageFile?: File | null; autoStart?: boolean; fromPortrait?: boolean; }
 
-export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrait, initialImageFile, autoStart }: AiTraceTabProps) {
+export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrait, initialImageFile, autoStart, fromPortrait }: AiTraceTabProps) {
   const { t, isRtl, language } = useLanguage();
   const { getCost } = useTokenCost();
   const aiTraceCost = getCost("ai_trace");
@@ -439,7 +439,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
   const [downloadTarget, setDownloadTarget] = useState<GeneratedImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   // Detail level: 0 = simple (default), 1 = detailed
-  const [detailLevel, setDetailLevel] = useState<0 | 1>(0);
+  // When coming from portrait mode (multiple faces), default to detailed for best face results
+  const [detailLevel, setDetailLevel] = useState<0 | 1>(fromPortrait ? 1 : 0);
   // Single line mode: draw centerline strokes instead of double outlines
   const [singleLine, setSingleLine] = useState(false);
   // Close paths: force all open paths to be closed in the DXF output
@@ -730,8 +731,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       ctx.drawImage(img, 0, 0, w, h);
       const compressed = canvas.toDataURL("image/jpeg", 0.85);
       setImagePreviewPersisted(compressed);
-      // Trigger face detection check (only if portrait switch is supported)
-      if (onSwitchToPortrait) {
+      // Trigger face detection check (only if portrait switch is supported AND not coming from portrait)
+      if (onSwitchToPortrait && !fromPortrait) {
         setFaceCheckLoading(true);
         // Use FormData with the original file to avoid base64 corruption issues
         const formData = new FormData();
