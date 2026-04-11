@@ -2743,3 +2743,6 @@
 
 ## העברת CNC Relief ל-Forge API - אפריל 2026
 - [x] החלפת OpenAI SDK ב-generateImage של מנוס (Forge API) ב-cncReliefRoute.ts
+
+## PayPal Guest Checkout - אפריל 2026
+- [x] PayPal Standalone CARD Button (תשלום בכרטיס ללא חשבון PayPal)

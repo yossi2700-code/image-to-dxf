@@ -66,28 +66,34 @@ export interface PayPalOrderResponse {
 export async function createPayPalOrder(params: CreateOrderParams): Promise<PayPalOrderResponse> {
   const token = await getAccessToken();
 
-  // useCard=true → BILLING landing page (shows card form first, no PayPal login required)
-  // useCard=false → GUEST_CHECKOUT (shows PayPal + card option)
-  const landingPage = params.useCard ? "BILLING" : "GUEST_CHECKOUT";
-  const body = {
-    intent: "CAPTURE",
-    purchase_units: [
-      {
-        reference_id: `${params.packageId}_${params.userId}`,
-        description: `${params.tokens} Design Tokens — dxfai.ai`,
-        amount: {
-          currency_code: params.currency,
-          value: params.amount,
-        },
-        custom_id: String(params.userId),
+  const purchaseUnits = [
+    {
+      reference_id: `${params.packageId}_${params.userId}`,
+      description: `${params.tokens} Design Tokens — dxfai.ai`,
+      amount: {
+        currency_code: params.currency,
+        value: params.amount,
       },
-    ],
-    payment_source: {
+      custom_id: String(params.userId),
+    },
+  ];
+
+  // useCard=true → No payment_source (for PayPal JS SDK Buttons with FUNDING.CARD)
+  //   The JS SDK handles card input client-side, so we must NOT include payment_source
+  // useCard=false → Include payment_source with PayPal experience context for redirect flow
+  const body: Record<string, unknown> = {
+    intent: "CAPTURE",
+    purchase_units: purchaseUnits,
+  };
+
+  if (!params.useCard) {
+    // PayPal redirect flow — include payment_source for proper redirect experience
+    body.payment_source = {
       paypal: {
         experience_context: {
           brand_name: "DXF AI",
           locale: "en-US",
-          landing_page: landingPage,
+          landing_page: "GUEST_CHECKOUT",
           user_action: "PAY_NOW",
           return_url: params.returnUrl,
           cancel_url: params.cancelUrl,
@@ -95,15 +101,22 @@ export async function createPayPalOrder(params: CreateOrderParams): Promise<PayP
           shipping_preference: "NO_SHIPPING",
         },
       },
-    },
+    };
+  }
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
   };
+
+  // Add idempotency key for card orders to prevent duplicates
+  if (params.useCard) {
+    headers["PayPal-Request-Id"] = `card-btn-${params.userId}-${Date.now()}`;
+  }
 
   const res = await fetch(`${BASE_URL}/v2/checkout/orders`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers,
     body: JSON.stringify(body),
   });
 
