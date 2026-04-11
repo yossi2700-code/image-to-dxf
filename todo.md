@@ -2751,3 +2751,7 @@
 - [x] שכתוב טעינת PayPal SDK — טעינה אחת עם cleanup נכון
 - [x] הוספת fallback button כשה-Card SDK button לא eligible
 - [x] כפתור redirect ל-PayPal עם landing_page BILLING כ-fallback
+
+## אפריל 2026
+
+- [x] PNG עם מילוי שחור — הוספת toggle "קווים / מילוי" בדיאלוג ההורדה כשבוחרים PNG

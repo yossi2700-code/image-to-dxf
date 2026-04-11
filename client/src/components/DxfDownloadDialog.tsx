@@ -236,6 +236,7 @@ export function DxfDownloadDialog({
   const [scalePercent, setScalePercent] = useState(100);
   const [selectedFormat, setSelectedFormat] = useState<FileFormat>("dxf");
   const [pngResolution, setPngResolution] = useState(2); // 1x, 2x, 3x
+  const [pngFilled, setPngFilled] = useState(true); // true = filled black, false = lines only
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSharing, setIsSharing] = useState(false);
@@ -275,6 +276,7 @@ export function DxfDownloadDialog({
       setError(null);
       setSelectedFormat("dxf");
       setPngResolution(2);
+      setPngFilled(true);
     }
   }, [open, defaultFilename]);
 
@@ -363,11 +365,20 @@ export function DxfDownloadDialog({
         if (!svgContent) return;
         const widthPx = Math.min(Math.round(outputWidthMm * (96 / 25.4) * pngResolution), 4000);
         const heightPx = Math.min(Math.round(outputHeightMm * (96 / 25.4) * pngResolution), 4000);
+        // Apply fill if requested: replace fill="none" with fill="black" on all paths
+        const svgForPng = pngFilled
+          ? svgContent
+              .replace(/fill="none"/g, 'fill="black"')
+              .replace(/fill='none'/g, "fill='black'")
+              // Also set stroke to none when filled so we get clean solid shapes
+              .replace(/stroke="[^"]*"/g, 'stroke="none"')
+              .replace(/stroke='[^']*'/g, "stroke='none'")
+          : svgContent;
         const pngRes = await fetch("/api/svg-to-png", {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ svgContent, widthPx, heightPx }),
+          body: JSON.stringify({ svgContent: svgForPng, widthPx, heightPx }),
         });
         if (!pngRes.ok) throw new Error(`PNG export failed: ${pngRes.status}`);
         const pngBlob = await pngRes.blob();
@@ -565,24 +576,53 @@ export function DxfDownloadDialog({
             </div>
           </div>
 
-          {/* PNG resolution selector */}
+          {/* PNG options: fill toggle + resolution selector */}
           {selectedFormat === "png" && (
-            <div className="flex items-center justify-between bg-pink-50 border border-pink-200 rounded-lg px-3 py-2">
-              <span className="text-xs font-semibold text-pink-700">{isRtl ? "רזולוציה:" : "Resolution:"}</span>
-              <div className="flex gap-1.5">
-                {[1, 2, 3].map((r) => (
+            <div className="flex flex-col gap-2">
+              {/* Fill toggle */}
+              <div className="flex items-center justify-between bg-pink-50 border border-pink-200 rounded-lg px-3 py-2">
+                <span className="text-xs font-semibold text-pink-700">{isRtl ? "סגנון:" : "Style:"}</span>
+                <div className="flex gap-1.5">
                   <button
-                    key={r}
-                    onClick={() => setPngResolution(r)}
+                    onClick={() => setPngFilled(true)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                      pngResolution === r
+                      pngFilled
                         ? "bg-pink-500 text-white shadow-sm"
                         : "bg-white text-pink-600 border border-pink-200 hover:bg-pink-100"
                     }`}
                   >
-                    {r}x
+                    {isRtl ? "⬛ מילוי" : "⬛ Filled"}
                   </button>
-                ))}
+                  <button
+                    onClick={() => setPngFilled(false)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                      !pngFilled
+                        ? "bg-pink-500 text-white shadow-sm"
+                        : "bg-white text-pink-600 border border-pink-200 hover:bg-pink-100"
+                    }`}
+                  >
+                    {isRtl ? "✏️ קווים" : "✏️ Lines"}
+                  </button>
+                </div>
+              </div>
+              {/* Resolution selector */}
+              <div className="flex items-center justify-between bg-pink-50 border border-pink-200 rounded-lg px-3 py-2">
+                <span className="text-xs font-semibold text-pink-700">{isRtl ? "רזולוציה:" : "Resolution:"}</span>
+                <div className="flex gap-1.5">
+                  {[1, 2, 3].map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setPngResolution(r)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                        pngResolution === r
+                          ? "bg-pink-500 text-white shadow-sm"
+                          : "bg-white text-pink-600 border border-pink-200 hover:bg-pink-100"
+                      }`}
+                    >
+                      {r}x
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
