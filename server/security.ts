@@ -24,7 +24,10 @@ export const helmetMiddleware = helmet({
         "'unsafe-inline'",   // Vite HMR in dev; tighten in prod if possible
         "'unsafe-eval'",     // Required by some bundled libs
         "https://www.paypal.com",
+        "https://www.sandbox.paypal.com",
         "https://www.paypalobjects.com",
+        "https://*.paypal.com",
+        "https://*.paypalobjects.com",
         "https://js.stripe.com",
         "https://fonts.googleapis.com",
       ],
@@ -38,7 +41,12 @@ export const helmetMiddleware = helmet({
       connectSrc: [
         "'self'",
         "https://api.paypal.com",
+        "https://api-m.paypal.com",
+        "https://www.paypal.com",
         "https://www.sandbox.paypal.com",
+        "https://api-m.sandbox.paypal.com",
+        "https://*.paypal.com",
+        "https://*.paypalobjects.com",
         "https://api.resend.com",
         "https://*.manus.computer",
         "https://*.manus.space",
@@ -49,6 +57,8 @@ export const helmetMiddleware = helmet({
         "'self'",
         "https://www.paypal.com",
         "https://www.sandbox.paypal.com",
+        "https://*.paypal.com",
+        "https://*.paypalobjects.com",
       ],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],

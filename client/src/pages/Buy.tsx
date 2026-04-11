@@ -220,6 +220,7 @@ export default function Buy() {
   const [cardSuccess, setCardSuccess] = useState(false);
   const [cardButtonReady, setCardButtonReady] = useState(false);
   const [cardButtonRendered, setCardButtonRendered] = useState(false);
+  const cardButtonRenderedRef = useRef(false);
   const [cardUseFallback, setCardUseFallback] = useState(false);
   const cardFormRef = useRef<HTMLDivElement>(null);
   const cardButtonContainerRef = useRef<HTMLDivElement>(null);
@@ -350,6 +351,7 @@ export default function Buy() {
           if (!cancelled) {
             setCardButtonReady(true);
             setCardButtonRendered(true);
+            cardButtonRenderedRef.current = true;
           }
         }).catch((err: unknown) => {
           if (!cancelled) {
@@ -363,10 +365,11 @@ export default function Buy() {
         setCardUseFallback(true);
         setCardButtonReady(true);
         setCardButtonRendered(true);
+        cardButtonRenderedRef.current = true;
       }
     };
 
-    const loadAndRender = () => {
+    const loadAndRender = (retryCount = 0) => {
       // If SDK already loaded with correct currency, just render
       const existingPaypal = (window as unknown as { paypal?: unknown }).paypal;
       if (existingPaypal && sdkCurrencyRef.current === currency) {
@@ -379,28 +382,52 @@ export default function Buy() {
       if (oldScript) {
         oldScript.remove();
       }
+      // Also remove any other PayPal SDK scripts that might conflict
+      document.querySelectorAll('script[src*="paypal.com/sdk/js"]').forEach(s => s.remove());
       delete (window as unknown as { paypal?: unknown }).paypal;
 
       // Load fresh SDK
       const script = document.createElement("script");
       script.id = "paypal-sdk-card";
-      script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&components=buttons,funding-eligibility&currency=${currency}&enable-funding=card`;
+      script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&components=buttons,funding-eligibility&currency=${currency}&enable-funding=card&disable-funding=credit,paylater`;
       script.async = true;
       script.onload = () => {
         sdkCurrencyRef.current = currency;
         renderCardButton();
       };
       script.onerror = () => {
-        if (!cancelled) {
-          setCardError(isRtl ? "שגיאה בטעינת PayPal SDK" : "Error loading PayPal SDK");
+        if (cancelled) return;
+        if (retryCount < 2) {
+          // Retry up to 2 times with delay
+          console.log(`PayPal SDK load failed, retrying (${retryCount + 1}/2)...`);
+          setTimeout(() => loadAndRender(retryCount + 1), 2000);
+        } else {
+          // After retries, fall back to redirect button
+          console.log("PayPal SDK load failed after retries, using redirect fallback");
+          setCardUseFallback(true);
+          setCardButtonReady(true);
+          setCardButtonRendered(true);
+          cardButtonRenderedRef.current = true;
         }
       };
       document.head.appendChild(script);
+
+      // Timeout fallback — if SDK doesn't load within 15 seconds, show redirect button
+      setTimeout(() => {
+        if (!cancelled && !cardButtonRenderedRef.current) {
+          console.log("PayPal SDK load timeout, using redirect fallback");
+          setCardUseFallback(true);
+          setCardButtonReady(true);
+          setCardButtonRendered(true);
+          cardButtonRenderedRef.current = true;
+        }
+      }, 15000);
     };
 
     // Reset state before loading
     setCardButtonReady(false);
     setCardButtonRendered(false);
+    cardButtonRenderedRef.current = false;
     setCardUseFallback(false);
     setCardError(null);
     loadAndRender();
