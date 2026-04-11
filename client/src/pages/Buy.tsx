@@ -371,13 +371,14 @@ export default function Buy() {
     setCardLoading(true);
     setCardError(null);
     try {
-      // Fallback mode: Card Fields not eligible, redirect to PayPal with guest checkout
+      // Fallback mode: Card Fields not eligible, redirect to PayPal with card-first landing page
       if (!cardFieldsInstanceRef.current) {
         const data = await createOrderMutation.mutateAsync({
           packageId: selectedPackage,
           currency,
           termsAccepted: true,
-          useCard: false,
+          origin: window.location.origin,
+          useCard: true,
         });
         if (data.approvalUrl) {
           window.location.href = data.approvalUrl;
@@ -619,6 +620,21 @@ export default function Buy() {
         <div className="flex gap-2 mb-5">
           <button
             type="button"
+            onClick={() => setPaymentMethod("card")}
+            className={`flex-1 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all border-2 ${
+              paymentMethod === "card"
+                ? "border-emerald-500 bg-emerald-500/20 text-white"
+                : "border-white/10 bg-white/5 text-emerald-200 hover:border-white/30"
+            }`}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+            <span>{isRtl ? "כרטיס אשראי" : "Credit Card"}</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setPaymentMethod("paypal")}
             className={`flex-1 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all border-2 ${
               paymentMethod === "paypal"
@@ -630,20 +646,6 @@ export default function Buy() {
               <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z" />
             </svg>
             PayPal
-          </button>
-          <button
-            type="button"
-            disabled
-            className="flex-1 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all border-2 border-white/10 bg-white/5 text-blue-300/50 cursor-not-allowed relative"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-              <line x1="1" y1="10" x2="23" y2="10"/>
-            </svg>
-            <span>{isRtl ? "כרטיס אשראי" : "Credit Card"}</span>
-            <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-black whitespace-nowrap">
-              {isRtl ? "בקרוב" : "Soon"}
-            </span>
           </button>
         </div>
 
@@ -682,8 +684,8 @@ export default function Buy() {
           </>
         )}
 
-        {/* Credit Card — Coming Soon */}
-        {paymentMethod === "card" && false && (
+        {/* Credit Card */}
+        {paymentMethod === "card" && (
           <div ref={cardFormRef}>
             {!termsAccepted ? (
               <div className="text-center py-4 text-amber-300 text-sm">
@@ -710,6 +712,16 @@ export default function Buy() {
                     {cardError}
                   </div>
                 )}
+
+                {/* No PayPal account required message */}
+                <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-400/30 rounded-xl text-center">
+                  <p className="text-emerald-300 text-sm font-medium">
+                    {isRtl ? "✅ לא נדרש חשבון PayPal" : "✅ No PayPal account required"}
+                  </p>
+                  <p className="text-emerald-300/80 text-xs mt-1">
+                    {isRtl ? "הזן שלם בישירו מכרטיס" : "Pay directly with your card"}
+                  </p>
+                </div>
 
                 {/* Card Fields form — only show if card fields are eligible (not fallback mode) */}
                 {cardFieldsMounted && !cardFieldsFallback && (
