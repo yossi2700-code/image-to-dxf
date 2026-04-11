@@ -78,22 +78,18 @@ export async function createPayPalOrder(params: CreateOrderParams): Promise<PayP
     },
   ];
 
-  // useCard=true → No payment_source (for PayPal JS SDK Buttons with FUNDING.CARD)
-  //   The JS SDK handles card input client-side, so we must NOT include payment_source
-  // useCard=false → Include payment_source with PayPal experience context for redirect flow
+  // Both flows use payment_source with redirect — different landing_page:
+  // useCard=true → landing_page: "BILLING" (shows credit card form first)
+  // useCard=false → landing_page: "LOGIN" (shows PayPal login first)
   const body: Record<string, unknown> = {
     intent: "CAPTURE",
     purchase_units: purchaseUnits,
-  };
-
-  if (!params.useCard) {
-    // PayPal redirect flow — include payment_source for proper redirect experience
-    body.payment_source = {
+    payment_source: {
       paypal: {
         experience_context: {
           brand_name: "DXF AI",
           locale: "en-US",
-          landing_page: "GUEST_CHECKOUT",
+          landing_page: params.useCard ? "BILLING" : "LOGIN",
           user_action: "PAY_NOW",
           return_url: params.returnUrl,
           cancel_url: params.cancelUrl,
@@ -101,8 +97,8 @@ export async function createPayPalOrder(params: CreateOrderParams): Promise<PayP
           shipping_preference: "NO_SHIPPING",
         },
       },
-    };
-  }
+    },
+  };
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
