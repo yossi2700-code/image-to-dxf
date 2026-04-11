@@ -455,7 +455,9 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
   const cropDragStartRef = useRef<{x:number;y:number} | null>(null);
   const cropIsDraggingRef = useRef(false);
   const [cropSel, setCropSel] = useState<{x:number;y:number;w:number;h:number} | null>(null);
-  const [currentStep, setCurrentStep] = useState<string>("");
+  const [currentStepHe, setCurrentStepHe] = useState<string>("");
+  const [currentStepEn, setCurrentStepEn] = useState<string>("");
+  const currentStep = isRtl ? currentStepHe : currentStepEn;
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [processingTime, setProcessingTime] = useState<number | null>(null); // seconds taken for last job
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
@@ -517,7 +519,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
           saveResultToCache(traceResult);
           setStatus("success");
           setShowSuccessOverlay(true);
-          setCurrentStep("");
+          setCurrentStepHe(""); setCurrentStepEn("");
           setProcessingTime(elapsedSeconds > 0 ? elapsedSeconds : null);
           setElapsedSeconds(0);
           setJobIdPersisted(null);
@@ -548,8 +550,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
             };
           });
           setStatus("success"); // Show result panel immediately with partial images
-          const stepMsg = isRtl ? (data.step || data.stepEn || "") : (data.stepEn || "");
-          setCurrentStep(stepMsg);
+          setCurrentStepHe(data.step || data.stepEn || "");
+          setCurrentStepEn(data.stepEn || data.step || "");
         } else if (data.status === "error") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           const isTokenError = data.error === "INSUFFICIENT_TOKENS" || data.error === "QUOTA_EXCEEDED";
@@ -569,7 +571,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
           setIsUnclearImage(isUnclear);
           setIsSceneDetected(isScene);
           setStatus("error");
-          setCurrentStep("");
+          setCurrentStepHe(""); setCurrentStepEn("");
           setElapsedSeconds(0);
           if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
           setJobIdPersisted(null);
@@ -581,13 +583,13 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
           setStatus("idle");
-          setCurrentStep("");
+          setCurrentStepHe(""); setCurrentStepEn("");
           setElapsedSeconds(0);
           setJobIdPersisted(null);
         } else if (data.step || data.stepEn) {
-          // Update current step message — never show Hebrew in EN mode
-          const stepMsg = isRtl ? (data.step || data.stepEn || "") : (data.stepEn || "");
-          setCurrentStep(stepMsg);
+          // Update current step message — always store both languages
+          setCurrentStepHe(data.step || data.stepEn || "");
+          setCurrentStepEn(data.stepEn || data.step || "");
         }
       } catch (_) { /* network error, keep trying */ }
     }, 3000);
@@ -708,7 +710,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
     setErrorMsg("");
     setFocusText("");
     setCustomImprovement("");
-    setCurrentStep("");
+    setCurrentStepHe(""); setCurrentStepEn("");
     setJobIdPersisted(null);
     setTryAgainUrl(null);
     // Reset file input so the same file can be re-selected
@@ -792,7 +794,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       });
     }
 
-    setShowSuccessOverlay(false); setStatus("loading"); setResult(null); setErrorMsg(""); setCurrentStep("");
+    setShowSuccessOverlay(false); setStatus("loading"); setResult(null); setErrorMsg(""); setCurrentStepHe(""); setCurrentStepEn("");
     try {
       const formData = new FormData();
       // When forcePreview is set, always use previewRef (the cropped image) even if imageFile exists
