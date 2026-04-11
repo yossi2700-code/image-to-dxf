@@ -269,7 +269,8 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
     return null;
   });
   const [errorMsg, setErrorMsg] = useState("");
-  const [errorKind, setErrorKind] = useState<"token" | "general">("general");
+  const [errorKind, setErrorKind] = useState<"token" | "general" | "too_many_faces">("general");
+  const [tooManyFacesCount, setTooManyFacesCount] = useState(0);
   const [downloadTarget, setDownloadTarget] = useState<GeneratedImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   const [lineweightMm, setLineweightMm] = useState<string>("");
@@ -391,14 +392,20 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
           if (progressTimerRef.current) clearInterval(progressTimerRef.current);
           if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
           const isTokenError = data.error === "INSUFFICIENT_TOKENS" || data.error === "QUOTA_EXCEEDED";
+          const isTooManyFaces = (data as { errorCode?: string }).errorCode === "TOO_MANY_FACES";
           const msg = data.message || data.error || (isRtl ? "שגיאה בעיבוד" : "Processing error");
           setErrorMsg(msg);
-          setErrorKind(isTokenError ? "token" : "general");
+          if (isTooManyFaces) {
+            setTooManyFacesCount((data as { faceCount?: number }).faceCount ?? 0);
+            setErrorKind("too_many_faces");
+          } else {
+            setErrorKind(isTokenError ? "token" : "general");
+          }
           setStatus("error");
           setCurrentStep("");
           setJobIdPersisted(null);
-          toast.error(msg);
-          if (!isTokenError) reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "face_detect" });
+          if (!isTooManyFaces) toast.error(msg);
+          if (!isTokenError && !isTooManyFaces) reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "face_detect" });
         } else if (data.status === "cancelled") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           if (progressTimerRef.current) clearInterval(progressTimerRef.current);
@@ -794,26 +801,34 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
         >
           <div
             className="rounded-2xl p-7 flex flex-col items-center gap-4 text-center max-w-sm w-full shadow-2xl"
-            style={{ background: '#fff', border: errorKind === "token" ? '2px solid #fbbf24' : '2px solid #fca5a5' }}
+            style={{ background: '#fff', border: errorKind === "token" ? '2px solid #fbbf24' : errorKind === "too_many_faces" ? '2px solid #a78bfa' : '2px solid #fca5a5' }}
             onClick={e => e.stopPropagation()}
           >
             {/* Icon */}
             <div className="w-16 h-16 rounded-full flex items-center justify-center"
-              style={{ background: errorKind === "token" ? '#fef3c7' : '#fee2e2' }}>
+              style={{ background: errorKind === "token" ? '#fef3c7' : errorKind === "too_many_faces" ? '#ede9fe' : '#fee2e2' }}>
               {errorKind === "token"
                 ? <span style={{ fontSize: 36 }}>🪙</span>
+                : errorKind === "too_many_faces"
+                ? <span style={{ fontSize: 36 }}>👥</span>
                 : <AlertCircle className="w-9 h-9 text-red-500" />}
             </div>
             {/* Title */}
-            <p className="text-lg font-bold" style={{ color: errorKind === "token" ? '#d97706' : '#dc2626' }}>
+            <p className="text-lg font-bold" style={{ color: errorKind === "token" ? '#d97706' : errorKind === "too_many_faces" ? '#7c3aed' : '#dc2626' }}>
               {errorKind === "token"
                 ? (isRtl ? "נגמרו האסימונים" : "Out of Tokens")
+                : errorKind === "too_many_faces"
+                ? (isRtl ? "יותר מדי אנשים בתמונה" : "Too Many People")
                 : (isRtl ? "לא זוהו פנים בתמונה" : "No Face Detected")}
             </p>
             {/* Message */}
             <p className="text-sm text-gray-600 leading-relaxed">
               {errorKind === "token"
                 ? (isRtl ? "נגמרו לך האסימונים. רכוש אסימונים נוספים כדי להמשיך ליצור פורטרטים." : "You've run out of tokens. Purchase more tokens to continue creating portraits.")
+                : errorKind === "too_many_faces"
+                ? (isRtl
+                    ? `זוהו ${tooManyFacesCount} פנים בתמונה. מצב פורטרט תומך עד 2 אנשים. אפשר לעלות תמונה עם 1-2 אנשים, או לעבד את התמונה במצב AI מתמונה.`
+                    : `Detected ${tooManyFacesCount} faces. Portrait mode supports up to 2 people. Upload a photo with 1-2 people, or process this image in AI from Image mode.`)
                 : (errorMsg
                     ? errorMsg.replace(/לא זויינו/g, "לא זוהו").replace(/לא זוהה/g, "לא זוהו")
                     : (isRtl
@@ -849,6 +864,27 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
                   onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); }}
                 >
                   {isRtl ? "סגור" : "Close"}
+                </button>
+              </>
+            ) : errorKind === "too_many_faces" ? (
+              <>
+                {/* Switch to AI from image */}
+                {onSwitchToAiOutline && (
+                  <button
+                    className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all active:scale-95"
+                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}
+                    onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); onSwitchToAiOutline(imageFile); }}
+                  >
+                    {isRtl ? "✨ עבור ל-AI מתמונה (עם אותה תמונה)" : "✨ Switch to AI from Image (same photo)"}
+                  </button>
+                )}
+                {/* Upload new photo */}
+                <button
+                  className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all active:scale-95"
+                  style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', boxShadow: '0 4px 14px rgba(124,58,237,0.4)' }}
+                  onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); setImageFile(null); setImagePreview(null); localStorage.removeItem("face_detect_imagePreview"); }}
+                >
+                  {isRtl ? "📷 העלה תמונה עם 1-2 אנשים" : "📷 Upload Photo with 1-2 People"}
                 </button>
               </>
             ) : (

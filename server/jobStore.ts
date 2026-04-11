@@ -17,6 +17,7 @@ export interface Job {
   result?: unknown;
   error?: string;
   errorCode?: string;  // e.g. "UNCLEAR_IMAGE" for special UI handling
+  faceCount?: number;   // number of faces detected (used for TOO_MANY_FACES error)
   tokenAction?: string; // e.g. "ai_trace" — used for refund on cancel
   tokenDeducted?: boolean; // true once tokens have been deducted — prevents phantom refunds
   noFaceRefundSent?: boolean; // true once no-face refund was issued — prevents double refund

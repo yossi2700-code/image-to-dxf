@@ -333,6 +333,15 @@ async function runFaceDetectJob(
       return;
     }
 
+    // Limit portrait mode to max 2 faces
+    if (faceCount > 2) {
+      const errorMsg = isHe
+        ? `זוהו ${faceCount} פנים בתמונה. מצב פורטרט תומך עד 2 אנשים בלבד.`
+        : `Detected ${faceCount} faces in the image. Portrait mode supports up to 2 people only.`;
+      updateJob(jobId, { status: "error", error: errorMsg, errorCode: "TOO_MANY_FACES", faceCount });
+      return;
+    }
+
     const jobAfterFaceCheck = getJob(jobId);
     if (!jobAfterFaceCheck || jobAfterFaceCheck.status === "cancelled") return;
 
@@ -420,10 +429,10 @@ async function runFaceDetectJob(
         .png({ compressionLevel: 1 })
         .toBuffer();
 
-      // Build a multi-face specific prompt
+      // Build a multi-face specific prompt — focus on FACES only, not full body
       const multiFacePrompt = PORTRAIT_STYLE_PROMPTS[style]
         .replace("Composition: head fills 70-80% of canvas. No clothing, no background.",
-          `Composition: all ${faceCount} faces must be fully visible and fit within the canvas. Show all people. No background.`);
+          `Composition: draw ONLY the faces and heads of all ${faceCount} people — NO body, NO clothing below the neck. All ${faceCount} heads must be fully visible and fit within the canvas. No background.`);
 
       const [singleResult, sugg] = await Promise.all([
         generatePortraitFromCrop(fullImageBuffer, "", multiFacePrompt),
