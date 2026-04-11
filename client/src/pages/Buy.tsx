@@ -414,39 +414,38 @@ export default function Buy() {
             </div>
 
             {/* Terms checkbox */}
-            <label className="flex items-start gap-3 mb-5 cursor-pointer group">
-              <div className="relative mt-0.5 flex-shrink-0">
-                <input
-                  type="checkbox"
-                  checked={termsAccepted}
-                  onChange={(e) => { setTermsAccepted(e.target.checked); if (error) setError(null); }}
-                  className="sr-only"
-                />
-                <div
-                  className="w-5 h-5 rounded flex items-center justify-center transition-all"
-                  style={{
-                    background: termsAccepted ? "linear-gradient(135deg, #4f46e5, #7c3aed)" : "rgba(255,255,255,0.05)",
-                    border: `2px solid ${termsAccepted ? "#7c3aed" : "rgba(255,255,255,0.2)"}`,
-                  }}
-                  onClick={() => { setTermsAccepted(!termsAccepted); if (error) setError(null); }}
-                >
-                  {termsAccepted && (
-                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
-                    </svg>
-                  )}
-                </div>
-              </div>
-              <span className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.6)" }}>
+            <div className="flex items-start gap-3 mb-5" dir="rtl">
+              <button
+                type="button"
+                onClick={() => { setTermsAccepted(!termsAccepted); if (error) setError(null); }}
+                className="mt-0.5 flex-shrink-0 w-6 h-6 rounded flex items-center justify-center transition-all"
+                style={{
+                  background: termsAccepted ? "linear-gradient(135deg, #4f46e5, #7c3aed)" : "rgba(255,255,255,0.05)",
+                  border: `2px solid ${termsAccepted ? "#7c3aed" : "rgba(255,255,255,0.3)"}`,
+                  minWidth: "24px",
+                }}
+                aria-label="אישור תנאי שימוש"
+              >
+                {termsAccepted && (
+                  <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                  </svg>
+                )}
+              </button>
+              <span
+                className="text-sm leading-relaxed cursor-pointer select-none"
+                style={{ color: "rgba(255,255,255,0.7)" }}
+                onClick={() => { setTermsAccepted(!termsAccepted); if (error) setError(null); }}
+              >
                 {t("buyTermsCheckbox")}{" "}
-                <button type="button" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} className="underline underline-offset-2 font-medium transition-colors" style={{ color: "#a5b4fc" }}
+                <button type="button" onClick={(e) => { e.stopPropagation(); setShowTermsModal(true); }} className="underline underline-offset-2 font-medium transition-colors" style={{ color: "#a5b4fc" }}
                   onMouseEnter={e => (e.currentTarget.style.color = "#c4b5fd")}
                   onMouseLeave={e => (e.currentTarget.style.color = "#a5b4fc")}
                 >
                   {t("buyTermsLink")}
                 </button>
               </span>
-            </label>
+            </div>
 
             {/* Alerts */}
             {error && (
