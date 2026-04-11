@@ -37,23 +37,22 @@ export type ReliefSize = typeof VALID_SIZES[number];
 
 function buildHeightmapPrompt(subject: string, hasSourceImage = false): string {
   const imageRef = hasSourceImage
-    ? "IMPORTANT: Use the provided reference image as the EXACT source — preserve ALL shapes, letters, icons, symbols, and layout from the reference image. Do NOT omit, merge, or simplify any element. Every letter and every icon must appear in the heightmap. " 
+    ? "CRITICAL: The provided reference image is the EXACT source to reproduce. You MUST include EVERY letter, icon, symbol, shape, and text element from the reference image — count them and verify none are missing. Reproduce the COMPLETE composition faithfully. " 
     : "";
   return (
     "Create a professional CNC relief heightmap (depth map) image. " +
     imageRef +
     "Subject: " + subject + ". " +
-    "CRITICAL RULES: " +
-    "1. GRAYSCALE ONLY — white (#FFFFFF) = highest raised point, black (#000000) = deepest background, grey tones = intermediate heights. " +
-    "2. PRESERVE ALL ELEMENTS — every letter, icon, shape, and detail from the original must appear. Do NOT omit or merge any element. " +
-    "3. Smooth gradient transitions — raised elements have bright centers fading to grey at edges, NOT hard black/white cutoffs. " +
-    "4. Background = solid black. All subject elements rise above it with white/light-grey centers. " +
-    "5. Letters and text must be clearly readable as raised white/light-grey forms on black background. " +
-    "6. Icons and symbols must also be raised (light grey) above the surrounding surface. " +
-    "7. NO colors, NO textures, NO labels — pure grayscale depth map only. " +
-    "8. Looks like a professional Vectric Aspire / ArtCAM heightmap. " +
-    "9. Subject fills 70-80% of frame, 10-15% black border all around. " +
-    "10. Every single element from the source must be present — missing elements are unacceptable."
+    "ABSOLUTE RULES — violating any rule makes the output unusable: " +
+    "RULE 1 — PURE GRAYSCALE: Output MUST be a black-and-white grayscale image only. Zero color. Zero saturation. Only shades of grey from pure black (#000000) to pure white (#FFFFFF). This is a depth map, not an illustration. " +
+    "RULE 2 — WHITE = RAISED, BLACK = RECESSED: white (#FFFFFF) = highest point, black (#000000) = deepest background, grey = intermediate depth. " +
+    "RULE 3 — PRESERVE ALL ELEMENTS: Every single letter, icon, shape, and detail from the reference must appear. Count the letters — all must be present. Do NOT omit, merge, or simplify any element. " +
+    "RULE 4 — SMOOTH GRADIENTS: Raised elements have bright white centers fading to grey at edges. No hard cutoffs. " +
+    "RULE 5 — BLACK BACKGROUND: Background = solid black (#000000). All elements rise above it. " +
+    "RULE 6 — READABLE TEXT: All letters and text must be clearly legible as raised white/light-grey forms on black. " +
+    "RULE 7 — NO COLOR AT ALL: No red, green, blue, yellow, or any hue. Pure monochrome grayscale only. " +
+    "RULE 8 — PROFESSIONAL QUALITY: Looks like a Vectric Aspire / ArtCAM / Blender displacement map. " +
+    "RULE 9 — COMPOSITION: Subject fills 70-80% of frame with 10-15% black border all around."
   );
 }
 
@@ -129,15 +128,16 @@ async function runReliefJob(
     const heightmapPrompt = buildHeightmapPrompt(subject, !!sourceImageUrl);
     const heightmapResult = await generateImage({
       prompt: heightmapPrompt,
-      ...(sourceImageUrl ? { originalImages: [{ url: sourceImageUrl, mimeType: "image/jpeg" }] } : {}),
+      ...(sourceImageUrl ? { originalImages: [{ url: sourceImageUrl, mimeType: "image/png" }] } : {}),
     });
     if (!heightmapResult.url) throw new Error("Forge ImageService did not return heightmap URL");
 
     // Download the image, post-process to grayscale + normalise + resize, re-upload
     const heightmapRaw = await fetch(heightmapResult.url).then(r => r.arrayBuffer());
     const processedHeightmap = await sharp(Buffer.from(heightmapRaw))
-      .grayscale()
-      .normalise()  // stretch histogram to full 0-255 range for maximum depth
+      .grayscale()           // force pure grayscale (remove any color the AI may have added)
+      .normalise()           // stretch histogram to full 0-255 range for maximum depth
+      .linear(1.1, -10)      // slight contrast boost to make raised areas brighter
       .resize(outputSize, outputSize, { fit: "contain", background: { r: 0, g: 0, b: 0 } })
       .png()
       .toBuffer();
@@ -322,15 +322,16 @@ router.post(
       // Auto-correct EXIF orientation
       const imageBuffer = await sharp(req.file.buffer).rotate().toBuffer();
 
-      // Upload source image for history
+      // Upload source image — full resolution for AI reference, no downscaling
       let sourceImageUrl: string | undefined;
       try {
-        const srcKey = `source-images/${appUser.userId}-${nanoid(8)}.jpg`;
-        const jpegBuf = await sharp(imageBuffer)
-          .resize(800, 800, { fit: "inside", withoutEnlargement: true })
-          .jpeg({ quality: 85 })
+        const srcKey = `source-images/${appUser.userId}-${nanoid(8)}.png`;
+        // Keep original resolution (max 2048px to avoid oversized uploads)
+        const fullBuf = await sharp(imageBuffer)
+          .resize(2048, 2048, { fit: "inside", withoutEnlargement: true })
+          .png()
           .toBuffer();
-        const { url } = await storagePut(srcKey, jpegBuf, "image/jpeg");
+        const { url } = await storagePut(srcKey, fullBuf, "image/png");
         sourceImageUrl = url;
       } catch (e) {
         console.warn("[cncReliefRoute] Failed to upload source image:", e);
