@@ -435,10 +435,20 @@ export function DxfDownloadDialog({
     <Dialog open={open} onOpenChange={(o) => !o && !isLoading && onClose()}>
       <DialogContent className="max-w-sm w-full" dir={isRtl ? "rtl" : "ltr"}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-right">
-            <FileCode2 className="w-5 h-5 text-primary" />
-            {t("downloadDxfTitle")}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <FileCode2 className="w-5 h-5 text-primary" />
+              {t("downloadDxfTitle")}
+            </DialogTitle>
+            <button
+              onClick={onClose}
+              disabled={isLoading}
+              className="rounded-full p-1.5 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </DialogHeader>
 
         <div className="space-y-4">
