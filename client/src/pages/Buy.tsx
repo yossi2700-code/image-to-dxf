@@ -219,22 +219,18 @@ export default function Buy() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080d1a] text-white" dir={isRtl ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-[#f4f6fb] text-gray-900" dir={isRtl ? "rtl" : "ltr"}>
       {showTermsModal && <PurchaseTermsModal onClose={() => setShowTermsModal(false)} />}
 
-      {/* Subtle background grid */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03]"
-        style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
-
-      {/* Top glow */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
+      {/* Top accent bar */}
+      <div className="h-1 w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500" />
 
       <div className="relative max-w-5xl mx-auto px-4 py-12">
 
         {/* Back button */}
         <button
           onClick={() => navigate("/")}
-          className="mb-10 inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm group"
+          className="mb-10 inline-flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors text-sm group"
         >
           <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -244,28 +240,28 @@ export default function Buy() {
 
         {/* Hero */}
         <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 rounded-full px-4 py-1.5 text-xs text-blue-300 font-medium mb-6 tracking-wide uppercase">
+          <div className="inline-flex items-center gap-2 bg-blue-100 border border-blue-200 rounded-full px-4 py-1.5 text-xs text-blue-600 font-medium mb-6 tracking-wide uppercase">
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             {isRtl ? "אסימוני עיצוב" : "Design Tokens"}
           </div>
-          <h1 className="text-4xl sm:text-5xl font-black mb-4 tracking-tight">
-            <span className="text-white">{isRtl ? "בחר " : "Choose Your "}</span>
-            <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-blue-400 bg-clip-text text-transparent">
+          <h1 className="text-4xl sm:text-5xl font-black mb-4 tracking-tight text-gray-900">
+            {isRtl ? "בחר " : "Choose Your "}
+            <span className="bg-gradient-to-r from-blue-600 via-indigo-500 to-violet-600 bg-clip-text text-transparent">
               {isRtl ? "חבילה" : "Plan"}
             </span>
           </h1>
-          <p className="text-gray-400 text-lg max-w-md mx-auto leading-relaxed">
+          <p className="text-gray-500 text-lg max-w-md mx-auto leading-relaxed">
             {t("buyPageSubtitle")}
           </p>
 
           {isLoggedIn && balance !== null && (
-            <div className="mt-6 inline-flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-6 py-3">
-              <div className="w-8 h-8 rounded-full bg-amber-400/20 border border-amber-400/30 flex items-center justify-center">
-                <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+            <div className="mt-6 inline-flex items-center gap-3 bg-white border border-gray-200 shadow-sm rounded-2xl px-6 py-3">
+              <div className="w-8 h-8 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center">
+                <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
               </div>
               <div className="text-left">
-                <div className="text-xs text-gray-500">{t("buyCurrentBalance")}</div>
-                <div className="text-white font-bold">{balance} <span className="text-gray-400 font-normal text-sm">{t("buyTokensLabel")}</span></div>
+                <div className="text-xs text-gray-400">{t("buyCurrentBalance")}</div>
+                <div className="text-gray-900 font-bold">{balance} <span className="text-gray-400 font-normal text-sm">{t("buyTokensLabel")}</span></div>
               </div>
             </div>
           )}
@@ -273,16 +269,16 @@ export default function Buy() {
 
         {/* Currency selector */}
         <div className="flex justify-center mb-10">
-          <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-5 py-2.5 hover:border-white/20 transition-colors">
+          <div className="flex items-center gap-3 bg-white border border-gray-200 shadow-sm rounded-xl px-5 py-2.5 hover:border-gray-300 transition-colors">
             <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span className="text-sm text-gray-400">{t("buySelectCurrency")}:</span>
+            <span className="text-sm text-gray-500">{t("buySelectCurrency")}:</span>
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
-              className="bg-transparent text-white text-sm font-semibold focus:outline-none cursor-pointer"
+              className="bg-transparent text-gray-900 text-sm font-semibold focus:outline-none cursor-pointer"
             >
               {activeCurrencies.map((c) => (
-                <option key={c} value={c} className="bg-[#0f1629] text-white">
+                <option key={c} value={c}>
                   {c} {CURRENCY_SYMBOLS[c as keyof typeof CURRENCY_SYMBOLS] ?? c}
                 </option>
               ))}
@@ -306,13 +302,13 @@ export default function Buy() {
                 onClick={() => setSelectedPackage(p.id)}
                 className={`relative cursor-pointer rounded-2xl border transition-all duration-200 select-none overflow-hidden ${
                   isSelected
-                    ? "border-blue-500/60 bg-gradient-to-b from-blue-900/40 to-blue-950/60 shadow-2xl shadow-blue-500/10"
-                    : "border-white/8 bg-white/[0.03] hover:border-white/15 hover:bg-white/[0.06]"
+                    ? "border-blue-500 bg-white shadow-xl shadow-blue-100 ring-2 ring-blue-500/20"
+                    : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-md shadow-sm"
                 }`}
               >
-                {/* Selected glow */}
+                {/* Selected highlight */}
                 {isSelected && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 to-indigo-50/40 pointer-events-none" />
                 )}
 
                 {/* Badge */}
@@ -332,39 +328,39 @@ export default function Buy() {
                   </div>
                 )}
 
-                <div className={`p-7 ${badge || (p.popular && !pDiscount) ? "pt-10" : ""}`}>
+                  <div className={`p-7 ${badge || (p.popular && !pDiscount) ? "pt-10" : ""}`}>
                   {/* Token count */}
                   <div className="mb-5">
                     <div className="flex items-end gap-2 mb-1">
-                      <span className="text-5xl font-black tabular-nums text-white">{p.tokens}</span>
+                      <span className="text-5xl font-black tabular-nums text-gray-900">{p.tokens}</span>
                       <span className="text-gray-400 text-sm mb-1.5 uppercase tracking-widest">{t("buyTokensCount")}</span>
                     </div>
                     {(p as { label?: string | null }).label && (
-                      <p className="text-gray-500 text-sm">{(p as { label?: string | null }).label}</p>
+                      <p className="text-gray-400 text-sm">{(p as { label?: string | null }).label}</p>
                     )}
                   </div>
 
                   {/* Divider */}
-                  <div className="border-t border-white/8 mb-5" />
+                  <div className="border-t border-gray-100 mb-5" />
 
                   {/* Price */}
                   <div className="mb-5">
                     {pDiscount > 0 ? (
                       <div className="flex items-baseline gap-2">
-                        <span className="text-gray-600 line-through text-lg">{symbol}{pPrice}</span>
-                        <span className="text-3xl font-black text-white">{symbol}{pFinalPrice}</span>
+                        <span className="text-gray-400 line-through text-lg">{symbol}{pPrice}</span>
+                        <span className="text-3xl font-black text-gray-900">{symbol}{pFinalPrice}</span>
                       </div>
                     ) : (
-                      <span className="text-3xl font-black text-white">{symbol}{pFinalPrice}</span>
+                      <span className="text-3xl font-black text-gray-900">{symbol}{pFinalPrice}</span>
                     )}
-                    <div className="text-gray-500 text-xs mt-1">{symbol}{pPerToken} {t("buyPerToken")}</div>
+                    <div className="text-gray-400 text-xs mt-1">{symbol}{pPerToken} {t("buyPerToken")}</div>
                   </div>
 
                   {/* Select indicator */}
                   <div className={`flex items-center justify-between rounded-xl px-4 py-2.5 transition-all ${
                     isSelected
                       ? "bg-blue-600 text-white"
-                      : "bg-white/5 text-gray-400 group-hover:bg-white/10"
+                      : "bg-gray-50 text-gray-500 hover:bg-gray-100"
                   }`}>
                     <span className="text-sm font-semibold">
                       {isSelected ? (isRtl ? "נבחר" : "Selected") : (isRtl ? "בחר חבילה" : "Select plan")}
@@ -387,12 +383,12 @@ export default function Buy() {
             {[
               { icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>, text: isRtl ? "ללא תפוגה" : "Never expire" },
               { icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>, text: isRtl ? "תשלום מאובטח" : "Secure payment" },
-              { icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>, text: isRtl ? "זיכוי מיידי" : "Instant credit" },
+              { icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>, text: isRtl ? "זיכוי מידי" : "Instant credit" },
               { icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>, text: isRtl ? "PayPal מאובטח" : "PayPal secured" },
             ].map((f, i) => (
-              <div key={i} className="flex items-center gap-2.5 bg-white/[0.03] border border-white/8 rounded-xl px-4 py-3">
-                <span className="text-emerald-400 flex-shrink-0">{f.icon}</span>
-                <span className="text-gray-300 text-xs font-medium">{f.text}</span>
+              <div key={i} className="flex items-center gap-2.5 bg-white border border-gray-200 shadow-sm rounded-xl px-4 py-3">
+                <span className="text-emerald-500 flex-shrink-0">{f.icon}</span>
+                <span className="text-gray-700 text-xs font-medium">{f.text}</span>
               </div>
             ))}
           </div>
@@ -400,34 +396,35 @@ export default function Buy() {
 
         {/* Purchase card */}
         <div className="max-w-md mx-auto">
-          <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg">
 
             {/* Order summary */}
             <div className="mb-6">
-              <h3 className="text-xs text-gray-500 uppercase tracking-widest mb-4">{isRtl ? "סיכום הזמנה" : "Order Summary"}</h3>
-              <div className="flex items-center justify-between py-3 border-b border-white/8">
+              <h3 className="text-xs text-gray-400 uppercase tracking-widest mb-4">{isRtl ? "סיכום הזמנה" : "Order Summary"}</h3>
+              <div className="flex items-center justify-between py-3 border-b border-gray-100">
                 <div>
-                  <div className="text-white font-semibold">{pkg.tokens} {t("buyTokensLabel")}</div>
+                  <div className="text-gray-900 font-semibold">{pkg.tokens} {t("buyTokensLabel")}</div>
                   <div className="text-gray-500 text-xs mt-0.5">{symbol}{perToken} {t("buyPerToken")}</div>
                 </div>
                 <div className="text-right">
-                  {discount > 0 && <div className="text-gray-600 line-through text-sm">{symbol}{price}</div>}
-                  <div className="text-white font-bold text-xl">{symbol}{finalPrice}</div>
-                  <div className="text-gray-500 text-xs">{currency}</div>
+                  {discount > 0 && <div className="text-gray-400 line-through text-sm">{symbol}{price}</div>}
+                  <div className="text-gray-900 font-bold text-xl">{symbol}{finalPrice}</div>
+                  <div className="text-gray-400 text-xs">{currency}</div>
                 </div>
               </div>
             </div>
 
             {/* Terms */}
             <label className="flex items-start gap-3 mb-5 cursor-pointer group">
-              <div className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${termsAccepted ? "bg-blue-600 border-blue-600" : "border-white/20 group-hover:border-white/40"}`}
-                onClick={() => { setTermsAccepted(!termsAccepted); if (error) setError(null); }}>
-                {termsAccepted && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
-              </div>
-              <input type="checkbox" checked={termsAccepted} onChange={(e) => { setTermsAccepted(e.target.checked); if (error) setError(null); }} className="sr-only" />
-              <span className="text-sm text-gray-400 leading-relaxed">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => { setTermsAccepted(e.target.checked); if (error) setError(null); }}
+                className="mt-0.5 w-5 h-5 rounded accent-blue-600 cursor-pointer flex-shrink-0"
+              />
+              <span className="text-sm text-gray-600 leading-relaxed">
                 {t("buyTermsCheckbox")}{" "}
-                <button type="button" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} className="text-blue-400 hover:text-blue-300 underline underline-offset-2">
+                <button type="button" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} className="text-blue-600 hover:text-blue-700 underline underline-offset-2 font-medium">
                   {t("buyTermsLink")}
                 </button>
               </span>
@@ -451,9 +448,9 @@ export default function Buy() {
             )}
 
             {/* Payment method tabs */}
-            <div className="flex gap-2 mb-5 p-1 bg-white/5 rounded-xl">
+            <div className="flex gap-2 mb-5 p-1 bg-gray-100 rounded-xl">
               {/* Credit Card — Coming Soon */}
-              <div className="flex-1 py-2.5 rounded-lg flex items-center justify-center gap-2 text-gray-600 cursor-not-allowed select-none">
+              <div className="flex-1 py-2.5 rounded-lg flex items-center justify-center gap-2 text-gray-400 cursor-not-allowed select-none">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
                   <line x1="1" y1="10" x2="23" y2="10"/>
@@ -461,11 +458,11 @@ export default function Buy() {
                 <span className="text-xs font-medium">{isRtl ? "כרטיס — בקרוב" : "Card — Soon"}</span>
               </div>
               {/* PayPal */}
-              <div className="flex-1 py-2.5 rounded-lg flex items-center justify-center gap-2 bg-white/8 text-white cursor-default select-none">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <div className="flex-1 py-2.5 rounded-lg flex items-center justify-center gap-2 bg-white text-gray-800 shadow-sm cursor-default select-none border border-gray-200">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="#003087">
                   <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"/>
                 </svg>
-                <span className="text-xs font-semibold">PayPal</span>
+                <span className="text-xs font-semibold text-[#003087]">PayPal</span>
               </div>
             </div>
 
@@ -475,8 +472,8 @@ export default function Buy() {
               disabled={loading || !termsAccepted || isLoggedIn === false || paypalConfigured === false}
               className={`w-full py-4 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-3 ${
                 loading || !termsAccepted || isLoggedIn === false || paypalConfigured === false
-                  ? "bg-white/5 text-gray-600 cursor-not-allowed"
-                  : "bg-[#0070BA] hover:bg-[#005ea6] active:bg-[#004a87] text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-700/40 hover:scale-[1.01]"
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
+                  : "bg-[#0070BA] hover:bg-[#005ea6] active:bg-[#004a87] text-white shadow-md hover:shadow-lg hover:scale-[1.01] active:scale-[0.99]"
               }`}
             >
               {loading ? (
@@ -497,7 +494,7 @@ export default function Buy() {
               )}
             </button>
 
-            <div className="mt-4 flex items-center justify-center gap-2 text-gray-600 text-xs">
+            <div className="mt-4 flex items-center justify-center gap-2 text-gray-400 text-xs">
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
               {isRtl ? "מאובטח על ידי PayPal — פרטי הכרטיס לא נשמרים" : "Secured by PayPal — card details never stored"}
             </div>
@@ -506,19 +503,19 @@ export default function Buy() {
 
         {/* FAQ */}
         <div className="max-w-2xl mx-auto mt-20 mb-10">
-          <h2 className="text-center text-2xl font-bold text-white mb-8">{t("buyFaqTitle")}</h2>
+          <h2 className="text-center text-2xl font-bold text-gray-900 mb-8">{t("buyFaqTitle")}</h2>
           <div className="space-y-3">
             {[
               { q: t("buyFaq1Q"), a: t("buyFaq1A") },
               { q: t("buyFaq2Q"), a: t("buyFaq2A") },
               { q: t("buyFaq3Q"), a: t("buyFaq3A") },
             ].map((item, i) => (
-              <details key={i} className="group bg-white/[0.03] border border-white/8 rounded-xl overflow-hidden">
+              <details key={i} className="group bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
                 <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none">
-                  <span className="font-semibold text-white text-sm">{item.q}</span>
-                  <svg className="w-4 h-4 text-gray-500 group-open:rotate-180 transition-transform flex-shrink-0 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                  <span className="font-semibold text-gray-900 text-sm">{item.q}</span>
+                  <svg className="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform flex-shrink-0 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </summary>
-                <div className="px-5 pb-4 text-gray-400 text-sm leading-relaxed border-t border-white/8 pt-3">
+                <div className="px-5 pb-4 text-gray-500 text-sm leading-relaxed border-t border-gray-100 pt-3">
                   {item.a}
                 </div>
               </details>
@@ -528,14 +525,14 @@ export default function Buy() {
 
         {/* Support */}
         <div className="max-w-md mx-auto pb-20">
-          <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-8 text-center">
+          <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-8 text-center">
             <div className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
               <svg className="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/></svg>
             </div>
-            <h3 className="text-lg font-bold text-white mb-2">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
               {isRtl ? "תמיכה טכנית" : "Technical Support"}
             </h3>
-            <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+            <p className="text-gray-500 text-sm mb-6 leading-relaxed text-gray-500">
               {isRtl ? "שאלות לגבי רכישה או בעיות טכניות? אנחנו כאן לעזור." : "Questions about your purchase or technical issues? We're here to help."}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
