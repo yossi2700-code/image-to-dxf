@@ -35,20 +35,25 @@ export type ReliefSize = typeof VALID_SIZES[number];
 
 // ─── Prompt builders ──────────────────────────────────────────────────────────
 
-function buildHeightmapPrompt(subject: string): string {
+function buildHeightmapPrompt(subject: string, hasSourceImage = false): string {
+  const imageRef = hasSourceImage
+    ? "IMPORTANT: Use the provided reference image as the EXACT source — preserve ALL shapes, letters, icons, symbols, and layout from the reference image. Do NOT omit, merge, or simplify any element. Every letter and every icon must appear in the heightmap. " 
+    : "";
   return (
-    "Create a professional CNC relief heightmap image for the following subject: " + subject + ". " +
-    "CRITICAL RULES FOR HEIGHTMAP: " +
-    "1. This is a GRAYSCALE heightmap — pure white (#FFFFFF) = highest raised point, pure black (#000000) = lowest recessed point, grey tones = intermediate heights. " +
-    "2. The subject must be rendered as a smooth 3D relief with realistic depth gradients — like a bas-relief sculpture. " +
-    "3. Use smooth gradient transitions between heights — no hard edges or flat areas. " +
-    "4. The background should be solid black (#000000) — the subject rises from a flat base. " +
-    "5. The highest points (white) should be the most prominent features: face center, raised elements, main forms. " +
-    "6. Add realistic depth: edges fade to grey, background is black, main mass is light grey to white. " +
-    "7. NO colors, NO textures, NO text, NO labels — pure grayscale depth map only. " +
-    "8. The result should look like a professional CNC relief depth map used in Vectric Aspire or ArtCAM software. " +
-    "9. Subject should fill 70-80% of the image with 10-15% black border all around. " +
-    "10. Smooth, professional, production-ready heightmap."
+    "Create a professional CNC relief heightmap (depth map) image. " +
+    imageRef +
+    "Subject: " + subject + ". " +
+    "CRITICAL RULES: " +
+    "1. GRAYSCALE ONLY — white (#FFFFFF) = highest raised point, black (#000000) = deepest background, grey tones = intermediate heights. " +
+    "2. PRESERVE ALL ELEMENTS — every letter, icon, shape, and detail from the original must appear. Do NOT omit or merge any element. " +
+    "3. Smooth gradient transitions — raised elements have bright centers fading to grey at edges, NOT hard black/white cutoffs. " +
+    "4. Background = solid black. All subject elements rise above it with white/light-grey centers. " +
+    "5. Letters and text must be clearly readable as raised white/light-grey forms on black background. " +
+    "6. Icons and symbols must also be raised (light grey) above the surrounding surface. " +
+    "7. NO colors, NO textures, NO labels — pure grayscale depth map only. " +
+    "8. Looks like a professional Vectric Aspire / ArtCAM heightmap. " +
+    "9. Subject fills 70-80% of frame, 10-15% black border all around. " +
+    "10. Every single element from the source must be present — missing elements are unacceptable."
   );
 }
 
@@ -121,7 +126,7 @@ async function runReliefJob(
     const jobCheck = getJob(jobId);
     if (!jobCheck || jobCheck.status === "cancelled") return;
 
-    const heightmapPrompt = buildHeightmapPrompt(subject);
+    const heightmapPrompt = buildHeightmapPrompt(subject, !!sourceImageUrl);
     const heightmapResult = await generateImage({
       prompt: heightmapPrompt,
       ...(sourceImageUrl ? { originalImages: [{ url: sourceImageUrl, mimeType: "image/jpeg" }] } : {}),
