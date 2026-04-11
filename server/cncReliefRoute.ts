@@ -21,12 +21,11 @@ import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { deductTokens, getTokenCostForAction } from "./tokenService";
 import { invokeLLM } from "./_core/llm";
+import { generateImage } from "./_core/imageGeneration";
 import { createJob, getJob, updateJob, cancelJob } from "./jobStore";
-import OpenAI from "openai";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
 export type ReliefMaterial = "wood" | "aluminum" | "mdf" | "stone" | "brass";
 
@@ -116,26 +115,21 @@ async function runReliefJob(
     if (!jobCheck || jobCheck.status === "cancelled") return;
 
     const heightmapPrompt = buildHeightmapPrompt(subject);
-    const heightmapResponse = await openai.images.generate({
-      model: "gpt-image-1",
+    const heightmapResult = await generateImage({
       prompt: heightmapPrompt,
-      n: 1,
-      size: "1024x1024",
-    } as Parameters<typeof openai.images.generate>[0], { signal: abortController.signal });
+      ...(sourceImageUrl ? { originalImages: [{ url: sourceImageUrl, mimeType: "image/jpeg" }] } : {}),
+    });
+    if (!heightmapResult.url) throw new Error("Forge ImageService did not return heightmap URL");
 
-    const heightmapB64 = (heightmapResponse as { data?: Array<{ b64_json?: string }> }).data?.[0]?.b64_json;
-    if (!heightmapB64) throw new Error("gpt-image-1 did not return heightmap data");
-
-    const heightmapBuffer = Buffer.from(heightmapB64, "base64");
-
-    // Post-process heightmap: ensure it's grayscale and high contrast
-    const processedHeightmap = await sharp(heightmapBuffer)
+    // Download the image, post-process to grayscale + normalise, re-upload
+    const heightmapRaw = await fetch(heightmapResult.url).then(r => r.arrayBuffer());
+    const processedHeightmap = await sharp(Buffer.from(heightmapRaw))
       .grayscale()
       .normalise()  // stretch histogram to full 0-255 range for maximum depth
       .png()
       .toBuffer();
 
-    // Upload heightmap to S3
+    // Upload processed heightmap to S3
     const heightmapKey = `cnc-relief/heightmap-${nanoid()}.png`;
     const { url: heightmapUrl } = await storagePut(heightmapKey, processedHeightmap, "image/png");
 
@@ -150,19 +144,12 @@ async function runReliefJob(
 
     // ── Step 2: Generate simulation ───────────────────────────────────────────
     const simulationPrompt = buildSimulationPrompt(subject, material);
-    const simulationResponse = await openai.images.generate({
-      model: "gpt-image-1",
+    const simulationResult = await generateImage({
       prompt: simulationPrompt,
-      n: 1,
-      size: "1024x1024",
-    } as Parameters<typeof openai.images.generate>[0], { signal: abortController.signal });
-
-    const simulationB64 = (simulationResponse as { data?: Array<{ b64_json?: string }> }).data?.[0]?.b64_json;
-    if (!simulationB64) throw new Error("gpt-image-1 did not return simulation data");
-
-    const simulationBuffer = Buffer.from(simulationB64, "base64");
-    const simulationKey = `cnc-relief/simulation-${nanoid()}.png`;
-    const { url: simulationUrl } = await storagePut(simulationKey, simulationBuffer, "image/png");
+      ...(sourceImageUrl ? { originalImages: [{ url: sourceImageUrl, mimeType: "image/jpeg" }] } : {}),
+    });
+    if (!simulationResult.url) throw new Error("Forge ImageService did not return simulation URL");
+    const simulationUrl = simulationResult.url;
 
     // ── Deduct tokens after success ───────────────────────────────────────────
     await deductTokens(appUserId, "cnc_relief");
@@ -230,8 +217,8 @@ async function runReliefJob(
       try {
         const { notifyOwner } = await import("./_core/notification");
         await notifyOwner({
-          title: "🔴 שגיאת חיוב OpenAI — CNC Relief",
-          content: `שגיאת billing ב-CNC Relief:\n${message}`,
+          title: "🔴 שגיאת Forge API — CNC Relief",
+          content: `שגיאת billing ב-CNC Relief (Forge):\n${message}`,
         });
       } catch (_) { /* ignore */ }
     }

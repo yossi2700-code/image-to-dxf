@@ -2740,3 +2740,6 @@
 
 ## שיפור זיהוי לוגואים - אפריל 2026
 - [x] שיפור B&W bypass — זיהוי לוגואים עם רקע כהה (avgBrightness<80) + negate() לפני potrace
+
+## העברת CNC Relief ל-Forge API - אפריל 2026
+- [x] החלפת OpenAI SDK ב-generateImage של מנוס (Forge API) ב-cncReliefRoute.ts
