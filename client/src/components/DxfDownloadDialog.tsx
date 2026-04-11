@@ -163,7 +163,7 @@ function SvgMiniPreview({ svg }: { svg: string }) {
   return (
     <div
       className="border-2 border-border rounded-xl bg-white overflow-hidden"
-      style={{ height: 150, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px' }}
+      style={{ height: 110, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px' }}
     >
       <div
         style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
@@ -444,8 +444,8 @@ export function DxfDownloadDialog({
   return (
     <>
     <Dialog open={open} onOpenChange={(o) => !o && !isLoading && onClose()}>
-      <DialogContent className="max-w-sm w-full" dir={isRtl ? "rtl" : "ltr"}>
-        <DialogHeader>
+      <DialogContent className="max-w-sm w-full max-h-[90dvh] overflow-y-auto p-4" dir={isRtl ? "rtl" : "ltr"}>
+        <DialogHeader className="sticky top-0 bg-background z-10 pb-2">
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
               <FileCode2 className="w-5 h-5 text-primary" />
@@ -454,7 +454,7 @@ export function DxfDownloadDialog({
             <button
               onClick={onClose}
               disabled={isLoading}
-              className="rounded-full p-1.5 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              className="rounded-full p-2 bg-muted hover:bg-muted/80 transition-colors text-foreground"
               aria-label="Close"
             >
               <X className="w-5 h-5" />
@@ -462,12 +462,12 @@ export function DxfDownloadDialog({
           </div>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* SVG Preview */}
           {svgContent && <SvgMiniPreview svg={svgContent} />}
 
           {/* Stats row */}
-          <div className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-2 text-sm">
+          <div className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-1.5 text-sm">
             <span className="text-muted-foreground">{segmentCount.toLocaleString()} {t("linesCount")}</span>
             <span className="font-semibold text-primary">
               {formatMm(outputWidthMm, isRtl)} × {formatMm(outputHeightMm, isRtl)}
@@ -493,7 +493,7 @@ export function DxfDownloadDialog({
 
           {/* Scale slider */}
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-1.5">
               <label className="text-sm font-semibold">{t("outputSizeLabel")}</label>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-primary tabular-nums">{scalePercent}%</span>
@@ -580,7 +580,7 @@ export function DxfDownloadDialog({
           {selectedFormat === "png" && (
             <div className="flex flex-col gap-2">
               {/* Fill toggle */}
-              <div className="flex items-center justify-between bg-pink-50 border border-pink-200 rounded-lg px-3 py-2">
+              <div className="flex items-center justify-between bg-pink-50 border border-pink-200 rounded-lg px-3 py-1.5">
                 <span className="text-xs font-semibold text-pink-700">{isRtl ? "סגנון:" : "Style:"}</span>
                 <div className="flex gap-1.5">
                   <button
@@ -606,7 +606,7 @@ export function DxfDownloadDialog({
                 </div>
               </div>
               {/* Resolution selector */}
-              <div className="flex items-center justify-between bg-pink-50 border border-pink-200 rounded-lg px-3 py-2">
+              <div className="flex items-center justify-between bg-pink-50 border border-pink-200 rounded-lg px-3 py-1.5">
                 <span className="text-xs font-semibold text-pink-700">{isRtl ? "רזולוציה:" : "Resolution:"}</span>
                 <div className="flex gap-1.5">
                   {[1, 2, 3].map((r) => (
@@ -629,7 +629,7 @@ export function DxfDownloadDialog({
 
           {/* Mobile share hint */}
           {useShareSheet && (
-            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700">
+            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 text-xs text-blue-700">
               <Share2 className="w-4 h-4 shrink-0" />
               <span>{t("shareHint")}</span>
             </div>
@@ -641,13 +641,13 @@ export function DxfDownloadDialog({
           )}
 
           {/* Action buttons */}
-          <div className="flex flex-col gap-2 pt-1">
+          <div className="flex flex-col gap-2 pt-0">
 
             {/* Share to Community - BEFORE download */}
             {!hideCommunityShare && <button
               onClick={handleShareToCommunity}
               disabled={hasShared}
-              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
+              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm ${
                 hasShared
                   ? "bg-emerald-50 text-emerald-400 border border-emerald-200 cursor-default"
                   : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white border-0 cursor-pointer hover:shadow-md hover:scale-[1.01]"
@@ -659,7 +659,7 @@ export function DxfDownloadDialog({
 
             <Button
               size="lg"
-              className="w-full font-bold text-base h-12 text-white hover:opacity-90 transition-all"
+              className="w-full font-bold text-base h-11 text-white hover:opacity-90 transition-all"
               style={getButtonStyle()}
               onClick={handleDownload}
               disabled={isLoading}
