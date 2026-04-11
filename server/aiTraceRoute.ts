@@ -120,6 +120,9 @@ const STYLE_VARIATIONS = [
       "ABSOLUTELY NO: sketchy texture, hatching, cross-hatching, shading, shadows, gradients, grey tones, stippling, texture fills, dark areas, filled regions. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
       "Lines must be SMOOTH, CONTINUOUS, and FLOWING — suitable for a laser to follow as a single path. " +
+      "TEXT/LETTERS RULE — ABSOLUTE: Any text or letters MUST be drawn as a SINGLE THIN LINE tracing the centerline of each letter stroke — like a wire skeleton. " +
+      "NEVER draw a double outline around letters. NEVER draw two parallel lines to form a letter stroke. " +
+      "Each letter stroke = exactly ONE thin line following the center of the stroke. No fill, no outline, no double contour. " +
       "Style: clean coloring-book outline drawing with smooth continuous ink strokes.",
   },
   {
@@ -133,6 +136,9 @@ const STYLE_VARIATIONS = [
       "ABSOLUTELY NO: sketchy texture, hatching, cross-hatching, shading, shadows, gradients, grey tones, stippling, filled regions, or any decorative marks. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
       "Lines must be SMOOTH, CONTINUOUS, and FLOWING — suitable for a laser to follow as a single path. " +
+      "TEXT/LETTERS RULE — ABSOLUTE: Any text or letters MUST be drawn as a SINGLE THIN LINE tracing the centerline of each letter stroke — like a wire skeleton. " +
+      "NEVER draw a double outline around letters. NEVER draw two parallel lines to form a letter stroke. " +
+      "Each letter stroke = exactly ONE thin line following the center of the stroke. No fill, no outline, no double contour. " +
       "Style: clean detailed technical line drawing — like a precise engineering illustration, outlines only, no fills.",
   },
   {
@@ -145,6 +151,9 @@ const STYLE_VARIATIONS = [
       "ABSOLUTELY NO: sketchy texture, hatching, cross-hatching, shading, shadows, gradients, grey tones, stippling, texture fills, dark areas, filled regions. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
       "Lines must be SMOOTH, CONTINUOUS, and FLOWING — suitable for a laser to follow as a single path. " +
+      "TEXT/LETTERS RULE — ABSOLUTE: Any text or letters MUST be drawn as a SINGLE THIN LINE tracing the centerline of each letter stroke — like a wire skeleton. " +
+      "NEVER draw a double outline around letters. NEVER draw two parallel lines to form a letter stroke. " +
+      "Each letter stroke = exactly ONE thin line following the center of the stroke. No fill, no outline, no double contour. " +
       "Style: ornamental line art with smooth flowing continuous lines, suitable for laser engraving.",
   },
 ];
@@ -251,7 +260,10 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
     `ADAPTIVE LINE WEIGHT RULE: Draw ONE single line per edge — NEVER two parallel lines to simulate thickness. Instead, vary the line weight itself: large/main elements use thick strokes (6-8px), medium elements use medium strokes (4-5px), small details and small text use thin strokes (2-3px). The line width communicates importance — do NOT use double-strokes to fill space. ` +
     `SINGLE CONTOUR RULE — applies to ALL elements: Every shape, letter, and object must have EXACTLY ONE contour line — the outermost boundary only. ` +
     `Do NOT draw both an inner edge and an outer edge. Do NOT create double-stroke or parallel outlines. ONE closed path per shape. ` +
-    `For text and letters: draw each letter as a SOLID SHAPE — trace the INNER boundary of the letter strokes themselves, as if the letter is cut out of paper and you are cutting THROUGH the letter, not around it. ONE single closed path per letter. Do NOT draw an outline around the outside of the letter leaving a gap. ` +
+    `TEXT/LETTERS RULE — ABSOLUTE: Any text or letters MUST be drawn as a SINGLE THIN LINE tracing the centerline of each letter stroke — like a wire skeleton or handwriting. ` +
+    `NEVER draw a double outline around letters. NEVER draw two parallel lines to form a letter stroke. ` +
+    `Each letter stroke = exactly ONE thin line following the center of the stroke. No fill, no outline, no double contour. ` +
+    `Think of it as: if you were to write the letter with a single pen stroke, that is the line to draw. ` +
     `For small shapes (leaves, petals, small objects): ONE single outline per shape, no inner detail lines that run parallel to the outer edge. ` +
     `SMALL DETAIL RULE: If a detail is too small to fit even ONE clean line, OMIT that detail entirely. A clean omission is always better than a noisy double-line. ` +
     `PARALLEL LINE RULE: If you see multiple parallel lines running close together, draw ONLY the single outermost line — never trace every layer or groove. ` +
@@ -338,7 +350,9 @@ function buildFullImagePrompt(sceneDescription: string, variationIndex: number, 
     "The entire composition MUST fit completely inside the frame. Leave AT LEAST 15% white margin on every edge. All elements fully visible, NOTHING cropped or touching the border. " +
     "=== END FRAMING RULES === " +
     "SINGLE CONTOUR RULE: Every shape, letter, and object must have EXACTLY ONE contour line — the outermost boundary only. Do NOT draw both inner and outer edges. ONE closed path per shape. " +
-    "For text/letters: draw each letter as a SOLID SHAPE — trace the INNER boundary of the letter strokes as if cutting THROUGH the letter, not around it. ONE closed path per letter. Do NOT draw an outline around the outside of the letter. " +
+    "TEXT/LETTERS RULE — ABSOLUTE: Any text or letters MUST be drawn as a SINGLE THIN LINE tracing the centerline of each letter stroke — like a wire skeleton or handwriting. " +
+    "NEVER draw a double outline around letters. NEVER draw two parallel lines to form a letter stroke. " +
+    "Each letter stroke = exactly ONE thin line following the center of the stroke. No fill, no outline, no double contour. " +
     "SMALL DETAIL RULE: If a detail is too small for even ONE clean line, OMIT it entirely. A clean omission is always better than a noisy double-line. " +
     "PARALLEL LINE RULE: If multiple parallel lines run close together, draw ONLY the outermost single line. Do NOT trace every groove or layer — simplify to essential silhouette + 2-3 key structural lines maximum."
   );
@@ -445,7 +459,9 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number, s
     "=== END FRAMING RULES === " +
     "Single centered object, complete, fully inside the frame. " +
     "SINGLE CONTOUR RULE: Every shape, letter, and object must have EXACTLY ONE contour line — the outermost boundary only. Do NOT draw both inner and outer edges. ONE closed path per shape. " +
-    "For text/letters: draw each letter as a SOLID SHAPE — trace the INNER boundary of the letter strokes as if cutting THROUGH the letter, not around it. ONE closed path per letter. Do NOT draw an outline around the outside of the letter. " +
+    "TEXT/LETTERS RULE — ABSOLUTE: Any text or letters MUST be drawn as a SINGLE THIN LINE tracing the centerline of each letter stroke — like a wire skeleton or handwriting. " +
+    "NEVER draw a double outline around letters. NEVER draw two parallel lines to form a letter stroke. " +
+    "Each letter stroke = exactly ONE thin line following the center of the stroke. No fill, no outline, no double contour. " +
     "SMALL DETAIL RULE: If a detail is too small for even ONE clean line, OMIT it entirely. A clean omission is always better than a noisy double-line. " +
     "PARALLEL LINE RULE: If multiple parallel lines run close together, draw ONLY the outermost single line. Do NOT trace every groove or layer — simplify to essential silhouette + 2-3 key structural lines maximum. " +
     "No background elements."

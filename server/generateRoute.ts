@@ -55,6 +55,9 @@ const STYLE_VARIATIONS = [
       "CRITICAL VECTOR RULES: Each line MUST be a SINGLE STROKE — absolutely NO double lines, NO parallel line pairs, NO outlined strokes. " +
       "Every line is one pixel wide at its core. NO texture, NO hatching, NO crosshatching, NO shading, NO fill, NO gray areas. " +
       "ONLY pure black (#000000) single-stroke lines on pure white (#FFFFFF) background. " +
+      "TEXT/LETTERS RULE — CRITICAL: Any text or letters in the image MUST be drawn as a SINGLE THIN LINE tracing the shape of each letter stroke — like a centerline skeleton. " +
+      "NEVER draw a double outline around letters. NEVER draw two parallel lines to form a letter stroke. " +
+      "Each letter stroke = exactly ONE thin line following the centerline of the stroke. No fill, no outline, no double contour. " +
       "PRESERVE the exact shape and proportions. " +
       "CRITICAL FRAMING: The object must occupy NO MORE than 65% of the image width AND height. " +
       "Leave at least 17% white margin on EVERY side (left, right, top, bottom). " +
@@ -70,6 +73,9 @@ const STYLE_VARIATIONS = [
       "CRITICAL VECTOR RULES: Each line MUST be a SINGLE STROKE — absolutely NO double lines, NO parallel line pairs, NO outlined strokes. " +
       "Every line is one pixel wide at its core. NO texture, NO hatching, NO crosshatching, NO shading, NO fill, NO gray areas. " +
       "ONLY pure black (#000000) single-stroke lines on pure white (#FFFFFF) background. PRESERVE the exact shape. " +
+      "TEXT/LETTERS RULE — CRITICAL: Any text or letters in the image MUST be drawn as a SINGLE THIN LINE tracing the shape of each letter stroke — like a centerline skeleton. " +
+      "NEVER draw a double outline around letters. NEVER draw two parallel lines to form a letter stroke. " +
+      "Each letter stroke = exactly ONE thin line following the centerline of the stroke. No fill, no outline, no double contour. " +
       "CRITICAL FRAMING: The object must occupy NO MORE than 65% of the image width AND height. " +
       "Leave at least 17% white margin on EVERY side (left, right, top, bottom). " +
       "The object must be FULLY VISIBLE — nothing cut off, nothing touching or near the border.",
@@ -84,6 +90,9 @@ const STYLE_VARIATIONS = [
       "CRITICAL VECTOR RULES: Each line MUST be a SINGLE STROKE — absolutely NO double lines, NO parallel line pairs, NO outlined strokes. " +
       "Every line is one pixel wide at its core. NO hatching, NO crosshatching, NO shading, NO fill, NO gray areas, NO texture fills. " +
       "ONLY pure black (#000000) single-stroke lines on pure white (#FFFFFF) background. PRESERVE the exact shape. All lines clean and precise. " +
+      "TEXT/LETTERS RULE — CRITICAL: Any text or letters in the image MUST be drawn as a SINGLE THIN LINE tracing the shape of each letter stroke — like a centerline skeleton. " +
+      "NEVER draw a double outline around letters. NEVER draw two parallel lines to form a letter stroke. " +
+      "Each letter stroke = exactly ONE thin line following the centerline of the stroke. No fill, no outline, no double contour. " +
       "CRITICAL FRAMING: The object must occupy NO MORE than 65% of the image width AND height. " +
       "Leave at least 17% white margin on EVERY side (left, right, top, bottom). " +
       "The object must be FULLY VISIBLE — nothing cut off, nothing touching or near the border.",
@@ -174,9 +183,14 @@ function buildLineArtPrompt(userPrompt: string, variationIndex: number): string 
   const hasExactText = exactTexts.length > 0;
 
   // Build text instruction: if user specified exact text, enforce it precisely
+  const TEXT_SINGLE_LINE_RULE =
+    "TEXT/LETTERS DRAWING RULE — ABSOLUTE: Any text or letters MUST be drawn as a SINGLE THIN LINE tracing the centerline of each letter stroke — like a wire skeleton. " +
+    "NEVER draw a double outline around letters. NEVER draw two parallel lines to form a letter stroke. " +
+    "Each letter stroke = exactly ONE thin line following the center of the stroke. No fill, no outline, no double contour. ";
   const textRule = hasExactText
     ? `CRITICAL TEXT RULE — The illustration MUST include the following text written EXACTLY, letter by letter, with NO spelling errors, NO missing letters, NO added letters: ${exactTexts.map(t => `"${t}"`).join(', ')}. ` +
-      `Render this text clearly and legibly in the image. The text must match EXACTLY what is specified above.`
+      `Render this text clearly and legibly in the image. The text must match EXACTLY what is specified above. ` +
+      TEXT_SINGLE_LINE_RULE
     : `ABSOLUTE RULE — NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS ANYWHERE IN THE IMAGE. ` +
       `The user's description is WHAT TO DRAW, not what to write. Do NOT render any part of the description as text.`;
 
