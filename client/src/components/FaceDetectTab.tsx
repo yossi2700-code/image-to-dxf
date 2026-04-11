@@ -827,7 +827,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
               {errorKind === "token"
                 ? (isRtl ? "נגמרו האסימונים" : "Out of Tokens")
                 : errorKind === "too_many_faces"
-                ? (isRtl ? `זוהו ${tooManyFacesCount} אנשים בתמונה` : `${tooManyFacesCount} People Detected`)
+                ? (isRtl ? `מגבלה: עד 2 פנים בפורטרט` : `Portrait Limit: Max 2 Faces`)
                 : (isRtl ? "לא זוהו פנים בתמונה" : "No Face Detected")}
             </p>
             {/* Message */}
@@ -836,8 +836,8 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
                 ? (isRtl ? "נגמרו לך האסימונים. רכוש אסימונים נוספים כדי להמשיך ליצור פורטרטים." : "You've run out of tokens. Purchase more tokens to continue creating portraits.")
                 : errorKind === "too_many_faces"
                 ? (isRtl
-                    ? `מצב פורטרט תומך עד 2 אנשים. תוכל לעבד את התמונה במצב "תמונה לקווים" שתומך בכל כמות אנשים, או להעלות תמונה חדשה עם 1-2 אנשים.`
-                    : `Portrait mode supports up to 2 people. You can process this image in "Image to Lines" mode which supports any number of people, or upload a new photo with 1-2 people.`)
+                    ? `זוהו ${tooManyFacesCount} פנים בתמונה — מצב פורטרט תומך עד 2 אנשים בלבד. תוכל לעבד את התמונה במצב "תמונה לקווים" שתומך בכל כמות אנשים.`
+                    : `Detected ${tooManyFacesCount} faces — Portrait mode supports up to 2 people. You can process this image in "Image to Lines" mode which supports any number of people.`)
                 : (errorMsg
                     ? errorMsg.replace(/לא זויינו/g, "לא זוהו").replace(/לא זוהה/g, "לא זוהו")
                     : (isRtl
@@ -877,23 +877,25 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
               </>
             ) : errorKind === "too_many_faces" ? (
               <>
-                {/* Switch to Image to Lines — primary green button */}
+                {/* Switch to Image to Lines — primary vibrant button */}
                 {onSwitchToAiOutline && (
                   <button
-                    className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all active:scale-95"
-                    style={{ background: 'linear-gradient(135deg, #059669, #10b981)', boxShadow: '0 4px 14px rgba(5,150,105,0.4)' }}
+                    className="w-full py-3.5 rounded-xl font-bold text-white text-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+                    style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', boxShadow: '0 4px 18px rgba(124,58,237,0.45)', fontSize: '15px' }}
                     onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); onSwitchToAiOutline(imageFile); }}
                   >
-                    {isRtl ? "🖼️ עבור לפיצ'ר תמונה לקווים" : "🖼️ Switch to Image to Lines"}
+                    <span style={{ fontSize: 18 }}>✨</span>
+                    <span>{isRtl ? "עבור לפיצ'ר תמונה לקווים" : "Switch to Image to Lines"}</span>
                   </button>
                 )}
-                {/* Upload new photo — secondary blue button */}
+                {/* Upload new photo — secondary outlined button */}
                 <button
-                  className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all active:scale-95"
-                  style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)', boxShadow: '0 4px 14px rgba(59,130,246,0.4)' }}
+                  className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+                  style={{ background: 'transparent', border: '2px solid #d1d5db', color: '#374151', fontSize: '14px' }}
                   onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); setImageFile(null); setImagePreview(null); localStorage.removeItem("face_detect_imagePreview"); }}
                 >
-                  {isRtl ? "📷 העלה תמונה חדשה (1-2 אנשים)" : "📷 Upload New Photo (1-2 People)"}
+                  <span style={{ fontSize: 16 }}>📷</span>
+                  <span>{isRtl ? "העלה תמונה חדשה (1-2 אנשים)" : "Upload New Photo (1-2 People)"}</span>
                 </button>
               </>
             ) : (

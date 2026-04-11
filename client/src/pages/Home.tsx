@@ -3316,8 +3316,8 @@ export default function Home() {
                   setAiTraceFromPortrait(true);
                   setAiTraceKey(k => k + 1); // force AiTraceTab re-mount with fresh state
                 }
-                setActiveTab('ai');
-                localStorage.setItem('active_tab', 'ai');
+                setActiveTab('trace');
+                localStorage.setItem('active_tab', 'trace');
                 setTimeout(() => {
                   document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 100);
