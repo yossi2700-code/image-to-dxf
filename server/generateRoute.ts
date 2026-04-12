@@ -130,8 +130,10 @@ function buildLandscapePrompt(userPrompt: string, variationIndex: number): strin
   const variation = LANDSCAPE_STYLE_VARIATIONS[variationIndex % LANDSCAPE_STYLE_VARIATIONS.length];
   return (
     // Lead with the absolute no-text rule
-    "ABSOLUTE RULE \u2014 NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS ANYWHERE IN THE IMAGE. " +
-    "The user's description is WHAT TO DRAW, not what to write. Do NOT render any part of the description as text. " +
+    "ABSOLUTE RULE #1 \u2014 NO TEXT ANYWHERE: Do NOT include any text, letters, words, numbers, labels, captions, watermarks, signatures, or typography of ANY kind anywhere in the image. " +
+    "This is a VISUAL ILLUSTRATION ONLY. The user's description is WHAT TO DRAW as a picture, not what to write as text. " +
+    "Do NOT render any part of the description as text, letters, or words. " +
+    "If the description mentions a brand name, product name, or word \u2014 draw the OBJECT or CONCEPT visually, do NOT write the name. " +
     `Clean black and white line art of a landscape scene: ${userPrompt}. ` +
     "Pure white background (#FFFFFF). " +
     "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
@@ -143,7 +145,8 @@ function buildLandscapePrompt(userPrompt: string, variationIndex: number): strin
     "Scale the scene so it occupies at most 80% of the canvas. " +
     "Leave at least 10% white margin on EVERY edge (top, bottom, left, right). " +
     "NOTHING must touch or go beyond the image border. All elements fully visible, nothing cropped. " +
-    "FINAL REMINDER: Zero text, zero letters, zero numbers anywhere. Pure illustration only."
+    "FINAL REMINDER: Zero text, zero letters, zero numbers anywhere. Pure visual illustration only. " +
+    "FINAL CHECK: scan the entire image \u2014 if ANY letter, digit, or text character appears anywhere, the output is REJECTED."
   );
 }
 
@@ -191,8 +194,11 @@ function buildLineArtPrompt(userPrompt: string, variationIndex: number): string 
     ? `CRITICAL TEXT RULE — The illustration MUST include the following text written EXACTLY, letter by letter, with NO spelling errors, NO missing letters, NO added letters: ${exactTexts.map(t => `"${t}"`).join(', ')}. ` +
       `Render this text clearly and legibly in the image. The text must match EXACTLY what is specified above. ` +
       TEXT_SINGLE_LINE_RULE
-    : `ABSOLUTE RULE — NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO LABELS, NO CAPTIONS, NO WATERMARKS ANYWHERE IN THE IMAGE. ` +
-      `The user's description is WHAT TO DRAW, not what to write. Do NOT render any part of the description as text.`;
+    : `ABSOLUTE RULE #1 — NO TEXT ANYWHERE: Do NOT include any text, letters, words, numbers, labels, captions, watermarks, signatures, or typography of ANY kind anywhere in the image. ` +
+      `This is a VISUAL ILLUSTRATION ONLY. The user's description is WHAT TO DRAW as a picture, not what to write as text. ` +
+      `Do NOT render any part of the description as text, letters, or words. ` +
+      `If the description mentions a brand name, product name, or word — draw the OBJECT or CONCEPT visually, do NOT write the name. ` +
+      `FINAL CHECK: scan the entire image — if ANY letter, digit, or text character appears anywhere, the output is REJECTED.`;
 
   // If user prompt contains both an object AND a scene (e.g. "bluey landscape"),
   // use the landscape-style prompt to render the object within the scene

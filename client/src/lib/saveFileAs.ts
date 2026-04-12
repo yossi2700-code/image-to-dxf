@@ -9,7 +9,7 @@
  *  - Any error → fallback to direct download
  */
 
-type MimeType = "application/dxf" | "application/octet-stream" | "application/pdf";
+type MimeType = "application/dxf" | "application/octet-stream" | "application/pdf" | "image/png" | "image/tiff" | "image/jpeg" | "image/svg+xml";
 
 interface SaveOptions {
   blob: Blob;

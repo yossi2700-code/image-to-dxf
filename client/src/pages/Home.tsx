@@ -1510,14 +1510,11 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
     }
   }, [isRtl]);
 
-  const isGeneratingRef = useRef(false); // guard against double-click
   const generate = async (isModify = false) => {
     if (!prompt.trim()) {
       toast.error(t("enterDescription"));
       return;
     }
-    if (isGeneratingRef.current) return; // prevent double-click / concurrent submissions
-    isGeneratingRef.current = true;
     setStatus("loading");
     setImages([]);
     setSelectedIdx(null);
@@ -1587,8 +1584,6 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
       setStatus("error");
       toast.error(msg);
       reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "ai_generate" });
-    } finally {
-      isGeneratingRef.current = false; // always release lock so user can retry
     }
   };
   const handleDownload = (img: AiImage) => {

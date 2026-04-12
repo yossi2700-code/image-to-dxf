@@ -306,19 +306,20 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
     case "drawing":
       return (
         base +
-        `EXISTING DRAWING / LINE ART TRACE MODE: ` +
-        `CRITICAL — You are a PIXEL-PERFECT TRACING TOOL, NOT a creative artist. ` +
-        `Your ONLY job is to output EXACTLY what you see in the image — nothing more, nothing less. ` +
-        `PRESERVE THE EXACT COMPOSITION: same orientation, same layout, same proportions, same position of every element. ` +
-        `TRACE THE EXACT OUTLINE of every shape visible in the image. ` +
+        `EXISTING DRAWING / LINE ART TRACE MODE — ZERO CREATIVITY ALLOWED: ` +
+        `CRITICAL — You are a PIXEL-PERFECT TRACING MACHINE, NOT a creative artist. ` +
+        `Your ONLY job is to output EXACTLY what you see in the reference image — nothing more, nothing less. ` +
+        `ACCURACY = 100%. Any deviation from the original is a failure. ` +
+        `PRESERVE THE EXACT COMPOSITION: same orientation (do NOT rotate or flip), same layout, same proportions, same position of EVERY element. ` +
+        `TRACE THE EXACT OUTLINE of every shape visible in the image — count every element and verify none are missing. ` +
         `If the image shows a tree leaning left → draw a tree leaning left. If branches go right → draw branches going right. ` +
         `If the image shows a branch → draw ONLY that branch with EXACTLY the same number of sub-branches, curves, and proportions as in the original. ` +
-        `If the image shows leaves → draw ONLY the leaves that are ACTUALLY VISIBLE in the image — do NOT add extra leaves, do NOT remove existing ones. ` +
-        `STRICTLY FORBIDDEN: rotating or flipping the composition, changing the orientation, adding any element not in the original, removing any element that IS in the original, changing proportions, beautifying, stylizing, simplifying, or interpreting creatively. ` +
-        `ALLOWED: smoothing rough pixel edges, converting filled black areas to clean outlines, making lines crisp and continuous. ` +
+        `If the image shows leaves → draw ONLY the leaves that are ACTUALLY VISIBLE — do NOT add extra leaves, do NOT remove existing ones. ` +
+        `STRICTLY FORBIDDEN (any of these = complete failure): rotating or flipping the composition, changing orientation, adding ANY element not in the original, removing ANY element that IS in the original, changing proportions, beautifying, stylizing, simplifying, reinterpreting, or adding creative touches. ` +
+        `ALLOWED ONLY: smoothing rough pixel edges, converting filled black areas to clean outlines, making lines crisp and continuous. ` +
         `For black silhouettes (solid black shapes): trace the OUTER CONTOUR of each black shape as a single closed outline. ` +
-        `For text/labels visible in the image: reproduce them faithfully as clean outlined letters in the same position. ` +
-        `The result must be a 1:1 faithful outline trace — if someone overlays the result on the original, every shape must match perfectly in position, size, and orientation. ` +
+        `For text/labels visible in the image: reproduce them faithfully as clean outlined letters in the EXACT same position, size, and orientation. ` +
+        `FINAL VERIFICATION: mentally overlay your output on the original — every shape must match perfectly in position, size, and orientation. If anything differs, redo it. ` +
         variationStyle
       );
 
@@ -660,25 +661,15 @@ async function runTraceJob(
             .toBuffer();
         } else {
           // ── B&W or dark-bg logo path ──
-          // ADAPTIVE THRESHOLD: compute brightness of editSourceBuffer (after normalise/boost)
-          // so we pick the right threshold regardless of original exposure.
-          // - Bright image (bg > 180): use threshold 200 — preserves thin lines, avoids thickening
-          // - Medium image (bg 120-180): use threshold 175 — balanced
-          // - Dark/underexposed image (bg < 120): use threshold 140 — avoids all-black output
-          const editStats = await sharp(editSourceBuffer).grayscale().stats();
-          const editBrightness = editStats.channels[0].mean;
-          const adaptiveThreshold = editBrightness > 180 ? 200 : editBrightness > 120 ? 175 : 140;
-          console.log(`[aiTraceRoute] Job ${jobId}: B&W path editBrightness=${editBrightness.toFixed(1)}, adaptiveThreshold=${adaptiveThreshold}`);
-
           let bwPipeline = sharp(editSourceBuffer).grayscale();
           if (needsInvert) {
             // Dark bg logo: invert so colored/white lines become black on white background
             bwPipeline = bwPipeline.negate() as typeof bwPipeline;
           }
           rawBuffer = await (bwPipeline as sharp.Sharp)
-            .linear(1.2, -10)           // very mild contrast — just enough to separate lines from bg
-            // NO sharpen — sharpen widens thin lines and creates thick blobs
-            .threshold(adaptiveThreshold) // ADAPTIVE: high for bright images, lower for dark/underexposed
+            .linear(2.0, -40)           // boost contrast: push lines to black, bg to white
+            .sharpen({ sigma: 1.5, m1: 1.0, m2: 0.5, x1: 2, y2: 10, y3: 20 })
+            .threshold(160)
             .extend({ top: 80, bottom: 80, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
             .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
             .png()

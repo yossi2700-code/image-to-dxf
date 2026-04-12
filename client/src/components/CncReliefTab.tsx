@@ -6,8 +6,9 @@
  *   2. From Prompt — type a description → AI generates heightmap + engraving simulation
  *
  * Material selector: Wood / Aluminum / MDF / Stone / Brass
- * Size selector: 512 / 768 / 1024 / 1536 / 2048 px
- * Results: Heightmap PNG (for CNC software) + Simulation PNG (realistic preview)
+ * Size selector: 512 / 768 / 1024 / 1536 / 2048 / 3000 / 4096 px
+ * Depth slider: 3mm / 5mm / 10mm
+ * Results: Heightmap PNG + TIFF 16-bit (for CNC software) + Simulation PNG (realistic preview)
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -29,6 +30,7 @@ import {
   Layers,
   Mountain,
   Cpu,
+  Info,
 } from "lucide-react";
 import { ReportIssueButton } from "@/components/ReportIssueButton";
 import { useTokenCost } from "@/hooks/useTokenCost";
@@ -37,15 +39,24 @@ type ReliefMaterial = "wood" | "aluminum" | "mdf" | "stone" | "brass";
 type Mode = "image" | "prompt";
 type Status = "idle" | "loading" | "success" | "error";
 
-const VALID_SIZES = [512, 768, 1024, 1536, 2048] as const;
+const VALID_SIZES = [512, 768, 1024, 1536, 2048, 3000, 4096] as const;
 type ReliefSize = typeof VALID_SIZES[number];
+
+// Depth options in mm
+const DEPTH_OPTIONS = [
+  { value: 3, label: "3mm", desc_he: "עדין", desc_en: "Shallow" },
+  { value: 5, label: "5mm", desc_he: "סטנדרטי", desc_en: "Standard" },
+  { value: 10, label: "10mm", desc_he: "עמוק", desc_en: "Deep" },
+];
 
 interface ReliefResult {
   heightmapUrl: string;
+  heightmapTiffUrl?: string;
   simulationUrl: string;
   subject: string;
   material: ReliefMaterial;
   outputSize?: ReliefSize;
+  depthMm?: number;
 }
 
 interface MaterialOption {
@@ -97,6 +108,7 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
   const [mode, setMode] = useState<Mode>("image");
   const [material, setMaterial] = useState<ReliefMaterial>("wood");
   const [outputSize, setOutputSize] = useState<ReliefSize>(1024);
+  const [depthMm, setDepthMm] = useState<number>(5);
   const [prompt, setPrompt] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -155,10 +167,12 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
     if (data.status === "done" && data.result) {
         setResult({
           heightmapUrl: data.result.heightmapUrl,
+          heightmapTiffUrl: data.result.heightmapTiffUrl,
           simulationUrl: data.result.simulationUrl,
           subject: data.result.subject,
           material: data.result.material,
           outputSize: data.result.outputSize,
+          depthMm: data.result.depthMm,
         });
         setStatus("success");
         toast.success(t("cncReliefSuccess"));
@@ -224,6 +238,7 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
         formData.append("material", material);
         formData.append("lang", language);
         formData.append("outputSize", String(outputSize));
+        formData.append("depthMm", String(depthMm));
 
         const res = await fetch("/api/cnc-relief/from-image", {
           method: "POST",
@@ -252,7 +267,7 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
         const res = await fetch("/api/cnc-relief/from-prompt", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: prompt.trim(), material, lang: language, outputSize }),
+          body: JSON.stringify({ prompt: prompt.trim(), material, lang: language, outputSize, depthMm }),
           credentials: "include",
         });
 
@@ -303,10 +318,17 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
       const resp = await fetch(url);
       if (!resp.ok) throw new Error("Download error");
       const blob = await resp.blob();
-      const ext = filename.split(".").pop()?.toLowerCase();
-      const mimeType = ext === "pdf" ? "application/pdf" : "application/octet-stream";
-      const { saveFileAs } = await import("@/lib/saveFileAs");
-      await saveFileAs({ blob, filename, mimeType });
+      const mimeType = filename.endsWith(".tiff") ? "image/tiff" : "image/png";
+      try {
+        const { saveFileAs } = await import("@/lib/saveFileAs");
+        await saveFileAs({ blob, filename, mimeType });
+      } catch {
+        // Fallback: direct link
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+      }
     } catch {
       // Fallback: direct link
       const a = document.createElement("a");
@@ -389,12 +411,47 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
         </div>
       </div>
 
+      {/* Depth Slider */}
+      <div className="mb-4">
+        <label className="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+          {isRtl ? "עומק גילוף" : "Carving Depth"}
+          <span className="ml-2 normal-case font-normal text-gray-400 text-[11px]">
+            ({isRtl ? "משפיע על ניגודיות ה-Heightmap" : "affects Heightmap contrast"})
+          </span>
+        </label>
+        <div className="flex gap-2">
+          {DEPTH_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setDepthMm(opt.value)}
+              className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-all text-center ${
+                depthMm === opt.value
+                  ? "border-amber-500 bg-amber-50 text-amber-700 shadow-sm"
+                  : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+              }`}
+            >
+              <div className="font-bold">{opt.label}</div>
+              <div className="text-[10px] opacity-70">{isRtl ? opt.desc_he : opt.desc_en}</div>
+            </button>
+          ))}
+        </div>
+        {/* White = high, Black = deep explanation */}
+        <div className="mt-2 flex items-start gap-2 p-2.5 rounded-lg bg-gray-50 border border-gray-100">
+          <Info className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+          <p className="text-[11px] text-gray-500">
+            {isRtl
+              ? "⬜ לבן = גבוה (בולט) · ⬛ שחור = עמוק (שקוע) · אפור = עומק ביניים"
+              : "⬜ White = raised (high) · ⬛ Black = recessed (deep) · Gray = intermediate depth"}
+          </p>
+        </div>
+      </div>
+
       {/* Output Size Selector */}
       <div className="mb-5">
         <label className="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
           {isRtl ? "גודל תמונה פלט" : "Output Image Size"}
           <span className="ml-2 normal-case font-normal text-gray-400 text-[11px]">
-            ({isRtl ? "מינ׳ 512 — מקס׳ 2048 פיקסל" : "min 512 — max 2048 px"})
+            ({isRtl ? "מינ׳ 512 — מקס׳ 4096 פיקסל" : "min 512 — max 4096 px"})
           </span>
         </label>
         <div className="flex gap-2 flex-wrap">
@@ -412,6 +469,11 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
               {size === 1024 && (
                 <span className="ml-1 text-[10px] text-violet-400 font-normal">
                   {isRtl ? "(ברירת מחדל)" : "(default)"}
+                </span>
+              )}
+              {(size === 3000 || size === 4096) && (
+                <span className="ml-1 text-[10px] text-amber-500 font-normal">
+                  {isRtl ? "HD" : "HD"}
                 </span>
               )}
             </button>
@@ -533,20 +595,33 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
       {/* Results */}
       {status === "success" && result && (
         <div className="mb-5">
-          {/* Size badge */}
-          {result.outputSize && (
-            <div className="flex items-center gap-2 mb-3">
+          {/* Size + depth badge */}
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            {result.outputSize && (
               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full font-medium">
                 {result.outputSize}×{result.outputSize}px
               </span>
-            </div>
-          )}
+            )}
+            {result.depthMm && (
+              <span className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded-full font-medium border border-amber-200">
+                {isRtl ? `עומק ${result.depthMm}mm` : `Depth ${result.depthMm}mm`}
+              </span>
+            )}
+            <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-full border border-gray-100">
+              {isRtl ? "⬜ לבן = גבוה · ⬛ שחור = עמוק" : "⬜ White = raised · ⬛ Black = deep"}
+            </span>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             {/* Heightmap */}
             <div className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
               <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
                 <span className="text-xs font-semibold text-gray-700">{t("cncReliefHeightmapLabel")}</span>
-                <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">PNG</span>
+                <div className="flex gap-1">
+                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">PNG</span>
+                  {result.heightmapTiffUrl && (
+                    <span className="text-xs text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full font-medium">TIFF 16-bit</span>
+                  )}
+                </div>
               </div>
               <div
                 className="relative cursor-zoom-in group bg-gray-900"
@@ -562,7 +637,8 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
                   <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-80 transition-opacity" />
                 </div>
               </div>
-              <div className="p-2">
+              <div className="p-2 space-y-1.5">
+                {/* PNG download */}
                 <Button
                   size="sm"
                   variant="outline"
@@ -570,8 +646,20 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
                   onClick={() => handleDownload(result.heightmapUrl, `heightmap-${result.material}-${result.outputSize ?? 1024}px.png`)}
                 >
                   <Download className="w-3.5 h-3.5 mr-1.5" />
-                  {t("cncReliefDownloadHeightmap")}
+                  {isRtl ? "הורד PNG" : "Download PNG"}
                 </Button>
+                {/* TIFF 16-bit download */}
+                {result.heightmapTiffUrl && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full text-xs border-violet-200 text-violet-700 hover:bg-violet-50"
+                    onClick={() => handleDownload(result.heightmapTiffUrl!, `heightmap-${result.material}-${result.outputSize ?? 1024}px-16bit.tiff`)}
+                  >
+                    <Download className="w-3.5 h-3.5 mr-1.5" />
+                    {isRtl ? "הורד TIFF 16-bit (Vectric / ArtCAM)" : "Download TIFF 16-bit (Vectric / ArtCAM)"}
+                  </Button>
+                )}
               </div>
             </div>
 

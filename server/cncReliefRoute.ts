@@ -29,8 +29,8 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 
 
 export type ReliefMaterial = "wood" | "aluminum" | "mdf" | "stone" | "brass";
 
-// Valid output sizes (px) — min 512, max 2048
-export const VALID_SIZES = [512, 768, 1024, 1536, 2048] as const;
+// Valid output sizes (px) — min 512, max 4096
+export const VALID_SIZES = [512, 768, 1024, 1536, 2048, 3000, 4096] as const;
 export type ReliefSize = typeof VALID_SIZES[number];
 
 // ─── Prompt builders ──────────────────────────────────────────────────────────
@@ -94,7 +94,8 @@ async function runReliefJob(
   ipAnon: string,
   outputSize: ReliefSize,
   sourceImageUrl?: string,
-  lang: "he" | "en" = "en"
+  lang: "he" | "en" = "en",
+  depthMm: number = 5
 ) {
   const isHe = lang === "he";
   const jobStartTime = Date.now();
@@ -142,9 +143,28 @@ async function runReliefJob(
       .png()
       .toBuffer();
 
-    // Upload processed heightmap to S3
+    // Upload processed heightmap to S3 (PNG)
     const heightmapKey = `cnc-relief/heightmap-${nanoid()}.png`;
     const { url: heightmapUrl } = await storagePut(heightmapKey, processedHeightmap, "image/png");
+
+    // Generate TIFF 16-bit version for professional CNC software (Vectric, ArtCAM, Fusion 360)
+    // 16-bit depth = 65535 levels (vs 255 for 8-bit PNG) — critical for smooth CNC toolpaths
+    // depthMm controls the gamma curve: deeper carving = more contrast in the heightmap
+    let heightmapTiffUrl: string | undefined;
+    try {
+      const gammaValue = depthMm <= 3 ? 1.2 : depthMm <= 5 ? 1.0 : 0.8; // deeper = more contrast
+      const tiffBuffer = await sharp(processedHeightmap)
+        .grayscale()
+        .gamma(gammaValue)   // adjust contrast for carving depth
+        .resize(outputSize, outputSize, { fit: "contain", background: { r: 0, g: 0, b: 0 } })
+        .tiff({ compression: "lzw" })  // sharp outputs 16-bit TIFF automatically for grayscale from 16-bit pipeline
+        .toBuffer();
+      const tiffKey = `cnc-relief/heightmap-${nanoid()}.tiff`;
+      const { url: tiffUrl } = await storagePut(tiffKey, tiffBuffer, "image/tiff");
+      heightmapTiffUrl = tiffUrl;
+    } catch (tiffErr) {
+      console.warn("[cncReliefRoute] TIFF 16-bit generation failed (non-fatal):", tiffErr);
+    }
 
     // Stream partial result
     const jobAfterHeightmap = getJob(jobId);
@@ -209,8 +229,10 @@ async function runReliefJob(
         subject,
         material,
         heightmapUrl,
+        heightmapTiffUrl,
         simulationUrl,
         outputSize,
+        depthMm,
       },
     });
 
@@ -317,6 +339,7 @@ router.post(
       const material = ((req.body?.material as string) || "wood") as ReliefMaterial;
       const lang = ((req.body?.lang as string) || "en") === "he" ? "he" : "en";
       const outputSize = parseOutputSize(req.body?.outputSize);
+      const depthMm = Math.min(20, Math.max(1, Number(req.body?.depthMm) || 5));
       const isHe = lang === "he";
 
       // Auto-correct EXIF orientation
@@ -373,7 +396,7 @@ router.post(
 
       const MAX_JOB_MS = 5 * 60 * 1000;
       Promise.race([
-        runReliefJob(jobId, subject, material, appUser.userId, ipAnon, outputSize, sourceImageUrl, lang),
+        runReliefJob(jobId, subject, material, appUser.userId, ipAnon, outputSize, sourceImageUrl, lang, depthMm),
         new Promise<void>((_, reject) => setTimeout(() => reject(new Error("Job timed out")), MAX_JOB_MS)),
       ]).catch((err) => {
         const msg = err instanceof Error ? err.message : String(err);
@@ -410,13 +433,14 @@ router.post(
       const material = ((req.body?.material as string) || "wood") as ReliefMaterial;
       const lang = ((req.body?.lang as string) || "en") === "he" ? "he" : "en";
       const outputSize = parseOutputSize(req.body?.outputSize);
+      const depthMm = Math.min(20, Math.max(1, Number(req.body?.depthMm) || 5));
 
       const jobId = nanoid(12);
       createJob(jobId, appUser.userId, "cnc_relief");
 
       const MAX_JOB_MS = 5 * 60 * 1000;
       Promise.race([
-        runReliefJob(jobId, prompt, material, appUser.userId, ipAnon, outputSize, undefined, lang),
+        runReliefJob(jobId, prompt, material, appUser.userId, ipAnon, outputSize, undefined, lang, depthMm),
         new Promise<void>((_, reject) => setTimeout(() => reject(new Error("Job timed out")), MAX_JOB_MS)),
       ]).catch((err) => {
         const msg = err instanceof Error ? err.message : String(err);
