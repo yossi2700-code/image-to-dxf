@@ -660,9 +660,16 @@ async function runTraceJob(
             .toBuffer();
         } else {
           // ── B&W or dark-bg logo path ──
-          // IMPORTANT: Do NOT sharpen or over-boost contrast — this thickens thin lines.
-          // Use a HIGH threshold (200) so only truly dark pixels become black.
-          // This preserves thin original lines without artificially widening them.
+          // ADAPTIVE THRESHOLD: compute brightness of editSourceBuffer (after normalise/boost)
+          // so we pick the right threshold regardless of original exposure.
+          // - Bright image (bg > 180): use threshold 200 — preserves thin lines, avoids thickening
+          // - Medium image (bg 120-180): use threshold 175 — balanced
+          // - Dark/underexposed image (bg < 120): use threshold 140 — avoids all-black output
+          const editStats = await sharp(editSourceBuffer).grayscale().stats();
+          const editBrightness = editStats.channels[0].mean;
+          const adaptiveThreshold = editBrightness > 180 ? 200 : editBrightness > 120 ? 175 : 140;
+          console.log(`[aiTraceRoute] Job ${jobId}: B&W path editBrightness=${editBrightness.toFixed(1)}, adaptiveThreshold=${adaptiveThreshold}`);
+
           let bwPipeline = sharp(editSourceBuffer).grayscale();
           if (needsInvert) {
             // Dark bg logo: invert so colored/white lines become black on white background
@@ -671,7 +678,7 @@ async function runTraceJob(
           rawBuffer = await (bwPipeline as sharp.Sharp)
             .linear(1.2, -10)           // very mild contrast — just enough to separate lines from bg
             // NO sharpen — sharpen widens thin lines and creates thick blobs
-            .threshold(200)             // HIGH threshold: only near-black pixels stay black → preserves thin lines
+            .threshold(adaptiveThreshold) // ADAPTIVE: high for bright images, lower for dark/underexposed
             .extend({ top: 80, bottom: 80, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
             .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
             .png()
