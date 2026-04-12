@@ -660,15 +660,18 @@ async function runTraceJob(
             .toBuffer();
         } else {
           // ── B&W or dark-bg logo path ──
+          // IMPORTANT: Do NOT sharpen or over-boost contrast — this thickens thin lines.
+          // Use a HIGH threshold (200) so only truly dark pixels become black.
+          // This preserves thin original lines without artificially widening them.
           let bwPipeline = sharp(editSourceBuffer).grayscale();
           if (needsInvert) {
             // Dark bg logo: invert so colored/white lines become black on white background
             bwPipeline = bwPipeline.negate() as typeof bwPipeline;
           }
           rawBuffer = await (bwPipeline as sharp.Sharp)
-            .linear(2.0, -40)           // boost contrast: push lines to black, bg to white
-            .sharpen({ sigma: 1.5, m1: 1.0, m2: 0.5, x1: 2, y2: 10, y3: 20 })
-            .threshold(160)
+            .linear(1.2, -10)           // very mild contrast — just enough to separate lines from bg
+            // NO sharpen — sharpen widens thin lines and creates thick blobs
+            .threshold(200)             // HIGH threshold: only near-black pixels stay black → preserves thin lines
             .extend({ top: 80, bottom: 80, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
             .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
             .png()
