@@ -773,8 +773,11 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
     const file = e.dataTransfer.files[0]; if (file) handleFile(file);
   }, [handleFile]);
 
+  const isTracingRef = useRef(false); // guard against double-click / concurrent calls
   const handleTrace = async (overrideFocusText?: string, forceLandscape?: boolean, forcePreview?: boolean) => {
     if (!imageFile && !previewRef.current) return;
+    if (isTracingRef.current) return; // prevent double-click / concurrent submissions
+    isTracingRef.current = true;
 
     // Use previewRef (not imagePreview state) to read the current preview URL.
     // Reading from state inside an async function can cause stale closures and
@@ -871,6 +874,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       const msg = err instanceof Error ? err.message : (t("processingError"));
       setErrorMsg(msg); setStatus("error"); toast.error(msg);
       reportBug({ errorType: "ai_failed", errorMessage: msg, feature: "ai_trace" });
+    } finally {
+      isTracingRef.current = false; // always release lock so user can retry
     }
   };
 
