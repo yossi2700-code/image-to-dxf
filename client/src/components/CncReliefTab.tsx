@@ -129,6 +129,9 @@ export function CncReliefTab({ onInsufficientTokens, testMode = false }: CncReli
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const jobIdRef = useRef<string | null>(null);
+  const testModeRef = useRef<boolean>(testMode);
+  // Keep testModeRef in sync with prop
+  testModeRef.current = testMode;
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -157,7 +160,7 @@ export function CncReliefTab({ onInsufficientTokens, testMode = false }: CncReli
     try {
       const res = await fetch(`/api/cnc-relief/job/${jobId}`, {
         credentials: "include",
-        headers: testMode ? { "x-relief-test-mode": "1" } : {},
+        headers: testModeRef.current ? { "x-relief-test-mode": "1" } : {},
       });
       if (!res.ok) return;
       const data = await res.json();
@@ -321,7 +324,7 @@ export function CncReliefTab({ onInsufficientTokens, testMode = false }: CncReli
       await fetch(`/api/cnc-relief/cancel/${jobIdRef.current}`, {
         method: "POST",
         credentials: "include",
-        headers: testMode ? { "x-relief-test-mode": "1" } : {},
+        headers: testModeRef.current ? { "x-relief-test-mode": "1" } : {},
       });
     } catch (_) { /* ignore */ }
     setStatus("idle");

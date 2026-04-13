@@ -100,6 +100,9 @@ async function startServer() {
       /\.manus\.computer$/,
       /\.manus\.space$/,
       /freedxf\./,
+      /dxfai\.ai$/,
+      /dxfai\.net$/,
+      /dxfai\.org$/,
     ];
     if (allowedOrigins.some(p => p.test(origin))) {
       res.setHeader("Access-Control-Allow-Origin", origin);
