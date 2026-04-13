@@ -105,7 +105,7 @@ async function startServer() {
       res.setHeader("Access-Control-Allow-Origin", origin);
       res.setHeader("Access-Control-Allow-Credentials", "true");
       res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-      res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization,X-FreeDXF-API-Key");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization,X-FreeDXF-API-Key,X-Relief-Test-Mode");
     }
     if (req.method === "OPTIONS") return res.sendStatus(204);
     return next();

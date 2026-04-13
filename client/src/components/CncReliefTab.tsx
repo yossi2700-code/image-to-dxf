@@ -31,6 +31,8 @@ import {
   Mountain,
   Cpu,
   Info,
+  ChevronDown,
+  Ruler,
 } from "lucide-react";
 import { ReportIssueButton } from "@/components/ReportIssueButton";
 import { useTokenCost } from "@/hooks/useTokenCost";
@@ -120,6 +122,10 @@ export function CncReliefTab({ onInsufficientTokens, testMode = false }: CncReli
   const [zoomSrc, setZoomSrc] = useState<string | null>(null);
   const [zoomAlt, setZoomAlt] = useState<string>("");
   const [partialHeightmap, setPartialHeightmap] = useState<string | null>(null);
+  const [showDimensions, setShowDimensions] = useState(false);
+  const [workpieceWidth, setWorkpieceWidth] = useState<string>("200");
+  const [workpieceHeight, setWorkpieceHeight] = useState<string>("200");
+  const [dpiValue, setDpiValue] = useState<string>("300");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const jobIdRef = useRef<string | null>(null);
@@ -491,6 +497,94 @@ export function CncReliefTab({ onInsufficientTokens, testMode = false }: CncReli
         )}
       </div>
 
+      {/* Dimensions Accordion */}
+      <div className="mb-5">
+        <button
+          type="button"
+          className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors text-sm font-semibold text-gray-700"
+          onClick={() => setShowDimensions((v) => !v)}
+        >
+          <span className="flex items-center gap-2">
+            <Ruler className="w-4 h-4 text-teal-600" />
+            {isRtl ? "מידות חומר גלם (אופציונלי)" : "Workpiece Dimensions (optional)"}
+          </span>
+          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showDimensions ? "rotate-180" : ""}`} />
+        </button>
+        {showDimensions && (
+          <div className="mt-2 p-4 rounded-xl border border-gray-200 bg-white space-y-3">
+            <p className="text-xs text-gray-500">
+              {isRtl
+                ? "הגדר את מידות חומר הגלם כדי לקבל מידע על הרזולוציה הסופית"
+                : "Set your workpiece dimensions to calculate the final resolution"}
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  {isRtl ? "רוחב (מ\"מ)" : "Width (mm)"}
+                </label>
+                <input
+                  type="number"
+                  min="10"
+                  max="2000"
+                  value={workpieceWidth}
+                  onChange={(e) => setWorkpieceWidth(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  {isRtl ? "גובה (מ\"מ)" : "Height (mm)"}
+                </label>
+                <input
+                  type="number"
+                  min="10"
+                  max="2000"
+                  value={workpieceHeight}
+                  onChange={(e) => setWorkpieceHeight(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                {isRtl ? "DPI (נקודות לאינץ׳)" : "DPI (dots per inch)"}
+              </label>
+              <div className="flex gap-2">
+                {["72", "150", "300", "600"].map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setDpiValue(d)}
+                    className={`flex-1 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                      dpiValue === d
+                        ? "border-teal-500 bg-teal-50 text-teal-700"
+                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                    }`}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Calculated resolution info */}
+            {workpieceWidth && workpieceHeight && dpiValue && (
+              <div className="p-2.5 rounded-lg bg-teal-50 border border-teal-100">
+                <p className="text-xs text-teal-700 font-medium">
+                  {isRtl ? "רזולוציה מחושבת:" : "Calculated resolution:"}{" "}
+                  {Math.round(Number(workpieceWidth) / 25.4 * Number(dpiValue))} ×{" "}
+                  {Math.round(Number(workpieceHeight) / 25.4 * Number(dpiValue))} px
+                </p>
+                <p className="text-[11px] text-teal-600 mt-0.5">
+                  {isRtl
+                    ? `חומר גלם: ${workpieceWidth}×${workpieceHeight} מ"מ · ${dpiValue} DPI`
+                    : `Workpiece: ${workpieceWidth}×${workpieceHeight} mm · ${dpiValue} DPI`}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Input Area */}
       {status === "idle" || status === "error" ? (
         <div className="mb-5">
@@ -616,8 +710,8 @@ export function CncReliefTab({ onInsufficientTokens, testMode = false }: CncReli
               {isRtl ? "⬜ לבן = גבוה · ⬛ שחור = עמוק" : "⬜ White = raised · ⬛ Black = deep"}
             </span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            {/* Heightmap */}
+          {/* Heightmap — full width, no simulation */}
+          <div className="mb-4">
             <div className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
               <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
                 <span className="text-xs font-semibold text-gray-700">{t("cncReliefHeightmapLabel")}</span>
@@ -665,47 +759,6 @@ export function CncReliefTab({ onInsufficientTokens, testMode = false }: CncReli
                     {isRtl ? "הורד TIFF 16-bit (Vectric / ArtCAM)" : "Download TIFF 16-bit (Vectric / ArtCAM)"}
                   </Button>
                 )}
-              </div>
-            </div>
-
-            {/* Simulation */}
-            <div className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
-              <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
-                <span className="text-xs font-semibold text-gray-700">{t("cncReliefSimulationLabel")}</span>
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full font-medium"
-                  style={{
-                    background: MATERIAL_OPTIONS.find((m) => m.value === result.material)?.color + "22",
-                    color: MATERIAL_OPTIONS.find((m) => m.value === result.material)?.color,
-                  }}
-                >
-                  {materialLabel(result.material)}
-                </span>
-              </div>
-              <div
-                className="relative cursor-zoom-in group"
-                onClick={() => { setZoomSrc(result.simulationUrl); setZoomAlt(t("cncReliefSimulationLabel")); }}
-              >
-                <img
-                  src={result.simulationUrl}
-                  alt="Simulation"
-                  className="w-full block"
-                  style={{ aspectRatio: "1", objectFit: "cover" }}
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                  <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-80 transition-opacity" />
-                </div>
-              </div>
-              <div className="p-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full text-xs"
-                  onClick={() => handleDownload(result.simulationUrl, `simulation-${result.material}-${result.outputSize ?? 1024}px.png`)}
-                >
-                  <Download className="w-3.5 h-3.5 mr-1.5" />
-                  {t("cncReliefDownloadSimulation")}
-                </Button>
               </div>
             </div>
           </div>
