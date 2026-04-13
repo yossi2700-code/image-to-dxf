@@ -529,7 +529,7 @@ export function SvgPanZoomViewer({
           }}
         >
           <span style={{ fontSize: 13 }}>👆</span>
-          <span>{isRtl ? 'גרור להזזה' : 'Drag to pan'}</span>
+          <span>{'Drag to pan'}</span>
         </div>
       )}
     </div>
