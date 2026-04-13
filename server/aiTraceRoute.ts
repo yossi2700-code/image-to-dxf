@@ -166,12 +166,13 @@ const SINGLE_LINE_STYLE =
 
 // ─── Image Classification Types ─────────────────────────────────────────────
 export type ImageType =
-  | "landscape"    // outdoor scene, cityscape, harbor, nature, wide view
-  | "portrait"     // human face / close-up person
-  | "object"       // single product, vehicle, animal, everyday item
-  | "mandala"      // mandala, geometric pattern, decorative symmetry
-  | "drawing"      // existing line art, sketch, diagram, blueprint
-  | "unknown";     // fallback
+  | "landscape"         // outdoor scene, cityscape, harbor, nature, wide view
+  | "portrait"          // human face / close-up person
+  | "object"            // single product, vehicle, animal, everyday item
+  | "mandala"           // mandala, geometric pattern, decorative symmetry
+  | "drawing"           // existing line art, sketch, illustration, coloring book
+  | "technical_drawing" // CAD drawing, blueprint, engineering plan, floor plan, schematic, technical diagram
+  | "unknown";          // fallback
 
 export interface ImageClassification {
   type: ImageType;
@@ -205,7 +206,8 @@ async function classifyImage(imageBase64: string): Promise<ImageClassification> 
             "Use type='portrait' when the image contains a human face (photo or drawing). " +
             "Use type='landscape' when the image is a photographic scene/environment with realistic lighting. " +
             "Use type='mandala' when the image is a decorative symmetrical pattern. " +
-            "IMPORTANT: When in doubt between 'drawing' and 'object', always choose 'drawing' if there are visible black outlines on a light background.",
+            "IMPORTANT: When in doubt between 'drawing' and 'object', always choose 'drawing' if there are visible black outlines on a light background. " +
+            "Use type='technical_drawing' when the image is a CAD drawing, engineering blueprint, floor plan, schematic, technical diagram, or any drawing with dimension lines, measurement annotations, title blocks, hatching patterns, or precise geometric construction lines typical of engineering/architectural drawings.",
         },
         {
           role: "user",
@@ -226,7 +228,7 @@ async function classifyImage(imageBase64: string): Promise<ImageClassification> 
           schema: {
             type: "object",
             properties: {
-              type: { type: "string", enum: ["landscape", "portrait", "object", "mandala", "drawing"] },
+              type: { type: "string", enum: ["landscape", "portrait", "object", "mandala", "drawing", "technical_drawing"] },
               subject: { type: "string" },
               complexity: { type: "string", enum: ["simple", "medium", "complex"] },
             },
@@ -246,11 +248,32 @@ async function classifyImage(imageBase64: string): Promise<ImageClassification> 
 }
 
 /**
+ * Warm-up system message — read by the AI before every image processing.
+ * Forces the model to internalize all rules before drawing.
+ */
+export const TRACE_WARMUP_SYSTEM =
+  "=== PRE-PROCESSING WARM-UP — READ ALL RULES BEFORE DRAWING === " +
+  "You are a precision line-art engine for laser engraving and CNC cutting. " +
+  "Before you draw a single line, read and internalize ALL of the following rules. " +
+  "After reading, confirm to yourself: 'I understand all rules and I am ready.' Then begin drawing. " +
+  "--- RULE CHECKLIST (verify each before submitting output) --- " +
+  "[CHECK 1] PURE WHITE BACKGROUND: Every pixel that is NOT a line must be pure white (#FFFFFF). Even very light grey = FAIL. " +
+  "[CHECK 2] PURE BLACK LINES ONLY: Lines must be pure black (#000000). No dark grey, no anti-aliased edges that bleed into grey. " +
+  "[CHECK 3] SINGLE LINE PER EDGE: NEVER draw two parallel lines to simulate thickness. ONE line per edge. If you see double lines anywhere = FAIL. " +
+  "[CHECK 4] LINE SPACING: Two lines closer than 3px must be MERGED into one. Crowded lines destroy vectorization. " +
+  "[CHECK 5] SELF-CHECK BEFORE SUBMITTING: Scan the entire image. If you find any grey pixel, any double-line, any parallel stroke pair — FIX IT before submitting. " +
+  "[CHECK 6] LINE WEIGHT HIERARCHY: Main silhouette = thick (6-8px). Structural details = medium (4-5px). Fine details = thin (2-3px). All same weight = FAIL. " +
+  "[CHECK 7] NO TEXT IN OUTPUT: Do NOT add any text, labels, watermarks, or annotations to the output. The output is a pure line drawing only. " +
+  "[CHECK 8] CAD RULE (if image is a technical drawing): Reproduce ALL dimension lines, center lines, dashed lines, hatching, and annotations EXACTLY as they appear — like a CAD export. " +
+  "=== END WARM-UP — YOU MAY NOW BEGIN DRAWING ===";
+
+/**
  * Build a type-specific direct-trace prompt based on image classification.
  * Each type gets tailored instructions for best laser engraving output.
  */
 function buildClassifiedPrompt(classification: ImageClassification, variationStyle: string): string {
   const base =
+    `${TRACE_WARMUP_SYSTEM} ` +
     `This image will be converted to a vector file for laser engraving or CNC cutting. ` +
     `Convert it to clean black and white line art by following the shapes visible in this image. ` +
     `DO NOT redraw from memory or imagination — trace what you actually see. ` +
@@ -267,6 +290,7 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
     `For small shapes (leaves, petals, small objects): ONE single outline per shape, no inner detail lines that run parallel to the outer edge. ` +
     `SMALL DETAIL RULE: If a detail is too small to fit even ONE clean line, OMIT that detail entirely. A clean omission is always better than a noisy double-line. ` +
     `PARALLEL LINE RULE: If you see multiple parallel lines running close together, draw ONLY the single outermost line — never trace every layer or groove. ` +
+    `LINE SPACING RULE: Any two lines closer than 3px must be merged into one single line. ` +
     `Industrial objects (appliances, machines, products) must be simplified to their essential silhouette + 2-3 key structural lines maximum. `;
 
   switch (classification.type) {
@@ -320,6 +344,28 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
         `For black silhouettes (solid black shapes): trace the OUTER CONTOUR of each black shape as a single closed outline. ` +
         `For text/labels visible in the image: reproduce them faithfully as clean outlined letters in the EXACT same position, size, and orientation. ` +
         `FINAL VERIFICATION: mentally overlay your output on the original — every shape must match perfectly in position, size, and orientation. If anything differs, redo it. ` +
+        variationStyle
+      );
+
+    case "technical_drawing":
+      return (
+        base +
+        `TECHNICAL DRAWING / CAD MODE — MAXIMUM PRECISION REQUIRED: ` +
+        `This is a technical drawing (CAD, blueprint, engineering plan, schematic, floor plan). ` +
+        `You MUST reproduce it EXACTLY as it appears — like exporting from AutoCAD or SolidWorks. ` +
+        `REPRODUCE ALL OF THE FOLLOWING with 100% accuracy: ` +
+        `• Solid lines (continuous) — main object outlines, walls, structural elements ` +
+        `• Dashed lines (hidden lines) — reproduce as dashed/dotted exactly as shown ` +
+        `• Center lines (dash-dot) — reproduce as dash-dot pattern ` +
+        `• Dimension lines — with arrowheads and extension lines, exactly as positioned ` +
+        `• Dimension text/numbers — reproduce as single-stroke centerline letters ` +
+        `• Hatching patterns — reproduce the exact angle, spacing, and area of all hatching ` +
+        `• Title block, labels, annotations — reproduce all text as single-stroke letters ` +
+        `• Section lines, cutting planes, view arrows — reproduce exactly ` +
+        `• Geometric construction lines (circles, arcs, tangent lines) — reproduce precisely ` +
+        `LINE TYPES: Use different visual weights to distinguish: thick lines for visible edges, thin lines for dimensions/hatching, dashed for hidden. ` +
+        `ZERO CREATIVITY: Do NOT simplify, beautify, or omit ANY element. Every line in the original must appear in the output. ` +
+        `SCALE: Maintain exact proportions and relative positions of all elements. ` +
         variationStyle
       );
 
