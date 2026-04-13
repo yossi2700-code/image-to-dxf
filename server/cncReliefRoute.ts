@@ -39,29 +39,37 @@ function buildHeightmapPrompt(subject: string, hasSourceImage = false): string {
   const imageRef = hasSourceImage
     ? (
       "TASK: Analyze the provided reference image and create a NEW professional CNC relief heightmap (displacement map) based on it. " +
-      "You are NOT copying the image — you are INTERPRETING it as a 3D relief sculpture. " +
-      "IDENTIFY the main subject/object in the image. Separate it from the background. " +
-      "The main subject should be BRIGHT WHITE (highest point, raised). The background should be PURE BLACK (deepest, recessed). " +
-      "Apply smooth 3D shading: foreground objects = white, mid-ground = medium grey, background = black. " +
-      "Preserve ALL shapes, outlines, and important details from the reference image. " +
-      "EVERY element that appears in the reference must appear in the heightmap as a raised white/grey form. "
+      "You are NOT copying the image — you are INTERPRETING it as a 3D sculptural relief. " +
+      "IDENTIFY the main subject/object in the image. Completely separate it from the background. " +
+      "MODEL the subject as a 3D dome/hill: the highest point (center or front face) = pure white (#FFFFFF), " +
+      "edges and sides of the subject fade smoothly through mid-grey to dark grey, " +
+      "background = pure black (#000000). " +
+      "For SMALL DETAILS (petals, feathers, fur, scales, rope/knot strands, text): " +
+      "each small element must have its own mini-dome — bright white highlight at its peak, " +
+      "smooth grey gradient down its sides, dark grey/black in the recesses between elements. " +
+      "This creates the rope/knot effect seen in Celtic relief carvings. " +
+      "Preserve ALL shapes, outlines, and fine details from the reference image. "
     )
     : ("Subject: " + subject + ". ");
 
   return (
-    "Create a professional CNC relief heightmap (depth map / displacement map) image. " +
+    "Create a PROFESSIONAL CNC relief heightmap (depth map / displacement map) image. " +
     imageRef +
-    "ABSOLUTE RULES — violating any rule makes the output unusable for CNC machining: " +
-    "RULE 1 — PURE GRAYSCALE ONLY: Output MUST be a black-and-white grayscale image. Zero color. Zero saturation. Only shades of grey from pure black (#000000) to pure white (#FFFFFF). This is a depth map, not a photo. " +
-    "RULE 2 — WHITE = RAISED, BLACK = RECESSED: white (#FFFFFF) = highest point (most raised), black (#000000) = deepest background (most recessed), grey = intermediate depth. " +
-    "RULE 3 — HIGH CONTRAST: The heightmap MUST have strong contrast — raised elements should be clearly bright white/light grey, background must be solid black. No flat grey overall tone. " +
-    "RULE 4 — SMOOTH GRADIENTS: Raised elements have bright white centers fading smoothly to grey at edges (like a dome or hill). No hard binary black/white cutoffs — smooth transitions create realistic 3D depth. " +
-    "RULE 5 — SOLID BLACK BACKGROUND: Background = solid pure black (#000000). All elements clearly rise above it as bright forms. " +
-    "RULE 6 — PRESERVE ALL DETAILS: Every shape, outline, and important detail from the subject must appear as a raised white/grey form. " +
-    "RULE 7 — NO COLOR AT ALL: No red, green, blue, yellow, or any hue. Pure monochrome grayscale only. " +
-    "RULE 8 — PROFESSIONAL QUALITY: Output should look like a Vectric Aspire / ArtCAM / Blender displacement map — suitable for direct CNC machining. " +
-    "RULE 9 — COMPOSITION: Subject fills 70-80% of frame with 10-15% black border all around. " +
-    "RULE 10 — 3D DEPTH ILLUSION: The heightmap must convey clear 3D depth — viewer should immediately understand which parts are raised and which are recessed."
+    "LOOK AT THESE REFERENCE EXAMPLES in your mind: " +
+    "EXAMPLE A — A heart shape: pure white glowing center, smooth radial gradient fading to grey at edges, pure black background. " +
+    "EXAMPLE B — A Celtic knot: each rope strand has a bright white ridge along its top, smooth grey sides, deep black recesses between crossing strands. " +
+    "EXAMPLE C — A flower: each petal is a raised dome (white center, grey edges), stamens are bright white dots, stem is a raised ridge, pure black background. " +
+    "YOUR OUTPUT MUST LOOK LIKE THESE EXAMPLES. " +
+    "ABSOLUTE RULES: " +
+    "RULE 1 — PURE GRAYSCALE ONLY: Zero color, zero saturation. Only shades from pure black (#000000) to pure white (#FFFFFF). " +
+    "RULE 2 — WHITE = RAISED, BLACK = RECESSED: white = highest point, black = deepest background, grey = intermediate depth. " +
+    "RULE 3 — SMOOTH GRADIENTS EVERYWHERE: Every raised element transitions smoothly from bright white peak → grey sides → black background. NO hard edges, NO binary black/white. Smooth like a 3D render. " +
+    "RULE 4 — SOLID BLACK BACKGROUND: Background = pure black (#000000). No grey in background. " +
+    "RULE 5 — SMALL DETAILS HAVE DEPTH: Even tiny details (petals, fur, feathers, rope strands) must have their own raised dome shape with highlight and shadow. " +
+    "RULE 6 — HIGH CONTRAST: Strong contrast between raised elements (bright) and background (black). No flat grey overall tone. " +
+    "RULE 7 — PROFESSIONAL QUALITY: Output must look like a Vectric Aspire / ArtCAM displacement map — suitable for direct CNC machining. " +
+    "RULE 8 — COMPOSITION: Subject fills 70-80% of frame with 10-15% pure black border all around. " +
+    "RULE 9 — 3D DEPTH ILLUSION: Viewer must immediately understand which parts are raised and which are recessed just by looking at the grey values."
   );
 }
 
@@ -145,22 +153,23 @@ async function runReliefJob(
     // Download the image, post-process to grayscale + normalise + resize, re-upload
     const heightmapRaw = await fetch(heightmapResult.url).then(r => r.arrayBuffer());
     // Advanced post-processing for CNC heightmap quality:
-    // sharp.gamma() only accepts 1.0-3.0 (values < 1 are not supported)
-    // To brighten midtones (equivalent to gamma < 1), we use linear() with a multiplier > 1
+    // Goal: preserve smooth gradients (like the heart/Celtic knot examples) while
+    //       ensuring strong contrast between raised elements and black background.
     // Strategy:
-    //   1. Normalise to full 0-255 range
-    //   2. Apply linear boost (multiplier + offset) to push midtones brighter
-    //   3. Re-normalise to ensure full range after boost
-    //   4. Sharpen edges for clean CNC toolpaths
-    // depthMm controls contrast strength: deeper carving = stronger contrast
-    const linearMultiplier = depthMm <= 3 ? 1.4 : depthMm <= 5 ? 1.5 : 1.6;
-    const linearOffset = depthMm <= 3 ? -15 : depthMm <= 5 ? -20 : -25;
+    //   1. Grayscale — remove any color the AI may have added
+    //   2. Normalise — stretch histogram to full 0-255 range
+    //   3. Gamma — brighten midtones to enhance dome-shaped gradients
+    //      (gamma 1.0-3.0 only; use 1.2-1.6 range to lift midtones without blowing highlights)
+    //   4. Mild sharpen — enhance small detail edges without destroying smooth gradients
+    //   5. Resize with black background
+    // depthMm controls gamma strength: deeper carving = stronger midtone lift
+    const gammaValue = depthMm <= 3 ? 1.2 : depthMm <= 5 ? 1.4 : 1.6;
     const processedHeightmap = await sharp(Buffer.from(heightmapRaw))
-      .grayscale()           // force pure grayscale (remove any color the AI may have added)
-      .normalise()           // stretch histogram to full 0-255 range for maximum depth
-      .linear(linearMultiplier, linearOffset) // boost midtones: whites get brighter, blacks stay dark
-      .normalise()           // re-normalise after linear to ensure full 0-255 range
-      .sharpen({ sigma: 1.5, m1: 0.5, m2: 3 }) // sharpen edges for clean CNC toolpaths
+      .grayscale()           // force pure grayscale
+      .normalise()           // full 0-255 range
+      .gamma(gammaValue)     // lift midtones: dome gradients become more pronounced
+      .normalise()           // re-normalise after gamma
+      .sharpen({ sigma: 0.8, m1: 0.3, m2: 2 }) // mild sharpen: enhance small details, preserve smooth gradients
       .resize(outputSize, outputSize, { fit: "contain", background: { r: 0, g: 0, b: 0 } })
       .png()
       .toBuffer();
