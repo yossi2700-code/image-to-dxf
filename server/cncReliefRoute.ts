@@ -469,18 +469,17 @@ router.post(
       return res.status(500).json({ error: "INTERNAL_ERROR", message });
     }
   }
-);
-
-// ─── GET /api/cnc-relief/job/:jobId ──────────────────────────────────────────
+)// ─── GET /api/cnc-relief/job/:jobId ──────────────────────────────────────────────
 
 router.get("/api/cnc-relief/job/:jobId", (req, res) => {
-  const appUser = getAppUserFromCookie(req.cookies);
+  const isTestMode = req.headers["x-relief-test-mode"] === "1";
+  const appUser = isTestMode ? { userId: TEST_MODE_USER_ID } : getAppUserFromCookie(req.cookies);
   if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
 
   const job = getJob(req.params.jobId);
   if (!job) return res.status(404).json({ error: "JOB_NOT_FOUND" });
-  if (job.userId !== appUser.userId) return res.status(403).json({ error: "FORBIDDEN" });
-
+  // In test mode, allow access to any job; otherwise enforce ownership
+  if (!isTestMode && job.userId !== appUser.userId) return res.status(403).json({ error: "FORBIDDEN" });
   if (job.status === "done") {
     return res.json({ status: "done", result: job.result });
   } else if (job.status === "error") {
@@ -508,12 +507,13 @@ router.get("/api/cnc-relief/job/:jobId", (req, res) => {
 // ─── POST /api/cnc-relief/cancel/:jobId ──────────────────────────────────────
 
 router.post("/api/cnc-relief/cancel/:jobId", (req, res) => {
-  const appUser = getAppUserFromCookie(req.cookies);
+  const isTestMode = req.headers["x-relief-test-mode"] === "1";
+  const appUser = isTestMode ? { userId: TEST_MODE_USER_ID } : getAppUserFromCookie(req.cookies);
   if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
 
   const job = getJob(req.params.jobId);
   if (!job) return res.status(404).json({ error: "JOB_NOT_FOUND" });
-  if (job.userId !== appUser.userId) return res.status(403).json({ error: "FORBIDDEN" });
+  if (!isTestMode && job.userId !== appUser.userId) return res.status(403).json({ error: "FORBIDDEN" });
 
   if (job.status === "done") {
     return res.json({ cancelled: false, reason: "Job already completed" });

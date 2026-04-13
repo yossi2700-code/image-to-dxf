@@ -155,7 +155,10 @@ export function CncReliefTab({ onInsufficientTokens, testMode = false }: CncReli
 
   const pollJob = useCallback(async (jobId: string) => {
     try {
-      const res = await fetch(`/api/cnc-relief/job/${jobId}`, { credentials: "include" });
+      const res = await fetch(`/api/cnc-relief/job/${jobId}`, {
+        credentials: "include",
+        headers: testMode ? { "x-relief-test-mode": "1" } : {},
+      });
       if (!res.ok) return;
       const data = await res.json();
 
@@ -318,6 +321,7 @@ export function CncReliefTab({ onInsufficientTokens, testMode = false }: CncReli
       await fetch(`/api/cnc-relief/cancel/${jobIdRef.current}`, {
         method: "POST",
         credentials: "include",
+        headers: testMode ? { "x-relief-test-mode": "1" } : {},
       });
     } catch (_) { /* ignore */ }
     setStatus("idle");
@@ -399,188 +403,153 @@ export function CncReliefTab({ onInsufficientTokens, testMode = false }: CncReli
         </button>
       </div>
 
-      {/* Material Selector */}
-      <div className="mb-4">
-        <label className="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
-          {t("cncReliefMaterialLabel")}
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {MATERIAL_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => setMaterial(opt.value)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all ${
-                material === opt.value
-                  ? "border-teal-500 bg-teal-50 text-teal-700 shadow-sm"
-                  : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              <span style={{ color: material === opt.value ? opt.color : undefined }}>{opt.icon}</span>
-              {t(opt.labelKey as Parameters<typeof t>[0])}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Depth Slider */}
-      <div className="mb-4">
-        <label className="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
-          {isRtl ? "עומק גילוף" : "Carving Depth"}
-          <span className="ml-2 normal-case font-normal text-gray-400 text-[11px]">
-            ({isRtl ? "משפיע על ניגודיות ה-Heightmap" : "affects Heightmap contrast"})
-          </span>
-        </label>
-        <div className="flex gap-2">
-          {DEPTH_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => setDepthMm(opt.value)}
-              className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-all text-center ${
-                depthMm === opt.value
-                  ? "border-amber-500 bg-amber-50 text-amber-700 shadow-sm"
-                  : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              <div className="font-bold">{opt.label}</div>
-              <div className="text-[10px] opacity-70">{isRtl ? opt.desc_he : opt.desc_en}</div>
-            </button>
-          ))}
-        </div>
-        {/* White = high, Black = deep explanation */}
-        <div className="mt-2 flex items-start gap-2 p-2.5 rounded-lg bg-gray-50 border border-gray-100">
-          <Info className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
-          <p className="text-[11px] text-gray-500">
-            {isRtl
-              ? "⬜ לבן = גבוה (בולט) · ⬛ שחור = עמוק (שקוע) · אפור = עומק ביניים"
-              : "⬜ White = raised (high) · ⬛ Black = recessed (deep) · Gray = intermediate depth"}
-          </p>
-        </div>
-      </div>
-
-      {/* Output Size Selector */}
-      <div className="mb-5">
-        <label className="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
-          {isRtl ? "גודל תמונה פלט" : "Output Image Size"}
-          <span className="ml-2 normal-case font-normal text-gray-400 text-[11px]">
-            ({isRtl ? "מינ׳ 512 — מקס׳ 4096 פיקסל" : "min 512 — max 4096 px"})
-          </span>
-        </label>
-        <div className="flex gap-2 flex-wrap">
-          {VALID_SIZES.map((size) => (
-            <button
-              key={size}
-              onClick={() => setOutputSize(size)}
-              className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-all ${
-                outputSize === size
-                  ? "border-violet-500 bg-violet-50 text-violet-700 shadow-sm"
-                  : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              {size}×{size}
-              {size === 1024 && (
-                <span className="ml-1 text-[10px] text-violet-400 font-normal">
-                  {isRtl ? "(ברירת מחדל)" : "(default)"}
-                </span>
-              )}
-              {(size === 3000 || size === 4096) && (
-                <span className="ml-1 text-[10px] text-amber-500 font-normal">
-                  {isRtl ? "HD" : "HD"}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-        {outputSize >= 1536 && (
-          <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
-            ⚠️ {isRtl ? "גדלים גדולים עלולים לקחת יותר זמן לעיבוד" : "Large sizes may take longer to process"}
-          </p>
-        )}
-      </div>
-
-      {/* Dimensions Accordion */}
+      {/* Settings Accordion — all options collapsed */}
       <div className="mb-5">
         <button
           type="button"
-          className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors text-sm font-semibold text-gray-700"
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors text-sm font-semibold text-gray-700"
           onClick={() => setShowDimensions((v) => !v)}
         >
           <span className="flex items-center gap-2">
             <Ruler className="w-4 h-4 text-teal-600" />
-            {isRtl ? "מידות חומר גלם (אופציונלי)" : "Workpiece Dimensions (optional)"}
+            <span>{isRtl ? "הגדרות" : "Settings"}</span>
+            {/* Summary badges */}
+            <span className="text-xs font-normal text-gray-400 bg-white border border-gray-200 px-2 py-0.5 rounded-full">
+              {materialLabel(material)} · {outputSize}px · {depthMm}mm
+            </span>
           </span>
           <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showDimensions ? "rotate-180" : ""}`} />
         </button>
+
         {showDimensions && (
-          <div className="mt-2 p-4 rounded-xl border border-gray-200 bg-white space-y-3">
-            <p className="text-xs text-gray-500">
-              {isRtl
-                ? "הגדר את מידות חומר הגלם כדי לקבל מידע על הרזולוציה הסופית"
-                : "Set your workpiece dimensions to calculate the final resolution"}
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  {isRtl ? "רוחב (מ\"מ)" : "Width (mm)"}
-                </label>
-                <input
-                  type="number"
-                  min="10"
-                  max="2000"
-                  value={workpieceWidth}
-                  onChange={(e) => setWorkpieceWidth(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  {isRtl ? "גובה (מ\"מ)" : "Height (mm)"}
-                </label>
-                <input
-                  type="number"
-                  min="10"
-                  max="2000"
-                  value={workpieceHeight}
-                  onChange={(e) => setWorkpieceHeight(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                {isRtl ? "DPI (נקודות לאינץ׳)" : "DPI (dots per inch)"}
+          <div className="mt-2 rounded-xl border border-gray-200 bg-white divide-y divide-gray-100">
+
+            {/* Material */}
+            <div className="p-4">
+              <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+                {t("cncReliefMaterialLabel")}
               </label>
-              <div className="flex gap-2">
-                {["72", "150", "300", "600"].map((d) => (
+              <div className="flex flex-wrap gap-2">
+                {MATERIAL_OPTIONS.map((opt) => (
                   <button
-                    key={d}
-                    type="button"
-                    onClick={() => setDpiValue(d)}
-                    className={`flex-1 py-1.5 rounded-lg border text-xs font-medium transition-all ${
-                      dpiValue === d
-                        ? "border-teal-500 bg-teal-50 text-teal-700"
-                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                    key={opt.value}
+                    onClick={() => setMaterial(opt.value)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all ${
+                      material === opt.value
+                        ? "border-teal-500 bg-teal-50 text-teal-700 shadow-sm"
+                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
                     }`}
                   >
-                    {d}
+                    <span style={{ color: material === opt.value ? opt.color : undefined }}>{opt.icon}</span>
+                    {t(opt.labelKey as Parameters<typeof t>[0])}
                   </button>
                 ))}
               </div>
             </div>
-            {/* Calculated resolution info */}
-            {workpieceWidth && workpieceHeight && dpiValue && (
-              <div className="p-2.5 rounded-lg bg-teal-50 border border-teal-100">
-                <p className="text-xs text-teal-700 font-medium">
-                  {isRtl ? "רזולוציה מחושבת:" : "Calculated resolution:"}{" "}
-                  {Math.round(Number(workpieceWidth) / 25.4 * Number(dpiValue))} ×{" "}
-                  {Math.round(Number(workpieceHeight) / 25.4 * Number(dpiValue))} px
-                </p>
-                <p className="text-[11px] text-teal-600 mt-0.5">
-                  {isRtl
-                    ? `חומר גלם: ${workpieceWidth}×${workpieceHeight} מ"מ · ${dpiValue} DPI`
-                    : `Workpiece: ${workpieceWidth}×${workpieceHeight} mm · ${dpiValue} DPI`}
+
+            {/* Output Size */}
+            <div className="p-4">
+              <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+                {isRtl ? "גודל תמונה פלט" : "Output Image Size"}
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                {VALID_SIZES.map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => setOutputSize(size)}
+                    className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-all ${
+                      outputSize === size
+                        ? "border-violet-500 bg-violet-50 text-violet-700 shadow-sm"
+                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    {size}×{size}
+                    {size === 1024 && <span className="ml-1 text-[10px] text-violet-400">{isRtl ? "(ברירת מחדל)" : "(default)"}</span>}
+                    {(size === 3000 || size === 4096) && <span className="ml-1 text-[10px] text-amber-500">HD</span>}
+                  </button>
+                ))}
+              </div>
+              {outputSize >= 1536 && (
+                <p className="text-xs text-amber-600 mt-1.5">⚠️ {isRtl ? "גדלים גדולים עלולים לקחת יותר זמן" : "Large sizes may take longer"}</p>
+              )}
+            </div>
+
+            {/* Carving Depth */}
+            <div className="p-4">
+              <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+                {isRtl ? "עומק גילוף" : "Carving Depth"}
+              </label>
+              <div className="flex gap-2">
+                {DEPTH_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setDepthMm(opt.value)}
+                    className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-all text-center ${
+                      depthMm === opt.value
+                        ? "border-amber-500 bg-amber-50 text-amber-700 shadow-sm"
+                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    <div className="font-bold">{opt.label}</div>
+                    <div className="text-[10px] opacity-70">{isRtl ? opt.desc_he : opt.desc_en}</div>
+                  </button>
+                ))}
+              </div>
+              <div className="mt-2 flex items-start gap-2 p-2.5 rounded-lg bg-gray-50 border border-gray-100">
+                <Info className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+                <p className="text-[11px] text-gray-500">
+                  {isRtl ? "⬜ לבן = גבוה (בולט) · ⬛ שחור = עמוק (שקוע)" : "⬜ White = raised · ⬛ Black = recessed"}
                 </p>
               </div>
-            )}
+            </div>
+
+            {/* Workpiece Dimensions + DPI */}
+            <div className="p-4 space-y-3">
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                {isRtl ? "מידות חומר גלם (אופציונלי)" : "Workpiece Dimensions (optional)"}
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">{isRtl ? "רוחב (מ\"מ)" : "Width (mm)"}</label>
+                  <input
+                    type="number" min="10" max="2000" value={workpieceWidth}
+                    onChange={(e) => setWorkpieceWidth(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">{isRtl ? "גובה (מ\"מ)" : "Height (mm)"}</label>
+                  <input
+                    type="number" min="10" max="2000" value={workpieceHeight}
+                    onChange={(e) => setWorkpieceHeight(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{isRtl ? "DPI" : "DPI (dots per inch)"}</label>
+                <div className="flex gap-2">
+                  {["72", "150", "300", "600"].map((d) => (
+                    <button key={d} type="button" onClick={() => setDpiValue(d)}
+                      className={`flex-1 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                        dpiValue === d ? "border-teal-500 bg-teal-50 text-teal-700" : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                      }`}>{d}</button>
+                  ))}
+                </div>
+              </div>
+              {workpieceWidth && workpieceHeight && dpiValue && (
+                <div className="p-2.5 rounded-lg bg-teal-50 border border-teal-100">
+                  <p className="text-xs text-teal-700 font-medium">
+                    {isRtl ? "רזולוציה מחושבת:" : "Calculated resolution:"}{" "}
+                    {Math.round(Number(workpieceWidth) / 25.4 * Number(dpiValue))} × {Math.round(Number(workpieceHeight) / 25.4 * Number(dpiValue))} px
+                  </p>
+                  <p className="text-[11px] text-teal-600 mt-0.5">
+                    {isRtl ? `${workpieceWidth}×${workpieceHeight} מ"מ · ${dpiValue} DPI` : `${workpieceWidth}×${workpieceHeight} mm · ${dpiValue} DPI`}
+                  </p>
+                </div>
+              )}
+            </div>
+
           </div>
         )}
       </div>
