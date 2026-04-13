@@ -57,8 +57,8 @@ export default function ReliefTest() {
           </div>
         </div>
 
-        {/* The actual CncReliefTab component */}
-        <CncReliefTab onInsufficientTokens={() => {}} />
+        {/* The actual CncReliefTab component — testMode bypasses login requirement */}
+        <CncReliefTab onInsufficientTokens={() => {}} testMode={true} />
       </div>
     </div>
   );

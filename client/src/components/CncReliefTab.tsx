@@ -101,9 +101,10 @@ function ImageZoomModal({ src, alt, onClose }: { src: string; alt: string; onClo
 
 interface CncReliefTabProps {
   onInsufficientTokens?: () => void;
+  testMode?: boolean;
 }
 
-export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
+export function CncReliefTab({ onInsufficientTokens, testMode = false }: CncReliefTabProps = {}) {
   const { t, language, isRtl } = useLanguage();
   const [mode, setMode] = useState<Mode>("image");
   const [material, setMaterial] = useState<ReliefMaterial>("wood");
@@ -244,6 +245,7 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
           method: "POST",
           body: formData,
           credentials: "include",
+          headers: testMode ? { "x-relief-test-mode": "1" } : {},
         });
 
         const data = await res.json();
@@ -266,7 +268,10 @@ export function CncReliefTab({ onInsufficientTokens }: CncReliefTabProps = {}) {
       } else {
         const res = await fetch("/api/cnc-relief/from-prompt", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(testMode ? { "x-relief-test-mode": "1" } : {}),
+          },
           body: JSON.stringify({ prompt: prompt.trim(), material, lang: language, outputSize, depthMm }),
           credentials: "include",
         });

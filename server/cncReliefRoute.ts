@@ -194,32 +194,34 @@ async function runReliefJob(
     const simKey = `cnc-relief/simulation-${nanoid()}.png`;
     const { url: simulationUrl } = await storagePut(simKey, processedSim, "image/png");
 
-    // ── Deduct tokens after success ───────────────────────────────────────────
-    await deductTokens(appUserId, "cnc_relief");
-    updateJob(jobId, { tokenDeducted: true });
+    // ── Deduct tokens after success (skip for test mode user) ──────────────────
+    if (appUserId !== 999999) {
+      await deductTokens(appUserId, "cnc_relief");
+      updateJob(jobId, { tokenDeducted: true });
 
-    // ── Log usage ─────────────────────────────────────────────────────────────
-    void logUsageEvent({
-      type: "ai_generate",
-      segmentCount: 0,
-      ipAnon: anonymizeIp(ipAnon),
-      durationMs: Date.now() - jobStartTime,
-      fileSizeKb: Math.round(processedHeightmap.length / 1024),
-    });
+      // ── Log usage ───────────────────────────────────────────────────────────
+      void logUsageEvent({
+        type: "ai_generate",
+        segmentCount: 0,
+        ipAnon: anonymizeIp(ipAnon),
+        durationMs: Date.now() - jobStartTime,
+        fileSizeKb: Math.round(processedHeightmap.length / 1024),
+      });
 
-    // ── Record user action ────────────────────────────────────────────────────
-    await recordUserAction({
-      appUserId,
-      actionType: "ai_generate",
-      description: subject.slice(0, 200),
-      dxfUrl: heightmapUrl,
-      imageUrl: simulationUrl,
-      svgPreview: undefined,
-      feature: "cnc_relief",
-      durationMs: Date.now() - jobStartTime,
-      ipAnon: ipAnon ?? undefined,
-      sourceImageUrl: sourceImageUrl ?? undefined,
-    });
+      // ── Record user action ──────────────────────────────────────────────────
+      await recordUserAction({
+        appUserId,
+        actionType: "ai_generate",
+        description: subject.slice(0, 200),
+        dxfUrl: heightmapUrl,
+        imageUrl: simulationUrl,
+        svgPreview: undefined,
+        feature: "cnc_relief",
+        durationMs: Date.now() - jobStartTime,
+        ipAnon: ipAnon ?? undefined,
+        sourceImageUrl: sourceImageUrl ?? undefined,
+      });
+    }
 
     clearTimeout(internalTimeoutId);
     updateJob(jobId, {
@@ -273,7 +275,16 @@ async function runReliefJob(
 
 // ─── Helper: auth + token check ───────────────────────────────────────────────
 
+const TEST_MODE_USER_ID = 999999; // virtual test user — no DB row needed
+
 async function checkAuthAndTokens(req: import("express").Request, res: import("express").Response): Promise<{ appUser: { userId: number }; ipAnon: string } | null> {
+  // Allow unauthenticated access from /relief-test page (test mode)
+  const isTestMode = req.headers["x-relief-test-mode"] === "1";
+  if (isTestMode) {
+    const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+    return { appUser: { userId: TEST_MODE_USER_ID }, ipAnon: anonymizeIp(rawIp) ?? "unknown" };
+  }
+
   const appUser = getAppUserFromCookie(req.cookies);
   if (!appUser) {
     res.status(401).json({
