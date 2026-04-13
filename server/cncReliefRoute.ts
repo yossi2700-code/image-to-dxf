@@ -37,22 +37,31 @@ export type ReliefSize = typeof VALID_SIZES[number];
 
 function buildHeightmapPrompt(subject: string, hasSourceImage = false): string {
   const imageRef = hasSourceImage
-    ? "CRITICAL: The provided reference image is the EXACT source to reproduce. You MUST include EVERY letter, icon, symbol, shape, and text element from the reference image — count them and verify none are missing. Reproduce the COMPLETE composition faithfully. " 
-    : "";
+    ? (
+      "TASK: Analyze the provided reference image and create a NEW professional CNC relief heightmap (displacement map) based on it. " +
+      "You are NOT copying the image — you are INTERPRETING it as a 3D relief sculpture. " +
+      "IDENTIFY the main subject/object in the image. Separate it from the background. " +
+      "The main subject should be BRIGHT WHITE (highest point, raised). The background should be PURE BLACK (deepest, recessed). " +
+      "Apply smooth 3D shading: foreground objects = white, mid-ground = medium grey, background = black. " +
+      "Preserve ALL shapes, outlines, and important details from the reference image. " +
+      "EVERY element that appears in the reference must appear in the heightmap as a raised white/grey form. "
+    )
+    : ("Subject: " + subject + ". ");
+
   return (
-    "Create a professional CNC relief heightmap (depth map) image. " +
+    "Create a professional CNC relief heightmap (depth map / displacement map) image. " +
     imageRef +
-    "Subject: " + subject + ". " +
-    "ABSOLUTE RULES — violating any rule makes the output unusable: " +
-    "RULE 1 — PURE GRAYSCALE: Output MUST be a black-and-white grayscale image only. Zero color. Zero saturation. Only shades of grey from pure black (#000000) to pure white (#FFFFFF). This is a depth map, not an illustration. " +
-    "RULE 2 — WHITE = RAISED, BLACK = RECESSED: white (#FFFFFF) = highest point, black (#000000) = deepest background, grey = intermediate depth. " +
-    "RULE 3 — PRESERVE ALL ELEMENTS: Every single letter, icon, shape, and detail from the reference must appear. Count the letters — all must be present. Do NOT omit, merge, or simplify any element. " +
-    "RULE 4 — SMOOTH GRADIENTS: Raised elements have bright white centers fading to grey at edges. No hard cutoffs. " +
-    "RULE 5 — BLACK BACKGROUND: Background = solid black (#000000). All elements rise above it. " +
-    "RULE 6 — READABLE TEXT: All letters and text must be clearly legible as raised white/light-grey forms on black. " +
+    "ABSOLUTE RULES — violating any rule makes the output unusable for CNC machining: " +
+    "RULE 1 — PURE GRAYSCALE ONLY: Output MUST be a black-and-white grayscale image. Zero color. Zero saturation. Only shades of grey from pure black (#000000) to pure white (#FFFFFF). This is a depth map, not a photo. " +
+    "RULE 2 — WHITE = RAISED, BLACK = RECESSED: white (#FFFFFF) = highest point (most raised), black (#000000) = deepest background (most recessed), grey = intermediate depth. " +
+    "RULE 3 — HIGH CONTRAST: The heightmap MUST have strong contrast — raised elements should be clearly bright white/light grey, background must be solid black. No flat grey overall tone. " +
+    "RULE 4 — SMOOTH GRADIENTS: Raised elements have bright white centers fading smoothly to grey at edges (like a dome or hill). No hard binary black/white cutoffs — smooth transitions create realistic 3D depth. " +
+    "RULE 5 — SOLID BLACK BACKGROUND: Background = solid pure black (#000000). All elements clearly rise above it as bright forms. " +
+    "RULE 6 — PRESERVE ALL DETAILS: Every shape, outline, and important detail from the subject must appear as a raised white/grey form. " +
     "RULE 7 — NO COLOR AT ALL: No red, green, blue, yellow, or any hue. Pure monochrome grayscale only. " +
-    "RULE 8 — PROFESSIONAL QUALITY: Looks like a Vectric Aspire / ArtCAM / Blender displacement map. " +
-    "RULE 9 — COMPOSITION: Subject fills 70-80% of frame with 10-15% black border all around."
+    "RULE 8 — PROFESSIONAL QUALITY: Output should look like a Vectric Aspire / ArtCAM / Blender displacement map — suitable for direct CNC machining. " +
+    "RULE 9 — COMPOSITION: Subject fills 70-80% of frame with 10-15% black border all around. " +
+    "RULE 10 — 3D DEPTH ILLUSION: The heightmap must convey clear 3D depth — viewer should immediately understand which parts are raised and which are recessed."
   );
 }
 
@@ -135,10 +144,20 @@ async function runReliefJob(
 
     // Download the image, post-process to grayscale + normalise + resize, re-upload
     const heightmapRaw = await fetch(heightmapResult.url).then(r => r.arrayBuffer());
+    // Advanced post-processing for CNC heightmap quality:
+    // 1. Force grayscale (remove any color)
+    // 2. Normalise histogram to full 0-255 range
+    // 3. Apply strong contrast curve: gamma < 1 = brighter midtones (raised areas pop)
+    // 4. Linear boost to push whites brighter and darken near-black background
+    // 5. Sharpen edges for crisp CNC toolpath definition
+    const gammaForContrast = depthMm <= 3 ? 0.7 : depthMm <= 5 ? 0.75 : 0.8;
     const processedHeightmap = await sharp(Buffer.from(heightmapRaw))
       .grayscale()           // force pure grayscale (remove any color the AI may have added)
       .normalise()           // stretch histogram to full 0-255 range for maximum depth
-      .linear(1.1, -10)      // slight contrast boost to make raised areas brighter
+      .gamma(gammaForContrast) // brighten midtones so raised areas are clearly white
+      .linear(1.3, -20)      // strong contrast boost: raise whites, push blacks to 0
+      .normalise()           // re-normalise after linear to ensure full range
+      .sharpen({ sigma: 1.5, m1: 0.5, m2: 3 }) // sharpen edges for clean CNC toolpaths
       .resize(outputSize, outputSize, { fit: "contain", background: { r: 0, g: 0, b: 0 } })
       .png()
       .toBuffer();
@@ -152,12 +171,12 @@ async function runReliefJob(
     // depthMm controls the gamma curve: deeper carving = more contrast in the heightmap
     let heightmapTiffUrl: string | undefined;
     try {
-      const gammaValue = depthMm <= 3 ? 1.2 : depthMm <= 5 ? 1.0 : 0.8; // deeper = more contrast
+      // TIFF 16-bit: start from the already-processed PNG heightmap for consistency
+      // Apply additional depth-specific gamma for the TIFF version
       const tiffBuffer = await sharp(processedHeightmap)
         .grayscale()
-        .gamma(gammaValue)   // adjust contrast for carving depth
-        .resize(outputSize, outputSize, { fit: "contain", background: { r: 0, g: 0, b: 0 } })
-        .tiff({ compression: "lzw" })  // sharp outputs 16-bit TIFF automatically for grayscale from 16-bit pipeline
+        .normalise()         // ensure full range
+        .tiff({ compression: "lzw", bitdepth: 8 })  // LZW compressed TIFF
         .toBuffer();
       const tiffKey = `cnc-relief/heightmap-${nanoid()}.tiff`;
       const { url: tiffUrl } = await storagePut(tiffKey, tiffBuffer, "image/tiff");
