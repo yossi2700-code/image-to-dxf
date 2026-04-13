@@ -145,18 +145,21 @@ async function runReliefJob(
     // Download the image, post-process to grayscale + normalise + resize, re-upload
     const heightmapRaw = await fetch(heightmapResult.url).then(r => r.arrayBuffer());
     // Advanced post-processing for CNC heightmap quality:
-    // 1. Force grayscale (remove any color)
-    // 2. Normalise histogram to full 0-255 range
-    // 3. Apply strong contrast curve: gamma < 1 = brighter midtones (raised areas pop)
-    // 4. Linear boost to push whites brighter and darken near-black background
-    // 5. Sharpen edges for crisp CNC toolpath definition
-    const gammaForContrast = depthMm <= 3 ? 0.7 : depthMm <= 5 ? 0.75 : 0.8;
+    // sharp.gamma() only accepts 1.0-3.0 (values < 1 are not supported)
+    // To brighten midtones (equivalent to gamma < 1), we use linear() with a multiplier > 1
+    // Strategy:
+    //   1. Normalise to full 0-255 range
+    //   2. Apply linear boost (multiplier + offset) to push midtones brighter
+    //   3. Re-normalise to ensure full range after boost
+    //   4. Sharpen edges for clean CNC toolpaths
+    // depthMm controls contrast strength: deeper carving = stronger contrast
+    const linearMultiplier = depthMm <= 3 ? 1.4 : depthMm <= 5 ? 1.5 : 1.6;
+    const linearOffset = depthMm <= 3 ? -15 : depthMm <= 5 ? -20 : -25;
     const processedHeightmap = await sharp(Buffer.from(heightmapRaw))
       .grayscale()           // force pure grayscale (remove any color the AI may have added)
       .normalise()           // stretch histogram to full 0-255 range for maximum depth
-      .gamma(gammaForContrast) // brighten midtones so raised areas are clearly white
-      .linear(1.3, -20)      // strong contrast boost: raise whites, push blacks to 0
-      .normalise()           // re-normalise after linear to ensure full range
+      .linear(linearMultiplier, linearOffset) // boost midtones: whites get brighter, blacks stay dark
+      .normalise()           // re-normalise after linear to ensure full 0-255 range
       .sharpen({ sigma: 1.5, m1: 0.5, m2: 3 }) // sharpen edges for clean CNC toolpaths
       .resize(outputSize, outputSize, { fit: "contain", background: { r: 0, g: 0, b: 0 } })
       .png()
