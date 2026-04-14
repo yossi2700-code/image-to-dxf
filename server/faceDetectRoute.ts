@@ -657,7 +657,7 @@ router.get("/api/face-detect/job/:jobId", (req, res) => {
   if (job.status === "done") {
     return res.json({ status: "done", result: job.result });
   } else if (job.status === "error") {
-    return res.json({ status: "error", error: job.error, message: job.error });
+    return res.json({ status: "error", error: job.error, message: job.error, errorCode: job.errorCode, faceCount: job.faceCount });
   } else if (job.status === "cancelled") {
     return res.json({ status: "cancelled" });
   } else {

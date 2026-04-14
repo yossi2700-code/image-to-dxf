@@ -899,25 +899,30 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
               </>
             ) : errorKind === "too_many_faces" ? (
               <>
+                {/* Explanation box */}
+                <div className="rounded-xl px-4 py-3 text-sm leading-relaxed" style={{ background: '#f0f0ff', color: '#3730a3', border: '1.5px solid #c7d2fe' }}>
+                  <p className="font-bold mb-1">{isRtl ? `זוהו ${tooManyFacesCount} פנים בתמונה` : `${tooManyFacesCount} faces detected`}</p>
+                  <p>{isRtl ? 'פורטרט תומך עד 2 אנשים בלבד. לתמונה קבוצתית — השתמש בתמונה לקווים שתומך בכל מספר אנשים.' : 'Portrait supports up to 2 people. For group photos, use Image to Lines which supports any number of people.'}</p>
+                </div>
                 {/* Switch to Image to Lines — primary CTA */}
                 {onSwitchToAiOutline && (
                   <button
-                    className="w-full py-4 rounded-xl font-bold text-white text-base transition-all active:scale-95 flex items-center justify-center gap-2"
-                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 4px 18px rgba(99,102,241,0.4)' }}
+                    className="w-full py-4 rounded-xl font-bold text-white text-base transition-all hover:opacity-90 active:scale-95 flex items-center justify-center gap-2"
+                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 6px 20px rgba(99,102,241,0.5)', border: '2px solid rgba(255,255,255,0.2)' }}
                     onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); onSwitchToAiOutline(imageFile); }}
                   >
-                    <span style={{ fontSize: 20 }}>✨</span>
-                    <span>{isRtl ? "המר לקווים — כל הפנים" : "Convert to Lines — All Faces"}</span>
+                    <span style={{ fontSize: 22 }}>✨</span>
+                    <span>{isRtl ? "נסה תמונה לקווים במקום" : "Try Image to Lines Instead"}</span>
                   </button>
                 )}
                 {/* Upload new photo */}
                 <button
-                  className="w-full py-3.5 rounded-xl font-semibold text-sm transition-all active:scale-95 flex items-center justify-center gap-2"
-                  style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', color: '#475569' }}
+                  className="w-full py-3.5 rounded-xl font-bold text-sm transition-all hover:opacity-90 active:scale-95 flex items-center justify-center gap-2"
+                  style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#fff', boxShadow: '0 4px 14px rgba(124,58,237,0.4)', border: '2px solid rgba(255,255,255,0.15)' }}
                   onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); setImageFile(null); setImagePreview(null); localStorage.removeItem("face_detect_imagePreview"); }}
                 >
-                  <span style={{ fontSize: 18 }}>📷</span>
-                  <span>{isRtl ? "העלה תמונה עם 1-2 אנשים" : "Upload Photo with 1-2 People"}</span>
+                  <span style={{ fontSize: 20 }}>📷</span>
+                  <span>{isRtl ? "העלה תמונה חדשה (1-2 אנשים)" : "Upload New Photo (1-2 People)"}</span>
                 </button>
               </>
             ) : (
