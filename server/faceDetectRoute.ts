@@ -48,9 +48,10 @@ const PORTRAIT_STYLE_PROMPTS: Record<PortraitStyle, string> = {
     "(5) HAIR: exact hairline, hair volume and direction as visible. " +
     "(6) EARS: include if visible from this angle. " +
     "(7) GLASSES: include only if clearly worn. " +
+    "(8) NECK AND SHOULDERS: always include the neck, both shoulders, and the upper chest (collarbone area). This is REQUIRED — a floating head looks unnatural. Draw minimal clothing lines at the shoulder/chest area only if visible. " +
     "FORBIDDEN: Do not front-face a profile. Do not add symmetry that is not there. Do not smooth or idealize. " +
     "Style: clean minimal line art, pure black strokes on white background, no shading, no grey tones. " +
-    "Composition: head fills 70-80% of canvas. No clothing, no background. No text, no watermarks.",
+    "Composition: head + neck + shoulders fill 75-85% of canvas. Include upper chest/collarbone. No background. No text, no watermarks.",
 
   detailed:
     "TASK: Convert this face photo into detailed black-and-white line art for laser/CNC engraving. " +
@@ -66,9 +67,10 @@ const PORTRAIT_STYLE_PROMPTS: Record<PortraitStyle, string> = {
     "(6) EARS: full detail if visible from this angle. " +
     "(7) GLASSES: full detail only if clearly worn. " +
     "(8) SKIN TEXTURE: wrinkles, folds, dimples only where actually visible. " +
+    "(9) NECK AND SHOULDERS: always include the neck, both shoulders, and the upper chest (collarbone area). This is REQUIRED — a floating head looks unnatural. Draw clothing lines at the shoulder/chest area with detail if visible. " +
     "FORBIDDEN: Do not front-face a profile. Do not add symmetry that is not there. Do not smooth or idealize. " +
     "Style: detailed line art, pure black lines on white, no shading, no grey. " +
-    "Composition: head fills 70-80% of canvas. No clothing, no background. No text, no watermarks.",
+    "Composition: head + neck + shoulders fill 75-85% of canvas. Include upper chest/collarbone. No background. No text, no watermarks.",
 };
 
 const STYLE_ORDER: PortraitStyle[] = ["simple", "detailed"];
@@ -431,8 +433,8 @@ async function runFaceDetectJob(
 
       // Build a multi-face specific prompt — focus on FACES only, not full body
       const multiFacePrompt = PORTRAIT_STYLE_PROMPTS[style]
-        .replace("Composition: head fills 70-80% of canvas. No clothing, no background.",
-          `Composition: draw ONLY the faces and heads of all ${faceCount} people — NO body, NO clothing below the neck. All ${faceCount} heads must be fully visible and fit within the canvas. No background.`);
+        .replace(/Composition: head \+ neck \+ shoulders fill [\d-]+% of canvas\. Include upper chest\/collarbone\. No background\./,
+          `Composition: draw the faces, necks, and shoulders of all ${faceCount} people. All ${faceCount} heads + shoulders must be fully visible and fit within the canvas. No background.`);
 
       const [singleResult, sugg] = await Promise.all([
         generatePortraitFromCrop(fullImageBuffer, "", multiFacePrompt),
