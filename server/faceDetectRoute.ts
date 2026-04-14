@@ -26,6 +26,7 @@ import { cleanSvgForPreview } from "./svgClean";
 import { invokeLLM } from "./_core/llm";
 import { generateImage } from "./_core/imageGeneration";
 import potrace from "potrace";
+import { aiTracePipeline } from "./imageProcessor";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
@@ -50,7 +51,8 @@ const PORTRAIT_STYLE_PROMPTS: Record<PortraitStyle, string> = {
     "(7) GLASSES: include only if clearly worn. " +
     "(8) NECK AND SHOULDERS: always include the neck, both shoulders, and the upper chest (collarbone area). This is REQUIRED — a floating head looks unnatural. Draw minimal clothing lines at the shoulder/chest area only if visible. " +
     "FORBIDDEN: Do not front-face a profile. Do not add symmetry that is not there. Do not smooth or idealize. " +
-    "Style: clean minimal line art, pure black strokes on white background, no shading, no grey tones. " +
+    "CRITICAL — OUTLINE ONLY: NEVER fill any area with solid black. Dark clothing, dark hair, shadows — ALL must be drawn as outlines/contour lines only, NOT as filled solid shapes. Every area must remain white inside with only black outlines. " +
+    "Style: clean minimal line art, pure black strokes on white background, no shading, no grey tones, NO SOLID FILLS. " +
     "Composition: head + neck + shoulders fill 75-85% of canvas. Include upper chest/collarbone. No background. No text, no watermarks.",
 
   detailed:
@@ -69,7 +71,8 @@ const PORTRAIT_STYLE_PROMPTS: Record<PortraitStyle, string> = {
     "(8) SKIN TEXTURE: wrinkles, folds, dimples only where actually visible. " +
     "(9) NECK AND SHOULDERS: always include the neck, both shoulders, and the upper chest (collarbone area). This is REQUIRED — a floating head looks unnatural. Draw clothing lines at the shoulder/chest area with detail if visible. " +
     "FORBIDDEN: Do not front-face a profile. Do not add symmetry that is not there. Do not smooth or idealize. " +
-    "Style: detailed line art, pure black lines on white, no shading, no grey. " +
+    "CRITICAL — OUTLINE ONLY: NEVER fill any area with solid black. Dark clothing, dark hair, shadows — ALL must be drawn as outlines/contour lines only, NOT as filled solid shapes. Every area must remain white inside with only black outlines. " +
+    "Style: detailed line art, pure black lines on white, no shading, no grey, NO SOLID FILLS. " +
     "Composition: head + neck + shoulders fill 75-85% of canvas. Include upper chest/collarbone. No background. No text, no watermarks.",
 };
 
@@ -137,19 +140,17 @@ async function generatePortraitVariation(
   if (!imgResponse.ok) throw new Error("Failed to download generated image");
   let rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
 
-  // Potrace → SVG → DXF
-  const processedBuffer = await sharp(rawBuffer)
+  // aiTracePipeline: centerline tracing (Zhang-Suen thinning) — no fill artifacts
+  const paddedBuffer = await sharp(rawBuffer)
     .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
     .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-    .grayscale()
-    .threshold(200)
     .png()
     .toBuffer();
 
-  const rawSvg = await pngToSvg(processedBuffer);
-  const cleanSvg = cleanSvgForPreview(rawSvg);
-
-  const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, minGapMm);
+  const { dxf, svgPreview: cleanSvg, segmentCount, width, height, realWidth, realHeight } = await aiTracePipeline(
+    paddedBuffer,
+    { threshold: 220, simplifyTolerance: 1.2, hairline: hairline, lineweightMm, minGapMm }
+  );
 
   const imgKey = `face-detect-generated/${nanoid()}.png`;
   const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
@@ -389,13 +390,16 @@ async function runFaceDetectJob(
       const imgRes = await fetch(generatedUrl);
       if (!imgRes.ok) throw new Error("Failed to download generated image");
       let rawBuffer = Buffer.from(await imgRes.arrayBuffer());
-      const processedBuffer = await sharp(rawBuffer)
+      // aiTracePipeline: centerline tracing (Zhang-Suen thinning) — no fill artifacts
+      const paddedBuffer = await sharp(rawBuffer)
         .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-        .grayscale().threshold(200).png().toBuffer();
-      const rawSvg = await pngToSvg(processedBuffer);
-      const cleanSvg = cleanSvgForPreview(rawSvg);
-      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, minGapMm);
+        .png()
+        .toBuffer();
+      const { dxf, svgPreview: cleanSvg, segmentCount, width, height, realWidth, realHeight } = await aiTracePipeline(
+        paddedBuffer,
+        { threshold: 220, simplifyTolerance: 1.2, hairline: hairline, lineweightMm, minGapMm }
+      );
       const imgKey = `face-detect-generated/${nanoid()}.png`;
       const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
       const dxfFilename = `face_portrait_${style}${faceLabel ? `_${faceLabel}` : ""}.dxf`;
