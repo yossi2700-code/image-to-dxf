@@ -104,7 +104,7 @@ function pathToPolylines(d: string): SvgPolyline[] {
   let currentPoly: Point[] = [];
   let currentClosed = false;
 
-  const STEPS = 12;
+  const STEPS = 8;
 
   let i = 0;
   const nextNum = (): number => {
@@ -333,6 +333,84 @@ function parseRectElementAsPoly(el: string): SvgPolyline[] {
   }];
 }
 
+// ─── Douglas-Peucker polyline simplification ────────────────────────────────
+
+/**
+ * Simplify a polyline using the Douglas-Peucker algorithm.
+ * tolerance: max allowed perpendicular distance in the same coordinate units.
+ * This dramatically reduces point count while preserving visual shape.
+ */
+function douglasPeucker(points: Point[], tolerance: number): Point[] {
+  if (points.length <= 2) return points;
+
+  // Find the point with the maximum distance from the line start→end
+  const [x1, y1] = points[0];
+  const [x2, y2] = points[points.length - 1];
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len = Math.sqrt(dx * dx + dy * dy);
+
+  let maxDist = 0;
+  let maxIdx = 0;
+
+  if (len < 1e-10) {
+    // Degenerate line — find point farthest from start
+    for (let i = 1; i < points.length - 1; i++) {
+      const d = Math.hypot(points[i][0] - x1, points[i][1] - y1);
+      if (d > maxDist) { maxDist = d; maxIdx = i; }
+    }
+  } else {
+    for (let i = 1; i < points.length - 1; i++) {
+      const [px, py] = points[i];
+      // Perpendicular distance from point to line
+      const dist = Math.abs(dy * px - dx * py + x2 * y1 - y2 * x1) / len;
+      if (dist > maxDist) { maxDist = dist; maxIdx = i; }
+    }
+  }
+
+  if (maxDist > tolerance) {
+    const left  = douglasPeucker(points.slice(0, maxIdx + 1), tolerance);
+    const right = douglasPeucker(points.slice(maxIdx), tolerance);
+    return [...left.slice(0, -1), ...right];
+  }
+
+  return [points[0], points[points.length - 1]];
+}
+
+/**
+ * Merge consecutive polylines where the end of one equals the start of the next.
+ * This reduces the number of LWPOLYLINE entities, which speeds up CAM processing.
+ */
+function mergePolylines(polys: SvgPolyline[], snapDist = 0.01): SvgPolyline[] {
+  if (polys.length === 0) return polys;
+  const result: SvgPolyline[] = [];
+  let current: SvgPolyline | null = null;
+
+  for (const poly of polys) {
+    if (poly.closed) {
+      if (current) { result.push(current); current = null; }
+      result.push(poly);
+      continue;
+    }
+    if (!current) {
+      current = { points: [...poly.points], closed: false };
+      continue;
+    }
+    const lastPt = current.points[current.points.length - 1];
+    const firstPt = poly.points[0];
+    const dist = Math.hypot(firstPt[0] - lastPt[0], firstPt[1] - lastPt[1]);
+    if (dist <= snapDist) {
+      // Merge: skip duplicate start point
+      current.points.push(...poly.points.slice(1));
+    } else {
+      result.push(current);
+      current = { points: [...poly.points], closed: false };
+    }
+  }
+  if (current) result.push(current);
+  return result;
+}
+
 // ─── DXF LWPOLYLINE writer ────────────────────────────────────────────────────
 
 // DXF R2000 lineweight codes (hundredths of mm)
@@ -425,9 +503,22 @@ export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: nu
     for (const poly of polys) allPolylines.push(poly);
   }
 
+  // ── Douglas-Peucker simplification ──────────────────────────────────────────
+  // Tolerance: 0.3 SVG units (~0.08mm at typical scale). Removes redundant
+  // collinear/near-collinear points from Bezier approximations without
+  // visibly changing the shape.
+  const DP_TOLERANCE = 0.3;
+  const simplifiedPolylines = allPolylines.map(poly => ({
+    points: douglasPeucker(poly.points, DP_TOLERANCE),
+    closed: poly.closed,
+  })).filter(poly => poly.points.length >= 2);
+
+  // ── Merge consecutive open polylines that share endpoints ────────────────────
+  const mergedPolylines = mergePolylines(simplifiedPolylines);
+
   // Count total segment count for reporting
   let segmentCount = 0;
-  for (const poly of allPolylines) {
+  for (const poly of mergedPolylines) {
     segmentCount += Math.max(0, poly.points.length - 1);
   }
 
@@ -445,7 +536,7 @@ export function svgToDxf(svgContent: string, hairline = false, lineweightMm?: nu
   const realHeight = allPolylines.length > 0 ? (maxY - minY) : height;
 
   // ── Min-gap scaling ──────────────────────────────────────────────────────────
-  let outputPolylines = allPolylines;
+  let outputPolylines = mergedPolylines;
   let outputWidth = width;
   let outputHeight = height;
 
