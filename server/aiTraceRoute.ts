@@ -259,6 +259,7 @@ export const TRACE_WARMUP_SYSTEM =
   "--- RULE CHECKLIST (verify each before submitting output) --- " +
   "[CHECK 1] PURE WHITE BACKGROUND: Every pixel that is NOT a line must be pure white (#FFFFFF). Even very light grey = FAIL. " +
   "[CHECK 2] PURE BLACK LINES ONLY: Lines must be pure black (#000000). No dark grey, no anti-aliased edges that bleed into grey. " +
+  "[CHECK 2b] FAINT LINES RULE: If the source image has weak, faint, or unclear lines — draw them STRONG and BLACK (#000000) in the output. Do NOT reproduce weak lines as weak lines. Every line in the output must be crisp, strong, and fully black — regardless of how faint it appears in the source. THIN but STRONG — not thick, but fully black and clearly visible. " +
   "[CHECK 3] SINGLE LINE PER EDGE: NEVER draw two parallel lines to simulate thickness. ONE line per edge. If you see double lines anywhere = FAIL. " +
   "[CHECK 4] LINE SPACING: Two lines closer than 3px must be MERGED into one. Crowded lines destroy vectorization. " +
   "[CHECK 5] SELF-CHECK BEFORE SUBMITTING: Scan the entire image. If you find any grey pixel, any double-line, any parallel stroke pair — FIX IT before submitting. " +
@@ -603,32 +604,55 @@ async function runTraceJob(
     const aiResizeW = isLandscapeImg ? 1536 : 1024;
     const aiResizeH = isLandscapeImg ? 1024 : 1536;
 
-    // Normalize dark/underexposed images before sending to gpt-image-1
-    // Detect average brightness: if image is very dark, apply auto-levels to improve quality
+    // Pre-process image before sending to AI:
+    // 1. Normalize dark/underexposed images (auto-levels)
+    // 2. Enhance contrast and sharpen faint/unclear lines so AI sees them clearly
     const rawResized = await sharp(imageBuffer)
       .resize(aiResizeW, aiResizeH, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
       .toBuffer();
     const { channels } = await sharp(rawResized).stats();
     const avgBrightness = (channels[0].mean + channels[1].mean + channels[2].mean) / 3;
     // Detect if image is monochrome/B&W: check if all channels have very similar means
-    // and low saturation (difference between max and min channel mean < 15)
     const channelDiff = Math.max(
       Math.abs(channels[0].mean - channels[1].mean),
       Math.abs(channels[1].mean - channels[2].mean),
       Math.abs(channels[0].mean - channels[2].mean)
     );
     const isMonochrome = channelDiff < 15; // very low color difference = B&W or near-B&W
-    console.log(`[aiTraceRoute] Job ${jobId}: avgBrightness=${avgBrightness.toFixed(1)}, channelDiff=${channelDiff.toFixed(1)}, isMonochrome=${isMonochrome}`);
-    // If average brightness < 80 (out of 255), image is dark — apply normalization
-    const editSourceBuffer = avgBrightness < 80
-      ? await sharp(rawResized)
-          .normalise()           // auto-levels: stretches histogram to full 0-255 range
-          .modulate({ brightness: 1.2 })  // slight brightness boost
-          .png({ compressionLevel: 6 })
-          .toBuffer()
-      : await sharp(rawResized)
-          .png({ compressionLevel: 6 })
-          .toBuffer();
+    // Detect faint/low-contrast images: use min/max range as proxy for contrast
+    // If the range (max - min) across channels is small, the image has weak contrast
+    const avgMin = (channels[0].min + channels[1].min + channels[2].min) / 3;
+    const avgMax = (channels[0].max + channels[1].max + channels[2].max) / 3;
+    const contrastRange = avgMax - avgMin;
+    const isFaint = contrastRange < 100; // low range = low contrast = faint lines
+    console.log(`[aiTraceRoute] Job ${jobId}: avgBrightness=${avgBrightness.toFixed(1)}, channelDiff=${channelDiff.toFixed(1)}, contrastRange=${contrastRange.toFixed(1)}, isMonochrome=${isMonochrome}, isFaint=${isFaint}`);
+
+    // Build pre-processing pipeline based on image characteristics
+    let editSourceBuffer: Buffer;
+    if (avgBrightness < 80) {
+      // Dark image: normalize + brightness boost
+      editSourceBuffer = await sharp(rawResized)
+        .normalise()           // auto-levels: stretches histogram to full 0-255 range
+        .modulate({ brightness: 1.2 })  // slight brightness boost
+        .sharpen({ sigma: 1.2, m1: 1.0, m2: 0.5, x1: 2, y2: 10, y3: 20 }) // sharpen lines
+        .png({ compressionLevel: 6 })
+        .toBuffer();
+    } else if (isFaint) {
+      // Faint/unclear image: aggressive contrast boost + sharpen to make lines visible to AI
+      editSourceBuffer = await sharp(rawResized)
+        .normalise()           // stretch histogram first
+        .linear(1.8, -30)      // boost contrast: push lines darker, bg lighter
+        .sharpen({ sigma: 1.5, m1: 1.5, m2: 0.5, x1: 2, y2: 10, y3: 20 }) // strong sharpen
+        .png({ compressionLevel: 6 })
+        .toBuffer();
+      console.log(`[aiTraceRoute] Job ${jobId}: faint image detected — applied contrast boost + sharpen`);
+    } else {
+      // Normal image: mild sharpen to help AI see fine details
+      editSourceBuffer = await sharp(rawResized)
+        .sharpen({ sigma: 0.8, m1: 0.8, m2: 0.3, x1: 2, y2: 10, y3: 20 }) // mild sharpen
+        .png({ compressionLevel: 6 })
+        .toBuffer();
+    }
 
     // Classify the image in parallel with image preparation (adds ~2-3s, improves prompt quality)
     // Use a 10s timeout so classification never blocks the main pipeline
