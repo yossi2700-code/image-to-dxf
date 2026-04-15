@@ -206,12 +206,7 @@ async function classifyImage(imageBase64: string): Promise<ImageClassification> 
             "Use type='portrait' when the image contains a human face (photo or drawing). " +
             "Use type='landscape' when the image is a photographic scene/environment with realistic lighting. " +
             "Use type='mandala' when the image is a decorative symmetrical pattern. " +
-            "CRITICAL ADDITIONAL RULES FOR type='drawing': " +
-            "(1) Metal gates, iron gates, fences, grilles, railings, metal screens — ALWAYS type='drawing', even if photographed with a real background. The metal structure itself has clear outlines that must be traced. " +
-            "(2) Decorative patterns, mosaic designs, repeating geometric or organic shapes (leaves, vines, branches filling a frame) — ALWAYS type='drawing'. " +
-            "(3) Laser-cut designs, CNC patterns, stencils, ornamental ironwork — ALWAYS type='drawing'. " +
-            "(4) Any image where the main subject consists of clear dark outlines/shapes on a lighter background, even if photographed — type='drawing'. " +
-            "IMPORTANT: When in doubt between 'drawing' and 'object', always choose 'drawing' if there are visible dark outlines forming the main subject. " +
+            "IMPORTANT: When in doubt between 'drawing' and 'object', always choose 'drawing' if there are visible black outlines on a light background. " +
             "Use type='technical_drawing' when the image is a CAD drawing, engineering blueprint, floor plan, schematic, technical diagram, or any drawing with dimension lines, measurement annotations, title blocks, hatching patterns, or precise geometric construction lines typical of engineering/architectural drawings.",
         },
         {
@@ -721,20 +716,15 @@ async function runTraceJob(
 
         if (isColoredLogo) {
           // ── COLORED LOGO PATH: convert colored pixels to black, white/light bg stays white ──
-          // Strategy: desaturate using luminance, then use contrast boost + adaptive threshold.
-          // DO NOT use normalise() — it stretches the histogram and can turn medium-gray backgrounds dark.
-          // Instead: use linear() to push dark elements to black and light bg to white,
-          // then threshold adaptively based on the original image brightness.
-          // bright bg (white paper/logo): threshold=200  — only near-white stays white
-          // medium bg (snow/sky/gray):    threshold=150  — preserves iron gate lines without killing bg
-          // dark bg:                      threshold=120  — handled by isDarkBackground path above
-          const adaptiveThreshold = avgBrightness > 160 ? 200 : avgBrightness > 100 ? 150 : 120;
-          console.log(`[aiTraceRoute] Job ${jobId}: colored logo/drawing — avgBrightness=${avgBrightness.toFixed(1)}, using adaptive threshold=${adaptiveThreshold}`);
+          // Strategy: desaturate using luminance, then use a HIGH threshold (200) to keep
+          // only truly light/white pixels as background. Everything else (colored elements) ── black.
+          // This ensures colored letters/shapes (even light yellow, light green) become black.
+          console.log(`[aiTraceRoute] Job ${jobId}: colored logo — using high-threshold grayscale for potrace`);
           rawBuffer = await sharp(editSourceBuffer)
             .grayscale()                // convert to luminance-based grayscale
-            .linear(1.8, -30)           // contrast boost: push dark lines darker, light bg lighter
+            .linear(1.5, -20)           // mild contrast boost
             .sharpen({ sigma: 1.0, m1: 1.0, m2: 0.5, x1: 2, y2: 10, y3: 20 })
-            .threshold(adaptiveThreshold) // adaptive threshold based on original image brightness
+            .threshold(200)             // HIGH threshold: only pixels >200 (near-white) stay white; everything else ── black
             .extend({ top: 80, bottom: 80, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
             .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
             .png()
