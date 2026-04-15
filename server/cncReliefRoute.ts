@@ -63,10 +63,11 @@ function buildHeightmapPrompt(subject: string, hasSourceImage = false): string {
     "ABSOLUTE RULES: " +
     "RULE 1 — PURE GRAYSCALE ONLY: Zero color, zero saturation. Only shades from pure black (#000000) to pure white (#FFFFFF). " +
     "RULE 2 — WHITE = RAISED, BLACK = RECESSED: white = highest point, black = deepest background, grey = intermediate depth. " +
-    "RULE 3 — SMOOTH GRADIENTS EVERYWHERE: Every raised element transitions smoothly from bright white peak → grey sides → black background. NO hard edges, NO binary black/white. Smooth like a 3D render. " +
+    "RULE 3 — SMOOTH GRADIENTS EVERYWHERE: Every raised element MUST transition smoothly from bright white peak → light grey → mid grey → dark grey → black background. Use MANY intermediate grey tones (at least 5-7 distinct grey levels between white and black). Think of it like a smooth 3D render with soft shadows — NO sudden jumps from white to dark grey. Smooth like a Pixar 3D render. " +
+    "RULE 3b — NO HARD EDGES BETWEEN GREY LEVELS: The transition from the bright mane/fur/hair to the body must be a GRADUAL gradient over many pixels, not a sharp line. Imagine the light slowly fading as you move away from the peak. " +
     "RULE 4 — SOLID BLACK BACKGROUND: Background = pure black (#000000). No grey in background. " +
     "RULE 5 — SMALL DETAILS HAVE DEPTH: Even tiny details (petals, fur, feathers, rope strands) must have their own raised dome shape with highlight and shadow. " +
-    "RULE 6 — HIGH CONTRAST: Strong contrast between raised elements (bright) and background (black). No flat grey overall tone. " +
+    "RULE 6 — BALANCED CONTRAST: Strong contrast between raised elements and background, BUT the raised elements themselves must have smooth internal gradients — not flat white. The mane should be bright white at the tips, fading through many grey tones to the body level. " +
     "RULE 7 — PROFESSIONAL QUALITY: Output must look like a Vectric Aspire / ArtCAM displacement map — suitable for direct CNC machining. " +
     "RULE 8 — COMPOSITION: Subject fills 70-80% of frame with 10-15% pure black border all around. " +
     "RULE 9 — 3D DEPTH ILLUSION: Viewer must immediately understand which parts are raised and which are recessed just by looking at the grey values."
