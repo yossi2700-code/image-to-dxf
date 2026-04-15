@@ -721,15 +721,17 @@ async function runTraceJob(
 
         if (isColoredLogo) {
           // ── COLORED LOGO PATH: convert colored pixels to black, white/light bg stays white ──
-          // Strategy: desaturate using luminance, then use a HIGH threshold (200) to keep
-          // only truly light/white pixels as background. Everything else (colored elements) ── black.
-          // This ensures colored letters/shapes (even light yellow, light green) become black.
-          console.log(`[aiTraceRoute] Job ${jobId}: colored logo — using high-threshold grayscale for potrace`);
+          // Strategy: desaturate using luminance, then threshold adaptively based on image brightness.
+          // For bright images (white bg): high threshold (200) keeps only near-white as background.
+          // For medium images (gray/snow bg): lower threshold (140) to avoid turning everything black.
+          // This handles iron gates photographed against snow/sky backgrounds.
+          const adaptiveThreshold = avgBrightness > 160 ? 200 : avgBrightness > 120 ? 160 : 130;
+          console.log(`[aiTraceRoute] Job ${jobId}: colored logo/drawing — avgBrightness=${avgBrightness.toFixed(1)}, using adaptive threshold=${adaptiveThreshold}`);
           rawBuffer = await sharp(editSourceBuffer)
             .grayscale()                // convert to luminance-based grayscale
-            .linear(1.5, -20)           // mild contrast boost
+            .normalise()                // auto-levels: stretch histogram to full 0-255 range first
             .sharpen({ sigma: 1.0, m1: 1.0, m2: 0.5, x1: 2, y2: 10, y3: 20 })
-            .threshold(200)             // HIGH threshold: only pixels >200 (near-white) stay white; everything else ── black
+            .threshold(adaptiveThreshold) // adaptive: bright bg=200, medium bg=160, dark bg=130
             .extend({ top: 80, bottom: 80, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
             .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
             .png()
