@@ -341,7 +341,7 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
         `If the image shows a branch → draw ONLY that branch with EXACTLY the same number of sub-branches, curves, and proportions as in the original. ` +
         `If the image shows leaves → draw ONLY the leaves that are ACTUALLY VISIBLE — do NOT add extra leaves, do NOT remove existing ones. ` +
         `STRICTLY FORBIDDEN (any of these = complete failure): rotating or flipping the composition, changing orientation, adding ANY element not in the original, removing ANY element that IS in the original, changing proportions, beautifying, stylizing, simplifying, reinterpreting, or adding creative touches. ` +
-        `ALLOWED ONLY: smoothing rough pixel edges, converting filled black areas to clean outlines, making lines crisp and continuous. ` +
+        `ALLOWED ONLY: smoothing rough pixel edges, converting filled black areas to clean outlines, making lines crisp and continuous. SMOOTH ALL CURVES: convert any rough, wobbly, or jagged hand-drawn lines into clean, smooth, flowing curves — as if redrawn with a steady hand or vector pen tool. ` +
         `For black silhouettes (solid black shapes): trace the OUTER CONTOUR of each black shape as a single closed outline. ` +
         `For text/labels visible in the image: reproduce them faithfully as clean outlined letters in the EXACT same position, size, and orientation. ` +
         `FINAL VERIFICATION: mentally overlay your output on the original — every shape must match perfectly in position, size, and orientation. If anything differs, redo it. ` +
@@ -863,8 +863,10 @@ async function runTraceJob(
       const potraceOptions = isDetailedMode
         // Detailed: turdSize 8 keeps very fine details; alphaMax 1.0 = smooth corners;
         // optTolerance 1.0 = maximum curve joining → connects broken lines in complex images
-        ? { threshold: 128, turdSize: 8, alphaMax: 1.0, optCurve: true, optTolerance: 1.0 }
-        : { threshold: 128, turdSize: 24, alphaMax: 1.0, optCurve: true, optTolerance: 0.6 }; // reduced turdSize → preserves small details like individual leaves
+        ? { threshold: 128, turdSize: 8, alphaMax: 1.2, optCurve: true, optTolerance: 1.2 }
+        // Simple: higher optTolerance (1.2) + alphaMax (1.5) = aggressively smooth jagged/wobbly lines
+        // This converts hand-drawn rough strokes into clean Bezier curves
+        : { threshold: 128, turdSize: 24, alphaMax: 1.5, optCurve: true, optTolerance: 1.2 };
 
       const rawSvg = await new Promise<string>((resolve, reject) => {
         potrace.trace(processedBuffer, potraceOptions, (err: Error | null, svg: string) => {
