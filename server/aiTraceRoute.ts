@@ -206,7 +206,12 @@ async function classifyImage(imageBase64: string): Promise<ImageClassification> 
             "Use type='portrait' when the image contains a human face (photo or drawing). " +
             "Use type='landscape' when the image is a photographic scene/environment with realistic lighting. " +
             "Use type='mandala' when the image is a decorative symmetrical pattern. " +
-            "IMPORTANT: When in doubt between 'drawing' and 'object', always choose 'drawing' if there are visible black outlines on a light background. " +
+            "CRITICAL ADDITIONAL RULES FOR type='drawing': " +
+            "(1) Metal gates, iron gates, fences, grilles, railings, metal screens — ALWAYS type='drawing', even if photographed with a real background. The metal structure itself has clear outlines that must be traced. " +
+            "(2) Decorative patterns, mosaic designs, repeating geometric or organic shapes (leaves, vines, branches filling a frame) — ALWAYS type='drawing'. " +
+            "(3) Laser-cut designs, CNC patterns, stencils, ornamental ironwork — ALWAYS type='drawing'. " +
+            "(4) Any image where the main subject consists of clear dark outlines/shapes on a lighter background, even if photographed — type='drawing'. " +
+            "IMPORTANT: When in doubt between 'drawing' and 'object', always choose 'drawing' if there are visible dark outlines forming the main subject. " +
             "Use type='technical_drawing' when the image is a CAD drawing, engineering blueprint, floor plan, schematic, technical diagram, or any drawing with dimension lines, measurement annotations, title blocks, hatching patterns, or precise geometric construction lines typical of engineering/architectural drawings.",
         },
         {

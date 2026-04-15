@@ -2787,3 +2787,7 @@
 ## שיפור החלקת קווים ב-AI from image
 
 - [x] קווים מרוסקים/zigzag — העלאת optTolerance+alphaMax ב-potrace + SMOOTH ALL CURVES ב-prompt
+
+## תיקון סיווג תמונות
+
+- [x] שערי ברזל/פסיפס מסווגים כ-object במקום drawing — הוספו כללי סיווג מפורשים לשערים/גדרות/עיצובי מתכת
