@@ -721,17 +721,20 @@ async function runTraceJob(
 
         if (isColoredLogo) {
           // ── COLORED LOGO PATH: convert colored pixels to black, white/light bg stays white ──
-          // Strategy: desaturate using luminance, then threshold adaptively based on image brightness.
-          // For bright images (white bg): high threshold (200) keeps only near-white as background.
-          // For medium images (gray/snow bg): lower threshold (140) to avoid turning everything black.
-          // This handles iron gates photographed against snow/sky backgrounds.
-          const adaptiveThreshold = avgBrightness > 160 ? 200 : avgBrightness > 120 ? 160 : 130;
+          // Strategy: desaturate using luminance, then use contrast boost + adaptive threshold.
+          // DO NOT use normalise() — it stretches the histogram and can turn medium-gray backgrounds dark.
+          // Instead: use linear() to push dark elements to black and light bg to white,
+          // then threshold adaptively based on the original image brightness.
+          // bright bg (white paper/logo): threshold=200  — only near-white stays white
+          // medium bg (snow/sky/gray):    threshold=150  — preserves iron gate lines without killing bg
+          // dark bg:                      threshold=120  — handled by isDarkBackground path above
+          const adaptiveThreshold = avgBrightness > 160 ? 200 : avgBrightness > 100 ? 150 : 120;
           console.log(`[aiTraceRoute] Job ${jobId}: colored logo/drawing — avgBrightness=${avgBrightness.toFixed(1)}, using adaptive threshold=${adaptiveThreshold}`);
           rawBuffer = await sharp(editSourceBuffer)
             .grayscale()                // convert to luminance-based grayscale
-            .normalise()                // auto-levels: stretch histogram to full 0-255 range first
+            .linear(1.8, -30)           // contrast boost: push dark lines darker, light bg lighter
             .sharpen({ sigma: 1.0, m1: 1.0, m2: 0.5, x1: 2, y2: 10, y3: 20 })
-            .threshold(adaptiveThreshold) // adaptive: bright bg=200, medium bg=160, dark bg=130
+            .threshold(adaptiveThreshold) // adaptive threshold based on original image brightness
             .extend({ top: 80, bottom: 80, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
             .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
             .png()
