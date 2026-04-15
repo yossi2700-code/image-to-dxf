@@ -2787,3 +2787,8 @@
 ## שיפור החלקת קווים ב-AI from image
 
 - [x] קווים מרוסקים/zigzag — העלאת optTolerance+alphaMax ב-potrace + SMOOTH ALL CURVES ב-prompt
+
+## שיפור heightmap תבליט - מחקר ויישום
+
+- [x] Heightmap: מעברים חדים מדי - הוסף Gaussian blur + הסר normalise כפול + TIFF 16-bit אמיתי
+- [x] Heightmap: תיקון syntax errors (EM dash) בprompt

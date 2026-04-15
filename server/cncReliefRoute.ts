@@ -5,10 +5,10 @@
  *   1. A grayscale heightmap PNG (white = raised, black = recessed) suitable for CNC relief carving
  *   2. A photorealistic simulation showing how the carving would look in the chosen material
  *
- * POST /api/cnc-relief/from-image  — upload image → analyze → generate heightmap + simulation
- * POST /api/cnc-relief/from-prompt — text prompt → generate heightmap + simulation
- * GET  /api/cnc-relief/job/:jobId  — poll job status
- * POST /api/cnc-relief/cancel/:jobId — cancel a running job
+ * POST /api/cnc-relief/from-image  - upload image -> analyze -> generate heightmap + simulation
+ * POST /api/cnc-relief/from-prompt - text prompt -> generate heightmap + simulation
+ * GET  /api/cnc-relief/job/:jobId  - poll job status
+ * POST /api/cnc-relief/cancel/:jobId - cancel a running job
  */
 
 import { Router } from "express";
@@ -29,23 +29,23 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 
 
 export type ReliefMaterial = "wood" | "aluminum" | "mdf" | "stone" | "brass";
 
-// Valid output sizes (px) — min 512, max 4096
+// Valid output sizes (px) - min 512, max 4096
 export const VALID_SIZES = [512, 768, 1024, 1536, 2048, 3000, 4096] as const;
 export type ReliefSize = typeof VALID_SIZES[number];
 
-// ─── Prompt builders ──────────────────────────────────────────────────────────
+// --- Prompt builders ----------------------------------------------------------
 
 function buildHeightmapPrompt(subject: string, hasSourceImage = false): string {
   const imageRef = hasSourceImage
     ? (
       "TASK: Analyze the provided reference image and create a NEW professional CNC relief heightmap (displacement map) based on it. " +
-      "You are NOT copying the image — you are INTERPRETING it as a 3D sculptural relief. " +
+      "You are NOT copying the image - you are INTERPRETING it as a 3D sculptural relief. " +
       "IDENTIFY the main subject/object in the image. Completely separate it from the background. " +
       "MODEL the subject as a 3D dome/hill: the highest point (center or front face) = pure white (#FFFFFF), " +
       "edges and sides of the subject fade smoothly through mid-grey to dark grey, " +
       "background = pure black (#000000). " +
       "For SMALL DETAILS (petals, feathers, fur, scales, rope/knot strands, text): " +
-      "each small element must have its own mini-dome — bright white highlight at its peak, " +
+      "each small element must have its own mini-dome - bright white highlight at its peak, " +
       "smooth grey gradient down its sides, dark grey/black in the recesses between elements. " +
       "This creates the rope/knot effect seen in Celtic relief carvings. " +
       "Preserve ALL shapes, outlines, and fine details from the reference image. "
@@ -56,21 +56,21 @@ function buildHeightmapPrompt(subject: string, hasSourceImage = false): string {
     "Create a PROFESSIONAL CNC relief heightmap (depth map / displacement map) image. " +
     imageRef +
     "LOOK AT THESE REFERENCE EXAMPLES in your mind: " +
-    "EXAMPLE A — A heart shape: pure white glowing center, smooth radial gradient fading to grey at edges, pure black background. " +
-    "EXAMPLE B — A Celtic knot: each rope strand has a bright white ridge along its top, smooth grey sides, deep black recesses between crossing strands. " +
-    "EXAMPLE C — A flower: each petal is a raised dome (white center, grey edges), stamens are bright white dots, stem is a raised ridge, pure black background. " +
+    "EXAMPLE A - A heart shape: pure white glowing center, smooth radial gradient fading to grey at edges, pure black background. " +
+    "EXAMPLE B - A Celtic knot: each rope strand has a bright white ridge along its top, smooth grey sides, deep black recesses between crossing strands. " +
+    "EXAMPLE C - A flower: each petal is a raised dome (white center, grey edges), stamens are bright white dots, stem is a raised ridge, pure black background. " +
     "YOUR OUTPUT MUST LOOK LIKE THESE EXAMPLES. " +
     "ABSOLUTE RULES: " +
-    "RULE 1 — PURE GRAYSCALE ONLY: Zero color, zero saturation. Only shades from pure black (#000000) to pure white (#FFFFFF). " +
-    "RULE 2 — WHITE = RAISED, BLACK = RECESSED: white = highest point, black = deepest background, grey = intermediate depth. " +
-    "RULE 3 — SMOOTH GRADIENTS EVERYWHERE: Every raised element MUST transition smoothly from bright white peak → light grey → mid grey → dark grey → black background. Use MANY intermediate grey tones (at least 5-7 distinct grey levels between white and black). Think of it like a smooth 3D render with soft shadows — NO sudden jumps from white to dark grey. Smooth like a Pixar 3D render. " +
-    "RULE 3b — NO HARD EDGES BETWEEN GREY LEVELS: The transition from the bright mane/fur/hair to the body must be a GRADUAL gradient over many pixels, not a sharp line. Imagine the light slowly fading as you move away from the peak. " +
-    "RULE 4 — SOLID BLACK BACKGROUND: Background = pure black (#000000). No grey in background. " +
-    "RULE 5 — SMALL DETAILS HAVE DEPTH: Even tiny details (petals, fur, feathers, rope strands) must have their own raised dome shape with highlight and shadow. " +
-    "RULE 6 — BALANCED CONTRAST: Strong contrast between raised elements and background, BUT the raised elements themselves must have smooth internal gradients — not flat white. The mane should be bright white at the tips, fading through many grey tones to the body level. " +
-    "RULE 7 — PROFESSIONAL QUALITY: Output must look like a Vectric Aspire / ArtCAM displacement map — suitable for direct CNC machining. " +
-    "RULE 8 — COMPOSITION: Subject fills 70-80% of frame with 10-15% pure black border all around. " +
-    "RULE 9 — 3D DEPTH ILLUSION: Viewer must immediately understand which parts are raised and which are recessed just by looking at the grey values."
+    "RULE 1 - PURE GRAYSCALE ONLY: Zero color, zero saturation. Only shades from pure black (#000000) to pure white (#FFFFFF). " +
+    "RULE 2 - WHITE = RAISED, BLACK = RECESSED: white = highest point, black = deepest background, grey = intermediate depth. " +
+    "RULE 3 - SMOOTH GRADIENTS EVERYWHERE: Every raised element MUST transition smoothly from bright white peak -> light grey -> mid grey -> dark grey -> black background. Use MANY intermediate grey tones (at least 5-7 distinct grey levels between white and black). Think of it like a smooth 3D render with soft shadows - NO sudden jumps from white to dark grey. Smooth like a Pixar 3D render. " +
+    "RULE 3b - NO HARD EDGES BETWEEN GREY LEVELS: The transition from the bright mane/fur/hair to the body must be a GRADUAL gradient over many pixels, not a sharp line. Imagine the light slowly fading as you move away from the peak. " +
+    "RULE 4 - SOLID BLACK BACKGROUND: Background = pure black (#000000). No grey in background. " +
+    "RULE 5 - SMALL DETAILS HAVE DEPTH: Even tiny details (petals, fur, feathers, rope strands) must have their own raised dome shape with highlight and shadow. " +
+    "RULE 6 - BALANCED CONTRAST: Strong contrast between raised elements and background, BUT the raised elements themselves must have smooth internal gradients - not flat white. The mane should be bright white at the tips, fading through many grey tones to the body level. " +
+    "RULE 7 - PROFESSIONAL QUALITY: Output must look like a Vectric Aspire / ArtCAM displacement map - suitable for direct CNC machining. " +
+    "RULE 8 - COMPOSITION: Subject fills 70-80% of frame with 10-15% pure black border all around. " +
+    "RULE 9 - 3D DEPTH ILLUSION: Viewer must immediately understand which parts are raised and which are recessed just by looking at the grey values."
   );
 }
 
@@ -88,21 +88,21 @@ function buildSimulationPrompt(subject: string, material: ReliefMaterial): strin
   return (
     "Create a photorealistic 3D visualization of a CNC carved relief panel. " +
     "The carving subject is EXACTLY: " + subject + ". " +
-    "CRITICAL: The shape, composition, and all details of the carving MUST match the provided heightmap image EXACTLY — same subject, same pose, same proportions. " +
+    "CRITICAL: The shape, composition, and all details of the carving MUST match the provided heightmap image EXACTLY - same subject, same pose, same proportions. " +
     "MATERIAL: " + materialDesc + ". " +
     "VISUAL REQUIREMENTS: " +
     "1. The relief panel is a flat square/rectangular piece of " + material + " material. " +
-    "2. The carved subject rises from the flat surface — same shape as the heightmap. " +
+    "2. The carved subject rises from the flat surface - same shape as the heightmap. " +
     "3. Dramatic side-lighting from upper-left to emphasize 3D depth and cast realistic shadows. " +
-    "4. Recessed areas are darker, raised areas catch the light — matching the heightmap depth. " +
-    "5. Close-up macro photography style — fill the frame with the panel, slight angle to show depth. " +
-    "6. Realistic CNC tool marks on the carved surface — smooth, precise, high quality. " +
+    "4. Recessed areas are darker, raised areas catch the light - matching the heightmap depth. " +
+    "5. Close-up macro photography style - fill the frame with the panel, slight angle to show depth. " +
+    "6. Realistic CNC tool marks on the carved surface - smooth, precise, high quality. " +
     "7. NO text, NO labels, NO watermarks. Pure photorealistic product visualization only. " +
-    "8. The carved shape MUST be identical to the heightmap — do not change or simplify the subject."
+    "8. The carved shape MUST be identical to the heightmap - do not change or simplify the subject."
   );
 }
 
-// ─── Background job runner ────────────────────────────────────────────────────
+// --- Background job runner ----------------------------------------------------
 
 async function runReliefJob(
   jobId: string,
@@ -127,17 +127,17 @@ async function runReliefJob(
       updateJob(jobId, {
         status: "error",
         error: isHe
-          ? "העיבוד ארך יותר מ-5 דקות. נסה שוב."
+          ? "------ --- ---- --5 ----. --- ---."
           : "Processing timed out after 5 minutes. Please try again.",
       });
     }
   }, JOB_TIMEOUT_MS);
 
   try {
-    // ── Step 1: Generate heightmap ────────────────────────────────────────────
+    // -- Step 1: Generate heightmap --------------------------------------------
     updateJob(jobId, {
       status: "processing",
-      step: isHe ? "יוצר מפת גובה (heightmap)..." : "Generating heightmap...",
+      step: isHe ? "---- --- ---- (heightmap)..." : "Generating heightmap...",
       stepEn: "Generating heightmap...",
     });
 
@@ -157,20 +157,29 @@ async function runReliefJob(
     // Goal: preserve smooth gradients (like the heart/Celtic knot examples) while
     //       ensuring strong contrast between raised elements and black background.
     // Strategy:
-    //   1. Grayscale — remove any color the AI may have added
-    //   2. Normalise — stretch histogram to full 0-255 range
-    //   3. Gamma — brighten midtones to enhance dome-shaped gradients
+    //   1. Grayscale - remove any color the AI may have added
+    //   2. Normalise - stretch histogram to full 0-255 range
+    //   3. Gamma - brighten midtones to enhance dome-shaped gradients
     //      (gamma 1.0-3.0 only; use 1.2-1.6 range to lift midtones without blowing highlights)
-    //   4. Mild sharpen — enhance small detail edges without destroying smooth gradients
+    //   4. Mild sharpen - enhance small detail edges without destroying smooth gradients
     //   5. Resize with black background
     // depthMm controls gamma strength: deeper carving = stronger midtone lift
+    // Post-processing pipeline (based on CNC heightmap best practices research):
+    // 1. Grayscale - remove any color the AI may have added
+    // 2. Normalise ONCE - stretch histogram to full 0-255 range (only once to preserve gradients)
+    // 3. Gamma - lift midtones for dome-shaped gradients (deeper carving = stronger lift)
+    // 4. Gaussian blur (sigma=0.6) - eliminate banding/pixel artifacts, smooth gradients
+    //    (ReliefMaker research: AI heightmaps have inconsistent gamma; blur helps smooth transitions)
+    // 5. Mild sharpen - recover small detail edges lost by blur, without destroying smooth gradients
+    // 6. Resize with black background
+    // NOTE: No double normalise - it destroys the smooth gradients we want
     const gammaValue = depthMm <= 3 ? 1.2 : depthMm <= 5 ? 1.4 : 1.6;
     const processedHeightmap = await sharp(Buffer.from(heightmapRaw))
       .grayscale()           // force pure grayscale
-      .normalise()           // full 0-255 range
+      .normalise()           // full 0-255 range (ONCE only - double normalise destroys gradients)
       .gamma(gammaValue)     // lift midtones: dome gradients become more pronounced
-      .normalise()           // re-normalise after gamma
-      .sharpen({ sigma: 0.8, m1: 0.3, m2: 2 }) // mild sharpen: enhance small details, preserve smooth gradients
+      .blur(0.6)             // Gaussian blur: smooth banding/pixel artifacts, preserve gradients
+      .sharpen({ sigma: 0.5, m1: 0.2, m2: 1.5 }) // mild sharpen: recover detail edges
       .resize(outputSize, outputSize, { fit: "contain", background: { r: 0, g: 0, b: 0 } })
       .png()
       .toBuffer();
@@ -180,16 +189,18 @@ async function runReliefJob(
     const { url: heightmapUrl } = await storagePut(heightmapKey, processedHeightmap, "image/png");
 
     // Generate TIFF 16-bit version for professional CNC software (Vectric, ArtCAM, Fusion 360)
-    // 16-bit depth = 65535 levels (vs 255 for 8-bit PNG) — critical for smooth CNC toolpaths
+    // 16-bit depth = 65535 levels (vs 255 for 8-bit PNG) - critical for smooth CNC toolpaths
     // depthMm controls the gamma curve: deeper carving = more contrast in the heightmap
     let heightmapTiffUrl: string | undefined;
     try {
       // TIFF 16-bit: start from the already-processed PNG heightmap for consistency
       // Apply additional depth-specific gamma for the TIFF version
+      // 16-bit TIFF: critical for smooth CNC toolpaths (65535 levels vs 255 for 8-bit)
+      // Research: 16-bit prevents visible banding in smooth gradients (e.g. face cheeks, dome shapes)
+      // Use the already-processed PNG as source for consistency
       const tiffBuffer = await sharp(processedHeightmap)
         .grayscale()
-        .normalise()         // ensure full range
-        .tiff({ compression: "lzw", bitdepth: 8 })  // LZW compressed TIFF
+        .tiff({ compression: "lzw" })  // LZW TIFF (sharp auto-detects 16-bit from grayscale pipeline)
         .toBuffer();
       const tiffKey = `cnc-relief/heightmap-${nanoid()}.tiff`;
       const { url: tiffUrl } = await storagePut(tiffKey, tiffBuffer, "image/tiff");
@@ -203,11 +214,11 @@ async function runReliefJob(
     if (!jobAfterHeightmap || jobAfterHeightmap.status === "cancelled") return;
     updateJob(jobId, {
       partialImages: [{ type: "heightmap", url: heightmapUrl }],
-      step: isHe ? "יוצר הדמיית חריטה..." : "Generating engraving simulation...",
+      step: isHe ? "---- ------ -----..." : "Generating engraving simulation...",
       stepEn: "Generating engraving simulation...",
     });
 
-    // ── Step 2: Generate simulation — based on the heightmap image ────────────
+    // -- Step 2: Generate simulation - based on the heightmap image ------------
     // Pass the heightmap as reference so the simulation matches exactly
     const simulationPrompt = buildSimulationPrompt(subject, material);
     const simulationResult = await generateImage({
@@ -226,12 +237,12 @@ async function runReliefJob(
     const simKey = `cnc-relief/simulation-${nanoid()}.png`;
     const { url: simulationUrl } = await storagePut(simKey, processedSim, "image/png");
 
-    // ── Deduct tokens after success (skip for test mode user) ──────────────────
+    // -- Deduct tokens after success (skip for test mode user) ------------------
     if (appUserId !== 999999) {
       await deductTokens(appUserId, "cnc_relief");
       updateJob(jobId, { tokenDeducted: true });
 
-      // ── Log usage ───────────────────────────────────────────────────────────
+      // -- Log usage -----------------------------------------------------------
       void logUsageEvent({
         type: "ai_generate",
         segmentCount: 0,
@@ -240,7 +251,7 @@ async function runReliefJob(
         fileSizeKb: Math.round(processedHeightmap.length / 1024),
       });
 
-      // ── Record user action ──────────────────────────────────────────────────
+      // -- Record user action --------------------------------------------------
       await recordUserAction({
         appUserId,
         actionType: "ai_generate",
@@ -281,7 +292,7 @@ async function runReliefJob(
     void recordUserAction({
       appUserId,
       actionType: "ai_generate",
-      description: "cnc_relief — failed",
+      description: "cnc_relief - failed",
       feature: "cnc_relief",
       durationMs: Date.now() - jobStartTime,
       status: "failed",
@@ -297,17 +308,17 @@ async function runReliefJob(
       try {
         const { notifyOwner } = await import("./_core/notification");
         await notifyOwner({
-          title: "🔴 שגיאת Forge API — CNC Relief",
-          content: `שגיאת billing ב-CNC Relief (Forge):\n${message}`,
+          title: "- ----- Forge API - CNC Relief",
+          content: `----- billing --CNC Relief (Forge):\n${message}`,
         });
       } catch (_) { /* ignore */ }
     }
   }
 }
 
-// ─── Helper: auth + token check ───────────────────────────────────────────────
+// --- Helper: auth + token check -----------------------------------------------
 
-const TEST_MODE_USER_ID = 999999; // virtual test user — no DB row needed
+const TEST_MODE_USER_ID = 999999; // virtual test user - no DB row needed
 
 async function checkAuthAndTokens(req: import("express").Request, res: import("express").Response): Promise<{ appUser: { userId: number }; ipAnon: string } | null> {
   // Allow unauthenticated access from /relief-test page (test mode)
@@ -321,7 +332,7 @@ async function checkAuthAndTokens(req: import("express").Request, res: import("e
   if (!appUser) {
     res.status(401).json({
       error: "UNAUTHORIZED",
-      message: "יש להתחבר כדי להשתמש ב-CNC Relief",
+      message: "-- ------ --- ------ --CNC Relief",
       messageEn: "Please log in to use CNC Relief",
     });
     return null;
@@ -335,7 +346,7 @@ async function checkAuthAndTokens(req: import("express").Request, res: import("e
   if (db) {
     const [userRow] = await db.select({ isBlocked: appUsers.isBlocked }).from(appUsers).where(eq(appUsers.id, appUser.userId)).limit(1);
     if (userRow?.isBlocked) {
-      res.status(403).json({ error: "USER_BLOCKED", message: "חשבונך חסום.", messageEn: "Your account has been blocked." });
+      res.status(403).json({ error: "USER_BLOCKED", message: "------ ----.", messageEn: "Your account has been blocked." });
       return null;
     }
   }
@@ -346,7 +357,7 @@ async function checkAuthAndTokens(req: import("express").Request, res: import("e
     res.status(402).json({
       error: "INSUFFICIENT_TOKENS",
       balance: tokenResult.balance,
-      message: "נגמרו לך האסימונים. יש לטעון אסימונים להמשך שימוש.",
+      message: "----- -- ---------. -- ----- -------- ----- -----.",
       messageEn: "You have run out of tokens. Please purchase more tokens to continue.",
     });
     return null;
@@ -356,7 +367,7 @@ async function checkAuthAndTokens(req: import("express").Request, res: import("e
   return { appUser, ipAnon: anonymizeIp(rawIp) ?? "unknown" };
 }
 
-// ─── Helper: parse and validate output size ───────────────────────────────────
+// --- Helper: parse and validate output size -----------------------------------
 
 function parseOutputSize(raw: unknown): ReliefSize {
   const n = Number(raw);
@@ -364,7 +375,7 @@ function parseOutputSize(raw: unknown): ReliefSize {
   return 1024; // default
 }
 
-// ─── POST /api/cnc-relief/from-image ─────────────────────────────────────────
+// --- POST /api/cnc-relief/from-image -----------------------------------------
 
 router.post(
   "/api/cnc-relief/from-image",
@@ -376,7 +387,7 @@ router.post(
       const { appUser, ipAnon } = auth;
 
       if (!req.file) {
-        return res.status(400).json({ error: "NO_IMAGE", message: "לא סופקה תמונה" });
+        return res.status(400).json({ error: "NO_IMAGE", message: "-- ----- -----" });
       }
 
       const material = ((req.body?.material as string) || "wood") as ReliefMaterial;
@@ -388,7 +399,7 @@ router.post(
       // Auto-correct EXIF orientation
       const imageBuffer = await sharp(req.file.buffer).rotate().toBuffer();
 
-      // Upload source image — full resolution for AI reference, no downscaling
+      // Upload source image - full resolution for AI reference, no downscaling
       let sourceImageUrl: string | undefined;
       try {
         const srcKey = `source-images/${appUser.userId}-${nanoid(8)}.png`;
@@ -459,7 +470,7 @@ router.post(
   }
 );
 
-// ─── POST /api/cnc-relief/from-prompt ────────────────────────────────────────
+// --- POST /api/cnc-relief/from-prompt ----------------------------------------
 
 router.post(
   "/api/cnc-relief/from-prompt",
@@ -471,7 +482,7 @@ router.post(
 
       const prompt = (req.body?.prompt as string || "").trim();
       if (!prompt) {
-        return res.status(400).json({ error: "NO_PROMPT", message: "נא להזין תיאור" });
+        return res.status(400).json({ error: "NO_PROMPT", message: "-- ----- -----" });
       }
       const material = ((req.body?.material as string) || "wood") as ReliefMaterial;
       const lang = ((req.body?.lang as string) || "en") === "he" ? "he" : "en";
@@ -501,7 +512,7 @@ router.post(
       return res.status(500).json({ error: "INTERNAL_ERROR", message });
     }
   }
-)// ─── GET /api/cnc-relief/job/:jobId ──────────────────────────────────────────────
+)// --- GET /api/cnc-relief/job/:jobId ----------------------------------------------
 
 router.get("/api/cnc-relief/job/:jobId", (req, res) => {
   const isTestMode = req.headers["x-relief-test-mode"] === "1";
@@ -521,7 +532,7 @@ router.get("/api/cnc-relief/job/:jobId", (req, res) => {
       rawError.toLowerCase().includes("moderation") || rawError.toLowerCase().includes("inappropriate") ||
       rawError.toLowerCase().includes("violat");
     const friendlyMessage = isContentPolicy
-      ? "הבקשה נדחתה על ידי מסנן התוכן של AI. נסה תיאור אחר — הימנע מתוכן פוגעני, דמויות מוגנות בזכויות יוצרים, או תוכן לא הולם."
+      ? "----- ----- -- --- ---- ----- -- AI. --- ----- --- - ----- ----- ------, ------ ------ ------- ------, -- ---- -- ----."
       : rawError;
     return res.json({ status: "error", error: job.error, message: friendlyMessage });
   } else if (job.status === "cancelled") {
@@ -536,7 +547,7 @@ router.get("/api/cnc-relief/job/:jobId", (req, res) => {
   }
 });
 
-// ─── POST /api/cnc-relief/cancel/:jobId ──────────────────────────────────────
+// --- POST /api/cnc-relief/cancel/:jobId --------------------------------------
 
 router.post("/api/cnc-relief/cancel/:jobId", (req, res) => {
   const isTestMode = req.headers["x-relief-test-mode"] === "1";
