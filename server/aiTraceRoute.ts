@@ -687,26 +687,18 @@ async function runTraceJob(
       });
     }
 
-    // ── B&W BYPASS: if image is already a B&W line drawing, skip AI entirely ──
-    // This gives 100% faithful output — no creative interpretation by the AI model.
-    // ONLY bypass AI when the image is already monochrome (B&W) — i.e. black lines on white bg.
-    // Colored drawings/logos MUST go through AI to get clean outlines (direct potrace turns them black).
-    const isDarkBackground = avgBrightness < 80; // dark bg logo (e.g. black bg with colored lines)
-    const isColoredLogo = imageClassification.type === "drawing" && !isMonochrome && !isDarkBackground;
-    // isBwDrawing: ONLY true when image is already black-and-white (monochrome) drawing.
-    // Colored logos (isColoredLogo) and dark-bg logos go through AI for proper outline extraction.
-    const isBwDrawing = imageClassification.type === "drawing" && isMonochrome && !isDarkBackground;
-    if (isBwDrawing) {
-      console.log(`[aiTraceRoute] Job ${jobId}: B&W drawing detected (monochrome) — bypassing AI, going directly to Potrace`);
+    // ALL drawings go through AI — no bypass.
+    // Direct potrace bypass was removed because channel-mean analysis cannot reliably detect
+    // colored logos (colored pixels are a small fraction of total, so means appear monochrome).
+    // AI always produces better outlines than direct potrace for any drawing type.
+    const isDarkBackground = avgBrightness < 80;
+    const isBwDrawing = false; // DISABLED: all drawings go through AI
+    const isColoredLogo = imageClassification.type === "drawing" && !isDarkBackground;
+    if (isColoredLogo) {
+      console.log(`[aiTraceRoute] Job ${jobId}: drawing/logo detected — sending to AI for outline extraction`);
       updateJob(jobId, {
-        step: isHe ? "ציור B&W זוהה — ממיר ישירות לוקטור..." : "B&W drawing detected — converting directly to vector...",
-        stepEn: "B&W drawing detected — converting directly to vector...",
-      });
-    } else if (isColoredLogo) {
-      console.log(`[aiTraceRoute] Job ${jobId}: colored logo detected — sending to AI for outline extraction`);
-      updateJob(jobId, {
-        step: isHe ? "לוגו צבעוני זוהה — מחלץ קווי מתאר..." : "Colored logo detected — extracting outlines via AI...",
-        stepEn: "Colored logo detected — extracting outlines via AI...",
+        step: isHe ? "ציור/לוגו זוהה — מחלץ קווי מתאר..." : "Drawing/logo detected — extracting outlines via AI...",
+        stepEn: "Drawing/logo detected — extracting outlines via AI...",
       });
     } else if (isDarkBackground) {
       console.log(`[aiTraceRoute] Job ${jobId}: dark-bg drawing detected — sending to AI for outline extraction`);
@@ -722,19 +714,8 @@ async function runTraceJob(
 
       let rawBuffer: Buffer;
 
-      if (isBwDrawing) {
-        // ── DIRECT POTRACE PATH: image is already B&W monochrome — no AI needed ──
-        // Apply sharp contrast + threshold to clean up the image before Potrace
-        rawBuffer = await sharp(editSourceBuffer)
-          .grayscale()
-          .linear(2.0, -40)           // boost contrast: push lines to black, bg to white
-          .sharpen({ sigma: 1.5, m1: 1.0, m2: 0.5, x1: 2, y2: 10, y3: 20 })
-          .threshold(160)
-          .extend({ top: 80, bottom: 80, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-          .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-          .png()
-          .toBuffer();
-        console.log(`[aiTraceRoute] Job ${jobId}: B&W monochrome drawing — direct potrace path`);
+      if (false) {
+        // DISABLED: B&W bypass removed — all drawings go through AI
       } else {
         // ── AI PATH: send to Forge ImageService ──
         // Build prompt based on image classification
