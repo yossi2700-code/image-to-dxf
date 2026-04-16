@@ -687,18 +687,17 @@ async function runTraceJob(
       });
     }
 
-    // ── B&W BYPASS: if image is already a line drawing/logo, skip AI entirely ──
+    // ── B&W BYPASS: if image is already a B&W line drawing, skip AI entirely ──
     // This gives 100% faithful output — no creative interpretation by the AI model.
-    // Condition: classified as "drawing" — includes B&W drawings, colored logos, dark-bg logos.
-    // All drawing types bypass AI to preserve exact shapes, letters, and composition.
+    // ONLY bypass AI when the image is already monochrome (B&W) — i.e. black lines on white bg.
+    // Colored drawings/logos MUST go through AI to get clean outlines (direct potrace turns them black).
     const isDarkBackground = avgBrightness < 80; // dark bg logo (e.g. black bg with colored lines)
     const isColoredLogo = imageClassification.type === "drawing" && !isMonochrome && !isDarkBackground;
-    // Colored logos (multi-color illustrations like Loro Bazar) MUST go through AI to get clean outlines.
-    // Only B&W drawings (already black lines on white) or dark-bg logos bypass AI.
-    const isBwDrawing = imageClassification.type === "drawing" && !isColoredLogo; // colored logos go to AI
+    // isBwDrawing: ONLY true when image is already black-and-white (monochrome) drawing.
+    // Colored logos (isColoredLogo) and dark-bg logos go through AI for proper outline extraction.
+    const isBwDrawing = imageClassification.type === "drawing" && isMonochrome && !isDarkBackground;
     if (isBwDrawing) {
-      const reason = isDarkBackground && !isMonochrome ? "dark-bg logo" : "B&W drawing";
-      console.log(`[aiTraceRoute] Job ${jobId}: ${reason} detected — bypassing AI, going directly to Potrace`);
+      console.log(`[aiTraceRoute] Job ${jobId}: B&W drawing detected (monochrome) — bypassing AI, going directly to Potrace`);
       updateJob(jobId, {
         step: isHe ? "ציור B&W זוהה — ממיר ישירות לוקטור..." : "B&W drawing detected — converting directly to vector...",
         stepEn: "B&W drawing detected — converting directly to vector...",
@@ -709,6 +708,12 @@ async function runTraceJob(
         step: isHe ? "לוגו צבעוני זוהה — מחלץ קווי מתאר..." : "Colored logo detected — extracting outlines via AI...",
         stepEn: "Colored logo detected — extracting outlines via AI...",
       });
+    } else if (isDarkBackground) {
+      console.log(`[aiTraceRoute] Job ${jobId}: dark-bg drawing detected — sending to AI for outline extraction`);
+      updateJob(jobId, {
+        step: isHe ? "ציור על רקע כהה זוהה — מחלץ קווי מתאר..." : "Dark-bg drawing detected — extracting outlines via AI...",
+        stepEn: "Dark-bg drawing detected — extracting outlines via AI...",
+      });
     }
 
     // Generate only the selected variation (variationIndex: 0=simple, 1=detailed, 2=decorative)
@@ -718,42 +723,18 @@ async function runTraceJob(
       let rawBuffer: Buffer;
 
       if (isBwDrawing) {
-        // ── DIRECT POTRACE PATH: use the source image as-is, no AI ──
+        // ── DIRECT POTRACE PATH: image is already B&W monochrome — no AI needed ──
         // Apply sharp contrast + threshold to clean up the image before Potrace
-        const needsInvert = isDarkBackground && !isMonochrome;
-
-        if (isColoredLogo) {
-          // ── COLORED LOGO PATH: convert colored pixels to black, white/light bg stays white ──
-          // Strategy: desaturate using luminance, then use a HIGH threshold (200) to keep
-          // only truly light/white pixels as background. Everything else (colored elements) ── black.
-          // This ensures colored letters/shapes (even light yellow, light green) become black.
-          console.log(`[aiTraceRoute] Job ${jobId}: colored logo — using high-threshold grayscale for potrace`);
-          rawBuffer = await sharp(editSourceBuffer)
-            .grayscale()                // convert to luminance-based grayscale
-            .linear(1.5, -20)           // mild contrast boost
-            .sharpen({ sigma: 1.0, m1: 1.0, m2: 0.5, x1: 2, y2: 10, y3: 20 })
-            .threshold(200)             // HIGH threshold: only pixels >200 (near-white) stay white; everything else ── black
-            .extend({ top: 80, bottom: 80, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-            .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-            .png()
-            .toBuffer();
-        } else {
-          // ── B&W or dark-bg logo path ──
-          let bwPipeline = sharp(editSourceBuffer).grayscale();
-          if (needsInvert) {
-            // Dark bg logo: invert so colored/white lines become black on white background
-            bwPipeline = bwPipeline.negate() as typeof bwPipeline;
-          }
-          rawBuffer = await (bwPipeline as sharp.Sharp)
-            .linear(2.0, -40)           // boost contrast: push lines to black, bg to white
-            .sharpen({ sigma: 1.5, m1: 1.0, m2: 0.5, x1: 2, y2: 10, y3: 20 })
-            .threshold(160)
-            .extend({ top: 80, bottom: 80, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-            .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-            .png()
-            .toBuffer();
-          if (needsInvert) console.log(`[aiTraceRoute] Job ${jobId}: inverted dark-bg logo for potrace`);
-        }
+        rawBuffer = await sharp(editSourceBuffer)
+          .grayscale()
+          .linear(2.0, -40)           // boost contrast: push lines to black, bg to white
+          .sharpen({ sigma: 1.5, m1: 1.0, m2: 0.5, x1: 2, y2: 10, y3: 20 })
+          .threshold(160)
+          .extend({ top: 80, bottom: 80, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .png()
+          .toBuffer();
+        console.log(`[aiTraceRoute] Job ${jobId}: B&W monochrome drawing — direct potrace path`);
       } else {
         // ── AI PATH: send to Forge ImageService ──
         // Build prompt based on image classification
