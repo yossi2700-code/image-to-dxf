@@ -781,17 +781,29 @@ async function runTraceJob(
         // No further processing needed — use as-is for Potrace
         processedBuffer = rawBuffer;
       } else if (isPortraitMode) {
-        // PORTRAIT MODE: AI generates line art with grey mid-tones (hair, face shadows).
-        // Problem: aggressive contrast (linear 1.8/-30 + threshold 155) turns grey areas into solid black → filled shapes.
-        // Solution: very high threshold (210) + gentle contrast → ONLY the darkest lines survive.
-        // This preserves the thin outline style and prevents filled black blobs.
-        processedBuffer = await sharp(rawBuffer)
+        // PORTRAIT MODE: Use Laplacian edge detection instead of threshold.
+        // Problem with threshold: grey areas (hair, shadows) become solid black filled shapes.
+        // Solution: Laplacian kernel finds EDGES ONLY (transitions between light/dark) → pure line art.
+        // Pipeline: resize → grayscale → blur (denoise) → Laplacian edge → invert (edges=black on white) → threshold (clean up weak edges)
+        const edgeRaw = await sharp(rawBuffer)
           .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .grayscale()
-          .linear(1.3, 10)             // gentle contrast: preserve mid-tones, don't push grey→black
-          .blur(0.8)                   // minimal blur to remove single-pixel noise
-          .threshold(210)              // HIGH threshold: only very dark lines pass — no grey fill areas
+          .blur(1.2)                   // denoise before edge detection to avoid speckle edges
+          .convolve({                  // Laplacian of Gaussian kernel — detects edges in all directions
+            width: 3, height: 3,
+            kernel: [-1, -1, -1, -1, 8, -1, -1, -1, -1],
+            scale: 1,
+            offset: 0
+          })
+          .png()
+          .toBuffer();
+        // After Laplacian: edges are bright on dark background. Invert so edges=dark on white.
+        // Then threshold to clean up weak/noisy edges and keep only strong lines.
+        processedBuffer = await sharp(edgeRaw)
+          .negate()                    // invert: edges become black, background becomes white
+          .linear(3.0, -400)           // boost edge contrast: make strong edges blacker, push weak to white
+          .threshold(200)              // keep only strong edges — removes noise speckles
           .png()
           .toBuffer();
       } else if (isDetailedMode) {
