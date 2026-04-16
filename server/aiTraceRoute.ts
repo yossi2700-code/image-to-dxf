@@ -767,6 +767,17 @@ async function runTraceJob(
       const isDetailedMode = idx === 1;
       const isPortraitMode = imageClassification.type === "portrait";
 
+      // DEBUG: save raw AI image before pipeline to S3 for analysis
+      if (isPortraitMode && idx === 0) {
+        try {
+          const debugKey = `debug/portrait-raw-${jobId}-${Date.now()}.png`;
+          const { url: debugUrl } = await storagePut(debugKey, rawBuffer, "image/png");
+          console.log(`[DEBUG] Portrait raw AI image saved: ${debugUrl}`);
+        } catch (e) {
+          console.warn("[DEBUG] Failed to save portrait raw image:", e);
+        }
+      }
+
       let processedBuffer: Buffer;
       if (isBwDrawing) {
         // B&W bypass: rawBuffer is already processed (grayscale + contrast + threshold + resize)
@@ -831,7 +842,12 @@ async function runTraceJob(
       // Simple: large turdSize removes small details; Detailed: small turdSize keeps texture/detail lines
       // turdSize scaled up for 3072px (4x area = ~4x turdSize)
       // Detailed: higher optTolerance (0.6) = smoother curves; lower alphaMax = rounder corners
-      const potraceOptions = isDetailedMode
+      // Portrait mode: use gentle potrace settings to preserve thin lines
+      // alphaMax 1.0 + optTolerance 0.6 = original settings from Apr 6 that worked correctly
+      // alphaMax 1.5 + optTolerance 1.2 caused corners to merge and fill areas with black
+      const potraceOptions = isPortraitMode
+        ? { threshold: 100, turdSize: 4, alphaMax: 1.0, optCurve: true, optTolerance: 0.6 }
+        : isDetailedMode
         // Detailed: turdSize 8 keeps very fine details; alphaMax 1.0 = smooth corners;
         // optTolerance 1.0 = maximum curve joining → connects broken lines in complex images
         ? { threshold: 128, turdSize: 8, alphaMax: 1.2, optCurve: true, optTolerance: 1.2 }
