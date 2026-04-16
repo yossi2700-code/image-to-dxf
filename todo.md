@@ -2792,3 +2792,7 @@
 
 - [x] Heightmap: מעברים חדים מדי - הוסף Gaussian blur + הסר normalise כפול + TIFF 16-bit אמיתי
 - [x] Heightmap: תיקון syntax errors (EM dash) בprompt
+
+## תיקון לוגו צבעוני
+
+- [x] לוגו צבעוני (Loro Bazar) מסווג כ-drawing ועובר potrace שחור — תוקן: isColoredLogo עכשיו עובר AI outline

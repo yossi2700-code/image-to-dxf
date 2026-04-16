@@ -693,13 +693,21 @@ async function runTraceJob(
     // All drawing types bypass AI to preserve exact shapes, letters, and composition.
     const isDarkBackground = avgBrightness < 80; // dark bg logo (e.g. black bg with colored lines)
     const isColoredLogo = imageClassification.type === "drawing" && !isMonochrome && !isDarkBackground;
-    const isBwDrawing = imageClassification.type === "drawing"; // ALL drawings bypass AI
+    // Colored logos (multi-color illustrations like Loro Bazar) MUST go through AI to get clean outlines.
+    // Only B&W drawings (already black lines on white) or dark-bg logos bypass AI.
+    const isBwDrawing = imageClassification.type === "drawing" && !isColoredLogo; // colored logos go to AI
     if (isBwDrawing) {
-      const reason = isDarkBackground && !isMonochrome ? "dark-bg logo" : isColoredLogo ? "colored logo/drawing" : "B&W drawing";
+      const reason = isDarkBackground && !isMonochrome ? "dark-bg logo" : "B&W drawing";
       console.log(`[aiTraceRoute] Job ${jobId}: ${reason} detected — bypassing AI, going directly to Potrace`);
       updateJob(jobId, {
-        step: isHe ? "לוגו/ציור זוהה — ממיר ישירות לוקטור..." : "Logo/drawing detected — converting directly to vector...",
-        stepEn: "Logo/drawing detected — converting directly to vector...",
+        step: isHe ? "ציור B&W זוהה — ממיר ישירות לוקטור..." : "B&W drawing detected — converting directly to vector...",
+        stepEn: "B&W drawing detected — converting directly to vector...",
+      });
+    } else if (isColoredLogo) {
+      console.log(`[aiTraceRoute] Job ${jobId}: colored logo detected — sending to AI for outline extraction`);
+      updateJob(jobId, {
+        step: isHe ? "לוגו צבעוני זוהה — מחלץ קווי מתאר..." : "Colored logo detected — extracting outlines via AI...",
+        stepEn: "Colored logo detected — extracting outlines via AI...",
       });
     }
 
