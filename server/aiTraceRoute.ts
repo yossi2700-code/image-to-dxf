@@ -310,18 +310,10 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
       return (
         base +
         `PORTRAIT MODE: This is a human face or person. ` +
-        `Style: detailed coloring-book portrait — like a professional portrait illustration book. ` +
-        `RULE 1 — NO FILLS: Every area MUST be pure white (#FFFFFF). FORBIDDEN: filled black areas, solid dark regions, black hair fill, shaded zones. ` +
-        `RULE 2 — FULL DETAIL: Draw ALL of these elements with MULTIPLE lines each: ` +
-        `(a) HAIR: 15-25 individual flowing curved strokes showing hair direction and volume — NOT a silhouette, NOT a blob. ` +
-        `(b) EYES: upper eyelid arc, lower eyelid arc, iris circle, pupil dot, eyebrow as single curved stroke. ` +
-        `(c) NOSE: two nostril curves + nose bridge line. ` +
-        `(d) MOUTH: upper lip curve (two arcs), lower lip curve, corner lines. ` +
-        `(e) FACE: jaw outline, cheekbones, chin, forehead hairline. ` +
-        `(f) NECK + SHOULDERS: neck sides, collar/clothing outline. ` +
-        `RULE 3 — DARK AREAS: Where the photo shows dark shadows or dark hair, draw LINES (not fills). Use more lines closer together to suggest darkness — but NEVER fill with black. ` +
-        `RULE 4 — LINE WEIGHT: Face outline = medium (3-4px). Hair strokes = thin (1-2px). Facial features = thin (1-2px). ` +
-        `Result must look like a detailed portrait coloring page — rich in lines, zero filled areas. ` +
+        `Draw the face outline, main facial features (eyes, nose, mouth, eyebrows), hair silhouette, and neck/shoulder contour. ` +
+        `Focus on the most expressive lines that define the person's likeness. ` +
+        `IGNORE: skin texture, fine hair strands, background details, clothing patterns. ` +
+        `Keep lines smooth and flowing — portrait-style line art. ` +
         variationStyle
       );
 
@@ -792,20 +784,6 @@ async function runTraceJob(
           .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .sharpen({ sigma: 2.0, m1: 1.5, m2: 0.5, x1: 2, y2: 10, y3: 20 }) // crisp edges before binarization
           .threshold(170)             // slightly lower threshold — catches more of the sharpened dark pixels
-          .png()
-          .toBuffer();
-      } else if (isPortraitMode) {
-        // PORTRAIT MODE: AI generates light grey lines on white background.
-        // linear(1.8,-30) BREAKS portraits: grey pixel 180 → 180*1.8-30=294 → solid black → filled areas.
-        // Fix: NO linear boost. Just grayscale + low threshold (110).
-        //   • Lines (0-110) → BLACK
-        //   • Grey hair/shadows (110-255) → WHITE (discarded)
-        // This is the only way to get clean line art from a portrait drawing.
-        processedBuffer = await sharp(rawBuffer)
-          .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-          .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-          .grayscale()
-          .threshold(110)              // LOW threshold, NO linear — only true dark lines pass
           .png()
           .toBuffer();
       } else {
