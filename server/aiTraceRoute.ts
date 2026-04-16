@@ -780,24 +780,6 @@ async function runTraceJob(
         // B&W bypass: rawBuffer is already processed (grayscale + contrast + threshold + resize)
         // No further processing needed — use as-is for Potrace
         processedBuffer = rawBuffer;
-      } else if (isPortraitMode) {
-        // PORTRAIT MODE: The AI generates a drawing with LIGHT GREY lines on white background.
-        // Analysis: lines are pixel values 0-120 (dark), grey areas are 120-200, background is 200-255.
-        // Problem: any contrast boost or high threshold pushes grey areas (120-200) into black → filled shapes.
-        // Solution: LOW threshold (120) — only pixels darker than 120 become black.
-        //   • Pixels 0-120 (actual lines) → BLACK (kept)
-        //   • Pixels 120-200 (grey shadows/hair) → WHITE (discarded)
-        //   • Pixels 200-255 (background) → WHITE (kept)
-        // NO contrast boost before threshold — that would push grey into the 0-120 range.
-        // Gentle blur(0.8) only to remove single-pixel noise without thickening lines.
-        processedBuffer = await sharp(rawBuffer)
-          .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-          .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-          .grayscale()
-          .blur(0.8)                   // minimal denoise only — no contrast boost
-          .threshold(120)              // LOW threshold: only true dark lines pass, grey areas become white
-          .png()
-          .toBuffer();
       } else if (isDetailedMode) {
         // Detailed mode: AI often generates thin/grey lines.
         // Pipeline: grayscale → contrast boost → resize (high res) → sharpen → threshold
