@@ -794,6 +794,20 @@ async function runTraceJob(
           .threshold(170)             // slightly lower threshold — catches more of the sharpened dark pixels
           .png()
           .toBuffer();
+      } else if (isPortraitMode) {
+        // PORTRAIT MODE: AI generates light grey lines on white background.
+        // linear(1.8,-30) BREAKS portraits: grey pixel 180 → 180*1.8-30=294 → solid black → filled areas.
+        // Fix: NO linear boost. Just grayscale + low threshold (110).
+        //   • Lines (0-110) → BLACK
+        //   • Grey hair/shadows (110-255) → WHITE (discarded)
+        // This is the only way to get clean line art from a portrait drawing.
+        processedBuffer = await sharp(rawBuffer)
+          .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .grayscale()
+          .threshold(110)              // LOW threshold, NO linear — only true dark lines pass
+          .png()
+          .toBuffer();
       } else {
         // Simple mode: minimal blur to preserve fine details (leaves, small shapes)
         // blur(1.0) instead of 3.0 — just enough to remove single-pixel noise without merging nearby lines
