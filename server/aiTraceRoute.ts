@@ -310,9 +310,14 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
       return (
         base +
         `PORTRAIT MODE: This is a human face or person. ` +
-        `Draw the face outline, main facial features (eyes, nose, mouth, eyebrows), hair silhouette, and neck/shoulder contour. ` +
-        `Focus on the most expressive lines that define the person's likeness. ` +
-        `IGNORE: skin texture, fine hair strands, background details, clothing patterns. ` +
+        `Draw ONLY thin continuous lines — like a coloring-book portrait. ` +
+        `CRITICAL — LINES ONLY, ZERO FILLS: Every area (hair, skin, clothing, shadows) MUST remain 100% pure white (#FFFFFF). ` +
+        `ABSOLUTELY FORBIDDEN: filled black areas, solid black regions, dark blobs, shaded zones, black hair fill, black clothing fill. ` +
+        `Hair must be drawn as individual flowing LINE STROKES — not as a filled black silhouette. ` +
+        `Shadows and dark areas in the photo must be IGNORED — draw only the boundary lines, never fill them. ` +
+        `Draw: face outline (single thin line), eyes (iris circle + eyelid lines), eyebrows (single curved line each), nose (2-3 lines), mouth (2 lines for lips), hair (flowing individual strokes showing hair direction), neck/shoulder contour (single line). ` +
+        `Every enclosed area must be 100% pure white — NO exceptions. ` +
+        `Think: coloring-book portrait where a child would color in the white areas. ` +
         `Keep lines smooth and flowing — portrait-style line art. ` +
         variationStyle
       );
