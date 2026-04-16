@@ -310,15 +310,18 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
       return (
         base +
         `PORTRAIT MODE: This is a human face or person. ` +
-        `Draw ONLY thin continuous lines — like a coloring-book portrait. ` +
-        `CRITICAL — LINES ONLY, ZERO FILLS: Every area (hair, skin, clothing, shadows) MUST remain 100% pure white (#FFFFFF). ` +
-        `ABSOLUTELY FORBIDDEN: filled black areas, solid black regions, dark blobs, shaded zones, black hair fill, black clothing fill. ` +
-        `Hair must be drawn as individual flowing LINE STROKES — not as a filled black silhouette. ` +
-        `Shadows and dark areas in the photo must be IGNORED — draw only the boundary lines, never fill them. ` +
-        `Draw: face outline (single thin line), eyes (iris circle + eyelid lines), eyebrows (single curved line each), nose (2-3 lines), mouth (2 lines for lips), hair (flowing individual strokes showing hair direction), neck/shoulder contour (single line). ` +
-        `Every enclosed area must be 100% pure white — NO exceptions. ` +
-        `Think: coloring-book portrait where a child would color in the white areas. ` +
-        `Keep lines smooth and flowing — portrait-style line art. ` +
+        `Style: detailed coloring-book portrait — like a professional portrait illustration book. ` +
+        `RULE 1 — NO FILLS: Every area MUST be pure white (#FFFFFF). FORBIDDEN: filled black areas, solid dark regions, black hair fill, shaded zones. ` +
+        `RULE 2 — FULL DETAIL: Draw ALL of these elements with MULTIPLE lines each: ` +
+        `(a) HAIR: 15-25 individual flowing curved strokes showing hair direction and volume — NOT a silhouette, NOT a blob. ` +
+        `(b) EYES: upper eyelid arc, lower eyelid arc, iris circle, pupil dot, eyebrow as single curved stroke. ` +
+        `(c) NOSE: two nostril curves + nose bridge line. ` +
+        `(d) MOUTH: upper lip curve (two arcs), lower lip curve, corner lines. ` +
+        `(e) FACE: jaw outline, cheekbones, chin, forehead hairline. ` +
+        `(f) NECK + SHOULDERS: neck sides, collar/clothing outline. ` +
+        `RULE 3 — DARK AREAS: Where the photo shows dark shadows or dark hair, draw LINES (not fills). Use more lines closer together to suggest darkness — but NEVER fill with black. ` +
+        `RULE 4 — LINE WEIGHT: Face outline = medium (3-4px). Hair strokes = thin (1-2px). Facial features = thin (1-2px). ` +
+        `Result must look like a detailed portrait coloring page — rich in lines, zero filled areas. ` +
         variationStyle
       );
 
