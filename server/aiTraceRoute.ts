@@ -765,12 +765,27 @@ async function runTraceJob(
       // Simple mode (idx=0): light blur, higher threshold → clean outlines, removes fine noise
       // Detailed mode (idx=1): contrast boost first to make grey lines black, then moderate blur
       const isDetailedMode = idx === 1;
+      const isPortraitMode = imageClassification.type === "portrait";
 
       let processedBuffer: Buffer;
       if (isBwDrawing) {
         // B&W bypass: rawBuffer is already processed (grayscale + contrast + threshold + resize)
         // No further processing needed — use as-is for Potrace
         processedBuffer = rawBuffer;
+      } else if (isPortraitMode) {
+        // PORTRAIT MODE: AI generates line art with grey mid-tones (hair, face shadows).
+        // Problem: aggressive contrast (linear 1.8/-30 + threshold 155) turns grey areas into solid black → filled shapes.
+        // Solution: very high threshold (210) + gentle contrast → ONLY the darkest lines survive.
+        // This preserves the thin outline style and prevents filled black blobs.
+        processedBuffer = await sharp(rawBuffer)
+          .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .grayscale()
+          .linear(1.3, 10)             // gentle contrast: preserve mid-tones, don't push grey→black
+          .blur(0.8)                   // minimal blur to remove single-pixel noise
+          .threshold(210)              // HIGH threshold: only very dark lines pass — no grey fill areas
+          .png()
+          .toBuffer();
       } else if (isDetailedMode) {
         // Detailed mode: AI often generates thin/grey lines.
         // Pipeline: grayscale → contrast boost → resize (high res) → sharpen → threshold
