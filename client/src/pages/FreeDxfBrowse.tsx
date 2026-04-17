@@ -56,16 +56,19 @@ export default function FreeDxfBrowse() {
   const [activeCategory, setActiveCategory] = useState(categoryParam);
   const [appUser, setAppUser] = useState<{ id: number; email: string; name?: string } | null>(null);
 
-  // Load current user
+  // Load current user via tRPC auth.me
   useEffect(() => {
-    fetch("/api/app-auth/me", { credentials: "include" })
+    fetch("/api/trpc/auth.me?batch=1&input=%7B%220%22%3A%7B%22json%22%3Anull%7D%7D", { credentials: "include" })
       .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data?.user) setAppUser(data.user); })
+      .then(data => {
+        const user = data?.[0]?.result?.data?.json;
+        if (user?.id) setAppUser(user);
+      })
       .catch(() => {});
   }, []);
 
   const handleLogout = async () => {
-    await fetch("/api/app-auth/logout", { method: "POST", credentials: "include" });
+    await fetch("/api/trpc/auth.logout?batch=1", { method: "POST", credentials: "include", headers: { "content-type": "application/json" }, body: JSON.stringify({ "0": { json: null } }) });
     setAppUser(null);
   };
 
@@ -136,8 +139,8 @@ export default function FreeDxfBrowse() {
   return (
     <div style={{ minHeight: "100vh", background: "#fafafa", fontFamily: "system-ui, -apple-system, sans-serif" }} dir={isRtl ? "rtl" : "ltr"}>
       {/* ── Navbar ── */}
-      <header style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", position: "sticky", top: 0, zIndex: 9990 }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 12px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+      <header style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", position: "sticky", top: 0, zIndex: 9990, overflow: "visible" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 12px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, overflow: "visible" }}>
           {/* Logo */}
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
             <Link href="/free" style={{ textDecoration: "none", flexShrink: 0 }}>
@@ -308,14 +311,14 @@ export default function FreeDxfBrowse() {
 
         {/* ── Files grid ── */}
         {loading ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12 }}>
             {Array.from({ length: 12 }).map((_, i) => (
               <div key={i} style={{ background: "#f3f4f6", borderRadius: 14, aspectRatio: "1", animation: "pulse 1.5s ease-in-out infinite" }} />
             ))}
           </div>
         ) : files.length > 0 ? (
           <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12 }}>
               {files.map((file) => (
                 <BrowseCard key={file.id} file={file} getTitle={getTitle} isRtl={isRtl} />
               ))}
