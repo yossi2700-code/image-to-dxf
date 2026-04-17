@@ -26,6 +26,7 @@ import { cleanSvgForPreview } from "./svgClean";
 import { invokeLLM } from "./_core/llm";
 import { generateImage } from "./_core/imageGeneration";
 import potrace from "potrace";
+import { aiTracePipeline } from "./imageProcessor";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
@@ -139,16 +140,17 @@ async function generatePortraitVariation(
   if (!imgResponse.ok) throw new Error("Failed to download generated image");
   let rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
 
-  // pngToSvg: potrace outline tracing — produces double-line (outline) paths, correct for portrait DXF
+  // aiTracePipeline: centerline tracing (Zhang-Suen thinning) — no fill artifacts
   const paddedBuffer = await sharp(rawBuffer)
     .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
     .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
     .png()
     .toBuffer();
 
-  const portraitSvg = await pngToSvg(paddedBuffer);
-  const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(portraitSvg, hairline, lineweightMm, minGapMm, false, false);
-  const cleanSvg = portraitSvg;
+  const { dxf, svgPreview: cleanSvg, segmentCount, width, height, realWidth, realHeight } = await aiTracePipeline(
+    paddedBuffer,
+    { threshold: 220, simplifyTolerance: 1.2, hairline: hairline, lineweightMm, minGapMm }
+  );
 
   const imgKey = `face-detect-generated/${nanoid()}.png`;
   const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
@@ -388,15 +390,16 @@ async function runFaceDetectJob(
       const imgRes = await fetch(generatedUrl);
       if (!imgRes.ok) throw new Error("Failed to download generated image");
       let rawBuffer = Buffer.from(await imgRes.arrayBuffer());
-      // pngToSvg: potrace outline tracing — produces double-line (outline) paths, correct for portrait DXF
+      // aiTracePipeline: centerline tracing (Zhang-Suen thinning) — no fill artifacts
       const paddedBuffer = await sharp(rawBuffer)
         .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .png()
         .toBuffer();
-      const portraitSvg = await pngToSvg(paddedBuffer);
-      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(portraitSvg, hairline, lineweightMm, minGapMm, false, false);
-      const cleanSvg = portraitSvg;
+      const { dxf, svgPreview: cleanSvg, segmentCount, width, height, realWidth, realHeight } = await aiTracePipeline(
+        paddedBuffer,
+        { threshold: 220, simplifyTolerance: 1.2, hairline: hairline, lineweightMm, minGapMm }
+      );
       const imgKey = `face-detect-generated/${nanoid()}.png`;
       const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
       const dxfFilename = `face_portrait_${style}${faceLabel ? `_${faceLabel}` : ""}.dxf`;

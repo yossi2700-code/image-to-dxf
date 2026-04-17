@@ -4,8 +4,9 @@
  */
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link, useLocation, useSearch } from "wouter";
-import { Search, Layers, X, ArrowLeft, Download, Eye, SlidersHorizontal } from "lucide-react";
+import { Search, Layers, X, ArrowLeft, ArrowRight, Download, Eye, SlidersHorizontal, Zap, User, LogOut } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 interface SharedFile {
   id: number;
@@ -53,6 +54,20 @@ export default function FreeDxfBrowse() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState(searchParam);
   const [activeCategory, setActiveCategory] = useState(categoryParam);
+  const [appUser, setAppUser] = useState<{ id: number; email: string; name?: string } | null>(null);
+
+  // Load current user
+  useEffect(() => {
+    fetch("/api/app-auth/me", { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.user) setAppUser(data.user); })
+      .catch(() => {});
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch("/api/app-auth/logout", { method: "POST", credentials: "include" });
+    setAppUser(null);
+  };
 
   const loadFiles = useCallback(async (reset = true, cat?: string, q?: string) => {
     if (reset) setLoading(true);
@@ -119,16 +134,69 @@ export default function FreeDxfBrowse() {
     (language === "he" && file.titleHe) ? file.titleHe : (file.title || "Untitled");
 
   return (
-    <div className="min-h-screen" style={{ background: "#fafafa" }} dir={isRtl ? "rtl" : "ltr"}>
-      {/* ── Header ── */}
+    <div style={{ minHeight: "100vh", background: "#fafafa", fontFamily: "system-ui, -apple-system, sans-serif" }} dir={isRtl ? "rtl" : "ltr"}>
+      {/* ── Navbar ── */}
+      <header style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", position: "sticky", top: 0, zIndex: 9990 }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 12px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+          {/* Logo */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            <Link href="/free" style={{ textDecoration: "none", flexShrink: 0 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg, #0d9488, #0891b2)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(13,148,136,0.25)" }}>
+                <span style={{ color: "#fff", fontWeight: 900, fontSize: 11, letterSpacing: "-0.5px" }}>free</span>
+              </div>
+            </Link>
+            <a href="/" style={{ textDecoration: "none", flexShrink: 0 }} title={isRtl ? "צור DXF עם AI" : "Create DXF with AI"}>
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/logo-dxfai_99079d72.webp"
+                alt="dxfai"
+                style={{ width: 40, height: 40, borderRadius: 12, objectFit: "cover", flexShrink: 0, boxShadow: "0 2px 8px rgba(0,0,0,0.18)" }}
+              />
+            </a>
+          </div>
+          {/* Right actions */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            <LanguageSwitcher />
+            <Link
+              href="/"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                padding: "7px 14px", borderRadius: 8,
+                background: "linear-gradient(135deg, #0d9488, #0891b2)", color: "#fff",
+                fontSize: 13, fontWeight: 600, textDecoration: "none",
+                whiteSpace: "nowrap", flexShrink: 0,
+              }}
+            >
+              <Zap style={{ width: 13, height: 13 }} />
+              {isRtl ? "צרו DXF" : "Create DXF"}
+            </Link>
+            {appUser ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", borderRadius: 8, background: "#f9fafb", border: "1px solid #e5e7eb" }}>
+                <User style={{ width: 13, height: 13, color: "#6b7280" }} />
+                <span style={{ fontSize: 12, color: "#374151", fontWeight: 500, maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {appUser.name || appUser.email}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  title={isRtl ? "התנתק" : "Logout"}
+                  style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "#9ca3af", display: "flex" }}
+                >
+                  <LogOut style={{ width: 13, height: 13 }} />
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </header>
+
+      {/* ── Hero Header ── */}
       <div style={{
         background: "linear-gradient(160deg, #042f2e 0%, #134e4a 50%, #0f766e 100%)",
         padding: "0 0 32px",
       }}>
-        {/* Top bar */}
+        {/* Back link */}
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "12px 20px", display: "flex", alignItems: "center", gap: 12 }}>
           <Link href="/free" style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.6)", fontSize: 13, textDecoration: "none" }}>
-            <ArrowLeft style={{ width: 16, height: 16 }} />
+            {isRtl ? <ArrowRight style={{ width: 16, height: 16 }} /> : <ArrowLeft style={{ width: 16, height: 16 }} />}
             {isRtl ? "חזרה" : "Back"}
           </Link>
         </div>
