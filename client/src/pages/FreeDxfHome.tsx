@@ -3,7 +3,7 @@
  * Clean, simple, fast design
  */
 import { useState, useEffect, useRef } from "react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { Search, Download, Layers, Zap, LogOut, User, X, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AuthDialog } from "@/components/AuthDialog";
@@ -39,15 +39,16 @@ const CATEGORY_HE: Record<string, string> = {
 export default function FreeDxfHome() {
   const { language } = useLanguage();
   const isRtl = language === "he";
-  const [, navigate] = useLocation();
   const [appUser, setAppUser] = useState<{ id: number; email: string; name?: string } | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [files, setFiles] = useState<SharedFile[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [totalFiles, setTotalFiles] = useState(0);
   const [activeCategory, setActiveCategory] = useState("");
+  const PAGE_SIZE = 24;
   const searchRef = useRef<HTMLInputElement>(null);
 
   // Check app auth status
@@ -74,9 +75,11 @@ export default function FreeDxfHome() {
 
   // Load files + categories
   useEffect(() => {
+    setLoading(true);
+    setFiles([]);
     async function load() {
       try {
-        const sp = new URLSearchParams({ limit: "24" });
+        const sp = new URLSearchParams({ limit: String(PAGE_SIZE) });
         if (activeCategory) sp.set("category", activeCategory);
         const [filesRes, catsRes] = await Promise.all([
           fetch(`/api/freedxf/files?${sp}`).then(r => r.json()),
@@ -92,11 +95,34 @@ export default function FreeDxfHome() {
       }
     }
     load();
-  }, [activeCategory]);
+  }, [activeCategory]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    try {
+      const sp = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(files.length) });
+      if (activeCategory) sp.set("category", activeCategory);
+      const res = await fetch(`/api/freedxf/files?${sp}`).then(r => r.json());
+      setFiles(prev => [...prev, ...(res.files || [])]);
+      setTotalFiles(res.total || 0);
+    } catch {
+      // silent
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (search.trim()) navigate(`/free/browse?search=${encodeURIComponent(search.trim())}`);
+    if (!search.trim()) return;
+    setLoading(true);
+    setFiles([]);
+    const sp = new URLSearchParams({ limit: String(PAGE_SIZE), search: search.trim() });
+    if (activeCategory) sp.set("category", activeCategory);
+    fetch(`/api/freedxf/files?${sp}`).then(r => r.json()).then(res => {
+      setFiles(res.files || []);
+      setTotalFiles(res.total || 0);
+    }).catch(() => {}).finally(() => setLoading(false));
   };
 
   const getTitle = (file: SharedFile) =>
@@ -305,16 +331,14 @@ export default function FreeDxfHome() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: "#111827", margin: 0 }}>
             {activeCategory
-              ? (isRtl ? `קטגוריה: ${activeCategory}` : `Category: ${activeCategory}`)
+              ? (isRtl ? `קטגוריה: ${CATEGORY_HE[activeCategory] || activeCategory}` : `Category: ${activeCategory}`)
               : (isRtl ? "קבצים אחרונים" : "Latest Files")}
           </h2>
-          <Link
-            href="/free/browse"
-            style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 600, color: "#0d9488", textDecoration: "none" }}
-          >
-            {isRtl ? "כל הקבצים" : "Browse All"}
-            <ChevronRight style={{ width: 14, height: 14 }} />
-          </Link>
+          {totalFiles > 0 && (
+            <span style={{ fontSize: 13, color: "#9ca3af" }}>
+              {isRtl ? `מציג ${files.length} מתוך ${totalFiles}` : `Showing ${files.length} of ${totalFiles}`}
+            </span>
+          )}
         </div>
 
         {loading ? (
@@ -353,21 +377,26 @@ export default function FreeDxfHome() {
           </div>
         )}
 
-        {/* Load more link */}
+        {/* Load more button */}
         {!loading && files.length > 0 && files.length < totalFiles && (
           <div style={{ textAlign: "center", marginTop: 32 }}>
-            <Link
-              href={activeCategory ? `/free/browse?category=${encodeURIComponent(activeCategory)}` : "/free/browse"}
+            <button
+              onClick={handleLoadMore}
+              disabled={loadingMore}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 6,
                 padding: "10px 28px", borderRadius: 10,
                 background: "#fff", border: "1.5px solid #e5e7eb",
-                color: "#374151", fontSize: 14, fontWeight: 600, textDecoration: "none",
+                color: "#374151", fontSize: 14, fontWeight: 600,
+                cursor: loadingMore ? "not-allowed" : "pointer",
+                opacity: loadingMore ? 0.6 : 1,
               }}
             >
-              {isRtl ? `עוד ${totalFiles - files.length} קבצים` : `${totalFiles - files.length} more files`}
-              <ChevronRight style={{ width: 15, height: 15 }} />
-            </Link>
+              {loadingMore
+                ? (isRtl ? "טוען..." : "Loading...")
+                : (isRtl ? `טען עוד ${totalFiles - files.length} קבצים` : `Load ${totalFiles - files.length} more files`)}
+              {!loadingMore && <ChevronRight style={{ width: 15, height: 15 }} />}
+            </button>
           </div>
         )}
       </main>
