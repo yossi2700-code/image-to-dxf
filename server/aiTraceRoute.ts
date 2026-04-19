@@ -266,6 +266,7 @@ export const TRACE_WARMUP_SYSTEM =
   "[CHECK 6] LINE WEIGHT HIERARCHY: Main silhouette = thick (6-8px). Structural details = medium (4-5px). Fine details = thin (2-3px). All same weight = FAIL. " +
   "[CHECK 7] NO TEXT IN OUTPUT: Do NOT add any text, labels, watermarks, or annotations to the output. The output is a pure line drawing only. " +
   "[CHECK 8] CAD RULE (if image is a technical drawing): Reproduce ALL dimension lines, center lines, dashed lines, hatching, and annotations EXACTLY as they appear — like a CAD export. " +
+  "[CHECK 9] SOURCE FIDELITY (MOST IMPORTANT): You received a reference image. Your output must be a clean version of THAT EXACT image — not a creative interpretation. Do NOT add any decorative element, swirl, curl, flourish, or embellishment that is NOT visible in the reference. If the reference is a simple butterfly, output a simple butterfly. ZERO creativity. ZERO invention. " +
   "=== END WARM-UP — YOU MAY NOW BEGIN DRAWING ===";
 
 /**
@@ -340,18 +341,20 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
         `CRITICAL — You are a PIXEL-PERFECT TRACING MACHINE, NOT a creative artist. ` +
         `Your ONLY job is to output EXACTLY what you see in the reference image — nothing more, nothing less. ` +
         `ACCURACY = 100%. Any deviation from the original is a failure. ` +
+        `THIS IMAGE IS A BLACK AND WHITE DRAWING. The lines in the original are already black on white. ` +
+        `Your task is ONLY to clean up those exact lines — make them crisp, smooth, and pure black. ` +
+        `DO NOT INVENT any new lines, curves, swirls, or shapes. ` +
+        `DO NOT ADD anything that is not already drawn in the original image. ` +
+        `EVERY stroke in your output must correspond to a stroke that EXISTS in the original image. ` +
+        `If the original has 5 lines, your output must have exactly 5 lines. If it has a simple butterfly, output a simple butterfly — not a decorated one. ` +
         `PRESERVE THE EXACT COMPOSITION: same orientation (do NOT rotate or flip), same layout, same proportions, same position of EVERY element. ` +
         `TRACE THE EXACT OUTLINE of every shape visible in the image — count every element and verify none are missing. ` +
-        `If the image shows a tree leaning left → draw a tree leaning left. If branches go right → draw branches going right. ` +
-        `If the image shows a branch → draw ONLY that branch with EXACTLY the same number of sub-branches, curves, and proportions as in the original. ` +
-        `If the image shows leaves → draw ONLY the leaves that are ACTUALLY VISIBLE — do NOT add extra leaves, do NOT remove existing ones. ` +
-        `STRICTLY FORBIDDEN (any of these = complete failure): rotating or flipping the composition, changing orientation, adding ANY element not in the original, removing ANY element that IS in the original, changing proportions, beautifying, stylizing, simplifying, reinterpreting, or adding creative touches. ` +
-        `DO NOT ADD decorative swirls, flourishes, curls, or embellishments that are NOT in the original image. ` +
-        `DO NOT "improve" or "enhance" the design — reproduce it EXACTLY as drawn. ` +
-        `ALLOWED ONLY: smoothing rough pixel edges, converting filled black areas to clean outlines, making lines crisp and continuous. SMOOTH ALL CURVES: convert any rough, wobbly, or jagged hand-drawn lines into clean, smooth, flowing curves — as if redrawn with a steady hand or vector pen tool. ` +
+        `STRICTLY FORBIDDEN (any of these = complete failure): adding ANY element not in the original, removing ANY element that IS in the original, changing proportions, beautifying, stylizing, reinterpreting, or adding creative touches. ` +
+        `STRICTLY FORBIDDEN: decorative swirls, flourishes, curls, extra wing patterns, extra body details, or ANY embellishment NOT visible in the source image. ` +
+        `DO NOT "improve" or "enhance" the design — reproduce it EXACTLY as drawn, just cleaner. ` +
+        `ALLOWED ONLY: smoothing rough pixel edges, making lines crisp and continuous, converting filled black areas to clean outlines. ` +
         `For black silhouettes (solid black shapes): trace the OUTER CONTOUR of each black shape as a single closed outline. ` +
-        `For text/labels visible in the image: reproduce them faithfully as clean outlined letters in the EXACT same position, size, and orientation. ` +
-        `FINAL VERIFICATION: mentally overlay your output on the original — every shape must match perfectly in position, size, and orientation. If anything differs, redo it. ` +
+        `FINAL VERIFICATION: mentally count every stroke in your output and compare to the original — they must match exactly. If you added anything new, remove it. ` +
         variationStyle
       );
 
@@ -1328,44 +1331,6 @@ router.post("/api/ai-trace/warmup", async (_req, res) => {
       signal: AbortSignal.timeout(30_000),
     }).catch(() => { /* ignore warm-up errors */ });
     console.log("[aiTraceRoute] Forge warm-up request sent");
-    return res.json({ ok: true });
-  } catch {
-    return res.json({ ok: false });
-  }
-});
-
-// ─── POST /api/ai-trace/warmup ──────────────────────────────────────────────
-// Called immediately when user uploads an image — wakes up Forge ImageService
-// so the first real Convert request is fast (~25s instead of ~120s cold start)
-router.post("/api/ai-trace/warmup", async (_req, res) => {
-  try {
-    const forgeApiUrl = process.env.BUILT_IN_FORGE_API_URL;
-    const forgeApiKey = process.env.BUILT_IN_FORGE_API_KEY;
-    if (!forgeApiUrl || !forgeApiKey) return res.json({ ok: false });
-    const forgeBaseUrl = forgeApiUrl.endsWith("/") ? forgeApiUrl : `${forgeApiUrl}/`;
-    const forgeEndpoint = new URL("images.v1.ImageService/GenerateImage", forgeBaseUrl).toString();
-    // Minimal 1x1 white pixel PNG — just enough to wake the service
-    const tinyPng = Buffer.from(
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==",
-      "base64"
-    );
-    const b64 = tinyPng.toString("base64");
-    // Fire-and-forget with 60s timeout — we don't wait for result, just wake the service
-    fetch(forgeEndpoint, {
-      method: "POST",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-        "connect-protocol-version": "1",
-        authorization: `Bearer ${forgeApiKey}`,
-      },
-      body: JSON.stringify({
-        prompt: "white blank canvas, no content",
-        original_images: [{ b64Json: b64, mimeType: "image/png" }],
-      }),
-      signal: AbortSignal.timeout(60_000),
-    }).catch(() => { /* ignore warm-up errors — best-effort only */ });
-    console.log("[aiTraceRoute] Forge warm-up request fired");
     return res.json({ ok: true });
   } catch {
     return res.json({ ok: false });
