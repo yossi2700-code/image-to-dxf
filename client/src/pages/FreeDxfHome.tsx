@@ -267,14 +267,9 @@ export default function FreeDxfHome() {
 
           {/* Stats row */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, marginTop: 20, flexWrap: "wrap" }}>
-            {[
-              { n: totalFiles, label: isRtl ? "קבצים" : "files" },
-              { n: categories.length, label: isRtl ? "קטגוריות" : "categories" },
-            ].map((s, i) => (
-              <span key={i} style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>
-                <strong style={{ color: "#99f6e4" }}>{s.n}</strong> {s.label}
-              </span>
-            ))}
+            <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>
+              <strong style={{ color: "#99f6e4" }}>{categories.length}</strong> {isRtl ? "קטגוריות" : "categories"}
+            </span>
           </div>
         </div>
       </div>
@@ -334,11 +329,7 @@ export default function FreeDxfHome() {
               ? (isRtl ? `קטגוריה: ${CATEGORY_HE[activeCategory] || activeCategory}` : `Category: ${activeCategory}`)
               : (isRtl ? "קבצים אחרונים" : "Latest Files")}
           </h2>
-          {totalFiles > 0 && (
-            <span style={{ fontSize: 13, color: "#9ca3af" }}>
-              {isRtl ? `מציג ${files.length} מתוך ${totalFiles}` : `Showing ${files.length} of ${totalFiles}`}
-            </span>
-          )}
+
         </div>
 
         {loading ? (
@@ -394,7 +385,7 @@ export default function FreeDxfHome() {
             >
               {loadingMore
                 ? (isRtl ? "טוען..." : "Loading...")
-                : (isRtl ? `טען עוד ${totalFiles - files.length} קבצים` : `Load ${totalFiles - files.length} more files`)}
+                : (isRtl ? "טען עוד קבצים" : "Load More Files")}
               {!loadingMore && <ChevronRight style={{ width: 15, height: 15 }} />}
             </button>
           </div>

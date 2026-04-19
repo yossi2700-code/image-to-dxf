@@ -24,6 +24,8 @@ import { ENV } from "./_core/env";
 import { addTokens } from "./tokenService";
 import { sendWelcomeEmail } from "./emailService";
 import { randomBytes } from "crypto";
+import { recordUserAction } from "./userActionsDb";
+import { anonymizeIp } from "./usageDb";
 
 const router = Router();
 
@@ -211,6 +213,20 @@ async function handleFreeDxfDownload(req: import("express").Request, res: import
       .update(sharedFiles)
       .set({ downloadCount: sql`${sharedFiles.downloadCount} + 1` })
       .where(eq(sharedFiles.id, id));
+
+    // Record user action for recent activity tracking
+    const userId = appUser?.userId ?? freedxfUser?.userId;
+    if (userId) {
+      const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+      void recordUserAction({
+        appUserId: userId,
+        actionType: "download",
+        description: file.title || `free_dxf_${id}`,
+        dxfUrl: file.dxfUrl ?? undefined,
+        feature: "free_dxf",
+        ipAnon: anonymizeIp(rawIp) ?? undefined,
+      });
+    }
 
     return res.json({ dxfUrl: file.dxfUrl, svgPreview: file.svgPreview ?? null, title: file.title });
   } catch (err) {
