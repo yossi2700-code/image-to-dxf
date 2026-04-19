@@ -277,7 +277,12 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
     `${TRACE_WARMUP_SYSTEM} ` +
     `This image will be converted to a vector file for laser engraving or CNC cutting. ` +
     `Convert it to clean black and white line art by following the shapes visible in this image. ` +
-    `DO NOT redraw from memory or imagination — trace what you actually see. ` +
+    `CRITICAL SOURCE FIDELITY RULE: You MUST be 100% faithful to the original image. ` +
+    `DO NOT add, remove, change, beautify, stylize, or invent ANY element. ` +
+    `DO NOT add decorative swirls, curls, flourishes, or embellishments that are not in the original. ` +
+    `DO NOT "improve" the design — trace it EXACTLY as it appears. ` +
+    `The user uploaded a specific image — reproduce THAT image as line art, not your interpretation of it. ` +
+    `DO NOT redraw from memory or imagination — trace ONLY what you actually see in the reference image. ` +
     `Pure white (#FFFFFF) background. Pure black (#000000) lines only. ` +
     `No shading, no grey tones, no gradients, no fills. ` +
     `Every line must be a single continuous stroke with no breaks, no gaps, no rough edges. ` +
@@ -341,6 +346,8 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
         `If the image shows a branch → draw ONLY that branch with EXACTLY the same number of sub-branches, curves, and proportions as in the original. ` +
         `If the image shows leaves → draw ONLY the leaves that are ACTUALLY VISIBLE — do NOT add extra leaves, do NOT remove existing ones. ` +
         `STRICTLY FORBIDDEN (any of these = complete failure): rotating or flipping the composition, changing orientation, adding ANY element not in the original, removing ANY element that IS in the original, changing proportions, beautifying, stylizing, simplifying, reinterpreting, or adding creative touches. ` +
+        `DO NOT ADD decorative swirls, flourishes, curls, or embellishments that are NOT in the original image. ` +
+        `DO NOT "improve" or "enhance" the design — reproduce it EXACTLY as drawn. ` +
         `ALLOWED ONLY: smoothing rough pixel edges, converting filled black areas to clean outlines, making lines crisp and continuous. SMOOTH ALL CURVES: convert any rough, wobbly, or jagged hand-drawn lines into clean, smooth, flowing curves — as if redrawn with a steady hand or vector pen tool. ` +
         `For black silhouettes (solid black shapes): trace the OUTER CONTOUR of each black shape as a single closed outline. ` +
         `For text/labels visible in the image: reproduce them faithfully as clean outlined letters in the EXACT same position, size, and orientation. ` +
