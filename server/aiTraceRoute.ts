@@ -697,18 +697,17 @@ async function runTraceJob(
       });
     }
 
-    // ALL drawings go through AI — no bypass.
-    // Direct potrace bypass was removed because channel-mean analysis cannot reliably detect
-    // colored logos (colored pixels are a small fraction of total, so means appear monochrome).
-    // AI always produces better outlines than direct potrace for any drawing type.
     const isDarkBackground = avgBrightness < 80;
-    const isBwDrawing = false; // DISABLED: all drawings go through AI
-    const isColoredLogo = imageClassification.type === "drawing" && !isDarkBackground;
-    if (isColoredLogo) {
-      console.log(`[aiTraceRoute] Job ${jobId}: drawing/logo detected — sending to AI for outline extraction`);
+    // B&W colorization: if image is fully monochrome (no color) AND bright background,
+    // tint the black lines to dark blue before sending to AI.
+    // This prevents the AI from "inventing" decorative elements on pure B&W drawings.
+    // The AI handles colored line art much more faithfully than pure black-on-white.
+    const isBwDrawing = isMonochrome && avgBrightness > 150 && !isDarkBackground;
+    if (isBwDrawing) {
+      console.log(`[aiTraceRoute] Job ${jobId}: B&W drawing detected — colorizing lines before AI`);
       updateJob(jobId, {
-        step: isHe ? "ציור/לוגו זוהה — מחלץ קווי מתאר..." : "Drawing/logo detected — extracting outlines via AI...",
-        stepEn: "Drawing/logo detected — extracting outlines via AI...",
+        step: isHe ? "ציור שחור-לבן זוהה — מעבד לפני עיבוד AI..." : "B&W drawing detected — preparing for AI...",
+        stepEn: "B&W drawing detected — preparing for AI...",
       });
     } else if (isDarkBackground) {
       console.log(`[aiTraceRoute] Job ${jobId}: dark-bg drawing detected — sending to AI for outline extraction`);
@@ -716,6 +715,8 @@ async function runTraceJob(
         step: isHe ? "ציור על רקע כהה זוהה — מחלץ קווי מתאר..." : "Dark-bg drawing detected — extracting outlines via AI...",
         stepEn: "Dark-bg drawing detected — extracting outlines via AI...",
       });
+    } else {
+      console.log(`[aiTraceRoute] Job ${jobId}: colored/complex image — sending to AI for outline extraction`);
     }
 
     // Generate only the selected variation (variationIndex: 0=simple, 1=detailed, 2=decorative)
@@ -724,9 +725,29 @@ async function runTraceJob(
 
       let rawBuffer: Buffer;
 
-      if (false) {
-        // DISABLED: B&W bypass removed — all drawings go through AI
-      } else {
+      // For B&W drawings: colorize lines to strong blue before sending to AI.
+      // Pure black-on-white causes AI to "invent" decorative elements.
+      // Coloring the lines makes AI treat it as colored line art and trace faithfully.
+      let aiInputBuffer = editSourceBuffer;
+      if (isBwDrawing) {
+        console.log(`[aiTraceRoute] Job ${jobId}: B&W colorization — tinting lines to strong blue for AI`);
+        // Step 1: binarize to get clean black/white mask
+        const binaryMask = await sharp(editSourceBuffer)
+          .grayscale()
+          .linear(2.5, -30)           // strong contrast boost
+          .threshold(160)             // pure B&W
+          .png()
+          .toBuffer();
+        // Step 2: composite — white bg + blue lines
+        // Invert mask so lines=white, bg=black, then tint lines blue using tint()
+        const invertedMask = await sharp(binaryMask).negate().png().toBuffer();
+        aiInputBuffer = await sharp({ create: { width: (await sharp(binaryMask).metadata()).width!, height: (await sharp(binaryMask).metadata()).height!, channels: 3, background: { r: 255, g: 255, b: 255 } } })
+          .composite([{ input: await sharp(invertedMask).tint({ r: 0, g: 0, b: 204 }).png().toBuffer(), blend: 'multiply' }])
+          .png({ compressionLevel: 6 })
+          .toBuffer();
+        console.log(`[aiTraceRoute] Job ${jobId}: B&W colorization done — lines tinted to blue (#0000CC)`);
+      }
+      {
         // ── AI PATH: send to Forge ImageService ──
         // Build prompt based on image classification
         const editPrompt = singleLine
@@ -742,7 +763,8 @@ async function runTraceJob(
         if (!forgeApiUrl || !forgeApiKey) throw new Error("Forge API not configured");
         const forgeBaseUrl = forgeApiUrl.endsWith("/") ? forgeApiUrl : `${forgeApiUrl}/`;
         const forgeEndpoint = new URL("images.v1.ImageService/GenerateImage", forgeBaseUrl).toString();
-        const b64Input = editSourceBuffer.toString("base64");
+        // Use colorized buffer for B&W drawings, original buffer for everything else
+        const b64Input = aiInputBuffer.toString("base64");
         const forgeResponse = await fetch(forgeEndpoint, {
           method: "POST",
           headers: {
@@ -777,11 +799,7 @@ async function runTraceJob(
       const isDetailedMode = idx === 1;
 
       let processedBuffer: Buffer;
-      if (isBwDrawing) {
-        // B&W bypass: rawBuffer is already processed (grayscale + contrast + threshold + resize)
-        // No further processing needed — use as-is for Potrace
-        processedBuffer = rawBuffer;
-      } else if (isDetailedMode) {
+      if (isDetailedMode) {
         // Detailed mode: AI often generates thin/grey lines.
         // Pipeline: grayscale → contrast boost → resize (high res) → sharpen → threshold
         // NO blur before threshold — blur softens edges and makes potrace produce jagged curves.
