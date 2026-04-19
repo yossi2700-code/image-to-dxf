@@ -763,6 +763,15 @@ async function runTraceJob(
         if (!forgeApiUrl || !forgeApiKey) throw new Error("Forge API not configured");
         const forgeBaseUrl = forgeApiUrl.endsWith("/") ? forgeApiUrl : `${forgeApiUrl}/`;
         const forgeEndpoint = new URL("images.v1.ImageService/GenerateImage", forgeBaseUrl).toString();
+        // Dark background: invert colors before sending to AI
+        // (white-on-black → black-on-white so AI can trace outlines correctly)
+        if (isDarkBackground) {
+          console.log(`[aiTraceRoute] Job ${jobId}: dark-bg — inverting colors before AI`);
+          aiInputBuffer = await sharp(aiInputBuffer)
+            .negate()  // invert: black bg → white, white lines → black
+            .png()
+            .toBuffer();
+        }
         // Use colorized buffer for B&W drawings, original buffer for everything else
         const b64Input = aiInputBuffer.toString("base64");
         const forgeResponse = await fetch(forgeEndpoint, {
