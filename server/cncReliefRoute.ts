@@ -70,7 +70,11 @@ function buildHeightmapPrompt(subject: string, hasSourceImage = false): string {
     "RULE 6 - BALANCED CONTRAST: Strong contrast between raised elements and background, BUT the raised elements themselves must have smooth internal gradients - not flat white. The mane should be bright white at the tips, fading through many grey tones to the body level. " +
     "RULE 7 - PROFESSIONAL QUALITY: Output must look like a Vectric Aspire / ArtCAM displacement map - suitable for direct CNC machining. " +
     "RULE 8 - COMPOSITION: Subject fills 70-80% of frame with 10-15% pure black border all around. " +
-    "RULE 9 - 3D DEPTH ILLUSION: Viewer must immediately understand which parts are raised and which are recessed just by looking at the grey values."
+    "RULE 9 - 3D DEPTH ILLUSION: Viewer must immediately understand which parts are raised and which are recessed just by looking at the grey values. " +
+    "RULE 10 - CNC MACHINABILITY: Avoid ultra-thin features (hair strands, individual fur hairs, thin wire-like lines) that would be impossible to machine. " +
+    "Instead, SIMPLIFY fine details into GROUPS: a mane/fur area becomes a single raised dome region with smooth texture, not hundreds of individual strands. " +
+    "Minimum feature width in the heightmap should be at least 3-4% of the total image width. " +
+    "This prevents cutter breakage and ensures clean CNC toolpaths."
   );
 }
 
@@ -174,12 +178,21 @@ async function runReliefJob(
     // 6. Resize with black background
     // NOTE: No double normalise - it destroys the smooth gradients we want
     const gammaValue = depthMm <= 3 ? 1.2 : depthMm <= 5 ? 1.4 : 1.6;
+    // Enhanced post-processing pipeline for CNC heightmap quality:
+    // 1. Grayscale - remove any color the AI may have added
+    // 2. Normalise ONCE - stretch histogram to full 0-255 range
+    // 3. Gamma - lift midtones for dome-shaped gradients
+    // 4. Gaussian blur (sigma=1.2) - smooth transitions between depth levels,
+    //    eliminate sharp edges between grey zones (key for horse mane/fur type images)
+    //    Increased from 0.6 to 1.2 based on CNC research: smoother gradients = better toolpaths
+    // 5. Mild sharpen - recover main contour edges lost by blur, without restoring fine details
+    // 6. Resize with black background
     const processedHeightmap = await sharp(Buffer.from(heightmapRaw))
       .grayscale()           // force pure grayscale
       .normalise()           // full 0-255 range (ONCE only - double normalise destroys gradients)
       .gamma(gammaValue)     // lift midtones: dome gradients become more pronounced
-      .blur(0.6)             // Gaussian blur: smooth banding/pixel artifacts, preserve gradients
-      .sharpen({ sigma: 0.5, m1: 0.2, m2: 1.5 }) // mild sharpen: recover detail edges
+      .blur(1.2)             // Gaussian blur (increased): smooth depth transitions, reduce sharp edges
+      .sharpen({ sigma: 0.8, m1: 0.3, m2: 2.0 }) // sharpen: recover main contour edges
       .resize(outputSize, outputSize, { fit: "contain", background: { r: 0, g: 0, b: 0 } })
       .png()
       .toBuffer();
@@ -399,13 +412,50 @@ router.post(
       // Auto-correct EXIF orientation
       const imageBuffer = await sharp(req.file.buffer).rotate().toBuffer();
 
-      // Upload source image - full resolution for AI reference, no downscaling
+      // Upload source image - preprocessed for optimal AI heightmap generation
       let sourceImageUrl: string | undefined;
       try {
         const srcKey = `source-images/${appUser.userId}-${nanoid(8)}.png`;
-        // Keep original resolution (max 2048px to avoid oversized uploads)
-        const fullBuf = await sharp(imageBuffer)
+        // Pre-process source image for better AI heightmap generation:
+        // 1. Detect dark background (like white-on-black horse renders) and invert if needed
+        // 2. Apply mild blur to reduce overly fine details (thin hair/fur) that cause CNC issues
+        // 3. Boost contrast so the AI sees clear depth differences
+        const rawBuf = await sharp(imageBuffer)
           .resize(2048, 2048, { fit: "inside", withoutEnlargement: true })
+          .png()
+          .toBuffer();
+        // Detect dark background: compute average brightness of border pixels
+        const { data: statsData, info: statsInfo } = await sharp(rawBuf)
+          .grayscale()
+          .raw()
+          .toBuffer({ resolveWithObject: true });
+        const w = statsInfo.width, h = statsInfo.height;
+        let borderSum = 0, borderCount = 0;
+        for (let x = 0; x < w; x++) {
+          borderSum += statsData[x]; // top row
+          borderSum += statsData[(h - 1) * w + x]; // bottom row
+          borderCount += 2;
+        }
+        for (let y = 1; y < h - 1; y++) {
+          borderSum += statsData[y * w]; // left col
+          borderSum += statsData[y * w + (w - 1)]; // right col
+          borderCount += 2;
+        }
+        const avgBorderBrightness = borderSum / borderCount;
+        const isDarkBg = avgBorderBrightness < 60; // dark background detected
+        // Build preprocessing pipeline
+        let pipeline = sharp(rawBuf);
+        if (isDarkBg) {
+          // Invert: white-on-black becomes black-on-white for better AI interpretation
+          pipeline = pipeline.negate();
+          console.log("[cncReliefRoute] Dark background detected - inverting source image for AI");
+        }
+        // Apply mild blur to reduce overly fine details (thin hair/fur strands)
+        // that cause CNC issues (too-thin features break cutters)
+        // sigma=1.2: smooths sub-2px details while preserving main shapes
+        const fullBuf = await pipeline
+          .blur(1.2)
+          .normalise()
           .png()
           .toBuffer();
         const { url } = await storagePut(srcKey, fullBuf, "image/png");
