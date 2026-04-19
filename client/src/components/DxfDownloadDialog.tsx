@@ -32,6 +32,8 @@ export interface DxfDownloadDialogProps {
   onClose: () => void;
   svgContent: string;
   dxfUrl: string;
+  /** URL of the SVG file in S3 (transparent background, for DTF/design use) */
+  svgUrl?: string;
   defaultFilename: string;
   segmentCount: number;
   /** Original SVG width in px (from potrace/AI output) */
@@ -42,7 +44,7 @@ export interface DxfDownloadDialogProps {
   hideCommunityShare?: boolean;
 }
 
-type FileFormat = "dxf" | "dxf-legacy" | "pdf" | "png";
+type FileFormat = "dxf" | "dxf-legacy" | "svg" | "pdf" | "png";
 
 // ─── Scale DXF content ────────────────────────────────────────────────────────
 
@@ -226,6 +228,7 @@ export function DxfDownloadDialog({
   onClose,
   svgContent,
   dxfUrl,
+  svgUrl,
   defaultFilename,
   segmentCount,
   svgWidth = 500,
@@ -352,6 +355,24 @@ export function DxfDownloadDialog({
          await saveFileAs({ blob, filename: `${cleanFilename}_caswin.dxf`, mimeType: "application/octet-stream" });
         void trackDownloadMutation.mutateAsync({ fileFormat: 'dxf-legacy', dxfUrl, description: cleanFilename });
         onClose();
+      } else if (selectedFormat === "svg") {
+        // SVG download — transparent background
+        const svgSource = svgUrl || svgContent;
+        if (!svgSource) return;
+        if (svgUrl) {
+          // Download from S3
+          const resp = await fetch(svgUrl);
+          if (!resp.ok) throw new Error("SVG download error");
+          const svgText = await resp.text();
+          const blob = new Blob([svgText], { type: "image/svg+xml" });
+          await saveFileAs({ blob, filename: `${cleanFilename}.svg`, mimeType: "image/svg+xml" });
+        } else {
+          // Fallback: use svgContent
+          const blob = new Blob([svgContent], { type: "image/svg+xml" });
+          await saveFileAs({ blob, filename: `${cleanFilename}.svg`, mimeType: "image/svg+xml" });
+        }
+        void trackDownloadMutation.mutateAsync({ fileFormat: 'svg', dxfUrl, description: cleanFilename });
+        onClose();
       } else if (selectedFormat === "pdf") {
         // PDF export
         if (!svgContent) return;
@@ -412,16 +433,19 @@ export function DxfDownloadDialog({
       if (selectedFormat === "pdf") return t("exportingPdf");
       if (selectedFormat === "dxf-legacy") return t("preparingLegacyDxf");
       if (selectedFormat === "png") return isRtl ? "מייצא PNG..." : "Exporting PNG...";
+      if (selectedFormat === "svg") return isRtl ? "מוריד SVG..." : "Downloading SVG...";
       return t("preparingDxf");
     }
     if (useShareSheet) {
       if (selectedFormat === "pdf") return t("shareOrSavePdf");
       if (selectedFormat === "png") return isRtl ? "שתף / שמור PNG" : "Share / Save PNG";
+      if (selectedFormat === "svg") return isRtl ? "שתף / שמור SVG" : "Share / Save SVG";
       return t("shareOrSaveDxf");
     }
     if (selectedFormat === "pdf") return t("downloadPdfBtn");
     if (selectedFormat === "dxf-legacy") return t("downloadLegacyDxfBtn");
     if (selectedFormat === "png") return isRtl ? "הורד PNG" : "Download PNG";
+    if (selectedFormat === "svg") return isRtl ? "הורד SVG" : "Download SVG";
     return t("downloadDxfBtn");
   };
 
@@ -434,6 +458,9 @@ export function DxfDownloadDialog({
     }
     if (selectedFormat === "png") {
       return { background: "linear-gradient(135deg, #db2777, #ec4899)", border: "none", boxShadow: "0 3px 10px rgba(219,39,119,0.3)" };
+    }
+    if (selectedFormat === "svg") {
+      return { background: "linear-gradient(135deg, #d97706, #f59e0b)", border: "none", boxShadow: "0 3px 10px rgba(217,119,6,0.3)" };
     }
     return { background: "linear-gradient(135deg, #059669, #10b981)", border: "none", boxShadow: "0 3px 10px rgba(5,150,105,0.3)" };
   };
@@ -547,6 +574,16 @@ export function DxfDownloadDialog({
                   borderColor="border-blue-500"
                 />
               )}
+              {/* SVG */}
+              <FormatCard
+                selected={selectedFormat === "svg"}
+                onClick={() => setSelectedFormat("svg")}
+                icon={<FileCode2 className={`w-4 h-4 ${selectedFormat === "svg" ? "text-amber-700" : "text-muted-foreground"}`} />}
+                title="SVG"
+                description={isRtl ? "DTF, Cricut, עיצוב" : "DTF, Cricut, Design"}
+                color="bg-amber-50"
+                borderColor="border-amber-500"
+              />
               {/* PNG */}
               {hasPng && (
                 <FormatCard

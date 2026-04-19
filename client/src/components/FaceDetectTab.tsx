@@ -35,6 +35,7 @@ interface GeneratedImage {
   imageUrl: string;
   svgPreview: string;
   dxfUrl: string;
+  svgUrl?: string;
   dxfFilename: string;
   segmentCount: number;
   width: number;
@@ -1199,6 +1200,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
           open={!!downloadTarget}
           onClose={() => setDownloadTarget(null)}
           dxfUrl={downloadTarget.dxfUrl}
+          svgUrl={downloadTarget.svgUrl}
           svgContent={downloadTarget.svgPreview}
           defaultFilename={downloadTarget.dxfFilename || "face_portrait.dxf"}
           segmentCount={downloadTarget.segmentCount}

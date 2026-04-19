@@ -52,6 +52,7 @@ type HistoryItem = {
   description: string | null;
   segmentCount: number | null;
   dxfUrl: string | null;
+  svgUrl: string | null;
   imageUrl: string | null;
   svgPreview: string | null;
   shareToken: string | null;
@@ -817,6 +818,7 @@ export default function History() {
         onClose={() => { setDownloadOpen(false); setTimeout(() => setDownloadTarget(null), 300); }}
         svgContent={downloadTarget?.svgPreview ?? ""}
         dxfUrl={downloadTarget?.dxfUrl ?? ""}
+        svgUrl={downloadTarget?.svgUrl ?? undefined}
         defaultFilename={`${downloadTarget?.description ?? "design"}.dxf`}
         segmentCount={downloadTarget?.segmentCount ?? 0}
       />

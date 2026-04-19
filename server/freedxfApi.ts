@@ -199,7 +199,7 @@ async function handleFreeDxfDownload(req: import("express").Request, res: import
     if (isNaN(id)) return res.status(400).json({ error: "Invalid ID" });
 
     const [file] = await db
-      .select({ id: sharedFiles.id, dxfUrl: sharedFiles.dxfUrl, title: sharedFiles.title })
+      .select({ id: sharedFiles.id, dxfUrl: sharedFiles.dxfUrl, svgPreview: sharedFiles.svgPreview, title: sharedFiles.title })
       .from(sharedFiles)
       .where(and(eq(sharedFiles.id, id), eq(sharedFiles.status, "approved")))
       .limit(1);
@@ -212,7 +212,7 @@ async function handleFreeDxfDownload(req: import("express").Request, res: import
       .set({ downloadCount: sql`${sharedFiles.downloadCount} + 1` })
       .where(eq(sharedFiles.id, id));
 
-    return res.json({ dxfUrl: file.dxfUrl, title: file.title });
+    return res.json({ dxfUrl: file.dxfUrl, svgPreview: file.svgPreview ?? null, title: file.title });
   } catch (err) {
     console.error("[freedxf/download]", err);
     return res.status(500).json({ error: "Internal error" });

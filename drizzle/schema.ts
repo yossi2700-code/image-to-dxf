@@ -95,6 +95,8 @@ export const userActions = mysqlTable("user_actions", {
   segmentCount: int("segmentCount").default(0),
   /** URL of the generated/converted DXF file */
   dxfUrl: text("dxfUrl"),
+  /** URL of the generated SVG file stored in S3 (transparent background) */
+  svgUrl: text("svgUrl"),
   /** URL of the source image or AI-generated image */
   imageUrl: text("imageUrl"),
   /** SVG preview string for re-displaying the result (mediumtext = up to 16MB) */
@@ -564,6 +566,8 @@ export const sharedFiles = mysqlTable("shared_files", {
   feature: varchar("feature", { length: 32 }),
   /** URL of the DXF file in S3 */
   dxfUrl: text("dxfUrl").notNull(),
+  /** URL of the SVG file in S3 (transparent background, for DTF/design use) */
+  svgUrl: text("svgUrl"),
   /** URL of the preview image (SVG rendered to PNG or original image) */
   previewImageUrl: text("previewImageUrl"),
   /** SVG preview string */

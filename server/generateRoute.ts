@@ -506,12 +506,15 @@ async function runGenerateJob(
       const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
       const dxfKey = `dxf-ai/${nanoid()}-${dxfFilename}`;
       const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
+      const svgFilename = `${baseFilename}_${variation.label}.svg`;
+      const svgKey = `svg-ai/${nanoid()}-${svgFilename}`;
+      const { url: svgUrl } = await storagePut(svgKey, Buffer.from(rawSvg, "utf-8"), "image/svg+xml");
 
-      return { imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight };
+      return { imageUrl, svgPreview: cleanSvg, dxfUrl, svgUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight };
     });
 
     // Check cancelled after each image
-    const images: Array<{ imageUrl: string; svgPreview: string; dxfUrl: string; dxfFilename: string; segmentCount: number; width: number; height: number; realWidth: number; realHeight: number }> = [];
+    const images: Array<{ imageUrl: string; svgPreview: string; dxfUrl: string; svgUrl: string; dxfFilename: string; segmentCount: number; width: number; height: number; realWidth: number; realHeight: number }> = [];
     for (let i = 0; i < 3; i++) {
       const jobMid = getJob(jobId);
       if (!jobMid || jobMid.status === "cancelled") return;
@@ -553,6 +556,7 @@ async function runGenerateJob(
         description: fullPrompt.slice(0, 200),
         segmentCount: img.segmentCount,
         dxfUrl: img.dxfUrl,
+        svgUrl: img.svgUrl,
         imageUrl: img.imageUrl,
         svgPreview: img.svgPreview,
         groupId,

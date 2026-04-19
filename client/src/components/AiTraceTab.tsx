@@ -38,6 +38,7 @@ interface GeneratedImage {
   imageUrl: string;
   svgPreview: string;
   dxfUrl: string;
+  svgUrl?: string;
   dxfFilename: string;
   segmentCount: number;
   width: number;
@@ -1026,6 +1027,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
         <DxfDownloadDialog
           open={!!downloadTarget} onClose={() => setDownloadTarget(null)}
           svgContent={downloadTarget.svgPreview} dxfUrl={downloadTarget.dxfUrl}
+          svgUrl={downloadTarget.svgUrl}
           defaultFilename={downloadTarget.dxfFilename ?? `ai-trace-${Date.now()}.dxf`}
           segmentCount={downloadTarget.segmentCount}
           svgWidth={downloadTarget.realWidth ?? 500}

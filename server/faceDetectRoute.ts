@@ -104,6 +104,7 @@ type PortraitResult = {
   imageUrl: string;
   svgPreview: string;
   dxfUrl: string;
+  svgUrl: string;
   dxfFilename: string;
   segmentCount: number;
   width: number;
@@ -157,11 +158,14 @@ async function generatePortraitVariation(
   const dxfFilename = `face_portrait_${style}.dxf`;
   const dxfKey = `face-detect-dxf/${nanoid()}-${dxfFilename}`;
   const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
+  const svgKey = `face-detect-svg/${nanoid()}-face_portrait_${style}.svg`;
+  const { url: svgUrl } = await storagePut(svgKey, Buffer.from(cleanSvg, "utf-8"), "image/svg+xml");
 
   return {
     imageUrl,
     svgPreview: cleanSvg,
     dxfUrl,
+    svgUrl,
     dxfFilename,
     segmentCount,
     width,
@@ -486,6 +490,7 @@ async function runFaceDetectJob(
         description: `face_detect: ${img.style} portrait line art`,
         segmentCount: img.segmentCount,
         dxfUrl: img.dxfUrl,
+        svgUrl: img.svgUrl,
         imageUrl: img.imageUrl,
         svgPreview: img.svgPreview,
         groupId,

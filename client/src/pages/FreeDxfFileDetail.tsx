@@ -53,6 +53,7 @@ export default function FreeDxfFileDetail() {
   // Download dialog state
   const [dlOpen, setDlOpen] = useState(false);
   const [dlDxfUrl, setDlDxfUrl] = useState<string>("");
+  const [dlSvgPreview, setDlSvgPreview] = useState<string | null>(null);
   const [dlFetching, setDlFetching] = useState(false);
 
   useEffect(() => {
@@ -100,8 +101,9 @@ export default function FreeDxfFileDetail() {
         if (resp.status === 401) { setAuthOpen(true); return; }
         throw new Error((data.error as string) || "Download failed");
       }
-      const data = await resp.json() as { dxfUrl: string };
+      const data = await resp.json() as { dxfUrl: string; svgPreview?: string | null };
       setDlDxfUrl(data.dxfUrl);
+      setDlSvgPreview(data.svgPreview ?? file.svgPreview ?? null);
       setDlOpen(true);
     } catch (err) {
       alert(err instanceof Error ? err.message : String(err));
@@ -391,14 +393,14 @@ export default function FreeDxfFileDetail() {
       />
 
       {/* ── DXF Download Dialog ── */}
-      {dlOpen && dlDxfUrl && file?.svgPreview && (
+      {dlOpen && dlDxfUrl && (
         <DxfDownloadDialog
           open={dlOpen}
           onClose={() => setDlOpen(false)}
-          svgContent={file.svgPreview}
+          svgContent={dlSvgPreview ?? file?.svgPreview ?? ""}
           dxfUrl={dlDxfUrl}
           defaultFilename={getCleanFilename()}
-          segmentCount={file.lineCount ?? 0}
+          segmentCount={file?.lineCount ?? 0}
           hideCommunityShare={true}
         />
       )}

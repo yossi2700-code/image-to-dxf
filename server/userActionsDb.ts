@@ -13,6 +13,8 @@ export interface RecordActionParams {
   description?: string;
   segmentCount?: number;
   dxfUrl?: string;
+  /** URL of the SVG file stored in S3 (transparent background) */
+  svgUrl?: string;
   imageUrl?: string;
   svgPreview?: string;
   /** Groups related variations from the same generation request */
@@ -43,6 +45,7 @@ export async function recordUserAction(params: RecordActionParams): Promise<void
       description: params.description ?? null,
       segmentCount: params.segmentCount ?? 0,
       dxfUrl: params.dxfUrl ?? null,
+      svgUrl: params.svgUrl ?? null,
       imageUrl: params.imageUrl ?? null,
       svgPreview: params.svgPreview ?? null,
       groupId: params.groupId ?? null,

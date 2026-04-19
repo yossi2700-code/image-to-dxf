@@ -330,6 +330,13 @@
       "when": 1775608149100,
       "tag": "0046_handy_tarantula",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "5",
+      "when": 1776606293116,
+      "tag": "0047_dapper_scrambler",
+      "breakpoints": true
     }
   ]
 }

@@ -101,6 +101,16 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
     const key = `dxf-output/${nanoid()}.dxf`;
     const { url } = await storagePut(key, Buffer.from(dxf, "utf-8"), "application/dxf");
 
+    // Upload SVG to S3
+    let svgUrl: string | undefined;
+    try {
+      const svgKey = `svg-output/${nanoid()}.svg`;
+      const svgResult = await storagePut(svgKey, Buffer.from(svgPreview, "utf-8"), "image/svg+xml");
+      svgUrl = svgResult.url;
+    } catch (e) {
+      console.warn("[convert] Failed to upload SVG:", e);
+    }
+
     // Upload original image thumbnail to S3 (fire-and-forget)
     let imageUrl: string | undefined;
     try {
@@ -122,6 +132,7 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
         description: req.file.originalname,
         segmentCount,
         dxfUrl: url,
+        svgUrl,
         imageUrl,
         svgPreview,
         feature: "convert",
@@ -132,6 +143,7 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
     return res.json({
       success: true,
       dxfUrl: url,
+      svgUrl,
       svgPreview,
       segmentCount,
       width,

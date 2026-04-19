@@ -1671,6 +1671,7 @@ export const appRouter = router({
           description: userActions.description,
           segmentCount: userActions.segmentCount,
           dxfUrl: userActions.dxfUrl,
+          svgUrl: userActions.svgUrl,
           imageUrl: userActions.imageUrl,
           svgPreview: userActions.svgPreview,
           shareToken: userActions.shareToken,

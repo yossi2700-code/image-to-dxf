@@ -880,8 +880,11 @@ async function runTraceJob(
       const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
       const dxfKey = `ai-trace-dxf/${nanoid()}-${dxfFilename}`;
       const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
+      const svgFilename = `${baseFilename}_${variation.label}.svg`;
+      const svgKey = `ai-trace-svg/${nanoid()}-${svgFilename}`;
+      const { url: svgUrl } = await storagePut(svgKey, Buffer.from(rawSvg, "utf-8"), "image/svg+xml");
 
-      const imageResult = { imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight };
+      const imageResult = { imageUrl, svgPreview: cleanSvg, dxfUrl, svgUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight };
 
       // Stream partial result to client immediately
       const currentJob = getJob(jobId);
@@ -944,6 +947,7 @@ async function runTraceJob(
         description: objectDescription.slice(0, 200),
         segmentCount: img.segmentCount,
         dxfUrl: img.dxfUrl,
+        svgUrl: img.svgUrl,
         imageUrl: img.imageUrl,
         svgPreview: img.svgPreview,
         groupId,
