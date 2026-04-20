@@ -2708,14 +2708,16 @@ export const appRouter = router({
         // Fetch user email for approval notification (only if not already approved)
         let userEmail: string | null = null;
         let userName: string | null = null;
+        let userLang: string = "he";
         if (file && file.status !== "approved") {
           const [userRow] = await db
-            .select({ email: appUsers.email, name: appUsers.name })
+            .select({ email: appUsers.email, name: appUsers.name, language: appUsers.language })
             .from(appUsers)
             .where(eq(appUsers.id, file.appUserId))
             .limit(1);
           userEmail = userRow?.email ?? null;
           userName = userRow?.name ?? null;
+          userLang = (userRow?.language ?? "he") as string;
         }
 
         const updateSet: Record<string, unknown> = {
@@ -2750,7 +2752,7 @@ export const appRouter = router({
             name: userName,
             fileTitle: approvedTitle,
             fileUrl: filePageUrl,
-            language: "he",
+            language: userLang as "he" | "en" | "ru" | "ar" | "zh" | "es" | "fr",
           }).catch((e: unknown) => console.error("[share approve] Failed to send email:", e));
         }
 

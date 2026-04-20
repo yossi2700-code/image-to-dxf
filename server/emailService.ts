@@ -539,15 +539,23 @@ export async function sendShareApprovedEmail(opts: {
   name: string | null;
   fileTitle: string;
   fileUrl: string; // full URL to the file page on the free DXF site
-  language?: "he" | "en";
+  language?: "he" | "en" | "ru" | "es" | "fr" | "ar" | "zh";
 }): Promise<void> {
   if (!resend) { console.warn("[emailService] RESEND_API_KEY not set, skipping share approved email"); return; }
-  const isHe = (opts.language ?? "he") === "he";
-  const displayName = opts.name?.trim() || (isHe ? "" : "");
+  const lang = opts.language ?? "he";
+  const isHe = lang === "he";
+  const displayName = opts.name?.trim() || "";
 
-  const subject = isHe
-    ? `✅ הקובץ שלך אושר ופורסם בספריית DXF החינמית`
-    : `✅ Your file has been approved and published in the free DXF library`;
+  const subjectMap: Record<string, string> = {
+    he: `✅ הקובץ שלך אושר ופורסם בספריית DXF החינמית`,
+    en: `✅ Your file has been approved and published in the free DXF library`,
+    ru: `✅ Ваш файл одобрен и опубликован в бесплатной библиотеке DXF`,
+    es: `✅ Tu archivo ha sido aprobado y publicado en la biblioteca DXF gratuita`,
+    fr: `✅ Votre fichier a été approuvé et publié dans la bibliothèque DXF gratuite`,
+    ar: `✅ تمت الموافقة على ملفك ونشره في مكتبة DXF المجانية`,
+    zh: `✅ 您的文件已获批准并发布在免费DXF库中`,
+  };
+  const subject = subjectMap[lang] ?? subjectMap.en;
 
   const heHtml = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -637,15 +645,59 @@ export async function sendShareApprovedEmail(opts: {
 </table>
 </body></html>`;
 
-  const plainText = isHe
-    ? `שלום${displayName ? ` ${displayName}` : ""}!\n\nהקובץ שלך "${opts.fileTitle}" אושר ופורסם בספריית DXF החינמית.\n\nצפה בקובץ: ${opts.fileUrl}\n\nתודה על השיתוף!\nצוות DXF AI\ndxfai.ai`
-    : `Hi${displayName ? ` ${displayName}` : ""}!\n\nYour file "${opts.fileTitle}" has been approved and published in the free DXF library.\n\nView your file: ${opts.fileUrl}\n\nThank you for sharing!\nDXF AI Team\ndxfai.ai`;
+  // Build plain text and HTML for non-he/en languages
+  const greetingMap: Record<string, string> = {
+    ru: `Здравствуйте${displayName ? ` ${displayName}` : ""}!`,
+    es: `¡Hola${displayName ? ` ${displayName}` : ""}!`,
+    fr: `Bonjour${displayName ? ` ${displayName}` : ""}!`,
+    ar: `مرحباً${displayName ? ` ${displayName}` : ""}!`,
+    zh: `您好${displayName ? ` ${displayName}` : ""}！`,
+  };
+  const bodyMap: Record<string, string> = {
+    ru: `Файл, который вы отправили для публикации — <strong>${opts.fileTitle}</strong> — одобрен и опубликован в нашей бесплатной библиотеке DXF.`,
+    es: `El archivo que enviaste para compartir — <strong>${opts.fileTitle}</strong> — ha sido aprobado y publicado en nuestra biblioteca DXF gratuita.`,
+    fr: `Le fichier que vous avez soumis — <strong>${opts.fileTitle}</strong> — a été approuvé et publié dans notre bibliothèque DXF gratuite.`,
+    ar: `الملف الذي أرسلته للمشاركة — <strong>${opts.fileTitle}</strong> — تمت الموافقة عليه ونشره في مكتبة DXF المجانية.`,
+    zh: `您提交分享的文件 — <strong>${opts.fileTitle}</strong> — 已获批准并发布在我们的免费DXF库中。`,
+  };
+  const btnMap: Record<string, string> = {
+    ru: "Посмотреть файл",
+    es: "Ver tu archivo",
+    fr: "Voir votre fichier",
+    ar: "عرض ملفك",
+    zh: "查看您的文件",
+  };
+  const thanksMap: Record<string, string> = {
+    ru: "Спасибо за вклад в сообщество!",
+    es: "¡Gracias por compartir tu creación con la comunidad!",
+    fr: "Merci de partager votre création avec la communauté!",
+    ar: "شكراً لمشاركة إبداعك مع المجتمع!",
+    zh: "感谢您与社区分享您的作品！",
+  };
+
+  let finalHtml: string;
+  let finalText: string;
+  if (isHe) {
+    finalHtml = heHtml;
+    finalText = `שלום${displayName ? ` ${displayName}` : ""}!\n\nהקובץ שלך "${opts.fileTitle}" אושר ופורסם בספריית DXF החינמית.\n\nצפה בקובץ: ${opts.fileUrl}\n\nתודה על השיתוף!\nצוות DXF AI\ndxfai.ai`;
+  } else if (lang === "en") {
+    finalHtml = enHtml;
+    finalText = `Hi${displayName ? ` ${displayName}` : ""}!\n\nYour file "${opts.fileTitle}" has been approved and published in the free DXF library.\n\nView your file: ${opts.fileUrl}\n\nThank you for sharing!\nDXF AI Team\ndxfai.ai`;
+  } else {
+    const dir = lang === "ar" ? "rtl" : "ltr";
+    const greeting = greetingMap[lang] ?? `Hi${displayName ? ` ${displayName}` : ""}!`;
+    const bodyText = bodyMap[lang] ?? `Your file <strong>${opts.fileTitle}</strong> has been approved.`;
+    const btnText = btnMap[lang] ?? "View file";
+    const thanksText = thanksMap[lang] ?? "Thank you for sharing!";
+    finalHtml = `<!DOCTYPE html><html lang="${lang}" dir="${dir}"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head><body style="margin:0;padding:0;background:#f9fafb;font-family:Arial,Helvetica,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:32px 0;"><tr><td align="center"><table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07);"><tr><td style="background:linear-gradient(135deg,#059669 0%,#10b981 100%);padding:28px 32px;"><p style="margin:0;color:#ffffff;font-size:13px;font-weight:600;">DXF AI</p><h1 style="margin:8px 0 0;color:#ffffff;font-size:22px;font-weight:700;">🎉</h1></td></tr><tr><td style="padding:32px;direction:${dir};"><p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 16px;">${greeting}</p><p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 24px;">${bodyText}</p><p style="margin:0 0 32px;"><a href="${opts.fileUrl}" style="display:inline-block;background:#059669;color:#ffffff;font-size:15px;font-weight:600;padding:13px 28px;border-radius:8px;text-decoration:none;">${btnText} &rarr;</a></p><hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 20px;"/><p style="color:#9ca3af;font-size:12px;line-height:1.6;margin:0;">${thanksText}<br/>DXF AI &bull; <a href="https://dxfai.ai" style="color:#6b7280;text-decoration:none;">dxfai.ai</a></p></td></tr></table></td></tr></table></body></html>`;
+    finalText = `${greeting.replace(/<[^>]+>/g, "")}\n\n${opts.fileTitle}\n\n${opts.fileUrl}\n\n${thanksText}\nDXF AI\ndxfai.ai`;
+  }
 
   await resend.emails.send({
     from: FROM_ADDRESS,
     to: opts.to,
     subject,
-    html: isHe ? heHtml : enHtml,
-    text: plainText,
+    html: finalHtml,
+    text: finalText,
   });
 }

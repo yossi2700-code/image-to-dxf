@@ -109,6 +109,7 @@ router.get("/api/freedxf/files", async (req, res) => {
         lineCount: sharedFiles.lineCount,
         downloadCount: sharedFiles.downloadCount,
         createdAt: sharedFiles.createdAt,
+        creatorName: sharedFiles.creatorName,
       })
       .from(sharedFiles)
       .where(whereClause)
