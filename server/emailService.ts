@@ -529,3 +529,123 @@ export async function sendReminderEmail(opts: {
     },
   });
 }
+
+/**
+ * Send an email to a user when their shared DXF file has been approved by the admin.
+ * The email includes a link to view the file on the free DXF library page.
+ */
+export async function sendShareApprovedEmail(opts: {
+  to: string;
+  name: string | null;
+  fileTitle: string;
+  fileUrl: string; // full URL to the file page on the free DXF site
+  language?: "he" | "en";
+}): Promise<void> {
+  if (!resend) { console.warn("[emailService] RESEND_API_KEY not set, skipping share approved email"); return; }
+  const isHe = (opts.language ?? "he") === "he";
+  const displayName = opts.name?.trim() || (isHe ? "" : "");
+
+  const subject = isHe
+    ? `✅ הקובץ שלך אושר ופורסם בספריית DXF החינמית`
+    : `✅ Your file has been approved and published in the free DXF library`;
+
+  const heHtml = `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>הקובץ שלך אושר</title>
+</head>
+<body style="margin:0;padding:0;background:#f9fafb;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:32px 0;">
+  <tr><td align="center">
+    <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07);">
+      <!-- Header -->
+      <tr><td style="background:linear-gradient(135deg,#059669 0%,#10b981 100%);padding:28px 32px;text-align:right;">
+        <p style="margin:0;color:#ffffff;font-size:13px;font-weight:600;letter-spacing:0.5px;">DXF AI</p>
+        <h1 style="margin:8px 0 0;color:#ffffff;font-size:22px;font-weight:700;">הקובץ שלך אושר! 🎉</h1>
+      </td></tr>
+      <!-- Body -->
+      <tr><td style="padding:32px;direction:rtl;">
+        <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 16px;">
+          שלום${displayName ? ` ${displayName}` : ""}!
+        </p>
+        <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 16px;">
+          הקובץ שהגשת לשיתוף — <strong>${opts.fileTitle}</strong> — אושר ופורסם בספריית הקבצים החינמית שלנו.
+        </p>
+        <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 24px;">
+          כעת כל משתמשי האתר יכולים לצפות בו ולהוריד אותו בחינם.
+        </p>
+        <p style="margin:0 0 32px;text-align:right;">
+          <a href="${opts.fileUrl}"
+             style="display:inline-block;background:#059669;color:#ffffff;font-size:15px;font-weight:600;padding:13px 28px;border-radius:8px;text-decoration:none;">
+            צפה בקובץ שלך &rarr;
+          </a>
+        </p>
+        <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 20px;"/>
+        <p style="color:#9ca3af;font-size:12px;line-height:1.6;margin:0;">
+          תודה על שיתוף היצירה שלך עם הקהילה!<br/>
+          צוות DXF AI &bull; <a href="https://dxfai.ai" style="color:#6b7280;text-decoration:none;">dxfai.ai</a>
+        </p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`;
+
+  const enHtml = `<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Your file has been approved</title>
+</head>
+<body style="margin:0;padding:0;background:#f9fafb;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:32px 0;">
+  <tr><td align="center">
+    <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07);">
+      <!-- Header -->
+      <tr><td style="background:linear-gradient(135deg,#059669 0%,#10b981 100%);padding:28px 32px;">
+        <p style="margin:0;color:#ffffff;font-size:13px;font-weight:600;letter-spacing:0.5px;">DXF AI</p>
+        <h1 style="margin:8px 0 0;color:#ffffff;font-size:22px;font-weight:700;">Your file has been approved! 🎉</h1>
+      </td></tr>
+      <!-- Body -->
+      <tr><td style="padding:32px;">
+        <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 16px;">
+          Hi${displayName ? ` ${displayName}` : ""}!
+        </p>
+        <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 16px;">
+          The file you submitted for sharing — <strong>${opts.fileTitle}</strong> — has been approved and published in our free DXF library.
+        </p>
+        <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 24px;">
+          All users can now view and download it for free.
+        </p>
+        <p style="margin:0 0 32px;">
+          <a href="${opts.fileUrl}"
+             style="display:inline-block;background:#059669;color:#ffffff;font-size:15px;font-weight:600;padding:13px 28px;border-radius:8px;text-decoration:none;">
+            View your file &rarr;
+          </a>
+        </p>
+        <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 20px;"/>
+        <p style="color:#9ca3af;font-size:12px;line-height:1.6;margin:0;">
+          Thank you for sharing your creation with the community!<br/>
+          DXF AI Team &bull; <a href="https://dxfai.ai" style="color:#6b7280;text-decoration:none;">dxfai.ai</a>
+        </p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`;
+
+  const plainText = isHe
+    ? `שלום${displayName ? ` ${displayName}` : ""}!\n\nהקובץ שלך "${opts.fileTitle}" אושר ופורסם בספריית DXF החינמית.\n\nצפה בקובץ: ${opts.fileUrl}\n\nתודה על השיתוף!\nצוות DXF AI\ndxfai.ai`
+    : `Hi${displayName ? ` ${displayName}` : ""}!\n\nYour file "${opts.fileTitle}" has been approved and published in the free DXF library.\n\nView your file: ${opts.fileUrl}\n\nThank you for sharing!\nDXF AI Team\ndxfai.ai`;
+
+  await resend.emails.send({
+    from: FROM_ADDRESS,
+    to: opts.to,
+    subject,
+    html: isHe ? heHtml : enHtml,
+    text: plainText,
+  });
+}

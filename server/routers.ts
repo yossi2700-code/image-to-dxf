@@ -18,7 +18,7 @@ import { getTokenBalance, addTokens, getTokenTransactions, invalidateTokenCostsC
 import { createPayPalOrder, capturePayPalOrder, createPayPalOrderForCardFields } from "./paypal";
 import { getPackageById, getPriceForCurrency } from "./products";
 import { storagePut } from "./storage";
-import { sendPurchaseConfirmationEmail, sendBulkEmail } from "./emailService";
+import { sendPurchaseConfirmationEmail, sendBulkEmail, sendShareApprovedEmail } from "./emailService";
 import { notifyOwner } from "./_core/notification";
 import { generatePreviewFromSvg } from "./svgPreviewGenerator";
 
@@ -2692,12 +2692,31 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        // Check if the file needs a preview image generated
+        // Fetch file + user info for email notification
         const [file] = await db
-          .select({ previewImageUrl: sharedFiles.previewImageUrl, svgPreview: sharedFiles.svgPreview, title: sharedFiles.title })
+          .select({
+            previewImageUrl: sharedFiles.previewImageUrl,
+            svgPreview: sharedFiles.svgPreview,
+            title: sharedFiles.title,
+            appUserId: sharedFiles.appUserId,
+            status: sharedFiles.status,
+          })
           .from(sharedFiles)
           .where(eq(sharedFiles.id, input.id))
           .limit(1);
+
+        // Fetch user email for approval notification (only if not already approved)
+        let userEmail: string | null = null;
+        let userName: string | null = null;
+        if (file && file.status !== "approved") {
+          const [userRow] = await db
+            .select({ email: appUsers.email, name: appUsers.name })
+            .from(appUsers)
+            .where(eq(appUsers.id, file.appUserId))
+            .limit(1);
+          userEmail = userRow?.email ?? null;
+          userName = userRow?.name ?? null;
+        }
 
         const updateSet: Record<string, unknown> = {
           status: "approved",
@@ -2721,6 +2740,20 @@ export const appRouter = router({
           .update(sharedFiles)
           .set(updateSet)
           .where(eq(sharedFiles.id, input.id));
+
+        // Send approval email to the user (fire-and-forget, don't block the response)
+        if (userEmail) {
+          const approvedTitle = (input.title ?? file?.title ?? `קובץ #${input.id}`) as string;
+          const filePageUrl = `https://dxfai.ai/free?file=${input.id}`;
+          void sendShareApprovedEmail({
+            to: userEmail,
+            name: userName,
+            fileTitle: approvedTitle,
+            fileUrl: filePageUrl,
+            language: "he",
+          }).catch((e: unknown) => console.error("[share approve] Failed to send email:", e));
+        }
+
         return { success: true };
       }),
 
