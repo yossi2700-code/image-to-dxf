@@ -60,6 +60,7 @@ import {
   CreditCard,
   Mountain,
   Building2,
+  Crosshair,
 } from "lucide-react";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -1335,6 +1336,7 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
     return null;
   });
   const [showModify, setShowModify] = useState(false);
+  const [precisionLoading, setPrecisionLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [brandBlocked, setBrandBlocked] = useState<{ brand: string; message: string } | null>(null);
   const [downloadOpen, setDownloadOpen] = useState(false);
@@ -1881,6 +1883,58 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
                     onMoreOptions={() => handleDownload(selected)}
                     isRtl={isRtl}
                   />
+                </div>
+                {/* Precision Redraw Button */}
+                <div className="mt-2 mb-1">
+                  <button
+                    className="w-full flex items-center justify-center gap-2 text-sm py-2.5 rounded-xl font-medium transition-all"
+                    style={{
+                      background: precisionLoading ? '#f1f5f9' : 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
+                      border: '1px solid #86efac',
+                      color: precisionLoading ? '#6b7280' : '#15803d',
+                      cursor: precisionLoading ? 'not-allowed' : 'pointer',
+                    }}
+                    disabled={precisionLoading}
+                    title={t('precisionRedrawTooltip')}
+                    onClick={async () => {
+                      if (!selected || precisionLoading) return;
+                      setPrecisionLoading(true);
+                      try {
+                        const resp = await fetch('/api/ai-precision', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ imageUrl: selected.imageUrl, originalPrompt: prompt }),
+                          credentials: 'include',
+                        });
+                        if (!resp.ok) {
+                          const err = await resp.json().catch(() => ({})) as { message?: string };
+                          toast.error(err?.message || (isRtl ? 'שגיאה בדיוק' : 'Precision error'));
+                          return;
+                        }
+                        const data = await resp.json() as {
+                          imageUrl: string; svgPreview: string; dxfUrl: string;
+                          dxfFilename?: string; segmentCount: number;
+                          width: number; height: number; realWidth?: number; realHeight?: number;
+                        };
+                        const precImg: AiImage = {
+                          imageUrl: data.imageUrl, svgPreview: data.svgPreview,
+                          dxfUrl: data.dxfUrl, dxfFilename: data.dxfFilename,
+                          segmentCount: data.segmentCount, width: data.width,
+                          height: data.height, realWidth: data.realWidth, realHeight: data.realHeight,
+                        };
+                        setImages((prev) => { const next = [...prev]; next[selectedIdx!] = precImg; return next; });
+                        toast.success(isRtl ? 'הציור דויק בהצלחה!' : 'Precision redraw complete!');
+                      } catch {
+                        toast.error(isRtl ? 'שגיאה בדיוק' : 'Precision error');
+                      } finally {
+                        setPrecisionLoading(false);
+                      }
+                    }}
+                  >
+                    {precisionLoading
+                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />{t('precisionLoading')}</>
+                      : <><Crosshair className="w-3.5 h-3.5" />{t('precisionRedraw')}</>}
+                  </button>
                 </div>
                 {/* AI Refine Panel */}
                 <AiRefinePanel

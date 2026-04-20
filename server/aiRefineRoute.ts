@@ -345,4 +345,123 @@ router.post("/api/ai-suggestions", async (req, res) => {
   return res.json({ suggestions: [] });
 });
 
+/**
+ * POST /api/ai-precision
+ * Body: { imageUrl: string, originalPrompt?: string }
+ * Returns: { imageUrl, svgPreview, dxfUrl, segmentCount, width, height, realWidth, realHeight }
+ *
+ * FREE endpoint (no token cost) — re-generates the drawing with a strong "be faithful to the original"
+ * instruction. Useful when the AI added unwanted elements or changed the composition.
+ */
+router.post("/api/ai-precision", async (req, res) => {
+  try {
+    const rawIp =
+      (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
+      req.socket.remoteAddress ||
+      "unknown";
+    const ipAnon = anonymizeIp(rawIp);
+    const appUser = getAppUserFromCookie(req.cookies);
+    if (!appUser?.userId) {
+      return res.status(401).json({ error: "UNAUTHORIZED", message: "נדרשת התחברות" });
+    }
+    const { imageUrl, originalPrompt } = req.body as {
+      imageUrl?: string;
+      originalPrompt?: string;
+    };
+    if (!imageUrl || !imageUrl.startsWith("http")) {
+      return res.status(400).json({ error: "MISSING_IMAGE", message: "חסרה כתובת תמונה" });
+    }
+    // Download the source image
+    const imgResponse = await fetch(imageUrl);
+    if (!imgResponse.ok) {
+      return res.status(400).json({ error: "לא הצלחנו לטעון את התמונה המקורית" });
+    }
+    const sourceBuffer = Buffer.from(await imgResponse.arrayBuffer() as ArrayBuffer);
+    const sourcePng = await sharp(sourceBuffer).png().toBuffer();
+    // Build a strong "faithful to original" prompt
+    const baseDescription = originalPrompt
+      ? `This is a black and white line art of: ${originalPrompt}.`
+      : "This is a black and white line art design.";
+    const precisionPrompt =
+      `${baseDescription} ` +
+      "TASK: Redraw this EXACT design with maximum precision and faithfulness. " +
+      "CRITICAL RULES — MUST FOLLOW ALL: " +
+      "(1) COPY THE ORIGINAL EXACTLY — same subject, same composition, same proportions, same shapes. " +
+      "(2) DO NOT ADD anything that is not in the original — no extra elements, no decorations, no background details, no new objects. " +
+      "(3) DO NOT REMOVE anything from the original — every shape and line must be present. " +
+      "(4) DO NOT CHANGE the subject — if it is a cup, output a cup. If it is a logo, output that exact logo. " +
+      "(5) Clean up only: make lines crisper, close any open paths, remove noise/artifacts. " +
+      "(6) Style: clean black line art on pure white background. Bold outlines. NO fill, NO shading, NO gradients, NO color. " +
+      "(7) The output must be a 1:1 faithful reproduction of the input, just cleaner and more precise.";
+    const imageFile = new File([new Uint8Array(sourcePng)], "source.png", { type: "image/png" });
+    const response = await openai.images.edit({
+      model: "gpt-image-1",
+      image: imageFile,
+      prompt: precisionPrompt,
+      n: 1,
+      size: "1024x1024",
+      quality: "medium",
+    });
+    const imageData = response.data?.[0];
+    if (!imageData) {
+      return res.status(500).json({ error: "לא הצלחנו לייצר תמונה" });
+    }
+    let rawBuffer: Buffer;
+    if (imageData.b64_json) {
+      rawBuffer = Buffer.from(imageData.b64_json, "base64");
+    } else if (imageData.url) {
+      const dlResponse = await fetch(imageData.url);
+      if (!dlResponse.ok) throw new Error("שגיאה בהורדת התמונה");
+      rawBuffer = Buffer.from(await dlResponse.arrayBuffer() as ArrayBuffer);
+    } else {
+      return res.status(500).json({ error: "לא התקבלה תמונה מה-AI" });
+    }
+    // Pre-process for potrace
+    const processedBuffer = await sharp(rawBuffer)
+      .grayscale()
+      .threshold(200)
+      .png()
+      .toBuffer();
+    // Vectorize with potrace
+    const rawSvg = await pngToSvg(processedBuffer);
+    // Convert to stroke-only for preview
+    const cleanSvg = cleanSvgForPreview(rawSvg);
+    // Convert SVG to DXF
+    const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg);
+    // Upload refined PNG to S3
+    const imgKey = `ai-refined/${nanoid()}-precision.png`;
+    const { url: refinedImageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
+    // Upload DXF to S3
+    const dxfFilename = `precision_${(originalPrompt || "design").slice(0, 30).replace(/[^\w]/g, "_")}.dxf`;
+    const dxfKey = `dxf-refined/${nanoid()}-${dxfFilename}`;
+    const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
+    // Record usage (no token deduction)
+    await recordUserAction({
+      appUserId: appUser.userId,
+      actionType: "ai_generate",
+      dxfUrl,
+      segmentCount,
+      imageUrl: refinedImageUrl,
+      description: "precision redraw",
+      feature: "ai_precision",
+    });
+    await logUsageEvent({ type: "ai_generate", ipAnon, appUserId: appUser.userId });
+    return res.json({
+      imageUrl: refinedImageUrl,
+      svgPreview: cleanSvg,
+      dxfUrl,
+      dxfFilename,
+      segmentCount,
+      width,
+      height,
+      realWidth,
+      realHeight,
+    });
+  } catch (err: unknown) {
+    console.error("[AI Precision] Error:", err);
+    const message = err instanceof Error ? err.message : "שגיאה לא ידועה";
+    return res.status(500).json({ error: "שגיאה בדיוק AI", details: message });
+  }
+});
+
 export default router;
