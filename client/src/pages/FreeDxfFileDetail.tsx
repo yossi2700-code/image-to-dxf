@@ -304,7 +304,7 @@ export default function FreeDxfFileDetail() {
                 ) : appUser ? (
                   <>
                     <Download style={{ width: 18, height: 18 }} />
-                    {isRtl ? "הורד קובץ DXF" : "Download DXF File"}
+                    {isRtl ? "הורד קובץ" : "Download File"}
                   </>
                 ) : (
                   <>
