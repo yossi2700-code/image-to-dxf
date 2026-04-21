@@ -409,8 +409,10 @@ async function runFaceDetectJob(
       const dxfFilename = `face_portrait_${style}${faceLabel ? `_${faceLabel}` : ""}.dxf`;
       const dxfKey = `face-detect-dxf/${nanoid()}-${dxfFilename}`;
       const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
+      const svgKeyLocal = `face-detect-svg/${nanoid()}-${dxfFilename.replace('.dxf', '.svg')}`;
+      const { url: svgUrl } = await storagePut(svgKeyLocal, Buffer.from(cleanSvg, "utf-8"), "image/svg+xml");
       return {
-        imageUrl, svgPreview: cleanSvg, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight,
+        imageUrl, svgPreview: cleanSvg, svgUrl, dxfUrl, dxfFilename, segmentCount, width, height, realWidth, realHeight,
         style,
         styleLabel: STYLE_LABELS[style].he + (faceLabel ? ` (${faceLabel})` : ""),
         styleLabelEn: STYLE_LABELS[style].en + (faceLabel ? ` (${faceLabel})` : ""),
