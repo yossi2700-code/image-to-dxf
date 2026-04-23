@@ -823,16 +823,17 @@ async function runTraceJob(
           .png()
           .toBuffer();
       } else {
-        // Simple mode: minimal blur to preserve fine details (leaves, small shapes)
-        // blur(1.0) instead of 3.0 — just enough to remove single-pixel noise without merging nearby lines
-        // contrast boost first to make light grey lines visible before threshold
+        // Simple mode: stronger contrast + moderate blur to merge noise dots into continuous lines
+        // Problem: AI draws faint grey lines for background (asphalt, trees, cars) → potrace makes dots
+        // Solution: aggressive contrast to darken real lines, blur(2.0) to merge noise clusters,
+        //           then turdSize:12 in potrace to discard remaining tiny isolated dots
         processedBuffer = await sharp(rawBuffer)
           .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .grayscale()
-          .linear(1.8, -30)            // mild contrast boost: darken lines without blowing out background
-          .blur(1.0)                   // minimal blur — removes single-pixel noise, preserves fine details
-          .threshold(155)              // slightly lower to catch more of the boosted dark pixels
+          .linear(2.5, -60)            // stronger contrast: push real lines to black, fade light noise
+          .blur(2.0)                   // moderate blur — merges nearby noise dots into lines or eliminates them
+          .threshold(160)              // higher threshold after contrast boost — removes merged noise clusters
           .png()
           .toBuffer();
       }
@@ -871,8 +872,9 @@ async function runTraceJob(
       const potraceOptions = isDetailedMode
         // Detailed: turdSize 8 keeps very fine details; alphaMax 1.0 = smooth corners
         ? { threshold: 128, turdSize: 8, alphaMax: 1.0, optCurve: true, optTolerance: 0.6 }
-        // Simple: same turdSize 8 — large turdSize deletes short strokes (spots, leaves, small shapes)
-        : { threshold: 128, turdSize: 8, alphaMax: 1.0, optCurve: true, optTolerance: 0.6 };
+        // Simple: turdSize 14 discards tiny isolated noise dots (asphalt, background texture)
+        //         without losing main object strokes which are much larger
+        : { threshold: 128, turdSize: 14, alphaMax: 1.0, optCurve: true, optTolerance: 0.6 };
 
       const rawSvg = await new Promise<string>((resolve, reject) => {
         potrace.trace(processedBuffer, potraceOptions, (err: Error | null, svg: string) => {
