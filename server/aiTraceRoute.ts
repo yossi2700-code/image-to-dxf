@@ -815,11 +815,11 @@ async function runTraceJob(
         // Sharpen BEFORE threshold ensures crisp, hard edges → potrace traces smooth clean paths.
         processedBuffer = await sharp(rawBuffer)
           .grayscale()
-          .linear(2.5, -80)           // aggressive contrast: push grey lines to black, bg to white
+          .linear(3.5, -100)          // very aggressive contrast: even faint grey lines (trees, branches) become black
           .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-          .sharpen({ sigma: 2.0, m1: 1.5, m2: 0.5, x1: 2, y2: 10, y3: 20 }) // crisp edges before binarization
-          .threshold(170)             // slightly lower threshold — catches more of the sharpened dark pixels
+          .sharpen({ sigma: 2.0, m1: 2.0, m2: 0.5, x1: 2, y2: 10, y3: 20 }) // stronger sharpen for crisp edges
+          .threshold(145)             // lower threshold — catches more faint pixels after contrast boost
           .png()
           .toBuffer();
       } else {
