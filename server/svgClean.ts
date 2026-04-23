@@ -236,7 +236,7 @@ export function cleanSvgForPreview(rawSvg: string): string {
     // Remove stroke-width in style attributes
     .replace(/stroke-width:[^;"'\s]*(;|(?=["'\s]))/g, '')
     // Now add clean stroke attributes to all path elements
-    .replace(/<path /g, '<path stroke="black" stroke-width="0.5" fill="none" ');
+    .replace(/<path /g, '<path stroke="black" stroke-width="1.2" fill="none" ');
 
   // Filter near-duplicate parallel paths (removes double-line artefacts from AI output)
   const deduped = filterNearbyParallelPaths(cleaned);
