@@ -823,17 +823,25 @@ async function runTraceJob(
           .png()
           .toBuffer();
       } else {
-        // Simple mode: stronger contrast + moderate blur to merge noise dots into continuous lines
-        // Problem: AI draws faint grey lines for background (asphalt, trees, cars) → potrace makes dots
-        // Solution: aggressive contrast to darken real lines, blur(2.0) to merge noise clusters,
-        //           then turdSize:12 in potrace to discard remaining tiny isolated dots
+        // Simple mode: line-weight normalization pipeline
+        // Problem: AI draws MIXED line weights — thick outlines + very thin fur/mane/detail lines.
+        //          A single global threshold either misses thin lines (too high) or picks up noise (too low).
+        // Solution:
+        //   1. Grayscale + moderate contrast boost (not too aggressive — keep thin lines grey, not white)
+        //   2. Unsharp mask with high radius — this AMPLIFIES thin lines: a 1px dark line on white
+        //      background gets a strong dark halo → becomes detectable at the same threshold as thick lines.
+        //      (sigma:3 = large neighbourhood, m1:3.5 = strong edge boost, x1:2 = low flat-area threshold)
+        //   3. Second linear pass to push amplified lines to black and clip noise
+        //   4. Threshold at 160 — now both thin and thick lines are above threshold
+        //   5. turdSize:8 (not 14) — thin lines produce small path segments; turdSize:14 would delete them
         processedBuffer = await sharp(rawBuffer)
           .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .grayscale()
-          .linear(2.5, -60)            // stronger contrast: push real lines to black, fade light noise
-          .blur(2.0)                   // moderate blur — merges nearby noise dots into lines or eliminates them
-          .threshold(160)              // higher threshold after contrast boost — removes merged noise clusters
+          .linear(2.0, -30)            // mild contrast: darken lines without blowing out thin ones to white
+          .sharpen({ sigma: 3.0, m1: 3.5, m2: 0.1, x1: 2, y2: 15, y3: 20 }) // strong unsharp mask — amplifies thin lines
+          .linear(1.8, -40)            // second pass: push amplified thin lines to black, clip remaining noise
+          .threshold(160)              // threshold — both thin and thick lines now exceed this
           .png()
           .toBuffer();
       }
@@ -872,9 +880,9 @@ async function runTraceJob(
       const potraceOptions = isDetailedMode
         // Detailed: turdSize 8 keeps very fine details; alphaMax 1.0 = smooth corners
         ? { threshold: 128, turdSize: 8, alphaMax: 1.0, optCurve: true, optTolerance: 0.6 }
-        // Simple: turdSize 14 discards tiny isolated noise dots (asphalt, background texture)
-        //         without losing main object strokes which are much larger
-        : { threshold: 128, turdSize: 14, alphaMax: 1.0, optCurve: true, optTolerance: 0.6 };
+        // Simple: turdSize 20 — the unsharp pipeline keeps fur/mane as connected paths (large area),
+        //         while background flowers/grass become isolated small paths (small area) → removed by turdSize
+        : { threshold: 128, turdSize: 20, alphaMax: 1.0, optCurve: true, optTolerance: 0.6 };
 
       const rawSvg = await new Promise<string>((resolve, reject) => {
         potrace.trace(processedBuffer, potraceOptions, (err: Error | null, svg: string) => {
