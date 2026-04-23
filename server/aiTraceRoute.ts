@@ -864,16 +864,15 @@ async function runTraceJob(
         }
       }
 
-      // Simple: large turdSize removes small details; Detailed: small turdSize keeps texture/detail lines
-      // turdSize scaled up for 3072px (4x area = ~4x turdSize)
-      // Detailed: higher optTolerance (0.6) = smoother curves; lower alphaMax = rounder corners
+      // Potrace options — Apr 6 baseline (proven to produce continuous lines without fragmentation)
+      // turdSize: 8 for both modes — turdSize 24 deleted short lines (giraffe spots, leaves, fine details)
+      // optTolerance: 0.6 — moderate curve joining; 1.2 was merging unrelated strokes
+      // alphaMax: 1.0 — standard corner rounding; 1.5 was causing filled areas in portrait
       const potraceOptions = isDetailedMode
-        // Detailed: turdSize 8 keeps very fine details; alphaMax 1.0 = smooth corners;
-        // optTolerance 1.0 = maximum curve joining → connects broken lines in complex images
-        ? { threshold: 128, turdSize: 8, alphaMax: 1.2, optCurve: true, optTolerance: 1.2 }
-        // Simple: higher optTolerance (1.2) + alphaMax (1.5) = aggressively smooth jagged/wobbly lines
-        // This converts hand-drawn rough strokes into clean Bezier curves
-        : { threshold: 128, turdSize: 24, alphaMax: 1.5, optCurve: true, optTolerance: 1.2 };
+        // Detailed: turdSize 8 keeps very fine details; alphaMax 1.0 = smooth corners
+        ? { threshold: 128, turdSize: 8, alphaMax: 1.0, optCurve: true, optTolerance: 0.6 }
+        // Simple: same turdSize 8 — large turdSize deletes short strokes (spots, leaves, small shapes)
+        : { threshold: 128, turdSize: 8, alphaMax: 1.0, optCurve: true, optTolerance: 0.6 };
 
       const rawSvg = await new Promise<string>((resolve, reject) => {
         potrace.trace(processedBuffer, potraceOptions, (err: Error | null, svg: string) => {
