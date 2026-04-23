@@ -475,6 +475,8 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
     setCurrentStep("");
     setProgressPct(5);
     setJobIdPersisted(null);
+    // Fire warm-up request to Forge immediately — wakes the AI service so first Convert is fast
+    fetch("/api/ai-trace/warmup", { method: "POST", credentials: "include" }).catch(() => {});
     if (fileInputRef.current) fileInputRef.current.value = "";
     const canvas = document.createElement("canvas");
     const img = new Image();

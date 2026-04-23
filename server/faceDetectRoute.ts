@@ -141,17 +141,17 @@ async function generatePortraitVariation(
   if (!imgResponse.ok) throw new Error("Failed to download generated image");
   let rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
 
-  // aiTracePipeline: centerline tracing (Zhang-Suen thinning) — no fill artifacts
+  // potrace outline tracing — produces clean line art from AI-generated B&W portrait
+  // pngToSvg uses threshold:180, turdSize:8, alphaMax:1, optTolerance:0.2 (proven settings)
   const paddedBuffer = await sharp(rawBuffer)
     .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
     .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
     .png()
     .toBuffer();
 
-  const { dxf, svgPreview: cleanSvg, segmentCount, width, height, realWidth, realHeight } = await aiTracePipeline(
-    paddedBuffer,
-    { threshold: 220, simplifyTolerance: 1.2, hairline: hairline, lineweightMm, minGapMm }
-  );
+  const rawSvg = await pngToSvg(paddedBuffer);
+  const cleanSvg = cleanSvgForPreview(rawSvg);
+  const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm);
 
   const imgKey = `face-detect-generated/${nanoid()}.png`;
   const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
@@ -394,16 +394,15 @@ async function runFaceDetectJob(
       const imgRes = await fetch(generatedUrl);
       if (!imgRes.ok) throw new Error("Failed to download generated image");
       let rawBuffer = Buffer.from(await imgRes.arrayBuffer());
-      // aiTracePipeline: centerline tracing (Zhang-Suen thinning) — no fill artifacts
+      // potrace outline tracing — produces clean line art from AI-generated B&W portrait
       const paddedBuffer = await sharp(rawBuffer)
         .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
         .png()
         .toBuffer();
-      const { dxf, svgPreview: cleanSvg, segmentCount, width, height, realWidth, realHeight } = await aiTracePipeline(
-        paddedBuffer,
-        { threshold: 220, simplifyTolerance: 1.2, hairline: hairline, lineweightMm, minGapMm }
-      );
+      const rawSvg = await pngToSvg(paddedBuffer);
+      const cleanSvg = cleanSvgForPreview(rawSvg);
+      const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm);
       const imgKey = `face-detect-generated/${nanoid()}.png`;
       const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
       const dxfFilename = `face_portrait_${style}${faceLabel ? `_${faceLabel}` : ""}.dxf`;
