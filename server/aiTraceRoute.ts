@@ -826,25 +826,16 @@ async function runTraceJob(
           .png()
           .toBuffer();
       } else {
-        // Simple mode: line-weight normalization pipeline
-        // Problem: AI draws MIXED line weights — thick outlines + very thin fur/mane/detail lines.
-        //          A single global threshold either misses thin lines (too high) or picks up noise (too low).
-        // Solution:
-        //   1. Grayscale + moderate contrast boost (not too aggressive — keep thin lines grey, not white)
-        //   2. Unsharp mask with high radius — this AMPLIFIES thin lines: a 1px dark line on white
-        //      background gets a strong dark halo → becomes detectable at the same threshold as thick lines.
-        //      (sigma:3 = large neighbourhood, m1:3.5 = strong edge boost, x1:2 = low flat-area threshold)
-        //   3. Second linear pass to push amplified lines to black and clip noise
-        //   4. Threshold at 160 — now both thin and thick lines are above threshold
-        //   5. turdSize:8 (not 14) — thin lines produce small path segments; turdSize:14 would delete them
+        // Simple mode: same pipeline as AI Create (generateRoute) — blur merges thick strokes into
+        // single centerlines, then double threshold removes all grey → uniform pure black lines.
         processedBuffer = await sharp(rawBuffer)
           .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-          .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .resize(2048, 2048, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 }, kernel: "lanczos3" })
           .grayscale()
-          .linear(2.0, -30)            // mild contrast: darken lines without blowing out thin ones to white
-          .sharpen({ sigma: 3.0, m1: 3.5, m2: 0.1, x1: 2, y2: 15, y3: 20 }) // strong unsharp mask — amplifies thin lines
-          .linear(1.8, -40)            // second pass: push amplified thin lines to black, clip remaining noise
-          .threshold(160)              // threshold — both thin and thick lines now exceed this
+          .blur(1.5)                   // merge thick stroke edges into single centerline
+          .threshold(200)              // remove grey — only dark lines survive
+          .blur(0.4)                   // light smooth to remove jagged potrace artifacts
+          .threshold(185)              // final sharpen pass
           .png()
           .toBuffer();
       }
