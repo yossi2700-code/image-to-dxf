@@ -28,6 +28,8 @@ import {
   X,
   FileText,
   Crop,
+  Crosshair,
+  Loader2,
 } from "lucide-react";
 import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { ReportIssueButton } from "@/components/ReportIssueButton";
@@ -467,6 +469,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
   const [showFaceDialog, setShowFaceDialog] = useState(false);
   const [faceDialogImageUrl, setFaceDialogImageUrl] = useState<string | null>(null);
   const [faceCheckLoading, setFaceCheckLoading] = useState(false);
+  const [precisionLoading, setPrecisionLoading] = useState(false);
+  const [precisionUsed, setPrecisionUsed] = useState(false);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const CLIENT_TIMEOUT_SEC = 240; // 4 minutes — auto-cancel if server hasn’t responded
@@ -1964,7 +1968,66 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                 feature="ai_trace"
               />
             </div>
-
+            {/* Precision Redraw Button — free, one-time use */}
+            {!precisionUsed && (
+              <div className="mt-1 mb-1">
+                <button
+                  className="w-full flex items-center justify-center gap-2 text-sm py-2.5 rounded-xl font-medium transition-all"
+                  style={{
+                    background: precisionLoading ? '#f1f5f9' : 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
+                    border: '1px solid #86efac',
+                    color: precisionLoading ? '#6b7280' : '#15803d',
+                    cursor: precisionLoading ? 'not-allowed' : 'pointer',
+                  }}
+                  disabled={precisionLoading}
+                  title={t('precisionRedrawTooltip')}
+                  onClick={async () => {
+                    if (!result.images[0]?.imageUrl || precisionLoading) return;
+                    setPrecisionLoading(true);
+                    try {
+                      const resp = await fetch('/api/ai-precision', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ imageUrl: result.images[0].imageUrl }),
+                        credentials: 'include',
+                      });
+                      if (!resp.ok) {
+                        const err = await resp.json().catch(() => ({})) as { message?: string };
+                        toast.error(err?.message || (isRtl ? 'שגיאה בדיוק' : 'Precision error'));
+                        return;
+                      }
+                      const data = await resp.json() as {
+                        imageUrl: string; svgPreview: string; dxfUrl: string;
+                        dxfFilename?: string; segmentCount: number;
+                        width: number; height: number; realWidth?: number; realHeight?: number;
+                      };
+                      const precImg: GeneratedImage = {
+                        imageUrl: data.imageUrl,
+                        svgPreview: data.svgPreview,
+                        dxfUrl: data.dxfUrl,
+                        dxfFilename: data.dxfFilename || 'precision.dxf',
+                        segmentCount: data.segmentCount,
+                        width: data.width,
+                        height: data.height,
+                        realWidth: data.realWidth ?? data.width,
+                        realHeight: data.realHeight ?? data.height,
+                      };
+                      setResult((prev) => prev ? { ...prev, images: [precImg, ...prev.images.slice(1)] } : prev);
+                      setPrecisionUsed(true);
+                      toast.success(isRtl ? 'הציור דויק בהצלחה!' : 'Precision redraw complete!');
+                    } catch {
+                      toast.error(isRtl ? 'שגיאה בדיוק' : 'Precision error');
+                    } finally {
+                      setPrecisionLoading(false);
+                    }
+                  }}
+                >
+                  {precisionLoading
+                    ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />{t('precisionLoading')}</>
+                    : <><Crosshair className="w-3.5 h-3.5" />{t('precisionRedraw')}</>}
+                </button>
+              </div>
+            )}
             <button
               className="w-full py-2.5 text-sm font-medium rounded-lg transition-all bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-200"
               onClick={reset}
