@@ -123,6 +123,7 @@ const STYLE_VARIATIONS = [
       "TEXT/LETTERS RULE — ABSOLUTE: Any text or letters MUST be drawn as a SINGLE THIN LINE tracing the centerline of each letter stroke — like a wire skeleton. " +
       "NEVER draw a double outline around letters. NEVER draw two parallel lines to form a letter stroke. " +
       "Each letter stroke = exactly ONE thin line following the center of the stroke. No fill, no outline, no double contour. " +
+      "ALL lines must be pure black (#000000) — do NOT use grey or lighter shades to simulate thinner lines. Every stroke, no matter how small, must be the same pure black. " +
       "Style: clean coloring-book outline drawing with smooth continuous ink strokes.",
   },
   {
@@ -139,6 +140,7 @@ const STYLE_VARIATIONS = [
       "TEXT/LETTERS RULE — ABSOLUTE: Any text or letters MUST be drawn as a SINGLE THIN LINE tracing the centerline of each letter stroke — like a wire skeleton. " +
       "NEVER draw a double outline around letters. NEVER draw two parallel lines to form a letter stroke. " +
       "Each letter stroke = exactly ONE thin line following the center of the stroke. No fill, no outline, no double contour. " +
+      "ALL lines must be pure black (#000000) — do NOT use grey or lighter shades to simulate thinner lines. Every stroke, no matter how small, must be the same pure black. " +
       "Style: clean detailed technical line drawing — like a precise engineering illustration, outlines only, no fills.",
   },
   {
@@ -146,7 +148,7 @@ const STYLE_VARIATIONS = [
     style:
       "This output will be converted to a vector file for laser engraving or CNC cutting. " +
       "Draw ONLY clean continuous pen strokes — like drawing with a fine-tip pen on paper. " +
-      "Draw bold outer contour with flowing decorative inner lines. " +
+      "Draw outer contour with flowing decorative inner lines. " +
       "Every line must be a single continuous stroke with no breaks, no gaps, no rough edges. " +
       "ABSOLUTELY NO: sketchy texture, hatching, cross-hatching, shading, shadows, gradients, grey tones, stippling, texture fills, dark areas, filled regions. " +
       "Every enclosed area must be 100% pure white. Zero grey pixels allowed. " +
@@ -154,6 +156,7 @@ const STYLE_VARIATIONS = [
       "TEXT/LETTERS RULE — ABSOLUTE: Any text or letters MUST be drawn as a SINGLE THIN LINE tracing the centerline of each letter stroke — like a wire skeleton. " +
       "NEVER draw a double outline around letters. NEVER draw two parallel lines to form a letter stroke. " +
       "Each letter stroke = exactly ONE thin line following the center of the stroke. No fill, no outline, no double contour. " +
+      "ALL lines must be pure black (#000000) — do NOT use grey or lighter shades to simulate thinner lines. Every stroke, no matter how small, must be the same pure black. " +
       "Style: ornamental line art with smooth flowing continuous lines, suitable for laser engraving.",
   },
 ];
@@ -263,7 +266,7 @@ export const TRACE_WARMUP_SYSTEM =
   "[CHECK 3] SINGLE LINE PER EDGE: NEVER draw two parallel lines to simulate thickness. ONE line per edge. If you see double lines anywhere = FAIL. " +
   "[CHECK 4] LINE SPACING: Two lines closer than 3px must be MERGED into one. Crowded lines destroy vectorization. " +
   "[CHECK 5] SELF-CHECK BEFORE SUBMITTING: Scan the entire image. If you find any grey pixel, any double-line, any parallel stroke pair — FIX IT before submitting. " +
-  "[CHECK 6] LINE WEIGHT HIERARCHY: Main silhouette = thick (6-8px). Structural details = medium (4-5px). Fine details = thin (2-3px). All same weight = FAIL. " +
+  "[CHECK 6] UNIFORM LINE COLOR: ALL lines MUST be pure black (#000000) at the same darkness level. Do NOT use grey, light grey, or any shade other than pure black for any line. Every stroke — outline, detail, fur, mane, background — must be the same pure black color. Grey lines = FAIL. " +
   "[CHECK 7] NO TEXT IN OUTPUT: Do NOT add any text, labels, watermarks, or annotations to the output. The output is a pure line drawing only. " +
   "[CHECK 8] CAD RULE (if image is a technical drawing): Reproduce ALL dimension lines, center lines, dashed lines, hatching, and annotations EXACTLY as they appear — like a CAD export. " +
   "[CHECK 9] SOURCE FIDELITY (MOST IMPORTANT): You received a reference image. Your output must be a clean version of THAT EXACT image — not a creative interpretation. Do NOT add any decorative element, swirl, curl, flourish, or embellishment that is NOT visible in the reference. If the reference is a simple butterfly, output a simple butterfly. ZERO creativity. ZERO invention. " +
@@ -287,7 +290,7 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
     `Pure white (#FFFFFF) background. Pure black (#000000) lines only. ` +
     `No shading, no grey tones, no gradients, no fills. ` +
     `Every line must be a single continuous stroke with no breaks, no gaps, no rough edges. ` +
-    `ADAPTIVE LINE WEIGHT RULE: Draw ONE single line per edge — NEVER two parallel lines to simulate thickness. Instead, vary the line weight itself: large/main elements use thick strokes (6-8px), medium elements use medium strokes (4-5px), small details and small text use thin strokes (2-3px). The line width communicates importance — do NOT use double-strokes to fill space. ` +
+    `UNIFORM LINE COLOR RULE: ALL lines must be pure black (#000000) — the SAME darkness for every single stroke. Do NOT use grey, light grey, or any shade other than pure black. Outlines, details, fur, mane, background elements — ALL must be identical pure black. ` +
     `SINGLE CONTOUR RULE — applies to ALL elements: Every shape, letter, and object must have EXACTLY ONE contour line — the outermost boundary only. ` +
     `Do NOT draw both an inner edge and an outer edge. Do NOT create double-stroke or parallel outlines. ONE closed path per shape. ` +
     `TEXT/LETTERS RULE — ABSOLUTE: Any text or letters MUST be drawn as a SINGLE THIN LINE tracing the centerline of each letter stroke — like a wire skeleton or handwriting. ` +
@@ -399,7 +402,7 @@ function buildFullImagePrompt(sceneDescription: string, variationIndex: number, 
   return (
     `Professional black and white line art of the following scene: ${sceneDescription}. ` +
     "Pure white background (#FFFFFF). " +
-    "ADAPTIVE LINE WEIGHT: ONE single line per edge — NEVER two parallel lines to simulate thickness. Vary line weight by element size: large/main elements 6-8px, medium elements 4-5px, small details and small text 2-3px. Line width communicates importance — do NOT use double-strokes to fill space. " +
+    "UNIFORM LINE COLOR: ALL lines must be pure black (#000000) — ONE single line per edge, NEVER two parallel lines to simulate thickness. Do NOT vary line weight or use grey for any stroke. Every line — outline, detail, fur, mane, background — must be the same pure black. " +
     "Pure black (#000000) lines on white (#FFFFFF) only. No fill, no shading, no gradients, no grey tones. " +
     "CRITICAL: Draw ALL elements visible in the image EXACTLY as described — every object, decoration, symbol, and detail in their correct positions and proportions. " +
     "Do NOT substitute or replace any element with a generic version. Draw the SPECIFIC items described. " +
@@ -507,7 +510,7 @@ function buildLineArtPrompt(objectDescription: string, variationIndex: number, s
     "=== END CAMERA ANGLE RULE === " +
     "\n=== STYLE === " +
     "Pure white background (#FFFFFF). " +
-    "ADAPTIVE LINE WEIGHT: ONE single line per edge — NEVER two parallel lines to simulate thickness. Vary line weight by element size: large/main elements 6-8px, medium elements 4-5px, small details and small text 2-3px. Line width communicates importance — do NOT use double-strokes to fill space. " +
+    "UNIFORM LINE COLOR: ALL lines must be pure black (#000000) — ONE single line per edge, NEVER two parallel lines to simulate thickness. Do NOT vary line weight or use grey for any stroke. Every line — outline, detail, fur, mane, background — must be the same pure black. " +
     "Pure black (#000000) lines on white (#FFFFFF) only. No fill, no shading, no gradients, no grey tones. " +
     `${styleBlock} ` +
     "\n=== FRAMING RULES (NEVER VIOLATE) === " +
