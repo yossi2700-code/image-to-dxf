@@ -825,9 +825,9 @@ async function runTraceJob(
           .threshold(145)             // lower threshold — catches more faint pixels after contrast boost
           .png()
           .toBuffer();
-      } else {
-        // Simple mode: same pipeline as AI Create (generateRoute) — blur merges thick strokes into
-        // single centerlines, then double threshold removes all grey → uniform pure black lines.
+      } else if (isBwDrawing) {
+        // Simple mode — B&W line-art drawing (AI-generated or hand-drawn sketch):
+        // blur merges thick strokes into single centerlines, then double threshold removes all grey.
         processedBuffer = await sharp(rawBuffer)
           .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .resize(2048, 2048, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 }, kernel: "lanczos3" })
@@ -836,6 +836,21 @@ async function runTraceJob(
           .threshold(200)              // remove grey — only dark lines survive
           .blur(0.4)                   // light smooth to remove jagged potrace artifacts
           .threshold(185)              // final sharpen pass
+          .png()
+          .toBuffer();
+      } else {
+        // Simple mode — color photo or colored drawing (flowers, cars, real photos):
+        // The AI redraws the image as line art. We then process the AI output:
+        // mild contrast boost + minimal blur + threshold — same pipeline that produced 37,090 lines
+        // from the flower bouquet (commit 913a5a2). linear(2.5,-50) was too aggressive and
+        // caused grey fill areas to become solid black silhouettes.
+        processedBuffer = await sharp(rawBuffer)
+          .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .grayscale()
+          .linear(1.8, -30)            // mild contrast boost: darken lines without blowing out background
+          .blur(1.0)                   // minimal blur — removes single-pixel noise, preserves fine details
+          .threshold(155)              // slightly lower to catch more of the boosted dark pixels
           .png()
           .toBuffer();
       }
