@@ -1116,8 +1116,8 @@ router.post(
       const singleLine = req.body?.singleLine === "true" || req.body?.singleLine === true;
       const closePaths = req.body?.closePaths === "true" || req.body?.closePaths === true;
       const lineweightMmRaw = parseFloat((req.body?.lineweightMm as string) ?? "");
-      // Default lineweight: 0.25mm (standard for laser/CNC) when user hasn't set a custom value
-      const lineweightMm = isNaN(lineweightMmRaw) ? 0.25 : Math.min(2.0, Math.max(0, lineweightMmRaw));
+      // Default lineweight: 0.35mm when user hasn't set a custom value
+      const lineweightMm = isNaN(lineweightMmRaw) ? 0.35 : Math.min(2.0, Math.max(0, lineweightMmRaw));
       const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
       const ipAnon = anonymizeIp(rawIp);
 
@@ -1275,8 +1275,8 @@ router.post(
       const ipAnon = anonymizeIp(rawIp2);
       const hairline = hairlineParam === true || hairlineParam === "true";
       const lineweightMmRaw2 = parseFloat((lwMmParam as string) ?? "");
-      // Default lineweight: 0.25mm (standard for laser/CNC) when user hasn't set a custom value
-      const lineweightMm2 = isNaN(lineweightMmRaw2) ? 0.25 : Math.min(2.0, Math.max(0, lineweightMmRaw2));
+      // Default lineweight: 0.35mm when user hasn't set a custom value
+      const lineweightMm2 = isNaN(lineweightMmRaw2) ? 0.35 : Math.min(2.0, Math.max(0, lineweightMmRaw2));
 
       let pngBuffer: Buffer;
       if (previewPngBase64) {
