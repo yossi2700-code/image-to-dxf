@@ -653,7 +653,7 @@ async function runTraceJob(
       Math.abs(channels[1].mean - channels[2].mean),
       Math.abs(channels[0].mean - channels[2].mean)
     );
-    const isMonochrome = channelDiff < 15; // very low color difference = B&W or near-B&W
+    const isMonochrome = channelDiff < 8; // very low color difference = truly B&W (tightened from 15 to avoid false positives on colorful landscapes/objects)
     // Detect faint/low-contrast images: use min/max range as proxy for contrast
     // If the range (max - min) across channels is small, the image has weak contrast
     const avgMin = (channels[0].min + channels[1].min + channels[2].min) / 3;
@@ -727,7 +727,9 @@ async function runTraceJob(
     // tint the black lines to dark blue before sending to AI.
     // This prevents the AI from "inventing" decorative elements on pure B&W drawings.
     // The AI handles colored line art much more faithfully than pure black-on-white.
-    const isBwDrawing = isMonochrome && avgBrightness > 150 && !isDarkBackground;
+    // Only treat as B&W drawing if: truly monochrome AND bright background AND AI didn't classify it as a photo-type (landscape/portrait/object)
+    const isPhotoType = ["landscape", "portrait", "object"].includes(imageClassification.type);
+    const isBwDrawing = isMonochrome && avgBrightness > 150 && !isDarkBackground && !isPhotoType;
     if (isBwDrawing) {
       console.log(`[aiTraceRoute] Job ${jobId}: B&W drawing detected — colorizing lines before AI`);
       updateJob(jobId, {
