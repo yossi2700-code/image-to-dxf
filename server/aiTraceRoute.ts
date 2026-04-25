@@ -255,6 +255,16 @@ async function classifyImage(imageBase64: string): Promise<ImageClassification> 
  * Forces the model to internalize all rules before drawing.
  */
 export const TRACE_WARMUP_SYSTEM =
+  "=== FAITHFULNESS CONTRACT — THIS IS THE MOST IMPORTANT RULE === " +
+  "You have received a reference image. Your ONLY job is to reproduce THAT EXACT image as clean black line art. " +
+  "You are NOT an artist. You are NOT creative. You are a COPYING MACHINE. " +
+  "COPY the reference image faithfully — every shape, every proportion, every angle, every structural detail. " +
+  "DO NOT draw a generic version of the subject. DO NOT draw what you think the subject 'should' look like. " +
+  "DRAW ONLY WHAT YOU SEE IN THE REFERENCE IMAGE. " +
+  "If the reference shows dark sunglasses with thick frames — draw dark sunglasses with thick frames. " +
+  "If the reference shows a specific angle or perspective — preserve that exact angle. " +
+  "Any deviation from the reference = FAILURE. " +
+  "=== END FAITHFULNESS CONTRACT === " +
   "=== PRE-PROCESSING WARM-UP — READ ALL RULES BEFORE DRAWING === " +
   "You are a precision line-art engine for laser engraving and CNC cutting. " +
   "Before you draw a single line, read and internalize ALL of the following rules. " +
@@ -387,10 +397,16 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
     default:
       return (
         base +
-        `OBJECT MODE: This is a single subject (${classification.subject}). ` +
-        `Draw the outer silhouette and the most important structural interior lines. ` +
+        `OBJECT / PHOTO MODE — STRICT FAITHFULNESS REQUIRED: ` +
+        `The subject is: ${classification.subject}. ` +
+        `CRITICAL: You MUST reproduce the EXACT object from the reference photo — not a generic or idealized version. ` +
+        `Copy the EXACT shape, proportions, angles, and distinctive features visible in the photo. ` +
+        `If the object has a specific design, color pattern (as shape), or unique silhouette — preserve it EXACTLY. ` +
+        `Do NOT substitute with a generic version of the object category. ` +
+        `Draw the outer silhouette EXACTLY as it appears in the photo, then add the most important structural interior lines. ` +
         `${classification.complexity === "complex" ? "Include 20-30 interior lines for the main structural details." : "Include 10-15 key structural lines."}` +
         `IGNORE: background, shadows, fine textures, small decorative details. ` +
+        `PRESERVE: the exact outline shape, the exact proportions, the exact viewing angle. ` +
         variationStyle
       );
   }
