@@ -317,11 +317,17 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
     case "landscape":
       return (
         base +
-        `LANDSCAPE/SCENE MODE: This is a scene with many elements. ` +
-        `Draw ONLY the 5-8 most dominant structural elements (horizon line, main buildings, large trees, prominent objects). ` +
-        `COMPLETELY IGNORE: sky details, water ripples, distant background objects, small figures, foliage texture, window details, cables, ropes, masts unless they are the main subject. ` +
-        `Simplify every complex area into 1-3 clean lines. Merge nearby parallel lines into one. ` +
-        `The result should look like a simple architectural sketch — minimal, clean, readable. ` +
+        `LANDSCAPE/SCENE MODE — EXTREME SIMPLIFICATION REQUIRED: This is a complex outdoor scene. ` +
+        `Draw ONLY 3-5 dominant silhouette outlines: horizon line, main tree trunks (1-2 lines each), large rock masses as single closed shapes, water edge as 1 line. ` +
+        `ABSOLUTE RULES — VIOLATION = FAILURE: ` +
+        `(1) ZERO foliage texture — tree canopies = single closed blob outline ONLY, no internal leaf/branch lines. ` +
+        `(2) ZERO water texture — water surface = flat empty area, draw only the water EDGE line. ` +
+        `(3) ZERO rock/stone texture — rocks = simple closed oval/polygon outlines only. ` +
+        `(4) ZERO sky details — sky = completely empty white space. ` +
+        `(5) ZERO grass texture — ground = 1-2 horizontal lines maximum. ` +
+        `(6) ZERO background detail — distant objects = omit entirely. ` +
+        `Think of it as a COLORING BOOK PAGE for children — simple bold outlines, large empty areas to color in. ` +
+        `If the result has more than 20 lines total, you have drawn too much — simplify further. ` +
         variationStyle
       );
 
