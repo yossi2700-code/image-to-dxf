@@ -737,8 +737,12 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       const compressed = canvas.toDataURL("image/jpeg", 0.85);
       setImagePreviewPersisted(compressed);
       // Trigger face detection check (only if portrait switch is supported AND not coming from portrait)
-      if (onSwitchToPortrait && !fromPortrait) {
+      if (!onSwitchToPortrait || fromPortrait) {
+        // No face check — auto-start tracing immediately after preview is set
+        setTimeout(() => handleTrace(), 150);
+      } else {
         setFaceCheckLoading(true);
+        // Auto-start will be triggered after face check completes (see below)
         // Use FormData with the original file to avoid base64 corruption issues
         const formData = new FormData();
         formData.append("image", file);
@@ -753,15 +757,26 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
             if (data.hasFaces) {
               setFaceDialogImageUrl(compressed);
               setShowFaceDialog(true);
+            } else {
+              // No faces — auto-start tracing immediately
+              setTimeout(() => handleTrace(), 100);
             }
           })
-          .catch(() => setFaceCheckLoading(false));
+          .catch(() => {
+            setFaceCheckLoading(false);
+            // On error, still auto-start
+            setTimeout(() => handleTrace(), 100);
+          });
       }
     };
     img.onerror = () => {
       // Fallback to FileReader if canvas fails
       const reader = new FileReader();
-      reader.onload = (e) => setImagePreviewPersisted(e.target?.result as string);
+      reader.onload = (e) => {
+        setImagePreviewPersisted(e.target?.result as string);
+        // Auto-start if no face check
+        if (!onSwitchToPortrait || fromPortrait) setTimeout(() => handleTrace(), 150);
+      };
       reader.readAsDataURL(file);
     };
     const objectUrl = URL.createObjectURL(file);
@@ -1970,17 +1985,27 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
             </div>
             {/* Precision Redraw Button — free, one-time use */}
             {!precisionUsed && (
-              <div className="mt-1 mb-1">
+              <div className="mt-1 mb-1 rounded-xl overflow-hidden" style={{ border: '1.5px solid #86efac', background: precisionLoading ? '#f8fafc' : 'linear-gradient(135deg, #f0fdf4, #dcfce7)' }}>
+                <div className="px-4 pt-3 pb-1">
+                  <p className="text-sm font-bold text-green-800 flex items-center gap-1.5">
+                    <Crosshair className="w-4 h-4" />
+                    {isRtl ? 'דייק את הציור — חינם' : 'Precision Redraw — Free'}
+                  </p>
+                  <p className="text-xs text-green-700 mt-0.5 leading-relaxed">
+                    {isRtl
+                      ? 'מצייר מחדש עם הוראה חזקה להיות נאמן למקור — מוסיף פרטים שהוחמצו. ללא עלות אסימונים.'
+                      : 'Redraws with strict faithfulness to the original — adds missed details. No token cost.'}
+                  </p>
+                </div>
                 <button
-                  className="w-full flex items-center justify-center gap-2 text-sm py-2.5 rounded-xl font-medium transition-all"
+                  className="w-full flex items-center justify-center gap-2 text-sm py-2.5 px-4 font-bold transition-all"
                   style={{
-                    background: precisionLoading ? '#f1f5f9' : 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
-                    border: '1px solid #86efac',
-                    color: precisionLoading ? '#6b7280' : '#15803d',
+                    background: precisionLoading ? '#e2e8f0' : '#16a34a',
+                    color: precisionLoading ? '#6b7280' : 'white',
                     cursor: precisionLoading ? 'not-allowed' : 'pointer',
+                    borderTop: '1px solid #86efac',
                   }}
                   disabled={precisionLoading}
-                  title={t('precisionRedrawTooltip')}
                   onClick={async () => {
                     if (!result.images[0]?.imageUrl || precisionLoading) return;
                     setPrecisionLoading(true);
@@ -2023,8 +2048,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                   }}
                 >
                   {precisionLoading
-                    ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />{t('precisionLoading')}</>
-                    : <><Crosshair className="w-3.5 h-3.5" />{t('precisionRedraw')}</>}
+                    ? <><Loader2 className="w-4 h-4 animate-spin" />{isRtl ? 'מדייק...' : 'Redrawing...'}</>
+                    : <>{isRtl ? '▶ התחל דיוק' : '▶ Start Precision Redraw'}</>}
                 </button>
               </div>
             )}
