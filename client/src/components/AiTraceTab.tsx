@@ -613,13 +613,10 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialImageFile]);
 
-  // When imagePreview updates AND autoStart is pending, trigger conversion
+  // autoStart pending effect — disabled, user must press Convert manually
+  // (kept as no-op to preserve prop interface compatibility)
   useEffect(() => {
-    if (!autoStartPendingRef.current) return;
-    if (!imagePreview && !previewRef.current) return;
     autoStartPendingRef.current = false;
-    // Small delay to ensure imageFile state is also set
-    setTimeout(() => handleTrace(), 150);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [imagePreview]);
 
@@ -737,13 +734,9 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       const compressed = canvas.toDataURL("image/jpeg", 0.85);
       setImagePreviewPersisted(compressed);
       // Trigger face detection check (only if portrait switch is supported AND not coming from portrait)
-      if (!onSwitchToPortrait || fromPortrait) {
-        // No face check — auto-start tracing immediately after preview is set
-        setTimeout(() => handleTrace(), 150);
-      } else {
+      if (onSwitchToPortrait && !fromPortrait) {
+        // Run face check to offer portrait switch — but do NOT auto-start after
         setFaceCheckLoading(true);
-        // Auto-start will be triggered after face check completes (see below)
-        // Use FormData with the original file to avoid base64 corruption issues
         const formData = new FormData();
         formData.append("image", file);
         fetch("/api/face-detect/quick-check", {
@@ -757,25 +750,22 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
             if (data.hasFaces) {
               setFaceDialogImageUrl(compressed);
               setShowFaceDialog(true);
-            } else {
-              // No faces — auto-start tracing immediately
-              setTimeout(() => handleTrace(), 100);
             }
+            // No faces — user presses Convert manually
           })
           .catch(() => {
             setFaceCheckLoading(false);
-            // On error, still auto-start
-            setTimeout(() => handleTrace(), 100);
+            // On error — user presses Convert manually
           });
       }
+      // Always wait for user to press Convert button — no auto-start
     };
     img.onerror = () => {
       // Fallback to FileReader if canvas fails
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreviewPersisted(e.target?.result as string);
-        // Auto-start if no face check
-        if (!onSwitchToPortrait || fromPortrait) setTimeout(() => handleTrace(), 150);
+        // No auto-start — user presses Convert manually
       };
       reader.readAsDataURL(file);
     };
@@ -1486,90 +1476,6 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                     </button>
                   );
                 })}
-            {/* Single line toggle */}
-            <div className="mt-2 mb-1">
-              <button
-                type="button"
-                onClick={() => setSingleLine(v => !v)}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all"
-                style={singleLine
-                  ? { background: 'linear-gradient(135deg, #f59e0b22, #f97316 11)', border: '2px solid #f59e0b', boxShadow: '0 2px 8px rgba(245,158,11,0.2)' }
-                  : { background: '#f8fafc', border: '2px solid #e2e8f0' }
-                }
-              >
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
-                    style={{ background: singleLine ? '#f59e0b' : '#e2e8f0' }}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                      <path d="M2 9 Q5 4 9 9 Q13 14 16 9" stroke={singleLine ? 'white' : '#9ca3af'} strokeWidth="2" strokeLinecap="round" fill="none"/>
-                    </svg>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-xs font-bold" style={{ color: singleLine ? '#92400e' : '#374151' }}>
-                      {isRtl ? 'קו יחיד (Centerline)' : 'Single Line (Centerline)'}
-                    </p>
-                    <p className="text-xs" style={{ color: singleLine ? '#b45309' : '#9ca3af', fontSize: '9px' }}>
-                      {isRtl ? 'קו מרכזי בלבד — מושלם לחריטת לייזר' : 'Center skeleton only — ideal for laser engraving'}
-                    </p>
-                  </div>
-                </div>
-                <div
-                  className="w-10 h-5 rounded-full relative transition-all shrink-0"
-                  style={{ background: singleLine ? '#f59e0b' : '#d1d5db' }}
-                >
-                  <div
-                    className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all"
-                    style={{ left: singleLine ? '22px' : '2px' }}
-                  />
-                </div>
-              </button>
-            </div>
-
-            {/* Close paths sub-option — only shown when single line is active */}
-            {singleLine && (
-              <div className="ml-4 mt-1 mb-1">
-                <button
-                  type="button"
-                  onClick={() => setClosePaths(v => !v)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all"
-                  style={closePaths
-                    ? { background: '#fef3c7', border: '1.5px solid #f59e0b' }
-                    : { background: '#f1f5f9', border: '1.5px solid #cbd5e1' }
-                  }
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
-                      style={{ background: closePaths ? '#f59e0b' : '#e2e8f0' }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <circle cx="6" cy="6" r="4.5" stroke={closePaths ? 'white' : '#9ca3af'} strokeWidth="1.5" fill="none"/>
-                        <circle cx="6" cy="1.5" r="1" fill={closePaths ? 'white' : '#9ca3af'}/>
-                      </svg>
-                    </div>
-                    <div className="text-left">
-                      <p className="text-xs font-semibold" style={{ color: closePaths ? '#92400e' : '#374151', fontSize: '10px' }}>
-                        {isRtl ? 'סגור קווים פתוחים' : 'Close Open Paths'}
-                      </p>
-                      <p style={{ color: closePaths ? '#b45309' : '#9ca3af', fontSize: '9px' }}>
-                        {isRtl ? 'מחבר סוף קו לתחילתו — לכרסום CNC' : 'Connects end to start — for CNC routing'}
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    className="w-8 h-4 rounded-full relative transition-all shrink-0"
-                    style={{ background: closePaths ? '#f59e0b' : '#d1d5db' }}
-                  >
-                    <div
-                      className="absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-all"
-                      style={{ left: closePaths ? '17px' : '2px' }}
-                    />
-                  </div>
-                </button>
-              </div>
-            )}
-
             {/* Lineweight option */}
             <div className="flex items-center gap-2 pt-1 pb-1 flex-wrap">
               <label className="text-sm font-medium shrink-0">
