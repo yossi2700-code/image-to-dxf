@@ -45,7 +45,7 @@ export default function SketchTest() {
             alert(isRtl ? "נדרשת התחברות" : "Login required");
           }}
           onInsufficientTokens={() => {
-            alert(isRtl ? "אין מספיק אסימונים" : "Insufficient tokens");
+            alert(isRtl ? "אין מספיק קרדיטים" : "Insufficient credits");
           }}
         />
       </div>

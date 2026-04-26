@@ -522,12 +522,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
   const addTokensMutation = trpc.admin.addTokens.useMutation({
     onSuccess: (data) => {
-      toast.success(`אסימונים נוספו! יתרה חדשה: ${data.balanceAfter}`);
+      toast.success(`קרדיטים נוספו! יתרה חדשה: ${data.balanceAfter}`);
       setAddingTokensUser(null);
       setTokenInput("");
       refetchUsers();
     },
-    onError: (err) => toast.error(err.message ?? "שגיאה בהוספת אסימונים"),
+    onError: (err) => toast.error(err.message ?? "שגיאה בהוספת קרדיטים"),
   });
 
   const blockUserMutation = trpc.admin.blockUser.useMutation({
@@ -631,7 +631,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   );
   const approveIssueMutation = trpc.issueReports.approve.useMutation({
     onSuccess: () => {
-      toast.success("הדיווח אושר והאסימונים זוכו");
+      toast.success("הדיווח אושר והקרדיטים זוכו");
       setIssueApproveId(null);
       setIssueAdminNote("");
       refetchIssueReports();
@@ -777,23 +777,23 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [newsForm, setNewsForm] = useState({ title: "", content: "", emoji: "", isPublished: 1, sortOrder: "0" });
 
   // ── Bulk Email state ──
-  const CAMPAIGN_EMAIL_SUBJECT = "עדכונים חדשים ב-AI DXF + 15 אסימונים חינם";
+  const CAMPAIGN_EMAIL_SUBJECT = "עדכונים חדשים ב-AI DXF + 15 קרדיטים חינם";
   const CAMPAIGN_EMAIL_BODY = `<p style="font-size:15px; color:#374151; line-height:1.8; margin:0 0 16px;">שלום {{name}},</p>
 <p style="font-size:15px; color:#374151; line-height:1.8; margin:0 0 16px;">תודה שנרשמת לאתר AI DXF. הוספנו יכולות חדשות ורצינו לעדכן אותך.</p>
 <p style="font-size:14px; font-weight:bold; color:#1e1b4b; margin:0 0 10px;">מה חדש באתר:</p>
 <p style="font-size:14px; color:#374151; line-height:1.8; margin:0 0 6px;">&#10024; יצירת תמונה מטקסט (AI Create) — תאר בטקסט מה אתה רוצה וה-AI יצור תמונה ויהפוך אותה לקובץ DXF.</p>
-<p style="font-size:14px; color:#374151; line-height:1.8; margin:0 0 6px;">&#128176; רכישת אסימונים — עכשיו ניתן לרכוש אסימונים נוספים ישירות מהאתר.</p>
+<p style="font-size:14px; color:#374151; line-height:1.8; margin:0 0 6px;">&#128176; רכישת קרדיטים — עכשיו ניתן לרכוש קרדיטים נוספים ישירות מהאתר.</p>
 <p style="font-size:14px; color:#374151; line-height:1.8; margin:0 0 20px;">&#128247; ממשק משופר — עיצוב חדש ומהיר יותר עם תצוגה מקדימה.</p>
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fef9c3; border:1px solid #fde68a; border-radius:8px; margin-bottom:20px;">
 <tr><td style="padding:16px 20px; direction:rtl; text-align:right;">
-<p style="margin:0 0 6px; font-size:15px; font-weight:bold; color:#92400e;">מתנה מיוחדת: 15 אסימונים נוספים</p>
-<p style="margin:0; font-size:13px; color:#78350f; line-height:1.7;">כל משתמש רשום שייכנס לאתר דרך הקישור הזה יקבל 15 אסימונים שיתווספו אוטומטית לחשבונו.</p>
+<p style="margin:0 0 6px; font-size:15px; font-weight:bold; color:#92400e;">מתנה מיוחדת: 15 קרדיטים נוספים</p>
+<p style="margin:0; font-size:13px; color:#78350f; line-height:1.7;">כל משתמש רשום שייכנס לאתר דרך הקישור הזה יקבל 15 קרדיטים שיתווספו אוטומטית לחשבונו.</p>
 </td></tr>
 </table>
 <p style="text-align:center; margin:0 0 8px;">
 <a href="https://dxfai.ai/?campaign=email_bonus_2026_03" style="display:inline-block; background:#4f46e5; color:#ffffff; font-size:15px; font-weight:bold; padding:12px 36px; text-decoration:none; border-radius:6px;">כניסה לאתר וקבלת האסימונים</a>
 </p>`;
-  const CAMPAIGN_EMAIL_TEXT = `שלום {{name}},\n\nתודה שנרשמת לאתר AI DXF.\n\nמה חדש:\n- יצירת תמונה מטקסט (AI Create)\n- רכישת אסימונים\n- ממשק משופר\n\nמתנה מיוחדת: 15 אסימונים נוספים לכל מי שנכנס דרך הקישור:\nhttps://dxfai.ai/?campaign=email_bonus_2026_03\n\nAI DXF - dxfai.ai`;
+  const CAMPAIGN_EMAIL_TEXT = `שלום {{name}},\n\nתודה שנרשמת לאתר AI DXF.\n\nמה חדש:\n- יצירת תמונה מטקסט (AI Create)\n- רכישת קרדיטים\n- ממשק משופר\n\nמתנה מיוחדת: 15 קרדיטים נוספים לכל מי שנכנס דרך הקישור:\nhttps://dxfai.ai/?campaign=email_bonus_2026_03\n\nAI DXF - dxfai.ai`;
 
   const [emailSubject, setEmailSubject] = useState(CAMPAIGN_EMAIL_SUBJECT);
   const [emailBody, setEmailBody] = useState(CAMPAIGN_EMAIL_BODY);
@@ -1725,10 +1725,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             <button
                               className="flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium hover:bg-blue-200 transition-colors"
                               onClick={(e) => { e.stopPropagation(); setAddingTokensUser(u.id); setTokenInput(""); }}
-                              title="לחץ להוספת אסימונים"
+                              title="לחץ להוספת קרדיטים"
                             >
                               <Coins className="w-3 h-3" />
-                              {u.tokenBalance ?? 0} אסימונים
+                              {u.tokenBalance ?? 0} קרדיטים
                               <Plus className="w-3 h-3" />
                             </button>
                           )}
@@ -1770,7 +1770,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                           <button
                             className="text-xs text-muted-foreground hover:text-primary transition-colors"
                             onClick={(e) => { e.stopPropagation(); setTokenHistoryUser(tokenHistoryUser === u.id ? null : u.id); }}
-                            title="היסטוריית אסימונים"
+                            title="היסטוריית קרדיטים"
                           >
                             <History className="w-3.5 h-3.5" />
                           </button>
@@ -1819,7 +1819,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                               onClick={(e) => { e.stopPropagation(); setTokenHistoryUser(u.id); }}
                             >
                               <Coins className="w-3 h-3" />
-                              אסימונים
+                              קרדיטים
                             </button>
                           </div>
 
@@ -2747,16 +2747,16 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                     <p className="text-xs font-semibold text-slate-600">חבילה חדשה</p>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs text-muted-foreground">כמות אסימונים</label>
+                        <label className="text-xs text-muted-foreground">כמות קרדיטים</label>
                         <Input className="h-7 text-xs mt-0.5" type="number" placeholder="200" value={newPkg.tokenAmount}
                           onChange={e => {
                             const amt = e.target.value;
                             const autoId = amt ? `tokens_${amt}` : "";
-                            const autoLabel = amt ? `${amt} אסימונים` : "";
+                            const autoLabel = amt ? `${amt} קרדיטים` : "";
                             setNewPkg(p => {
                               // Update packageId if it's empty or still matches auto-pattern (not manually edited)
                               const isAutoId = !p.packageId || /^tokens_\d*$/.test(p.packageId);
-                              const isAutoLabel = !p.label || /^\d+ אסימונים$/.test(p.label);
+                              const isAutoLabel = !p.label || /^\d+ קרדיטים$/.test(p.label);
                               return {
                                 ...p,
                                 tokenAmount: amt,
@@ -2769,7 +2769,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       </div>
                       <div>
                         <label className="text-xs text-muted-foreground">שם תצוגה</label>
-                        <Input className="h-7 text-xs mt-0.5" placeholder="200 אסימונים" value={newPkg.label} onChange={e => setNewPkg(p => ({ ...p, label: e.target.value }))} />
+                        <Input className="h-7 text-xs mt-0.5" placeholder="200 קרדיטים" value={newPkg.label} onChange={e => setNewPkg(p => ({ ...p, label: e.target.value }))} />
                       </div>
                       <div className="col-span-2">
                         <label className="text-xs text-muted-foreground">מזהה טכני (יוצר אוטומטית, למשל tokens_200)</label>
@@ -2863,7 +2863,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-semibold text-sm">{pkg.label || pkg.packageId}</span>
-                              <span className="text-xs text-muted-foreground">({pkg.tokenAmount} אסימונים)</span>
+                              <span className="text-xs text-muted-foreground">({pkg.tokenAmount} קרדיטים)</span>
                               {pkg.badge && (
                                 <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
                                   pkg.badge === 'recommended' ? 'bg-blue-100 text-blue-700' :
@@ -3189,7 +3189,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                         </p>
                       </div>
                       <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-center">
-                        <p className="text-xs text-purple-600 font-medium">אסימונים נמכרו</p>
+                        <p className="text-xs text-purple-600 font-medium">קרדיטים נמכרו</p>
                         <p className="text-lg font-bold text-purple-700">{(paypalOrdersData ?? []).filter(o => o.status === "completed").reduce((sum, o) => sum + (o.tokenAmount || 0), 0)}</p>
                       </div>
                     </div>
@@ -3200,7 +3200,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                           <th className="py-2 pr-2 font-semibold text-muted-foreground text-xs">משתמש</th>
                           <th className="py-2 pr-2 font-semibold text-muted-foreground text-xs">חבילה</th>
                           <th className="py-2 pr-2 font-semibold text-muted-foreground text-xs">סכום</th>
-                          <th className="py-2 pr-2 font-semibold text-muted-foreground text-xs">אסימונים</th>
+                          <th className="py-2 pr-2 font-semibold text-muted-foreground text-xs">קרדיטים</th>
                           <th className="py-2 pr-2 font-semibold text-muted-foreground text-xs rounded-l-lg">סטטוס</th>
                         </tr>
                       </thead>
@@ -3571,7 +3571,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Gift className="w-5 h-5 text-purple-500" />
-                  דוח קמפיין מייל — מי תבע 15 אסימונים
+                  דוח קמפיין מייל — מי תבע 15 קרדיטים
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -3594,7 +3594,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       </div>
                       <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-2 text-center">
                         <div className="text-2xl font-bold text-green-700">{campaignData.reduce((s, r) => s + r.tokensAwarded, 0)}</div>
-                        <div className="text-xs text-green-500">אסימונים חולקו</div>
+                        <div className="text-xs text-green-500">קרדיטים חולקו</div>
                       </div>
                     </div>
                     <div className="overflow-x-auto">
@@ -3604,7 +3604,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             <th className="pb-2 font-medium">שם</th>
                             <th className="pb-2 font-medium">מייל</th>
                             <th className="pb-2 font-medium">קמפיין</th>
-                            <th className="pb-2 font-medium">אסימונים</th>
+                            <th className="pb-2 font-medium">קרדיטים</th>
                             <th className="pb-2 font-medium">תאריך</th>
                           </tr>
                         </thead>
@@ -3653,7 +3653,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                     <RefreshCw className="w-3.5 h-3.5" />רענן
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">פאנל איתור באגים — מי עבד, כמה זמן, למה נכשל, ותמונת המקור. אסימונים לא נוכו כאשר ה-job נכשל.</p>
+                <p className="text-xs text-muted-foreground mt-1">פאנל איתור באגים — מי עבד, כמה זמן, למה נכשל, ותמונת המקור. קרדיטים לא נוכו כאשר ה-job נכשל.</p>
               </CardHeader>
               <CardContent>
                 {failedJobsLoading ? (
@@ -3868,7 +3868,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                 <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{report.feature}</span>
                               )}
                               {report.tokensRefunded && (
-                                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">זוכה: {report.tokensRefunded} אסימונים</span>
+                                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">זוכה: {report.tokensRefunded} קרדיטים</span>
                               )}
                             </div>
                             <p className="text-sm text-slate-700 mb-3 whitespace-pre-wrap">{report.description}</p>
@@ -3902,9 +3902,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             <div className="flex flex-col gap-2 shrink-0">
                               {issueApproveId === report.id ? (
                                 <div className="bg-white rounded-lg border border-green-200 p-3 space-y-2 min-w-[200px]">
-                                  <p className="text-xs font-semibold text-green-700">אישור דיווח וזיכוי אסימונים</p>
+                                  <p className="text-xs font-semibold text-green-700">אישור דיווח וזיכוי קרדיטים</p>
                                   <div className="flex items-center gap-2">
-                                    <label className="text-xs text-slate-600">כמות אסימונים:</label>
+                                    <label className="text-xs text-slate-600">כמות קרדיטים:</label>
                                     <input
                                       type="number"
                                       min={1}

@@ -117,7 +117,7 @@ export default function Marketing() {
         </a>
 
         <p style={{ marginTop: 14, fontSize: 13, color: "rgba(255,255,255,0.4)" }}>
-          20 אסימונים חינם בהרשמה · ללא כרטיס אשראי
+          20 קרדיטים חינם בהרשמה · ללא כרטיס אשראי
         </p>
       </div>
 

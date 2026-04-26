@@ -106,8 +106,8 @@ function CorrectionPanel({ imageUrl, objectDescription, onRefined, isRtl }: Corr
       const data = await response.json();
       if (!response.ok) {
         if (data.error === "INSUFFICIENT_TOKENS") {
-          toast.error(isRtl ? (data.message || "נגמרו האסימונים") : (data.messageEn || "Out of tokens"), {
-            action: { label: isRtl ? "רכוש אסימונים" : "Buy Tokens", onClick: () => { window.location.href = "/tokens"; } },
+          toast.error(isRtl ? (data.message || "נגמרו הקרדיטים") : (data.messageEn || "Out of credits"), {
+            action: { label: isRtl ? "רכוש קרדיטים" : "Buy Credits", onClick: () => { window.location.href = "/buy"; } },
             duration: 6000,
           });
         } else {
@@ -583,7 +583,7 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
           return;
         }
         if (data.error === "INSUFFICIENT_TOKENS") {
-          const msg = isRtl ? (data.message || "נגמרו האסימונים") : (data.messageEn || "Out of tokens");
+          const msg = isRtl ? (data.message || "נגמרו הקרדיטים") : (data.messageEn || "Out of credits");
           setErrorMsg(msg);
           setStatus("error");
           refetchTokens();
@@ -632,7 +632,7 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
       });
       const data = await res.json();
       if (data.cancelled) {
-        toast.success(isRtl ? "העיבוד בוטל והאסימונים הוחזרו" : "Processing cancelled — tokens refunded");
+        toast.success(isRtl ? "העיבוד בוטל והקרדיטים הוחזרו" : "Processing cancelled — credits refunded");
         refetchTokens();
       }
     } catch (_) { /* ignore */ }
@@ -811,7 +811,7 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
           disabled={!imageFile && !imagePreview}
           onClick={handleRedraw}
         >
-          <><Wand2 className="w-5 h-5" />{isRtl ? "צייר מחדש עם AI" : "Redraw with AI"}{redrawCost > 0 && <span style={{ fontSize: '0.72em', opacity: 0.8, marginInlineStart: 6 }}>({redrawCost} {isRtl ? 'אסימונים' : 'tokens'})</span>}</>
+          <><Wand2 className="w-5 h-5" />{isRtl ? "צייר מחדש עם AI" : "Redraw with AI"}{redrawCost > 0 && <span style={{ fontSize: '0.72em', opacity: 0.8, marginInlineStart: 6 }}>({redrawCost} {isRtl ? 'קרדיטים' : 'credits'})</span>}</>
         </button>
       </div>
 
@@ -827,7 +827,7 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
           }}
         >
           <X className="w-4 h-4" />
-          {isRtl ? "בטל עיבוד והחזר אסימונים" : "Cancel & Refund Tokens"}
+          {isRtl ? "בטל עיבוד והחזר קרדיטים" : "Cancel & Refund Credits"}
         </button>
       )}
 

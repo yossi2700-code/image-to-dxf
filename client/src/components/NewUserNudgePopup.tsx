@@ -179,13 +179,13 @@ export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSele
           gap: 4,
         }}>
           <Sparkles size={11} />
-          {isHe ? "אסימונים חינם" : "Free tokens"}
+          {isHe ? "קרדיטים חינם" : "Free credits"}
         </div>
       </div>
 
       {/* Headline */}
       <p style={{ fontSize: isMobile ? 14 : 16, fontWeight: 800, margin: "0 0 4px", lineHeight: 1.3, color: "white" }}>
-        {isHe ? "יש לך אסימונים — נסה עכשיו!" : "You have tokens — try now!"}
+        {isHe ? "יש לך קרדיטים — נסה עכשיו!" : "You have credits — try now!"}
       </p>
       <p style={{ fontSize: 11, color: "rgba(196,181,253,0.9)", margin: "0 0 10px", lineHeight: 1.5 }}>
         {isHe ? "בחר מה לנסות:" : "Choose what to try:"}
@@ -287,12 +287,12 @@ export function NewUserNudgePopup({ hasAnyAction, hasPendingWelcomeBonus, onSele
       {/* Email bonus hint */}
       {hasPendingWelcomeBonus && (
         <p style={{ fontSize: 10, color: "rgba(251,191,36,0.85)", margin: "8px 0 0", textAlign: "center", lineHeight: 1.4 }}>
-          📧 {isHe ? "בדוק במייל — מחכים לך עוד 20 אסימונים" : "Check your email — 20 more tokens waiting"}
+          📧 {isHe ? "בדוק במייל — מחכים לך עוד 20 קרדיטים" : "Check your email — 20 more credits waiting"}
         </p>
       )}
       {/* Footer note */}
       <p style={{ fontSize: 10, color: "rgba(196,181,253,0.6)", margin: "5px 0 0", textAlign: "center" }}>
-        {isHe ? "האסימונים לא פגים — השתמש בהם מתי שתרצה" : "Tokens never expire — use them whenever you want"}
+        {isHe ? "הקרדיטים לא פגים — השתמש בהם מתי שתרצה" : "Credits never expire — use them whenever you want"}
       </p>
     </div>
   );

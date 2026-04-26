@@ -69,11 +69,11 @@ function PurchaseTermsModal({ onClose }: { onClose: () => void }) {
           <p className="text-xs text-gray-500">{isHe ? "עדכון אחרון: מרץ 2026 | dxfai.ai" : "Last updated: March 2026 | dxfai.ai"}</p>
           {isHe ? (
             <>
-              <section><h3 className="font-semibold text-white mb-2">1. חבילות אסימונים ותמחור</h3><p>בהשלמת הרכישה אתה רוכש רישיון שאינו ניתן להחזר ואינו ניתן להעברה לשימוש במספר האסימונים המצוין בפלטפורמת dxfai.ai.</p></section>
-              <section><h3 className="font-semibold text-white mb-2">2. ללא תפוגה</h3><p>אסימונים שנרכשו אינם פגים ונשארים זמינים בחשבונך ללא הגבלת זמן.</p></section>
+              <section><h3 className="font-semibold text-white mb-2">1. חבילות קרדיטים ותמחור</h3><p>בהשלמת הרכישה אתה רוכש רישיון שאינו ניתן להחזר ואינו ניתן להעברה לשימוש במספר הקרדיטים המצוין בפלטפורמת dxfai.ai.</p></section>
+              <section><h3 className="font-semibold text-white mb-2">2. ללא תפוגה</h3><p>קרדיטים שנרכשו אינם פגים ונשארים זמינים בחשבונך ללא הגבלת זמן.</p></section>
               <section><h3 className="font-semibold text-white mb-2">3. מדיניות אי-החזר</h3><p>כל הרכישות סופיות ואינן ניתנות להחזר. פנה לתמיכה בכתובת support@dxfai.ai תוך 14 יום מתאריך העסקה.</p></section>
               <section><h3 className="font-semibold text-white mb-2">4. עיבוד תשלומים</h3><p>התשלומים מעובדים בצורה מאובטחת על ידי PayPal Inc. איננו שומרים את פרטי כרטיס האשראי שלך.</p></section>
-              <section><h3 className="font-semibold text-white mb-2">5. ניכוי אסימונים</h3><p>אסימונים מנוכים עם תחילת עיבוד. אם עבודה נכשלת עקב שגיאת שרת מאומתת, האסימון יוחזר תוך 24 שעות.</p></section>
+              <section><h3 className="font-semibold text-white mb-2">5. ניכוי קרדיטים</h3><p>קרדיטים מנוכים עם תחילת עיבוד. אם עבודה נכשלת עקב שגיאת שרת מאומתת, הקרדיט יוחזר תוך 24 שעות.</p></section>
               <section><h3 className="font-semibold text-white mb-2">6. יצירת קשר</h3><p>לשאלות: <a href="mailto:support@dxfai.ai" className="text-blue-400 hover:underline">support@dxfai.ai</a></p></section>
             </>
           ) : (

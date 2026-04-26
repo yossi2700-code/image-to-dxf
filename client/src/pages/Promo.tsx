@@ -129,7 +129,7 @@ export default function Promo() {
             marginBottom: 10,
           }}
         >
-          נסה עכשיו — 10 אסימונים חינם »
+          נסה עכשיו — 10 קרדיטים חינם »
         </a>
         <p style={{ fontSize: 12, color: "#475569" }}>
           ללא כרטיס אשראי · מיידי · dxfai.ai

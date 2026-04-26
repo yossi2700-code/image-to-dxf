@@ -61,6 +61,7 @@ import {
   Mountain,
   Building2,
   Crosshair,
+  Coins,
 } from "lucide-react";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -451,11 +452,11 @@ function WelcomeBanner({ onDismiss }: { onDismiss: () => void }) {
             ברוכים הבאים! עכשיו אתה מקצוען בווקטורים וקבצי DXF באמצעות AI ✨
           </p>
           <p className="text-indigo-200 text-sm leading-relaxed mb-3">
-            <span className="text-white font-semibold">קיבלת 10 אסימונים</span> להתנסות בחינם — ועוד{' '}
+            <span className="text-white font-semibold">קיבלת 10 קרדיטים</span> להתנסות בחינם — ועוד{' '}
             <span
               className="text-yellow-300 font-semibold"
               style={{ animation: 'float 2s ease-in-out infinite' }}
-            >20 אסימונים בונוס</span>{' '}
+            >20 קרדיטים בונוס</span>{' '}
             מחכים לך במייל שקיבלת עכשיו.
           </p>
           {/* Email CTA */}
@@ -465,7 +466,7 @@ function WelcomeBanner({ onDismiss }: { onDismiss: () => void }) {
           >
             <span className="text-xl shrink-0 mt-0.5">📧</span>
             <p className="text-indigo-100 text-sm leading-relaxed">
-              <span className="text-white font-semibold">לקבלת ה-20 אסימונים — היכנס לתיבת הדואר שלך ולחץ על הקישור במייל.</span>{' '}
+              <span className="text-white font-semibold">לקבלת ה-20 קרדיטים — היכנס לתיבת הדואר שלך ולחץ על הקישור במייל.</span>{' '}
               אם לא קיבלת, בדוק בספאם.
             </p>
           </div>
@@ -501,7 +502,7 @@ function SaleBanner() {
 
   const discount = salePackage.discountPercent ?? 0;
   // Always use localized token word to avoid mixing languages (DB label may be in Hebrew)
-  const tokenWord = language === 'he' ? 'אסימונים' : language === 'ru' ? 'токенов' : 'tokens';
+  const tokenWord = language === 'he' ? 'קרדיטים' : language === 'ru' ? 'кредитов' : 'credits';
   const label = `${salePackage.tokenAmount} ${tokenWord}`;
 
   return (
@@ -1174,7 +1175,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
         <Button size="lg" className="w-full h-11 font-semibold" disabled={!imageFile || status === "loading"} onClick={handleConvert} data-track="convert">
           {status === "loading"
             ? <><Loader2 className="w-4 h-4 ml-2 animate-spin" />{t("processing")}</>
-            : <><Upload className="w-4 h-4 ml-2" />{t("convertToDxf")}{convertCost > 0 && <span style={{ fontSize: '0.72em', opacity: 0.8, marginInlineStart: 6 }}>({convertCost} {isRtl ? 'אסימונים' : 'tokens'})</span>}</>}
+            : <><Upload className="w-4 h-4 ml-2" />{t("convertToDxf")}{convertCost > 0 && <span style={{ fontSize: '0.72em', opacity: 0.8, marginInlineStart: 6 }}>({convertCost} {isRtl ? 'קרדיטים' : 'credits'})</span>}</>}
         </Button>
       </div>
 
@@ -1257,16 +1258,17 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
                 </Button>
               </div>
             )}
-            {status === "error" && (
+            {status === "error" &&
+              !errorMsg?.includes("קרדיטים") && !errorMsg?.includes("אסימונים") &&
+              !errorMsg?.toLowerCase().includes("token") && !errorMsg?.toLowerCase().includes("quota") &&
+              !errorMsg?.toLowerCase().includes("credit") && (
               <div className="flex flex-col items-center gap-3 py-8 text-center">
                 <AlertCircle className="w-10 h-10 text-red-400" />
                 <p className="font-semibold text-red-600">{t("processingError")}</p>
                 <p className="text-sm text-muted-foreground">{errorMsg}</p>
-                {!errorMsg?.includes("אסימונים") && !errorMsg?.toLowerCase().includes("token") && !errorMsg?.toLowerCase().includes("quota") && (
-                  <p className="text-xs font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                    ✓ {t("tokensRefunded")}
-                  </p>
-                )}
+                <p className="text-xs font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                  ✓ {t("tokensRefunded")}
+                </p>
                 <Button variant="outline" size="sm" onClick={reset}>{t("tryAgain")}</Button>
               </div>
             )}
@@ -1557,7 +1559,7 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
         refetchTokens();
         if (onInsufficientTokens) onInsufficientTokens();
         toast.error(msg, {
-          action: { label: language === "he" ? "רכוש אסימונים" : "Buy Tokens", onClick: () => { window.location.href = "/buy"; } },
+          action: { label: language === "he" ? "רכוש קרדיטים" : "Buy Credits", onClick: () => { window.location.href = "/buy"; } },
           duration: 6000,
         });
         return;
@@ -1714,7 +1716,7 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
           >
             {status === "loading"
               ? <><Loader2 className="w-4 h-4 animate-spin" />{t("creating")}</>
-              : <><Wand2 className="w-4 h-4" />{t("create3Designs")}{aiGenerateCost > 0 && <span style={{ fontSize: '0.72em', opacity: 0.8, marginInlineStart: 6 }}>({aiGenerateCost} {isRtl ? 'אסימונים' : 'tokens'})</span>}</>}
+              : <><Wand2 className="w-4 h-4" />{t("create3Designs")}{aiGenerateCost > 0 && <span style={{ fontSize: '0.72em', opacity: 0.8, marginInlineStart: 6 }}>({aiGenerateCost} {isRtl ? 'קרדיטים' : 'credits'})</span>}</>}
           </button>
       </div>
 
@@ -1736,8 +1738,11 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
         />
       )}
 
-      {/* Error */}
-      {status === "error" && (
+      {/* Error — only for non-token errors (token errors use the global InsufficientTokensBanner modal) */}
+      {status === "error" &&
+        !errorMsg?.includes("קרדיטים") && !errorMsg?.includes("אסימונים") &&
+        !errorMsg?.toLowerCase().includes("token") && !errorMsg?.toLowerCase().includes("quota") &&
+        !errorMsg?.toLowerCase().includes("credit") && (
         <div
           className="rounded-xl p-6 flex flex-col items-center gap-3 text-center"
           style={{ background: '#fff5f5', border: '1px solid #fecaca' }}
@@ -1745,25 +1750,14 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
             <AlertCircle className="w-10 h-10 text-red-400" />
             <p className="font-semibold text-red-600">{t("aiError")}</p>
             <p className="text-sm text-gray-500">{errorMsg}</p>
-            {!errorMsg?.includes("אסימונים") && !errorMsg?.toLowerCase().includes("token") && !errorMsg?.toLowerCase().includes("quota") && (
-              <p className="text-xs font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                ✓ {t("tokensRefunded")}
-              </p>
-            )}
+            <p className="text-xs font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">
+              ✓ {t("tokensRefunded")}
+            </p>
             <div className="flex gap-2 flex-wrap justify-center">
               <button
                 className="text-sm px-4 py-2 rounded-lg font-medium transition-all bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200"
                 onClick={() => setStatus("idle")}
               >{t("tryAgain")}</button>
-              {errorMsg && (errorMsg.includes("אסימונים") || errorMsg.toLowerCase().includes("token")) && (
-                <button
-                  className="text-sm px-4 py-2 rounded-lg font-semibold transition-all"
-                  style={{background: '#4f46e5', color: 'white', border: 'none'}}
-                  onClick={() => window.location.href = "/tokens"}
-                >
-                  {t("buyTokens")}
-                </button>
-              )}
             </div>
         </div>
       )}
@@ -2142,7 +2136,7 @@ function TokenBonusAnimation({ tokens, onDone }: { tokens: number; onDone: () =>
           +{tokens}
         </div>
         <div style={{ color: '#c4b5fd', fontSize: 16, fontWeight: 600, marginBottom: 20 }}>
-          אסימונים נוספו לחשבונך! ✨
+          קרדיטים נוספו לחשבונך! ✨
         </div>
         <button
           onClick={onDone}
@@ -2234,7 +2228,7 @@ function TokenHistoryPopup({ onClose, isRtl, containerRef }: { onClose: () => vo
       {/* Header */}
       <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ color: '#e0e7ff', fontWeight: 700, fontSize: 14 }}>
-          {isRtl ? 'היסטוריית אסימונים' : 'Token History'}
+          {isRtl ? 'היסטוריית קרדיטים' : 'Credit History'}
         </span>
         <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#a5b4fc', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: '0 2px' }}>✕</button>
       </div>
@@ -2287,7 +2281,7 @@ function TokenHistoryPopup({ onClose, isRtl, containerRef }: { onClose: () => vo
           onClick={() => { onClose(); window.location.href = '/buy'; }}
           style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: 'white', border: 'none', borderRadius: 20, padding: '7px 20px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
         >
-          {isRtl ? '✨ קנה אסימונים' : '✨ Buy Tokens'}
+          {isRtl ? '✨ קנה קרדיטים' : '✨ Buy Credits'}
         </button>
       </div>
     </div>
@@ -2739,16 +2733,16 @@ export default function Home() {
                     onClick={() => setTokenHistoryOpen(v => !v)}
                     className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full shrink-0 hover:opacity-80 transition-opacity"
                     style={{ background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4338ca', fontSize: '12px', whiteSpace: 'nowrap' }}
-                    title={isRtl ? 'היסטוריית אסימונים' : 'Token history'}
+                    title={isRtl ? 'היסטוריית קרדיטים' : 'Credit history'}
                   >
-                    <Sparkles className="w-3.5 h-3.5" />
+                    <Coins className="w-3.5 h-3.5" />
                     <span>{tokenBalance}</span>
                     {/* Pending welcome bonus dot */}
                     {hasPendingWelcomeBonus && (
                       <span
                         className="w-2 h-2 rounded-full animate-pulse"
                         style={{ background: '#f59e0b', display: 'inline-block', marginLeft: 2 }}
-                        title={isRtl ? 'מחכים לך 20 בונוס במייל' : '20 bonus tokens waiting in your email'}
+                        title={isRtl ? 'מחכים לך 20 קרדיטים בונוס במייל' : '20 bonus credits waiting in your email'}
                       />
                     )}
                   </button>

@@ -246,7 +246,7 @@ export function FeatureLandingPage({ config }: { config: FeatureLandingConfig })
           {isRtl ? "מוכן להתחיל?" : "Ready to start?"}
         </h2>
         <p className="text-muted-foreground mb-6">
-          {isRtl ? "10 אסימונים חינם עם הרשמה" : "10 free tokens on signup"}
+          {isRtl ? "10 קרדיטים חינם עם הרשמה" : "10 free credits on signup"}
         </p>
         <Button size="lg" onClick={handleCta} className="gap-2 text-base px-8 py-6">
           <Sparkles className="w-5 h-5" />

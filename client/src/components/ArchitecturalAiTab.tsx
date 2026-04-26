@@ -495,7 +495,7 @@ export function ArchitecturalAiTab({ onOpenAuth, onInsufficientTokens }: Archite
         refetchTokens();
         if (onInsufficientTokens) onInsufficientTokens();
         toast.error(msg, {
-          action: { label: language === "he" ? "רכוש אסימונים" : "Buy Tokens", onClick: () => { window.location.href = "/buy"; } },
+          action: { label: language === "he" ? "רכוש קרדיטים" : "Buy Credits", onClick: () => { window.location.href = "/buy"; } },
           duration: 6000,
         });
         return;
@@ -795,7 +795,7 @@ export function ArchitecturalAiTab({ onOpenAuth, onInsufficientTokens }: Archite
                   {isRtl ? "צור 3 שרטוטים" : "Generate 3 Drawings"}
                   {cost > 0 && (
                     <span style={{ fontSize: "0.72em", opacity: 0.8, marginInlineStart: 6 }}>
-                      ({cost} {isRtl ? "אסימונים" : "tokens"})
+                      ({cost} {isRtl ? "קרדיטים" : "credits"})
                     </span>
                   )}
                 </>
@@ -840,9 +840,9 @@ export function ArchitecturalAiTab({ onOpenAuth, onInsufficientTokens }: Archite
                   <button
                     className="text-sm px-4 py-2 rounded-lg font-semibold transition-all"
                     style={{ background: TEAL_ACCENT, color: "white", border: "none" }}
-                    onClick={() => (window.location.href = "/tokens")}
+                    onClick={() => (window.location.href = "/buy")}
                   >
-                    {isRtl ? "קנה אסימונים" : "Buy Tokens"}
+                    {isRtl ? "קנה קרדיטים" : "Buy Credits"}
                   </button>
                 )}
               </div>

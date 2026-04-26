@@ -266,7 +266,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, initi
       }
 
       if (data.campaignBonusAwarded) {
-        toast.success(`🎁 קיבלת ${data.campaignTokens} אסימונים בונוס! הם נוספו לחשבונך.`, { duration: 5000 });
+        toast.success(`🎁 קיבלת ${data.campaignTokens} קרדיטים בונוס! הם נוספו לחשבונך.`, { duration: 5000 });
       } else if (mode === "login") {
         toast.success(t("authWelcomeBack"));
       }

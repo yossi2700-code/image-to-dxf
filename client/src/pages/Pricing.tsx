@@ -116,7 +116,7 @@ const COMPARISON_HE = [
   { feature: "היסטוריית עיצובים", free: true, paid: true },
   { feature: "הורדת DXF + SVG", free: true, paid: true },
   { feature: "תמיכה במגוון שפות", free: true, paid: true },
-  { feature: "אסימונים לא פגים", free: false, paid: true },
+  { feature: "קרדיטים לא פגים", free: false, paid: true },
   { feature: "עדיפות בתמיכה", free: false, paid: true },
 ];
 
@@ -134,8 +134,8 @@ const COMPARISON_EN = [
 
 // ─── FAQ ──────────────────────────────────────────────────────────────────────
 const FAQ_HE = [
-  { q: "מה זה אסימון?", a: "כל פעולה (המרת תמונה, יצירת AI, עקיבה, פורטרט) עולה אסימון אחד. אסימונים לא פגים ונשארים בחשבון שלך לתמיד." },
-  { q: "האם האסימונים פגים?", a: "לא. אסימונים שרכשת נשארים בחשבונך ללא הגבלת זמן — גם אחרי שנה." },
+  { q: "מה זה קרדיט?", a: "כל פעולה (המרת תמונה, יצירת AI, עקיבה, פורטרט) עולה אסימון אחד. קרדיטים לא פגים ונשארים בחשבון שלך לתמיד." },
+  { q: "האם הקרדיטים פגים?", a: "לא. קרדיטים שרכשת נשארים בחשבונך ללא הגבלת זמן — גם אחרי שנה." },
   { q: "האם יש החזר כספי?", a: "כל הרכישות סופיות. אם הייתה שגיאה מצדנו — האסימון יוחזר אוטומטית תוך 24 שעות." },
   { q: "איזה פורמטים נתמכים?", a: "ניתן להעלות JPG, PNG, WEBP. הפלט הוא קובץ DXF תואם לכל תוכנת CAD, CNC ולייזר (Lightburn, AutoCAD, Fusion 360 ועוד)." },
   { q: "האם אני שומר על זכויות הקובץ?", a: "כן. כל קבצי ה-DXF שנוצרו מתמונותיך הם שלך לחלוטין — לשימוש אישי ומסחרי." },
@@ -341,7 +341,7 @@ export default function Pricing() {
                   {pkg.tokens}
                 </span>
                 <span style={{ fontSize: 18, fontWeight: 600, color: pkg.popular ? "rgba(255,255,255,0.65)" : "#9ca3af", marginInlineStart: 8 }}>
-                  {isRtl ? "אסימונים" : "tokens"}
+                  {isRtl ? "קרדיטים" : "credits"}
                 </span>
               </div>
 
@@ -386,7 +386,7 @@ export default function Pricing() {
 
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 11 }}>
                 {(isRtl
-                  ? ["המרת תמונה ל-DXF", "יצירת עיצוב AI", "AI Trace — עקיבה חכמה", "פורטרט — זיהוי פנים", "היסטוריית עיצובים", "DXF + SVG", "אסימונים לא פגים", "חשבונית מס", "תמיכה במגוון שפות"]
+                  ? ["המרת תמונה ל-DXF", "יצירת עיצוב AI", "AI Trace — עקיבה חכמה", "פורטרט — זיהוי פנים", "היסטוריית עיצובים", "DXF + SVG", "קרדיטים לא פגים", "חשבונית מס", "תמיכה במגוון שפות"]
                   : ["Image to DXF conversion", "AI design generation", "AI Trace — smart tracing", "Portrait — face detection", "Design history", "DXF + SVG download", "Tokens never expire", "Tax invoice", "Multi-language support"]
                 ).map((f, i) => (
                   <li key={i} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: pkg.popular ? "rgba(255,255,255,0.9)" : "#374151" }}>
@@ -426,11 +426,11 @@ export default function Pricing() {
           <div style={{ fontSize: 44 }}>🎁</div>
           <div style={{ flex: 1, minWidth: 200 }}>
             <p style={{ fontWeight: 800, fontSize: 18, color: "#92400e", margin: "0 0 6px" }}>
-              {isRtl ? "הירשם וקבל 10 אסימונים חינם" : "Sign up and get 10 free tokens"}
+              {isRtl ? "הירשם וקבל 10 קרדיטים חינם" : "Sign up and get 10 free credits"}
             </p>
             <p style={{ fontSize: 14, color: "#a16207", margin: 0, lineHeight: 1.5 }}>
               {isRtl
-                ? "משתמשים חדשים מקבלים 10 אסימונים מיד לאחר הרשמה"
+                ? "משתמשים חדשים מקבלים 10 קרדיטים מיד לאחר הרשמה"
                 : "New users get 10 tokens immediately after registration"}
             </p>
           </div>
@@ -506,7 +506,7 @@ export default function Pricing() {
             {isRtl ? "כמה עולה כל פעולה?" : "How many tokens per action?"}
           </h2>
           <p style={{ fontSize: 16, color: "#6b7280", margin: 0 }}>
-            {isRtl ? "מחיר האסימונים מנוהל ועשוי להשתנות" : "Token costs are admin-managed and may change"}
+            {isRtl ? "מחיר הקרדיטים מנוהל ועשוי להשתנות" : "Credit costs are admin-managed and may change"}
           </p>
         </div>
         <div style={{ background: "#fff", borderRadius: 20, overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
@@ -629,12 +629,12 @@ export default function Pricing() {
             </p>
             <p style={{ fontSize: 14, color: "rgba(199,210,254,0.75)", margin: "0 0 16px", lineHeight: 1.6 }}>
               {isRtl
-                ? "מנוי חודשי לעסקים עם אסימונים ללא הגבלה, ניהול צוות, ו-API גישה. מתאים לסטודיות, מפעלים ומעצבים מקצועיים."
+                ? "מנוי חודשי לעסקים עם קרדיטים ללא הגבלה, ניהול צוות, ו-API גישה. מתאים לסטודיות, מפעלים ומעצבים מקצועיים."
                 : "Monthly subscription for businesses with unlimited tokens, team management, and API access."}
             </p>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               {[
-                isRtl ? "אסימונים ללא הגבלה" : "Unlimited tokens",
+                isRtl ? "קרדיטים ללא הגבלה" : "Unlimited credits",
                 isRtl ? "ניהול צוות" : "Team management",
                 isRtl ? "גישת API" : "API access",
                 isRtl ? "חשבונית מס" : "Tax invoice",
@@ -670,7 +670,7 @@ export default function Pricing() {
             {isRtl ? "מוכן להתחיל?" : "Ready to start?"}
           </h2>
           <p style={{ fontSize: 17, color: "rgba(199,210,254,0.8)", marginBottom: 36, lineHeight: 1.6 }}>
-            {isRtl ? "הירשם חינם וקבל 10 אסימונים — ללא כרטיס אשראי" : "Sign up free and get 10 tokens — no credit card required"}
+            {isRtl ? "הירשם חינם וקבל 10 קרדיטים — ללא כרטיס אשראי" : "Sign up free and get 10 credits — no credit card required"}
           </p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
             <button
@@ -708,7 +708,7 @@ export default function Pricing() {
       <footer style={{ background: "#0f172a", padding: "36px 20px", textAlign: "center" }}>
         <p style={{ fontSize: 12, color: "#6b7280", margin: "0 auto 16px", maxWidth: 680, lineHeight: 1.7 }}>
           {isRtl
-            ? "החברה שומרת לעצמה את הזכות לסגור את השירות בכל עת. במקרה שיסגר השירות, ייעשה מאמץ סביר להחזיר אסימונים שלא נוצלו או לתת זיכוי כספי יחסי על האסימונים הנותרים."
+            ? "החברה שומרת לעצמה את הזכות לסגור את השירות בכל עת. במקרה שיסגר השירות, ייעשה מאמץ סביר להחזיר קרדיטים שלא נוצלו או לתת זיכוי כספי יחסי על הקרדיטים הנותרים."
             : "The company reserves the right to close the service at any time. In such a case, a reasonable effort will be made to refund unused tokens or provide a proportional monetary credit for remaining tokens."}
         </p>
         <p style={{ fontSize: 13, color: "#4b5563", margin: 0 }}>

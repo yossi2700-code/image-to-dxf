@@ -39,7 +39,7 @@ function Design1({ selected, onSelect }: { selected: boolean; onSelect: () => vo
             <Sparkles className="w-3 h-3 text-indigo-300" />
             <span className="text-indigo-300 text-xs font-medium">אסימוני DXF AI</span>
           </div>
-          <h2 className="text-white font-bold text-lg mb-1">בחר חבילת אסימונים</h2>
+          <h2 className="text-white font-bold text-lg mb-1">בחר חבילת קרדיטים</h2>
           <p className="text-gray-400 text-xs">כל אסימון = המרה אחת מלאה</p>
         </div>
 
@@ -61,7 +61,7 @@ function Design1({ selected, onSelect }: { selected: boolean; onSelect: () => vo
                   {p.tokens}
                 </div>
                 <div>
-                  <div className="text-white text-xs font-semibold">{p.tokens} אסימונים</div>
+                  <div className="text-white text-xs font-semibold">{p.tokens} קרדיטים</div>
                   <div className="text-gray-500 text-xs">${p.pricePerToken} לאסימון</div>
                 </div>
               </div>
@@ -120,7 +120,7 @@ function Design2({ selected, onSelect }: { selected: boolean; onSelect: () => vo
             <Zap className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-gray-900 font-bold text-base">רכישת אסימונים</h2>
+            <h2 className="text-gray-900 font-bold text-base">רכישת קרדיטים</h2>
             <p className="text-gray-400 text-xs">בחר חבילה מתאימה</p>
           </div>
         </div>
@@ -144,7 +144,7 @@ function Design2({ selected, onSelect }: { selected: boolean; onSelect: () => vo
                 </div>
               )}
               <div className="text-lg font-black" style={{ color: pkg === p.id ? "#6366f1" : "#374151" }}>{p.tokens}</div>
-              <div className="text-gray-400 text-xs">אסימונים</div>
+              <div className="text-gray-400 text-xs">קרדיטים</div>
               <div className="font-bold text-sm mt-1" style={{ color: "#111827" }}>${p.price}</div>
             </div>
           ))}
@@ -165,7 +165,7 @@ function Design2({ selected, onSelect }: { selected: boolean; onSelect: () => vo
 
         {/* Features */}
         <div className="mt-3 space-y-1.5">
-          {["אסימונים לא פגים", "תמיכה בכל הפיצ'רים", "תשלום מאובטח"].map(f => (
+          {["קרדיטים לא פגים", "תמיכה בכל הפיצ'רים", "תשלום מאובטח"].map(f => (
             <div key={f} className="flex items-center gap-2">
               <Check className="w-3 h-3 text-green-500 shrink-0" />
               <span className="text-gray-500 text-xs">{f}</span>
@@ -231,7 +231,7 @@ function Design3({ selected, onSelect }: { selected: boolean; onSelect: () => vo
                     <Layers className="w-4 h-4" style={{ color: pkg === p.id ? "white" : "#6b7280" }} />
                   </div>
                   <div>
-                    <div className="font-bold text-xs" style={{ color: pkg === p.id ? "white" : "#9ca3af" }}>{p.tokens} אסימונים</div>
+                    <div className="font-bold text-xs" style={{ color: pkg === p.id ? "white" : "#9ca3af" }}>{p.tokens} קרדיטים</div>
                     <div className="text-xs" style={{ color: pkg === p.id ? "rgba(255,255,255,0.6)" : "#4b5563" }}>${p.pricePerToken} / אסימון</div>
                   </div>
                 </div>

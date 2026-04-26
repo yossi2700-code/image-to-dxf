@@ -168,7 +168,7 @@ export function ReportIssueButton({
                   </h4>
                   <p className="text-sm leading-relaxed" style={{ color: "#4b5563" }}>
                     {isRtl
-                      ? "תודה על הדיווח. נבדוק את הבעיה ואם הדיווח יאושר — תקבל זיכוי אסימונים לחשבונך."
+                      ? "תודה על הדיווח. נבדוק את הבעיה ואם הדיווח יאושר — תקבל זיכוי קרדיטים לחשבונך."
                       : "Thank you for reporting. We'll review the issue and if approved, you'll receive a token refund to your account."}
                   </p>
                   <button
@@ -251,7 +251,7 @@ export function ReportIssueButton({
                     <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#d97706" }} />
                     <p className="text-xs leading-snug" style={{ color: "#92400e" }}>
                       {isRtl
-                        ? "לאחר בדיקת הדיווח על ידי הצוות, תקבל זיכוי אסימונים אם הבעיה תאושר."
+                        ? "לאחר בדיקת הדיווח על ידי הצוות, תקבל זיכוי קרדיטים אם הבעיה תאושר."
                         : "After our team reviews the report, you'll receive a token refund if the issue is approved."}
                     </p>
                   </div>

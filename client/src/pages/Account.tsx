@@ -95,7 +95,7 @@ export default function Account() {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Token history collapse
+  // Credit history collapse
   const [txExpanded, setTxExpanded] = useState(false);
 
   // Change password
@@ -270,7 +270,7 @@ export default function Account() {
               {tokenData && (
                 <div className="text-center shrink-0">
                   <p className="text-2xl font-black">{tokenData.balance}</p>
-                  <p className="text-white/70 text-xs">{isRtl ? "אסימונים" : "tokens"}</p>
+                  <p className="text-white/70 text-xs">{isRtl ? "קרדיטים" : "credits"}</p>
                 </div>
               )}
             </div>
@@ -379,12 +379,12 @@ export default function Account() {
               </form>
             </SectionCard>
 
-            {/* ── 3. Tokens & Payment ── */}
-            <SectionCard icon={Coins} title={isRtl ? "אסימונים ותשלום" : "Tokens & Payment"} color="linear-gradient(135deg, #d97706, #f59e0b)">
+            {/* ── 3. Credits & Payment ── */}
+            <SectionCard icon={Coins} title={isRtl ? "קרדיטים ותשלום" : "Credits & Payment"} color="linear-gradient(135deg, #d97706, #f59e0b)">
               {/* Balance */}
               <div className="flex items-center justify-between p-3 rounded-xl mb-3" style={{ background: "#fffbeb", border: "1px solid #fde68a" }}>
                 <div>
-                  <p className="text-xs text-amber-600 font-medium">{isRtl ? "יתרת אסימונים" : "Token balance"}</p>
+                  <p className="text-xs text-amber-600 font-medium">{isRtl ? "יתרת קרדיטים" : "Credit balance"}</p>
                   <p className="text-2xl font-black text-amber-700">{tokenData?.balance ?? 0}</p>
                 </div>
                 <Coins className="w-8 h-8 text-amber-400" />
@@ -399,14 +399,14 @@ export default function Account() {
                 <p className="text-xs text-gray-400">{isRtl ? "אפשרות זו תהיה זמינה בקרוב" : "This option will be available soon"}</p>
               </div>
 
-              {/* Token history collapsible */}
+              {/* Credit history collapsible */}
               <div>
                 <button
                   onClick={() => setTxExpanded(!txExpanded)}
                   className="w-full flex items-center justify-between p-3 rounded-xl text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                   style={{ border: "1px solid #e8eaf0" }}
                 >
-                  <span>{isRtl ? `היסטוריית אסימונים (${(txHistory ?? []).length})` : `Token history (${(txHistory ?? []).length})`}</span>
+                  <span>{isRtl ? `היסטוריית קרדיטים (${(txHistory ?? []).length})` : `Credit history (${(txHistory ?? []).length})`}</span>
                   {txExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                 </button>
 
@@ -441,7 +441,7 @@ export default function Account() {
                   </div>
                 )}
                 {(txHistory ?? []).length === 0 && (
-                  <p className="text-xs text-gray-400 text-center py-3">{isRtl ? "אין עדיין היסטוריית אסימונים" : "No token history yet"}</p>
+                  <p className="text-xs text-gray-400 text-center py-3">{isRtl ? "אין עדיין היסטוריית קרדיטים" : "No credit history yet"}</p>
                 )}
               </div>
             </SectionCard>
@@ -453,7 +453,7 @@ export default function Account() {
                   <p className="text-sm text-gray-400">{isRtl ? "אין עדיין רכישות" : "No purchases yet"}</p>
                   <Link href="/buy">
                     <button className="mt-3 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #0d9488, #06b6d4)" }}>
-                      {isRtl ? "רכוש אסימונים" : "Purchase Tokens"}
+                      {isRtl ? "רכוש קרדיטים" : "Purchase Credits"}
                     </button>
                   </Link>
                 </div>
@@ -476,7 +476,7 @@ export default function Account() {
                               <Coins className="w-3.5 h-3.5 text-teal-600" />
                             </div>
                             <div className="min-w-0">
-                              <p className="font-semibold text-gray-700">+{p.tokenAmount} {isRtl ? "אסימונים" : "tokens"}</p>
+                              <p className="font-semibold text-gray-700">+{p.tokenAmount} {isRtl ? "קרדיטים" : "credits"}</p>
                               <p className="text-gray-400">{date}</p>
                             </div>
                           </div>
@@ -501,7 +501,7 @@ export default function Account() {
                   <div className="mt-3 pt-3 border-t border-gray-100 text-center">
                     <Link href="/buy">
                       <button className="px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #0d9488, #06b6d4)" }}>
-                        {isRtl ? "רכוש אסימונים נוספים" : "Purchase More Tokens"}
+                        {isRtl ? "רכוש קרדיטים נוספים" : "Purchase More Credits"}
                       </button>
                     </Link>
                   </div>
@@ -514,7 +514,7 @@ export default function Account() {
               <div className="p-4 rounded-xl text-center" style={{ background: "linear-gradient(135deg, #faf5ff, #f3e8ff)", border: "1px solid #e9d5ff" }}>
                 <Crown className="w-8 h-8 text-purple-400 mx-auto mb-2" />
                 <p className="font-bold text-purple-700 text-sm mb-1">{isRtl ? "תוכנית פרימיום — בקרוב" : "Premium Plan — Coming Soon"}</p>
-                <p className="text-xs text-purple-500">{isRtl ? "מנויים יקבלו אסימונים חודשיים, עיבוד מהיר יותר ותמיכה מועדפת" : "Subscribers will get monthly tokens, faster processing, and priority support"}</p>
+                <p className="text-xs text-purple-500">{isRtl ? "מנויים יקבלו קרדיטים חודשיים, עיבוד מהיר יותר ותמיכה מועדפת" : "Subscribers will get monthly credits, faster processing, and priority support"}</p>
                 <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: "#ede9fe", color: "#7c3aed" }}>
                   <span>🔔</span>
                   {isRtl ? "עדכן אותי כשיהיה זמין" : "Notify me when available"}

@@ -444,7 +444,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
       const res = await fetch(`/api/face-detect/cancel/${jobId}`, { method: "POST", credentials: "include" });
       const data = await res.json();
       if (data.cancelled) {
-        toast.success(isRtl ? "העיבוד בוטל והאסימונים הוחזרו" : "Processing cancelled — tokens refunded");
+        toast.success(isRtl ? "העיבוד בוטל והקרדיטים הוחזרו" : "Processing cancelled — credits refunded");
         refetchTokens();
       }
     } catch { /* ignore */ }
@@ -533,7 +533,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
       if (!res.ok) {
         if (data.error === "UNAUTHORIZED") { if (onOpenAuth) onOpenAuth(); setStatus("idle"); return; }
         if (data.error === "INSUFFICIENT_TOKENS") {
-          const msg = isRtl ? (data.message || "נגמרו האסימונים") : (data.messageEn || data.message || "Out of tokens");
+          const msg = isRtl ? (data.message || "נגמרו הקרדיטים") : (data.messageEn || data.message || "Out of credits");
           toast.error(msg); setErrorMsg(msg); setErrorKind("token"); setStatus("error"); refetchTokens(); return;
         }
         throw new Error(isRtl ? (data.message || data.error) : (data.messageEn || data.error || "Error"));
@@ -767,7 +767,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
               data-face-submit
             >
               <Scan className="w-4 h-4" />
-              {isRtl ? `צור פורטרט DXF (${faceDetectCost} אסימונים)` : `Create Portrait DXF (${faceDetectCost} tokens)`}
+              {isRtl ? `צור פורטרט DXF (${faceDetectCost} קרדיטים)` : `Create Portrait DXF (${faceDetectCost} credits)`}
             </button>
           </div>
         </div>
@@ -814,7 +814,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
               className="relative px-6 pt-8 pb-10 flex flex-col items-center text-center"
               style={{
                 background: errorKind === "token"
-                  ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                  ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%)'
                   : errorKind === "too_many_faces"
                   ? 'linear-gradient(135deg, #6366f1, #8b5cf6)'
                   : 'linear-gradient(135deg, #f97316, #ef4444)',
@@ -832,13 +832,13 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
 
               {/* Big emoji icon */}
               <div className="text-5xl mb-3">
-                {errorKind === "token" ? '🪙' : errorKind === "too_many_faces" ? '👨‍👩‍👧‍👦' : '🔍'}
+                {errorKind === "token" ? '⚡' : errorKind === "too_many_faces" ? '👨‍👩‍👧‍👦' : '🔍'}
               </div>
 
               {/* Title */}
               <p className="text-xl font-bold text-white leading-tight">
                 {errorKind === "token"
-                  ? (isRtl ? "נגמרו האסימונים" : "Out of Tokens")
+                  ? (isRtl ? "נגמרו הקרדיטים" : "Out of Credits")
                   : errorKind === "too_many_faces"
                   ? (isRtl ? `זוהו ${tooManyFacesCount} פנים בתמונה` : `${tooManyFacesCount} Faces Detected`)
                   : (isRtl ? "לא זוהו פנים בתמונה" : "No Face Detected")}
@@ -846,7 +846,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
               {/* Subtitle */}
               <p className="text-sm mt-1.5" style={{ color: 'rgba(255,255,255,0.85)' }}>
                 {errorKind === "token"
-                  ? (isRtl ? "נדרשים אסימונים ליצירת פורטרט" : "Tokens required to create portrait")
+                  ? (isRtl ? "כדי להמשיך צריך לטעון קרדיטים" : "Top up credits to continue")
                   : errorKind === "too_many_faces"
                   ? (isRtl ? "מצב פורטרט תומך עד 2 אנשים בלבד" : "Portrait mode supports up to 2 people")
                   : (isRtl ? "לא נמצאו פנים ברורים בתמונה" : "No clear faces found in the image")}
@@ -855,8 +855,8 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
 
             {/* White card pulled up over header */}
             <div className="-mt-4 mx-4 mb-4 bg-white rounded-2xl shadow-lg p-5 flex flex-col gap-3">
-              {/* Info box */}
-              <div
+              {/* Info box — only for non-token errors */}
+              {errorKind !== "token" && <div
                 className="rounded-xl px-4 py-3 text-sm leading-relaxed"
                 style={{
                   background: errorKind === "too_many_faces" ? '#f0f0ff' : '#fff7ed',
@@ -864,42 +864,34 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
                   border: errorKind === "too_many_faces" ? '1px solid #c7d2fe' : '1px solid #fed7aa',
                 }}
               >
-                {errorKind === "token"
-                  ? (isRtl ? "רכוש אסימונים נוספים כדי להמשיך ליצור פורטרטים. האסימונים לא פגים!" : "Purchase more tokens to continue creating portraits. Tokens never expire!")
-                  : errorKind === "too_many_faces"
+                {errorKind === "too_many_faces"
                   ? (isRtl
                       ? `תמונה זו מכילה ${tooManyFacesCount} פנים. ניתן לעבד אותה במצב "תמונה לקווים" שתומך בכל מספר אנשים.`
                       : `This image has ${tooManyFacesCount} faces. You can process it in "Image to Lines" mode which supports any number of people.`)
                   : (isRtl
                       ? "ודא שהפנים ברורים, מוארים היטב ולא מכוסים. פרופיל צד עובד גם כן."
                       : "Make sure the face is clear, well-lit, and not covered. Side profiles work too.")}
-              </div>
+              </div>}
 
             {errorKind === "token" ? (
               <>
-                {/* Buy tokens button */}
-                <button
-                  className="w-full py-3.5 rounded-xl font-bold text-white text-sm transition-all active:scale-95"
-                  style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 4px 14px rgba(245,158,11,0.35)' }}
-                  onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); window.location.href = "/buy"; }}
-                >
-                  {isRtl ? "🛒 רכוש אסימונים" : "🛒 Buy Tokens"}
-                </button>
-                {/* Try free tool */}
-                {onSwitchToAiOutline && (
+                {/* Buy credits button */}
+                <a href="/buy" className="block w-full" style={{ textDecoration: "none" }}>
                   <button
-                    className="w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-95"
-                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', boxShadow: '0 4px 14px rgba(99,102,241,0.3)' }}
-                    onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); onSwitchToAiOutline(imageFile); }}
+                    className="w-full py-4 rounded-2xl font-black text-white text-base transition-all hover:opacity-90 active:scale-95 flex items-center justify-center gap-2.5"
+                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 6px 20px rgba(99,102,241,0.45)', border: 'none', cursor: 'pointer' }}
+                    onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); }}
                   >
-                    {isRtl ? "✨ נסה תמונה לקווים" : "✨ Try Image to Lines"}
+                    <span>🛒</span>
+                    <span>{isRtl ? "טעינת קרדיטים עכשיו" : "Buy Credits Now"}</span>
                   </button>
-                )}
+                </a>
                 <button
                   className="w-full py-2 rounded-xl text-sm text-gray-400 transition-all active:scale-95"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer' }}
                   onClick={() => { setStatus("idle"); setErrorMsg(""); setErrorKind("general"); }}
                 >
-                  {isRtl ? "סגור" : "Close"}
+                  {isRtl ? "אולי מאוחר יותר" : "Maybe later"}
                 </button>
               </>
             ) : errorKind === "too_many_faces" ? (

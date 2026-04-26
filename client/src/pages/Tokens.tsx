@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 
 const WHATSAPP_NUMBER = "972501234567"; // Replace with actual number
-const WHATSAPP_MSG_HE = "שלום, אני מעוניין/ת לרכוש אסימונים לאפליקציית ממיר תמונה ל-DXF";
+const WHATSAPP_MSG_HE = "שלום, אני מעוניין/ת לרכוש קרדיטים לאפליקציית ממיר תמונה ל-DXF";
 const WHATSAPP_MSG_EN = "Hello, I would like to purchase tokens for the Image to DXF app";
 
 type Transaction = {
@@ -93,7 +93,7 @@ export default function Tokens() {
           </Button>
           <div className="flex-1">
             <h1 className="text-base font-bold leading-tight">
-              {isRtl ? "ניהול אסימונים" : "Token Management"}
+              {isRtl ? "ניהול קרדיטים" : "Credit Management"}
             </h1>
             <p className="text-xs text-muted-foreground">
               {isRtl ? "יתרה, היסטוריה ורכישה" : "Balance, history & purchase"}
@@ -114,7 +114,7 @@ export default function Tokens() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
-                    {isRtl ? "יתרת אסימונים" : "Token Balance"}
+                    {isRtl ? "יתרת קרדיטים" : "Credit Balance"}
                   </p>
                   {balanceLoading ? (
                     <div className="h-8 w-20 bg-muted animate-pulse rounded" />
@@ -146,7 +146,7 @@ export default function Tokens() {
                 </p>
                 <p className="text-xs mt-0.5">
                   {isRtl
-                    ? "יש לך פחות מ-5 אסימונים. כדי להמשיך להשתמש בתכונות AI, רכוש אסימונים נוספים."
+                    ? "יש לך פחות מ-5 קרדיטים. כדי להמשיך להשתמש בתכונות AI, רכוש קרדיטים נוספים."
                     : "You have fewer than 5 tokens. Purchase more to continue using AI features."}
                 </p>
               </div>
@@ -163,11 +163,11 @@ export default function Tokens() {
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-green-800 text-sm">
-                  {isRtl ? "רכישת אסימונים" : "Purchase Tokens"}
+                  {isRtl ? "רכישת קרדיטים" : "Purchase Credits"}
                 </h3>
                 <p className="text-xs text-green-700 mt-1">
                   {isRtl
-                    ? "יש לטעון אסימונים להמשך שימוש בתכונה"
+                    ? "יש לטעון קרדיטים להמשך שימוש בתכונה"
                     : "Purchase tokens to continue using the app"}
                 </p>
                 <a
@@ -175,7 +175,7 @@ export default function Tokens() {
                   className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition-colors"
                 >
                   <Coins className="w-4 h-4" />
-                  {isRtl ? "לרכישת אסימונים" : "Buy Tokens"}
+                  {isRtl ? "לרכישת קרדיטים" : "Buy Credits"}
                 </a>
               </div>
             </div>
@@ -201,7 +201,7 @@ export default function Tokens() {
                   <Badge variant={c.cost === 0 ? "secondary" : "outline"} className="font-mono text-xs">
                     {c.cost === 0
                       ? (isRtl ? "חינם" : "Free")
-                      : `${c.cost} ${isRtl ? "אסימונים" : "tokens"}`}
+                      : `${c.cost} ${isRtl ? "קרדיטים" : "credits"}`}
                   </Badge>
                 </div>
               ))}

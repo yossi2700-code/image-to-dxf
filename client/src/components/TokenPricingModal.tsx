@@ -55,7 +55,7 @@ export function TokenPricingModal({ open, onClose }: TokenPricingModalProps) {
           <div className="flex items-center gap-2">
             <Coins className="w-5 h-5 text-violet-600" />
             <h2 className="font-bold text-lg text-foreground">
-              {isRtl ? "מחירון אסימונים" : "Token Pricing"}
+              {isRtl ? "מחירון קרדיטים" : "Credit Pricing"}
             </h2>
           </div>
           <button
@@ -127,7 +127,7 @@ export function TokenPricingModal({ open, onClose }: TokenPricingModalProps) {
           {/* Footer note */}
           <p className="text-xs text-muted-foreground text-center mt-4 leading-relaxed">
             {isRtl
-              ? "המחירים עשויים להשתנות. ניתן לרכוש אסימונים נוספים בכל עת."
+              ? "המחירים עשויים להשתנות. ניתן לרכוש קרדיטים נוספים בכל עת."
               : "Prices may change. You can purchase more tokens at any time."}
           </p>
         </div>

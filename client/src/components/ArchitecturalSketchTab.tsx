@@ -541,7 +541,7 @@ export function ArchitecturalSketchTab({ onOpenAuth, onInsufficientTokens }: Arc
         stopScanAnimation();
         if (data.error === "UNAUTHORIZED") { onOpenAuth(); setStatus("idle"); return; }
         if (data.error === "INSUFFICIENT_TOKENS") {
-          const msg = isRtl ? (data.message || "נגמרו האסימונים") : (data.messageEn || "Out of tokens");
+          const msg = isRtl ? (data.message || "נגמרו הקרדיטים") : (data.messageEn || "Out of credits");
           setErrorMsg(msg);
           setStatus("error");
           refetchTokens();

@@ -1603,7 +1603,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                 {status === "loading" ? (
                   <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />{t("aiAnalyzing")}</>
                 ) : (
-                  <><Wand2 className="w-4 h-4" />{t("createAiOutline")}{aiTraceCost > 0 && <span style={{ fontSize: '0.72em', opacity: 0.8, marginInlineStart: 6 }}>({aiTraceCost} {isRtl ? 'אסימונים' : 'tokens'})</span>}</>
+                  <><Wand2 className="w-4 h-4" />{t("createAiOutline")}{aiTraceCost > 0 && <span style={{ fontSize: '0.72em', opacity: 0.8, marginInlineStart: 6 }}>({aiTraceCost} {isRtl ? 'קרדיטים' : 'credits'})</span>}</>
                 )}
               </button>
               {tryAgainUrl && status !== "loading" && (
@@ -1769,8 +1769,11 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
           </div>
         )}
 
-        {/* Regular Error */}
-        {status === "error" && !isUnclearImage && !isSceneDetected && (
+        {/* Regular Error — only shown for non-token errors (token errors use the global InsufficientTokensBanner modal) */}
+        {status === "error" && !isUnclearImage && !isSceneDetected &&
+          !errorMsg?.includes("קרדיטים") && !errorMsg?.includes("אסימונים") &&
+          !errorMsg?.toLowerCase().includes("token") && !errorMsg?.toLowerCase().includes("quota") &&
+          !errorMsg?.toLowerCase().includes("credit") && (
           <div
             className="rounded-xl p-6 flex flex-col items-center gap-3 text-center"
             style={{ background: '#fff5f5', border: '1px solid #fecaca' }}
@@ -1778,25 +1781,14 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
               <AlertCircle className="w-10 h-10 text-red-400" />
               <p className="font-semibold text-red-600">{t("processingError")}</p>
               <p className="text-sm text-gray-500">{errorMsg}</p>
-              {!errorMsg?.includes("אסימונים") && !errorMsg?.toLowerCase().includes("token") && !errorMsg?.toLowerCase().includes("quota") && (
-                <p className="text-xs font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                  ✓ {t("tokensRefunded")}
-                </p>
-              )}
+              <p className="text-xs font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                ✓ {t("tokensRefunded")}
+              </p>
               <div className="flex gap-2 flex-wrap justify-center">
                 <button
                   className="text-sm px-4 py-2 rounded-lg font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200"
                   onClick={reset}
                 >{t("tryAgain")}</button>
-                {errorMsg && (errorMsg.includes("אסימונים") || errorMsg.toLowerCase().includes("token")) && (
-                  <button
-                    className="text-sm px-4 py-2 rounded-lg font-semibold"
-                    style={{background: '#0d9488', color: 'white', border: 'none'}}
-                    onClick={() => window.location.href = "/tokens"}
-                  >
-                    {t("buyTokens")}
-                  </button>
-                )}
               </div>
           </div>
         )}
@@ -1993,7 +1985,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                   </p>
                   <p className="text-xs text-green-700 mt-0.5 leading-relaxed">
                     {isRtl
-                      ? 'מצייר מחדש עם הוראה חזקה להיות נאמן למקור — מוסיף פרטים שהוחמצו. ללא עלות אסימונים.'
+                      ? 'מצייר מחדש עם הוראה חזקה להיות נאמן למקור — מוסיף פרטים שהוחמצו. ללא עלות קרדיטים.'
                       : 'Redraws with strict faithfulness to the original — adds missed details. No token cost.'}
                   </p>
                 </div>
