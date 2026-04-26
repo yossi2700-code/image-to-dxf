@@ -448,8 +448,6 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
   const [singleLine, setSingleLine] = useState(false);
   // Close paths: force all open paths to be closed in the DXF output
   const [closePaths, setClosePaths] = useState(false);
-  // High Quality mode: AI upscale x4 before vectorization (costs +2 credits)
-  const [highQuality, setHighQuality] = useState(false);
   const [lineweightMm, setLineweightMm] = useState<string>(""); // empty = default
   const [dragOver, setDragOver] = useState(false);
   const [fullImageMode, setFullImageMode] = useState(false);
@@ -839,7 +837,6 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       formData.append("variationIndex", String(detailLevel));
       if (singleLine) formData.append("singleLine", "true");
       if (singleLine && closePaths) formData.append("closePaths", "true");
-      if (highQuality) formData.append("highQuality", "true");
       const lwVal = parseFloat(lineweightMm);
       if (!isNaN(lwVal) && lwVal >= 0) formData.append("lineweightMm", String(lwVal));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
@@ -916,7 +913,6 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       formData.append("variationIndex", String(detailLevel));
       if (singleLine) formData.append("singleLine", "true");
       if (singleLine && closePaths) formData.append("closePaths", "true");
-      if (highQuality) formData.append("highQuality", "true");
       const lwVal = parseFloat(lineweightMm);
       if (!isNaN(lwVal) && lwVal >= 0) formData.append("lineweightMm", String(lwVal));
       const res = await fetch("/api/ai-trace", { method: "POST", body: formData, credentials: "include" });
@@ -1573,47 +1569,6 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                 </button>
               </div>
             )}
-
-            {/* High Quality toggle — AI upscale x4 before vectorization */}
-            <div className="mt-2 mb-1">
-              <button
-                type="button"
-                onClick={() => setHighQuality(v => !v)}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all"
-                style={highQuality
-                  ? { background: 'linear-gradient(135deg, #ede9fe22, #7c3aed11)', border: '2px solid #7c3aed', boxShadow: '0 2px 8px rgba(124,58,237,0.2)' }
-                  : { background: '#f8fafc', border: '2px solid #e2e8f0' }
-                }
-              >
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
-                    style={{ background: highQuality ? 'linear-gradient(135deg, #7c3aed, #4f46e5)' : '#e2e8f0' }}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                      <path d="M9 2 L10.5 6.5 L15 6.5 L11.5 9.5 L13 14 L9 11 L5 14 L6.5 9.5 L3 6.5 L7.5 6.5 Z" stroke={highQuality ? 'white' : '#9ca3af'} strokeWidth="1.5" strokeLinejoin="round" fill={highQuality ? 'rgba(255,255,255,0.3)' : 'none'}/>
-                    </svg>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-xs font-bold" style={{ color: highQuality ? '#5b21b6' : '#374151' }}>
-                      {isRtl ? 'איכות גבוהה (AI x4)' : 'High Quality (AI x4)'}
-                    </p>
-                    <p className="text-xs" style={{ color: highQuality ? '#7c3aed' : '#9ca3af', fontSize: '9px' }}>
-                      {isRtl ? 'שיפור רזולוציה בבינה מלאכותית — +2 קרדיטים, ~15 שניות נוספות' : 'AI resolution boost — +2 credits, ~15s extra'}
-                    </p>
-                  </div>
-                </div>
-                <div
-                  className="w-10 h-5 rounded-full relative transition-all shrink-0"
-                  style={{ background: highQuality ? '#7c3aed' : '#d1d5db' }}
-                >
-                  <div
-                    className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all"
-                    style={{ left: highQuality ? '22px' : '2px' }}
-                  />
-                </div>
-              </button>
-            </div>
 
             {/* Lineweight option */}
             <div className="flex items-center gap-2 pt-1 pb-1 flex-wrap">

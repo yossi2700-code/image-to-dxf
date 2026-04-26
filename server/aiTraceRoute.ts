@@ -25,7 +25,6 @@ import { deductTokens, addTokens, TOKEN_COSTS, TokenAction, getTokenCostForActio
 import { invokeLLM } from "./_core/llm";
 import { createJob, getJob, updateJob, cancelJob, heartbeatJob } from "./jobStore";
 import { svgToDxf } from "./svgToDxf";
-import { upscaleImageAI } from "./upscaleImage";
 import { cleanSvgForPreview } from "./svgClean";
 import OpenAI from "openai";
 import potrace from "potrace";
@@ -587,8 +586,7 @@ async function runTraceJob(
   hairline = false,
   lineweightMm?: number,
   singleLine = false,
-  closePaths = false,
-  highQuality = false
+  closePaths = false
 ) {
   const isHe = lang === "he";
   let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
@@ -830,22 +828,6 @@ async function runTraceJob(
         rawBuffer = Buffer.from(b64, "base64");
       }
 
-      // ── High Quality mode: AI upscale x4 before potrace ──────────────────────
-      // Uses FAL.ai Real-ESRGAN to sharpen lines before vectorization.
-      // Produces cleaner, more precise DXF output.
-      if (highQuality) {
-        updateJob(jobId, {
-          step: isHe ? "משפר רזולוציה בבינה מלאכותית (x4)..." : "AI upscaling for sharper lines (x4)...",
-          stepEn: "AI upscaling for sharper lines (x4)...",
-        });
-        try {
-          rawBuffer = await upscaleImageAI(rawBuffer);
-          console.log(`[aiTraceRoute] Job ${jobId}: AI upscale complete`);
-        } catch (upscaleErr) {
-          console.warn(`[aiTraceRoute] Job ${jobId}: AI upscale failed, continuing without:`, upscaleErr);
-        }
-      }
-
       // Add white padding around the AI-generated image, then process at 3072px resolution
       // Higher resolution = more pixels for potrace → smoother curves, less jagged edges
       // Simple mode (idx=0): light blur, higher threshold → clean outlines, removes fine noise
@@ -1001,12 +983,7 @@ async function runTraceJob(
     });
 
     // Deduct tokens NOW — only after successful job completion
-    // High Quality mode costs 2 extra credits (for AI upscale)
     await deductTokens(appUserId, "ai_trace");
-    if (highQuality) {
-      // Deduct 2 extra credits for AI upscale
-      try { await deductTokens(appUserId, "ai_refine"); } catch { /* ignore if balance issue */ }
-    }
     updateJob(jobId, { tokenDeducted: true });
 
     // Record user actions
@@ -1171,7 +1148,6 @@ router.post(
       const hairline = req.body?.hairline === "true" || req.body?.hairline === true;
       const singleLine = req.body?.singleLine === "true" || req.body?.singleLine === true;
       const closePaths = req.body?.closePaths === "true" || req.body?.closePaths === true;
-      const highQuality = req.body?.highQuality === "true" || req.body?.highQuality === true;
       const lineweightMmRaw = parseFloat((req.body?.lineweightMm as string) ?? "");
       // Default lineweight: 0.35mm when user hasn't set a custom value
       const lineweightMm = isNaN(lineweightMmRaw) ? 0.35 : Math.min(2.0, Math.max(0, lineweightMmRaw));
@@ -1203,7 +1179,7 @@ router.post(
         setTimeout(() => reject(new Error("Job timed out after 3 minutes")), MAX_JOB_MS)
       );
       Promise.race([
-        runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline, lineweightMm, singleLine, closePaths, highQuality),
+        runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline, lineweightMm, singleLine, closePaths),
         timeoutPromise,
       ]).catch((err) => {
         const msg = err instanceof Error ? err.message : String(err);
