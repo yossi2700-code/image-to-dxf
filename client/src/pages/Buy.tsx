@@ -57,11 +57,11 @@ function PurchaseTermsModal({ onClose }: { onClose: () => void }) {
   const { isRtl } = useLanguage();
   const isHe = isRtl;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto bg-white" style={{ border: "1px solid #e5e7eb" }} onClick={(e) => e.stopPropagation()}>
-        <div className="sticky top-0 flex justify-between items-center p-6 bg-white" style={{ borderBottom: "1px solid #f3f4f6" }} dir={isHe ? "rtl" : "ltr"}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="rounded-3xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto bg-white" style={{ border: "1px solid rgba(99,102,241,0.15)" }} onClick={(e) => e.stopPropagation()}>
+        <div className="sticky top-0 flex justify-between items-center p-6 bg-white rounded-t-3xl" style={{ borderBottom: "1px solid #f3f4f6" }} dir={isHe ? "rtl" : "ltr"}>
           <h2 className="text-xl font-bold text-gray-900">{isHe ? "תנאי רכישה" : "Purchase Terms & Conditions"}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors w-8 h-8 flex items-center justify-center rounded-full bg-gray-100">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
         </div>
@@ -87,8 +87,8 @@ function PurchaseTermsModal({ onClose }: { onClose: () => void }) {
             </>
           )}
         </div>
-        <div className="sticky bottom-0 p-4 flex justify-end bg-white" style={{ borderTop: "1px solid #f3f4f6" }}>
-          <button onClick={onClose} className="px-6 py-2.5 text-white rounded-xl font-semibold transition-colors text-sm" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
+        <div className="sticky bottom-0 p-4 flex justify-end bg-white rounded-b-3xl" style={{ borderTop: "1px solid #f3f4f6" }}>
+          <button onClick={onClose} className="px-6 py-2.5 text-white rounded-xl font-semibold transition-all text-sm hover:opacity-90" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
             {isHe ? "סגור" : "Close"}
           </button>
         </div>
@@ -201,15 +201,6 @@ export default function Buy() {
     }
   }
 
-  // Card accent colors per package index (light-theme friendly)
-  const cardAccents = [
-    { bg: "linear-gradient(135deg, #ede9fe, #ddd6fe)", border: "#c4b5fd", selected: "linear-gradient(135deg, #4f46e5, #7c3aed)", selectedBorder: "#7c3aed", textColor: "#4f46e5" },
-    { bg: "linear-gradient(135deg, #dbeafe, #bfdbfe)", border: "#93c5fd", selected: "linear-gradient(135deg, #1d4ed8, #2563eb)", selectedBorder: "#3b82f6", textColor: "#1d4ed8" },
-    { bg: "linear-gradient(135deg, #d1fae5, #a7f3d0)", border: "#6ee7b7", selected: "linear-gradient(135deg, #065f46, #059669)", selectedBorder: "#10b981", textColor: "#065f46" },
-    { bg: "linear-gradient(135deg, #fce7f3, #fbcfe8)", border: "#f9a8d4", selected: "linear-gradient(135deg, #9d174d, #db2777)", selectedBorder: "#ec4899", textColor: "#9d174d" },
-    { bg: "linear-gradient(135deg, #fef3c7, #fde68a)", border: "#fcd34d", selected: "linear-gradient(135deg, #92400e, #d97706)", selectedBorder: "#f59e0b", textColor: "#92400e" },
-  ];
-
   const badgeConfig: Record<string, { text: string }> = {
     recommended: { text: isRtl ? "★ מומלץ" : "★ Recommended" },
     best_value: { text: isRtl ? "💰 הכי משתלם" : "💰 Best Value" },
@@ -217,19 +208,37 @@ export default function Buy() {
     trial: { text: isRtl ? "🌟 התנסות" : "🌟 Starter" },
   };
 
+  // Package visual themes
+  const pkgThemes = [
+    { icon: "⚡", color: "#6366f1", light: "#eef2ff", ring: "#c7d2fe" },
+    { icon: "🚀", color: "#7c3aed", light: "#f5f3ff", ring: "#ddd6fe" },
+    { icon: "💎", color: "#0ea5e9", light: "#f0f9ff", ring: "#bae6fd" },
+    { icon: "🔥", color: "#f59e0b", light: "#fffbeb", ring: "#fde68a" },
+    { icon: "🌟", color: "#10b981", light: "#f0fdf4", ring: "#bbf7d0" },
+  ];
+
   return (
-    <div className="min-h-screen" style={{ background: "#f8f9fb" }} dir={isRtl ? "rtl" : "ltr"}>
+    <div className="min-h-screen" dir={isRtl ? "rtl" : "ltr"}
+      style={{ background: "linear-gradient(160deg, #f0f4ff 0%, #faf5ff 40%, #f0fdf4 100%)" }}>
       {showTermsModal && <PurchaseTermsModal onClose={() => setShowTermsModal(false)} />}
 
-      {/* Top gradient bar */}
-      <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, #4f46e5, #7c3aed, #2563eb)" }} />
+      {/* Decorative blobs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
+        <div style={{ position: "absolute", top: "-120px", left: "-120px", width: "500px", height: "500px", borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)" }} />
+        <div style={{ position: "absolute", top: "30%", right: "-100px", width: "400px", height: "400px", borderRadius: "50%", background: "radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%)" }} />
+        <div style={{ position: "absolute", bottom: "10%", left: "20%", width: "350px", height: "350px", borderRadius: "50%", background: "radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)" }} />
+      </div>
 
-      <div className="relative max-w-5xl mx-auto px-4 py-12">
+      {/* Top accent bar */}
+      <div className="h-1 w-full relative z-10" style={{ background: "linear-gradient(90deg, #4f46e5, #7c3aed, #06b6d4, #10b981)" }} />
+
+      <div className="relative max-w-5xl mx-auto px-4 py-12" style={{ zIndex: 1 }}>
 
         {/* Back button */}
         <button
           onClick={() => navigate("/")}
-          className="mb-10 inline-flex items-center gap-2 text-sm transition-colors group text-gray-400 hover:text-gray-700"
+          className="mb-10 inline-flex items-center gap-2 text-sm font-medium transition-all group px-4 py-2 rounded-xl hover:bg-white/70"
+          style={{ color: "#6b7280" }}
         >
           <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -237,27 +246,41 @@ export default function Buy() {
           {t("back")}
         </button>
 
-        {/* Hero */}
-        <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-medium mb-6 tracking-wide uppercase" style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)", color: "#4f46e5" }}>
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            {isRtl ? "קרדיטים לעיצוב" : "Design Credits"}
+        {/* Hero section */}
+        <div className="text-center mb-16">
+          {/* Coin icon */}
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl mb-6 shadow-lg"
+            style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)", boxShadow: "0 8px 32px rgba(99,102,241,0.35)" }}>
+            <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+              <circle cx="12" cy="12" r="9"/>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v2m0 8v2M9.5 9.5c0-1.1.9-2 2.5-2s2.5.9 2.5 2c0 1.4-1.5 2-2.5 2.5-1 .5-2.5 1.1-2.5 2.5 0 1.1.9 2 2.5 2s2.5-.9 2.5-2"/>
+            </svg>
           </div>
-          <h1 className="text-4xl sm:text-5xl font-black mb-4 tracking-tight" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed, #2563eb)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            {isRtl ? "בחר את החבילה שלך" : "Choose Your Plan"}
+
+          <h1 className="text-5xl sm:text-6xl font-black mb-4 tracking-tight leading-tight">
+            <span style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              {isRtl ? "קרדיטים" : "Credits"}
+            </span>
+            <br />
+            <span className="text-gray-800">{isRtl ? "לעיצוב שלך" : "for your designs"}</span>
           </h1>
-          <p className="text-lg max-w-md mx-auto leading-relaxed text-gray-500">
+          <p className="text-lg text-gray-500 max-w-md mx-auto leading-relaxed">
             {t("buyPageSubtitle")}
           </p>
 
           {isLoggedIn && balance !== null && (
-            <div className="mt-6 inline-flex items-center gap-3 rounded-2xl px-6 py-3 bg-white shadow-sm" style={{ border: "1px solid #e5e7eb" }}>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.3)" }}>
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" style={{ color: "#f59e0b" }}><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+            <div className="mt-8 inline-flex items-center gap-3 rounded-2xl px-6 py-3 bg-white shadow-md"
+              style={{ border: "1px solid rgba(99,102,241,0.15)" }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                style={{ background: "linear-gradient(135deg, #fef3c7, #fde68a)" }}>
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: "#d97706" }}>
+                  <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd"/>
+                </svg>
               </div>
               <div className={isRtl ? "text-right" : "text-left"}>
-                <div className="text-xs text-gray-400">{t("buyCurrentBalance")}</div>
-                <div className="font-bold text-gray-800">{balance} <span className="font-normal text-sm text-gray-400">{t("buyTokensLabel")}</span></div>
+                <div className="text-xs text-gray-400 font-medium">{t("buyCurrentBalance")}</div>
+                <div className="font-bold text-gray-800 text-lg">{balance} <span className="font-normal text-sm text-gray-400">{t("buyTokensLabel")}</span></div>
               </div>
             </div>
           )}
@@ -265,13 +288,17 @@ export default function Buy() {
 
         {/* Currency selector */}
         <div className="flex justify-center mb-10">
-          <div className="flex items-center gap-3 rounded-xl px-5 py-2.5 bg-white shadow-sm" style={{ border: "1px solid #e5e7eb" }}>
-            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span className="text-sm text-gray-400">{t("buySelectCurrency")}:</span>
+          <div className="inline-flex items-center gap-3 rounded-2xl px-5 py-3 bg-white shadow-sm"
+            style={{ border: "1px solid rgba(99,102,241,0.12)" }}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ color: "#6366f1" }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span className="text-sm text-gray-400 font-medium">{t("buySelectCurrency")}:</span>
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
-              className="text-sm font-semibold focus:outline-none cursor-pointer text-gray-700 bg-transparent"
+              className="text-sm font-bold focus:outline-none cursor-pointer bg-transparent"
+              style={{ color: "#4f46e5" }}
             >
               {activeCurrencies.map((c) => (
                 <option key={c} value={c}>
@@ -283,7 +310,7 @@ export default function Buy() {
         </div>
 
         {/* Package cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-12 max-w-3xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-14 max-w-3xl mx-auto">
           {packages.map((p, idx) => {
             const pPrice = p.prices[currency] ?? p.prices["USD"];
             const pDiscount = (p as { discountPercent?: number }).discountPercent ?? 0;
@@ -291,74 +318,120 @@ export default function Buy() {
             const pPerToken = (parseFloat(pFinalPrice) / p.tokens).toFixed(2);
             const isSelected = selectedPackage === p.id;
             const badge = (p as { badge?: string | null }).badge ?? null;
-            const accent = cardAccents[idx % cardAccents.length];
+            const theme = pkgThemes[idx % pkgThemes.length];
 
             return (
               <div
                 key={p.id}
                 onClick={() => setSelectedPackage(p.id)}
-                className="relative cursor-pointer rounded-2xl transition-all duration-200 select-none overflow-hidden"
+                className="relative cursor-pointer rounded-3xl transition-all duration-300 select-none overflow-hidden"
                 style={{
-                  background: isSelected ? accent.selected : "white",
-                  border: `2px solid ${isSelected ? accent.selectedBorder : "#e5e7eb"}`,
-                  boxShadow: isSelected ? `0 8px 30px ${accent.selectedBorder}40, 0 2px 8px rgba(0,0,0,0.08)` : "0 2px 8px rgba(0,0,0,0.06)",
-                  transform: isSelected ? "scale(1.02)" : "scale(1)",
+                  background: isSelected
+                    ? `linear-gradient(145deg, ${theme.color}ee, ${theme.color}cc)`
+                    : "white",
+                  border: `2px solid ${isSelected ? theme.color : theme.ring}`,
+                  boxShadow: isSelected
+                    ? `0 20px 60px ${theme.color}40, 0 4px 16px ${theme.color}20`
+                    : "0 4px 20px rgba(0,0,0,0.06)",
+                  transform: isSelected ? "translateY(-4px) scale(1.02)" : "translateY(0) scale(1)",
                 }}
               >
+                {/* Decorative circle */}
+                <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-20"
+                  style={{ background: isSelected ? "white" : theme.color }} />
+
                 {/* Badge */}
-                {badge && badgeConfig[badge] && (
-                  <div className="absolute top-0 left-0 right-0 py-1.5 text-center text-xs font-bold tracking-wide" style={{ background: isSelected ? "rgba(0,0,0,0.15)" : accent.bg, color: isSelected ? "white" : accent.textColor }}>
+                {(badge && badgeConfig[badge]) && (
+                  <div className="absolute top-0 left-0 right-0 py-2 text-center text-xs font-bold tracking-wide"
+                    style={{
+                      background: isSelected ? "rgba(255,255,255,0.2)" : theme.light,
+                      color: isSelected ? "white" : theme.color,
+                      borderBottom: `1px solid ${isSelected ? "rgba(255,255,255,0.2)" : theme.ring}`,
+                    }}>
                     {badgeConfig[badge].text}
                   </div>
                 )}
                 {!badge && p.popular && !pDiscount && (
-                  <div className="absolute top-0 left-0 right-0 py-1.5 text-center text-xs font-bold tracking-wide" style={{ background: isSelected ? "rgba(0,0,0,0.15)" : accent.bg, color: isSelected ? "white" : accent.textColor }}>
+                  <div className="absolute top-0 left-0 right-0 py-2 text-center text-xs font-bold tracking-wide"
+                    style={{
+                      background: isSelected ? "rgba(255,255,255,0.2)" : theme.light,
+                      color: isSelected ? "white" : theme.color,
+                      borderBottom: `1px solid ${isSelected ? "rgba(255,255,255,0.2)" : theme.ring}`,
+                    }}>
                     ✦ {t("buyBestValue")}
                   </div>
                 )}
                 {pDiscount > 0 && (
-                  <div className="absolute top-3 right-3 text-white text-xs font-black px-2.5 py-1 rounded-full" style={{ background: "#ef4444" }}>
+                  <div className="absolute top-4 right-4 text-white text-xs font-black px-2.5 py-1 rounded-full shadow-md"
+                    style={{ background: "#ef4444" }}>
                     -{pDiscount}%
                   </div>
                 )}
 
-                <div className={`p-7 ${badge || (p.popular && !pDiscount) ? "pt-10" : ""}`}>
-                  {/* Token count */}
-                  <div className="mb-5">
-                    <div className="flex items-end gap-2 mb-1">
-                      <span className="text-5xl font-black tabular-nums" style={{ color: isSelected ? "white" : "#111827" }}>{p.tokens}</span>
-                      <span className="text-sm mb-1.5 uppercase tracking-widest" style={{ color: isSelected ? "rgba(255,255,255,0.7)" : "#9ca3af" }}>{t("buyTokensCount")}</span>
+                <div className={`p-8 ${badge || (p.popular && !pDiscount) ? "pt-12" : ""} relative`}>
+                  {/* Icon + token count */}
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-md flex-shrink-0"
+                      style={{ background: isSelected ? "rgba(255,255,255,0.25)" : theme.light }}>
+                      {theme.icon}
                     </div>
-                    {(p as { label?: string | null }).label && (
-                      <p className="text-sm" style={{ color: isSelected ? "rgba(255,255,255,0.65)" : "#6b7280" }}>{(p as { label?: string | null }).label}</p>
-                    )}
+                    <div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-5xl font-black tabular-nums leading-none"
+                          style={{ color: isSelected ? "white" : "#111827" }}>
+                          {p.tokens}
+                        </span>
+                        <span className="text-sm font-semibold uppercase tracking-wider"
+                          style={{ color: isSelected ? "rgba(255,255,255,0.7)" : "#9ca3af" }}>
+                          {t("buyTokensCount")}
+                        </span>
+                      </div>
+                      {(p as { label?: string | null }).label && (
+                        <p className="text-sm mt-0.5"
+                          style={{ color: isSelected ? "rgba(255,255,255,0.65)" : "#6b7280" }}>
+                          {(p as { label?: string | null }).label}
+                        </p>
+                      )}
+                    </div>
                   </div>
-
-                  {/* Divider */}
-                  <div className="mb-5" style={{ borderTop: `1px solid ${isSelected ? "rgba(255,255,255,0.2)" : "#f3f4f6"}` }} />
 
                   {/* Price */}
-                  <div className="mb-5">
+                  <div className="mb-6">
                     {pDiscount > 0 ? (
                       <div className="flex items-baseline gap-2">
-                        <span className="line-through text-lg" style={{ color: isSelected ? "rgba(255,255,255,0.4)" : "#d1d5db" }}>{symbol}{pPrice}</span>
-                        <span className="text-3xl font-black" style={{ color: isSelected ? "white" : "#111827" }}>{symbol}{pFinalPrice}</span>
+                        <span className="line-through text-lg"
+                          style={{ color: isSelected ? "rgba(255,255,255,0.4)" : "#d1d5db" }}>
+                          {symbol}{pPrice}
+                        </span>
+                        <span className="text-4xl font-black"
+                          style={{ color: isSelected ? "white" : "#111827" }}>
+                          {symbol}{pFinalPrice}
+                        </span>
                       </div>
                     ) : (
-                      <span className="text-3xl font-black" style={{ color: isSelected ? "white" : "#111827" }}>{symbol}{pFinalPrice}</span>
+                      <span className="text-4xl font-black"
+                        style={{ color: isSelected ? "white" : "#111827" }}>
+                        {symbol}{pFinalPrice}
+                      </span>
                     )}
-                    <div className="text-xs mt-1" style={{ color: isSelected ? "rgba(255,255,255,0.55)" : "#9ca3af" }}>{symbol}{pPerToken} {t("buyPerToken")}</div>
+                    <div className="text-xs mt-1.5 font-medium"
+                      style={{ color: isSelected ? "rgba(255,255,255,0.55)" : "#9ca3af" }}>
+                      {symbol}{pPerToken} {t("buyPerToken")}
+                    </div>
                   </div>
 
-                  {/* Select indicator */}
-                  <div className="flex items-center justify-between rounded-xl px-4 py-2.5 transition-all" style={{
-                    background: isSelected ? "rgba(255,255,255,0.18)" : "#f9fafb",
-                    border: `1px solid ${isSelected ? "rgba(255,255,255,0.3)" : "#e5e7eb"}`,
-                  }}>
-                    <span className="text-sm font-semibold" style={{ color: isSelected ? "white" : "#6b7280" }}>
-                      {isSelected ? (isRtl ? "נבחר ✓" : "Selected ✓") : (isRtl ? "בחר חבילה" : "Select plan")}
+                  {/* Select button */}
+                  <div className="flex items-center justify-between rounded-2xl px-4 py-3 transition-all"
+                    style={{
+                      background: isSelected ? "rgba(255,255,255,0.2)" : theme.light,
+                      border: `1.5px solid ${isSelected ? "rgba(255,255,255,0.35)" : theme.ring}`,
+                    }}>
+                    <span className="text-sm font-bold"
+                      style={{ color: isSelected ? "white" : theme.color }}>
+                      {isSelected ? (isRtl ? "✓ נבחר" : "✓ Selected") : (isRtl ? "בחר חבילה" : "Select plan")}
                     </span>
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: isSelected ? "white" : "#9ca3af" }}>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                      style={{ color: isSelected ? "white" : theme.color }}>
                       {isSelected
                         ? <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
                         : <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
@@ -372,37 +445,45 @@ export default function Buy() {
         </div>
 
         {/* Trust badges */}
-        <div className="max-w-3xl mx-auto mb-12">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="max-w-3xl mx-auto mb-14">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>, text: isRtl ? "ללא תפוגה" : "Never expire", color: "#10b981" },
-              { icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>, text: isRtl ? "תשלום מאובטח" : "Secure payment", color: "#3b82f6" },
-              { icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>, text: isRtl ? "זיכוי מידי" : "Instant credit", color: "#f59e0b" },
-              { icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>, text: isRtl ? "PayPal מאובטח" : "PayPal secured", color: "#6366f1" },
+              { icon: "⏰", text: isRtl ? "ללא תפוגה" : "Never expire", color: "#10b981", bg: "#f0fdf4" },
+              { icon: "🔒", text: isRtl ? "תשלום מאובטח" : "Secure payment", color: "#3b82f6", bg: "#eff6ff" },
+              { icon: "⚡", text: isRtl ? "זיכוי מידי" : "Instant credit", color: "#f59e0b", bg: "#fffbeb" },
+              { icon: "💳", text: isRtl ? "PayPal מאובטח" : "PayPal secured", color: "#6366f1", bg: "#eef2ff" },
             ].map((f, i) => (
-              <div key={i} className="flex items-center gap-2.5 rounded-xl px-4 py-3 bg-white shadow-sm" style={{ border: "1px solid #f3f4f6" }}>
-                <span style={{ color: f.color }} className="flex-shrink-0">{f.icon}</span>
-                <span className="text-xs font-medium text-gray-600">{f.text}</span>
+              <div key={i} className="flex items-center gap-2.5 rounded-2xl px-4 py-3 bg-white shadow-sm"
+                style={{ border: `1.5px solid ${f.bg}` }}>
+                <span className="text-lg flex-shrink-0">{f.icon}</span>
+                <span className="text-xs font-semibold" style={{ color: f.color }}>{f.text}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Purchase card */}
-        <div className="max-w-md mx-auto">
-          <div className="rounded-2xl p-6 bg-white shadow-md" style={{ border: "1px solid #e5e7eb" }}>
+        <div className="max-w-md mx-auto" ref={cardFormRef}>
+          <div className="rounded-3xl p-7 bg-white shadow-xl"
+            style={{ border: "1.5px solid rgba(99,102,241,0.12)", boxShadow: "0 20px 60px rgba(99,102,241,0.1), 0 4px 16px rgba(0,0,0,0.06)" }}>
 
             {/* Order summary */}
             <div className="mb-6">
-              <h3 className="text-xs uppercase tracking-widest mb-4 text-gray-400">{isRtl ? "סיכום הזמנה" : "Order Summary"}</h3>
-              <div className="flex items-center justify-between py-3" style={{ borderBottom: "1px solid #f3f4f6" }}>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(180deg, #4f46e5, #7c3aed)" }} />
+                <h3 className="text-xs uppercase tracking-widest font-bold text-gray-400">
+                  {isRtl ? "סיכום הזמנה" : "Order Summary"}
+                </h3>
+              </div>
+              <div className="flex items-center justify-between py-4 px-4 rounded-2xl"
+                style={{ background: "linear-gradient(135deg, #f8f7ff, #faf5ff)", border: "1px solid #e9d5ff" }}>
                 <div>
-                  <div className="text-gray-800 font-semibold">{pkg.tokens} {t("buyTokensLabel")}</div>
+                  <div className="font-bold text-gray-800 text-base">{pkg.tokens} {t("buyTokensLabel")}</div>
                   <div className="text-xs mt-0.5 text-gray-400">{symbol}{perToken} {t("buyPerToken")}</div>
                 </div>
                 <div className="text-right">
                   {discount > 0 && <div className="line-through text-sm text-gray-300">{symbol}{price}</div>}
-                  <div className="text-gray-900 font-bold text-xl">{symbol}{finalPrice}</div>
+                  <div className="font-black text-2xl" style={{ color: "#4f46e5" }}>{symbol}{finalPrice}</div>
                   <div className="text-xs text-gray-300">{currency}</div>
                 </div>
               </div>
@@ -413,11 +494,12 @@ export default function Buy() {
               <button
                 type="button"
                 onClick={() => { setTermsAccepted(!termsAccepted); if (error) setError(null); }}
-                className="mt-0.5 flex-shrink-0 w-6 h-6 rounded flex items-center justify-center transition-all"
+                className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center transition-all"
                 style={{
                   background: termsAccepted ? "linear-gradient(135deg, #4f46e5, #7c3aed)" : "white",
                   border: `2px solid ${termsAccepted ? "#7c3aed" : "#d1d5db"}`,
                   minWidth: "24px",
+                  boxShadow: termsAccepted ? "0 2px 8px rgba(99,102,241,0.4)" : "none",
                 }}
                 aria-label="אישור תנאי שימוש"
               >
@@ -432,7 +514,10 @@ export default function Buy() {
                 onClick={() => { setTermsAccepted(!termsAccepted); if (error) setError(null); }}
               >
                 {t("buyTermsCheckbox")}{" "}
-                <button type="button" onClick={(e) => { e.stopPropagation(); setShowTermsModal(true); }} className="underline underline-offset-2 font-medium transition-colors text-indigo-600 hover:text-indigo-800">
+                <button type="button"
+                  onClick={(e) => { e.stopPropagation(); setShowTermsModal(true); }}
+                  className="font-semibold underline underline-offset-2 transition-colors"
+                  style={{ color: "#6366f1" }}>
                   {t("buyTermsLink")}
                 </button>
               </span>
@@ -440,59 +525,66 @@ export default function Buy() {
 
             {/* Alerts */}
             {error && (
-              <div className="mb-4 p-3 rounded-xl text-sm text-center" style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626" }}>
+              <div className="mb-4 p-3 rounded-2xl text-sm text-center"
+                style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626" }}>
                 {error}
               </div>
             )}
             {isLoggedIn === false && (
-              <div className="mb-4 p-3 rounded-xl text-sm text-center" style={{ background: "#fffbeb", border: "1px solid #fde68a", color: "#92400e" }}>
+              <div className="mb-4 p-3 rounded-2xl text-sm text-center"
+                style={{ background: "#fffbeb", border: "1px solid #fde68a", color: "#92400e" }}>
                 {t("buyLoginRequired")}
               </div>
             )}
             {paypalConfigured === false && (
-              <div className="mb-4 p-3 rounded-xl text-sm text-center" style={{ background: "#fffbeb", border: "1px solid #fde68a", color: "#92400e" }}>
+              <div className="mb-4 p-3 rounded-2xl text-sm text-center"
+                style={{ background: "#fffbeb", border: "1px solid #fde68a", color: "#92400e" }}>
                 {t("buyPayPalNotConfigured")}
               </div>
             )}
 
             {/* Payment method tabs */}
-            <div className="flex gap-2 mb-5 p-1 rounded-xl bg-gray-50" style={{ border: "1px solid #f3f4f6" }}>
-              {/* Credit Card — Coming Soon */}
-              <div className="flex-1 py-2.5 rounded-lg flex items-center justify-center gap-2 select-none cursor-not-allowed text-gray-300">
+            <div className="flex gap-2 mb-5 p-1.5 rounded-2xl bg-gray-50" style={{ border: "1px solid #f3f4f6" }}>
+              <div className="flex-1 py-2.5 rounded-xl flex items-center justify-center gap-2 select-none cursor-not-allowed text-gray-300">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
                   <line x1="1" y1="10" x2="23" y2="10"/>
                 </svg>
                 <span className="text-xs font-medium">{isRtl ? "כרטיס — בקרוב" : "Card — Soon"}</span>
               </div>
-              {/* PayPal — active */}
-              <div className="flex-1 py-2.5 rounded-lg flex items-center justify-center gap-2 select-none bg-white shadow-sm" style={{ border: "1px solid #e5e7eb", color: "#1d4ed8" }}>
+              <div className="flex-1 py-2.5 rounded-xl flex items-center justify-center gap-2 select-none bg-white shadow-sm"
+                style={{ border: "1.5px solid #bfdbfe" }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="#1d4ed8">
                   <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"/>
                 </svg>
-                <span className="text-xs font-semibold">PayPal</span>
+                <span className="text-xs font-bold text-blue-700">PayPal</span>
               </div>
             </div>
 
-            {/* PayPal button */}
+            {/* CTA Button */}
             <button
               onClick={handlePurchase}
               disabled={loading || !termsAccepted || isLoggedIn === false || paypalConfigured === false}
-              className="w-full py-4 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-3"
+              className="w-full py-4 rounded-2xl font-black text-base transition-all duration-200 flex items-center justify-center gap-3"
               style={
                 loading || !termsAccepted || isLoggedIn === false || paypalConfigured === false
-                  ? { background: "#f3f4f6", color: "#9ca3af", cursor: "not-allowed", border: "1px solid #e5e7eb" }
-                  : { background: "linear-gradient(135deg, #4f46e5, #7c3aed, #2563eb)", color: "white", boxShadow: "0 4px 20px rgba(99,102,241,0.35)", cursor: "pointer" }
+                  ? { background: "#f3f4f6", color: "#9ca3af", cursor: "not-allowed" }
+                  : {
+                      background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #2563eb 100%)",
+                      color: "white",
+                      boxShadow: "0 8px 32px rgba(99,102,241,0.45), 0 2px 8px rgba(99,102,241,0.2)",
+                      cursor: "pointer",
+                    }
               }
               onMouseEnter={e => {
                 if (!loading && termsAccepted && isLoggedIn !== false && paypalConfigured !== false) {
-                  (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 6px 28px rgba(99,102,241,0.5)";
-                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.01)";
+                  (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 12px 40px rgba(99,102,241,0.55), 0 4px 12px rgba(99,102,241,0.25)";
                 }
               }}
               onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 20px rgba(99,102,241,0.35)";
-                (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 8px 32px rgba(99,102,241,0.45), 0 2px 8px rgba(99,102,241,0.2)";
               }}
             >
               {loading ? (
@@ -514,7 +606,9 @@ export default function Buy() {
             </button>
 
             <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400">
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
               {isRtl ? "מאובטח על ידי PayPal — פרטי הכרטיס לא נשמרים" : "Secured by PayPal — card details never stored"}
             </div>
           </div>
@@ -522,19 +616,25 @@ export default function Buy() {
 
         {/* FAQ */}
         <div className="max-w-2xl mx-auto mt-20 mb-10">
-          <h2 className="text-center text-2xl font-bold text-gray-800 mb-8">{t("buyFaqTitle")}</h2>
+          <h2 className="text-center text-2xl font-black text-gray-800 mb-8">{t("buyFaqTitle")}</h2>
           <div className="space-y-3">
             {[
               { q: t("buyFaq1Q"), a: t("buyFaq1A") },
               { q: t("buyFaq2Q"), a: t("buyFaq2A") },
               { q: t("buyFaq3Q"), a: t("buyFaq3A") },
             ].map((item, i) => (
-              <details key={i} className="group rounded-xl overflow-hidden bg-white shadow-sm" style={{ border: "1px solid #e5e7eb" }}>
-                <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none">
-                  <span className="font-semibold text-gray-800 text-sm">{item.q}</span>
-                  <svg className="w-4 h-4 group-open:rotate-180 transition-transform flex-shrink-0 ml-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
+              <details key={i} className="group rounded-2xl overflow-hidden bg-white shadow-sm"
+                style={{ border: "1.5px solid #e9d5ff" }}>
+                <summary className="flex items-center justify-between px-6 py-4 cursor-pointer list-none">
+                  <span className="font-bold text-gray-800 text-sm">{item.q}</span>
+                  <svg className="w-4 h-4 group-open:rotate-180 transition-transform flex-shrink-0 ml-3"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                    style={{ color: "#7c3aed" }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
+                  </svg>
                 </summary>
-                <div className="px-5 pb-4 text-sm leading-relaxed pt-3 text-gray-500" style={{ borderTop: "1px solid #f3f4f6" }}>
+                <div className="px-6 pb-5 text-sm leading-relaxed pt-3 text-gray-500"
+                  style={{ borderTop: "1px solid #f3f4f6" }}>
                   {item.a}
                 </div>
               </details>
@@ -544,11 +644,10 @@ export default function Buy() {
 
         {/* Support */}
         <div className="max-w-md mx-auto pb-20">
-          <div className="rounded-2xl p-8 text-center bg-white shadow-sm" style={{ border: "1px solid #e5e7eb" }}>
-            <div className="w-12 h-12 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)" }}>
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ color: "#6366f1" }}><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/></svg>
-            </div>
-            <h3 className="text-lg font-bold text-gray-800 mb-2">
+          <div className="rounded-3xl p-8 text-center bg-white shadow-sm"
+            style={{ border: "1.5px solid rgba(99,102,241,0.1)", background: "linear-gradient(135deg, #fafbff, #f5f3ff)" }}>
+            <div className="text-4xl mb-4">💬</div>
+            <h3 className="text-lg font-black text-gray-800 mb-2">
               {isRtl ? "תמיכה טכנית" : "Technical Support"}
             </h3>
             <p className="text-sm mb-6 leading-relaxed text-gray-500">
@@ -557,25 +656,32 @@ export default function Buy() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               {contactSettings?.supportEmail ? (
                 <a href={`mailto:${contactSettings.supportEmail}`}
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all text-sm text-gray-600 hover:text-gray-800 bg-gray-50 hover:bg-gray-100"
-                  style={{ border: "1px solid #e5e7eb" }}>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all text-sm bg-white hover:bg-indigo-50"
+                  style={{ border: "1.5px solid #c7d2fe", color: "#4f46e5" }}>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
                   {isRtl ? "שלח אימייל" : "Send Email"}
                 </a>
               ) : (
                 <a href="mailto:support@dxfai.ai"
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all text-sm text-gray-600 hover:text-gray-800 bg-gray-50 hover:bg-gray-100"
-                  style={{ border: "1px solid #e5e7eb" }}>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all text-sm bg-white hover:bg-indigo-50"
+                  style={{ border: "1.5px solid #c7d2fe", color: "#4f46e5" }}>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
                   support@dxfai.ai
                 </a>
               )}
               {contactSettings?.whatsappNumber && (
                 <a href={`https://wa.me/${contactSettings.whatsappNumber.replace(/[^0-9]/g, "")}`}
                   target="_blank" rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all text-sm"
-                  style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#16a34a" }}>
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.117 1.528 5.845L.057 23.5l5.797-1.522A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.848 0-3.576-.5-5.065-1.375l-.363-.215-3.44.902.918-3.354-.236-.38A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all text-sm"
+                  style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", color: "#16a34a" }}>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.117 1.528 5.845L.057 23.5l5.797-1.522A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.848 0-3.576-.5-5.065-1.375l-.363-.215-3.44.902.918-3.354-.236-.38A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+                  </svg>
                   WhatsApp
                 </a>
               )}
