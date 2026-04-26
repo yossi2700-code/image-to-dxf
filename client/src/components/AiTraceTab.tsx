@@ -1736,50 +1736,51 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
             {/* AI Suggestions + custom improvement */}
             {result.suggestions && result.suggestions.length > 0 && (
               <div
-                className="rounded-xl p-4"
-                style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+                className="rounded-xl p-3 mt-0"
+                style={{
+                  background: 'linear-gradient(135deg, #f0fdfa 0%, #f8fafc 100%)',
+                  border: '1.5px solid #99f6e4',
+                  boxShadow: '0 2px 8px rgba(13,148,136,0.08)',
+                  animation: 'slideDown 0.35s cubic-bezier(0.4,0,0.2,1)',
+                }}
               >
-                  <div className="flex items-center gap-2 mb-3">
-                    <Wand2 className="w-4 h-4 text-teal-600" />
-                    <span className="text-sm font-semibold text-gray-700">
+                  <style>{`
+                    @keyframes slideDown {
+                      from { opacity: 0; transform: translateY(-8px); }
+                      to   { opacity: 1; transform: translateY(0); }
+                    }
+                    @keyframes chipPop {
+                      from { opacity: 0; transform: scale(0.85); }
+                      to   { opacity: 1; transform: scale(1); }
+                    }
+                  `}</style>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Wand2 className="w-3.5 h-3.5 text-teal-600" />
+                    <span className="text-xs font-semibold text-teal-700">
                       {t("improveDesign")}
                     </span>
                   </div>
 
-                  <p className="text-xs font-medium mb-1.5 text-teal-700">
-                    {t("changeStyle")}
-                  </p>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {(isRtl ? VARIATION_LABELS : VARIATION_LABELS_EN).map((label, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => { setFocusText(label); handleTrace(label); }}
-                        className="text-xs px-3 py-1.5 rounded-full font-medium transition-all bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100"
-                      >
-                        🎨 {label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <p className="text-xs font-medium mb-1.5 text-teal-700">
-                    {t("aiSuggestions")}
-                  </p>
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="flex flex-wrap gap-1.5 mb-2">
                     {result.suggestions.map((suggestion, idx) => (
                       <button
                         key={idx}
                         onClick={() => { setFocusText(suggestion); handleTrace(suggestion); }}
-                        className="text-xs px-3 py-1.5 rounded-full font-medium transition-all bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100"
+                        className="text-xs px-2.5 py-1 rounded-full font-medium transition-all hover:scale-105 active:scale-95"
+                        style={{
+                          background: 'white',
+                          border: '1.5px solid #5eead4',
+                          color: '#0d9488',
+                          boxShadow: '0 1px 3px rgba(13,148,136,0.12)',
+                          animation: `chipPop 0.25s ease ${idx * 0.06}s both`,
+                        }}
                       >
                         ✨ {suggestion}
                       </button>
                     ))}
                   </div>
 
-                  <p className="text-xs font-medium mb-1.5 text-teal-700">
-                    {t("orTypeRequest")}
-                  </p>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1.5">
                     <input
                       type="text"
                       value={customImprovement}
@@ -1793,7 +1794,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                         }
                       }}
                       placeholder={t("addDetailPlaceholder")}
-                      className="flex-1 text-sm rounded-lg px-3 py-2 bg-gray-50 border border-gray-200 text-gray-800"
+                      className="flex-1 text-xs rounded-lg px-2.5 py-1.5 bg-white border border-teal-200 text-gray-800 focus:outline-none focus:border-teal-400"
                       dir={isRtl ? "rtl" : "ltr"}
                     />
                     <button
@@ -1806,12 +1807,13 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                         }
                       }}
                       disabled={!customImprovement.trim()}
-                      className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95"
                       style={{
-                        background: customImprovement.trim() ? '#0d9488' : '#ccfbf1',
+                        background: customImprovement.trim() ? 'linear-gradient(135deg, #0d9488, #06b6d4)' : '#ccfbf1',
                         color: customImprovement.trim() ? 'white' : '#5eead4',
                         border: 'none',
                         cursor: customImprovement.trim() ? 'pointer' : 'not-allowed',
+                        boxShadow: customImprovement.trim() ? '0 2px 6px rgba(13,148,136,0.3)' : 'none',
                       }}
                     >
                       {t("apply")}
