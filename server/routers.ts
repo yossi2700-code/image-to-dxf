@@ -11,7 +11,7 @@ import { getDb } from "./db";
 import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks, emailVerifications, failedJobs, visitorEvents, contactMessages, issueReports, sharedFiles, freedxfDownloads } from "../drizzle/schema";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "./emailService";
-import { desc, eq, and, sql, gte, like, inArray } from "drizzle-orm";
+import { desc, eq, and, sql, gte, like, inArray, isNotNull, ne } from "drizzle-orm";
 import { getAppUserFromCookie } from "./appAuth";
 import { COUNTRY_NAMES_HE, countryCodeToFlag, getHebrewCountryDisplay } from "./countryNames";
 import { getTokenBalance, addTokens, getTokenTransactions, invalidateTokenCostsCache } from "./tokenService";
@@ -1653,11 +1653,18 @@ export const appRouter = router({
         week: 7 * 24 * 60 * 60 * 1000,
         month: 30 * 24 * 60 * 60 * 1000,
       };
+      // Only show completed items (status=success) that have actual results
+      const completedFilter = and(
+        ne(userActions.status, "failed"),
+        ne(userActions.status, "cancelled"),
+        sql`(${userActions.svgPreview} IS NOT NULL OR ${userActions.imageUrl} IS NOT NULL OR ${userActions.dxfUrl} IS NOT NULL)`
+      );
       const whereConditions = period === "all"
-        ? eq(userActions.appUserId, appUser.userId)
+        ? and(eq(userActions.appUserId, appUser.userId), completedFilter)
         : and(
             eq(userActions.appUserId, appUser.userId),
-            gte(userActions.createdAt, new Date(now - periodMs[period]))
+            gte(userActions.createdAt, new Date(now - periodMs[period])),
+            completedFilter
           );
       const [{ count: totalCount }] = await db
         .select({ count: sql<number>`count(*)` })
