@@ -2863,3 +2863,8 @@
 - [x] תקן קווים כפולים ב-DXF פורטרט — עבר ל-potraceToSingleLine (קו אמצעי בודד)
 - [x] שיפר DXF ל-R2000 LWPOLYLINE עם סקיילינג 200mm
 - [x] שיפר פרטי קווים דקים עם epsilon=1.0 ו-numSamples=150
+
+## תיקון עובי קווים ופרטים בוקטור פורטרט - אפריל 2026
+- [x] הדק קווים בוקטור — hairline=true, turdSize=2, threshold=160, optTolerance=0.1
+- [x] שמור פרטים דקים — חזר ל-svgToDxf (בלי potraceToSingleLine שגרם אובדן פרטים)
+- [x] אפס מרווח ברירת מחדל (minGapMm=0) — סליידר עדיין זמין לכרסום

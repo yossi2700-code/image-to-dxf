@@ -277,7 +277,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
   const [downloadTarget, setDownloadTarget] = useState<GeneratedImage | null>(null);
   const [zoomImg, setZoomImg] = useState<{ src: string; alt: string } | null>(null);
   const [lineweightMm, setLineweightMm] = useState<string>("");
-  const [minGapMm, setMinGapMm] = useState<string>("1.5");
+  const [minGapMm, setMinGapMm] = useState<string>("0");
   const [portraitStyle, setPortraitStyle] = useState<PortraitStyle>("simple");
   const [dragOver, setDragOver] = useState(false);
   const [jobId, setJobId] = useState<string | null>(() => localStorage.getItem("face_detect_jobId"));
@@ -701,11 +701,11 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
                 <label className="text-xs font-semibold text-indigo-700">
                   {isRtl ? "🔧 מרווח בין קווים לכרסום" : "🔧 Line spacing for CNC routing"}
                 </label>
-                <span className="text-sm font-bold text-indigo-800">{minGapMm || "1.5"} {isRtl ? "מ\"מ" : "mm"}</span>
+                <span className="text-sm font-bold text-indigo-800">{minGapMm === "0" || minGapMm === "" ? (isRtl ? "כבוי" : "Off") : `${minGapMm} ${isRtl ? "מ\"מ" : "mm"}`}</span>
               </div>
               <input
-                type="range" min="0.2" max="3" step="0.1"
-                value={minGapMm || "1.5"}
+                type="range" min="0" max="3" step="0.1"
+                value={minGapMm || "0"}
                 onChange={e => setMinGapMm(e.target.value)}
                 className="w-full accent-indigo-600 h-2"
               />

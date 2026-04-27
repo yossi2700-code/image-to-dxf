@@ -88,11 +88,11 @@ const STYLE_LABELS: Record<PortraitStyle, { he: string; en: string }> = {
 function pngToSvg(pngBuffer: Buffer): Promise<string> {
   return new Promise((resolve, reject) => {
     potrace.trace(pngBuffer, {
-      threshold: 180,
-      turdSize: 8,
-      alphaMax: 1,
+      threshold: 160,   // lower = pick up lighter/thinner strokes
+      turdSize: 2,      // was 8 — keep tiny details like beard stubble
+      alphaMax: 0.5,    // tighter corner detection = sharper detail
       optCurve: true,
-      optTolerance: 0.2,
+      optTolerance: 0.1, // was 0.2 — less smoothing = preserve fine lines
     }, (err: Error | null, svg: string) => {
       if (err) reject(err);
       else resolve(svg);
@@ -152,16 +152,10 @@ async function generatePortraitVariation(
 
   const rawSvg = await pngToSvg(paddedBuffer);
   const cleanSvg = cleanSvgForPreview(rawSvg);
-  // Use potraceToSingleLine to extract centerlines — eliminates double-outline
-  // artifacts that potrace produces (each line becomes two parallel outlines).
-  // Falls back to svgToDxf if centerline extraction yields too few segments.
-  const singleLineResult = potraceToSingleLine(rawSvg, 1.0, 150);
-  let dxf: string, segmentCount: number, width: number, height: number, realWidth: number, realHeight: number;
-  if (singleLineResult.segmentCount >= 20) {
-    ({ dxf, segmentCount, width, height, realWidth, realHeight } = singleLineResult);
-  } else {
-    ({ dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm));
-  }
+  // Use svgToDxf directly — preserves all fine details from potrace SVG.
+  // potraceToSingleLine was causing detail loss (epsilon smoothing removed beard/eye lines).
+  // hairline=true ensures thinnest possible line weight in DXF.
+  const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, true, undefined);
 
   const imgKey = `face-detect-generated/${nanoid()}.png`;
   const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
@@ -609,7 +603,7 @@ router.post(
       const lineweightMmRaw = parseFloat((req.body?.lineweightMm as string) ?? "");
       const lineweightMm = isNaN(lineweightMmRaw) ? undefined : Math.min(2.0, Math.max(0, lineweightMmRaw));
       const minGapMmRaw = parseFloat((req.body?.minGapMm as string) ?? "");
-      const minGapMm = isNaN(minGapMmRaw) ? 1.5 : Math.min(3.0, Math.max(0, minGapMmRaw));
+      const minGapMm = isNaN(minGapMmRaw) ? 0 : Math.min(3.0, Math.max(0, minGapMmRaw));
       const styleRaw = (req.body?.style as string) ?? "simple";
       const style: PortraitStyle = (["simple", "detailed"] as const).includes(styleRaw as PortraitStyle)
         ? (styleRaw as PortraitStyle)
