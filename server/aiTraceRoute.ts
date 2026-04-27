@@ -311,7 +311,8 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
     `SMALL DETAIL RULE: If a detail is too small to fit even ONE clean line, OMIT that detail entirely. A clean omission is always better than a noisy double-line. ` +
     `PARALLEL LINE RULE: If you see multiple parallel lines running close together, draw ONLY the single outermost line — never trace every layer or groove. ` +
     `LINE SPACING RULE: Any two lines closer than 3px must be merged into one single line. ` +
-    `Industrial objects (appliances, machines, products) must be simplified to their essential silhouette + 2-3 key structural lines maximum. `;
+    `Industrial objects (appliances, machines, products) must be simplified to their essential silhouette + 2-3 key structural lines maximum. ` +
+    `=== MANDATORY FRAMING RULE === Leave AT LEAST 10% white margin on every edge. NOTHING must touch or cross the border. All elements must be fully visible inside the frame with clear white space around them. === END FRAMING RULE === `;
 
   switch (classification.type) {
     case "landscape":
@@ -843,7 +844,7 @@ async function runTraceJob(
         processedBuffer = await sharp(rawBuffer)
           .grayscale()
           .linear(3.5, -100)          // very aggressive contrast: even faint grey lines (trees, branches) become black
-          .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .extend({ top: 240, bottom: 240, left: 240, right: 240, background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .sharpen({ sigma: 2.0, m1: 2.0, m2: 0.5, x1: 2, y2: 10, y3: 20 }) // stronger sharpen for crisp edges
           .threshold(145)             // lower threshold — catches more faint pixels after contrast boost
@@ -853,7 +854,7 @@ async function runTraceJob(
         // Simple mode — B&W line-art drawing (AI-generated or hand-drawn sketch):
         // blur merges thick strokes into single centerlines, then double threshold removes all grey.
         processedBuffer = await sharp(rawBuffer)
-          .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .extend({ top: 240, bottom: 240, left: 240, right: 240, background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .resize(2048, 2048, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 }, kernel: "lanczos3" })
           .grayscale()
           .blur(1.5)                   // merge thick stroke edges into single centerline
@@ -869,7 +870,7 @@ async function runTraceJob(
         // from the flower bouquet (commit 913a5a2). linear(2.5,-50) was too aggressive and
         // caused grey fill areas to become solid black silhouettes.
         processedBuffer = await sharp(rawBuffer)
-          .extend({ top: 160, bottom: 160, left: 120, right: 120, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+          .extend({ top: 240, bottom: 240, left: 240, right: 240, background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .grayscale()
           .linear(1.8, -30)            // mild contrast boost: darken lines without blowing out background
