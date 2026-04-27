@@ -493,8 +493,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
       const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
       setImagePreviewPersisted(dataUrl);
       URL.revokeObjectURL(objectUrl);
-      // Auto-start portrait processing immediately after preview is ready
-      setTimeout(() => handleDetect(), 150);
+      // Do NOT auto-start — user must click the Process button
     };
     img.src = objectUrl;
   }, [isRtl, setImagePreviewPersisted, setJobIdPersisted]);
