@@ -22,6 +22,7 @@ import { recordUserAction } from "./userActionsDb";
 import { deductTokens, addTokens, TOKEN_COSTS, TokenAction, getTokenCostForAction } from "./tokenService";
 import { createJob, getJob, updateJob, cancelJob, heartbeatJob } from "./jobStore";
 import { svgToDxf } from "./svgToDxf";
+import { potraceToSingleLine } from "./potraceToSingleLine";
 import { cleanSvgForPreview } from "./svgClean";
 import { invokeLLM } from "./_core/llm";
 import { generateImage } from "./_core/imageGeneration";
@@ -151,7 +152,16 @@ async function generatePortraitVariation(
 
   const rawSvg = await pngToSvg(paddedBuffer);
   const cleanSvg = cleanSvgForPreview(rawSvg);
-  const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm);
+  // Use potraceToSingleLine to extract centerlines — eliminates double-outline
+  // artifacts that potrace produces (each line becomes two parallel outlines).
+  // Falls back to svgToDxf if centerline extraction yields too few segments.
+  const singleLineResult = potraceToSingleLine(rawSvg, 1.0, 150);
+  let dxf: string, segmentCount: number, width: number, height: number, realWidth: number, realHeight: number;
+  if (singleLineResult.segmentCount >= 20) {
+    ({ dxf, segmentCount, width, height, realWidth, realHeight } = singleLineResult);
+  } else {
+    ({ dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm));
+  }
 
   const imgKey = `face-detect-generated/${nanoid()}.png`;
   const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");

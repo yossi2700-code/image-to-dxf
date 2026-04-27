@@ -218,29 +218,68 @@ function extractViewBox(svgContent: string): { width: number; height: number } {
 
 // ─── Build DXF from polylines ─────────────────────────────────────────────────
 
+let _entityHandle = 0x200;
+function nextHandle(): string { return (_entityHandle++).toString(16).toUpperCase(); }
+function resetHandles() { _entityHandle = 0x200; }
+
+/**
+ * Write R2000 LWPOLYLINE — each centerline becomes one connected entity.
+ * Scales all coordinates so the longest side = 200mm (same as svgToDxf).
+ */
 function polylinesToDxf(polylines: Polyline[], width: number, height: number): string {
+  resetHandles();
+  // Scale to 200mm max side
+  const MAX_MM = 200;
+  const mmScale = MAX_MM / Math.max(width, height, 1);
+  const outW = width * mmScale;
+  const outH = height * mmScale;
+
   const lines: string[] = [];
+  // HEADER
   lines.push("0\nSECTION");
   lines.push("2\nHEADER");
-  lines.push("9\n$ACADVER\n1\nAC1009");
+  lines.push("9\n$ACADVER\n1\nAC1015");
+  lines.push("9\n$INSUNITS\n70\n4"); // 4 = millimetres
   lines.push(`9\n$EXTMIN\n10\n0.0\n20\n0.0\n30\n0.0`);
-  lines.push(`9\n$EXTMAX\n10\n${width}\n20\n${height}\n30\n0.0`);
+  lines.push(`9\n$EXTMAX\n10\n${outW.toFixed(3)}\n20\n${outH.toFixed(3)}\n30\n0.0`);
   lines.push("0\nENDSEC");
+  // CLASSES (required by R2000)
+  lines.push("0\nSECTION\n2\nCLASSES\n0\nENDSEC");
+  // TABLES
   lines.push("0\nSECTION\n2\nTABLES");
-  lines.push("0\nTABLE\n2\nLAYER\n70\n1");
-  lines.push("0\nLAYER\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS");
-  lines.push("0\nENDTAB\n0\nENDSEC");
+  lines.push("0\nTABLE\n2\nLTYPE\n5\n5\n100\nAcDbSymbolTable\n70\n1");
+  lines.push("0\nLTYPE\n5\n14\n100\nAcDbSymbolTableRecord\n100\nAcDbLinetypeTableRecord\n2\nByLayer\n70\n0\n3\n\n72\n65\n73\n0\n40\n0.0");
+  lines.push("0\nENDTAB");
+  lines.push("0\nTABLE\n2\nLAYER\n5\n2\n100\nAcDbSymbolTable\n70\n1");
+  lines.push("0\nLAYER\n5\n10\n100\nAcDbSymbolTableRecord\n100\nAcDbLayerTableRecord\n2\n0\n70\n0\n62\n7\n6\nByLayer");
+  lines.push("0\nENDTAB");
+  lines.push("0\nTABLE\n2\nAPPID\n5\n9\n100\nAcDbSymbolTable\n70\n1");
+  lines.push("0\nAPPID\n5\n12\n100\nAcDbSymbolTableRecord\n100\nAcDbRegAppTableRecord\n2\nACAD\n70\n0");
+  lines.push("0\nENDTAB");
+  lines.push("0\nENDSEC");
+  // BLOCKS
+  lines.push("0\nSECTION\n2\nBLOCKS");
+  lines.push("0\nBLOCK\n5\n1C\n100\nAcDbEntity\n8\n0\n100\nAcDbBlockBegin\n2\n*Model_Space\n70\n0\n10\n0.0\n20\n0.0\n30\n0.0\n3\n*Model_Space\n1\\");
+  lines.push("0\nENDBLK\n5\n1D\n100\nAcDbEntity\n8\n0\n100\nAcDbBlockEnd");
+  lines.push("0\nENDSEC");
+  // ENTITIES
   lines.push("0\nSECTION\n2\nENTITIES");
 
   for (const poly of polylines) {
-    for (let i = 0; i + 1 < poly.length; i++) {
-      const [x1, y1] = poly[i];
-      const [x2, y2] = poly[i + 1];
-      const dy1 = height - y1;
-      const dy2 = height - y2;
-      lines.push("0\nLINE\n8\n0");
-      lines.push(`10\n${x1.toFixed(3)}\n20\n${dy1.toFixed(3)}\n30\n0.0`);
-      lines.push(`11\n${x2.toFixed(3)}\n21\n${dy2.toFixed(3)}\n31\n0.0`);
+    if (poly.length < 2) continue;
+    lines.push("0\nLWPOLYLINE");
+    lines.push(`5\n${nextHandle()}`);
+    lines.push("330\n1F");
+    lines.push("100\nAcDbEntity");
+    lines.push("8\n0");
+    lines.push("100\nAcDbPolyline");
+    lines.push(`90\n${poly.length}`);
+    lines.push("70\n0"); // open
+    lines.push("43\n0.0");
+    for (const [px, py] of poly) {
+      const dxfY = outH - py * mmScale;
+      lines.push(`10\n${(px * mmScale).toFixed(3)}`);
+      lines.push(`20\n${dxfY.toFixed(3)}`);
     }
   }
 
