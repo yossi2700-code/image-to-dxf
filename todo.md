@@ -2836,3 +2836,11 @@
 - [x] דף ניהול חדש /admin/tracking: רשימת משתמשים + היסטוריית לחיצות לכל משתמש
 - [x] פיד לחיצות גלובלי (300 הלחיצות האחרונות)
 - [x] כפתור "מעקב משתמשים" בכותרת דף הניהול
+
+## מעקב ניווט מלא - אפריל 2026
+
+- [x] מעקב גלובלי על כל מעבר עמוד (page_view) — Home, History, Buy, Landing, Free
+- [x] מעקב על מעבר בין טאבים ראשיים (AI Create, Image to Lines, Portrait, CNC Relief)
+- [x] מעקב על לחיצות ניווט בתפריט (History, Buy, Account, Login)
+- [x] מעקב על פתיחת דיאלוגים (AuthDialog)
+- [x] שיפור דף /admin/tracking — הצגת מסע משתמש כ-timeline כרונולוגי

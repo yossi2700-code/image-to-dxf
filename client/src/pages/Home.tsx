@@ -2444,6 +2444,9 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [typingPhase, typingText, typingWordIdx]);
 
+  // Click tracking for the main Home page
+  const trackHome = useTrackClick("home");
+
   // Remember active tab — auto-switch to tab with active job on page return
   const [activeTab, setActiveTab] = useState<string>(() => {
     // If there's an active job, go to that tab automatically
@@ -2514,6 +2517,7 @@ export default function Home() {
     setAuthReason(reason);
     setLimitReached(reason === "limit");
     setAuthOpen(true);
+    trackHome('open_auth_dialog', `פתיחת התחברות: ${reason}`);
   };
   // Note: useAuth is imported from _core hooks for Manus OAuth support
   const manusAuthData = trpc.auth.me.useQuery();
@@ -2719,7 +2723,7 @@ export default function Home() {
             {/* Pricing button — opens token pricing modal */}
             <button
               id="tour-pricing"
-              onClick={() => setPricingModalOpen(true)}
+              onClick={() => { trackHome('nav_pricing', 'מחירון'); setPricingModalOpen(true); }}
               className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-80 shrink-0"
               style={{ color: '#6366f1', background: '#eef2ff', border: '1px solid #c7d2fe', whiteSpace: 'nowrap' }}
             >
@@ -2809,7 +2813,7 @@ export default function Home() {
                         {/* Personal Area */}
                         <button
                           id="tour-account"
-                          onClick={() => { setUserMenuOpen(false); window.location.href = '/account'; }}
+                          onClick={() => { setUserMenuOpen(false); trackHome('nav_account', 'אזור אישי'); window.location.href = '/account'; }}
                           style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.1)', cursor: 'pointer', width: '100%', color: '#c4b5fd', fontSize: 13, fontWeight: 600, textAlign: isRtl ? 'right' : 'left', transition: 'all 0.15s' }}
                           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(139,92,246,0.22)'; (e.currentTarget as HTMLButtonElement).style.color = '#ddd6fe'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(139,92,246,0.5)'; }}
                           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(139,92,246,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#c4b5fd'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(139,92,246,0.25)'; }}
@@ -2825,7 +2829,7 @@ export default function Home() {
                         {/* History */}
                         <button
                           id="tour-history"
-                          onClick={() => { setUserMenuOpen(false); window.location.href = '/history'; }}
+                          onClick={() => { setUserMenuOpen(false); trackHome('nav_history', 'היסטוריה'); window.location.href = '/history'; }}
                           style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(99,102,241,0.25)', background: 'rgba(99,102,241,0.1)', cursor: 'pointer', width: '100%', color: '#a5b4fc', fontSize: 13, fontWeight: 600, textAlign: isRtl ? 'right' : 'left', transition: 'all 0.15s' }}
                           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(99,102,241,0.22)'; (e.currentTarget as HTMLButtonElement).style.color = '#c7d2fe'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(99,102,241,0.5)'; }}
                           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(99,102,241,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#a5b4fc'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(99,102,241,0.25)'; }}
@@ -2839,7 +2843,7 @@ export default function Home() {
                           </div>
                         </button>
                         <button
-                          onClick={() => { setUserMenuOpen(false); window.location.href = '/buy'; }}
+                          onClick={() => { setUserMenuOpen(false); trackHome('nav_buy', 'קנה קרדיטים'); window.location.href = '/buy'; }}
                           style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: 'none', background: 'rgba(16,185,129,0.08)', cursor: 'pointer', width: '100%', color: '#6ee7b7', fontSize: 13, fontWeight: 600, textAlign: isRtl ? 'right' : 'left' }}
                           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.2)'; }}
                           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.08)'; }}
@@ -3126,6 +3130,8 @@ export default function Home() {
           onValueChange={(v) => {
             setActiveTab(v);
             localStorage.setItem("active_tab", v);
+            const tabNames: Record<string, string> = { ai: 'AI Create', trace: 'Image to Lines', face: 'Portrait', 'cnc-relief': 'CNC Relief', redraw: 'Document Redraw' };
+            trackHome(`tab_switch_${v}`, `מעבר ל: ${tabNames[v] ?? v}`);
           }}
           dir={isRtl ? "rtl" : "ltr"}
           className="flex flex-col md:flex-row gap-4"
