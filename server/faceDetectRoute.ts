@@ -44,43 +44,47 @@ export type PortraitStyle = "simple" | "detailed";
 
 const PORTRAIT_STYLE_PROMPTS: Record<PortraitStyle, string> = {
   simple:
-    "TASK: Convert this face photo into clean black-and-white line art for laser/CNC engraving. " +
-    "FACE ANGLE — CRITICAL: Preserve the EXACT head angle and pose from the photo. If the face is turned, tilted, or at any angle — reproduce that exact angle. Do NOT straighten, front-face, or rotate the portrait. " +
-    "IDENTITY — CRITICAL: Every feature must match this specific person. Do not generalize, beautify, or idealize. " +
-    "ABSOLUTE RULE: Only draw what is literally visible in the photo. Do not invent anything. " +
-    "TRACE EXACTLY: " +
-    "(1) FACE SHAPE: exact jaw line, chin shape, forehead, cheekbones — as seen from this specific angle including any asymmetry. " +
-    "(2) EYES: exact eye shape, spacing between eyes, eyelids, brow shape — their actual size and position, not idealized. " +
-    "(3) NOSE: exact nose shape from this angle — bridge width, tip shape, nostrils as visible. " +
-    "(4) MOUTH: exact lip shape and proportions. Closed or open exactly as in photo. " +
-    "(5) HAIR: exact hairline, hair volume and direction as visible. " +
-    "(6) EARS: include if visible from this angle. " +
-    "(7) GLASSES: include only if clearly worn. " +
-    "(8) NECK AND SHOULDERS: always include the neck, both shoulders, and the upper chest (collarbone area). This is REQUIRED — a floating head looks unnatural. Draw minimal clothing lines at the shoulder/chest area only if visible. " +
-    "FORBIDDEN: Do not front-face a profile. Do not add symmetry that is not there. Do not smooth or idealize. " +
-    "CRITICAL — OUTLINE ONLY: NEVER fill any area with solid black. Dark clothing, dark hair, shadows — ALL must be drawn as outlines/contour lines only, NOT as filled solid shapes. Every area must remain white inside with only black outlines. " +
-    "Style: clean minimal line art, pure black strokes on white background, no shading, no grey tones, NO SOLID FILLS. " +
-    "Composition: head + neck + shoulders fill 75-85% of canvas. Include upper chest/collarbone. No background. No text, no watermarks.",
+    "TASK: Create a clean, elegant portrait line art drawing of the person in this photo, suitable for laser/CNC engraving. " +
+    "STYLE: Professional portrait illustration — like a skilled artist's line drawing. Clean, confident strokes. Flattering but recognizable likeness. " +
+    "FACE ANGLE: Preserve the exact head angle and pose from the photo. Do NOT change the viewing angle. " +
+    "LIKENESS — CRITICAL: Capture the person's distinctive features so they are clearly recognizable: " +
+    "face shape, eye shape and spacing, nose shape, mouth/lip shape, hair style and direction, any beard/facial hair. " +
+    "AESTHETIC QUALITY: Draw with smooth, flowing lines. Make the person look their best while staying true to their features. " +
+    "Avoid harsh lines that add age. Use clean confident strokes for facial features. " +
+    "WHAT TO DRAW: " +
+    "(1) Face outline — jaw, chin, cheekbones, forehead " +
+    "(2) Eyes — clean almond shape, eyebrows, eyelashes as a clean line " +
+    "(3) Nose — bridge and tip with clean lines " +
+    "(4) Mouth — lip shape clearly defined " +
+    "(5) Hair — flowing lines showing hair direction and volume " +
+    "(6) Beard/stubble — if present, show with short stroke lines " +
+    "(7) Ears — if visible " +
+    "(8) Neck + shoulders + upper chest — ALWAYS include, never a floating head " +
+    "LINE QUALITY: Pure black strokes on white background. No grey, no shading, no fills. " +
+    "CRITICAL — OUTLINE ONLY: NEVER fill any area with solid black. ALL areas must remain white inside with only black outlines/strokes. " +
+    "Composition: head + neck + shoulders fill 75-85% of canvas. No background. No text, no watermarks.",
 
   detailed:
-    "TASK: Convert this face photo into detailed black-and-white line art for laser/CNC engraving. " +
-    "FACE ANGLE — CRITICAL: Preserve the EXACT head angle and pose from the photo. If the face is turned, tilted, or at any angle — reproduce that exact angle faithfully. Do NOT straighten, front-face, or rotate the portrait. " +
-    "IDENTITY — CRITICAL: Every detail must match this specific person. Trace, do not create. " +
-    "ABSOLUTE RULE: Only draw what is literally visible. Do not invent anything. " +
-    "TRACE EVERY VISIBLE DETAIL: " +
-    "(1) FACE SHAPE: exact jaw line, chin, forehead, cheekbones from this specific angle — including any asymmetry. " +
-    "(2) EYES: exact eyelid shape, iris size, lash line, brow shape and arch — their actual position and spacing. " +
-    "(3) NOSE: full nose detail from this angle — bridge, tip, nostrils, columella exactly as visible. " +
-    "(4) MOUTH: exact lip shape, philtrum, cupid's bow as visible. " +
-    "(5) HAIR: individual strands, hairline, volume and direction as visible. " +
-    "(6) EARS: full detail if visible from this angle. " +
-    "(7) GLASSES: full detail only if clearly worn. " +
-    "(8) SKIN TEXTURE: wrinkles, folds, dimples only where actually visible. " +
-    "(9) NECK AND SHOULDERS: always include the neck, both shoulders, and the upper chest (collarbone area). This is REQUIRED — a floating head looks unnatural. Draw clothing lines at the shoulder/chest area with detail if visible. " +
-    "FORBIDDEN: Do not front-face a profile. Do not add symmetry that is not there. Do not smooth or idealize. " +
-    "CRITICAL — OUTLINE ONLY: NEVER fill any area with solid black. Dark clothing, dark hair, shadows — ALL must be drawn as outlines/contour lines only, NOT as filled solid shapes. Every area must remain white inside with only black outlines. " +
-    "Style: detailed line art, pure black lines on white, no shading, no grey, NO SOLID FILLS. " +
-    "Composition: head + neck + shoulders fill 75-85% of canvas. Include upper chest/collarbone. No background. No text, no watermarks.",
+    "TASK: Create a detailed, expressive portrait line art drawing of the person in this photo, suitable for laser/CNC engraving. " +
+    "STYLE: Professional detailed portrait illustration — like a master artist's line drawing with rich detail. " +
+    "FACE ANGLE: Preserve the exact head angle and pose from the photo. Do NOT change the viewing angle. " +
+    "LIKENESS — CRITICAL: Capture every distinctive feature so the person is unmistakably recognizable: " +
+    "face shape, eye shape and spacing, nose shape, mouth/lip shape, hair style, any beard/facial hair, distinctive marks. " +
+    "AESTHETIC QUALITY: Draw with confident, expressive lines. Make the person look their best while capturing their true character. " +
+    "Use varied line weight — thicker for main outlines, thinner for interior details. " +
+    "WHAT TO DRAW IN DETAIL: " +
+    "(1) Face outline — precise jaw, chin, cheekbones, forehead shape " +
+    "(2) Eyes — detailed: iris, pupil circle, eyelid folds, lashes, brow hairs " +
+    "(3) Nose — full detail: bridge, tip, nostril shape " +
+    "(4) Mouth — precise lip shape, philtrum " +
+    "(5) Hair — individual strand groups, hairline, volume " +
+    "(6) Beard/stubble — if present, detailed short stroke lines " +
+    "(7) Ears — full detail if visible " +
+    "(8) Skin character lines — only the most defining ones (NOT every wrinkle) " +
+    "(9) Neck + shoulders + upper chest — ALWAYS include with clothing detail " +
+    "LINE QUALITY: Pure black lines on white background. No grey, no shading, no fills. " +
+    "CRITICAL — OUTLINE ONLY: NEVER fill any area with solid black. ALL areas must remain white inside with only black lines. " +
+    "Composition: head + neck + shoulders fill 75-85% of canvas. No background. No text, no watermarks.",
 };
 
 const STYLE_ORDER: PortraitStyle[] = ["simple", "detailed"];
@@ -163,15 +167,6 @@ async function generatePortraitVariation(
 
   await fs.promises.writeFile(tmpPng, paddedBuffer);
 
-  // Also generate SVG preview via potrace (for the visual preview only)
-  const pngForSvg = await sharp(rawBuffer)
-    .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-    .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-    .png()
-    .toBuffer();
-  const rawSvg = await pngToSvg(pngForSvg);
-  const cleanSvg = cleanSvgForPreview(rawSvg);
-
   // Run Python centerline extractor
   // In dev: __dirname = server/ (tsx), in prod: __dirname = dist/ (esbuild bundle)
   // The Python script is copied to dist/ during build, so __dirname works in both cases.
@@ -186,6 +181,8 @@ async function generatePortraitVariation(
   let realWidth = 200;
   let realHeight = 200;
   let dxfContent = "";
+  let svgPreviewContent = "";
+  const tmpSvg = tmpDxf.replace(".dxf", ".svg");
 
   try {
     const { stdout } = await execFileAsync("python3", [scriptPath, tmpPng, tmpDxf, String(minGapMm)], { timeout: 60000 });
@@ -196,9 +193,17 @@ async function generatePortraitVariation(
     realWidth = stats.realWidth;
     realHeight = stats.realHeight;
     dxfContent = await fs.promises.readFile(tmpDxf, "utf-8");
+    // Read the SVG preview generated by the Python script (same polylines as DXF)
+    svgPreviewContent = await fs.promises.readFile(tmpSvg, "utf-8").catch(() => "");
   } catch (pyErr) {
     // Fallback to potrace-based approach if Python fails
     console.error("[Portrait] Python centerline failed, falling back to svgToDxf:", pyErr);
+    const pngForSvg = await sharp(rawBuffer)
+      .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .png()
+      .toBuffer();
+    const rawSvg = await pngToSvg(pngForSvg);
     const fallback = svgToDxf(rawSvg, true, undefined);
     segmentCount = fallback.segmentCount;
     width = fallback.width;
@@ -206,10 +211,12 @@ async function generatePortraitVariation(
     realWidth = fallback.realWidth;
     realHeight = fallback.realHeight;
     dxfContent = fallback.dxf;
+    svgPreviewContent = cleanSvgForPreview(rawSvg);
   } finally {
     // Cleanup temp files
     fs.promises.unlink(tmpPng).catch(() => {});
     fs.promises.unlink(tmpDxf).catch(() => {});
+    fs.promises.unlink(tmpSvg).catch(() => {});
   }
 
   const imgKey = `face-detect-generated/${nanoid()}.png`;
@@ -218,11 +225,11 @@ async function generatePortraitVariation(
   const dxfKey = `face-detect-dxf/${nanoid()}-${dxfFilename}`;
   const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxfContent, "utf-8"), "application/dxf");
   const svgKey = `face-detect-svg/${nanoid()}-face_portrait_${style}.svg`;
-  const { url: svgUrl } = await storagePut(svgKey, Buffer.from(cleanSvg, "utf-8"), "image/svg+xml");
+  const { url: svgUrl } = await storagePut(svgKey, Buffer.from(svgPreviewContent, "utf-8"), "image/svg+xml");
 
   return {
     imageUrl,
-    svgPreview: cleanSvg,
+    svgPreview: svgPreviewContent,
     dxfUrl,
     svgUrl,
     dxfFilename,

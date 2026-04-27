@@ -2878,3 +2878,7 @@
 - [x] בטל קווים כפולים/מנוקדים שנגרמו מ-potrace outline-fill
 - [x] הוסף requirements.txt ו-postinstall לסביבת production
 - [x] הוסף fallback ל-svgToDxf אם Python נכשל
+
+## שיפור פורטרט - אפריל 2026 (session 2)
+- [x] שפר AI prompt לציור פנים יפה יותר (לא "מבוגר")
+- [x] תקן DXF - שיתאים ל-PNG (skeleton עדיין לא מספיק טוב)
