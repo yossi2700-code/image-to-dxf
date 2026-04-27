@@ -28,6 +28,12 @@ import { invokeLLM } from "./_core/llm";
 import { generateImage } from "./_core/imageGeneration";
 import potrace from "potrace";
 import { aiTracePipeline } from "./imageProcessor";
+import { execFile } from "child_process";
+import { promisify } from "util";
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
+const execFileAsync = promisify(execFile);
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
@@ -142,26 +148,75 @@ async function generatePortraitVariation(
   if (!imgResponse.ok) throw new Error("Failed to download generated image");
   let rawBuffer = Buffer.from(await imgResponse.arrayBuffer());
 
-  // potrace outline tracing — produces clean line art from AI-generated B&W portrait
-  // pngToSvg uses threshold:180, turdSize:8, alphaMax:1, optTolerance:0.2 (proven settings)
+  // Use Python skeleton-based centerline extraction for clean single-line DXF.
+  // This avoids potrace's outline-fill approach which creates double lines.
+  // The AI-generated PNG is used directly — no re-tracing needed.
+  const tmpDir = os.tmpdir();
+  const tmpPng = path.join(tmpDir, `portrait_${nanoid()}.png`);
+  const tmpDxf = path.join(tmpDir, `portrait_${nanoid()}.dxf`);
+
+  // Pad image slightly before skeleton extraction
   const paddedBuffer = await sharp(rawBuffer)
+    .extend({ top: 40, bottom: 40, left: 40, right: 40, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+    .png()
+    .toBuffer();
+
+  await fs.promises.writeFile(tmpPng, paddedBuffer);
+
+  // Also generate SVG preview via potrace (for the visual preview only)
+  const pngForSvg = await sharp(rawBuffer)
     .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
     .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
     .png()
     .toBuffer();
-
-  const rawSvg = await pngToSvg(paddedBuffer);
+  const rawSvg = await pngToSvg(pngForSvg);
   const cleanSvg = cleanSvgForPreview(rawSvg);
-  // Use svgToDxf directly — preserves all fine details from potrace SVG.
-  // potraceToSingleLine was causing detail loss (epsilon smoothing removed beard/eye lines).
-  // hairline=true ensures thinnest possible line weight in DXF.
-  const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, true, undefined);
+
+  // Run Python centerline extractor
+  // In dev: __dirname = server/ (tsx), in prod: __dirname = dist/ (esbuild bundle)
+  // The Python script is copied to dist/ during build, so __dirname works in both cases.
+  const scriptPath = path.join(
+    process.env.NODE_ENV === "production"
+      ? path.join(process.cwd(), "dist", "portrait_to_dxf.py")
+      : path.join(process.cwd(), "server", "portrait_to_dxf.py")
+  );
+  let segmentCount = 0;
+  let width = 0;
+  let height = 0;
+  let realWidth = 200;
+  let realHeight = 200;
+  let dxfContent = "";
+
+  try {
+    const { stdout } = await execFileAsync("python3", [scriptPath, tmpPng, tmpDxf, String(minGapMm)], { timeout: 60000 });
+    const stats = JSON.parse(stdout.trim());
+    segmentCount = stats.segmentCount;
+    width = stats.width;
+    height = stats.height;
+    realWidth = stats.realWidth;
+    realHeight = stats.realHeight;
+    dxfContent = await fs.promises.readFile(tmpDxf, "utf-8");
+  } catch (pyErr) {
+    // Fallback to potrace-based approach if Python fails
+    console.error("[Portrait] Python centerline failed, falling back to svgToDxf:", pyErr);
+    const fallback = svgToDxf(rawSvg, true, undefined);
+    segmentCount = fallback.segmentCount;
+    width = fallback.width;
+    height = fallback.height;
+    realWidth = fallback.realWidth;
+    realHeight = fallback.realHeight;
+    dxfContent = fallback.dxf;
+  } finally {
+    // Cleanup temp files
+    fs.promises.unlink(tmpPng).catch(() => {});
+    fs.promises.unlink(tmpDxf).catch(() => {});
+  }
 
   const imgKey = `face-detect-generated/${nanoid()}.png`;
   const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
   const dxfFilename = `face_portrait_${style}.dxf`;
   const dxfKey = `face-detect-dxf/${nanoid()}-${dxfFilename}`;
-  const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
+  const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxfContent, "utf-8"), "application/dxf");
   const svgKey = `face-detect-svg/${nanoid()}-face_portrait_${style}.svg`;
   const { url: svgUrl } = await storagePut(svgKey, Buffer.from(cleanSvg, "utf-8"), "image/svg+xml");
 

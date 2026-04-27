@@ -2868,3 +2868,13 @@
 - [x] הדק קווים בוקטור — hairline=true, turdSize=2, threshold=160, optTolerance=0.1
 - [x] שמור פרטים דקים — חזר ל-svgToDxf (בלי potraceToSingleLine שגרם אובדן פרטים)
 - [x] אפס מרווח ברירת מחדל (minGapMm=0) — סליידר עדיין זמין לכרסום
+
+## תיקון DXF פורטרט - המרה ישירה מ-SVG - אפריל 2026
+- [ ] עבור להמרה ישירה מ-SVG של ה-AI ל-DXF (ללא potrace מחדש)
+- [ ] בטל קווים כפולים/מנוקדים שנגרמים מ-potrace re-tracing
+
+## תיקון DXF פורטרט - skeleton centerline - אפריל 2026
+- [x] עבר להמרה ישירה מ-PNG ל-DXF עם Python skeleton (cv2+skimage)
+- [x] בטל קווים כפולים/מנוקדים שנגרמו מ-potrace outline-fill
+- [x] הוסף requirements.txt ו-postinstall לסביבת production
+- [x] הוסף fallback ל-svgToDxf אם Python נכשל
