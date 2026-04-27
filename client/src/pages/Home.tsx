@@ -29,6 +29,7 @@ import { ReportIssueButton } from "@/components/ReportIssueButton";
 import { convertPdfToImage, isPdf } from "@/lib/pdfToImage";
 import { useTokenCost } from "@/hooks/useTokenCost";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTrackClick } from "@/hooks/useTrackClick";
 import {
   Upload,
   Download,
@@ -1308,6 +1309,7 @@ if (!sessionStorage.getItem("page_session_active")) {
 // ─── AI Generator Tab ────────────────────────────────────────────────────────
 function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () => void; onInsufficientTokens?: () => void }) {
   const { t, isRtl, language } = useLanguage();
+  const track = useTrackClick("home/ai_generate");
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
   const { reportBug } = useBugReport();
   const { getCost } = useTokenCost();
@@ -1711,7 +1713,7 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
               boxShadow: status === "loading" || !prompt.trim() ? 'none' : '0 4px 14px rgba(99,102,241,0.4)',
               cursor: status === "loading" || !prompt.trim() ? 'not-allowed' : 'pointer',
             }}
-            onClick={() => generate(false)}
+            onClick={() => { track("btn_ai_generate", "צור 3 עיצובים / Create 3 Designs"); generate(false); }}
             disabled={status === "loading" || !prompt.trim()}
           >
             {status === "loading"

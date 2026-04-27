@@ -594,6 +594,30 @@ export const sharedFiles = mysqlTable("shared_files", {
 export type SharedFile = typeof sharedFiles.$inferSelect;
 export type InsertSharedFile = typeof sharedFiles.$inferInsert;
 
+// User click events — tracks every button/action click per registered user
+export const userClickEvents = mysqlTable("user_click_events", {
+  id: int("id").autoincrement().primaryKey(),
+  /** App user who clicked (null for anonymous) */
+  appUserId: int("appUserId"),
+  /** User email at time of click (denormalized for fast admin queries) */
+  userEmail: varchar("userEmail", { length: 320 }),
+  /** User name at time of click (denormalized) */
+  userName: varchar("userName", { length: 128 }),
+  /** Button/action identifier, e.g. 'btn_convert', 'btn_download_dxf', 'btn_buy_credits' */
+  action: varchar("action", { length: 128 }).notNull(),
+  /** Human-readable label in Hebrew/English */
+  label: varchar("label", { length: 200 }),
+  /** Page/tab where the click happened, e.g. 'home/ai_trace', 'buy', 'history' */
+  page: varchar("page", { length: 128 }),
+  /** Optional extra context (JSON string), e.g. prompt text, feature name */
+  metadata: text("metadata"),
+  /** Anonymized IP */
+  ipAnon: varchar("ipAnon", { length: 20 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type UserClickEvent = typeof userClickEvents.$inferSelect;
+export type InsertUserClickEvent = typeof userClickEvents.$inferInsert;
+
 /** Track which users downloaded which FreeDXF files */
 export const freedxfDownloads = mysqlTable("freedxf_downloads", {
   id: int("id").autoincrement().primaryKey(),

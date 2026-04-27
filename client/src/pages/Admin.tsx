@@ -975,6 +975,13 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             </div>
             <div className="flex items-center gap-2">
               <button
+                onClick={() => { window.location.href = "/admin/tracking"; }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95"
+                style={{ background: 'rgba(99,102,241,0.35)', color: '#c7d2fe', border: '1px solid rgba(99,102,241,0.4)' }}
+              >
+                👥 מעקב משתמשים
+              </button>
+              <button
                 onClick={() => { window.location.href = "/"; }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95"
                 style={{ background: 'rgba(255,255,255,0.15)', color: 'white', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}

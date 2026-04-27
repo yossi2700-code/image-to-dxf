@@ -2826,3 +2826,13 @@
 - [x] הוספת אייקון Coins ליד מספר הקרדיטים בהדר
 - [x] upload flow ב-AiTraceTab עובד נכון (upload → face check → auto-start)
 - [x] דף רכישת קרדיטים (Buy.tsx) — עיצוב בהיר (לבן/אפור) במקום שחור
+
+## מעקב לחיצות משתמשים - אפריל 2026
+
+- [x] הוספת טבלת user_click_events לסכמת DB (appUserId, action, label, page, metadata, ipAnon, timestamps)
+- [x] יצירת hook useTrackClick לרישום לחיצות fire-and-forget מהצד הלקוח
+- [x] הוספת tRPC procedures: tracking.logClick, tracking.adminUsers, tracking.adminUserClicks, tracking.adminAllClicks
+- [x] מעקב לחיצות בכפתורי המרה ראשיים: btn_convert (AI Trace), btn_ai_generate, btn_portrait_detect, btn_download_dxf
+- [x] דף ניהול חדש /admin/tracking: רשימת משתמשים + היסטוריית לחיצות לכל משתמש
+- [x] פיד לחיצות גלובלי (300 הלחיצות האחרונות)
+- [x] כפתור "מעקב משתמשים" בכותרת דף הניהול

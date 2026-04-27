@@ -18,6 +18,7 @@ const Landing = lazy(() => import("./pages/Landing"));
 // Lazily loaded — only when user navigates to these routes
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminAnnouncement = lazy(() => import("./pages/AdminAnnouncement"));
+const AdminTracking = lazy(() => import("./pages/AdminTracking"));
 const History = lazy(() => import("./pages/History"));
 const Tokens = lazy(() => import("./pages/Tokens"));
 const Share = lazy(() => import("./pages/Share"));
@@ -214,6 +215,7 @@ function Router() {
         <Route path={"/"} component={Home} />
         <Route path={"/admin"} component={Admin} />
         <Route path={"/admin/announcement"} component={AdminAnnouncement} />
+        <Route path={"/admin/tracking"} component={AdminTracking} />
         <Route path={"/account"} component={Account} />
         <Route path={"/history"} component={History} />
         <Route path={"/tokens"} component={Tokens} />

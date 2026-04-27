@@ -30,6 +30,7 @@ import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { ReportIssueButton } from "@/components/ReportIssueButton";
 import { convertPdfToImage, isPdf } from "@/lib/pdfToImage";
 import { useTokenCost } from "@/hooks/useTokenCost";
+import { useTrackClick } from "@/hooks/useTrackClick";
 
 interface GeneratedImage {
   imageUrl: string;
@@ -254,6 +255,7 @@ const STYLE_OPTIONS: { value: PortraitStyle; labelHe: string; labelEn: string; d
 export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDataUrl, onSwitchToAiOutline }: FaceDetectTabProps) {
   const { language } = useLanguage();
   const isRtl = language === "he";
+  const track = useTrackClick("home/portrait");
   const { getCost } = useTokenCost();
   const faceDetectCost = getCost("face_detect");
   const { reportBug } = useBugReport();
@@ -763,7 +765,7 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
                 cursor: canSubmit ? 'pointer' : 'not-allowed',
               }}
               disabled={!canSubmit}
-              onClick={handleDetect}
+              onClick={() => { track("btn_portrait_detect", "צור פורטרט / Create Portrait"); handleDetect(); }}
               data-face-submit
             >
               <Scan className="w-4 h-4" />

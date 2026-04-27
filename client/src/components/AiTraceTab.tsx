@@ -35,6 +35,7 @@ import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { ReportIssueButton } from "@/components/ReportIssueButton";
 import { convertPdfToImage, isPdf } from "@/lib/pdfToImage";
 import { useTokenCost } from "@/hooks/useTokenCost";
+import { useTrackClick } from "@/hooks/useTrackClick";
 
 interface GeneratedImage {
   imageUrl: string;
@@ -409,6 +410,7 @@ interface AiTraceTabProps { onOpenAuth: () => void; onInsufficientTokens?: () =>
 
 export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrait, initialImageFile, autoStart, fromPortrait }: AiTraceTabProps) {
   const { t, isRtl, language } = useLanguage();
+  const track = useTrackClick("home/ai_trace");
   const { getCost } = useTokenCost();
   const aiTraceCost = getCost("ai_trace");
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
@@ -1504,7 +1506,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                   cursor: ((!imageFile && !imagePreview) || status === "loading" || faceCheckLoading) ? 'not-allowed' : 'pointer',
                 }}
                 disabled={(!imageFile && !imagePreview) || status === "loading" || faceCheckLoading}
-                onClick={() => handleTrace()}
+                onClick={() => { track("btn_convert", "המר / Convert"); handleTrace(); }}
               >
                 {status === "loading" ? (
                   <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />{t("aiAnalyzing")}</>
@@ -1868,7 +1870,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
                   image={image}
                   index={idx}
                   isRtl={isRtl}
-                  onDownload={setDownloadTarget}
+                  onDownload={(img) => { track("btn_download_dxf", "הורד DXF / Download DXF"); setDownloadTarget(img); }}
                   onZoom={(src, alt) => setZoomImg({ src, alt })}
                   processingTime={processingTime}
                 />

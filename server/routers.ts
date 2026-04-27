@@ -8,7 +8,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { getDailyActivity, getRecentEvents, getUsageStats, TimeRange } from "./usageDb";
 import { getDb } from "./db";
-import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks, emailVerifications, failedJobs, visitorEvents, contactMessages, issueReports, sharedFiles, freedxfDownloads } from "../drizzle/schema";
+import { appUsers, userActions, tokenTransactions, systemSettings, passwordResets, consentRecords, paypalOrders, packagePrices, tokenCosts, campaignRedemptions, subscriptionPlans, userSubscriptions, dailyUsage, bugReports, newsItems, adminTasks, emailVerifications, failedJobs, visitorEvents, contactMessages, issueReports, sharedFiles, freedxfDownloads, userClickEvents } from "../drizzle/schema";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "./emailService";
 import { desc, eq, and, sql, gte, like, inArray, isNotNull, ne } from "drizzle-orm";
@@ -2936,6 +2936,122 @@ export const appRouter = router({
           .where(eq(freedxfDownloads.appUserId, appUser.userId))
           .orderBy(desc(freedxfDownloads.createdAt))
           .limit(limit);
+      }),
+  }),
+
+  // ── Click tracking ──────────────────────────────────────────────────────────
+  tracking: router({
+    /** Log a button click — public (works for anonymous too, but prefers logged-in user) */
+    logClick: publicProcedure
+      .input(z.object({
+        action: z.string().min(1).max(128),
+        label: z.string().max(200).optional(),
+        page: z.string().max(128).optional(),
+        metadata: z.string().max(1000).optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const db = await getDb();
+        if (!db) return { success: false };
+        const appUser = getAppUserFromCookie(
+          (ctx.req as { cookies?: Record<string, string> }).cookies ?? {}
+        );
+        const req = ctx.req as { headers: Record<string, string | string[] | undefined>; socket?: { remoteAddress?: string } };
+        const rawIp = getClientIp(req);
+        const parts = rawIp.split(".");
+        const ipAnon = parts.length === 4 ? parts.slice(0, 3).join(".") + ".x" : rawIp;
+        // Fetch user name from DB if we have a userId
+        let userName: string | null = null;
+        if (appUser?.userId) {
+          const userRow = await db.select({ name: appUsers.name }).from(appUsers).where(eq(appUsers.id, appUser.userId)).limit(1);
+          userName = userRow[0]?.name ?? null;
+        }
+        await db.insert(userClickEvents).values({
+          appUserId: appUser?.userId ?? null,
+          userEmail: appUser?.email ?? null,
+          userName,
+          action: input.action,
+          label: input.label ?? null,
+          page: input.page ?? null,
+          metadata: input.metadata ?? null,
+          ipAnon,
+        });
+        return { success: true };
+      }),
+
+    /** Admin: get all users with their click counts */
+    adminUsers: adminProcedure
+      .input(z.object({ limit: z.number().min(1).max(500).default(200) }).optional())
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return [];
+        const limit = input?.limit ?? 200;
+        // Get all app users with their last click time and total click count
+        const rows = await db
+          .select({
+            id: appUsers.id,
+            name: appUsers.name,
+            email: appUsers.email,
+            googleId: appUsers.googleId,
+            tokenBalance: appUsers.tokenBalance,
+            createdAt: appUsers.createdAt,
+            lastLoginAt: appUsers.lastLoginAt,
+            clickCount: sql<number>`COUNT(${userClickEvents.id})`,
+            lastClickAt: sql<Date | null>`MAX(${userClickEvents.createdAt})`,
+          })
+          .from(appUsers)
+          .leftJoin(userClickEvents, eq(userClickEvents.appUserId, appUsers.id))
+          .groupBy(appUsers.id)
+          .orderBy(desc(appUsers.lastLoginAt))
+          .limit(limit);
+        return rows;
+      }),
+
+    /** Admin: get click events for a specific user */
+    adminUserClicks: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+        limit: z.number().min(1).max(1000).default(200),
+      }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return [];
+        return db
+          .select()
+          .from(userClickEvents)
+          .where(eq(userClickEvents.appUserId, input.userId))
+          .orderBy(desc(userClickEvents.createdAt))
+          .limit(input.limit);
+      }),
+
+    /** Admin: get ALL click events (latest first, across all users) */
+    adminAllClicks: adminProcedure
+      .input(z.object({
+        limit: z.number().min(1).max(1000).default(300),
+        action: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return [];
+        const limit = input?.limit ?? 300;
+        const baseQuery = db
+          .select({
+            id: userClickEvents.id,
+            appUserId: userClickEvents.appUserId,
+            userEmail: userClickEvents.userEmail,
+            userName: userClickEvents.userName,
+            action: userClickEvents.action,
+            label: userClickEvents.label,
+            page: userClickEvents.page,
+            metadata: userClickEvents.metadata,
+            createdAt: userClickEvents.createdAt,
+          })
+          .from(userClickEvents)
+          .orderBy(desc(userClickEvents.createdAt))
+          .limit(limit);
+        if (input?.action) {
+          return baseQuery.where(eq(userClickEvents.action, input.action));
+        }
+        return baseQuery;
       }),
   }),
 });
