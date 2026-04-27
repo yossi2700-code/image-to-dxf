@@ -57,6 +57,8 @@ type ActionConfig = { label: string; color: string; bg: string; icon: React.Reac
 
 function getActionConfig(action: string): ActionConfig {
   const map: Record<string, ActionConfig> = {
+    // Page views
+    page_view:           { label: "ביקור בדף",             color: "text-gray-700",   bg: "bg-gray-50 border-gray-200",      icon: <Navigation className="w-3 h-3" /> },
     // Tab switches
     tab_switch_ai:       { label: "עבר ל: AI Create",       color: "text-indigo-700", bg: "bg-indigo-50 border-indigo-200",  icon: <Wand2 className="w-3 h-3" /> },
     tab_switch_trace:    { label: "עבר ל: תמונה לקווים",    color: "text-teal-700",   bg: "bg-teal-50 border-teal-200",      icon: <Layers className="w-3 h-3" /> },
@@ -340,7 +342,8 @@ export default function AdminTracking() {
           <p className="text-xs font-semibold text-gray-500 mb-2">מה נרשם:</p>
           <div className="flex flex-wrap gap-2">
             {[
-              { action: "tab_switch_ai", label: "מעבר טאב" },
+              { action: "page_view", label: "ביקור בדף" },
+            { action: "tab_switch_ai", label: "מעבר טאב" },
               { action: "nav_history", label: "ניווט לדף" },
               { action: "btn_convert", label: "לחיצת כפתור" },
               { action: "btn_ai_generate", label: "יצירת AI" },

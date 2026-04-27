@@ -90,6 +90,7 @@ function getUtmParams() {
 function VisitorTracker() {
   const [location] = useLocation();
   const trackMutation = trpc.visitors.track.useMutation();
+  const logClickMutation = trpc.tracking.logClick.useMutation();
   const lastTracked = useRef("");
   const pageEntryTime = useRef<number>(Date.now());
   const hasInteracted = useRef(false);
@@ -143,7 +144,6 @@ function VisitorTracker() {
 
     lastTracked.current = location;
     pageEntryTime.current = Date.now();
-    hasInteracted.current = false;
 
     const sessionId = getOrCreateSessionId();
     trackMutation.mutate({
@@ -156,6 +156,17 @@ function VisitorTracker() {
       browser: detectBrowser(),
       ...getUtmParams(),
     });
+    // Also log to user_click_events so we can see per-user page views
+    const pageLabels: Record<string, string> = {
+      '/': 'דף בית',
+      '/buy': 'דף רכישה',
+      '/history': 'דף היסטוריה',
+      '/account': 'אזור אישי',
+      '/free': 'דף חינם',
+      '/community': 'קהילה',
+    };
+    const pageLabel = pageLabels[location] || location;
+    logClickMutation.mutate({ action: 'page_view', label: pageLabel, page: location });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
 

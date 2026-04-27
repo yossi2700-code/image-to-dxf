@@ -2980,11 +2980,11 @@ export const appRouter = router({
 
     /** Admin: get all users with their click counts */
     adminUsers: adminProcedure
-      .input(z.object({ limit: z.number().min(1).max(500).default(200) }).optional())
+      .input(z.object({ limit: z.number().min(1).max(10000).default(5000) }).optional())
       .query(async ({ input }) => {
         const db = await getDb();
         if (!db) return [];
-        const limit = input?.limit ?? 200;
+        const limit = input?.limit ?? 5000;
         // Get all app users with their last click time and total click count
         const rows = await db
           .select({
