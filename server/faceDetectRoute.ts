@@ -599,7 +599,7 @@ router.post(
       const lineweightMmRaw = parseFloat((req.body?.lineweightMm as string) ?? "");
       const lineweightMm = isNaN(lineweightMmRaw) ? undefined : Math.min(2.0, Math.max(0, lineweightMmRaw));
       const minGapMmRaw = parseFloat((req.body?.minGapMm as string) ?? "");
-      const minGapMm = isNaN(minGapMmRaw) ? 0 : Math.min(3.0, Math.max(0, minGapMmRaw));
+      const minGapMm = isNaN(minGapMmRaw) ? 1.5 : Math.min(3.0, Math.max(0, minGapMmRaw));
       const styleRaw = (req.body?.style as string) ?? "simple";
       const style: PortraitStyle = (["simple", "detailed"] as const).includes(styleRaw as PortraitStyle)
         ? (styleRaw as PortraitStyle)

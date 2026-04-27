@@ -695,26 +695,32 @@ export function FaceDetectTab({ onOpenAuth, onInsufficientTokens, initialImageDa
               </div>
             </div>
 
+            {/* Line gap slider — visible by default, important for CNC routing */}
+            <div className="mb-3 rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2.5">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-indigo-700">
+                  {isRtl ? "🔧 מרווח בין קווים לכרסום" : "🔧 Line spacing for CNC routing"}
+                </label>
+                <span className="text-sm font-bold text-indigo-800">{minGapMm || "1.5"} {isRtl ? "מ\"מ" : "mm"}</span>
+              </div>
+              <input
+                type="range" min="0.2" max="3" step="0.1"
+                value={minGapMm || "1.5"}
+                onChange={e => setMinGapMm(e.target.value)}
+                className="w-full accent-indigo-600 h-2"
+              />
+              <div className="flex justify-between text-xs text-indigo-400 mt-1">
+                <span>0.2</span>
+                <span className="text-indigo-500 font-medium">{isRtl ? "מומלץ: 1.5 לכרסום V-bit" : "Recommended: 1.5 for V-bit"}</span>
+                <span>3.0</span>
+              </div>
+            </div>
             {/* Advanced options */}
             <details className="mb-3">
               <summary className="text-xs font-medium text-gray-500 cursor-pointer select-none hover:text-gray-700">
                 {isRtl ? "הגדרות מתקדמות" : "Advanced settings"}
               </summary>
               <div className="mt-2 space-y-2 pl-2">
-                {/* Min gap */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <label className="text-xs font-medium text-gray-600 shrink-0">
-                    {isRtl ? "מרווח בין קווים (מ'מ):" : "Line gap (mm):"}
-                  </label>
-                  <input
-                    type="number" min="0.2" max="3" step="0.1"
-                    placeholder="1.5"
-                    value={minGapMm}
-                    onChange={e => setMinGapMm(e.target.value)}
-                    className="w-20 border border-border rounded px-2 py-1 text-xs text-center"
-                  />
-                  <span className="text-xs text-gray-400">{isRtl ? "(מומלץ 1.5 לקרסום V-bit)" : "(1.5 recommended for V-bit)"}</span>
-                </div>
                 {/* Lineweight */}
                 <div className="flex items-center gap-2 flex-wrap">
                   <label className="text-xs font-medium text-gray-600 shrink-0">
