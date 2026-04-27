@@ -3001,7 +3001,7 @@ export const appRouter = router({
           .from(appUsers)
           .leftJoin(userClickEvents, eq(userClickEvents.appUserId, appUsers.id))
           .groupBy(appUsers.id)
-          .orderBy(desc(appUsers.lastLoginAt))
+          .orderBy(desc(sql`MAX(${userClickEvents.createdAt})`), desc(appUsers.lastLoginAt))
           .limit(limit);
         return rows;
       }),

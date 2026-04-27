@@ -161,8 +161,8 @@ function UserRow({ user }: {
             <span className="text-gray-400">פעולות</span>
           </div>
           <div className="flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5 text-gray-400" />
-            <span>{timeAgo(user.lastLoginAt)}</span>
+            <Clock className="w-3.5 h-3.5 text-green-500" />
+            <span className="font-semibold text-green-700">{user.lastClickAt ? timeAgo(user.lastClickAt) : timeAgo(user.lastLoginAt)}</span>
           </div>
         </div>
         <div className="shrink-0 text-gray-400">
@@ -178,6 +178,7 @@ function UserRow({ user }: {
             <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{user.email}</span>
             <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />נרשם: {formatDate(user.createdAt)}</span>
             <span className="flex items-center gap-1"><Activity className="w-3.5 h-3.5" />כניסה אחרונה: {formatDate(user.lastLoginAt)}</span>
+            {user.lastClickAt && <span className="flex items-center gap-1 font-semibold text-green-700"><MousePointerClick className="w-3.5 h-3.5 text-green-500" />פעולה אחרונה: {formatDate(user.lastClickAt)}</span>}
             <span className="flex items-center gap-1"><Coins className="w-3.5 h-3.5 text-yellow-500" />{user.tokenBalance} קרדיטים</span>
             <span className="flex items-center gap-1"><MousePointerClick className="w-3.5 h-3.5 text-indigo-500" />{user.clickCount ?? 0} פעולות</span>
           </div>
