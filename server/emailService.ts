@@ -132,7 +132,7 @@ export async function sendWelcomeEmail(opts: {
     ? `${opts.siteUrl}/api/unsubscribe?token=${generateUnsubscribeToken(opts.userId)}`
     : null;
 
-  const HEADER_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/email-opt-c-adpMBYVwkfcAXqKrwGmkwB.png";
+  const HEADER_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/email-opt-a-Da65nhEFrXDrzAwvUjp6VL.png";
 
   const html = isHe
     ? `<!DOCTYPE html>

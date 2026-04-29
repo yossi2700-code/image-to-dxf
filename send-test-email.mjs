@@ -26,7 +26,7 @@ const subject = `ברוך הבא ל-DXF AI`;
 const unsubToken = jwt.sign({ userId: opts.userId, purpose: "unsubscribe" }, JWT_SECRET, { expiresIn: "365d" });
 const unsubscribeUrl = `${opts.siteUrl}/api/unsubscribe?token=${unsubToken}`;
 
-const HEADER_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/email-opt-c-adpMBYVwkfcAXqKrwGmkwB.png";
+const HEADER_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/email-opt-a-Da65nhEFrXDrzAwvUjp6VL.png";
 
 const html = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
