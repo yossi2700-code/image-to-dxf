@@ -44,28 +44,37 @@ export type PortraitStyle = "simple" | "detailed";
 
 const PORTRAIT_STYLE_PROMPTS: Record<PortraitStyle, string> = {
   simple:
-    "Convert this photo into a clean black-and-white portrait line art illustration. " +
-    "CRITICAL — MAXIMUM LIKENESS: The output MUST be unmistakably recognizable as the same person. " +
-    "Preserve exactly: face shape, eye shape and spacing, nose shape, lip shape, hair style, hairline, any beard/facial hair. " +
-    "FACE ANGLE: Keep the exact same head angle and pose as the photo. " +
-    "LINE STYLE: Bold confident outlines. Thick outer contour lines (face, hair, jaw). " +
-    "Clean interior lines for eyes, nose, mouth, hair strands. " +
-    "WHAT TO DRAW: face outline, eyes with eyebrows and lashes, nose, lips, ears if visible, hair with flowing strand lines, neck and shoulders. " +
-    "BACKGROUND: Pure white. No shading, no grey tones, no fills — only black lines on white. " +
-    "Do NOT fill any area solid black. Keep all interior areas white with black outlines only. " +
-    "No text, no watermarks. Head fills 75-85% of canvas.",
+    "Convert this portrait photo into a clean black-and-white line art illustration suitable for laser engraving or CNC cutting. " +
+    "CRITICAL — MAXIMUM LIKENESS: The result MUST be unmistakably recognizable as the same person in the photo. " +
+    "Faithfully reproduce: exact face shape, eye shape and spacing, nose shape, lip shape, hair style and hairline, beard/facial hair if present, ear shape. " +
+    "FACE ANGLE: Preserve the exact head angle and pose from the photo. Do NOT change the pose. " +
+    "LINE WEIGHT RULE (very important): " +
+    "  - THICK bold lines for: outer face contour, jaw, hairline boundary, neck outline, shoulder outline. " +
+    "  - MEDIUM lines for: eyebrows, eyelids, nose bridge, lip contour, ear outline. " +
+    "  - THIN flowing lines for: hair strands (draw 8-15 flowing curved lines following the hair direction), eyelashes, nostril detail, lip crease. " +
+    "HAIR: Draw the hair as a series of flowing curved lines following the natural hair direction. Do NOT fill hair solid black. Draw individual strand groups. " +
+    "EYES: Draw both eyes with upper and lower eyelids, iris circle, pupil dot, and 5-8 eyelash lines per eye. " +
+    "BACKGROUND: Pure white (#FFFFFF). No shading, no grey tones, no fills, no hatching. Only black lines on white. " +
+    "Do NOT fill any area solid black. All enclosed areas must remain white. " +
+    "COMPOSITION: Head + neck + shoulders fill 80-90% of canvas. Generous white margins on all sides. No cropping. " +
+    "No text, no watermarks, no signatures.",
 
   detailed:
-    "Convert this photo into a detailed black-and-white portrait line art illustration. " +
-    "CRITICAL — MAXIMUM LIKENESS: The output MUST be unmistakably recognizable as the same person. " +
-    "Preserve exactly: face shape, eye shape and spacing, nose shape, lip shape, hair style, hairline, any beard/facial hair, distinctive features. " +
-    "FACE ANGLE: Keep the exact same head angle and pose as the photo. " +
-    "LINE STYLE: Bold confident outlines with varied line weight. Thick outer contour lines (face, hair, jaw). " +
-    "Detailed interior lines for eyes (iris, lashes, lids), nose (bridge, nostrils), mouth (lip contour, philtrum), hair (individual strand groups). " +
-    "WHAT TO DRAW IN DETAIL: face outline, detailed eyes with brows and lashes, nose with nostrils, lips, ears, hair with flowing detailed strands, neck and shoulders with clothing. " +
-    "BACKGROUND: Pure white. No shading, no grey tones, no fills — only black lines on white. " +
-    "Do NOT fill any area solid black. Keep all interior areas white with black outlines only. " +
-    "No text, no watermarks. Head fills 75-85% of canvas.",
+    "Convert this portrait photo into a highly detailed black-and-white line art illustration suitable for laser engraving or CNC cutting. " +
+    "CRITICAL — MAXIMUM LIKENESS: The result MUST be unmistakably recognizable as the same person in the photo. " +
+    "Faithfully reproduce every distinctive feature: exact face shape, eye shape and spacing, nose shape, lip shape, hair style and hairline, beard/facial hair if present, ear shape, distinctive marks. " +
+    "FACE ANGLE: Preserve the exact head angle and pose from the photo. Do NOT change the pose. " +
+    "LINE WEIGHT RULE (very important): " +
+    "  - THICK bold lines for: outer face contour, jaw, hairline boundary, neck outline, shoulder outline. " +
+    "  - MEDIUM lines for: eyebrows (draw individual hairs), eyelids, nose bridge, lip contour, ear outline, chin detail. " +
+    "  - THIN precise lines for: hair strands (draw 15-25 flowing curved lines following hair direction), eyelashes (individual), iris texture lines, nostril shape, lip crease, philtrum, neck muscle lines. " +
+    "HAIR: Draw the hair as many flowing curved lines following the natural hair direction and volume. Do NOT fill hair solid black. Show hair texture with individual strand groups. " +
+    "EYES: Draw both eyes in detail: upper and lower eyelids with thickness, iris with 4-6 radial lines, pupil, and 8-12 individual eyelash lines per eye. " +
+    "BEARD/FACIAL HAIR: If present, draw with short curved lines following the growth direction. " +
+    "BACKGROUND: Pure white (#FFFFFF). No shading, no grey tones, no fills, no hatching. Only black lines on white. " +
+    "Do NOT fill any area solid black. All enclosed areas must remain white. " +
+    "COMPOSITION: Head + neck + shoulders fill 80-90% of canvas. Generous white margins on all sides. No cropping. " +
+    "No text, no watermarks, no signatures.",
 };
 
 const STYLE_ORDER: PortraitStyle[] = ["simple", "detailed"];
@@ -266,13 +275,13 @@ async function runFaceDetectJob(
       messages: [
         {
           role: "system",
-          content: "You are an expert face detection system. Your job is to find EVERY human face in the image — adults, babies, children, elderly, side profiles, partially visible faces. Be thorough and do not miss any face. Return normalized bounding box coordinates (0.0 to 1.0) for each face. x_min/y_min is top-left, x_max/y_max is bottom-right. Respond with JSON only.",
+          content: "You are a precise face detection system. Count ONLY complete human faces that are clearly visible with eyes, nose, and mouth distinguishable. A face must have: visible eyes, a nose, and a mouth. Do NOT count: reflections, shadows, blurry background faces, partial faces missing key features, or body parts that are not faces. Each face box must cover the full head including hair, with 10% padding. Return normalized bounding box coordinates (0.0 to 1.0). x_min/y_min is top-left, x_max/y_max is bottom-right. Respond with JSON only.",
         },
         {
           role: "user",
           content: [
             { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "high" } },
-            { type: "text", text: 'Find ALL human faces in this image — including babies, children, adults, elderly, side profiles, and partially visible faces. Do NOT miss any face. Return JSON: {"faces": [{"x_min": 0.1, "y_min": 0.05, "x_max": 0.45, "y_max": 0.6}, ...]}. Use normalized 0-1 coordinates (0.0=left/top, 1.0=right/bottom). Include the full head and hair area with 10% padding around each face bounding box.' },
+            { type: "text", text: 'Count the CLEARLY VISIBLE human faces in this image. Only include faces where you can clearly see BOTH eyes, a nose, and a mouth. Do NOT include: partial faces, blurry background people, reflections, or shadows. Return JSON: {"faces": [{"x_min": 0.1, "y_min": 0.05, "x_max": 0.45, "y_max": 0.6}, ...]}. Use normalized 0-1 coordinates. Each box should cover the full head + hair + 10% padding.' },
           ],
         },
       ],
@@ -314,7 +323,27 @@ async function runFaceDetectJob(
     let detectedFaces: FaceBox[] = [];
     try {
       const parsed = JSON.parse(faceCheckContent) as { faces?: FaceBox[] };
-      detectedFaces = Array.isArray(parsed.faces) ? parsed.faces.slice(0, 4) : [];
+      const rawFaces = Array.isArray(parsed.faces) ? parsed.faces.slice(0, 4) : [];
+      // Filter out false positives:
+      // 1. Face must be at least 8% of image width AND 8% of image height (eliminates tiny background faces)
+      // 2. Face area must be at least 0.5% of total image area
+      // 3. If multiple faces detected, remove any face whose area is less than 20% of the largest face
+      //    (eliminates small false positives when there's a dominant face)
+      const withSize = rawFaces.map(f => ({
+        ...f,
+        w: f.x_max - f.x_min,
+        h: f.y_max - f.y_min,
+        area: (f.x_max - f.x_min) * (f.y_max - f.y_min),
+      }));
+      const minW = 0.08, minH = 0.08, minArea = 0.005;
+      const sizeFiltered = withSize.filter(f => f.w >= minW && f.h >= minH && f.area >= minArea);
+      if (sizeFiltered.length > 1) {
+        const maxArea = Math.max(...sizeFiltered.map(f => f.area));
+        detectedFaces = sizeFiltered.filter(f => f.area >= maxArea * 0.20).map(({ w: _w, h: _h, area: _a, ...f }) => f);
+      } else {
+        detectedFaces = sizeFiltered.map(({ w: _w, h: _h, area: _a, ...f }) => f);
+      }
+      console.log(`[faceDetectRoute] Job ${jobId}: raw=${rawFaces.length} faces, after size filter=${detectedFaces.length}`);
     } catch { detectedFaces = []; }
     
     const faceCount = detectedFaces.length;
@@ -392,9 +421,13 @@ async function runFaceDetectJob(
       if (!imgRes.ok) throw new Error("Failed to download generated image");
       let rawBuffer = Buffer.from(await imgRes.arrayBuffer());
       // potrace outline tracing — produces clean line art from AI-generated B&W portrait
+      // Higher resolution (2048) + contrast boost ensures thick bold lines are preserved
       const paddedBuffer = await sharp(rawBuffer)
-        .extend({ top: 60, bottom: 60, left: 60, right: 60, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-        .resize(1024, 1024, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .grayscale()
+        .linear(2.0, -40)              // boost contrast: darken lines, whiten background
+        .extend({ top: 80, bottom: 80, left: 80, right: 80, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .resize(2048, 2048, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .threshold(160)               // lower threshold = thicker lines captured
         .png()
         .toBuffer();
       const rawSvg = await pngToSvg(paddedBuffer);
@@ -431,32 +464,27 @@ async function runFaceDetectJob(
     let suggestions: string[];
 
     if (isMultiFace) {
-      // For multi-face: send the full image to AI so all faces appear together in one portrait
-      const fullImageBuffer = await sharp(imageBuffer)
-        .resize(1024, 1024, { fit: "inside", withoutEnlargement: true, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-        .png({ compressionLevel: 1 })
-        .toBuffer();
-
-      // Build a multi-face specific prompt — focus on FACES only, not full body
-      const multiFacePrompt = PORTRAIT_STYLE_PROMPTS[style]
-        .replace(/Composition: head \+ neck \+ shoulders fill [\d-]+% of canvas\. Include upper chest\/collarbone\. No background\./,
-          `Composition: draw the faces, necks, and shoulders of all ${faceCount} people. All ${faceCount} heads + shoulders must be fully visible and fit within the canvas. No background.`);
-
-      const [singleResult, sugg] = await Promise.all([
-        generatePortraitFromCrop(fullImageBuffer, "", multiFacePrompt),
+      // For multi-face: process EACH face separately so every person gets their own portrait
+      // This is more reliable than asking AI to draw multiple faces in one image
+      updateJob(jobId, {
+        step: isHe ? `זוהו ${faceCount} פנים — מצייר כל פנים בנפרד...` : `Detected ${faceCount} faces — drawing each face separately...`,
+        stepEn: `Detected ${faceCount} faces — drawing each face separately...`,
+      });
+      const sortedFaces = [...detectedFaces].sort((a, b) => a.x_min - b.x_min);
+      const cropBuffers = await Promise.all(sortedFaces.map(box => cropFace(box)));
+      const faceLabels = isHe
+        ? faceCount === 2 ? ["פנים 1", "פנים 2"] : sortedFaces.map((_, i) => `פנים ${i + 1}`)
+        : faceCount === 2 ? ["Face 1", "Face 2"] : sortedFaces.map((_, i) => `Face ${i + 1}`);
+      [portraitResults, suggestions] = await Promise.all([
+        Promise.all(cropBuffers.map((cropBuffer, i) => generatePortraitFromCrop(cropBuffer, faceLabels[i]))),
         generateAiSuggestions(style, lang),
       ]);
-      // Override the prompt used — patch the result label
-      singleResult.styleLabel = STYLE_LABELS[style].he;
-      singleResult.styleLabelEn = STYLE_LABELS[style].en;
-      portraitResults = [singleResult];
-      suggestions = sugg;
     } else {
       // Single face: crop and generate
       const sortedFaces = [...detectedFaces].sort((a, b) => a.x_min - b.x_min);
       const cropBuffers = await Promise.all(sortedFaces.map(box => cropFace(box)));
       [portraitResults, suggestions] = await Promise.all([
-        Promise.all(cropBuffers.map((cropBuffer, i) => generatePortraitFromCrop(cropBuffer, ""))),
+        Promise.all(cropBuffers.map((cropBuffer) => generatePortraitFromCrop(cropBuffer, ""))),
         generateAiSuggestions(style, lang),
       ]);
     }
