@@ -26,7 +26,7 @@ const subject = `ברוך הבא ל-DXF AI`;
 const unsubToken = jwt.sign({ userId: opts.userId, purpose: "unsubscribe" }, JWT_SECRET, { expiresIn: "365d" });
 const unsubscribeUrl = `${opts.siteUrl}/api/unsubscribe?token=${unsubToken}`;
 
-const HEADER_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/email-header-welcome-Zo2za9z5qBA2JZTCEo5iTj.png";
+const HEADER_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/email-opt-c-adpMBYVwkfcAXqKrwGmkwB.png";
 
 const html = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -66,48 +66,32 @@ const html = `<!DOCTYPE html>
     </table>
   </td></tr>
 
-  <!-- Tips heading -->
-  <tr><td style="padding:0 40px 16px;">
-    <div style="font-size:16px;font-weight:700;color:#1e1b4b;">2 טיפים לתוצאה מצוינת</div>
-  </td></tr>
-
-  <!-- Tip 1 -->
-  <tr><td style="padding:0 40px 14px;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border-radius:12px;border:1px solid #e5e7eb;">
+  <!-- PWA install section -->
+  <tr><td style="padding:0 40px 20px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border-radius:14px;border:1px solid #bbf7d0;">
       <tr><td style="padding:20px 24px;">
-        <div style="font-size:13px;font-weight:700;color:#4f46e5;margin-bottom:6px;">✨ יצירת AI — איך לכתוב נכון?</div>
-        <div style="font-size:13px;color:#374151;line-height:1.8;">
-          במקום לכתוב מילה אחת כמו <span style="background:#fef3c7;padding:1px 5px;border-radius:4px;font-weight:600;">"כלב"</span> — תאר במשפט שלם:<br/>
-          <span style="color:#4f46e5;font-weight:600;">"כלב לברדור ישוב בפרופיל, קווים עבים, רקע לבן, סגנון חיתוך לייזר"</span><br/>
-          <span style="color:#9ca3af;font-size:12px;">כך ה-AI מבין בדיוק מה אתה רוצה — והקובץ יוצא הרבה יותר טוב.</span>
-        </div>
-      </td></tr>
-    </table>
-  </td></tr>
-
-  <!-- Tip 2 -->
-  <tr><td style="padding:0 40px 32px;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border-radius:12px;border:1px solid #e5e7eb;">
-      <tr><td style="padding:20px 24px;">
-        <div style="font-size:13px;font-weight:700;color:#4f46e5;margin-bottom:6px;">📷 תמונה לקווים — איך לצלם נכון?</div>
-        <div style="font-size:13px;color:#374151;line-height:1.8;">
-          רוצים להמיר חפץ פיזי ל-DXF? הניחו אותו על <span style="background:#fef3c7;padding:1px 5px;border-radius:4px;font-weight:600;">דף A4 לבן</span> וצלמו מלמעלה ישיר.<br/>
-          <span style="color:#9ca3af;font-size:12px;">ניגודיות גבוהה בין החפץ לרקע = קווי DXF נקיים ומדויקים יותר.</span>
+        <div style="font-size:14px;font-weight:700;color:#15803d;margin-bottom:8px;">📲 הוסף לדף הבית — כמו אפליקציה</div>
+        <div style="font-size:13px;color:#374151;line-height:1.9;">
+          אפשר להשתמש ב-DXF AI ישירות מהדפדפן, בלי להוריד כלום.<br/>
+          <strong>ב-iPhone/iPad:</strong> לחץ על כפתור השיתוף &#9650; ← "הוסף למסך הבית"<br/>
+          <strong>ב-Android / מחשב:</strong> לחץ על הסמל &#8853; בשורת הכתובת ← "התקן"<br/>
+          <span style="color:#6b7280;font-size:12px;">האפליקציה תיפתח כמו כל אפליקציה רגילה — מהירה ונוחה.</span>
         </div>
       </td></tr>
     </table>
   </td></tr>
 
   <!-- CTA -->
-  <tr><td style="padding:0 40px 36px;text-align:center;">
+  <tr><td style="padding:0 40px 28px;text-align:center;">
     <a href="${opts.siteUrl}" style="display:inline-block;background:#4f46e5;color:#ffffff;font-size:15px;font-weight:700;padding:16px 52px;border-radius:12px;text-decoration:none;letter-spacing:0.3px;box-shadow:0 4px 16px rgba(79,70,229,0.35);">התחל ליצור עכשיו →</a>
     <div style="font-size:11px;color:#9ca3af;margin-top:12px;">dxfai.ai</div>
   </td></tr>
 
-  <!-- Support -->
-  <tr><td style="padding:20px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
-    <div style="font-size:12px;color:#6b7280;line-height:1.8;">
-      שאלות או עזרה? <a href="mailto:support@dxfai.ai" style="color:#4f46e5;text-decoration:none;font-weight:600;">support@dxfai.ai</a> — מענה תוך 24 שעות.
+  <!-- Reply invitation -->
+  <tr><td style="padding:0 40px 24px;">
+    <div style="font-size:13px;color:#6b7280;line-height:1.9;border-top:1px solid #e5e7eb;padding-top:20px;">
+      יש שאלות? רוצה לשתף משהו? פשוט <strong>השב על המייל הזה</strong> — נשמח לשמוע ממך 😊<br/>
+      <span style="font-size:12px;color:#9ca3af;">אנחנו קוראים כל מייל ועונים אישית.</span>
     </div>
   </td></tr>
 
