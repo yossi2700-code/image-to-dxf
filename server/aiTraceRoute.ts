@@ -909,12 +909,52 @@ async function runTraceJob(
           const detail = await forgeResponse.text().catch(() => "");
           throw new Error(`Forge ImageService failed (${forgeResponse.status}): ${detail}`);
         }
-        const forgeResult = await forgeResponse.json() as { image: { b64Json: string; mimeType: string } };
+         const forgeResult = await forgeResponse.json() as { image: { b64Json: string; mimeType: string } };
         const b64 = forgeResult.image?.b64Json;
         if (!b64) throw new Error("Forge ImageService did not return image data");
         rawBuffer = Buffer.from(b64, "base64");
-      }
 
+        // Validate AI output — detect blank/white images (AI sometimes returns all-white)
+        // Check average brightness: if > 250 (nearly all white), the AI returned a blank image
+        const aiOutputStats = await sharp(rawBuffer).grayscale().stats();
+        const aiOutputBrightness = aiOutputStats.channels[0].mean;
+        const aiOutputMin = aiOutputStats.channels[0].min;
+        if (aiOutputBrightness > 250 && aiOutputMin > 240) {
+          // All-white image returned by AI — retry once with a simpler prompt
+          console.warn(`[aiTraceRoute] Job ${jobId}: AI returned blank/white image (brightness=${aiOutputBrightness.toFixed(1)}) — retrying with fallback prompt`);
+          const fallbackPrompt = `Clean black and white line art. Trace the exact shapes from the reference image. Pure black lines (#000000) on pure white background (#FFFFFF). No fills, no shading. Reproduce ONLY what you see in the reference image.`;
+          const retryResponse = await fetch(forgeEndpoint, {
+            method: "POST",
+            headers: {
+              accept: "application/json",
+              "content-type": "application/json",
+              "connect-protocol-version": "1",
+              authorization: `Bearer ${forgeApiKey}`,
+            },
+            body: JSON.stringify({
+              prompt: fallbackPrompt,
+              original_images: [{ b64Json: b64Input, mimeType: "image/png" }],
+            }),
+            signal: AbortSignal.timeout(2 * 60 * 1000),
+          });
+          if (retryResponse.ok) {
+            const retryResult = await retryResponse.json() as { image: { b64Json: string; mimeType: string } };
+            const retryB64 = retryResult.image?.b64Json;
+            if (retryB64) {
+              const retryBuffer = Buffer.from(retryB64, "base64");
+              const retryStats = await sharp(retryBuffer).grayscale().stats();
+              if (retryStats.channels[0].mean < 250) {
+                rawBuffer = retryBuffer;
+                console.log(`[aiTraceRoute] Job ${jobId}: retry succeeded (brightness=${retryStats.channels[0].mean.toFixed(1)})`);
+              } else {
+                throw new Error(isHe ? "ה-AI החזיר תמונה ריקה. נסה שוב עם תמונה ברורה יותר." : "AI returned a blank image. Please try again with a clearer image.");
+              }
+            }
+          } else {
+            throw new Error(isHe ? "ה-AI החזיר תמונה ריקה. נסה שוב עם תמונה ברורה יותר." : "AI returned a blank image. Please try again with a clearer image.");
+          }
+        }
+      }
       // Add white padding around the AI-generated image, then process at 3072px resolution
       // Higher resolution = more pixels for potrace → smoother curves, less jagged edges
       // Simple mode (idx=0): light blur, higher threshold → clean outlines, removes fine noise
