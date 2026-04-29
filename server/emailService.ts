@@ -696,89 +696,105 @@ export async function sendShareApprovedEmail(opts: {
 
   const heHtml = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>הקובץ שלך אושר</title>
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700&display=swap');</style>
 </head>
-<body style="margin:0;padding:0;background:#f9fafb;font-family:Arial,Helvetica,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:32px 0;">
-  <tr><td align="center">
-    <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07);">
-      <!-- Header -->
-      <tr><td style="background:linear-gradient(135deg,#059669 0%,#10b981 100%);padding:28px 32px;text-align:right;">
-        <p style="margin:0;color:#ffffff;font-size:13px;font-weight:600;letter-spacing:0.5px;">DXF AI</p>
-        <h1 style="margin:8px 0 0;color:#ffffff;font-size:22px;font-weight:700;">הקובץ שלך אושר! 🎉</h1>
-      </td></tr>
-      <!-- Body -->
-      <tr><td style="padding:32px;direction:rtl;">
-        <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 16px;">
-          שלום${displayName ? ` ${displayName}` : ""}!
-        </p>
-        <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 16px;">
-          הקובץ שהגשת לשיתוף — <strong>${opts.fileTitle}</strong> — אושר ופורסם בספריית הקבצים החינמית שלנו.
-        </p>
-        <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 24px;">
-          כעת כל משתמשי האתר יכולים לצפות בו ולהוריד אותו בחינם.
-        </p>
-        <p style="margin:0 0 32px;text-align:right;">
-          <a href="${opts.fileUrl}"
-             style="display:inline-block;background:#059669;color:#ffffff;font-size:15px;font-weight:600;padding:13px 28px;border-radius:8px;text-decoration:none;">
-            צפה בקובץ שלך &rarr;
-          </a>
-        </p>
-        <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 20px;"/>
-        <p style="color:#9ca3af;font-size:12px;line-height:1.6;margin:0;">
-          תודה על שיתוף היצירה שלך עם הקהילה!<br/>
-          צוות DXF AI &bull; <a href="https://dxfai.ai" style="color:#6b7280;text-decoration:none;">dxfai.ai</a>
-        </p>
+<body style="margin:0;padding:0;background:#0f0f0f;font-family:'Heebo',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0f0f0f;padding:40px 0;">
+<tr><td align="center">
+<table width="580" cellpadding="0" cellspacing="0" style="background:#1a1a1a;border-radius:16px;overflow:hidden;border:1px solid #2a2a2a;">
+  <!-- Header -->
+  <tr><td style="padding:40px 48px 32px;border-bottom:1px solid #2a2a2a;">
+    <div style="font-size:13px;font-weight:600;color:#6366f1;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;">DXF AI</div>
+    <div style="font-size:26px;font-weight:700;color:#ffffff;line-height:1.3;">שלום${displayName ? ` ${displayName}` : ""},</div>
+    <div style="font-size:15px;color:#71717a;margin-top:8px;font-weight:300;">הקובץ שלך אושר ופורסם!</div>
+  </td></tr>
+  <!-- Approved box -->
+  <tr><td style="padding:32px 48px;border-bottom:1px solid #2a2a2a;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#18181b;border:1px solid #27272a;border-radius:12px;">
+      <tr><td style="padding:24px 28px;">
+        <div style="font-size:11px;font-weight:600;color:#22c55e;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">סטאטוס</div>
+        <div style="font-size:20px;font-weight:700;color:#ffffff;line-height:1.3;">✅ אושר ופורסם</div>
+        <div style="font-size:13px;color:#52525b;margin-top:8px;">${opts.fileTitle}</div>
       </td></tr>
     </table>
   </td></tr>
+  <!-- Message -->
+  <tr><td style="padding:32px 48px;border-bottom:1px solid #2a2a2a;">
+    <div style="font-size:14px;color:#a1a1aa;line-height:1.8;">
+      הקובץ שהגשת לשיתוף פורסם בספריית ה-DXF החינמית שלנו.<br/>
+      כל משתמשי האתר יכולים לצפות בו ולהוריד אותו בחינם.
+    </div>
+  </td></tr>
+  <!-- CTA -->
+  <tr><td style="padding:32px 48px;border-bottom:1px solid #2a2a2a;text-align:center;">
+    <a href="${opts.fileUrl}" style="display:inline-block;background:#6366f1;color:#ffffff;font-size:14px;font-weight:600;padding:14px 44px;border-radius:8px;text-decoration:none;letter-spacing:0.3px;">צפה בקובץ שלך ←</a>
+    <div style="font-size:11px;color:#52525b;margin-top:12px;">dxfai.ai</div>
+  </td></tr>
+  <!-- Support -->
+  <tr><td style="padding:24px 48px;">
+    <div style="font-size:12px;color:#52525b;line-height:1.8;">
+      שאלות? <a href="mailto:support@dxfai.ai" style="color:#6366f1;text-decoration:none;">support@dxfai.ai</a> — מענה תוך 24 שעות.
+    </div>
+  </td></tr>
+  <!-- Footer -->
+  <tr><td style="padding:20px 48px;border-top:1px solid #2a2a2a;">
+    <div style="font-size:11px;color:#3f3f46;">תודה על שיתוף היצירה שלך! &bull; DXF AI</div>
+  </td></tr>
+</table>
+</td></tr>
 </table>
 </body></html>`;
 
   const enHtml = `<!DOCTYPE html>
 <html lang="en" dir="ltr">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Your file has been approved</title>
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');</style>
 </head>
-<body style="margin:0;padding:0;background:#f9fafb;font-family:Arial,Helvetica,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:32px 0;">
-  <tr><td align="center">
-    <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07);">
-      <!-- Header -->
-      <tr><td style="background:linear-gradient(135deg,#059669 0%,#10b981 100%);padding:28px 32px;">
-        <p style="margin:0;color:#ffffff;font-size:13px;font-weight:600;letter-spacing:0.5px;">DXF AI</p>
-        <h1 style="margin:8px 0 0;color:#ffffff;font-size:22px;font-weight:700;">Your file has been approved! 🎉</h1>
-      </td></tr>
-      <!-- Body -->
-      <tr><td style="padding:32px;">
-        <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 16px;">
-          Hi${displayName ? ` ${displayName}` : ""}!
-        </p>
-        <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 16px;">
-          The file you submitted for sharing — <strong>${opts.fileTitle}</strong> — has been approved and published in our free DXF library.
-        </p>
-        <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 24px;">
-          All users can now view and download it for free.
-        </p>
-        <p style="margin:0 0 32px;">
-          <a href="${opts.fileUrl}"
-             style="display:inline-block;background:#059669;color:#ffffff;font-size:15px;font-weight:600;padding:13px 28px;border-radius:8px;text-decoration:none;">
-            View your file &rarr;
-          </a>
-        </p>
-        <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 20px;"/>
-        <p style="color:#9ca3af;font-size:12px;line-height:1.6;margin:0;">
-          Thank you for sharing your creation with the community!<br/>
-          DXF AI Team &bull; <a href="https://dxfai.ai" style="color:#6b7280;text-decoration:none;">dxfai.ai</a>
-        </p>
+<body style="margin:0;padding:0;background:#0f0f0f;font-family:'Inter',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0f0f0f;padding:40px 0;">
+<tr><td align="center">
+<table width="580" cellpadding="0" cellspacing="0" style="background:#1a1a1a;border-radius:16px;overflow:hidden;border:1px solid #2a2a2a;">
+  <!-- Header -->
+  <tr><td style="padding:40px 48px 32px;border-bottom:1px solid #2a2a2a;">
+    <div style="font-size:13px;font-weight:600;color:#6366f1;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;">DXF AI</div>
+    <div style="font-size:26px;font-weight:700;color:#ffffff;line-height:1.3;">Hi${displayName ? ` ${displayName}` : ""},</div>
+    <div style="font-size:15px;color:#71717a;margin-top:8px;font-weight:300;">Your file has been approved and published!</div>
+  </td></tr>
+  <!-- Approved box -->
+  <tr><td style="padding:32px 48px;border-bottom:1px solid #2a2a2a;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#18181b;border:1px solid #27272a;border-radius:12px;">
+      <tr><td style="padding:24px 28px;">
+        <div style="font-size:11px;font-weight:600;color:#22c55e;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Status</div>
+        <div style="font-size:20px;font-weight:700;color:#ffffff;line-height:1.3;">&#x2705; Approved &amp; Published</div>
+        <div style="font-size:13px;color:#52525b;margin-top:8px;">${opts.fileTitle}</div>
       </td></tr>
     </table>
   </td></tr>
+  <!-- Message -->
+  <tr><td style="padding:32px 48px;border-bottom:1px solid #2a2a2a;">
+    <div style="font-size:14px;color:#a1a1aa;line-height:1.8;">
+      Your file is now live in the free DXF library.<br/>
+      All users can view and download it for free.
+    </div>
+  </td></tr>
+  <!-- CTA -->
+  <tr><td style="padding:32px 48px;border-bottom:1px solid #2a2a2a;text-align:center;">
+    <a href="${opts.fileUrl}" style="display:inline-block;background:#6366f1;color:#ffffff;font-size:14px;font-weight:600;padding:14px 44px;border-radius:8px;text-decoration:none;letter-spacing:0.3px;">View your file &#x2192;</a>
+    <div style="font-size:11px;color:#52525b;margin-top:12px;">dxfai.ai</div>
+  </td></tr>
+  <!-- Support -->
+  <tr><td style="padding:24px 48px;">
+    <div style="font-size:12px;color:#52525b;line-height:1.8;">
+      Questions? <a href="mailto:support@dxfai.ai" style="color:#6366f1;text-decoration:none;">support@dxfai.ai</a> — we reply within 24 hours.
+    </div>
+  </td></tr>
+  <!-- Footer -->
+  <tr><td style="padding:20px 48px;border-top:1px solid #2a2a2a;">
+    <div style="font-size:11px;color:#3f3f46;">Thank you for sharing your creation! &bull; DXF AI</div>
+  </td></tr>
+</table>
+</td></tr>
 </table>
 </body></html>`;
 
@@ -826,7 +842,7 @@ export async function sendShareApprovedEmail(opts: {
     const bodyText = bodyMap[lang] ?? `Your file <strong>${opts.fileTitle}</strong> has been approved.`;
     const btnText = btnMap[lang] ?? "View file";
     const thanksText = thanksMap[lang] ?? "Thank you for sharing!";
-    finalHtml = `<!DOCTYPE html><html lang="${lang}" dir="${dir}"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head><body style="margin:0;padding:0;background:#f9fafb;font-family:Arial,Helvetica,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:32px 0;"><tr><td align="center"><table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07);"><tr><td style="background:linear-gradient(135deg,#059669 0%,#10b981 100%);padding:28px 32px;"><p style="margin:0;color:#ffffff;font-size:13px;font-weight:600;">DXF AI</p><h1 style="margin:8px 0 0;color:#ffffff;font-size:22px;font-weight:700;">🎉</h1></td></tr><tr><td style="padding:32px;direction:${dir};"><p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 16px;">${greeting}</p><p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 24px;">${bodyText}</p><p style="margin:0 0 32px;"><a href="${opts.fileUrl}" style="display:inline-block;background:#059669;color:#ffffff;font-size:15px;font-weight:600;padding:13px 28px;border-radius:8px;text-decoration:none;">${btnText} &rarr;</a></p><hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 20px;"/><p style="color:#9ca3af;font-size:12px;line-height:1.6;margin:0;">${thanksText}<br/>DXF AI &bull; <a href="https://dxfai.ai" style="color:#6b7280;text-decoration:none;">dxfai.ai</a></p></td></tr></table></td></tr></table></body></html>`;
+    finalHtml = `<!DOCTYPE html><html lang="${lang}" dir="${dir}"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head><body style="margin:0;padding:0;background:#0f0f0f;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#0f0f0f;padding:40px 0;"><tr><td align="center"><table width="580" cellpadding="0" cellspacing="0" style="background:#1a1a1a;border-radius:16px;overflow:hidden;border:1px solid #2a2a2a;"><tr><td style="padding:40px 48px 32px;border-bottom:1px solid #2a2a2a;"><div style="font-size:13px;font-weight:600;color:#6366f1;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;">DXF AI</div><div style="font-size:26px;font-weight:700;color:#ffffff;line-height:1.3;direction:${dir};">${greeting}</div></td></tr><tr><td style="padding:32px 48px;border-bottom:1px solid #2a2a2a;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#18181b;border:1px solid #27272a;border-radius:12px;"><tr><td style="padding:24px 28px;"><div style="font-size:11px;font-weight:600;color:#22c55e;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Status</div><div style="font-size:20px;font-weight:700;color:#ffffff;">&#x2705; Approved</div><div style="font-size:13px;color:#52525b;margin-top:8px;">${opts.fileTitle}</div></td></tr></table></td></tr><tr><td style="padding:32px 48px;border-bottom:1px solid #2a2a2a;"><div style="font-size:14px;color:#a1a1aa;line-height:1.8;direction:${dir};">${bodyText.replace(/<strong>/g,'').replace(/<\/strong>/g,'')}</div></td></tr><tr><td style="padding:32px 48px;border-bottom:1px solid #2a2a2a;text-align:center;"><a href="${opts.fileUrl}" style="display:inline-block;background:#6366f1;color:#ffffff;font-size:14px;font-weight:600;padding:14px 44px;border-radius:8px;text-decoration:none;">${btnText} &#x2192;</a><div style="font-size:11px;color:#52525b;margin-top:12px;">dxfai.ai</div></td></tr><tr><td style="padding:20px 48px;border-top:1px solid #2a2a2a;"><div style="font-size:11px;color:#3f3f46;">${thanksText} &bull; DXF AI</div></td></tr></table></td></tr></table></body></html>`;
     finalText = `${greeting.replace(/<[^>]+>/g, "")}\n\n${opts.fileTitle}\n\n${opts.fileUrl}\n\n${thanksText}\nDXF AI\ndxfai.ai`;
   }
 
