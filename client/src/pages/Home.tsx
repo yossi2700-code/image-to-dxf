@@ -2954,6 +2954,14 @@ export default function Home() {
                 'currency': 'ILS'
               });
             }
+            // Facebook Pixel - CompleteRegistration (new users only)
+            if (typeof window !== 'undefined' && (window as any).fbq) {
+              (window as any).fbq('track', 'CompleteRegistration', {
+                value: 0,
+                currency: 'ILS',
+                content_name: 'dxfai_signup'
+              });
+            }
           }
           // Claim any pending campaign bonus after login/register
           const pendingCampaign = localStorage.getItem("pending_campaign");
