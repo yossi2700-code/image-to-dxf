@@ -31,6 +31,7 @@ import {
   inputSanitizer,
 } from "../security";
 import { startReminderScheduler } from "../reminderScheduler";
+import unsubscribeRoute from "../unsubscribeRoute";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -172,6 +173,9 @@ async function startServer() {
   // Architectural Sketch → DXF route
   app.use("/api/architectural-sketch", uploadLimiter);
   app.use(architecturalSketchRoute);
+
+  // ── Unsubscribe route ─────────────────────────────────────────────────
+  app.use(unsubscribeRoute);
 
   // ── FreeDXF REST API ───────────────────────────────────────────────────
   app.use(freedxfRouter);

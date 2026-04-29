@@ -1,0 +1,1 @@
+ALTER TABLE `app_users` ADD `emailOptOut` int DEFAULT 0 NOT NULL;

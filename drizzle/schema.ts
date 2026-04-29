@@ -77,6 +77,8 @@ export const appUsers = mysqlTable("app_users", {
   language: varchar("language", { length: 8 }).default("he"),
   /** Registration source: direct | freedxf */
   registrationSource: varchar("registrationSource", { length: 32 }).default("direct"),
+  /** Whether the user has opted out of marketing emails (1 = opted out) */
+  emailOptOut: int("emailOptOut").default(0).notNull(),
 });
 
 export type AppUser = typeof appUsers.$inferSelect;
