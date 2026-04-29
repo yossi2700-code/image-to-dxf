@@ -955,6 +955,106 @@ async function runTraceJob(
           }
         }
       }
+      // ── HALLUCINATION CHECK: verify AI output matches input subject ──
+      // Only run on first variation (idx=0) to avoid extra latency on all 3
+      if (idx === 0 && imageClassification.type !== "unknown") {
+        try {
+          const outputB64 = rawBuffer.toString("base64");
+          const hallucinationCheck = await Promise.race([
+            invokeLLM({
+              messages: [
+                {
+                  role: "system",
+                  content:
+                    "You are a strict image faithfulness checker. " +
+                    "You will receive: (1) the original input image, (2) the AI-generated line art output. " +
+                    "Your job: determine if the AI output depicts the SAME subject as the input. " +
+                    "Return JSON only: { \"faithful\": true/false, \"input_subject\": \"...\", \"output_subject\": \"...\" }. " +
+                    "Be LENIENT: minor style differences are OK. Only return faithful=false if the output shows a COMPLETELY DIFFERENT object/scene than the input. " +
+                    "Example of faithful=false: input=metal gate, output=cathedral. input=technical drawing, output=tree. " +
+                    "Example of faithful=true: input=flower, output=flower line art (even if simplified).",
+                },
+                {
+                  role: "user",
+                  content: [
+                    { type: "text", text: "INPUT IMAGE (original uploaded by user):" },
+                    { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "low" } },
+                    { type: "text", text: "OUTPUT IMAGE (AI-generated line art):" },
+                    { type: "image_url", image_url: { url: `data:image/png;base64,${outputB64}`, detail: "low" } },
+                    { type: "text", text: "Does the output depict the same subject as the input? Return JSON only." },
+                  ],
+                },
+              ],
+              response_format: {
+                type: "json_schema",
+                json_schema: {
+                  name: "faithfulness_check",
+                  strict: true,
+                  schema: {
+                    type: "object",
+                    properties: {
+                      faithful: { type: "boolean" },
+                      input_subject: { type: "string" },
+                      output_subject: { type: "string" },
+                    },
+                    required: ["faithful", "input_subject", "output_subject"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+            }),
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), 15_000)),
+          ]);
+          if (hallucinationCheck) {
+            const hContent = (hallucinationCheck as { choices?: Array<{ message?: { content?: string } }> })?.choices?.[0]?.message?.content ?? "{}";
+            const hParsed = JSON.parse(typeof hContent === "string" ? hContent : JSON.stringify(hContent)) as { faithful: boolean; input_subject?: string; output_subject?: string };
+            console.log(`[aiTraceRoute] Job ${jobId}: hallucination check — faithful=${hParsed.faithful}, input="${hParsed.input_subject}", output="${hParsed.output_subject}"`);
+            if (!hParsed.faithful) {
+              // AI hallucinated — retry once with an ultra-strict prompt
+              console.warn(`[aiTraceRoute] Job ${jobId}: HALLUCINATION DETECTED (input=${hParsed.input_subject}, output=${hParsed.output_subject}) — retrying with ultra-strict prompt`);
+              const ultraStrictPrompt =
+                `CRITICAL INSTRUCTION: You MUST draw ONLY what is visible in the reference image. ` +
+                `The reference image shows: ${hParsed.input_subject ?? imageClassification.subject}. ` +
+                `DO NOT draw anything else. DO NOT draw a ${hParsed.output_subject ?? "different subject"}. ` +
+                `TRACE THE EXACT SHAPES from the reference image — every line, every curve, every angle. ` +
+                `Pure black lines (#000000) on pure white background (#FFFFFF). No fills, no shading. ` +
+                `You are a TRACING MACHINE — copy what you see, nothing more, nothing less.`;
+              const retryHallucinationResponse = await fetch(
+                new URL("images.v1.ImageService/GenerateImage", (process.env.BUILT_IN_FORGE_API_URL ?? "").endsWith("/") ? process.env.BUILT_IN_FORGE_API_URL : `${process.env.BUILT_IN_FORGE_API_URL}/`).toString(),
+                {
+                  method: "POST",
+                  headers: {
+                    accept: "application/json",
+                    "content-type": "application/json",
+                    "connect-protocol-version": "1",
+                    authorization: `Bearer ${process.env.BUILT_IN_FORGE_API_KEY}`,
+                  },
+                  body: JSON.stringify({
+                    prompt: ultraStrictPrompt,
+                    original_images: [{ b64Json: aiInputBuffer.toString("base64"), mimeType: "image/png" }],
+                  }),
+                  signal: AbortSignal.timeout(2 * 60 * 1000),
+                }
+              );
+              if (retryHallucinationResponse.ok) {
+                const retryHallucinationResult = await retryHallucinationResponse.json() as { image: { b64Json: string; mimeType: string } };
+                const retryHallucinationB64 = retryHallucinationResult.image?.b64Json;
+                if (retryHallucinationB64) {
+                  const retryHallucinationBuffer = Buffer.from(retryHallucinationB64, "base64");
+                  const retryStats = await sharp(retryHallucinationBuffer).grayscale().stats();
+                  if (retryStats.channels[0].mean < 250) {
+                    rawBuffer = retryHallucinationBuffer;
+                    console.log(`[aiTraceRoute] Job ${jobId}: hallucination retry succeeded`);
+                  }
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.warn(`[aiTraceRoute] Job ${jobId}: hallucination check failed (non-blocking):`, e);
+        }
+      }
+
       // Add white padding around the AI-generated image, then process at 3072px resolution
       // Higher resolution = more pixels for potrace → smoother curves, less jagged edges
       // Simple mode (idx=0): light blur, higher threshold → clean outlines, removes fine noise
