@@ -184,6 +184,70 @@ export interface ImageClassification {
 }
 
 /**
+ * Check if an image is clear enough to process.
+ * Returns { clear: true } if OK, or { clear: false, reason } if not.
+ */
+async function checkImageClarity(imageBase64: string): Promise<{ clear: boolean; reason?: string; reasonHe?: string }> {
+  try {
+    const response = await invokeLLM({
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an image quality checker for a laser engraving vectorization tool. " +
+            "Analyze the image and determine if it is clear enough to process. " +
+            "Return JSON only with fields: clear (boolean), reason (string in English, max 15 words, only if not clear). " +
+            "An image is NOT clear enough if: " +
+            "1. It is extremely blurry or out of focus and the main subject cannot be identified. " +
+            "2. It is nearly entirely white/blank with no visible subject. " +
+            "3. It is so dark that no shapes are visible. " +
+            "4. It contains only random noise or artifacts with no recognizable content. " +
+            "An image IS clear enough even if: it is low contrast, faint lines, slightly blurry, or has a complex background. " +
+            "Be LENIENT — only reject images that truly have no identifiable subject.",
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "image_url",
+              image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: "low" },
+            },
+            { type: "text", text: "Is this image clear enough to convert to line art? Return JSON only: {\"clear\": true/false, \"reason\": \"...\"}" },
+          ],
+        },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "clarity_check",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              clear: { type: "boolean" },
+              reason: { type: "string" },
+            },
+            required: ["clear", "reason"],
+            additionalProperties: false,
+          },
+        },
+      },
+    });
+    const content = response?.choices?.[0]?.message?.content ?? "{}";
+    const parsed = JSON.parse(typeof content === "string" ? content : JSON.stringify(content)) as { clear: boolean; reason?: string };
+    if (!parsed.clear) {
+      // Map English reason to Hebrew
+      const reasonHe = "התמונה אינה ברורה מספיק לעיבוד. אנא העלה תמונה ברורה יותר.";
+      return { clear: false, reason: parsed.reason || "Image is not clear enough to process.", reasonHe };
+    }
+    return { clear: true };
+  } catch (e) {
+    console.warn("[aiTraceRoute] checkImageClarity failed, assuming clear:", e);
+    return { clear: true }; // fail-open: if check fails, proceed with processing
+  }
+}
+
+/**
  * Classify the uploaded image using LLM vision.
  * Returns the image type and a short subject description.
  * Runs in parallel with image preparation — adds ~2-3s but improves prompt quality.
@@ -690,8 +754,14 @@ async function runTraceJob(
         .toBuffer();
     }
 
-    // Classify the image in parallel with image preparation (adds ~2-3s, improves prompt quality)
-    // Use a 10s timeout so classification never blocks the main pipeline
+    // Run clarity check AND classification in parallel (both add ~2-3s)
+    // Use a 10s timeout so neither check blocks the main pipeline
+    const clarityPromise = Promise.race([
+      checkImageClarity(imageBase64),
+      new Promise<{ clear: boolean }>((resolve) =>
+        setTimeout(() => resolve({ clear: true }), 10_000) // fail-open on timeout
+      ),
+    ]);
     const classificationPromise = Promise.race([
       classifyImage(imageBase64),
       new Promise<ImageClassification>((resolve) =>
@@ -701,6 +771,22 @@ async function runTraceJob(
 
     // Initialize partialImages array for streaming results to client as each image completes
     updateJob(jobId, { partialImages: [] });
+
+    // Wait for clarity check first — fail fast if image is not processable
+    const clarityResult = await clarityPromise;
+    if (!clarityResult.clear) {
+      clearTimeout(internalTimeoutId);
+      clearInterval(heartbeatInterval);
+      const cr = clarityResult as { clear: boolean; reason?: string; reasonHe?: string };
+      updateJob(jobId, {
+        status: "error",
+        error: isHe
+          ? (cr.reasonHe ?? "התמונה אינה ברורה מספיק. אנא העלה תמונה ברורה יותר עם תאורה ברורה.")
+          : (cr.reason ?? "Image is not clear enough to process. Please upload a clearer image with a visible subject."),
+      });
+      return;
+    }
+    console.log(`[aiTraceRoute] Job ${jobId}: clarity check passed`);
 
     // Wait for classification result (it runs in parallel with image prep above)
     const imageClassification = await classificationPromise;
