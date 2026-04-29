@@ -1474,12 +1474,14 @@ export const appRouter = router({
           cancelUrl: `${safeOrigin}/buy?cancelled=1`,
           useCard: input.useCard ?? false,
         });
+        const amountCentsValue = Math.round(parseFloat(resolvedAmount) * 100);
         await db.insert(paypalOrders).values({
           appUserId,
           paypalOrderId: paypalOrder.id,
           packageId: input.packageId,
           tokenAmount: resolvedTokens,
           priceAmount: resolvedAmount,
+          amountCents: amountCentsValue,
           currency: resolvedCurrency,
           status: "pending",
           tokensCredited: 0,
@@ -1540,12 +1542,14 @@ export const appRouter = router({
           currency: resolvedCurrency,
           userId: appUserId,
         });
+        const amountCentsValueCard = Math.round(parseFloat(resolvedAmount) * 100);
         await db.insert(paypalOrders).values({
           appUserId,
           paypalOrderId: paypalOrder.id,
           packageId: input.packageId,
           tokenAmount: resolvedTokens,
           priceAmount: resolvedAmount,
+          amountCents: amountCentsValueCard,
           currency: resolvedCurrency,
           status: "pending",
           tokensCredited: 0,

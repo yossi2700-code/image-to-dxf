@@ -108,6 +108,7 @@ router.post("/api/paypal/create-order", async (req, res) => {
       packageId,
       tokenAmount: resolvedTokens,
       priceAmount: resolvedAmount,
+      amountCents: Math.round(parseFloat(resolvedAmount) * 100),
       currency: resolvedCurrency,
       status: "pending",
       tokensCredited: 0,
