@@ -344,6 +344,7 @@ export const TRACE_WARMUP_SYSTEM =
   "[CHECK 7] NO TEXT IN OUTPUT: Do NOT add any text, labels, watermarks, or annotations to the output. The output is a pure line drawing only. " +
   "[CHECK 8] CAD RULE (if image is a technical drawing): Reproduce ALL dimension lines, center lines, dashed lines, hatching, and annotations EXACTLY as they appear — like a CAD export. " +
   "[CHECK 9] SOURCE FIDELITY (MOST IMPORTANT): You received a reference image. Your output must be a clean version of THAT EXACT image — not a creative interpretation. Do NOT add any decorative element, swirl, curl, flourish, or embellishment that is NOT visible in the reference. If the reference is a simple butterfly, output a simple butterfly. ZERO creativity. ZERO invention. " +
+  "[CHECK 10] NO FILLED BLACK AREAS: NEVER fill any enclosed area with solid black. Dark areas in the source photo (tires, dark panels, shadows, grilles) must be converted to their OUTLINE only — a single closed line, interior pure white. WHEELS specifically: outer rim circle + inner hub circle + 4-6 spokes only. Wheel interior = pure white. Filling wheels or any area black = FAIL. " +
   "=== END WARM-UP — YOU MAY NOW BEGIN DRAWING ===";
 
 /**
@@ -478,6 +479,14 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
         `${classification.complexity === "complex" ? "Include 20-30 interior lines for the main structural details." : "Include 10-15 key structural lines."}` +
         `IGNORE: background, shadows, fine textures, small decorative details. ` +
         `PRESERVE: the exact outline shape, the exact proportions, the exact viewing angle. ` +
+        `=== WHEELS / CIRCLES / DARK AREAS RULE (CRITICAL — VIOLATION = FAILURE) === ` +
+        `NEVER fill any area with solid black. Every enclosed area must be PURE WHITE inside. ` +
+        `WHEELS: Draw ONLY the outer rim circle + inner hub circle + 4-6 spoke lines radiating from center to rim. The tire tread = outer circle outline only. The wheel interior = pure white with spokes. NEVER fill the wheel black. ` +
+        `DARK AREAS in the photo (tires, shadows, dark panels): Convert these to their OUTLINE only — a single closed line around the dark area's boundary. The interior stays white. ` +
+        `GRILLES / VENTS: Draw as a grid of lines or parallel lines — never fill black. ` +
+        `WINDOWS / GLASS: Draw as a single closed outline — interior pure white. ` +
+        `RULE: If you are about to fill ANY area with black — STOP. Draw its outline instead. ` +
+        `=== END WHEELS RULE === ` +
         variationStyle
       );
   }
@@ -1054,6 +1063,50 @@ async function runTraceJob(
           console.warn(`[aiTraceRoute] Job ${jobId}: hallucination check failed (non-blocking):`, e);
         }
       }
+
+      // ── Glow / halo effect around subject ───────────────────────────────────────
+      // Add a soft white radial glow/bloom around the subject edges.
+      // This makes the subject stand out from the background with a luminous halo.
+      // Applied to rawBuffer BEFORE the contrast/threshold pipeline.
+      // Technique: blur a "subject mask" (white subject on black) and lighten-blend it back.
+      try {
+        const { data: glowRaw, info: glowInfo } = await sharp(rawBuffer)
+          .grayscale()
+          .raw()
+          .toBuffer({ resolveWithObject: true });
+        const gW = glowInfo.width;
+        const gH = glowInfo.height;
+        const gTotal = gW * gH;
+        const glowAvg = (glowRaw as Buffer).reduce((s: number, v: number) => s + v, 0) / gTotal;
+        // Determine polarity: bright background → invert to get white subject on black
+        const glowNeedsInvert = glowAvg > 128;
+        // Build subject mask (white subject on black)
+        const glowMask = Buffer.allocUnsafe(gTotal);
+        for (let i = 0; i < gTotal; i++) {
+          glowMask[i] = glowNeedsInvert ? 255 - (glowRaw as Buffer)[i] : (glowRaw as Buffer)[i];
+        }
+        // Blur to create bloom
+        const glowBloom = await sharp(glowMask, { raw: { width: gW, height: gH, channels: 1 } })
+          .blur(20)
+          .raw()
+          .toBuffer();
+        // Lighten-blend: max(mask, bloom * 1.35)
+        const glowResult = Buffer.allocUnsafe(gTotal);
+        for (let i = 0; i < gTotal; i++) {
+          glowResult[i] = Math.max(glowMask[i], Math.min(255, Math.round((glowBloom as Buffer)[i] * 1.35)));
+        }
+        // Convert back to original polarity
+        const glowFinal = Buffer.allocUnsafe(gTotal);
+        for (let i = 0; i < gTotal; i++) {
+          glowFinal[i] = glowNeedsInvert ? 255 - glowResult[i] : glowResult[i];
+        }
+        rawBuffer = await sharp(glowFinal, { raw: { width: gW, height: gH, channels: 1 } })
+          .png()
+          .toBuffer();
+      } catch (glowErr) {
+        console.warn(`[aiTraceRoute] Job ${jobId}: glow effect failed (non-fatal):`, glowErr);
+      }
+      // ── End glow effect ─────────────────────────────────────────────────────
 
       // Add white padding around the AI-generated image, then process at 3072px resolution
       // Higher resolution = more pixels for potrace → smoother curves, less jagged edges
