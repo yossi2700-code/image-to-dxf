@@ -3150,11 +3150,11 @@ export default function Home() {
             <div className="w-full relative" style={{ background: '#0f172a', paddingBottom: '55%' }}>
               <img
                 src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/engraving-car-v1-kPbQRBPcEsicJqNBqf8Xj9.webp"
-                alt="Photo Engraving"
+                alt="Granite Engraving"
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
               />
             </div>
-            <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #1e3a5f, #0f4c75)', color: 'white', letterSpacing: '0.02em' }}>{isRtl ? 'חריטת תמונה' : 'Photo Engraving'}</span>
+            <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #1e3a5f, #0f4c75)', color: 'white', letterSpacing: '0.02em' }}>{isRtl ? 'חריטה על גרניט' : 'Granite Engraving'}</span>
           </button>
 
         </div>
@@ -3166,7 +3166,7 @@ export default function Home() {
           onValueChange={(v) => {
             setActiveTab(v);
             localStorage.setItem("active_tab", v);
-            const tabNames: Record<string, string> = { ai: 'AI Create', trace: 'Image to Lines', face: 'Portrait', 'cnc-relief': 'CNC Relief', redraw: 'Document Redraw', 'needle-engraving': 'Photo Engraving' };
+            const tabNames: Record<string, string> = { ai: 'AI Create', trace: 'Image to Lines', face: 'Portrait', 'cnc-relief': 'CNC Relief', redraw: 'Document Redraw', 'needle-engraving': 'Granite Engraving' };
             trackHome(`tab_switch_${v}`, `מעבר ל: ${tabNames[v] ?? v}`);
           }}
           dir={isRtl ? "rtl" : "ltr"}
@@ -3248,7 +3248,7 @@ export default function Home() {
               }}
             >
               <ImageIcon className="w-4 h-4 shrink-0" />
-              <span className="truncate text-[11px]">{isRtl ? 'חריטת תמונה' : 'Photo Engrave'}</span>
+              <span className="truncate text-[11px]">{isRtl ? 'חריטה על גרניט' : 'Granite Engrave'}</span>
             </TabsTrigger>
             {/* arch-ai and sketch tabs hidden until ready */}
             {/* 5. CNC Relief (coming soon) */}
@@ -3538,13 +3538,13 @@ export default function Home() {
                   <ImageIcon className="w-3.5 h-3.5 text-white" />
                 </div>
                 <span className="text-sm font-bold text-gray-800">
-                  {isRtl ? 'חריטת תמונה עם מחט יהלום' : 'Diamond Needle Photo Engraving'}
+                  {isRtl ? 'חריטה על גרניט' : 'Granite Engraving'}
                 </span>
               </div>
               <div className="rounded-xl overflow-hidden" style={{ maxHeight: '160px' }}>
                 <img
                   src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/engraving-car-v1-kPbQRBPcEsicJqNBqf8Xj9.webp"
-                  alt="Photo Engraving example"
+                  alt="Granite Engraving example"
                   className="w-full object-cover"
                   style={{ objectPosition: 'center' }}
                 />

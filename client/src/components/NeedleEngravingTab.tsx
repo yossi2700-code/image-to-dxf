@@ -123,7 +123,7 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
   }, [stopTimer]);
 
   const t = {
-    title: isRtl ? "חריטת תמונה — מחט יהלום" : "Photo Engraving — Diamond Needle",
+    title: isRtl ? "חריטה על גרניט" : "Granite Engraving",
     uploadMode: isRtl ? "העלאת תמונה" : "Upload Image",
     aiMode: isRtl ? "יצירה עם AI" : "AI Generate",
     uploadHint: isRtl ? "JPG או PNG, עד 20MB" : "JPG or PNG, up to 20MB",
@@ -149,9 +149,9 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
     imageSelected: isRtl ? "החלף תמונה" : "Change image",
     costLabel: isRtl ? `עלות: ${cost} קרדיטים` : `Cost: ${cost} credits`,
     infoText: isRtl
-      ? "ממיר תמונה לקובץ BMP 8-bit מוכן למכונות חריטה עם מחט יהלום על גרניט שחור. כולל איזון חשיפה (CLAHE) וחידוד פרטים."
-      : "Converts image to BMP 8-bit file ready for diamond needle engraving machines on black granite. Includes exposure balance (CLAHE) and detail sharpening.",
-    featureLabel: isRtl ? "חריטת תמונה" : "Photo Engraving",
+      ? "ממיר תמונה לקובץ BMP 8-bit מוכן למכונות חריטה על גרניט שחור. כולל איזון חשיפה (CLAHE), חידוד פרטים ותיקון גמא."
+      : "Converts image to BMP 8-bit file ready for diamond needle engraving on black granite. Includes CLAHE, detail sharpening and gamma correction.",
+    featureLabel: isRtl ? "חריטה על גרניט" : "Granite Engraving",
   };
 
   const handleFile = useCallback((file: File) => {
@@ -522,6 +522,7 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
           >
             {mode === "ai" ? <Sparkles className="w-4 h-4" /> : <Wand2 className="w-4 h-4" />}
             {mode === "ai" ? t.generateBtn : t.processBtn}
+            {cost > 0 && <span style={{ fontSize: '0.72em', opacity: 0.8, marginInlineStart: 6 }}>({cost} {isRtl ? 'קרדיטים' : 'credits'})</span>}
           </button>
         </div>
       )}
@@ -557,14 +558,17 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
       {/* Error state */}
       {status === "error" && (
         <div
-          className="rounded-xl p-5"
+          className="rounded-xl p-5 flex flex-col items-center gap-3 text-center"
           style={{ background: '#fff1f2', border: '1px solid #fecdd3' }}
         >
-          <p className="text-sm font-semibold text-red-700 mb-1">{isRtl ? "שגיאה בעיבוד" : "Processing error"}</p>
-          <p className="text-xs text-red-600 mb-3">{errorMsg}</p>
+          <p className="text-sm font-semibold text-red-700">{isRtl ? "שגיאה בעיבוד" : "Processing error"}</p>
+          <p className="text-xs text-red-600">{errorMsg}</p>
+          <p className="text-xs font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">
+            ✓ {isRtl ? "האסימונים הוחזרו" : "Tokens refunded"}
+          </p>
           <button
             onClick={handleReset}
-            className="text-xs font-bold text-red-600 hover:text-red-800 underline"
+            className="text-sm px-4 py-2 rounded-lg font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200"
           >
             {t.tryAgain}
           </button>

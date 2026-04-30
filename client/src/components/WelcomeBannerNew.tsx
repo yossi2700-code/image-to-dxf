@@ -194,8 +194,8 @@ const FEATURES: FeatureBtn[] = [
   {
     tab: "needle-engraving",
     icon: <ImageIcon className="w-5 h-5" />,
-    labelHe: "חריטת תמונה",
-    labelEn: "Photo Engrave",
+    labelHe: "חריטה על גרניט",
+    labelEn: "Granite Engrave",
     gradient: "linear-gradient(135deg, #1e3a5f, #0f4c75)",
     emoji: "💎",
   },
