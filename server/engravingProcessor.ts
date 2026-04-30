@@ -146,12 +146,21 @@ export async function processForGraniteEngraving(
   }
 
   // ── 8. Smart invert: granite machines engrave white on black.
-  //        If the image has a dark background (avg < 128), invert so background → white.
+  //        If the image has a dark background (avg < 110), invert.
+  //        After invert, brighten midtones so the subject has visible grey detail
+  //        (not just pure black/white) — this makes the horse look lighter.
   const avgBrightness = finalPixels.reduce((s, v) => s + v, 0) / total;
   const outputPixels = new Uint8Array(total);
   if (avgBrightness < 110) {
     // Dark background → invert so the subject becomes dark on white
-    for (let i = 0; i < total; i++) outputPixels[i] = 255 - finalPixels[i];
+    // Then apply a brightness lift: push midtones up by ~30 so details are visible
+    const brightnessLift = 30;
+    for (let i = 0; i < total; i++) {
+      const inverted = 255 - finalPixels[i];
+      // Lift: darks stay dark, midtones get brighter, whites stay white
+      const lifted = inverted < 200 ? Math.min(255, inverted + Math.round(brightnessLift * (1 - inverted / 255))) : inverted;
+      outputPixels[i] = lifted;
+    }
   } else {
     outputPixels.set(finalPixels);
   }

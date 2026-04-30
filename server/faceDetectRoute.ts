@@ -419,7 +419,68 @@ async function runFaceDetectJob(
       if (!generatedUrl) throw new Error("Failed to generate portrait");
       const imgRes = await fetch(generatedUrl);
       if (!imgRes.ok) throw new Error("Failed to download generated image");
-      let rawBuffer = Buffer.from(await imgRes.arrayBuffer());
+      const rawAb = await imgRes.arrayBuffer();
+      let rawBuffer: Buffer = Buffer.from(rawAb);
+
+      // ── Glow / halo effect ──────────────────────────────────────────────────
+      // Add a soft white radial glow around the subject on the dark background.
+      // Technique:
+      //   1. Convert to grayscale, invert so subject = white on black
+      //   2. Blur heavily to create a "bloom" layer
+      //   3. Composite the bloom behind the original (lighten blend)
+      //   4. Re-invert back to original polarity (dark subject on white)
+      // This gives a halo/glow around hair and face edges.
+      try {
+        const { data: rawData, info } = await sharp(rawBuffer)
+          .grayscale()
+          .raw()
+          .toBuffer({ resolveWithObject: true });
+        const w = info.width;
+        const h = info.height;
+        const total = w * h;
+
+        // Determine polarity: if avg brightness < 128, subject is dark on light bg
+        // We need subject = white on black for bloom generation
+        const avg = rawData.reduce((s: number, v: number) => s + v, 0) / total;
+        const needsInvert = avg > 128; // bright background → invert to get white subject
+
+        // Create "subject mask" (white subject on black)
+        const maskPixels = new Uint8Array(total);
+        for (let i = 0; i < total; i++) {
+          maskPixels[i] = needsInvert ? 255 - rawData[i] : rawData[i];
+        }
+        const maskBuffer = Buffer.from(maskPixels);
+
+        // Blur the mask to create bloom
+        const bloomBuffer = await sharp(maskBuffer, { raw: { width: w, height: h, channels: 1 } })
+          .blur(18)  // large blur radius for soft glow
+          .raw()
+          .toBuffer();
+
+        // Combine: lighten original mask with bloom (max of both)
+        const glowMask = new Uint8Array(total);
+        for (let i = 0; i < total; i++) {
+          glowMask[i] = Math.max(maskPixels[i], Math.min(255, bloomBuffer[i] * 1.4));
+        }
+
+        // Convert back to original polarity
+        const finalGlow = new Uint8Array(total);
+        for (let i = 0; i < total; i++) {
+          finalGlow[i] = needsInvert ? 255 - glowMask[i] : glowMask[i];
+        }
+
+        // Rebuild PNG from glow-enhanced pixels
+        const glowNodeBuf = Buffer.allocUnsafe(total);
+        for (let i = 0; i < total; i++) glowNodeBuf[i] = finalGlow[i];
+        rawBuffer = await sharp(glowNodeBuf, { raw: { width: w, height: h, channels: 1 } })
+          .png()
+          .toBuffer();
+      } catch (glowErr) {
+        // Non-fatal: if glow fails, continue with original rawBuffer
+        console.warn("[faceDetect] glow effect failed (non-fatal):", glowErr);
+      }
+      // ── End glow effect ─────────────────────────────────────────────────────
+
       // potrace outline tracing — produces clean line art from AI-generated B&W portrait
       // Higher resolution (2048) + contrast boost ensures thick bold lines are preserved
       const paddedBuffer = await sharp(rawBuffer)

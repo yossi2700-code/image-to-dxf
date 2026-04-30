@@ -587,25 +587,10 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
             <span className="font-semibold text-gray-800 text-sm">{t.resultTitle}</span>
           </div>
 
-          {/* Side by side: original + processed */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            {/* Original / Generated */}
-            <div>
-              <p className="text-xs text-gray-400 mb-1 text-center">
-                {mode === "ai"
-                  ? (isRtl ? "תמונה שנוצרה" : "Generated image")
-                  : (isRtl ? "תמונה מקורית" : "Original image")}
-              </p>
-              <div className="rounded-lg overflow-hidden bg-gray-100 border border-gray-200" style={{ aspectRatio: '1' }}>
-                <img
-                  src={mode === "ai" ? result.generatedImageUrl || result.previewUrl : imagePreview || result.previewUrl}
-                  alt="original"
-                  className="w-full h-full object-contain"
-                />
-              </div>
-            </div>
-            {/* Processed preview */}
-            <div>
+          {/* Result image display */}
+          {mode === "ai" ? (
+            /* AI mode: show only the processed result, full width */
+            <div className="mb-4">
               <p className="text-xs text-gray-400 mb-1 text-center">{isRtl ? "לאחר עיבוד" : "After processing"}</p>
               <div className="rounded-lg overflow-hidden bg-black border border-gray-700" style={{ aspectRatio: '1' }}>
                 <img
@@ -615,7 +600,31 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
                 />
               </div>
             </div>
-          </div>
+          ) : (
+            /* Upload mode: side by side original + processed */
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <p className="text-xs text-gray-400 mb-1 text-center">{isRtl ? "תמונה מקורית" : "Original image"}</p>
+                <div className="rounded-lg overflow-hidden bg-gray-100 border border-gray-200" style={{ aspectRatio: '1' }}>
+                  <img
+                    src={imagePreview || result.previewUrl}
+                    alt="original"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 mb-1 text-center">{isRtl ? "לאחר עיבוד" : "After processing"}</p>
+                <div className="rounded-lg overflow-hidden bg-black border border-gray-700" style={{ aspectRatio: '1' }}>
+                  <img
+                    src={result.previewUrl}
+                    alt="engraving preview"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-2 mb-4">
