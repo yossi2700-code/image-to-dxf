@@ -17,6 +17,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const execFileAsync = promisify(execFile);
+
+// Resolve python3 path — production containers may not have it on PATH
+// Try common absolute paths first, then fall back to 'python3'
+function resolvePython3(): string {
+  const candidates = ['/usr/bin/python3', '/usr/local/bin/python3', '/usr/bin/python'];
+  for (const p of candidates) {
+    try { fs.accessSync(p); return p; } catch { /* not found */ }
+  }
+  return 'python3';
+}
+const PYTHON3 = resolvePython3();
+const EXEC_ENV = { ...process.env, PATH: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' };
+
 const router = express.Router();
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -103,7 +116,7 @@ router.post("/process", upload.single("image"), async (req, res) => {
       dpi,
     ];
 
-    const { stdout, stderr } = await execFileAsync("python3", args, { timeout: 60000 });
+    const { stdout, stderr } = await execFileAsync(PYTHON3, args, { timeout: 60000, env: EXEC_ENV });
 
     if (stderr && !stdout) {
       throw new Error(`Python error: ${stderr}`);
@@ -220,7 +233,7 @@ router.post("/generate-and-process", express.json(), async (req, res) => {
       dpi,
     ];
 
-    const { stdout, stderr } = await execFileAsync("python3", args, { timeout: 60000 });
+    const { stdout, stderr } = await execFileAsync(PYTHON3, args, { timeout: 60000, env: EXEC_ENV });
 
     if (stderr && !stdout) {
       throw new Error(`Python error: ${stderr}`);
@@ -293,7 +306,7 @@ diff_gb = np.mean(np.abs(g.astype(int) - b.astype(int)))
 is_color = max(diff_rg, diff_rb, diff_gb) > 10
 print("true" if is_color else "false")
 `;
-    const { stdout } = await efAsync("python3", ["-c", script, imagePath], { timeout: 10000 });
+    const { stdout } = await efAsync(PYTHON3, ["-c", script, imagePath], { timeout: 10000, env: EXEC_ENV });
     return stdout.trim() === "true";
   } catch {
     return false;
