@@ -145,9 +145,20 @@ export async function processForGraniteEngraving(
     finalPixels[i] = v < blackPoint ? 0 : v;
   }
 
-  // ── 8. Output as 8-bit BMP (manual BMP header construction) ─────────────────
+  // ── 8. Smart invert: granite machines engrave white on black.
+  //        If the image has a dark background (avg < 128), invert so background → white.
+  const avgBrightness = finalPixels.reduce((s, v) => s + v, 0) / total;
+  const outputPixels = new Uint8Array(total);
+  if (avgBrightness < 110) {
+    // Dark background → invert so the subject becomes dark on white
+    for (let i = 0; i < total; i++) outputPixels[i] = 255 - finalPixels[i];
+  } else {
+    outputPixels.set(finalPixels);
+  }
+
+  // ── 9. Output as 8-bit BMP (manual BMP header construction) ─────────────────
   // sharp doesn't support BMP output, so we build the BMP file manually
-  const bmpBuffer = buildBmp8bit(finalPixels, width, height);
+  const bmpBuffer = buildBmp8bit(outputPixels, width, height);
 
   return {
     width,
