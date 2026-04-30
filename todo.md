@@ -2928,3 +2928,10 @@
 - [x] הוספת endpoint /api/needle-engraving/generate-and-process לשרת
 - [x] שילוב כטאב inline בדף הראשי (TabsTrigger + TabsContent)
 - [x] כפתור כרטיס חריטת תמונה מנווט לטאב inline (לא לעמוד נפרד)
+
+## באנר ברוך הבא למשתמשים חדשים
+
+- [x] קומפוננטה WelcomeBanner עם קונפטי + שאלה "מה בא לך לייצר?"
+- [x] הצגה פעם אחת בלבד לאחר הרשמה (localStorage flag)
+- [x] כפתורי פיצ'רים: AI Create, Image to Lines, Portrait, Photo Engrave
+- [x] תמיכה בעברית ואנגלית

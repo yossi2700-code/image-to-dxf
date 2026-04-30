@@ -21,6 +21,7 @@ import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { FaceDetectTab } from "@/components/FaceDetectTab";
 import { CncReliefTab } from "@/components/CncReliefTab";
 import { NeedleEngravingTab } from "@/components/NeedleEngravingTab";
+import { WelcomeBannerNew } from "@/components/WelcomeBannerNew";
 import { AiProcessingAnimation } from "@/components/AiProcessingAnimation";
 import { OnboardingTour, resetOnboardingTour } from "@/components/OnboardingTour";
 import { NewUserNudgePopup } from "@/components/NewUserNudgePopup";
@@ -2978,7 +2979,17 @@ export default function Home() {
 
          {/* ── Welcome Banner (new registrations only) ── */}
         {showWelcomeBanner && (
-          <WelcomeBanner onDismiss={() => setShowWelcomeBanner(false)} />
+          <WelcomeBannerNew
+            userName={appUser?.name ?? undefined}
+            onDismiss={() => setShowWelcomeBanner(false)}
+            onSelectFeature={(tab) => {
+              setActiveTab(tab);
+              localStorage.setItem('active_tab', tab);
+              setTimeout(() => {
+                document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }, 100);
+            }}
+          />
         )}
         {/* ── PWA Install Banner — desktop only ── */}
         {showPwaBanner && (
