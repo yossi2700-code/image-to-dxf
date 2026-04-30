@@ -20,6 +20,7 @@ import { ArchitecturalAiTab } from "@/components/ArchitecturalAiTab";
 import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { FaceDetectTab } from "@/components/FaceDetectTab";
 import { CncReliefTab } from "@/components/CncReliefTab";
+import { NeedleEngravingTab } from "@/components/NeedleEngravingTab";
 import { AiProcessingAnimation } from "@/components/AiProcessingAnimation";
 import { OnboardingTour, resetOnboardingTour } from "@/components/OnboardingTour";
 import { NewUserNudgePopup } from "@/components/NewUserNudgePopup";
@@ -3131,13 +3132,13 @@ export default function Home() {
 
           {/* Photo Engraving — active */}
           <button
-            onClick={() => { window.location.href = '/needle-engraving'; }}
-            className="flex flex-col items-center gap-0 rounded-xl overflow-hidden relative"
+            onClick={() => { setActiveTab('needle-engraving'); localStorage.setItem('active_tab', 'needle-engraving'); document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+            className="flex flex-col items-center gap-0 rounded-xl overflow-hidden transition-all hover:scale-105 active:scale-95 relative"
             style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', cursor: 'pointer' }}
           >
             <div className="w-full relative" style={{ background: '#0f172a', paddingBottom: '55%' }}>
               <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/engraving-before-after-VkQVZW3WySA6fArrkEeyPQ.webp"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/engraving-car-v1-kPbQRBPcEsicJqNBqf8Xj9.webp"
                 alt="Photo Engraving"
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
               />
@@ -3154,7 +3155,7 @@ export default function Home() {
           onValueChange={(v) => {
             setActiveTab(v);
             localStorage.setItem("active_tab", v);
-            const tabNames: Record<string, string> = { ai: 'AI Create', trace: 'Image to Lines', face: 'Portrait', 'cnc-relief': 'CNC Relief', redraw: 'Document Redraw' };
+            const tabNames: Record<string, string> = { ai: 'AI Create', trace: 'Image to Lines', face: 'Portrait', 'cnc-relief': 'CNC Relief', redraw: 'Document Redraw', 'needle-engraving': 'Photo Engraving' };
             trackHome(`tab_switch_${v}`, `מעבר ל: ${tabNames[v] ?? v}`);
           }}
           dir={isRtl ? "rtl" : "ltr"}
@@ -3226,6 +3227,17 @@ export default function Home() {
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
                 </span>
               )}
+            </TabsTrigger>
+            {/* 4. Photo Engraving */}
+            <TabsTrigger
+              value="needle-engraving"
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
+              style={{
+                background: activeTab === 'needle-engraving' ? 'linear-gradient(135deg, #1e3a5f, #0f4c75)' : 'transparent',
+              }}
+            >
+              <ImageIcon className="w-4 h-4 shrink-0" />
+              <span className="truncate text-[11px]">{isRtl ? 'חריטת תמונה' : 'Photo Engrave'}</span>
             </TabsTrigger>
             {/* arch-ai and sketch tabs hidden until ready */}
             {/* 5. CNC Relief (coming soon) */}
@@ -3502,6 +3514,40 @@ export default function Home() {
               </div>
             </div>
             <CncReliefTab onInsufficientTokens={() => setShowTokensBanner(true)} />
+          </TabsContent>
+
+          <TabsContent value="needle-engraving">
+            {/* Demo banner — Photo Engraving */}
+            <div
+              className="mb-5 rounded-2xl overflow-hidden p-4"
+              style={{ background: '#ffffff', border: '1px solid #e8eaf0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #1e3a5f, #0f4c75)'}}>
+                  <ImageIcon className="w-3.5 h-3.5 text-white" />
+                </div>
+                <span className="text-sm font-bold text-gray-800">
+                  {isRtl ? 'חריטת תמונה עם מחט יהלום' : 'Diamond Needle Photo Engraving'}
+                </span>
+              </div>
+              <div className="rounded-xl overflow-hidden" style={{ maxHeight: '160px' }}>
+                <img
+                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/engraving-car-v1-kPbQRBPcEsicJqNBqf8Xj9.webp"
+                  alt="Photo Engraving example"
+                  className="w-full object-cover"
+                  style={{ objectPosition: 'center' }}
+                />
+              </div>
+              <p className="text-xs text-gray-500 leading-relaxed mt-3">
+                {isRtl
+                  ? 'המר תמונה לקובץ BMP 8-bit מוכן למכונות חריטה עם מחט יהלום על גרניט שחור. נתמך איזון חשיפה וחידוד פרטים. אפשר להעלות תמונה או ליצור באמצעות AI.'
+                  : 'Convert any image to BMP 8-bit file ready for diamond needle engraving machines on black granite. Includes exposure balance and detail sharpening. Upload a photo or generate with AI.'}
+              </p>
+            </div>
+            <NeedleEngravingTab
+              onOpenAuth={() => openAuthAs('unregistered')}
+              onInsufficientTokens={() => setShowTokensBanner(true)}
+            />
           </TabsContent>
         </Tabs>
         </div>{/* end centering wrapper */}

@@ -8,7 +8,7 @@ import { promisify } from "util";
 import { storagePut } from "./storage";
 import { invokeLLM } from "./_core/llm";
 import { generateImage } from "./_core/imageGeneration";
-import { getAppUserFromCookie } from "./appAuth";
+import { getAppUserFromRequest } from "./appAuth";
 import { deductTokens } from "./tokenService";
 import { recordUserAction } from "./userActionsDb";
 
@@ -40,8 +40,8 @@ router.post("/process", upload.single("image"), async (req, res) => {
       return res.status(400).json({ error: "No image uploaded" });
     }
 
-    // Auth + token check
-    const appUser = getAppUserFromCookie(req.cookies as Record<string, string>);
+    // Auth + token check (supports both app_user_session and Manus OAuth)
+    const appUser = await getAppUserFromRequest(req, res);
     if (!appUser) {
       return res.status(401).json({ error: "UNAUTHORIZED" });
     }
@@ -151,6 +151,117 @@ router.post("/process", upload.single("image"), async (req, res) => {
     });
     const message = err instanceof Error ? err.message : String(err);
     console.error("[needle-engraving] Error:", message);
+    return res.status(500).json({ error: message });
+  }
+});
+
+/**
+ * POST /api/needle-engraving/generate-and-process
+ * AI text-to-image mode: generate image from prompt, then process for engraving
+ * Body: JSON { prompt, widthCm?, heightCm?, dpi?, isPortrait? }
+ */
+router.post("/generate-and-process", express.json(), async (req, res) => {
+  const tmpDir = os.tmpdir();
+  const id = `engraving-gen-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const outputBmpPath = path.join(tmpDir, `${id}-output.bmp`);
+
+  try {
+    const appUser = await getAppUserFromRequest(req, res);
+    if (!appUser) {
+      return res.status(401).json({ error: "UNAUTHORIZED" });
+    }
+    const tokenCheck = await deductTokens(appUser.userId, "needle_engraving" as any, { checkOnly: true });
+    if (!tokenCheck.success) {
+      return res.status(402).json({ error: "INSUFFICIENT_TOKENS", balance: tokenCheck.balance });
+    }
+
+    const { prompt, widthCm, heightCm, dpi = "180", isPortrait = "false" } = req.body as {
+      prompt: string;
+      widthCm?: string;
+      heightCm?: string;
+      dpi?: string;
+      isPortrait?: string;
+    };
+
+    if (!prompt || !prompt.trim()) {
+      return res.status(400).json({ error: "Prompt is required" });
+    }
+
+    // Step 1: Generate image with AI (grayscale, optimized for engraving)
+    const engravingPrompt = isPortrait === "true"
+      ? `Professional portrait: ${prompt}. Grayscale only, no color. High contrast, sharp facial details, smooth gradients. Black background. Optimized for diamond needle engraving on black granite.`
+      : `${prompt}. Grayscale only, no color. High contrast, sharp details, clean composition. Black background. Optimized for diamond needle engraving on black granite.`;
+
+    const { url: generatedUrl } = await generateImage({ prompt: engravingPrompt });
+    if (!generatedUrl) throw new Error("AI image generation failed");
+
+    // Step 2: Download generated image
+    const genResponse = await fetch(generatedUrl);
+    const genBuffer = Buffer.from(await genResponse.arrayBuffer());
+    const genInputPath = path.join(tmpDir, `${id}-generated.png`);
+    fs.writeFileSync(genInputPath, genBuffer);
+
+    // Step 3: Upload generated image preview to S3 (before processing)
+    const genPreviewKey = `engraving-gen-preview/${id}-generated.png`;
+    const { url: generatedPreviewUrl } = await storagePut(genPreviewKey, genBuffer, "image/png");
+
+    // Step 4: Run Python processing script
+    const scriptPath = path.join(__dirname, "process_engraving.py");
+    const args = [
+      scriptPath,
+      genInputPath,
+      outputBmpPath,
+      widthCm || "null",
+      heightCm || "null",
+      dpi,
+    ];
+
+    const { stdout, stderr } = await execFileAsync("python3", args, { timeout: 60000 });
+
+    if (stderr && !stdout) {
+      throw new Error(`Python error: ${stderr}`);
+    }
+
+    const result = JSON.parse(stdout.trim());
+    if (result.error) {
+      throw new Error(result.error);
+    }
+
+    // Step 5: Upload BMP to S3
+    const bmpBuffer = fs.readFileSync(outputBmpPath);
+    const bmpKey = `engraving-output/${id}.bmp`;
+    const { url: bmpUrl } = await storagePut(bmpKey, bmpBuffer, "image/bmp");
+
+    // Cleanup
+    [genInputPath, outputBmpPath].forEach((f) => {
+      try { fs.unlinkSync(f); } catch {}
+    });
+
+    // Deduct tokens after success
+    await deductTokens(appUser.userId, "needle_engraving" as any);
+    await recordUserAction({
+      appUserId: appUser.userId,
+      actionType: "convert",
+      description: `needle_engraving_ai prompt="${prompt.slice(0, 60)}" dpi=${dpi}`,
+    });
+
+    return res.json({
+      success: true,
+      bmpUrl,
+      previewUrl: generatedPreviewUrl,
+      width: result.width,
+      height: result.height,
+      bitDepth: result.bitDepth,
+      fileSizeKB: result.fileSizeKB,
+      wasColorConverted: false,
+      generatedImageUrl: generatedPreviewUrl,
+    });
+  } catch (err: unknown) {
+    [outputBmpPath].forEach((f) => {
+      try { fs.unlinkSync(f); } catch {}
+    });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[needle-engraving/generate] Error:", message);
     return res.status(500).json({ error: message });
   }
 });
