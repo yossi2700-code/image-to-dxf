@@ -114,14 +114,27 @@ export async function getUserDailyCount(appUserId: number): Promise<number> {
 
 router.post("/api/app-auth/register", async (req, res) => {
   try {
-    const { name, email, password, termsAccepted, termsVersion, privacyVersion } = req.body as {
+    const { name, email, password, termsAccepted, termsVersion, privacyVersion, language: bodyLang } = req.body as {
       name?: string;
       email?: string;
       password?: string;
       termsAccepted?: boolean;
       termsVersion?: string;
       privacyVersion?: string;
+      language?: string;
     };
+    // Determine language: use body lang if valid, else fall back to Accept-Language header
+    const acceptLang = (req.headers["accept-language"] ?? "").toLowerCase();
+    const detectedLang: "he" | "en" | "ru" | "es" | "fr" | "ar" | "zh" =
+      (bodyLang === "he" || bodyLang === "en" || bodyLang === "ru" || bodyLang === "es" || bodyLang === "fr" || bodyLang === "ar" || bodyLang === "zh")
+        ? bodyLang
+        : acceptLang.startsWith("he") ? "he"
+        : acceptLang.startsWith("ru") ? "ru"
+        : acceptLang.startsWith("es") ? "es"
+        : acceptLang.startsWith("fr") ? "fr"
+        : acceptLang.startsWith("ar") ? "ar"
+        : acceptLang.startsWith("zh") ? "zh"
+        : "en";
     if (!termsAccepted) return res.status(400).json({ error: "יש לאשר את תנאי השימוש ומדיניות הפרטיות" });
     if (!email || !password) return res.status(400).json({ error: "אימייל וסיסמה נדרשים" });
     if (password.length < 6) return res.status(400).json({ error: "הסיסמה חייבת להכיל לפחות 6 תווים" });
@@ -138,6 +151,7 @@ router.post("/api/app-auth/register", async (req, res) => {
       name: name?.trim() || null,
       email: email.toLowerCase(),
       passwordHash,
+      language: detectedLang,
     });
 
     const userId = (result as { insertId: number }).insertId;
@@ -176,7 +190,7 @@ router.post("/api/app-auth/register", async (req, res) => {
       name: name?.trim() || null,
       tokens: 10,
       siteUrl: "https://dxfai.ai",
-      language: "he",
+      language: detectedLang === "he" ? "he" : "en",
     });
 
     const token = signToken(userId, email.toLowerCase());

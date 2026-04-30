@@ -247,7 +247,7 @@ export function AuthDialog({ open, onOpenChange, limitReached, authReason, initi
       const endpoint = mode === "register" ? "/api/app-auth/register" : "/api/app-auth/login";
       const campaignCode = new URLSearchParams(window.location.search).get("campaign") || undefined;
       const body = mode === "register"
-        ? { name, email, password, termsAccepted: true, termsVersion: "2026-03-10", privacyVersion: "2026-03-10", campaignCode }
+        ? { name, email, password, termsAccepted: true, termsVersion: "2026-03-10", privacyVersion: "2026-03-10", campaignCode, language }
         : { email, password, rememberMe, campaignCode };
       try { localStorage.setItem("auth_remember_me", String(rememberMe)); } catch { /* ignore */ }
 
