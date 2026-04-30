@@ -22,6 +22,7 @@ export const TOKEN_COSTS_DEFAULT = {
   ai_refine: 2,
   face_detect: 4,
   cnc_relief: 4,
+  needle_engraving: 10,
   convert: 0,
 } as const;
 

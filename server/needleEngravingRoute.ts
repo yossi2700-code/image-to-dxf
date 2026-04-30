@@ -8,6 +8,9 @@ import { promisify } from "util";
 import { storagePut } from "./storage";
 import { invokeLLM } from "./_core/llm";
 import { generateImage } from "./_core/imageGeneration";
+import { getAppUserFromCookie } from "./appAuth";
+import { deductTokens } from "./tokenService";
+import { recordUserAction } from "./userActionsDb";
 
 const execFileAsync = promisify(execFile);
 const router = express.Router();
@@ -35,6 +38,16 @@ router.post("/process", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No image uploaded" });
+    }
+
+    // Auth + token check
+    const appUser = getAppUserFromCookie(req.cookies as Record<string, string>);
+    if (!appUser) {
+      return res.status(401).json({ error: "UNAUTHORIZED" });
+    }
+    const tokenCheck = await deductTokens(appUser.userId, "needle_engraving" as any, { checkOnly: true });
+    if (!tokenCheck.success) {
+      return res.status(402).json({ error: "INSUFFICIENT_TOKENS", balance: tokenCheck.balance });
     }
 
     const { widthCm, heightCm, dpi = "180", isPortrait = "false" } = req.body as {
@@ -111,6 +124,14 @@ router.post("/process", upload.single("image"), async (req, res) => {
     // Cleanup temp files
     [inputPath, outputBmpPath, processInputPath, previewPath].forEach((f) => {
       try { fs.unlinkSync(f); } catch {}
+    });
+
+    // Deduct tokens after success
+    await deductTokens(appUser.userId, "needle_engraving" as any);
+    await recordUserAction({
+      appUserId: appUser.userId,
+      actionType: "convert",
+      description: `needle_engraving w=${widthCm}cm h=${heightCm}cm dpi=${dpi}`,
     });
 
     return res.json({

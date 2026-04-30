@@ -3129,6 +3129,22 @@ export default function Home() {
             <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #6366f1, #7c3aed)', color: 'white', letterSpacing: '0.02em' }}>{isRtl ? 'CNC תבליט' : 'CNC Relief'}</span>
           </button>
 
+          {/* Photo Engraving — active */}
+          <button
+            onClick={() => { window.location.href = '/needle-engraving'; }}
+            className="flex flex-col items-center gap-0 rounded-xl overflow-hidden relative"
+            style={{ border: 'none', padding: 0, background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', cursor: 'pointer' }}
+          >
+            <div className="w-full relative" style={{ background: '#0f172a', paddingBottom: '55%' }}>
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/engraving-before-after-VkQVZW3WySA6fArrkEeyPQ.webp"
+                alt="Photo Engraving"
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </div>
+            <span className="w-full text-[11px] font-bold text-center py-1.5" style={{ background: 'linear-gradient(135deg, #1e3a5f, #0f4c75)', color: 'white', letterSpacing: '0.02em' }}>{isRtl ? 'חריטת תמונה' : 'Photo Engraving'}</span>
+          </button>
+
         </div>
 
         {/* Tabs */}
