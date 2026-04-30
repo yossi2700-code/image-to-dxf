@@ -2902,3 +2902,13 @@
 
 ## תיקון AI hallucination - אפריל 2026
 - [x] תיקון: AI מייצר תוכן לא קשור לתמונה המקורית - נוסף hallucination check post-generation עם retry אוטומטיוט יותר
+
+## חריטה עם מחט יהלום (Diamond Needle Engraving)
+
+- [x] Python processing script: grayscale, CLAHE, unsharp mask, BMP 8-bit output
+- [x] התקנת opencv-python-headless, pillow, numpy בשרת
+- [x] Server tRPC procedure: upload image → AI color-to-grayscale (if color) → Python processing → return BMP download URL
+- [x] Frontend page: /needle-engraving עם העלאה, הגדרות גודל (ס"מ + DPI), preview, הורדת BMP
+- [x] הוספה לניווט הראשי / כרטיסי פיצ'ר בדף הבית
+- [x] תמיכה בתמונות צבעוניות (AI grayscale conversion) ותמונות שחור-לבן (עיבוד Python ישיר)
+- [x] פלט: BMP 8-bit, 180 DPI ברירת מחדל, גודל מותאם בס"מ

@@ -45,6 +45,7 @@ const FreeDxfFileDetail = lazy(() => import("./pages/FreeDxfFileDetail"));
 const SketchTest = lazy(() => import("./pages/SketchTest"));
 const ReliefTest = lazy(() => import("./pages/ReliefTest"));
 const BuyDesignPreview = lazy(() => import("./pages/BuyDesignPreview"));
+const NeedleEngraving = lazy(() => import("./pages/NeedleEngraving"));
 
 /** Generates or retrieves a persistent session ID from localStorage */
 function getOrCreateSessionId(): string {
@@ -253,6 +254,7 @@ function Router() {
         <Route path={"/sketch-test"} component={SketchTest} />
         <Route path={"/relief-test"} component={ReliefTest} />
         <Route path={"/buy-design-preview"} component={BuyDesignPreview} />
+        <Route path={"/needle-engraving"} component={NeedleEngraving} />
         <Route path={"/404"} component={NotFound} />
         {/* Final fallback route */}
         <Route component={NotFound} />
