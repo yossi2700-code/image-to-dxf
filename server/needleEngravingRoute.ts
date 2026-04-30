@@ -1,34 +1,12 @@
 import express from "express";
 import multer from "multer";
-import path from "path";
-import { fileURLToPath } from "url";
-import fs from "fs";
-import os from "os";
-import { execFile } from "child_process";
-import { promisify } from "util";
+import sharp from "sharp";
 import { storagePut } from "./storage";
 import { generateImage } from "./_core/imageGeneration";
 import { getAppUserFromRequest } from "./appAuth";
 import { deductTokens } from "./tokenService";
 import { recordUserAction } from "./userActionsDb";
-
-// ESM-compatible __dirname polyfill
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const execFileAsync = promisify(execFile);
-
-// Resolve python3 path — production containers may not have it on PATH
-// Try common absolute paths first, then fall back to 'python3'
-function resolvePython3(): string {
-  const candidates = ['/usr/bin/python3', '/usr/local/bin/python3', '/usr/bin/python'];
-  for (const p of candidates) {
-    try { fs.accessSync(p); return p; } catch { /* not found */ }
-  }
-  return 'python3';
-}
-const PYTHON3 = resolvePython3();
-const EXEC_ENV = { ...process.env, PATH: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' };
+import { processForGraniteEngraving } from "./engravingProcessor";
 
 const router = express.Router();
 const upload = multer({
@@ -46,18 +24,13 @@ const upload = multer({
  *   - isPortrait: "true" | "false" (optional)
  */
 router.post("/process", upload.single("image"), async (req, res) => {
-  const tmpDir = os.tmpdir();
   const id = `engraving-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const inputPath = path.join(tmpDir, `${id}-input.png`);
-  const outputBmpPath = path.join(tmpDir, `${id}-output.bmp`);
-  const previewPath = path.join(tmpDir, `${id}-preview.png`);
-
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No image uploaded" });
     }
 
-    // Auth + token check (supports both app_user_session and Manus OAuth)
+    // Auth + token check
     const appUser = await getAppUserFromRequest(req, res);
     if (!appUser) {
       return res.status(401).json({ error: "UNAUTHORIZED" });
@@ -74,13 +47,10 @@ router.post("/process", upload.single("image"), async (req, res) => {
       isPortrait?: string;
     };
 
-    // Save uploaded file to temp
-    fs.writeFileSync(inputPath, req.file.buffer);
+    let processBuffer = req.file.buffer;
 
     // Step 1: If color image → convert to grayscale via AI
-    let processInputPath = inputPath;
-    const isColor = await checkIfColorImage(inputPath);
-
+    const isColor = await checkIfColorImage(req.file.buffer);
     if (isColor) {
       const promptText =
         isPortrait === "true"
@@ -96,52 +66,27 @@ router.post("/process", upload.single("image"), async (req, res) => {
         originalImages: [{ url: originalUrl, mimeType: "image/png" }],
       });
 
-      // Download AI result
       if (!aiGrayscaleUrl) throw new Error("AI grayscale conversion failed");
       const aiResponse = await fetch(aiGrayscaleUrl);
-      const aiBuffer = Buffer.from(await aiResponse.arrayBuffer());
-      const aiInputPath = path.join(tmpDir, `${id}-ai-gray.png`);
-      fs.writeFileSync(aiInputPath, aiBuffer);
-      processInputPath = aiInputPath;
+      processBuffer = Buffer.from(await aiResponse.arrayBuffer());
     }
 
-    // Step 2: Run Python processing script
-    const scriptPath = path.join(__dirname, "process_engraving.py");
-    const args = [
-      scriptPath,
-      processInputPath,
-      outputBmpPath,
-      widthCm || "null",
-      heightCm || "null",
-      dpi,
-    ];
-
-    const { stdout, stderr } = await execFileAsync(PYTHON3, args, { timeout: 60000, env: EXEC_ENV });
-
-    if (stderr && !stdout) {
-      throw new Error(`Python error: ${stderr}`);
-    }
-
-    const result = JSON.parse(stdout.trim());
-    if (result.error) {
-      throw new Error(result.error);
-    }
+    // Step 2: Process for granite engraving using Node.js/sharp (no Python needed)
+    const result = await processForGraniteEngraving(processBuffer, {
+      widthCm: widthCm ? parseFloat(widthCm) : undefined,
+      heightCm: heightCm ? parseFloat(heightCm) : undefined,
+      dpi: parseInt(dpi, 10) || 180,
+      isPortrait: isPortrait === "true",
+    });
 
     // Step 3: Upload BMP to S3
-    const bmpBuffer = fs.readFileSync(outputBmpPath);
     const bmpKey = `engraving-output/${id}.bmp`;
-    const { url: bmpUrl } = await storagePut(bmpKey, bmpBuffer, "image/bmp");
+    const { url: bmpUrl } = await storagePut(bmpKey, result.bmpBuffer, "image/bmp");
 
-    // Step 4: Create PNG preview (grayscale PNG for browser display)
-    // Use the processed grayscale image as preview
-    const previewBuffer = fs.readFileSync(processInputPath);
+    // Step 4: Create PNG preview for browser display
+    const previewBuffer = await sharp(processBuffer).grayscale().png().toBuffer();
     const previewKey = `engraving-preview/${id}.png`;
     const { url: previewUrl } = await storagePut(previewKey, previewBuffer, "image/png");
-
-    // Cleanup temp files
-    [inputPath, outputBmpPath, processInputPath, previewPath].forEach((f) => {
-      try { fs.unlinkSync(f); } catch {}
-    });
 
     // Deduct tokens after success
     await deductTokens(appUser.userId, "needle_engraving" as any);
@@ -162,10 +107,6 @@ router.post("/process", upload.single("image"), async (req, res) => {
       wasColorConverted: isColor,
     });
   } catch (err: unknown) {
-    // Cleanup on error
-    [inputPath, outputBmpPath, previewPath].forEach((f) => {
-      try { fs.unlinkSync(f); } catch {}
-    });
     const message = err instanceof Error ? err.message : String(err);
     console.error("[needle-engraving] Error:", message);
     return res.status(500).json({ error: message });
@@ -178,10 +119,7 @@ router.post("/process", upload.single("image"), async (req, res) => {
  * Body: JSON { prompt, widthCm?, heightCm?, dpi?, isPortrait? }
  */
 router.post("/generate-and-process", express.json(), async (req, res) => {
-  const tmpDir = os.tmpdir();
   const id = `engraving-gen-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const outputBmpPath = path.join(tmpDir, `${id}-output.bmp`);
-
   try {
     const appUser = await getAppUserFromRequest(req, res);
     if (!appUser) {
@@ -215,44 +153,22 @@ router.post("/generate-and-process", express.json(), async (req, res) => {
     // Step 2: Download generated image
     const genResponse = await fetch(generatedUrl);
     const genBuffer = Buffer.from(await genResponse.arrayBuffer());
-    const genInputPath = path.join(tmpDir, `${id}-generated.png`);
-    fs.writeFileSync(genInputPath, genBuffer);
 
     // Step 3: Upload generated image preview to S3 (before processing)
     const genPreviewKey = `engraving-gen-preview/${id}-generated.png`;
     const { url: generatedPreviewUrl } = await storagePut(genPreviewKey, genBuffer, "image/png");
 
-    // Step 4: Run Python processing script
-    const scriptPath = path.join(__dirname, "process_engraving.py");
-    const args = [
-      scriptPath,
-      genInputPath,
-      outputBmpPath,
-      widthCm || "null",
-      heightCm || "null",
-      dpi,
-    ];
-
-    const { stdout, stderr } = await execFileAsync(PYTHON3, args, { timeout: 60000, env: EXEC_ENV });
-
-    if (stderr && !stdout) {
-      throw new Error(`Python error: ${stderr}`);
-    }
-
-    const result = JSON.parse(stdout.trim());
-    if (result.error) {
-      throw new Error(result.error);
-    }
+    // Step 4: Process for granite engraving using Node.js/sharp (no Python needed)
+    const result = await processForGraniteEngraving(genBuffer, {
+      widthCm: widthCm ? parseFloat(widthCm) : undefined,
+      heightCm: heightCm ? parseFloat(heightCm) : undefined,
+      dpi: parseInt(dpi, 10) || 180,
+      isPortrait: isPortrait === "true",
+    });
 
     // Step 5: Upload BMP to S3
-    const bmpBuffer = fs.readFileSync(outputBmpPath);
     const bmpKey = `engraving-output/${id}.bmp`;
-    const { url: bmpUrl } = await storagePut(bmpKey, bmpBuffer, "image/bmp");
-
-    // Cleanup
-    [genInputPath, outputBmpPath].forEach((f) => {
-      try { fs.unlinkSync(f); } catch {}
-    });
+    const { url: bmpUrl } = await storagePut(bmpKey, result.bmpBuffer, "image/bmp");
 
     // Deduct tokens after success
     await deductTokens(appUser.userId, "needle_engraving" as any);
@@ -274,9 +190,6 @@ router.post("/generate-and-process", express.json(), async (req, res) => {
       generatedImageUrl: generatedPreviewUrl,
     });
   } catch (err: unknown) {
-    [outputBmpPath].forEach((f) => {
-      try { fs.unlinkSync(f); } catch {}
-    });
     const message = err instanceof Error ? err.message : String(err);
     console.error("[needle-engraving/generate] Error:", message);
     return res.status(500).json({ error: message });
@@ -284,30 +197,19 @@ router.post("/generate-and-process", express.json(), async (req, res) => {
 });
 
 /**
- * Check if an image has meaningful color (not grayscale)
+ * Check if an image buffer has meaningful color (not grayscale).
+ * Uses sharp — pure Node.js, no Python required.
  */
-async function checkIfColorImage(imagePath: string): Promise<boolean> {
+async function checkIfColorImage(buffer: Buffer): Promise<boolean> {
   try {
-    const { execFile: ef } = await import("child_process");
-    const { promisify: prom } = await import("util");
-    const efAsync = prom(ef);
-    const script = `
-import cv2
-import numpy as np
-import sys
-img = cv2.imread(sys.argv[1])
-if img is None:
-    print("false")
-    sys.exit(0)
-b, g, r = cv2.split(img)
-diff_rg = np.mean(np.abs(r.astype(int) - g.astype(int)))
-diff_rb = np.mean(np.abs(r.astype(int) - b.astype(int)))
-diff_gb = np.mean(np.abs(g.astype(int) - b.astype(int)))
-is_color = max(diff_rg, diff_rb, diff_gb) > 10
-print("true" if is_color else "false")
-`;
-    const { stdout } = await efAsync(PYTHON3, ["-c", script, imagePath], { timeout: 10000, env: EXEC_ENV });
-    return stdout.trim() === "true";
+    const { channels } = await sharp(buffer).stats();
+    if (!channels || channels.length < 3) return false;
+    // Compare mean values of R, G, B channels
+    const [r, g, b] = channels;
+    const diffRG = Math.abs(r.mean - g.mean);
+    const diffRB = Math.abs(r.mean - b.mean);
+    const diffGB = Math.abs(g.mean - b.mean);
+    return Math.max(diffRG, diffRB, diffGB) > 10;
   } catch {
     return false;
   }
