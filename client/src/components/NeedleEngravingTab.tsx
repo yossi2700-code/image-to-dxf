@@ -4,18 +4,20 @@
  * Two modes:
  *   1. Upload image → process for engraving
  *   2. AI generate → create image from prompt → process for engraving
+ *
+ * v2: AiProcessingAnimation with elapsed timer, step labels, server warm-up message.
  */
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTokenCost } from "@/hooks/useTokenCost";
 import { trpc } from "@/lib/trpc";
+import { AiProcessingAnimation } from "@/components/AiProcessingAnimation";
 import {
   Upload,
   Download,
-  Loader2,
   ImageIcon,
   CheckCircle2,
   X,
@@ -44,7 +46,7 @@ interface NeedleEngravingTabProps {
 }
 
 export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleEngravingTabProps) {
-  const { isRtl, language } = useLanguage();
+  const { isRtl } = useLanguage();
   const { getCost } = useTokenCost();
   const cost = getCost("needle_engraving");
   const { refetch: refetchTokens } = trpc.tokens.balance.useQuery(undefined, { enabled: false });
@@ -70,6 +72,56 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
   const [dpi, setDpi] = useState(180);
   const [showSettings, setShowSettings] = useState(false);
 
+  // Processing animation state
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [currentStep, setCurrentStep] = useState("");
+  const [progressPct, setProgressPct] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Steps for the processing animation
+  const uploadSteps = isRtl
+    ? ["מנתח תמונה...", "מאזן חשיפה (CLAHE)...", "מחדד פרטים...", "יוצר קובץ BMP..."]
+    : ["Analyzing image...", "Balancing exposure (CLAHE)...", "Sharpening details...", "Creating BMP file..."];
+
+  const aiSteps = isRtl
+    ? ["יוצר תמונה עם AI...", "ממיר לגווני אפור...", "מאזן חשיפה...", "יוצר קובץ BMP..."]
+    : ["Generating image with AI...", "Converting to grayscale...", "Balancing exposure...", "Creating BMP file..."];
+
+  // Start/stop the elapsed timer
+  const startTimer = useCallback(() => {
+    setElapsedSeconds(0);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setElapsedSeconds(s => s + 1);
+    }, 1000);
+  }, []);
+
+  const stopTimer = useCallback(() => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+  }, []);
+
+  // Update current step label and progress based on elapsed time
+  useEffect(() => {
+    if (status !== "loading") return;
+    const steps = mode === "ai" ? aiSteps : uploadSteps;
+    const maxDuration = mode === "ai" ? 70 : 35;
+    const stepDuration = maxDuration / steps.length;
+    const idx = Math.min(Math.floor(elapsedSeconds / stepDuration), steps.length - 1);
+    setCurrentStep(steps[idx]);
+    // Progress: grows to 95% over maxDuration, then stalls until done
+    const raw = Math.min((elapsedSeconds / maxDuration) * 95, 95);
+    setProgressPct(Math.round(raw));
+  }, [elapsedSeconds, status, mode]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopTimer();
+      if (abortRef.current) abortRef.current.abort();
+    };
+  }, [stopTimer]);
+
   const t = {
     title: isRtl ? "חריטת תמונה — מחט יהלום" : "Photo Engraving — Diamond Needle",
     uploadMode: isRtl ? "העלאת תמונה" : "Upload Image",
@@ -81,8 +133,6 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
     portraitMode: isRtl ? "מצב פורטרט (פנים)" : "Portrait mode (faces)",
     processBtn: isRtl ? "עבד לחריטה" : "Process for Engraving",
     generateBtn: isRtl ? "צור וחרוט" : "Generate & Engrave",
-    processing: isRtl ? "מעבד..." : "Processing...",
-    generating: isRtl ? "יוצר תמונה..." : "Generating image...",
     resultTitle: isRtl ? "קובץ BMP מוכן לחריטה" : "BMP File Ready for Engraving",
     downloadBmp: isRtl ? "הורד BMP לחריטה" : "Download BMP for Engraving",
     colorConverted: isRtl ? "תמונה צבעונית הומרה לגווני אפור על ידי AI" : "Color image converted to grayscale by AI",
@@ -98,10 +148,10 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
     noPrompt: isRtl ? "נא להזין תיאור" : "Please enter a description",
     imageSelected: isRtl ? "החלף תמונה" : "Change image",
     costLabel: isRtl ? `עלות: ${cost} קרדיטים` : `Cost: ${cost} credits`,
-    infoTitle: isRtl ? "מה זה?" : "What is this?",
     infoText: isRtl
       ? "ממיר תמונה לקובץ BMP 8-bit מוכן למכונות חריטה עם מחט יהלום על גרניט שחור. כולל איזון חשיפה (CLAHE) וחידוד פרטים."
       : "Converts image to BMP 8-bit file ready for diamond needle engraving machines on black granite. Includes exposure balance (CLAHE) and detail sharpening.",
+    featureLabel: isRtl ? "חריטת תמונה" : "Photo Engraving",
   };
 
   const handleFile = useCallback((file: File) => {
@@ -129,6 +179,14 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
     if (file) handleFile(file);
   }, [handleFile]);
 
+  const handleCancel = useCallback(() => {
+    if (abortRef.current) abortRef.current.abort();
+    stopTimer();
+    setStatus("idle");
+    setElapsedSeconds(0);
+    setCurrentStep("");
+  }, [stopTimer]);
+
   const handleProcess = async () => {
     if (mode === "upload") {
       if (!imageFile) { toast.error(t.noFile); return; }
@@ -139,6 +197,11 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
     setStatus("loading");
     setResult(null);
     setErrorMsg("");
+    startTimer();
+
+    // Create abort controller for cancellation
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
       if (mode === "upload") {
@@ -153,23 +216,27 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
           method: "POST",
           body: formData,
           credentials: "include",
+          signal: controller.signal,
         });
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({ error: "Unknown error" }));
-          if (err.error === "UNAUTHORIZED") { onOpenAuth(); setStatus("idle"); return; }
+          if (err.error === "UNAUTHORIZED") { onOpenAuth(); stopTimer(); setStatus("idle"); return; }
           if (err.error === "INSUFFICIENT_TOKENS") {
+            stopTimer();
             setErrorMsg(isRtl ? "אין מספיק קרדיטים" : "Insufficient credits");
             setStatus("error");
             if (onInsufficientTokens) onInsufficientTokens();
             return;
           }
-          throw new Error(err.error || "Server error");
+          throw new Error(err.error || `Server error ${res.status}`);
         }
 
         const data = await res.json();
+        stopTimer();
         setResult(data);
         setStatus("success");
+        setElapsedSeconds(0);
         refetchTokens();
         toast.success(isRtl ? "הקובץ מוכן לחריטה!" : "File ready for engraving!");
       } else {
@@ -178,6 +245,7 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
+          signal: controller.signal,
           body: JSON.stringify({
             prompt: prompt.trim(),
             widthCm: widthCm || undefined,
@@ -189,23 +257,31 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({ error: "Unknown error" }));
-          if (err.error === "UNAUTHORIZED") { onOpenAuth(); setStatus("idle"); return; }
+          if (err.error === "UNAUTHORIZED") { onOpenAuth(); stopTimer(); setStatus("idle"); return; }
           if (err.error === "INSUFFICIENT_TOKENS") {
+            stopTimer();
             setErrorMsg(isRtl ? "אין מספיק קרדיטים" : "Insufficient credits");
             setStatus("error");
             if (onInsufficientTokens) onInsufficientTokens();
             return;
           }
-          throw new Error(err.error || "Server error");
+          throw new Error(err.error || `Server error ${res.status}`);
         }
 
         const data = await res.json();
+        stopTimer();
         setResult(data);
         setStatus("success");
+        setElapsedSeconds(0);
         refetchTokens();
         toast.success(isRtl ? "התמונה נוצרה ומוכנה לחריטה!" : "Image generated and ready for engraving!");
       }
     } catch (err: unknown) {
+      stopTimer();
+      if (err instanceof Error && err.name === "AbortError") {
+        // User cancelled — already handled in handleCancel
+        return;
+      }
       const message = err instanceof Error ? err.message : String(err);
       setErrorMsg(message);
       setStatus("error");
@@ -224,11 +300,14 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
   };
 
   const handleReset = () => {
+    stopTimer();
     setStatus("idle");
     setResult(null);
     setErrorMsg("");
     setImageFile(null);
     setImagePreview(null);
+    setElapsedSeconds(0);
+    setCurrentStep("");
   };
 
   return (
@@ -432,7 +511,7 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
           {/* Process button */}
           <button
             onClick={handleProcess}
-            disabled={status === "loading" as Status || (mode === "upload" && !imageFile) || (mode === "ai" && !prompt.trim())}
+            disabled={(status as string) === "loading" || (mode === "upload" && !imageFile) || (mode === "ai" && !prompt.trim())}
             className="w-full h-12 rounded-xl text-white text-sm font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               background: mode === "ai"
@@ -447,28 +526,32 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
         </div>
       )}
 
-      {/* Loading state */}
+      {/* Loading state — AiProcessingAnimation with elapsed timer */}
       {status === "loading" && (
-        <div
-          className="rounded-xl p-8 flex flex-col items-center gap-4"
-          style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
-        >
-          <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #1e3a5f22, #0f4c7522)' }}>
-            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-          </div>
-          <div className="text-center">
-            <p className="font-semibold text-gray-800 mb-1">
-              {mode === "ai"
-                ? (isRtl ? "יוצר תמונה ומעבד לחריטה..." : "Generating image and processing for engraving...")
-                : (isRtl ? "מעבד תמונה לחריטה..." : "Processing image for engraving...")}
-            </p>
-            <p className="text-xs text-gray-400">
-              {mode === "ai"
-                ? (isRtl ? "AI יוצר תמונה ואז מעבד לקובץ BMP — עד 60 שניות" : "AI creates image then processes to BMP — up to 60 seconds")
-                : (isRtl ? "מייעל ניגודיות ופרטים — עד 30 שניות" : "Optimizing contrast and details — up to 30 seconds")}
-            </p>
-          </div>
-        </div>
+        <>
+          <AiProcessingAnimation
+            elapsedSeconds={elapsedSeconds}
+            progressPct={progressPct}
+            currentStep={currentStep}
+            imagePreview={imagePreview}
+            onCancel={handleCancel}
+            isRtl={isRtl}
+            accentColor="#1e3a5f"
+            accentGradient="linear-gradient(135deg, #1e3a5f, #0f4c75)"
+            featureLabel={t.featureLabel}
+          />
+          {/* Server warm-up message after 15s */}
+          {elapsedSeconds >= 15 && elapsedSeconds < 30 && (
+            <div className="rounded-xl px-4 py-3 text-center text-xs" style={{ background: '#fffbeb', border: '1px solid #fde68a', color: '#92400e' }}>
+              {isRtl ? "⚡ השרת מתחמם — עוד רגע..." : "⚡ Server warming up — almost ready..."}
+            </div>
+          )}
+          {elapsedSeconds >= 30 && (
+            <div className="rounded-xl px-4 py-3 text-center text-xs" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534' }}>
+              {isRtl ? "🔄 מעבד תמונה מורכבת — AI עובד קשה..." : "🔄 Processing complex image — AI is working hard..."}
+            </div>
+          )}
+        </>
       )}
 
       {/* Error state */}

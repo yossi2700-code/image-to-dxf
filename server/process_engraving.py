@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 """
-Diamond needle engraving image processor.
+Diamond needle engraving image processor — High Accuracy Edition.
 Converts an image to BMP 8-bit grayscale optimized for black granite engraving.
+
+Improvements over v1:
+  - Multi-stage CLAHE for better local contrast without washing out
+  - Adaptive unsharp mask that preserves fine details
+  - Edge-aware sharpening using Laplacian
+  - Gamma correction optimized for granite engraving (dark areas preserved)
+  - Noise reduction before sharpening to avoid amplifying artifacts
+  - Better black-point handling: gradual falloff instead of hard cutoff
 
 Usage:
   python3 process_engraving.py <input_path> <output_bmp_path> [width_cm] [height_cm] [dpi]
@@ -31,44 +39,111 @@ def process_for_granite_engraving(
     height_cm=None,
     dpi=180
 ):
-    # Load and convert to grayscale
-    img = cv2.imread(input_path)
+    # ── 1. Load image ──────────────────────────────────────────────────────────
+    img = cv2.imread(input_path, cv2.IMREAD_COLOR)
     if img is None:
-        raise ValueError(f"Cannot read image: {input_path}")
+        # Try with PIL as fallback (handles more formats)
+        try:
+            pil_fallback = Image.open(input_path).convert("RGB")
+            img = cv2.cvtColor(np.array(pil_fallback), cv2.COLOR_RGB2BGR)
+        except Exception:
+            raise ValueError(f"Cannot read image: {input_path}")
 
+    # ── 2. Convert to grayscale ────────────────────────────────────────────────
+    # Use luminosity weights (better perceptual grayscale than simple average)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    # CLAHE - local exposure balancing (gentle)
-    clahe = cv2.createCLAHE(clipLimit=1.2, tileGridSize=(16, 16))
-    gray = clahe.apply(gray)
+    # ── 3. Gentle noise reduction (preserve edges) ────────────────────────────
+    # Bilateral filter: smooths flat areas, keeps edges sharp
+    gray = cv2.bilateralFilter(gray, d=5, sigmaColor=20, sigmaSpace=20)
 
-    # Unsharp mask - detail preservation (gentle)
-    blurred = cv2.GaussianBlur(gray, (0, 0), 0.8)
-    gray = cv2.addWeighted(gray, 1.25, blurred, -0.25, 0)
+    # ── 4. Multi-stage CLAHE for local contrast enhancement ───────────────────
+    # Stage 1: coarse grid — global tonal balance
+    clahe_coarse = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
+    gray = clahe_coarse.apply(gray)
 
-    # Force absolute black background
-    gray = np.where(gray < 15, 0, gray).astype(np.uint8)
+    # Stage 2: fine grid — local micro-contrast (detail recovery)
+    clahe_fine = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(32, 32))
+    gray = clahe_fine.apply(gray)
 
-    pil_img = Image.fromarray(gray)
+    # ── 5. Gamma correction — optimize tonal range for granite ────────────────
+    # Granite engraving: mid-tones need to be slightly brighter to engrave well
+    # Gamma < 1.0 brightens midtones; 0.85 is a good starting point
+    gamma = 0.88
+    lut = np.array([
+        min(255, int(((i / 255.0) ** gamma) * 255))
+        for i in range(256)
+    ], dtype=np.uint8)
+    gray = cv2.LUT(gray, lut)
 
-    # Resize by cm + DPI if provided
+    # ── 6. Edge-aware sharpening ───────────────────────────────────────────────
+    # Unsharp mask: enhances fine details without halos
+    blur_sigma = 1.0
+    blurred = cv2.GaussianBlur(gray, (0, 0), blur_sigma)
+    # Strength 1.5 = moderate sharpening (1.0 = no change, 2.0 = strong)
+    sharpened = cv2.addWeighted(gray, 1.5, blurred, -0.5, 0)
+
+    # Laplacian edge boost: add fine edge detail back
+    laplacian = cv2.Laplacian(gray, cv2.CV_64F, ksize=3)
+    laplacian_norm = np.clip(laplacian * 0.15, -30, 30).astype(np.int16)
+    sharpened = np.clip(sharpened.astype(np.int16) + laplacian_norm, 0, 255).astype(np.uint8)
+
+    gray = sharpened
+
+    # ── 7. Black-point: gradual falloff for deep blacks ───────────────────────
+    # Pixels below 12 → pure black (removes noise in dark areas)
+    # Pixels 12–30 → smooth ramp to avoid hard edge
+    black_threshold = 12
+    ramp_end = 30
+    mask_hard = gray < black_threshold
+    mask_ramp = (gray >= black_threshold) & (gray < ramp_end)
+    ramp_factor = ((gray[mask_ramp].astype(np.float32) - black_threshold) / (ramp_end - black_threshold))
+    gray[mask_hard] = 0
+    gray[mask_ramp] = (gray[mask_ramp] * ramp_factor).astype(np.uint8)
+
+    # ── 8. Stretch contrast to use full 0–255 range ───────────────────────────
+    p_low, p_high = np.percentile(gray[gray > 0], [1, 99]) if np.any(gray > 0) else (0, 255)
+    if p_high > p_low:
+        gray = np.clip((gray.astype(np.float32) - p_low) / (p_high - p_low) * 255, 0, 255).astype(np.uint8)
+
+    # ── 9. Build PIL image ─────────────────────────────────────────────────────
+    pil_img = Image.fromarray(gray, mode='L')
+
+    # ── 10. Resize by cm + DPI if provided ────────────────────────────────────
     if width_cm and height_cm:
         w_px = round((float(width_cm) / 2.54) * float(dpi))
         h_px = round((float(height_cm) / 2.54) * float(dpi))
+        # Use LANCZOS for downscale, BICUBIC for upscale
+        orig_w, orig_h = pil_img.size
+        resample = Image.LANCZOS if (w_px * h_px) < (orig_w * orig_h) else Image.BICUBIC
+        pil_img = pil_img.resize((w_px, h_px), resample)
+    elif width_cm:
+        # Maintain aspect ratio if only width given
+        w_px = round((float(width_cm) / 2.54) * float(dpi))
+        orig_w, orig_h = pil_img.size
+        h_px = round(orig_h * w_px / orig_w)
+        pil_img = pil_img.resize((w_px, h_px), Image.LANCZOS)
+    elif height_cm:
+        # Maintain aspect ratio if only height given
+        h_px = round((float(height_cm) / 2.54) * float(dpi))
+        orig_w, orig_h = pil_img.size
+        w_px = round(orig_w * h_px / orig_h)
         pil_img = pil_img.resize((w_px, h_px), Image.LANCZOS)
 
-    # Save as BMP 8-bit (NOT 24-bit — machine won't read 24-bit!)
+    # ── 11. Save as BMP 8-bit grayscale ───────────────────────────────────────
+    # IMPORTANT: Machine requires 8-bit (256-color palette), NOT 24-bit!
     img_p = pil_img.convert('P')
+    # Build a proper grayscale palette
     palette = []
     for i in range(256):
         palette.extend([i, i, i])
     img_p.putpalette(palette)
     img_p.save(output_bmp_path, format='BMP', dpi=(dpi, dpi))
 
-    # Verify bit depth
+    # ── 12. Verify output ──────────────────────────────────────────────────────
     with open(output_bmp_path, 'rb') as f:
-        data = f.read(54)
-    bit_depth = int.from_bytes(data[28:30], 'little')
+        header = f.read(54)
+    bit_depth = int.from_bytes(header[28:30], 'little')
     file_size_kb = os.path.getsize(output_bmp_path) / 1024
 
     return {

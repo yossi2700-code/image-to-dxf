@@ -12,6 +12,7 @@ const DEFAULTS: Record<string, number> = {
   face_detect: 4,
   ai_refine: 2,
   cnc_relief: 4,
+  needle_engraving: 10,
 };
 
 export function useTokenCost() {

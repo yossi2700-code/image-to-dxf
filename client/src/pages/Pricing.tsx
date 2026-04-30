@@ -526,6 +526,8 @@ export default function Pricing() {
                 ai_trace: <Scan size={18} color="#3b82f6" />,
                 face_detect: <User size={18} color="#ec4899" />,
                 ai_refine: <Wand2 size={18} color="#f59e0b" />,
+                needle_engraving: <ImageIcon size={18} color="#1e3a5f" />,
+                cnc_relief: <Layers size={18} color="#7c3aed" />,
               };
               const icon = iconMap[item.action] ?? <Coins size={18} color="#6b7280" />;
               return (
@@ -571,6 +573,7 @@ export default function Pricing() {
               { action: "ai_trace", labelHe: "AI Trace — ציור מחדש", labelEn: "AI Trace — Redraw", cost: 5, icon: <Scan size={18} color="#3b82f6" /> },
               { action: "face_detect", labelHe: "פורטרט AI", labelEn: "AI Portrait", cost: 4, icon: <User size={18} color="#ec4899" /> },
               { action: "ai_refine", labelHe: "שיפור AI", labelEn: "AI Refine", cost: 2, icon: <Wand2 size={18} color="#f59e0b" /> },
+              { action: "needle_engraving", labelHe: "חריטת תמונה — מחט יהלום", labelEn: "Photo Engraving — Diamond Needle", cost: 10, icon: <ImageIcon size={18} color="#1e3a5f" /> },
             ].map((item, i) => (
               <div
                 key={item.action}

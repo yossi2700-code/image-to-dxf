@@ -1,16 +1,20 @@
 import express from "express";
 import multer from "multer";
 import path from "path";
+import { fileURLToPath } from "url";
 import fs from "fs";
 import os from "os";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { storagePut } from "./storage";
-import { invokeLLM } from "./_core/llm";
 import { generateImage } from "./_core/imageGeneration";
 import { getAppUserFromRequest } from "./appAuth";
 import { deductTokens } from "./tokenService";
 import { recordUserAction } from "./userActionsDb";
+
+// ESM-compatible __dirname polyfill
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const execFileAsync = promisify(execFile);
 const router = express.Router();
