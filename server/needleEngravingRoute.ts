@@ -1,12 +1,47 @@
 import express from "express";
 import multer from "multer";
 import sharp from "sharp";
+import heicConvert from "heic-convert";
 import { storagePut } from "./storage";
 import { generateImage } from "./_core/imageGeneration";
 import { getAppUserFromRequest } from "./appAuth";
 import { deductTokens } from "./tokenService";
 import { recordUserAction } from "./userActionsDb";
 import { processForGraniteEngraving } from "./engravingProcessor";
+
+/**
+ * Normalize any image buffer to a format sharp can process.
+ * Handles HEIC/HEIF (iPhone), AVIF, and unusual JPEG variants.
+ * Always returns a JPEG or PNG buffer that sharp can read.
+ */
+async function normalizeImageBuffer(input: Buffer): Promise<Buffer> {
+  // Detect HEIC/HEIF by magic bytes: starts with ftyp box containing 'heic', 'heis', 'hevc', 'mif1', 'msf1', 'avif'
+  const isHeic = (
+    (input[4] === 0x66 && input[5] === 0x74 && input[6] === 0x79 && input[7] === 0x70) && // 'ftyp' at offset 4
+    (
+      (input[8] === 0x68 && input[9] === 0x65) || // 'he...' (heic, heis, hevc)
+      (input[8] === 0x6d && input[9] === 0x69) || // 'mi...' (mif1)
+      (input[8] === 0x6d && input[9] === 0x73) || // 'ms...' (msf1)
+      (input[8] === 0x61 && input[9] === 0x76)    // 'av...' (avif)
+    )
+  );
+  if (isHeic) {
+    console.log('[needle-engraving] HEIC/HEIF detected, converting to JPEG...');
+    const jpegBuffer = await heicConvert({ buffer: input.buffer as ArrayBuffer, format: 'JPEG', quality: 0.95 });
+    return Buffer.from(jpegBuffer);
+  }
+  // Try standard sharp read with auto-rotate
+  try {
+    return await sharp(input).rotate().toBuffer();
+  } catch {
+    // Fallback: force JPEG conversion
+    try {
+      return await sharp(input, { failOn: 'none' }).rotate().jpeg({ quality: 95 }).toBuffer();
+    } catch {
+      return await sharp(input, { failOn: 'none' }).jpeg({ quality: 95 }).toBuffer();
+    }
+  }
+}
 
 const router = express.Router();
 const upload = multer({
@@ -47,19 +82,13 @@ router.post("/process", upload.single("image"), async (req, res) => {
       isPortrait?: string;
     };
 
-    // Auto-rotate based on EXIF orientation so portrait photos aren't sideways
-    // Handles HEIC/HEIF from iPhone and unusual JPEG variants by converting to JPEG first
+    // Normalize image: handles HEIC/HEIF from iPhone, AVIF, unusual JPEG variants
     let processBuffer: Buffer;
     try {
-      processBuffer = await sharp(req.file.buffer).rotate().toBuffer();
-    } catch {
-      // Fallback: force-decode with failOn:'none' and convert to JPEG
-      try {
-        processBuffer = await sharp(req.file.buffer, { failOn: 'none' }).rotate().jpeg({ quality: 95 }).toBuffer();
-      } catch {
-        // Last resort: skip rotate
-        processBuffer = await sharp(req.file.buffer, { failOn: 'none' }).jpeg({ quality: 95 }).toBuffer();
-      }
+      processBuffer = await normalizeImageBuffer(req.file.buffer);
+    } catch (normErr) {
+      console.error('[needle-engraving] normalizeImageBuffer failed:', normErr);
+      throw new Error('Unsupported image format. Please upload a JPEG, PNG, or HEIC file.');
     }
     // Step 1: If color image → convert to grayscale via AI
     const isColor = await checkIfColorImage(processBuffer);
