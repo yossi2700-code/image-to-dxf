@@ -103,19 +103,25 @@ router.post("/process", upload.single("image"), async (req, res) => {
       const normalizedForUpload = await sharp(processBuffer).png().toBuffer();
       const { url: originalUrl } = await storagePut(originalKey, normalizedForUpload, "image/png");
 
-      const { url: aiGrayscaleUrl } = await generateImage({
+      const { url: aiGrayscaleUrl, buffer: aiBuffer } = await generateImage({
         prompt: promptText,
         originalImages: [{ url: originalUrl, mimeType: "image/png" }],
       });
-
       if (!aiGrayscaleUrl) throw new Error("AI grayscale conversion failed");
-      const aiResponse = await fetch(aiGrayscaleUrl);
-      const rawAiBuffer = Buffer.from(await aiResponse.arrayBuffer());
-      // Normalize AI output (may be WebP or AVIF from some AI providers)
-      try {
-        processBuffer = await normalizeImageBuffer(rawAiBuffer);
-      } catch {
-        processBuffer = rawAiBuffer;
+      // Use buffer directly (already PNG) — avoids re-fetching from S3
+      if (aiBuffer) {
+        processBuffer = aiBuffer;
+        console.log('[needle-engraving] Using AI buffer directly, size:', processBuffer.length);
+      } else {
+        const aiResponse = await fetch(aiGrayscaleUrl);
+        if (!aiResponse.ok) throw new Error(`Failed to fetch AI result: ${aiResponse.status}`);
+        const rawAiBuffer = Buffer.from(await aiResponse.arrayBuffer());
+        console.log('[needle-engraving] Fetched AI buffer, first bytes:', rawAiBuffer.slice(0,4).toString('hex'));
+        try {
+          processBuffer = await normalizeImageBuffer(rawAiBuffer);
+        } catch {
+          processBuffer = rawAiBuffer;
+        }
       }
     }
 
@@ -207,18 +213,29 @@ router.post("/generate-and-process", express.json(), async (req, res) => {
       ? `Professional portrait: ${prompt}. Grayscale only, no color. High contrast, sharp facial details, smooth gradients. Black background. Optimized for diamond needle engraving on black granite.`
       : `${prompt}. Grayscale only, no color. High contrast, sharp details, clean composition. Black background. Optimized for diamond needle engraving on black granite.`;
 
-    const { url: generatedUrl } = await generateImage({ prompt: engravingPrompt });
+    const { url: generatedUrl, buffer: generatedBuffer } = await generateImage({ prompt: engravingPrompt });
     if (!generatedUrl) throw new Error("AI image generation failed");
 
-    // Step 2: Download generated image
-    const genResponse = await fetch(generatedUrl);
-    const rawGenBuffer = Buffer.from(await genResponse.arrayBuffer());
-    // Normalize: ensure sharp can read it (handles WebP, AVIF, unusual PNG from AI)
+    // Step 2: Use buffer directly from generateImage (already PNG) — avoids re-fetching from S3
+    // This eliminates the risk of fetching HTML/XML error pages from S3
     let genBuffer: Buffer;
-    try {
-      genBuffer = await normalizeImageBuffer(rawGenBuffer);
-    } catch {
-      genBuffer = rawGenBuffer;
+    if (generatedBuffer) {
+      // Best path: use the PNG buffer directly (no network round-trip)
+      genBuffer = generatedBuffer;
+      console.log('[needle-engraving/generate] Using buffer directly from generateImage, size:', genBuffer.length);
+    } else {
+      // Fallback: fetch from S3 URL
+      console.log('[needle-engraving/generate] Fetching generated image from S3:', generatedUrl);
+      const genResponse = await fetch(generatedUrl);
+      if (!genResponse.ok) throw new Error(`Failed to fetch generated image: ${genResponse.status}`);
+      const rawGenBuffer = Buffer.from(await genResponse.arrayBuffer());
+      console.log('[needle-engraving/generate] Fetched buffer size:', rawGenBuffer.length, 'first bytes:', rawGenBuffer.slice(0,4).toString('hex'));
+      // Normalize: ensure sharp can read it
+      try {
+        genBuffer = await normalizeImageBuffer(rawGenBuffer);
+      } catch {
+        genBuffer = rawGenBuffer;
+      }
     }
 
     // Step 3: Upload generated image preview to S3 (before processing)

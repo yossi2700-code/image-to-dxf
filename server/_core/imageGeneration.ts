@@ -30,6 +30,7 @@ export type GenerateImageOptions = {
 
 export type GenerateImageResponse = {
   url?: string;
+  buffer?: Buffer; // PNG buffer — use this directly to avoid re-fetching from S3
 };
 
 export async function generateImage(
@@ -81,17 +82,20 @@ export async function generateImage(
   const base64Data = result.image.b64Json;
   const rawBuffer = Buffer.from(base64Data, "base64");
 
-  // Always convert to PNG before saving — ensures downstream sharp processing works
+  // Always convert to PNG — ensures downstream sharp processing works
   // regardless of what format the AI returns (WebP, AVIF, JPEG, etc.)
   let pngBuffer: Buffer;
   try {
     pngBuffer = await sharp(rawBuffer).rotate().png().toBuffer();
   } catch {
     try {
-      pngBuffer = await sharp(rawBuffer, { failOn: "none" }).png().toBuffer();
-    } catch {
-      // Last resort: save as-is (original format)
-      pngBuffer = rawBuffer;
+      pngBuffer = await sharp(rawBuffer, { failOn: "none" }).rotate().png().toBuffer();
+    } catch (e2) {
+      // If sharp can't convert it at all, throw a clear error
+      // (do NOT save raw non-PNG bytes labeled as PNG — that causes downstream failures)
+      console.error('[imageGeneration] sharp failed to convert AI output to PNG:', e2);
+      console.error('[imageGeneration] raw buffer first bytes:', rawBuffer.slice(0, 16).toString('hex'), 'mimeType:', result.image.mimeType);
+      throw new Error(`AI image generation produced an unsupported format (${result.image.mimeType}). Please try again.`);
     }
   }
 
@@ -103,5 +107,6 @@ export async function generateImage(
   );
   return {
     url,
+    buffer: pngBuffer, // Return buffer directly to avoid re-fetching from S3
   };
 }
