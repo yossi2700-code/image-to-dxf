@@ -109,7 +109,13 @@ router.post("/process", upload.single("image"), async (req, res) => {
 
       if (!aiGrayscaleUrl) throw new Error("AI grayscale conversion failed");
       const aiResponse = await fetch(aiGrayscaleUrl);
-      processBuffer = Buffer.from(await aiResponse.arrayBuffer());
+      const rawAiBuffer = Buffer.from(await aiResponse.arrayBuffer());
+      // Normalize AI output (may be WebP or AVIF from some AI providers)
+      try {
+        processBuffer = await normalizeImageBuffer(rawAiBuffer);
+      } catch {
+        processBuffer = rawAiBuffer;
+      }
     }
 
     // Step 2: Process for granite engraving using Node.js/sharp (no Python needed)
@@ -205,7 +211,14 @@ router.post("/generate-and-process", express.json(), async (req, res) => {
 
     // Step 2: Download generated image
     const genResponse = await fetch(generatedUrl);
-    const genBuffer = Buffer.from(await genResponse.arrayBuffer());
+    const rawGenBuffer = Buffer.from(await genResponse.arrayBuffer());
+    // Normalize: ensure sharp can read it (handles WebP, AVIF, unusual PNG from AI)
+    let genBuffer: Buffer;
+    try {
+      genBuffer = await normalizeImageBuffer(rawGenBuffer);
+    } catch {
+      genBuffer = rawGenBuffer;
+    }
 
     // Step 3: Upload generated image preview to S3 (before processing)
     const genPreviewKey = `engraving-gen-preview/${id}-generated.png`;
