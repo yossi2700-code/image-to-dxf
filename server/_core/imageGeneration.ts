@@ -15,6 +15,7 @@
  *     }]
  *   });
  */
+import sharp from "sharp";
 import { storagePut } from "server/storage";
 import { ENV } from "./env";
 
@@ -78,13 +79,27 @@ export async function generateImage(
     };
   };
   const base64Data = result.image.b64Json;
-  const buffer = Buffer.from(base64Data, "base64");
+  const rawBuffer = Buffer.from(base64Data, "base64");
 
-  // Save to S3
+  // Always convert to PNG before saving — ensures downstream sharp processing works
+  // regardless of what format the AI returns (WebP, AVIF, JPEG, etc.)
+  let pngBuffer: Buffer;
+  try {
+    pngBuffer = await sharp(rawBuffer).rotate().png().toBuffer();
+  } catch {
+    try {
+      pngBuffer = await sharp(rawBuffer, { failOn: "none" }).png().toBuffer();
+    } catch {
+      // Last resort: save as-is (original format)
+      pngBuffer = rawBuffer;
+    }
+  }
+
+  // Save to S3 as PNG
   const { url } = await storagePut(
     `generated/${Date.now()}.png`,
-    buffer,
-    result.image.mimeType
+    pngBuffer,
+    "image/png"
   );
   return {
     url,
