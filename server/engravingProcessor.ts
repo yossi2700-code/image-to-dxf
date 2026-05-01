@@ -16,6 +16,42 @@ import sharp from "sharp";
 import fs from "fs";
 import path from "path";
 
+/**
+ * Convert any image buffer (HEIC, WebP, AVIF, JPEG, PNG, etc.) to PNG.
+ * This ensures sharp can always read it downstream.
+ */
+async function normalizeToPNG(input: Buffer): Promise<Buffer> {
+  // Check for HEIC magic bytes: ftyp box at offset 4
+  const isHeic =
+    input.length > 12 &&
+    input[4] === 0x66 && input[5] === 0x74 && input[6] === 0x79 && input[7] === 0x70;
+
+  if (isHeic) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const heicConvert = require("heic-convert");
+      const outputBuffer = await heicConvert({
+        buffer: input.buffer.slice(input.byteOffset, input.byteOffset + input.byteLength) as ArrayBuffer,
+        format: "PNG",
+      });
+      return Buffer.from(outputBuffer);
+    } catch {
+      // fall through to sharp
+    }
+  }
+
+  try {
+    return await sharp(input).rotate().png().toBuffer();
+  } catch {
+    try {
+      return await sharp(input, { failOn: "none" }).rotate().png().toBuffer();
+    } catch {
+      // Return as-is and let the caller handle the error
+      return input;
+    }
+  }
+}
+
 export interface EngravingOptions {
   widthCm?: number;
   heightCm?: number;
@@ -41,8 +77,11 @@ export async function processForGraniteEngraving(
 ): Promise<EngravingResult> {
   const { widthCm, heightCm, dpi = 180 } = options;
 
+  // ── 0. Normalize input to PNG (handles HEIC, WebP, AVIF, JPEG, etc.) ────────
+  const normalizedBuffer = await normalizeToPNG(inputBuffer);
+
   // ── 1. Load & convert to grayscale ──────────────────────────────────────────
-  let pipeline = sharp(inputBuffer).grayscale();
+  let pipeline = sharp(normalizedBuffer).grayscale();
 
   // ── 2. Resize if dimensions specified ────────────────────────────────────────
   if (widthCm && heightCm) {
