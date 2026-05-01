@@ -12,10 +12,40 @@ import { processForGraniteEngraving } from "./engravingProcessor";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
-// Exact prompt from technical spec for portrait engraving
-const PORTRAIT_ENGRAVING_PROMPT = `Transform this portrait photo into a professional grayscale portrait optimized for diamond percussion impact engraving on black granite. IMPORTANT: The diamond needle strikes dots into black granite - more dots = lighter area, fewer dots = darker area. This means: dark clothing (black/navy/dark shirts) MUST be rendered as medium-to-light gray (60-120 out of 255) so the clothing is VISIBLE in the engraving - do NOT leave clothing as pure black. Pure solid black background ONLY (remove any existing background completely). Face must look EXACTLY like the real person - preserve authentic features faithfully. Skin rendered with VERY SMOOTH natural gradients - soft transitions from light to shadow, no harsh edges. Hair: natural tones with subtle highlights showing individual strands. Beard/stubble (if present): fine individual hair dots in soft gray tones, NOT a heavy dark shadow. Eyes: natural depth and realistic rendering. Clothing: ALWAYS render as visible medium gray (60-150 range) even if originally dark/black - the engraving machine needs tonal variation to show the clothing. Style: photorealistic grayscale portrait like a professional B&W studio photograph. 256 shades of gray, smooth gradients throughout. No harsh edges anywhere. Black background is absolute pure black.`;
+// Portrait prompt — explains the physics of black granite engraving
+const PORTRAIT_ENGRAVING_PROMPT = `You are preparing an image for diamond needle engraving on BLACK GRANITE.
 
-const GENERAL_ENGRAVING_PROMPT = `Convert this image into a professional grayscale image optimized for diamond needle engraving on black granite. IMPORTANT: Dark areas (black clothing, dark objects) must be rendered as medium gray (60-150 out of 255) so they are VISIBLE in the engraving - do NOT leave them as pure black. Pure solid black background only. High contrast, sharp details, smooth gradients throughout. 256 shades of gray. Style: professional B&W photograph. Black background is absolute pure black.`;
+HOW THIS ENGRAVING WORKS: The granite stone is BLACK. The diamond needle strikes the stone and creates WHITE dots. More dots = lighter/whiter area. Fewer dots = stays black. So the final engraving is WHITE marks on BLACK stone.
+
+THEREFORE: Think of this like drawing with white chalk on black paper. EVERYTHING that should be visible in the final engraving MUST have some gray value (not pure black). ONLY the background should be pure black.
+
+RULES:
+- Background: pure black (0,0,0) — this is the stone itself, not engraved
+- Face/skin: bright to medium gray (150-230) — smooth gradients, photorealistic
+- Hair: medium gray (80-160) with subtle highlights
+- Dark clothing (black shirt, dark jacket): render as VISIBLE medium gray (70-130) — if left black, the clothing will be INVISIBLE in the engraving
+- Any dark object that should be visible: minimum gray value of 60
+- Beard/stubble: soft gray dots (60-120), NOT solid black
+- Eyes: realistic depth, iris visible in gray tones
+- Smooth gradients everywhere — no harsh edges
+- Preserve the person's EXACT facial features and likeness
+
+Style: professional B&W portrait photograph, 256 gray levels, photorealistic.`;
+
+const GENERAL_ENGRAVING_PROMPT = `You are preparing an image for diamond needle engraving on BLACK GRANITE.
+
+HOW THIS ENGRAVING WORKS: The granite stone is BLACK. The diamond needle creates WHITE dots on the stone. More dots = lighter area. Fewer dots = stays black.
+
+THEREFORE: Think of this like drawing with white chalk on black paper. EVERYTHING that should be visible MUST have some gray value (not pure black). ONLY the empty background should be pure black.
+
+RULES:
+- Background: pure black (0,0,0)
+- All objects/subjects that should be visible: minimum gray value of 60, ideally 80-200
+- Dark objects (black car, dark clothing, dark fur): render as VISIBLE medium gray (70-130)
+- Smooth gradients, sharp details, high contrast
+- 256 gray levels
+
+Style: professional B&W photograph.`;
 
 /**
  * Use OpenAI gpt-image-1 images.edit to convert image to engraving-ready grayscale.
