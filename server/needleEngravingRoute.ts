@@ -30,15 +30,15 @@ async function normalizeImageBuffer(input: Buffer): Promise<Buffer> {
     const jpegBuffer = await heicConvert({ buffer: input.buffer as ArrayBuffer, format: 'JPEG', quality: 0.95 });
     return Buffer.from(jpegBuffer);
   }
-  // Try standard sharp read with auto-rotate
+  // Always convert to PNG — ensures sharp can read it in all downstream steps
   try {
-    return await sharp(input).rotate().toBuffer();
+    return await sharp(input).rotate().png().toBuffer();
   } catch {
-    // Fallback: force JPEG conversion
+    // Fallback: force PNG conversion ignoring errors
     try {
-      return await sharp(input, { failOn: 'none' }).rotate().jpeg({ quality: 95 }).toBuffer();
+      return await sharp(input, { failOn: 'none' }).rotate().png().toBuffer();
     } catch {
-      return await sharp(input, { failOn: 'none' }).jpeg({ quality: 95 }).toBuffer();
+      return await sharp(input, { failOn: 'none' }).png().toBuffer();
     }
   }
 }
