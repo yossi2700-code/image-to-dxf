@@ -565,17 +565,7 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
             accentGradient="linear-gradient(135deg, #1e3a5f, #0f4c75)"
             featureLabel={t.featureLabel}
           />
-          {/* Server warm-up message after 15s */}
-          {elapsedSeconds >= 15 && elapsedSeconds < 30 && (
-            <div className="rounded-xl px-4 py-3 text-center text-xs" style={{ background: '#fffbeb', border: '1px solid #fde68a', color: '#92400e' }}>
-              {isRtl ? "⚡ השרת מתחמם — עוד רגע..." : "⚡ Server warming up — almost ready..."}
-            </div>
-          )}
-          {elapsedSeconds >= 30 && (
-            <div className="rounded-xl px-4 py-3 text-center text-xs" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534' }}>
-              {isRtl ? "🔄 מעבד תמונה מורכבת — AI עובד קשה..." : "🔄 Processing complex image — AI is working hard..."}
-            </div>
-          )}
+          {/* Warming/processing messages removed per user request */}
         </>
       )}
 

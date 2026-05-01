@@ -48,7 +48,19 @@ router.post("/process", upload.single("image"), async (req, res) => {
     };
 
     // Auto-rotate based on EXIF orientation so portrait photos aren't sideways
-    let processBuffer = await sharp(req.file.buffer).rotate().toBuffer();
+    // Handles HEIC/HEIF from iPhone and unusual JPEG variants by converting to JPEG first
+    let processBuffer: Buffer;
+    try {
+      processBuffer = await sharp(req.file.buffer).rotate().toBuffer();
+    } catch {
+      // Fallback: force-decode with failOn:'none' and convert to JPEG
+      try {
+        processBuffer = await sharp(req.file.buffer, { failOn: 'none' }).rotate().jpeg({ quality: 95 }).toBuffer();
+      } catch {
+        // Last resort: skip rotate
+        processBuffer = await sharp(req.file.buffer, { failOn: 'none' }).jpeg({ quality: 95 }).toBuffer();
+      }
+    }
     // Step 1: If color image → convert to grayscale via AI
     const isColor = await checkIfColorImage(processBuffer);
     if (isColor) {
