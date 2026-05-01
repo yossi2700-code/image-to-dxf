@@ -67,80 +67,122 @@ export interface EngravingResult {
 }
 
 /**
- * CLAHE (Contrast Limited Adaptive Histogram Equalization) approximation.
- * Divides image into tiles and equalizes each tile independently.
- * clipLimit controls contrast amplification (1.2 per spec).
- * tileSize: number of tiles per dimension (16 per spec).
+ * CLAHE (Contrast Limited Adaptive Histogram Equalization) with bilinear interpolation.
+ * Matches OpenCV's CLAHE behavior: builds per-tile LUTs then interpolates between
+ * neighboring tile centers to eliminate hard block boundaries (the "square" artifact).
+ * clipLimit=1.2, tileCount=8 (8×8 tiles per spec, interpolated).
  */
+function buildTileLUT(
+  pixels: Uint8Array,
+  width: number,
+  x0: number, y0: number, x1: number, y1: number,
+  clipLimit: number
+): Uint8Array {
+  const tilePixels = (x1 - x0) * (y1 - y0);
+  const hist = new Array(256).fill(0);
+  for (let y = y0; y < y1; y++) {
+    for (let x = x0; x < x1; x++) {
+      hist[pixels[y * width + x]]++;
+    }
+  }
+  const avgCount = tilePixels / 256;
+  const clipThreshold = Math.max(1, Math.round(clipLimit * avgCount));
+  let excess = 0;
+  for (let i = 0; i < 256; i++) {
+    if (hist[i] > clipThreshold) { excess += hist[i] - clipThreshold; hist[i] = clipThreshold; }
+  }
+  const redistPerBin = Math.floor(excess / 256);
+  const remainder = excess % 256;
+  for (let i = 0; i < 256; i++) hist[i] += redistPerBin;
+  for (let i = 0; i < remainder; i++) hist[i]++;
+
+  const cdf = new Array(256).fill(0);
+  cdf[0] = hist[0];
+  for (let i = 1; i < 256; i++) cdf[i] = cdf[i - 1] + hist[i];
+  let cdfMin = 0;
+  for (let i = 0; i < 256; i++) { if (cdf[i] > 0) { cdfMin = cdf[i]; break; } }
+  const lut = new Uint8Array(256);
+  const denom = tilePixels - cdfMin;
+  for (let i = 0; i < 256; i++) {
+    lut[i] = denom > 0 ? Math.min(255, Math.round(((cdf[i] - cdfMin) / denom) * 255)) : 0;
+  }
+  return lut;
+}
+
 function applyCLAHE(
   pixels: Uint8Array,
   width: number,
   height: number,
   clipLimit: number = 1.2,
-  tileCount: number = 16
+  tileCount: number = 8
 ): Uint8Array {
-  const result = new Uint8Array(pixels.length);
+  // Build LUT for each tile
+  const luts: Uint8Array[][] = [];
   const tileW = Math.ceil(width / tileCount);
   const tileH = Math.ceil(height / tileCount);
 
+  // Tile center coordinates
+  const tileCX: number[] = [];
+  const tileCY: number[] = [];
+  for (let t = 0; t < tileCount; t++) {
+    tileCX.push(Math.min(t * tileW + tileW / 2, width - 1));
+    tileCY.push(Math.min(t * tileH + tileH / 2, height - 1));
+  }
+
   for (let ty = 0; ty < tileCount; ty++) {
+    luts.push([]);
     for (let tx = 0; tx < tileCount; tx++) {
       const x0 = tx * tileW;
       const y0 = ty * tileH;
       const x1 = Math.min(x0 + tileW, width);
       const y1 = Math.min(y0 + tileH, height);
-      const tilePixels = (x1 - x0) * (y1 - y0);
+      luts[ty].push(buildTileLUT(pixels, width, x0, y0, x1, y1, clipLimit));
+    }
+  }
 
-      // Build histogram for this tile
-      const hist = new Array(256).fill(0);
-      for (let y = y0; y < y1; y++) {
-        for (let x = x0; x < x1; x++) {
-          hist[pixels[y * width + x]]++;
-        }
-      }
+  // Apply with bilinear interpolation between tile LUTs
+  const result = new Uint8Array(pixels.length);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const v = pixels[y * width + x];
 
-      // Clip histogram at clipLimit * average
-      const avgCount = tilePixels / 256;
-      const clipThreshold = Math.round(clipLimit * avgCount);
-      let excess = 0;
-      for (let i = 0; i < 256; i++) {
-        if (hist[i] > clipThreshold) {
-          excess += hist[i] - clipThreshold;
-          hist[i] = clipThreshold;
-        }
+      // Find which tile region we're in (by center proximity)
+      let tx1 = 0;
+      for (let t = 0; t < tileCount - 1; t++) {
+        if (x >= tileCX[t]) tx1 = t; else break;
       }
-      // Redistribute excess uniformly
-      const redistPerBin = Math.floor(excess / 256);
-      const remainder = excess % 256;
-      for (let i = 0; i < 256; i++) {
-        hist[i] += redistPerBin;
+      if (x >= tileCX[tileCount - 1]) tx1 = tileCount - 1;
+      let tx2 = Math.min(tx1 + 1, tileCount - 1);
+      // Recalculate properly
+      tx1 = 0;
+      for (let t = 0; t < tileCount; t++) {
+        if (tileCX[t] <= x) tx1 = t;
       }
-      for (let i = 0; i < remainder; i++) {
-        hist[i]++;
-      }
+      tx2 = Math.min(tx1 + 1, tileCount - 1);
 
-      // Build CDF and LUT
-      const cdf = new Array(256).fill(0);
-      cdf[0] = hist[0];
-      for (let i = 1; i < 256; i++) cdf[i] = cdf[i - 1] + hist[i];
-
-      let cdfMin = 0;
-      for (let i = 0; i < 256; i++) {
-        if (cdf[i] > 0) { cdfMin = cdf[i]; break; }
+      let ty1 = 0;
+      for (let t = 0; t < tileCount; t++) {
+        if (tileCY[t] <= y) ty1 = t;
       }
+      const ty2 = Math.min(ty1 + 1, tileCount - 1);
 
-      const lut = new Uint8Array(256);
-      const denom = tilePixels - cdfMin;
-      for (let i = 0; i < 256; i++) {
-        lut[i] = denom > 0 ? Math.round(((cdf[i] - cdfMin) / denom) * 255) : 0;
-      }
+      // Bilinear weights
+      const xSpan = tileCX[tx2] - tileCX[tx1];
+      const ySpan = tileCY[ty2] - tileCY[ty1];
+      const wx = xSpan > 0 ? (x - tileCX[tx1]) / xSpan : 0;
+      const wy = ySpan > 0 ? (y - tileCY[ty1]) / ySpan : 0;
 
-      // Apply LUT to tile pixels
-      for (let y = y0; y < y1; y++) {
-        for (let x = x0; x < x1; x++) {
-          result[y * width + x] = lut[pixels[y * width + x]];
-        }
-      }
+      const v00 = luts[ty1][tx1][v];
+      const v10 = luts[ty1][tx2][v];
+      const v01 = luts[ty2][tx1][v];
+      const v11 = luts[ty2][tx2][v];
+
+      const interpolated = v00 * (1 - wx) * (1 - wy)
+        + v10 * wx * (1 - wy)
+        + v01 * (1 - wx) * wy
+        + v11 * wx * wy;
+
+      result[y * width + x] = Math.min(255, Math.round(interpolated));
     }
   }
 
