@@ -65,6 +65,8 @@ export interface EngravingResult {
   bitDepth: number;
   fileSizeKB: number;
   bmpBuffer: Buffer;
+  /** Raw 8-bit grayscale pixel data (width*height bytes) for creating JPEG/TIFF/PNG without re-parsing BMP */
+  rawPixels: Buffer;
 }
 
 /**
@@ -214,6 +216,7 @@ export async function processForGraniteEngraving(
     bitDepth: 8,
     fileSizeKB: Math.round(bmpBuffer.length / 1024),
     bmpBuffer,
+    rawPixels: Buffer.from(outputPixels),
   };
 }
 

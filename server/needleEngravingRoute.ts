@@ -49,6 +49,29 @@ const upload = multer({
   limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
 });
 
+// Diagnostic endpoint to check sharp capabilities in production
+router.get("/diag", async (_req, res) => {
+  try {
+    const versions = (sharp as any).versions || {};
+    // Test: create a small PNG, convert to grayscale, convert to BMP-like raw
+    const testPng = await sharp({ create: { width: 10, height: 10, channels: 3, background: { r: 128, g: 64, b: 32 } } }).png().toBuffer();
+    const grayscale = await sharp(testPng).grayscale().raw().toBuffer({ resolveWithObject: true });
+    res.json({
+      ok: true,
+      sharpVersion: versions.sharp,
+      vipsVersion: versions.vips,
+      webpVersion: versions.webp,
+      testPngSize: testPng.length,
+      grayscaleSize: grayscale.data.length,
+      grayscaleDims: `${grayscale.info.width}x${grayscale.info.height}`,
+      platform: process.platform,
+      arch: process.arch,
+    });
+  } catch (e: any) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 /**
  * POST /api/needle-engraving/process
  * Accepts: multipart/form-data with fields:
@@ -138,17 +161,17 @@ router.post("/process", upload.single("image"), async (req, res) => {
     const { url: bmpUrl } = await storagePut(bmpKey, result.bmpBuffer, "image/bmp");
 
     // Step 4: Create PNG preview for browser display (also used as JPEG/TIFF source)
-    const previewBuffer = await sharp(result.bmpBuffer).grayscale().png().toBuffer();
+    const previewBuffer = await sharp(result.rawPixels, { raw: { width: result.width, height: result.height, channels: 1 } }).png().toBuffer();
     const previewKey = `engraving-preview/${id}.png`;
     const { url: previewUrl } = await storagePut(previewKey, previewBuffer, "image/png");
 
     // Step 5: Create JPEG export
-    const jpegBuffer = await sharp(result.bmpBuffer).grayscale().jpeg({ quality: 95 }).toBuffer();
+    const jpegBuffer = await sharp(result.rawPixels, { raw: { width: result.width, height: result.height, channels: 1 } }).jpeg({ quality: 95 }).toBuffer();
     const jpegKey = `engraving-output/${id}.jpg`;
     const { url: jpegUrl } = await storagePut(jpegKey, jpegBuffer, "image/jpeg");
 
     // Step 6: Create TIFF export
-    const tiffBuffer = await sharp(result.bmpBuffer).grayscale().tiff({ compression: 'lzw' }).toBuffer();
+    const tiffBuffer = await sharp(result.rawPixels, { raw: { width: result.width, height: result.height, channels: 1 } }).tiff({ compression: 'lzw' }).toBuffer();
     const tiffKey = `engraving-output/${id}.tif`;
     const { url: tiffUrl } = await storagePut(tiffKey, tiffBuffer, "image/tiff");
 
@@ -255,12 +278,12 @@ router.post("/generate-and-process", express.json(), async (req, res) => {
     const { url: bmpUrl } = await storagePut(bmpKey, result.bmpBuffer, "image/bmp");
 
     // Step 6: Create JPEG export
-    const jpegBuffer = await sharp(result.bmpBuffer).grayscale().jpeg({ quality: 95 }).toBuffer();
+    const jpegBuffer = await sharp(result.rawPixels, { raw: { width: result.width, height: result.height, channels: 1 } }).jpeg({ quality: 95 }).toBuffer();
     const jpegKey = `engraving-output/${id}.jpg`;
     const { url: jpegUrl } = await storagePut(jpegKey, jpegBuffer, "image/jpeg");
 
     // Step 7: Create TIFF export
-    const tiffBuffer = await sharp(result.bmpBuffer).grayscale().tiff({ compression: 'lzw' }).toBuffer();
+    const tiffBuffer = await sharp(result.rawPixels, { raw: { width: result.width, height: result.height, channels: 1 } }).tiff({ compression: 'lzw' }).toBuffer();
     const tiffKey = `engraving-output/${id}.tif`;
     const { url: tiffUrl } = await storagePut(tiffKey, tiffBuffer, "image/tiff");
 
