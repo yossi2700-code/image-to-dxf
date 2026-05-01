@@ -47,10 +47,10 @@ router.post("/process", upload.single("image"), async (req, res) => {
       isPortrait?: string;
     };
 
-    let processBuffer = req.file.buffer;
-
+    // Auto-rotate based on EXIF orientation so portrait photos aren't sideways
+    let processBuffer = await sharp(req.file.buffer).rotate().toBuffer();
     // Step 1: If color image → convert to grayscale via AI
-    const isColor = await checkIfColorImage(req.file.buffer);
+    const isColor = await checkIfColorImage(processBuffer);
     if (isColor) {
       const promptText =
         isPortrait === "true"
@@ -83,10 +83,20 @@ router.post("/process", upload.single("image"), async (req, res) => {
     const bmpKey = `engraving-output/${id}.bmp`;
     const { url: bmpUrl } = await storagePut(bmpKey, result.bmpBuffer, "image/bmp");
 
-    // Step 4: Create PNG preview for browser display
-    const previewBuffer = await sharp(processBuffer).grayscale().png().toBuffer();
+    // Step 4: Create PNG preview for browser display (also used as JPEG/TIFF source)
+    const previewBuffer = await sharp(result.bmpBuffer).grayscale().png().toBuffer();
     const previewKey = `engraving-preview/${id}.png`;
     const { url: previewUrl } = await storagePut(previewKey, previewBuffer, "image/png");
+
+    // Step 5: Create JPEG export
+    const jpegBuffer = await sharp(result.bmpBuffer).grayscale().jpeg({ quality: 95 }).toBuffer();
+    const jpegKey = `engraving-output/${id}.jpg`;
+    const { url: jpegUrl } = await storagePut(jpegKey, jpegBuffer, "image/jpeg");
+
+    // Step 6: Create TIFF export
+    const tiffBuffer = await sharp(result.bmpBuffer).grayscale().tiff({ compression: 'lzw' }).toBuffer();
+    const tiffKey = `engraving-output/${id}.tif`;
+    const { url: tiffUrl } = await storagePut(tiffKey, tiffBuffer, "image/tiff");
 
     // Deduct tokens after success
     await deductTokens(appUser.userId, "needle_engraving" as any);
@@ -99,6 +109,8 @@ router.post("/process", upload.single("image"), async (req, res) => {
     return res.json({
       success: true,
       bmpUrl,
+      jpegUrl,
+      tiffUrl,
       previewUrl,
       width: result.width,
       height: result.height,
@@ -170,6 +182,16 @@ router.post("/generate-and-process", express.json(), async (req, res) => {
     const bmpKey = `engraving-output/${id}.bmp`;
     const { url: bmpUrl } = await storagePut(bmpKey, result.bmpBuffer, "image/bmp");
 
+    // Step 6: Create JPEG export
+    const jpegBuffer = await sharp(result.bmpBuffer).grayscale().jpeg({ quality: 95 }).toBuffer();
+    const jpegKey = `engraving-output/${id}.jpg`;
+    const { url: jpegUrl } = await storagePut(jpegKey, jpegBuffer, "image/jpeg");
+
+    // Step 7: Create TIFF export
+    const tiffBuffer = await sharp(result.bmpBuffer).grayscale().tiff({ compression: 'lzw' }).toBuffer();
+    const tiffKey = `engraving-output/${id}.tif`;
+    const { url: tiffUrl } = await storagePut(tiffKey, tiffBuffer, "image/tiff");
+
     // Deduct tokens after success
     await deductTokens(appUser.userId, "needle_engraving" as any);
     await recordUserAction({
@@ -181,6 +203,8 @@ router.post("/generate-and-process", express.json(), async (req, res) => {
     return res.json({
       success: true,
       bmpUrl,
+      jpegUrl,
+      tiffUrl,
       previewUrl: generatedPreviewUrl,
       width: result.width,
       height: result.height,
