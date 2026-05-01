@@ -289,14 +289,31 @@ export function NeedleEngravingTab({ onOpenAuth, onInsufficientTokens }: NeedleE
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!result) return;
-    const a = document.createElement("a");
-    a.href = result.bmpUrl;
-    a.download = (imageFile ? imageFile.name.replace(/\.[^.]+$/, "") : (prompt.slice(0, 30) || "engraving")) + "_engraving.bmp";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const filename = (imageFile ? imageFile.name.replace(/\.[^.]+$/, "") : (prompt.slice(0, 30) || "engraving")) + "_engraving.bmp";
+    try {
+      // Fetch the BMP bytes and create a local blob URL so the browser
+      // triggers a real file download instead of opening the file in a tab.
+      const response = await fetch(result.bmpUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(new Blob([blob], { type: "image/bmp" }));
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+    } catch {
+      // Fallback: direct link
+      const a = document.createElement("a");
+      a.href = result.bmpUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
   };
 
   const handleReset = () => {
