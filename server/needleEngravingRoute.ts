@@ -2,12 +2,54 @@ import express from "express";
 import multer from "multer";
 import sharp from "sharp";
 import heicConvert from "heic-convert";
+import OpenAI from "openai";
 import { storagePut } from "./storage";
 import { generateImage } from "./_core/imageGeneration";
 import { getAppUserFromRequest } from "./appAuth";
 import { deductTokens } from "./tokenService";
 import { recordUserAction } from "./userActionsDb";
 import { processForGraniteEngraving } from "./engravingProcessor";
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
+
+// Exact prompt from technical spec for portrait engraving
+const PORTRAIT_ENGRAVING_PROMPT = `Transform this portrait photo into a professional grayscale portrait optimized for diamond percussion impact engraving on black granite. The diamond needle strikes dots into black granite - more dots = lighter area, fewer dots = darker area, so smooth gradients are critical. Requirements: Pure solid black background (remove any existing background completely). Face must look EXACTLY like the real person - preserve authentic features faithfully. Skin rendered with VERY SMOOTH natural gradients - soft transitions from light to shadow, no harsh edges. Hair: natural tones with subtle highlights showing individual strands. Beard/stubble (if present): fine individual hair dots in soft gray tones, NOT a heavy dark shadow. Eyes: natural depth and realistic rendering. Clothing: smooth dark gray tones. Style: photorealistic grayscale portrait like a professional B&W studio photograph. 256 shades of gray, smooth gradients throughout. No harsh edges anywhere. Black background is absolute pure black.`;
+
+const GENERAL_ENGRAVING_PROMPT = `Convert this image into a professional grayscale image optimized for diamond needle engraving on black granite. Pure solid black background. High contrast, sharp details, smooth gradients throughout. 256 shades of gray. Style: professional B&W photograph. Black background is absolute pure black.`;
+
+/**
+ * Use OpenAI gpt-image-1 images.edit to convert image to engraving-ready grayscale.
+ * This is the same approach as the Python reference implementation.
+ */
+async function convertToEngravingGrayscaleWithOpenAI(
+  imageBuffer: Buffer,
+  isPortrait: boolean
+): Promise<Buffer> {
+  const prompt = isPortrait ? PORTRAIT_ENGRAVING_PROMPT : GENERAL_ENGRAVING_PROMPT;
+  const imageFile = new File([new Uint8Array(imageBuffer)], "source.png", { type: "image/png" });
+  const response = await openai.images.edit({
+    model: "gpt-image-1",
+    image: imageFile,
+    prompt,
+    n: 1,
+    size: "1024x1024",
+    quality: "medium",
+  });
+  const imageData = response.data?.[0];
+  if (!imageData) throw new Error("AI did not return an image");
+  let rawBuffer: Buffer;
+  if (imageData.b64_json) {
+    rawBuffer = Buffer.from(imageData.b64_json, "base64");
+  } else if (imageData.url) {
+    const dlResponse = await fetch(imageData.url);
+    if (!dlResponse.ok) throw new Error(`Failed to fetch AI result: ${dlResponse.status}`);
+    rawBuffer = Buffer.from(await dlResponse.arrayBuffer() as ArrayBuffer);
+  } else {
+    throw new Error("AI returned no image data");
+  }
+  // Convert to PNG for downstream processing
+  return await sharp(rawBuffer).rotate().png().toBuffer();
+}
 
 /**
  * Normalize any image buffer to a format sharp can process.
@@ -113,38 +155,21 @@ router.post("/process", upload.single("image"), async (req, res) => {
       console.error('[needle-engraving] normalizeImageBuffer failed:', normErr);
       throw new Error('Unsupported image format. Please upload a JPEG, PNG, or HEIC file.');
     }
-    // Step 1: If color image → convert to grayscale via AI
+    // Step 1: Use OpenAI gpt-image-1 images.edit to convert to engraving-ready grayscale
+    // This matches the Python reference implementation exactly
     const isColor = await checkIfColorImage(processBuffer);
-    if (isColor) {
-      const promptText =
-        isPortrait === "true"
-          ? "Transform this portrait photo into a professional grayscale portrait optimized for diamond needle engraving on black granite. Pure grayscale only, no color. High contrast, sharp details, smooth gradients. Background must be pure black (0,0,0). Output: grayscale PNG."
-          : "Convert this image into a professional grayscale image optimized for diamond needle engraving on black granite. Pure grayscale only, no color. High contrast, sharp details, smooth gradients. Background must be pure black (0,0,0). Output: grayscale PNG.";
-
-      // Upload normalized buffer to S3 for AI processing (use processBuffer, not raw req.file.buffer)
-      const originalKey = `engraving-temp/${id}-original.png`;
-      const normalizedForUpload = await sharp(processBuffer).png().toBuffer();
-      const { url: originalUrl } = await storagePut(originalKey, normalizedForUpload, "image/png");
-
-      const { url: aiGrayscaleUrl, buffer: aiBuffer } = await generateImage({
-        prompt: promptText,
-        originalImages: [{ url: originalUrl, mimeType: "image/png" }],
-      });
-      if (!aiGrayscaleUrl) throw new Error("AI grayscale conversion failed");
-      // Use buffer directly (already PNG) — avoids re-fetching from S3
-      if (aiBuffer) {
-        processBuffer = aiBuffer;
-        console.log('[needle-engraving] Using AI buffer directly, size:', processBuffer.length);
-      } else {
-        const aiResponse = await fetch(aiGrayscaleUrl);
-        if (!aiResponse.ok) throw new Error(`Failed to fetch AI result: ${aiResponse.status}`);
-        const rawAiBuffer = Buffer.from(await aiResponse.arrayBuffer());
-        console.log('[needle-engraving] Fetched AI buffer, first bytes:', rawAiBuffer.slice(0,4).toString('hex'));
-        try {
-          processBuffer = await normalizeImageBuffer(rawAiBuffer);
-        } catch {
-          processBuffer = rawAiBuffer;
-        }
+    // Always run AI conversion for portraits; for non-portrait, only if color
+    if (isPortrait === "true" || isColor) {
+      console.log(`[needle-engraving] Running AI conversion (isPortrait=${isPortrait}, isColor=${isColor})`);
+      try {
+        processBuffer = await convertToEngravingGrayscaleWithOpenAI(
+          processBuffer,
+          isPortrait === "true"
+        );
+        console.log('[needle-engraving] AI conversion done, buffer size:', processBuffer.length);
+      } catch (aiErr) {
+        console.error('[needle-engraving] AI conversion failed, continuing with original:', aiErr);
+        // Continue with original buffer if AI fails
       }
     }
 
@@ -231,7 +256,7 @@ router.post("/generate-and-process", express.json(), async (req, res) => {
       return res.status(400).json({ error: "Prompt is required" });
     }
 
-    // Step 1: Generate image with AI (grayscale, optimized for engraving)
+    // Step 1: Generate image with AI using Forge API (text-to-image)
     const engravingPrompt = isPortrait === "true"
       ? `Professional portrait: ${prompt}. Grayscale only, no color. High contrast, sharp facial details, smooth gradients. Black background. Optimized for diamond needle engraving on black granite.`
       : `${prompt}. Grayscale only, no color. High contrast, sharp details, clean composition. Black background. Optimized for diamond needle engraving on black granite.`;
@@ -239,26 +264,29 @@ router.post("/generate-and-process", express.json(), async (req, res) => {
     const { url: generatedUrl, buffer: generatedBuffer } = await generateImage({ prompt: engravingPrompt });
     if (!generatedUrl) throw new Error("AI image generation failed");
 
-    // Step 2: Use buffer directly from generateImage (already PNG) — avoids re-fetching from S3
-    // This eliminates the risk of fetching HTML/XML error pages from S3
+    // Step 2: Use buffer directly from generateImage (already PNG)
     let genBuffer: Buffer;
     if (generatedBuffer) {
-      // Best path: use the PNG buffer directly (no network round-trip)
       genBuffer = generatedBuffer;
       console.log('[needle-engraving/generate] Using buffer directly from generateImage, size:', genBuffer.length);
     } else {
-      // Fallback: fetch from S3 URL
-      console.log('[needle-engraving/generate] Fetching generated image from S3:', generatedUrl);
       const genResponse = await fetch(generatedUrl);
       if (!genResponse.ok) throw new Error(`Failed to fetch generated image: ${genResponse.status}`);
       const rawGenBuffer = Buffer.from(await genResponse.arrayBuffer());
-      console.log('[needle-engraving/generate] Fetched buffer size:', rawGenBuffer.length, 'first bytes:', rawGenBuffer.slice(0,4).toString('hex'));
-      // Normalize: ensure sharp can read it
       try {
         genBuffer = await normalizeImageBuffer(rawGenBuffer);
       } catch {
         genBuffer = rawGenBuffer;
       }
+    }
+
+    // Step 2b: Apply OpenAI gpt-image-1 engraving refinement (same as upload path)
+    // This converts the generated image to proper engraving style
+    try {
+      genBuffer = await convertToEngravingGrayscaleWithOpenAI(genBuffer, isPortrait === "true");
+      console.log('[needle-engraving/generate] AI engraving refinement done, size:', genBuffer.length);
+    } catch (aiErr) {
+      console.error('[needle-engraving/generate] AI refinement failed, using raw generated:', aiErr);
     }
 
     // Step 3: Upload generated image preview to S3 (before processing)

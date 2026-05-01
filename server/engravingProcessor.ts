@@ -1,20 +1,18 @@
 /**
  * Diamond Needle Engraving Processor — Pure Node.js/sharp implementation.
- * Replaces process_engraving.py to avoid Python dependency in production.
+ * Based on technical spec: process_for_granite_engraving()
  *
- * Pipeline:
+ * Pipeline (per spec):
+ *  0. Normalize input to PNG
  *  1. Convert to grayscale
  *  2. Resize if width/height specified
- *  3. Bilateral-like blur for noise reduction (median blur via sharp)
- *  4. CLAHE-like contrast enhancement (normalize + linear)
- *  5. Unsharp mask for sharpening
- *  6. Gamma correction for granite (darks preserved)
- *  7. Output as 8-bit BMP
+ *  3. CLAHE-like contrast enhancement (clipLimit=1.2, tileGridSize=16×16)
+ *  4. Unsharp mask (amount=1.25, sigma=0.8) — gentle
+ *  5. Black threshold: pixels < 15 → 0 (absolute black background)
+ *  6. Output as 8-bit grayscale BMP
  */
 
 import sharp from "sharp";
-import fs from "fs";
-import path from "path";
 
 /**
  * Convert any image buffer (HEIC, WebP, AVIF, JPEG, PNG, etc.) to PNG.
@@ -46,7 +44,6 @@ async function normalizeToPNG(input: Buffer): Promise<Buffer> {
     try {
       return await sharp(input, { failOn: "none" }).rotate().png().toBuffer();
     } catch {
-      // Return as-is and let the caller handle the error
       return input;
     }
   }
@@ -70,8 +67,93 @@ export interface EngravingResult {
 }
 
 /**
+ * CLAHE (Contrast Limited Adaptive Histogram Equalization) approximation.
+ * Divides image into tiles and equalizes each tile independently.
+ * clipLimit controls contrast amplification (1.2 per spec).
+ * tileSize: number of tiles per dimension (16 per spec).
+ */
+function applyCLAHE(
+  pixels: Uint8Array,
+  width: number,
+  height: number,
+  clipLimit: number = 1.2,
+  tileCount: number = 16
+): Uint8Array {
+  const result = new Uint8Array(pixels.length);
+  const tileW = Math.ceil(width / tileCount);
+  const tileH = Math.ceil(height / tileCount);
+
+  for (let ty = 0; ty < tileCount; ty++) {
+    for (let tx = 0; tx < tileCount; tx++) {
+      const x0 = tx * tileW;
+      const y0 = ty * tileH;
+      const x1 = Math.min(x0 + tileW, width);
+      const y1 = Math.min(y0 + tileH, height);
+      const tilePixels = (x1 - x0) * (y1 - y0);
+
+      // Build histogram for this tile
+      const hist = new Array(256).fill(0);
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          hist[pixels[y * width + x]]++;
+        }
+      }
+
+      // Clip histogram at clipLimit * average
+      const avgCount = tilePixels / 256;
+      const clipThreshold = Math.round(clipLimit * avgCount);
+      let excess = 0;
+      for (let i = 0; i < 256; i++) {
+        if (hist[i] > clipThreshold) {
+          excess += hist[i] - clipThreshold;
+          hist[i] = clipThreshold;
+        }
+      }
+      // Redistribute excess uniformly
+      const redistPerBin = Math.floor(excess / 256);
+      const remainder = excess % 256;
+      for (let i = 0; i < 256; i++) {
+        hist[i] += redistPerBin;
+      }
+      for (let i = 0; i < remainder; i++) {
+        hist[i]++;
+      }
+
+      // Build CDF and LUT
+      const cdf = new Array(256).fill(0);
+      cdf[0] = hist[0];
+      for (let i = 1; i < 256; i++) cdf[i] = cdf[i - 1] + hist[i];
+
+      let cdfMin = 0;
+      for (let i = 0; i < 256; i++) {
+        if (cdf[i] > 0) { cdfMin = cdf[i]; break; }
+      }
+
+      const lut = new Uint8Array(256);
+      const denom = tilePixels - cdfMin;
+      for (let i = 0; i < 256; i++) {
+        lut[i] = denom > 0 ? Math.round(((cdf[i] - cdfMin) / denom) * 255) : 0;
+      }
+
+      // Apply LUT to tile pixels
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          result[y * width + x] = lut[pixels[y * width + x]];
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
  * Process an image buffer for granite diamond needle engraving.
- * Returns an 8-bit grayscale BMP buffer.
+ * Per technical spec:
+ * - CLAHE clipLimit=1.2, tileGridSize=16×16
+ * - Unsharp mask: amount=1.25, sigma=0.8
+ * - Black threshold: 15
+ * - Output: 8-bit grayscale BMP
  */
 export async function processForGraniteEngraving(
   inputBuffer: Buffer,
@@ -79,7 +161,7 @@ export async function processForGraniteEngraving(
 ): Promise<EngravingResult> {
   const { widthCm, heightCm, dpi = 180 } = options;
 
-  // ── 0. Normalize input to PNG (handles HEIC, WebP, AVIF, JPEG, etc.) ────────
+  // ── 0. Normalize input to PNG ────────────────────────────────────────────────
   const normalizedBuffer = await normalizeToPNG(inputBuffer);
 
   // ── 1. Load & convert to grayscale ──────────────────────────────────────────
@@ -107,7 +189,7 @@ export async function processForGraniteEngraving(
     });
   }
 
-  // ── 3. Get raw pixel data for processing ─────────────────────────────────────
+  // ── 3. Get raw pixel data ─────────────────────────────────────────────────────
   const { data: rawData, info } = await pipeline
     .raw()
     .toBuffer({ resolveWithObject: true });
@@ -117,97 +199,35 @@ export async function processForGraniteEngraving(
   const height = info.height;
   const total = width * height;
 
-  // ── 4. CLAHE-like contrast enhancement ───────────────────────────────────────
-  // Compute histogram
-  const hist = new Array(256).fill(0);
-  for (let i = 0; i < total; i++) hist[pixels[i]]++;
+  // ── 4. CLAHE (clipLimit=1.2, tileGridSize=16×16) per spec ────────────────────
+  const claheResult = applyCLAHE(pixels, width, height, 1.2, 16);
 
-  // Compute CDF
-  const cdf = new Array(256).fill(0);
-  cdf[0] = hist[0];
-  for (let i = 1; i < 256; i++) cdf[i] = cdf[i - 1] + hist[i];
-
-  // Find min non-zero CDF value
-  let cdfMin = 0;
-  for (let i = 0; i < 256; i++) {
-    if (cdf[i] > 0) { cdfMin = cdf[i]; break; }
-  }
-
-  // Histogram equalization (CLAHE approximation)
-  const lut = new Uint8Array(256);
-  for (let i = 0; i < 256; i++) {
-    lut[i] = Math.round(((cdf[i] - cdfMin) / (total - cdfMin)) * 255);
-  }
-
-  // Apply LUT
-  const enhanced = new Uint8Array(total);
-  for (let i = 0; i < total; i++) {
-    enhanced[i] = lut[pixels[i]];
-  }
-
-  // ── 5. Unsharp mask (manual implementation) ───────────────────────────────────
-  // Create blurred version using sharp
-  const blurredBuf = await sharp(Buffer.from(enhanced), {
+  // ── 5. Unsharp mask: amount=1.25, sigma=0.8 (gentle, per spec) ───────────────
+  // Blur with sigma=0.8 using sharp
+  const blurredBuf = await sharp(Buffer.from(claheResult), {
     raw: { width, height, channels: 1 },
   })
-    .blur(2)
+    .blur(0.8)
     .raw()
     .toBuffer();
 
   const blurred = new Uint8Array(blurredBuf);
   const sharpened = new Uint8Array(total);
-  const unsharpAmount = 1.5; // strength of sharpening
+  const unsharpAmount = 1.25; // per spec: gray = addWeighted(gray, 1.25, blurred, -0.25, 0)
 
   for (let i = 0; i < total; i++) {
-    const diff = enhanced[i] - blurred[i];
-    const val = Math.round(enhanced[i] + unsharpAmount * diff);
+    // cv2.addWeighted(gray, 1.25, blurred, -0.25, 0) = gray*1.25 + blurred*(-0.25) + 0
+    const val = Math.round(claheResult[i] * 1.25 + blurred[i] * (-0.25));
     sharpened[i] = Math.max(0, Math.min(255, val));
   }
 
-  // ── 6. Gamma correction for granite (preserve darks) ─────────────────────────
-  // Gamma < 1 brightens midtones, gamma > 1 darkens them
-  // For granite engraving: use gamma ~0.85 to preserve shadow detail
-  const gamma = 0.85;
-  const gammaLut = new Uint8Array(256);
-  for (let i = 0; i < 256; i++) {
-    gammaLut[i] = Math.round(Math.pow(i / 255, gamma) * 255);
-  }
-
-  const gammaApplied = new Uint8Array(total);
-  for (let i = 0; i < total; i++) {
-    gammaApplied[i] = gammaLut[sharpened[i]];
-  }
-
-  // ── 7. Black point: ensure very dark pixels stay dark (granite background) ────
-  const blackPoint = 8;
-  const finalPixels = new Uint8Array(total);
-  for (let i = 0; i < total; i++) {
-    const v = gammaApplied[i];
-    finalPixels[i] = v < blackPoint ? 0 : v;
-  }
-
-  // ── 8. Smart invert: granite machines engrave white on black.
-  //        If the image has a dark background (avg < 110), invert.
-  //        After invert, brighten midtones so the subject has visible grey detail
-  //        (not just pure black/white) — this makes the horse look lighter.
-  const avgBrightness = finalPixels.reduce((s, v) => s + v, 0) / total;
+  // ── 6. Black threshold: pixels < 15 → 0 (absolute black background, per spec) ─
   const outputPixels = new Uint8Array(total);
-  if (avgBrightness < 110) {
-    // Dark background → invert so the subject becomes dark on white
-    // Then apply a brightness lift: push midtones up by ~30 so details are visible
-    const brightnessLift = 30;
-    for (let i = 0; i < total; i++) {
-      const inverted = 255 - finalPixels[i];
-      // Lift: darks stay dark, midtones get brighter, whites stay white
-      const lifted = inverted < 200 ? Math.min(255, inverted + Math.round(brightnessLift * (1 - inverted / 255))) : inverted;
-      outputPixels[i] = lifted;
-    }
-  } else {
-    outputPixels.set(finalPixels);
+  for (let i = 0; i < total; i++) {
+    outputPixels[i] = sharpened[i] < 15 ? 0 : sharpened[i];
   }
 
-  // ── 9. Output as 8-bit BMP (manual BMP header construction) ─────────────────
-  // sharp doesn't support BMP output, so we build the BMP file manually
+  // ── 7. Output as 8-bit BMP ───────────────────────────────────────────────────
   const bmpBuffer = buildBmp8bit(outputPixels, width, height);
 
   return {
@@ -244,13 +264,13 @@ function buildBmp8bit(pixels: Uint8Array, width: number, height: number): Buffer
   // ── BITMAPINFOHEADER ─────────────────────────────────────────────────────────
   buf.writeUInt32LE(40, offset); offset += 4;                    // biSize
   buf.writeInt32LE(width, offset); offset += 4;                  // biWidth
-  buf.writeInt32LE(-height, offset); offset += 4;                // biHeight (negative = top-down)
+  buf.writeInt32LE(height, offset); offset += 4;                 // biHeight (positive = bottom-up, standard BMP)
   buf.writeUInt16LE(1, offset); offset += 2;                     // biPlanes
   buf.writeUInt16LE(8, offset); offset += 2;                     // biBitCount (8-bit)
   buf.writeUInt32LE(0, offset); offset += 4;                     // biCompression (BI_RGB)
   buf.writeUInt32LE(pixelDataSize, offset); offset += 4;         // biSizeImage
-  buf.writeInt32LE(2835, offset); offset += 4;                   // biXPelsPerMeter (~72 dpi)
-  buf.writeInt32LE(2835, offset); offset += 4;                   // biYPelsPerMeter
+  buf.writeInt32LE(Math.round(dpiToPixelsPerMeter(180)), offset); offset += 4; // biXPelsPerMeter
+  buf.writeInt32LE(Math.round(dpiToPixelsPerMeter(180)), offset); offset += 4; // biYPelsPerMeter
   buf.writeUInt32LE(256, offset); offset += 4;                   // biClrUsed
   buf.writeUInt32LE(256, offset); offset += 4;                   // biClrImportant
 
@@ -262,8 +282,8 @@ function buildBmp8bit(pixels: Uint8Array, width: number, height: number): Buffer
     buf[offset++] = 0; // Reserved
   }
 
-  // ── Pixel data (bottom-up rows, padded) ─────────────────────────────────────
-  for (let y = 0; y < height; y++) {
+  // ── Pixel data (bottom-up rows: last row first, padded to 4-byte boundary) ───
+  for (let y = height - 1; y >= 0; y--) {
     for (let x = 0; x < width; x++) {
       buf[offset + x] = pixels[y * width + x];
     }
@@ -271,4 +291,8 @@ function buildBmp8bit(pixels: Uint8Array, width: number, height: number): Buffer
   }
 
   return buf;
+}
+
+function dpiToPixelsPerMeter(dpi: number): number {
+  return Math.round(dpi / 0.0254);
 }
