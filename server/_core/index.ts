@@ -57,8 +57,8 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // ── Server timeout: 5 minutes for long AI processing jobs ────────────────
-  server.timeout = 5 * 60 * 1000;          // 5 min socket timeout
+  // ── Server timeout: 2 minutes (default) ────────────────────────────────────
+  server.timeout = 2 * 60 * 1000;          // 2 min socket timeout
   server.keepAliveTimeout = 65 * 1000;     // 65s keep-alive (> load balancer 60s)
   server.headersTimeout = 66 * 1000;       // slightly above keepAliveTimeout
 

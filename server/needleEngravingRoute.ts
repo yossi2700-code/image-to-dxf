@@ -98,9 +98,10 @@ router.post("/process", upload.single("image"), async (req, res) => {
           ? "Transform this portrait photo into a professional grayscale portrait optimized for diamond needle engraving on black granite. Pure grayscale only, no color. High contrast, sharp details, smooth gradients. Background must be pure black (0,0,0). Output: grayscale PNG."
           : "Convert this image into a professional grayscale image optimized for diamond needle engraving on black granite. Pure grayscale only, no color. High contrast, sharp details, smooth gradients. Background must be pure black (0,0,0). Output: grayscale PNG.";
 
-      // Upload original to S3 for AI processing
+      // Upload normalized buffer to S3 for AI processing (use processBuffer, not raw req.file.buffer)
       const originalKey = `engraving-temp/${id}-original.png`;
-      const { url: originalUrl } = await storagePut(originalKey, req.file.buffer, "image/png");
+      const normalizedForUpload = await sharp(processBuffer).png().toBuffer();
+      const { url: originalUrl } = await storagePut(originalKey, normalizedForUpload, "image/png");
 
       const { url: aiGrayscaleUrl } = await generateImage({
         prompt: promptText,
