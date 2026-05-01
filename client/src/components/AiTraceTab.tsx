@@ -475,10 +475,12 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
   const [precisionUsed, setPrecisionUsed] = useState(false);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const CLIENT_TIMEOUT_SEC = 240; // 4 minutes — auto-cancel if server hasn’t responded
+  const CLIENT_TIMEOUT_SEC = 240; // 4 minutes — auto-cancel if server hasn't responded
   const fileInputRef = useRef<HTMLInputElement>(null);
   // previewRef holds the latest preview URL without causing re-renders when read inside handleTrace
   const previewRef = useRef<string | null>(localStorage.getItem("ai_trace_imagePreview"));
+  // warmupPromiseRef: stores the in-flight warmup request so handleTrace can await it
+  const warmupPromiseRef = useRef<Promise<void> | null>(null);
 
   const setJobIdPersisted = useCallback((id: string | null) => {
     if (id) {
@@ -711,7 +713,10 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
     setResult(null);
     setStatus("idle");
     // Fire warm-up request to Forge immediately — wakes the AI service so first Convert is fast
-    fetch("/api/ai-trace/warmup", { method: "POST", credentials: "include" }).catch(() => {});
+    // Store the promise so handleTrace can await it before sending the real job
+    warmupPromiseRef.current = fetch("/api/ai-trace/warmup", { method: "POST", credentials: "include" })
+      .then(() => {})
+      .catch(() => {});
     setErrorMsg("");
     setFocusText("");
     setCustomImprovement("");
@@ -809,6 +814,11 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
 
     setShowSuccessOverlay(false); setStatus("loading"); setResult(null); setErrorMsg(""); setCurrentStepHe(""); setCurrentStepEn("");
     try {
+      // Await warmup if it's still in-flight — ensures Forge is awake before the real request
+      if (warmupPromiseRef.current) {
+        try { await warmupPromiseRef.current; } catch { /* ignore */ }
+        warmupPromiseRef.current = null;
+      }
       const formData = new FormData();
       // When forcePreview is set, always use previewRef (the cropped image) even if imageFile exists
       if (!forcePreview && imageFile) {
