@@ -179,11 +179,21 @@ function detectObjectAndScene(userPrompt: string): { hasScene: boolean; sceneKey
   return { hasScene: !!match, sceneKeywords: match ? match[0] : "" };
 }
 
+/**
+ * Detect if the prompt is asking for multiple flat objects that should be laid out
+ * in a grid/row (cards, tiles, stamps, coins, stickers, etc.) — NOT in a fan/perspective.
+ */
+function detectFlatLayoutObjects(userPrompt: string): boolean {
+  const flatPatterns = /\b(card|cards|deck|playing card|playing cards|קלף|קלפים|חפיסה|tile|tiles|stamp|stamps|coin|coins|sticker|stickers|badge|badges|label|labels|token|tokens|chip|chips|domino|dominoes|tag|tags|patch|patches)\b/i;
+  return flatPatterns.test(userPrompt);
+}
+
 function buildLineArtPrompt(userPrompt: string, variationIndex: number): string {
   const variation = STYLE_VARIATIONS[variationIndex % STYLE_VARIATIONS.length];
   const { hasScene } = detectObjectAndScene(userPrompt);
   const exactTexts = detectExactTextInPrompt(userPrompt);
   const hasExactText = exactTexts.length > 0;
+  const isFlatLayout = detectFlatLayoutObjects(userPrompt);
 
   // Build text instruction: if user specified exact text, enforce it precisely
   const TEXT_SINGLE_LINE_RULE =
@@ -217,8 +227,18 @@ function buildLineArtPrompt(userPrompt: string, variationIndex: number): string 
     );
   }
 
+  // Flat layout rule for cards, tiles, stamps etc. — prevent fan/perspective arrangement
+  const flatLayoutRule = isFlatLayout
+    ? "CRITICAL LAYOUT RULE: Draw each item FLAT, viewed from directly above (top-down / bird's-eye view). " +
+      "NO perspective, NO 3D angle, NO fan arrangement, NO overlapping. " +
+      "Arrange items in a neat GRID or ROW, each item fully visible and separated by a small gap. " +
+      "Every item must be the same size, perfectly rectangular, lying flat. " +
+      "Think of items laid out on a flat table photographed from above. "
+    : "";
+
   return (
     `${textRule} ` +
+    `${flatLayoutRule}` +
     `Professional black and white line art illustration of ${userPrompt}. ` +
     "Pure white background (#FFFFFF). " +
     "Bold thick black outlines (3-5px stroke width), no fill, no shading, no gradients. " +
@@ -244,6 +264,9 @@ const HE_TO_EN_GEN: Record<string, string> = {
   "ספר": "book", "עיפרון": "pencil", "מפתח": "key", "כוס": "cup",
   "שעון": "clock", "טלפון": "phone", "מצלמה": "camera",
   "לוגו": "logo", "סמל": "symbol", "עיצוב": "design",
+  "קלף": "playing card", "קלפים": "playing cards", "חפיסה": "deck of cards",
+  "מטבע": "coin", "מטבעות": "coins", "בול": "stamp", "בולים": "stamps",
+  "אריח": "tile", "אריחים": "tiles", "תג": "tag", "תגים": "tags",
 };
 
 /**
