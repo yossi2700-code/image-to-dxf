@@ -21,6 +21,7 @@ import { SvgPanZoomViewer } from "@/components/SvgPanZoomViewer";
 import { FaceDetectTab } from "@/components/FaceDetectTab";
 import { CncReliefTab } from "@/components/CncReliefTab";
 import { NeedleEngravingTab } from "@/components/NeedleEngravingTab";
+import { SmartTemplateTab } from "@/components/SmartTemplateTab";
 import { WelcomeBannerNew } from "@/components/WelcomeBannerNew";
 import { AiProcessingAnimation } from "@/components/AiProcessingAnimation";
 import { OnboardingTour, resetOnboardingTour } from "@/components/OnboardingTour";
@@ -3183,7 +3184,7 @@ export default function Home() {
           onValueChange={(v) => {
             setActiveTab(v);
             localStorage.setItem("active_tab", v);
-            const tabNames: Record<string, string> = { ai: 'AI Create', trace: 'Image to Lines', face: 'Portrait', 'cnc-relief': 'CNC Relief', redraw: 'Document Redraw', 'needle-engraving': 'Granite Engraving' };
+            const tabNames: Record<string, string> = { ai: 'AI Create', trace: 'Image to Lines', face: 'Portrait', 'cnc-relief': 'CNC Relief', redraw: 'Document Redraw', 'needle-engraving': 'Granite Engraving', 'smart-templates': 'Engineering Templates' };
             trackHome(`tab_switch_${v}`, `מעבר ל: ${tabNames[v] ?? v}`);
           }}
           dir={isRtl ? "rtl" : "ltr"}
@@ -3279,9 +3280,19 @@ export default function Home() {
               <span className="absolute -top-1.5 -right-1 text-[9px] font-bold bg-violet-500 text-white px-1 rounded-full leading-4">
                 {t("comingSoon")}
               </span>
+             </TabsTrigger>
+            {/* 5. Smart Templates */}
+            <TabsTrigger
+              value="smart-templates"
+              className="flex-1 flex-col gap-0.5 py-2.5 text-xs font-semibold transition-all rounded-xl text-gray-400 data-[state=active]:text-white data-[state=active]:shadow-md relative px-1"
+              style={{
+                background: activeTab === 'smart-templates' ? 'linear-gradient(135deg, #059669, #10b981)' : 'transparent',
+              }}
+            >
+              <Layers className="w-4 h-4 shrink-0" />
+              <span className="truncate text-[11px]">{isRtl ? 'תבניות' : 'Templates'}</span>
             </TabsTrigger>
           </TabsList>
-
           <TabsContent value="ai">
             {/* Demo gallery — AI Create */}
             <div
@@ -3573,6 +3584,33 @@ export default function Home() {
               </p>
             </div>
             <NeedleEngravingTab
+              onOpenAuth={() => openAuthAs('unregistered')}
+              onInsufficientTokens={() => setShowTokensBanner(true)}
+            />
+          </TabsContent>
+
+          {/* Smart Templates tab */}
+          <TabsContent value="smart-templates">
+            {/* Demo banner — Smart Templates */}
+            <div
+              className="mb-5 rounded-2xl overflow-hidden p-4"
+              style={{ background: '#ffffff', border: '1px solid #e8eaf0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #059669, #10b981)'}}>
+                  <Layers className="w-3.5 h-3.5 text-white" />
+                </div>
+                <span className="text-sm font-bold text-gray-800">
+                  {isRtl ? 'תבניות הנדסיות' : 'Engineering Templates'}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                {isRtl
+                  ? 'יצירת קבצי DXF מדויקים מתיאור טקסטואלי. פשוט לכתוב "חביסת קלפים 52 קלפים" או "לוח שחמט 40xd740 סמ" ולקבל קובץ מוכן לחיתוך במכונה תוך שניות.'
+                  : 'Generate precise DXF files from text descriptions. Simply write "52 playing cards" or "chess board 40xd740 cm" and get a file ready for laser cutting in seconds.'}
+              </p>
+            </div>
+            <SmartTemplateTab
               onOpenAuth={() => openAuthAs('unregistered')}
               onInsufficientTokens={() => setShowTokensBanner(true)}
             />

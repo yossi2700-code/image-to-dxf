@@ -2946,3 +2946,13 @@
 - [ ] יצירה AI — הסר תמונת "לפני" בתוצאה, הצג רק תמונת התוצאה
 - [ ] חריטת גרניט — הסוס יהיה בהיר יותר (פחות invert חזק, יותר גוונים אפורים)
 - [ ] פורטרט — הוסף הילה לבנה מטושטשת סביב האובייקט על רקע שחור
+
+## Smart Templates — תבניות הנדסיות
+- [x] server route — smartTemplateRoute.ts עם GPT parsing + SVG/DXF generation
+- [x] תמיכה בסוגים: playing_cards, chess_board, puzzle, dice, frame
+- [x] SmartTemplateTab component עם אותה UX כמו שאר הפיצ'רים
+- [x] הוספת smart_template לטוקן קוסט (2 אסימונים)
+- [x] רישום ב-index.ts ובטאב ב-Home.tsx
+- [ ] הוספת תמונת דמו לטאב
+- [ ] שיפור SVG generator — הוספת עיצוב פנים לקלפים (J/Q/K)
+- [ ] שמירה בהיסטוריה (recordUserAction)

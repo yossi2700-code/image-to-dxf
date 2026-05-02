@@ -33,6 +33,7 @@ import {
 import { startReminderScheduler } from "../reminderScheduler";
 import unsubscribeRoute from "../unsubscribeRoute";
 import needleEngravingRoute from "../needleEngravingRoute";
+import { smartTemplateRouter } from "../smartTemplateRoute";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -186,6 +187,10 @@ async function startServer() {
   // ── Diamond Needle Engraving route ────────────────────────────────────
   app.use("/api/needle-engraving", uploadLimiter);
   app.use("/api/needle-engraving", needleEngravingRoute);
+
+  // ── Smart Templates route ────────────────────────────────────────────────
+  app.use("/api/smart-template", uploadLimiter);
+  app.use(smartTemplateRouter);
 
   // ── FreeDXF REST API ───────────────────────────────────────────────────
   app.use(freedxfRouter);
