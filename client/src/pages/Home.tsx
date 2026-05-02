@@ -3609,14 +3609,7 @@ export default function Home() {
                   ? 'יצירת קבצי DXF מדויקים מתיאור טקסטואלי. פשוט לכתוב "חבילת קלפים 52 קלפים" או "לוח שחמט 40x40 סמ" ולקבל קובץ מוכן לחיתוך במכונה תוך שניות.'
                   : 'Generate precise DXF files from text descriptions. Simply write "52 playing cards" or "chess board 40x40 cm" and get a file ready for laser cutting in seconds.'}
               </p>
-              <div className="rounded-xl overflow-hidden">
-                <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663365044246/hnDFdLkzVGYJYdws9hbnLw/smart-templates-hero-YT9fmcXnc4RQDLfx8nJVG3.webp"
-                  alt="Engineering Templates — playing cards and chess board DXF layout"
-                  className="w-full object-cover object-center rounded-xl"
-                  style={{maxHeight: '180px'}}
-                />
-              </div>
+
             </div>
             <SmartTemplateTab
               onOpenAuth={() => openAuthAs('unregistered')}
