@@ -977,6 +977,7 @@ export const appRouter = router({
           lastLoginAt: appUsers.lastLoginAt,
           googleId: appUsers.googleId,
           registrationSource: appUsers.registrationSource,
+          language: appUsers.language,
         })
         .from(appUsers)
         .orderBy(desc(appUsers.createdAt))

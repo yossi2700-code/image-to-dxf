@@ -661,6 +661,17 @@ router.post("/api/app-auth/google", async (req, res) => {
       .from(appUsers)
       .where(eq(appUsers.email, email));
 
+    // Detect language from Accept-Language header
+    const acceptLangGoogle = (req.headers["accept-language"] ?? "").toLowerCase();
+    const googleLang: "he" | "en" | "ru" | "es" | "fr" | "ar" | "zh" =
+      acceptLangGoogle.startsWith("he") ? "he"
+      : acceptLangGoogle.startsWith("ru") ? "ru"
+      : acceptLangGoogle.startsWith("es") ? "es"
+      : acceptLangGoogle.startsWith("fr") ? "fr"
+      : acceptLangGoogle.startsWith("ar") ? "ar"
+      : acceptLangGoogle.startsWith("zh") ? "zh"
+      : "en";
+
     let isNewUser = false;
     if (!user) {
       isNewUser = true;
@@ -670,6 +681,7 @@ router.post("/api/app-auth/google", async (req, res) => {
         emailVerified: 1,
         tokenBalance: 10,
         googleId: googleSub,
+        language: googleLang,
       });
       const insertId = (result as { insertId: number }).insertId;
       const [newUser] = await db
@@ -684,7 +696,7 @@ router.post("/api/app-auth/google", async (req, res) => {
         name: name ?? null,
         tokens: 10,
         siteUrl: "https://dxfai.ai",
-        language: "en",
+        language: googleLang === "he" ? "he" : "en",
       });
     } else {
       // Update last login and save googleId if not already set

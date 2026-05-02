@@ -1661,6 +1661,24 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                 Google
                               </span>
                             ) : null}
+                            {(u as any).language ? (
+                              <span className={`text-xs px-1.5 py-0.5 rounded-full border ${
+                                (u as any).language === 'he' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                                (u as any).language === 'ru' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                (u as any).language === 'ar' ? 'bg-green-50 text-green-700 border-green-200' :
+                                (u as any).language === 'es' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                                (u as any).language === 'fr' ? 'bg-pink-50 text-pink-700 border-pink-200' :
+                                'bg-slate-50 text-slate-600 border-slate-200'
+                              }`} title={`שפת ממשק: ${(u as any).language}`}>
+                                {(u as any).language === 'he' ? '🇮🇱 עב' :
+                                 (u as any).language === 'ru' ? '🇷🇺 RU' :
+                                 (u as any).language === 'ar' ? '🇸🇦 AR' :
+                                 (u as any).language === 'es' ? '🇪🇸 ES' :
+                                 (u as any).language === 'fr' ? '🇫🇷 FR' :
+                                 (u as any).language === 'zh' ? '🇨🇳 ZH' :
+                                 '🌐 EN'}
+                              </span>
+                            ) : null}
                             {subscription && (
                               <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full flex items-center gap-1">
                                 <Crown className="w-2.5 h-2.5" />{subscription.planId}
