@@ -922,8 +922,13 @@ async function runTraceJob(
          const forgeResult = await forgeResponse.json() as { image: { b64Json: string; mimeType: string } };
         const b64 = forgeResult.image?.b64Json;
         if (!b64) throw new Error("Forge ImageService did not return image data");
-        rawBuffer = Buffer.from(b64, "base64");
-
+         rawBuffer = Buffer.from(b64, "base64");
+        // Flatten alpha channel → white background immediately after receiving AI output.
+        // Prevents gray artifacts when the AI output PNG has transparency or semi-transparent edges.
+        rawBuffer = await sharp(rawBuffer)
+          .flatten({ background: { r: 255, g: 255, b: 255 } })
+          .png()
+          .toBuffer();
         // Validate AI output — detect blank/white images (AI sometimes returns all-white)
         // Check average brightness: if > 250 (nearly all white), the AI returned a blank image
         const aiOutputStats = await sharp(rawBuffer).grayscale().stats();
@@ -951,7 +956,9 @@ async function runTraceJob(
             const retryResult = await retryResponse.json() as { image: { b64Json: string; mimeType: string } };
             const retryB64 = retryResult.image?.b64Json;
             if (retryB64) {
-              const retryBuffer = Buffer.from(retryB64, "base64");
+              const retryBufferRaw = Buffer.from(retryB64, "base64");
+              const retryBufferFlat = await sharp(retryBufferRaw).flatten({ background: { r: 255, g: 255, b: 255 } }).png().toBuffer();
+              const retryBuffer = Buffer.from(retryBufferFlat);
               const retryStats = await sharp(retryBuffer).grayscale().stats();
               if (retryStats.channels[0].mean < 250) {
                 rawBuffer = retryBuffer;
