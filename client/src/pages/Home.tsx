@@ -2597,12 +2597,21 @@ export default function Home() {
   }, []);
 
   // Google Ads: fire sign_up conversion when user arrives after OAuth new registration
+  // Also show confetti welcome banner for new Manus OAuth registrations
   useEffect(() => {
     const cookies = document.cookie.split(';').map(c => c.trim());
     const hasNewReg = cookies.some(c => c.startsWith('new_registration='));
     if (hasNewReg) {
       // Delete the cookie immediately so it only fires once
       document.cookie = 'new_registration=; Max-Age=0; path=/';
+      // Show welcome banner with confetti for new OAuth registrations
+      setShowWelcomeBanner(true);
+      // Scroll to tools section
+      setTimeout(() => {
+        document.getElementById('main-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setHighlightTabs(true);
+        setTimeout(() => setHighlightTabs(false), 3000);
+      }, 500);
       if (typeof window !== 'undefined' && (window as any).gtag) {
         (window as any).gtag('event', 'conversion', {
           'send_to': 'AW-18000656977/FGBsCL_t8I4cENH0sIdD',
@@ -2610,6 +2619,14 @@ export default function Home() {
           'currency': 'ILS'
         });
         console.log('[Analytics] Google Ads sign_up conversion fired (OAuth new user)');
+      }
+      // Facebook Pixel - CompleteRegistration
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        (window as any).fbq('track', 'CompleteRegistration', {
+          value: 0,
+          currency: 'ILS',
+          content_name: 'dxfai_signup'
+        });
       }
     }
   }, []);
