@@ -717,6 +717,7 @@ async function runTraceJob(
     // 1. Normalize dark/underexposed images (auto-levels)
     // 2. Enhance contrast and sharpen faint/unclear lines so AI sees them clearly
     const rawResized = await sharp(imageBuffer)
+      .flatten({ background: { r: 255, g: 255, b: 255 } }) // merge alpha channel → white bg (prevents gray from transparent PNGs)
       .resize(aiResizeW, aiResizeH, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
       .toBuffer();
     const { channels } = await sharp(rawResized).stats();
