@@ -122,14 +122,28 @@ async function convertToEngravingGrayscaleWithOpenAI(
   isPortrait: boolean
 ): Promise<Buffer> {
   const prompt = isPortrait ? PORTRAIT_ENGRAVING_PROMPT : GENERAL_ENGRAVING_PROMPT;
-  const imageFile = new File([new Uint8Array(imageBuffer)], "source.png", { type: "image/png" });
+
+  // Per PDF spec: center-crop to square then resize to 1024x1024 before sending to AI
+  const meta = await sharp(imageBuffer).metadata();
+  const w = meta.width ?? 1024;
+  const h = meta.height ?? 1024;
+  const size = Math.min(w, h);
+  const left = Math.floor((w - size) / 2);
+  const top = Math.floor((h - size) / 2);
+  const preparedBuffer = await sharp(imageBuffer)
+    .extract({ left, top, width: size, height: size })
+    .resize(1024, 1024, { kernel: sharp.kernel.lanczos3 })
+    .png()
+    .toBuffer();
+
+  const imageFile = new File([new Uint8Array(preparedBuffer)], "source.png", { type: "image/png" });
   const response = await openai.images.edit({
     model: "gpt-image-1",
     image: imageFile,
     prompt,
     n: 1,
     size: "1024x1024",
-    quality: "high",
+    quality: "medium",  // Per PDF spec: medium is sufficient and faster
   });
   const imageData = response.data?.[0];
   if (!imageData) throw new Error("AI did not return an image");
