@@ -13,23 +13,7 @@ import { processForGraniteEngraving } from "./engravingProcessor";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
 // Portrait prompt — explains the physics of black granite engraving
-const PORTRAIT_ENGRAVING_PROMPT = `You are preparing this portrait for diamond needle engraving on BLACK GRANITE.
-
-HOW IT WORKS: The granite stone is BLACK. The diamond needle creates WHITE dots. More dots = lighter area. Fewer dots = stays black. Result: WHITE marks on BLACK stone.
-
-THINK: white chalk on black paper. EVERYTHING visible MUST have gray value. ONLY background = pure black.
-
-CRITICAL OUTPUT RULES:
-- BACKGROUND: pure black (RGB 0,0,0) — the stone itself, not engraved. NO gray, NO texture in background.
-- FACE/SKIN: bright gray (160-240) with smooth gradients — photorealistic, silky smooth, NO harsh edges
-- HAIR: flowing gray (70-160) with bright highlights (180-220)
-- EYES: realistic depth — iris in gray (80-150), bright catchlights (200-240)
-- BEARD/STUBBLE: soft gray dots (50-120), smooth texture
-- DARK CLOTHING: MUST be visible medium gray (70-130) — if black it will be invisible in engraving
-- ALL SHADOWS: soft gradual transitions — minimum gray value 30, never pure black
-
-STYLE: Photorealistic B&W portrait. Smooth continuous gradients. Rich tonal range. Preserve EXACT facial likeness.
-FORMAT: Pure grayscale only. Pure black background. No color. No text. No borders. No white background.`;
+const PORTRAIT_ENGRAVING_PROMPT = `Transform this portrait photo into a professional grayscale portrait optimized for diamond percussion impact engraving on black granite. The diamond needle strikes dots into black granite - more dots = lighter area, fewer dots = darker area, so smooth gradients are critical. Requirements: Pure solid black background (remove any existing background completely). Face must look EXACTLY like the real person - preserve authentic features faithfully. Skin rendered with VERY SMOOTH natural gradients - soft transitions from light to shadow, no harsh edges. Hair: natural tones with subtle highlights showing individual strands. Beard/stubble if present: fine individual hair dots in soft gray tones, NOT a heavy dark shadow. Eyes: natural depth and realistic rendering. Clothing: smooth dark gray tones. Style: photorealistic grayscale portrait. 256 shades of gray, smooth gradients throughout. No harsh edges anywhere. Black background is absolute pure black.`;
 
 const GENERAL_ENGRAVING_PROMPT = `You are preparing this image for diamond needle engraving on BLACK GRANITE.
 
