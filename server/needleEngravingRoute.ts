@@ -13,39 +13,41 @@ import { processForGraniteEngraving } from "./engravingProcessor";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
 // Portrait prompt — explains the physics of black granite engraving
-const PORTRAIT_ENGRAVING_PROMPT = `You are preparing an image for diamond needle engraving on BLACK GRANITE.
+const PORTRAIT_ENGRAVING_PROMPT = `Convert this portrait to a FINE ART GRAYSCALE ENGRAVING IMAGE for diamond needle engraving on black granite.
 
-HOW THIS ENGRAVING WORKS: The granite stone is BLACK. The diamond needle strikes the stone and creates WHITE dots. More dots = lighter/whiter area. Fewer dots = stays black. So the final engraving is WHITE marks on BLACK stone.
+PHYSICS: The granite is BLACK. The needle creates WHITE dots — more dots = lighter. Think: white chalk on black paper.
 
-THEREFORE: Think of this like drawing with white chalk on black paper. EVERYTHING that should be visible in the final engraving MUST have some gray value (not pure black). ONLY the background should be pure black.
+ARTISTIC STYLE REQUIREMENTS (CRITICAL):
+- Produce a SMOOTH, PAINTERLY grayscale image — like a master mezzotint or photogravure engraving
+- Rich, continuous tonal gradients — NO harsh edges, NO pixelation, NO noise
+- Skin: luminous, smooth gradients from bright highlights (220-255) to mid-tones (120-180) — like fine art photography
+- Hair: flowing, silky gradients (60-160) with bright specular highlights
+- Eyes: deep, realistic — iris in gray tones (80-150), bright catchlights (200-255)
+- Shadows: soft, gradual — never pure black except the empty background
+- Beard/stubble: soft feathered gray (50-120), smooth texture
+- Dark clothing: visible medium gray (70-130) — NEVER leave it black
+- Background: pure black (0,0,0) ONLY — clean, no texture
 
-RULES:
-- Background: pure black (0,0,0) — this is the stone itself, not engraved
-- Face/skin: bright to medium gray (150-230) — smooth gradients, photorealistic
-- Hair: medium gray (80-160) with subtle highlights
-- Dark clothing (black shirt, dark jacket): render as VISIBLE medium gray (70-130) — if left black, the clothing will be INVISIBLE in the engraving
-- Any dark object that should be visible: minimum gray value of 60
-- Beard/stubble: soft gray dots (60-120), NOT solid black
-- Eyes: realistic depth, iris visible in gray tones
-- Smooth gradients everywhere — no harsh edges
-- Preserve the person's EXACT facial features and likeness
+QUALITY: Photorealistic fine art portrait. Maximum tonal range. Silky smooth gradients. Preserve EXACT facial likeness.
+Output: pure grayscale, 256 levels, black background, no color, no text, no borders.`;
 
-Style: professional B&W portrait photograph, 256 gray levels, photorealistic.`;
+const GENERAL_ENGRAVING_PROMPT = `Convert this image to a FINE ART GRAYSCALE ENGRAVING IMAGE for diamond needle engraving on black granite.
 
-const GENERAL_ENGRAVING_PROMPT = `You are preparing an image for diamond needle engraving on BLACK GRANITE.
+PHYSICS: The granite is BLACK. The needle creates WHITE dots — more dots = lighter. Think: white chalk on black paper.
 
-HOW THIS ENGRAVING WORKS: The granite stone is BLACK. The diamond needle creates WHITE dots on the stone. More dots = lighter area. Fewer dots = stays black.
+ARTISTIC STYLE REQUIREMENTS (CRITICAL):
+- Produce a SMOOTH, RICH grayscale image — like a master mezzotint, photogravure, or fine art engraving print
+- Continuous, painterly tonal gradients — NO harsh edges, NO noise, NO pixelation
+- Bright highlights: 200-255 (metal reflections, light sources, bright surfaces)
+- Mid-tones: 80-180 (main subjects, textures, details)
+- Dark areas: 30-80 (shadows, depth) — NEVER pure black except the empty background
+- Background: pure black (0,0,0) ONLY — completely clean
+- Dark objects (black car, dark clothing, dark fur): render as visible medium gray (60-130)
+- All subjects must have rich tonal variation — avoid flat gray areas
+- Preserve all fine details: textures, edges, reflections
 
-THEREFORE: Think of this like drawing with white chalk on black paper. EVERYTHING that should be visible MUST have some gray value (not pure black). ONLY the empty background should be pure black.
-
-RULES:
-- Background: pure black (0,0,0)
-- All objects/subjects that should be visible: minimum gray value of 60, ideally 80-200
-- Dark objects (black car, dark clothing, dark fur): render as VISIBLE medium gray (70-130)
-- Smooth gradients, sharp details, high contrast
-- 256 gray levels
-
-Style: professional B&W photograph.`;
+QUALITY: Fine art print quality. Maximum tonal range. Silky smooth gradients. High detail preservation.
+Output: pure grayscale, 256 levels, black background, no color, no text, no borders.`;
 
 /**
  * Use OpenAI gpt-image-1 images.edit to convert image to engraving-ready grayscale.
@@ -63,7 +65,7 @@ async function convertToEngravingGrayscaleWithOpenAI(
     prompt,
     n: 1,
     size: "1024x1024",
-    quality: "medium",
+    quality: "high",
   });
   const imageData = response.data?.[0];
   if (!imageData) throw new Error("AI did not return an image");
