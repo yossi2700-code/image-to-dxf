@@ -12,27 +12,40 @@ import { processForGraniteEngraving } from "./engravingProcessor";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
-// Portrait prompt — explains the physics of black granite engraving
-const PORTRAIT_ENGRAVING_PROMPT = `Transform this portrait photo into a professional grayscale portrait optimized for diamond percussion impact engraving on black granite. The diamond needle strikes dots into black granite - more dots = lighter area, fewer dots = darker area, so smooth gradients are critical. Requirements: Pure solid black background (remove any existing background completely). Face must look EXACTLY like the real person - preserve authentic features faithfully. Skin rendered with VERY SMOOTH natural gradients - soft transitions from light to shadow, no harsh edges. Hair: natural tones with subtle highlights showing individual strands. Beard/stubble if present: fine individual hair dots in soft gray tones, NOT a heavy dark shadow. Eyes: natural depth and realistic rendering. Clothing: smooth dark gray tones. Style: photorealistic grayscale portrait. 256 shades of gray, smooth gradients throughout. No harsh edges anywhere. Black background is absolute pure black.`;
+// Shared prompt for both portrait and general granite engraving.
+// Key principle: FAITHFUL conversion — preserve exact composition, only convert colors to grayscale.
+const PORTRAIT_ENGRAVING_PROMPT = `Convert this image to grayscale optimized for diamond needle engraving on black granite.
 
-const GENERAL_ENGRAVING_PROMPT = `You are preparing this image for diamond needle engraving on BLACK GRANITE.
+CRITICAL: Keep the EXACT same composition, subjects, positions, and background as the original image. Do NOT remove background. Do NOT change what is in the image. Do NOT add or remove any elements.
 
-HOW IT WORKS: The granite stone is BLACK. The diamond needle creates WHITE dots. More dots = lighter area. Fewer dots = stays black. Result: WHITE marks on BLACK stone.
+Only change: convert all colors to smooth grayscale tones suitable for engraving.
 
-THINK: white chalk on black paper. EVERYTHING visible MUST have gray value. ONLY empty background = pure black.
+Grayscale mapping rules:
+- Bright/light areas in original → bright gray (180-240)
+- Mid-tone areas → medium gray (80-160)
+- Dark/shadow areas → dark gray (20-80)
+- The darkest background areas → near-black (0-30)
+- Skin tones: smooth gradients, soft transitions, no harsh edges
+- Hair: natural gray tones showing individual strands
+- All details preserved: textures, edges, fine features
 
-CRITICAL OUTPUT RULES:
-- BACKGROUND: pure black (RGB 0,0,0) — the stone itself. NO gray background, NO white background.
-- MAIN SUBJECTS: bright to medium gray (80-230) with smooth gradients and rich tonal variation
-- HIGHLIGHTS: bright gray (180-240) on reflective surfaces, light sources, bright areas
-- MID-TONES: medium gray (80-160) for main body of subjects
-- SHADOWS: soft gray (30-80) — NEVER pure black, always some gray value
-- DARK OBJECTS (black car, dark clothing, dark fur): MUST be visible medium gray (60-130)
-- Smooth continuous gradients — NO harsh edges, NO noise, NO pixelation
-- Preserve all fine details: textures, edges, reflections
+Style: photorealistic grayscale. 256 shades of gray. Smooth gradients throughout. No noise. No harsh edges. Preserve all original details faithfully.`;
 
-STYLE: Photorealistic B&W. Smooth gradients. Rich tonal range. High detail.
-FORMAT: Pure grayscale only. Pure black background. No color. No text. No borders. No white background.`;
+const GENERAL_ENGRAVING_PROMPT = `Convert this image to grayscale optimized for diamond needle engraving on black granite.
+
+CRITICAL: Keep the EXACT same composition, subjects, positions, and background as the original image. Do NOT remove background. Do NOT change what is in the image. Do NOT add or remove any elements.
+
+Only change: convert all colors to smooth grayscale tones suitable for engraving.
+
+Grayscale mapping rules:
+- Bright/light areas in original → bright gray (180-240)
+- Mid-tone areas → medium gray (80-160)
+- Dark/shadow areas → dark gray (20-80)
+- The darkest background areas → near-black (0-30)
+- All details preserved: textures, edges, fine features
+- Smooth continuous gradients — no noise, no harsh edges
+
+Style: photorealistic grayscale. 256 shades of gray. Smooth gradients throughout. Preserve all original details faithfully.`;
 
 /**
  * Remove background from image using Replicate rembg model.
