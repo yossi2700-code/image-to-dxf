@@ -13,41 +13,121 @@ import { processForGraniteEngraving } from "./engravingProcessor";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
 // Portrait prompt — explains the physics of black granite engraving
-const PORTRAIT_ENGRAVING_PROMPT = `Convert this portrait to a FINE ART GRAYSCALE ENGRAVING IMAGE for diamond needle engraving on black granite.
+const PORTRAIT_ENGRAVING_PROMPT = `You are preparing this portrait for diamond needle engraving on BLACK GRANITE.
 
-PHYSICS: The granite is BLACK. The needle creates WHITE dots — more dots = lighter. Think: white chalk on black paper.
+HOW IT WORKS: The granite stone is BLACK. The diamond needle creates WHITE dots. More dots = lighter area. Fewer dots = stays black. Result: WHITE marks on BLACK stone.
 
-ARTISTIC STYLE REQUIREMENTS (CRITICAL):
-- Produce a SMOOTH, PAINTERLY grayscale image — like a master mezzotint or photogravure engraving
-- Rich, continuous tonal gradients — NO harsh edges, NO pixelation, NO noise
-- Skin: luminous, smooth gradients from bright highlights (220-255) to mid-tones (120-180) — like fine art photography
-- Hair: flowing, silky gradients (60-160) with bright specular highlights
-- Eyes: deep, realistic — iris in gray tones (80-150), bright catchlights (200-255)
-- Shadows: soft, gradual — never pure black except the empty background
-- Beard/stubble: soft feathered gray (50-120), smooth texture
-- Dark clothing: visible medium gray (70-130) — NEVER leave it black
-- Background: pure black (0,0,0) ONLY — clean, no texture
+THINK: white chalk on black paper. EVERYTHING visible MUST have gray value. ONLY background = pure black.
 
-QUALITY: Photorealistic fine art portrait. Maximum tonal range. Silky smooth gradients. Preserve EXACT facial likeness.
-Output: pure grayscale, 256 levels, black background, no color, no text, no borders.`;
+CRITICAL OUTPUT RULES:
+- BACKGROUND: pure black (RGB 0,0,0) — the stone itself, not engraved. NO gray, NO texture in background.
+- FACE/SKIN: bright gray (160-240) with smooth gradients — photorealistic, silky smooth, NO harsh edges
+- HAIR: flowing gray (70-160) with bright highlights (180-220)
+- EYES: realistic depth — iris in gray (80-150), bright catchlights (200-240)
+- BEARD/STUBBLE: soft gray dots (50-120), smooth texture
+- DARK CLOTHING: MUST be visible medium gray (70-130) — if black it will be invisible in engraving
+- ALL SHADOWS: soft gradual transitions — minimum gray value 30, never pure black
 
-const GENERAL_ENGRAVING_PROMPT = `Convert this image to a FINE ART GRAYSCALE ENGRAVING IMAGE for diamond needle engraving on black granite.
+STYLE: Photorealistic B&W portrait. Smooth continuous gradients. Rich tonal range. Preserve EXACT facial likeness.
+FORMAT: Pure grayscale only. Pure black background. No color. No text. No borders. No white background.`;
 
-PHYSICS: The granite is BLACK. The needle creates WHITE dots — more dots = lighter. Think: white chalk on black paper.
+const GENERAL_ENGRAVING_PROMPT = `You are preparing this image for diamond needle engraving on BLACK GRANITE.
 
-ARTISTIC STYLE REQUIREMENTS (CRITICAL):
-- Produce a SMOOTH, RICH grayscale image — like a master mezzotint, photogravure, or fine art engraving print
-- Continuous, painterly tonal gradients — NO harsh edges, NO noise, NO pixelation
-- Bright highlights: 200-255 (metal reflections, light sources, bright surfaces)
-- Mid-tones: 80-180 (main subjects, textures, details)
-- Dark areas: 30-80 (shadows, depth) — NEVER pure black except the empty background
-- Background: pure black (0,0,0) ONLY — completely clean
-- Dark objects (black car, dark clothing, dark fur): render as visible medium gray (60-130)
-- All subjects must have rich tonal variation — avoid flat gray areas
+HOW IT WORKS: The granite stone is BLACK. The diamond needle creates WHITE dots. More dots = lighter area. Fewer dots = stays black. Result: WHITE marks on BLACK stone.
+
+THINK: white chalk on black paper. EVERYTHING visible MUST have gray value. ONLY empty background = pure black.
+
+CRITICAL OUTPUT RULES:
+- BACKGROUND: pure black (RGB 0,0,0) — the stone itself. NO gray background, NO white background.
+- MAIN SUBJECTS: bright to medium gray (80-230) with smooth gradients and rich tonal variation
+- HIGHLIGHTS: bright gray (180-240) on reflective surfaces, light sources, bright areas
+- MID-TONES: medium gray (80-160) for main body of subjects
+- SHADOWS: soft gray (30-80) — NEVER pure black, always some gray value
+- DARK OBJECTS (black car, dark clothing, dark fur): MUST be visible medium gray (60-130)
+- Smooth continuous gradients — NO harsh edges, NO noise, NO pixelation
 - Preserve all fine details: textures, edges, reflections
 
-QUALITY: Fine art print quality. Maximum tonal range. Silky smooth gradients. High detail preservation.
-Output: pure grayscale, 256 levels, black background, no color, no text, no borders.`;
+STYLE: Photorealistic B&W. Smooth gradients. Rich tonal range. High detail.
+FORMAT: Pure grayscale only. Pure black background. No color. No text. No borders. No white background.`;
+
+/**
+ * Remove background from image using Replicate rembg model.
+ * Returns a PNG with transparent background.
+ */
+async function removeBackground(imageBuffer: Buffer): Promise<Buffer> {
+  const replicateToken = process.env.REPLICATE_API_TOKEN;
+  if (!replicateToken) throw new Error('REPLICATE_API_TOKEN not set');
+
+  // Upload image to S3 to get a public URL for Replicate
+  const tempKey = `engraving-temp/${Date.now()}-${Math.random().toString(36).slice(2)}.png`;
+  const { url: imageUrl } = await storagePut(tempKey, imageBuffer, 'image/png');
+
+  // Call Replicate rembg API
+  const createResponse = await fetch('https://api.replicate.com/v1/predictions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${replicateToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      version: 'fb8af171cfa1616ddcf1242c093f9c46bcada5ad4cf6f2fbe8b81b330ec5c003',
+      input: { image: imageUrl },
+    }),
+  });
+  if (!createResponse.ok) throw new Error(`Replicate create failed: ${createResponse.status}`);
+  const prediction = await createResponse.json() as { id: string; status: string; output?: string; error?: string };
+
+  // Poll for result
+  const pollUrl = `https://api.replicate.com/v1/predictions/${prediction.id}`;
+  for (let i = 0; i < 30; i++) {
+    await new Promise(r => setTimeout(r, 2000));
+    const pollResponse = await fetch(pollUrl, {
+      headers: { Authorization: `Bearer ${replicateToken}` },
+    });
+    const result = await pollResponse.json() as { status: string; output?: string; error?: string };
+    if (result.status === 'succeeded' && result.output) {
+      const dlResponse = await fetch(result.output);
+      if (!dlResponse.ok) throw new Error(`Failed to download rembg result: ${dlResponse.status}`);
+      return Buffer.from(await dlResponse.arrayBuffer() as ArrayBuffer);
+    }
+    if (result.status === 'failed') throw new Error(`Replicate rembg failed: ${result.error}`);
+  }
+  throw new Error('Replicate rembg timed out');
+}
+
+/**
+ * Prepare portrait image: remove background and composite on pure black.
+ * This ensures gpt-image-1 sees a clean subject on black background.
+ */
+async function preparePortraitForEngraving(imageBuffer: Buffer): Promise<Buffer> {
+  try {
+    console.log('[needle-engraving] Removing background for portrait mode...');
+    const noBgBuffer = await removeBackground(imageBuffer);
+
+    // Get dimensions of the result
+    const meta = await sharp(noBgBuffer).metadata();
+    const w = meta.width ?? 1024;
+    const h = meta.height ?? 1024;
+
+    // Composite the subject (transparent PNG) onto pure black background
+    const blackBg = await sharp({
+      create: { width: w, height: h, channels: 3, background: { r: 0, g: 0, b: 0 } },
+    })
+      .png()
+      .toBuffer();
+
+    const result = await sharp(blackBg)
+      .composite([{ input: noBgBuffer, blend: 'over' }])
+      .png()
+      .toBuffer();
+
+    console.log('[needle-engraving] Background removed and composited on black, size:', result.length);
+    return result;
+  } catch (err) {
+    console.error('[needle-engraving] Background removal failed, using original:', err);
+    return imageBuffer;
+  }
+}
 
 /**
  * Use OpenAI gpt-image-1 images.edit to convert image to engraving-ready grayscale.
@@ -187,7 +267,12 @@ router.post("/process", upload.single("image"), async (req, res) => {
       console.error('[needle-engraving] normalizeImageBuffer failed:', normErr);
       throw new Error('Unsupported image format. Please upload a JPEG, PNG, or HEIC file.');
     }
-    // Step 1: Use OpenAI gpt-image-1 images.edit to convert to engraving-ready grayscale
+    // Step 1a: For portrait mode, remove background and place on black before AI
+    if (isPortrait === "true") {
+      processBuffer = await preparePortraitForEngraving(processBuffer);
+    }
+
+    // Step 1b: Use OpenAI gpt-image-1 images.edit to convert to engraving-ready grayscale
     // This matches the Python reference implementation exactly
     const isColor = await checkIfColorImage(processBuffer);
     // Always run AI conversion for portraits; for non-portrait, only if color
