@@ -292,8 +292,28 @@ export async function processForGraniteEngraving(
     outputPixels[i] = Math.min(255, Math.max(thresholded[i], haloContrib));
   }
 
-  // ── 7. Output as 8-bit BMP ───────────────────────────────────────────────────
-  const bmpBuffer = buildBmp8bit(outputPixels, width, height);
+  // ── 7. Brightness boost + contrast stretch: push highlights to full white ─────
+  // Find the actual max brightness in the image (ignore absolute black bg)
+  let maxVal = 1;
+  for (let i = 0; i < total; i++) {
+    if (outputPixels[i] > maxVal) maxVal = outputPixels[i];
+  }
+  // Stretch so the brightest pixel becomes 255, then apply gamma lift for mid-tones
+  const finalPixels = new Uint8Array(total);
+  const scale = 255 / maxVal;
+  for (let i = 0; i < total; i++) {
+    if (outputPixels[i] === 0) {
+      finalPixels[i] = 0; // keep absolute black
+    } else {
+      // Stretch + gamma 0.75 to lift mid-tones (brighter overall)
+      const stretched = Math.min(255, Math.round(outputPixels[i] * scale));
+      const gamma = Math.round(Math.pow(stretched / 255, 0.75) * 255);
+      finalPixels[i] = gamma;
+    }
+  }
+
+  // ── 8. Output as 8-bit BMP ───────────────────────────────────────────────────
+  const bmpBuffer = buildBmp8bit(finalPixels, width, height);
 
   return {
     width,
@@ -301,7 +321,7 @@ export async function processForGraniteEngraving(
     bitDepth: 8,
     fileSizeKB: Math.round(bmpBuffer.length / 1024),
     bmpBuffer,
-    rawPixels: Buffer.from(outputPixels),
+    rawPixels: Buffer.from(finalPixels),
   };
 }
 
