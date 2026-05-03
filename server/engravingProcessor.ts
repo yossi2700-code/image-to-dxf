@@ -244,29 +244,52 @@ export async function processForGraniteEngraving(
   // ── 4. CLAHE (clipLimit=1.2, tileGridSize=16×16) per spec ────────────────────
   const claheResult = applyCLAHE(pixels, width, height, 1.2, 16);
 
-  // ── 5. Unsharp mask: amount=1.25, sigma=0.8 (gentle, per spec) ───────────────
-  // Blur with sigma=0.8 using sharp
-  const blurredBuf = await sharp(Buffer.from(claheResult), {
+  // ── 5. Pre-smooth: gentle blur for silkier gradients ──────────────────────────
+  const preSmoothBuf = await sharp(Buffer.from(claheResult), {
+    raw: { width, height, channels: 1 },
+  })
+    .blur(1.2)
+    .raw()
+    .toBuffer();
+  const preSmoothed = new Uint8Array(preSmoothBuf);
+
+  // ── 5b. Mild unsharp mask: amount=0.9 (reduced from 1.25 for smoother result) ─
+  const blurredBuf = await sharp(Buffer.from(preSmoothed), {
     raw: { width, height, channels: 1 },
   })
     .blur(0.8)
     .raw()
     .toBuffer();
-
   const blurred = new Uint8Array(blurredBuf);
   const sharpened = new Uint8Array(total);
-  const unsharpAmount = 1.25; // per spec: gray = addWeighted(gray, 1.25, blurred, -0.25, 0)
-
   for (let i = 0; i < total; i++) {
-    // cv2.addWeighted(gray, 1.25, blurred, -0.25, 0) = gray*1.25 + blurred*(-0.25) + 0
-    const val = Math.round(claheResult[i] * 1.25 + blurred[i] * (-0.25));
+    const val = Math.round(preSmoothed[i] * 0.9 + blurred[i] * 0.1);
     sharpened[i] = Math.max(0, Math.min(255, val));
   }
 
-  // ── 6. Black threshold: pixels < 15 → 0 (absolute black background, per spec) ─
+  // ── 6. Black threshold: pixels < 15 → 0 (absolute black background) ──────────
+  const thresholded = new Uint8Array(total);
+  for (let i = 0; i < total; i++) {
+    thresholded[i] = sharpened[i] < 15 ? 0 : sharpened[i];
+  }
+
+  // ── 6b. White halo glow: soft radial bloom around subject on black background ─
+  // Build subject mask: bright pixels → white, dark background → black
+  const haloMask = Buffer.allocUnsafe(total);
+  for (let i = 0; i < total; i++) {
+    haloMask[i] = thresholded[i] > 40 ? 255 : 0;
+  }
+  // Blur heavily to create a wide, soft glow
+  const haloBlurBuf = await sharp(haloMask, { raw: { width, height, channels: 1 } })
+    .blur(28)
+    .raw()
+    .toBuffer();
+  const haloBlur = new Uint8Array(haloBlurBuf);
+  // Lighten-only blend: glow adds brightness to dark background without darkening subject
   const outputPixels = new Uint8Array(total);
   for (let i = 0; i < total; i++) {
-    outputPixels[i] = sharpened[i] < 15 ? 0 : sharpened[i];
+    const haloContrib = Math.round(haloBlur[i] * 0.32); // max ~80 brightness for soft glow
+    outputPixels[i] = Math.min(255, Math.max(thresholded[i], haloContrib));
   }
 
   // ── 7. Output as 8-bit BMP ───────────────────────────────────────────────────
