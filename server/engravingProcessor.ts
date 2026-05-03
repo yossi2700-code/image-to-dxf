@@ -244,17 +244,8 @@ export async function processForGraniteEngraving(
   // ── 4. CLAHE (clipLimit=1.2, tileGridSize=16×16) per spec ────────────────────
   const claheResult = applyCLAHE(pixels, width, height, 1.2, 16);
 
-  // ── 5. Pre-smooth: gentle blur for silkier gradients ──────────────────────────
-  const preSmoothBuf = await sharp(Buffer.from(claheResult), {
-    raw: { width, height, channels: 1 },
-  })
-    .blur(1.2)
-    .raw()
-    .toBuffer();
-  const preSmoothed = new Uint8Array(preSmoothBuf);
-
-  // ── 5b. Mild unsharp mask: amount=0.9 (reduced from 1.25 for smoother result) ─
-  const blurredBuf = await sharp(Buffer.from(preSmoothed), {
+  // ── 5. Unsharp mask: amount=1.25, sigma=0.8 (exact PDF spec) ─────────────────
+  const blurredBuf = await sharp(Buffer.from(claheResult), {
     raw: { width, height, channels: 1 },
   })
     .blur(0.8)
@@ -263,53 +254,14 @@ export async function processForGraniteEngraving(
   const blurred = new Uint8Array(blurredBuf);
   const sharpened = new Uint8Array(total);
   for (let i = 0; i < total; i++) {
-    const val = Math.round(preSmoothed[i] * 0.9 + blurred[i] * 0.1);
+    const val = Math.round(claheResult[i] * 1.25 + blurred[i] * -0.25);
     sharpened[i] = Math.max(0, Math.min(255, val));
   }
 
   // ── 6. Black threshold: pixels < 15 → 0 (absolute black background) ──────────
-  const thresholded = new Uint8Array(total);
-  for (let i = 0; i < total; i++) {
-    thresholded[i] = sharpened[i] < 15 ? 0 : sharpened[i];
-  }
-
-  // ── 6b. White halo glow: soft radial bloom around subject on black background ─
-  // Build subject mask: bright pixels → white, dark background → black
-  const haloMask = Buffer.allocUnsafe(total);
-  for (let i = 0; i < total; i++) {
-    haloMask[i] = thresholded[i] > 40 ? 255 : 0;
-  }
-  // Blur heavily to create a wide, soft glow
-  const haloBlurBuf = await sharp(haloMask, { raw: { width, height, channels: 1 } })
-    .blur(28)
-    .raw()
-    .toBuffer();
-  const haloBlur = new Uint8Array(haloBlurBuf);
-  // Lighten-only blend: glow adds brightness to dark background without darkening subject
-  const outputPixels = new Uint8Array(total);
-  for (let i = 0; i < total; i++) {
-    const haloContrib = Math.round(haloBlur[i] * 0.32); // max ~80 brightness for soft glow
-    outputPixels[i] = Math.min(255, Math.max(thresholded[i], haloContrib));
-  }
-
-  // ── 7. Brightness boost + contrast stretch: push highlights to full white ─────
-  // Find the actual max brightness in the image (ignore absolute black bg)
-  let maxVal = 1;
-  for (let i = 0; i < total; i++) {
-    if (outputPixels[i] > maxVal) maxVal = outputPixels[i];
-  }
-  // Stretch so the brightest pixel becomes 255, then apply gamma lift for mid-tones
   const finalPixels = new Uint8Array(total);
-  const scale = 255 / maxVal;
   for (let i = 0; i < total; i++) {
-    if (outputPixels[i] === 0) {
-      finalPixels[i] = 0; // keep absolute black
-    } else {
-      // Stretch + gamma 0.75 to lift mid-tones (brighter overall)
-      const stretched = Math.min(255, Math.round(outputPixels[i] * scale));
-      const gamma = Math.round(Math.pow(stretched / 255, 0.75) * 255);
-      finalPixels[i] = gamma;
-    }
+    finalPixels[i] = sharpened[i] < 15 ? 0 : sharpened[i];
   }
 
   //  // ── 8. Upscale to high resolution for professional engraving (3000×3000 min) ──

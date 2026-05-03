@@ -251,13 +251,9 @@ router.post("/process", upload.single("image"), async (req, res) => {
       console.error('[needle-engraving] normalizeImageBuffer failed:', normErr);
       throw new Error('Unsupported image format. Please upload a JPEG, PNG, or HEIC file.');
     }
-    // Step 1a: For portrait mode, remove background and place on black before AI
-    if (isPortrait === "true") {
-      processBuffer = await preparePortraitForEngraving(processBuffer);
-    }
-
-    // Step 1b: Use OpenAI gpt-image-1 images.edit to convert to engraving-ready grayscale
-    // This matches the Python reference implementation exactly
+    // Step 1: Use OpenAI gpt-image-1 images.edit to convert to engraving-ready grayscale
+    // Per PDF spec: send image DIRECTLY to AI without pre-removing background.
+    // The AI removes the background itself via the prompt.
     const isColor = await checkIfColorImage(processBuffer);
     // Always run AI conversion for portraits; for non-portrait, only if color
     if (isPortrait === "true" || isColor) {
