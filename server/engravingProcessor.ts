@@ -312,16 +312,46 @@ export async function processForGraniteEngraving(
     }
   }
 
-  // ── 8. Output as 8-bit BMP ───────────────────────────────────────────────────
-  const bmpBuffer = buildBmp8bit(finalPixels, width, height);
+  //  // ── 8. Upscale to high resolution for professional engraving (3000×3000 min) ──
+  // AI generates at 1024×1024 — too low for engraving. Upscale with Lanczos3.
+  const TARGET_SIZE = 3000;
+  let finalWidth = width;
+  let finalHeight = height;
+  let finalPixelsBuf: Buffer = Buffer.from(finalPixels);
+
+  if (width < TARGET_SIZE || height < TARGET_SIZE) {
+    // Scale up maintaining aspect ratio, with minimum side = TARGET_SIZE
+    const scale = TARGET_SIZE / Math.min(width, height);
+    finalWidth = Math.round(width * scale);
+    finalHeight = Math.round(height * scale);
+
+    const upscaleInput = new Uint8Array(finalPixels.buffer, finalPixels.byteOffset, finalPixels.byteLength);
+    const upscaleResult = await sharp(upscaleInput, {
+      raw: { width, height, channels: 1 },
+    })
+      .resize(finalWidth, finalHeight, {
+        kernel: sharp.kernel.lanczos3,
+        fit: 'fill',
+      })
+      .raw()
+      .toBuffer();
+    finalPixelsBuf = upscaleResult;
+
+    console.log(`[engraving] Upscaled from ${width}×${height} to ${finalWidth}×${finalHeight}`);
+  }
+
+  const finalPixelsUpscaled = new Uint8Array(finalPixelsBuf);
+
+  // ── 9. Output as 8-bit BMP ───────────────────────────────────────────────
+  const bmpBuffer = buildBmp8bit(finalPixelsUpscaled, finalWidth, finalHeight);
 
   return {
-    width,
-    height,
+    width: finalWidth,
+    height: finalHeight,
     bitDepth: 8,
     fileSizeKB: Math.round(bmpBuffer.length / 1024),
     bmpBuffer,
-    rawPixels: Buffer.from(finalPixels),
+    rawPixels: finalPixelsBuf,
   };
 }
 
@@ -354,8 +384,8 @@ function buildBmp8bit(pixels: Uint8Array, width: number, height: number): Buffer
   buf.writeUInt16LE(8, offset); offset += 2;                     // biBitCount (8-bit)
   buf.writeUInt32LE(0, offset); offset += 4;                     // biCompression (BI_RGB)
   buf.writeUInt32LE(pixelDataSize, offset); offset += 4;         // biSizeImage
-  buf.writeInt32LE(Math.round(dpiToPixelsPerMeter(180)), offset); offset += 4; // biXPelsPerMeter
-  buf.writeInt32LE(Math.round(dpiToPixelsPerMeter(180)), offset); offset += 4; // biYPelsPerMeter
+  buf.writeInt32LE(Math.round(dpiToPixelsPerMeter(300)), offset); offset += 4; // biXPelsPerMeter
+  buf.writeInt32LE(Math.round(dpiToPixelsPerMeter(300)), offset); offset += 4; // biYPelsPerMeter
   buf.writeUInt32LE(256, offset); offset += 4;                   // biClrUsed
   buf.writeUInt32LE(256, offset); offset += 4;                   // biClrImportant
 
