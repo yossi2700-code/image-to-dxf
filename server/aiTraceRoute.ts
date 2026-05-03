@@ -1072,7 +1072,49 @@ async function runTraceJob(
         }
       }
 
-      // Glow effect removed — was causing gray shadow artifacts in vector output
+      // ── Glow / halo effect around subject ───────────────────────────────────────
+      // Add a soft white radial glow/bloom around the subject edges.
+      // This makes the subject stand out from the background with a luminous halo.
+      // Applied to rawBuffer BEFORE the contrast/threshold pipeline.
+      // Technique: blur a "subject mask" (white subject on black) and lighten-blend it back.
+      try {
+        const { data: glowRaw, info: glowInfo } = await sharp(rawBuffer)
+          .grayscale()
+          .raw()
+          .toBuffer({ resolveWithObject: true });
+        const gW = glowInfo.width;
+        const gH = glowInfo.height;
+        const gTotal = gW * gH;
+        const glowAvg = (glowRaw as Buffer).reduce((s: number, v: number) => s + v, 0) / gTotal;
+        // Determine polarity: bright background → invert to get white subject on black
+        const glowNeedsInvert = glowAvg > 128;
+        // Build subject mask (white subject on black)
+        const glowMask = Buffer.allocUnsafe(gTotal);
+        for (let i = 0; i < gTotal; i++) {
+          glowMask[i] = glowNeedsInvert ? 255 - (glowRaw as Buffer)[i] : (glowRaw as Buffer)[i];
+        }
+        // Blur to create bloom
+        const glowBloom = await sharp(glowMask, { raw: { width: gW, height: gH, channels: 1 } })
+          .blur(20)
+          .raw()
+          .toBuffer();
+        // Lighten-blend: max(mask, bloom * 1.35)
+        const glowResult = Buffer.allocUnsafe(gTotal);
+        for (let i = 0; i < gTotal; i++) {
+          glowResult[i] = Math.max(glowMask[i], Math.min(255, Math.round((glowBloom as Buffer)[i] * 1.35)));
+        }
+        // Convert back to original polarity
+        const glowFinal = Buffer.allocUnsafe(gTotal);
+        for (let i = 0; i < gTotal; i++) {
+          glowFinal[i] = glowNeedsInvert ? 255 - glowResult[i] : glowResult[i];
+        }
+        rawBuffer = await sharp(glowFinal, { raw: { width: gW, height: gH, channels: 1 } })
+          .png()
+          .toBuffer();
+      } catch (glowErr) {
+        console.warn(`[aiTraceRoute] Job ${jobId}: glow effect failed (non-fatal):`, glowErr);
+      }
+      // ── End glow effect ─────────────────────────────────────────────────────
 
       // Add white padding around the AI-generated image, then process at 3072px resolution
       // Higher resolution = more pixels for potrace → smoother curves, less jagged edges
