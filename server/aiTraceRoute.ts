@@ -1109,16 +1109,16 @@ async function runTraceJob(
       } else {
         // Simple mode — color photo or colored drawing (flowers, cars, real photos):
         // The AI redraws the image as line art. We then process the AI output:
-        // mild contrast boost + minimal blur + threshold — same pipeline that produced 37,090 lines
-        // from the flower bouquet (commit 913a5a2). linear(2.5,-50) was too aggressive and
-        // caused grey fill areas to become solid black silhouettes.
+        // Problem: AI generates thin/light lines that potrace can't detect → lines disappear in DXF.
+        // Solution: strong contrast boost to pull thin lines to solid black, then high threshold
+        // to keep only the darkest pixels (true lines) and discard any grey noise.
         processedBuffer = await sharp(rawBuffer)
           .extend({ top: 240, bottom: 240, left: 240, right: 240, background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .grayscale()
-          .linear(1.8, -30)            // mild contrast boost: darken lines without blowing out background
-          .blur(1.0)                   // minimal blur — removes single-pixel noise, preserves fine details
-          .threshold(155)              // slightly lower to catch more of the boosted dark pixels
+          .linear(2.5, -50)            // strong contrast: pull thin lines to solid black
+          .sharpen({ sigma: 1.0, m1: 1.5, m2: 0.3, x1: 2, y2: 10, y3: 20 }) // sharpen edges before threshold
+          .threshold(170)              // high threshold: only solid black lines survive, grey noise removed
           .png()
           .toBuffer();
       }
@@ -1157,9 +1157,9 @@ async function runTraceJob(
       const potraceOptions = isDetailedMode
         // Detailed: turdSize 8 keeps very fine details; alphaMax 1.0 = smooth corners
         ? { threshold: 128, turdSize: 8, alphaMax: 1.0, optCurve: true, optTolerance: 0.6 }
-        // Simple: turdSize 20 — the unsharp pipeline keeps fur/mane as connected paths (large area),
-        //         while background flowers/grass become isolated small paths (small area) → removed by turdSize
-        : { threshold: 128, turdSize: 20, alphaMax: 1.0, optCurve: true, optTolerance: 0.6 };
+        // Simple: turdSize 4 — keep all lines including short architectural details;
+        //         optTolerance 0.6 — moderate curve joining without merging unrelated strokes
+        : { threshold: 128, turdSize: 4, alphaMax: 1.0, optCurve: true, optTolerance: 0.6 };
 
       const rawSvg = await new Promise<string>((resolve, reject) => {
         potrace.trace(processedBuffer, potraceOptions, (err: Error | null, svg: string) => {
