@@ -1109,16 +1109,16 @@ async function runTraceJob(
       } else {
         // Simple mode — color photo or colored drawing (flowers, cars, real photos):
         // The AI redraws the image as line art. We then process the AI output:
-        // Step 1: aggressive contrast boost to make thin/faint lines bold enough for potrace
-        // Step 2: dilate (blur then re-threshold) to thicken thin lines into solid strokes
-        // Step 3: threshold to pure B&W for clean potrace tracing
+        // mild contrast boost + minimal blur + threshold — same pipeline that produced 37,090 lines
+        // from the flower bouquet (commit 913a5a2). linear(2.5,-50) was too aggressive and
+        // caused grey fill areas to become solid black silhouettes.
         processedBuffer = await sharp(rawBuffer)
           .extend({ top: 240, bottom: 240, left: 240, right: 240, background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .grayscale()
-          .linear(3.0, -60)            // strong contrast: pull thin/faint lines to black, push background to white
-          .blur(1.2)                   // slight dilation: thickens thin lines so potrace traces them as solid paths
-          .threshold(140)              // lower threshold — catches all darkened pixels after contrast boost
+          .linear(1.8, -30)            // mild contrast boost: darken lines without blowing out background
+          .blur(1.0)                   // minimal blur — removes single-pixel noise, preserves fine details
+          .threshold(155)              // slightly lower to catch more of the boosted dark pixels
           .png()
           .toBuffer();
       }
@@ -1156,10 +1156,10 @@ async function runTraceJob(
       // alphaMax: 1.0 — standard corner rounding; 1.5 was causing filled areas in portrait
       const potraceOptions = isDetailedMode
         // Detailed: turdSize 8 keeps very fine details; alphaMax 1.0 = smooth corners
-        ? { threshold: 128, turdSize: 8, alphaMax: 1.0, optCurve: true, optTolerance: 0.8 }
-        // Simple: turdSize 6 — keep small architectural details (window frames, bricks);
-        //         optTolerance 1.0 — join nearby broken path segments into longer continuous lines
-        : { threshold: 128, turdSize: 6, alphaMax: 1.0, optCurve: true, optTolerance: 1.0 };
+        ? { threshold: 128, turdSize: 8, alphaMax: 1.0, optCurve: true, optTolerance: 0.6 }
+        // Simple: turdSize 20 — the unsharp pipeline keeps fur/mane as connected paths (large area),
+        //         while background flowers/grass become isolated small paths (small area) → removed by turdSize
+        : { threshold: 128, turdSize: 20, alphaMax: 1.0, optCurve: true, optTolerance: 0.6 };
 
       const rawSvg = await new Promise<string>((resolve, reject) => {
         potrace.trace(processedBuffer, potraceOptions, (err: Error | null, svg: string) => {
