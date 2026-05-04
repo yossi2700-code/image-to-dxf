@@ -631,3 +631,27 @@ export const freedxfDownloads = mysqlTable("freedxf_downloads", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type FreedxfDownload = typeof freedxfDownloads.$inferSelect;
+
+// Persistent job store — survives Cloud Run instance restarts
+// Jobs are written to DB on create/update so polling always finds the latest state
+export const persistentJobs = mysqlTable("persistent_jobs", {
+  id: varchar("id", { length: 32 }).primaryKey(),
+  userId: int("userId").notNull(),
+  status: mysqlEnum("status", ["pending", "processing", "done", "error", "cancelled"]).notNull().default("pending"),
+  tokenAction: varchar("tokenAction", { length: 64 }),
+  tokenDeducted: int("tokenDeducted").default(0).notNull(),
+  noFaceRefundSent: int("noFaceRefundSent").default(0).notNull(),
+  faceCount: int("faceCount"),
+  step: text("step"),
+  stepEn: text("stepEn"),
+  /** JSON-encoded partial images array */
+  partialImages: mediumtext("partialImages"),
+  /** JSON-encoded final result */
+  result: mediumtext("result"),
+  error: text("error"),
+  errorCode: varchar("errorCode", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PersistentJob = typeof persistentJobs.$inferSelect;
+export type InsertPersistentJob = typeof persistentJobs.$inferInsert;

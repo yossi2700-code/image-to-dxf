@@ -351,6 +351,13 @@
       "when": 1777499111010,
       "tag": "0049_smiling_war_machine",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "5",
+      "when": 1777871793866,
+      "tag": "0050_graceful_phalanx",
+      "breakpoints": true
     }
   ]
 }

@@ -23,7 +23,7 @@ import { recordUserAction } from "./userActionsDb";
 import { checkUsageLimit } from "./usageLimits";
 import { deductTokens, addTokens, TOKEN_COSTS, TokenAction, getTokenCostForAction } from "./tokenService";
 import { invokeLLM } from "./_core/llm";
-import { createJob, getJob, updateJob, cancelJob, heartbeatJob } from "./jobStore";
+import { createJob, getJob, getJobFromDB, updateJob, cancelJob, heartbeatJob } from "./jobStore";
 import { svgToDxf } from "./svgToDxf";
 import { cleanSvgForPreview } from "./svgClean";
 import OpenAI from "openai";
@@ -1460,12 +1460,13 @@ router.post(
   }
 );
 
-// ─── GET /api/ai-trace/job/:jobId ─────────────────────────────────────────────
-router.get("/api/ai-trace/job/:jobId", (req, res) => {
+/// ─── GET /api/ai-trace/job/:jobId ─────────────────────────────────────────────
+router.get("/api/ai-trace/job/:jobId", async (req, res) => {
   const appUser = getAppUserFromCookie(req.cookies);
   if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
-
-  const job = getJob(req.params.jobId);
+  // Try in-memory cache first; fall back to DB for cross-instance lookups (Cloud Run restarts)
+  let job = getJob(req.params.jobId);
+  if (!job) job = await getJobFromDB(req.params.jobId) ?? undefined;
   if (!job) return res.status(404).json({ error: "JOB_NOT_FOUND" });
   if (job.userId !== appUser.userId) return res.status(403).json({ error: "FORBIDDEN" });
 
@@ -1495,16 +1496,13 @@ router.get("/api/ai-trace/job/:jobId", (req, res) => {
       partialImages: job.partialImages ?? [],
     });
   }
-});
-
-// ─── POST /api/ai-trace/cancel/:jobId ─────────────────────────────────────────
+});// ─── POST /api/ai-trace/cancel/:jobId ─────────────────────────────────────────────
 router.post("/api/ai-trace/cancel/:jobId", async (req, res) => {
   const appUser = getAppUserFromCookie(req.cookies);
   if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
-
-  const job = getJob(req.params.jobId);
-  if (!job) return res.status(404).json({ error: "JOB_NOT_FOUND" });
-  if (job.userId !== appUser.userId) return res.status(403).json({ error: "FORBIDDEN" });
+  let job = getJob(req.params.jobId);
+  if (!job) job = await getJobFromDB(req.params.jobId) ?? undefined;
+  if (!job) return res.status(404).json({ error: "JOB_NOT_FOUND" });  if (job.userId !== appUser.userId) return res.status(403).json({ error: "FORBIDDEN" });
 
   if (job.status === "done") {
     return res.json({ cancelled: false, reason: "Job already completed" });
