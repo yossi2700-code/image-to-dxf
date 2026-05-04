@@ -1100,10 +1100,10 @@ async function runTraceJob(
           .extend({ top: 240, bottom: 240, left: 240, right: 240, background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .resize(2048, 2048, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 }, kernel: "lanczos3" })
           .grayscale()
-          .blur(1.5)                   // merge thick stroke edges into single centerline
-          .threshold(200)              // remove grey — only dark lines survive
-          .blur(0.4)                   // light smooth to remove jagged potrace artifacts
-          .threshold(185)              // final sharpen pass
+          .blur(2.5)                   // larger blur = thicker lines in DXF output
+          .threshold(190)              // slightly lower threshold to capture more line pixels
+          .blur(0.5)                   // light smooth to remove jagged potrace artifacts
+          .threshold(175)              // final sharpen pass
           .png()
           .toBuffer();
       } else {
