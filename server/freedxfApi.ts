@@ -302,7 +302,7 @@ router.post("/api/freedxf/register", async (req, res) => {
       name: name?.trim() || null,
       email: email.toLowerCase(),
       passwordHash,
-      tokenBalance: 10,
+      tokenBalance: 30,
       registrationSource: "freedxf",
       language: language === "he" ? "he" : "en",
     });
@@ -330,7 +330,7 @@ router.post("/api/freedxf/register", async (req, res) => {
     void sendWelcomeEmail({
       to: email.toLowerCase(),
       name: name?.trim() || null,
-      tokens: 10,
+      tokens: 30,
       siteUrl: "https://dxfai.ai",
       language: language === "he" ? "he" : "en",
     });
@@ -341,7 +341,7 @@ router.post("/api/freedxf/register", async (req, res) => {
     return res.json({
       success: true,
       token, // Also return token for localStorage fallback
-      user: { id: userId, email: email.toLowerCase(), name: name?.trim() || null, tokenBalance: 10 },
+      user: { id: userId, email: email.toLowerCase(), name: name?.trim() || null, tokenBalance: 30 },
     });
   } catch (err) {
     console.error("[freedxf/register]", err);
@@ -423,7 +423,7 @@ router.post("/api/freedxf/google-login", async (req, res) => {
         email,
         name: name ?? null,
         emailVerified: 1,
-        tokenBalance: 10,
+        tokenBalance: 30,
         googleId: googleSub,
         registrationSource: "freedxf",
         language: language === "he" ? "he" : "en",
@@ -438,7 +438,7 @@ router.post("/api/freedxf/google-login", async (req, res) => {
       void sendWelcomeEmail({
         to: email,
         name: name ?? null,
-        tokens: 10,
+        tokens: 30,
         siteUrl: "https://dxfai.ai",
         language: language === "he" ? "he" : "en",
       });

@@ -188,7 +188,7 @@ router.post("/api/app-auth/register", async (req, res) => {
     void sendWelcomeEmail({
       to: email.toLowerCase(),
       name: name?.trim() || null,
-      tokens: 10,
+      tokens: 30,
       siteUrl: "https://dxfai.ai",
       language: detectedLang === "he" ? "he" : "en",
     });
@@ -277,7 +277,7 @@ router.get("/api/app-auth/me", async (req: import("express").Request, res: impor
       await db.insert(appUsers).values({
         email: manusUser.email,
         name: manusUser.name ?? null,
-        tokenBalance: 10,
+        tokenBalance: 30,
         emailVerified: 1,
       });
       const [newUser] = await db
@@ -679,7 +679,7 @@ router.post("/api/app-auth/google", async (req, res) => {
         email,
         name: name ?? null,
         emailVerified: 1,
-        tokenBalance: 10,
+        tokenBalance: 30,
         googleId: googleSub,
         language: googleLang,
       });
@@ -694,7 +694,7 @@ router.post("/api/app-auth/google", async (req, res) => {
       void sendWelcomeEmail({
         to: email,
         name: name ?? null,
-        tokens: 10,
+        tokens: 30,
         siteUrl: "https://dxfai.ai",
         language: googleLang === "he" ? "he" : "en",
       });
