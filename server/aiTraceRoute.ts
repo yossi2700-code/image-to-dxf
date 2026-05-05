@@ -383,17 +383,20 @@ function buildClassifiedPrompt(classification: ImageClassification, variationSty
     case "landscape":
       return (
         base +
-        `LANDSCAPE/SCENE MODE — EXTREME SIMPLIFICATION REQUIRED: This is a complex outdoor scene. ` +
-        `Draw ONLY 3-5 dominant silhouette outlines: horizon line, main tree trunks (1-2 lines each), large rock masses as single closed shapes, water edge as 1 line. ` +
-        `ABSOLUTE RULES — VIOLATION = FAILURE: ` +
-        `(1) ZERO foliage texture — tree canopies = single closed blob outline ONLY, no internal leaf/branch lines. ` +
-        `(2) ZERO water texture — water surface = flat empty area, draw only the water EDGE line. ` +
-        `(3) ZERO rock/stone texture — rocks = simple closed oval/polygon outlines only. ` +
-        `(4) ZERO sky details — sky = completely empty white space. ` +
-        `(5) ZERO grass texture — ground = 1-2 horizontal lines maximum. ` +
-        `(6) ZERO background detail — distant objects = omit entirely. ` +
-        `Think of it as a COLORING BOOK PAGE for children — simple bold outlines, large empty areas to color in. ` +
-        `If the result has more than 20 lines total, you have drawn too much — simplify further. ` +
+        `LANDSCAPE/SCENE MODE — ARCHITECTURAL DETAIL REQUIRED: This is a complex outdoor scene. ` +
+        `IF IMAGE CONTAINS BUILDINGS/HOUSES/STRUCTURES: Draw ALL architectural elements with STRONG BLACK lines: ` +
+        `  • Building silhouettes and outlines (BOLD, STRONG, pure black #000000) ` +
+        `  • Windows, doors, arches, columns, frames (EVERY visible opening and structural element) ` +
+        `  • Roof lines, eaves, parapets, railings, stairs ` +
+        `  • Landscape: tree silhouettes (1 line per tree), shrubs, water edges, rocks ` +
+        `INCLUDE 20-40 LINES for architectural scenes. Every structural element must be VISIBLE and STRONG. ` +
+        `IF PURE LANDSCAPE (no buildings): Draw 5-10 dominant silhouettes only. ` +
+        `ABSOLUTE RULES: ` +
+        `(1) ALL building lines = STRONG and BLACK (#000000), no faint lines. Every line crisp and fully visible. ` +
+        `(2) Tree canopies = single closed outline ONLY, no internal leaf texture. ` +
+        `(3) Water = flat area with edge line only. ` +
+        `(4) Sky = completely empty white space. ` +
+        `(5) Grass/ground = 1-2 lines maximum. ` +
         variationStyle
       );
 
