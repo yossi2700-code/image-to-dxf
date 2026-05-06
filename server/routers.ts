@@ -3029,6 +3029,55 @@ export const appRouter = router({
       }),
 
     /** Admin: get ALL click events (latest first, across all users) */
+    testModel: adminProcedure
+      .input(z.object({
+        model: z.enum(["gpt-image-1-mini", "gpt-image-1", "gpt-image-1.5", "gpt-image-2", "gpt-image-2-2026-04-21"]),
+        imageBase64: z.string(), // base64 PNG/JPEG
+        prompt: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { model, imageBase64, prompt } = input;
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "OPENAI_API_KEY not set" });
+
+        const defaultPrompt =
+          "Professional black and white line art. Pure white background (#FFFFFF). " +
+          "Pure black (#000000) lines only. No fills, no shading, no gradients, no grey tones. " +
+          "Clean coloring-book outline drawing with smooth continuous ink strokes. " +
+          "Trace the exact shapes from the reference image.";
+
+        const FormDataNode = (await import("form-data")).default;
+        const form = new FormDataNode();
+        form.append("model", model);
+        form.append("prompt", prompt ?? defaultPrompt);
+        const imgBuffer = Buffer.from(imageBase64, "base64");
+        form.append("image", imgBuffer, { filename: "image.png", contentType: "image/png" });
+        form.append("n", "1");
+        form.append("size", "1024x1024");
+        form.append("response_format", "b64_json");
+
+        const formBuffer = form.getBuffer();
+        const formUint8 = new Uint8Array(formBuffer.buffer, formBuffer.byteOffset, formBuffer.byteLength);
+
+        const startMs = Date.now();
+        const response = await fetch("https://api.openai.com/v1/images/edits", {
+          method: "POST",
+          headers: { authorization: `Bearer ${apiKey}`, ...form.getHeaders() },
+          body: formUint8 as any,
+          signal: AbortSignal.timeout(3 * 60 * 1000),
+        });
+        const durationMs = Date.now() - startMs;
+
+        if (!response.ok) {
+          const detail = await response.text().catch(() => "");
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `OpenAI error (${response.status}): ${detail}` });
+        }
+        const result = await response.json() as { data?: Array<{ b64_json?: string }> };
+        const b64 = result.data?.[0]?.b64_json;
+        if (!b64) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "No image returned" });
+        return { imageBase64: b64, durationMs, model };
+      }),
+
     adminAllClicks: adminProcedure
       .input(z.object({
         limit: z.number().min(1).max(1000).default(300),

@@ -647,51 +647,41 @@ function pngToSvg(pngBuffer: Buffer): Promise<string> {
   });
 }
 
-// ─── OpenAI Image Generation Helper ─────────────────────────────────────────
-// Uses gpt-image-1 model for high-quality line art generation
-async function generateWithOpenAI(prompt: string, imageBuffer: Buffer, signal?: AbortSignal): Promise<Buffer> {
-  const openaiApiKey = process.env.OPENAI_API_KEY;
-  if (!openaiApiKey) throw new Error("OpenAI API Key not configured");
+// ─── Forge ImageService Helper ──────────────────────────────────────────────
+// Uses Manus built-in Forge ImageService for high-quality line art generation
+async function generateWithForge(prompt: string, imageBuffer: Buffer, signal?: AbortSignal): Promise<Buffer> {
+  const forgeApiUrl = process.env.BUILT_IN_FORGE_API_URL;
+  const forgeApiKey = process.env.BUILT_IN_FORGE_API_KEY;
+  if (!forgeApiUrl || !forgeApiKey) throw new Error("Forge API not configured");
 
-  const FormDataNode = (await import("form-data")).default;
-  const form = new FormDataNode();
-  form.append("model", "gpt-image-2");
-  form.append("prompt", prompt);
-  form.append("image", imageBuffer, { filename: "image.png", contentType: "image/png" });
-  form.append("n", "1");
-  form.append("size", "1024x1024");
-  form.append("response_format", "b64_json");
+  const forgeBaseUrl = forgeApiUrl.endsWith("/") ? forgeApiUrl : `${forgeApiUrl}/`;
+  const forgeEndpoint = new URL("images.v1.ImageService/GenerateImage", forgeBaseUrl).toString();
 
-  const formBuffer = form.getBuffer();
-  const formUint8 = new Uint8Array(formBuffer.buffer, formBuffer.byteOffset, formBuffer.byteLength);
-
-  const response = await fetch("https://api.openai.com/v1/images/edits", {
+  const b64Input = imageBuffer.toString("base64");
+  const response = await fetch(forgeEndpoint, {
     method: "POST",
     headers: {
-      authorization: `Bearer ${openaiApiKey}`,
-      ...form.getHeaders(),
+      accept: "application/json",
+      "content-type": "application/json",
+      "connect-protocol-version": "1",
+      authorization: `Bearer ${forgeApiKey}`,
     },
-    body: formUint8 as any,
+    body: JSON.stringify({
+      prompt,
+      original_images: [{ b64Json: b64Input, mimeType: "image/png" }],
+    }),
     signal,
   });
 
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
-    throw new Error(`OpenAI API failed (${response.status}): ${detail}`);
+    throw new Error(`Forge ImageService failed (${response.status}): ${detail}`);
   }
 
-  const result = await response.json() as { data?: Array<{ b64_json?: string; url?: string }> };
-  const item = result.data?.[0];
-  if (!item) throw new Error("OpenAI API returned no image");
-
-  if (item.b64_json) {
-    return Buffer.from(item.b64_json, "base64");
-  } else if (item.url) {
-    const imgResp = await fetch(item.url);
-    if (!imgResp.ok) throw new Error(`Failed to download image from OpenAI: ${imgResp.status}`);
-    return Buffer.from(await imgResp.arrayBuffer());
-  }
-  throw new Error("OpenAI API returned no image data");
+  const result = await response.json() as { image: { b64Json: string; mimeType: string } };
+  const b64 = result.image?.b64Json;
+  if (!b64) throw new Error("Forge ImageService did not return image data");
+  return Buffer.from(b64, "base64");
 }
 
 // ─── Background job runner for AI Trace ──────────────────────────────────────
@@ -940,8 +930,8 @@ async function runTraceJob(
             .png()
             .toBuffer();
         }
-        // Use OpenAI gpt-image-2 for high-quality line art generation
-        rawBuffer = await generateWithOpenAI(editPrompt, aiInputBuffer, abortController.signal);
+        // Use Forge ImageService for high-quality line art generation
+        rawBuffer = await generateWithForge(editPrompt, aiInputBuffer, abortController.signal);
         // Flatten alpha channel → white background immediately after receiving AI output.
         // Prevents gray artifacts when the AI output PNG has transparency or semi-transparent edges.
         rawBuffer = await sharp(rawBuffer)
@@ -957,7 +947,7 @@ async function runTraceJob(
           // All-white image returned by AI — retry once with a simpler prompt
           console.warn(`[aiTraceRoute] Job ${jobId}: AI returned blank/white image (brightness=${aiOutputBrightness.toFixed(1)}) — retrying with fallback prompt`);
           const fallbackPrompt = `Clean black and white line art. Trace the exact shapes from the reference image. Pure black lines (#000000) on pure white background (#FFFFFF). No fills, no shading. Reproduce ONLY what you see in the reference image.`;
-          const retryBuffer = await generateWithOpenAI(fallbackPrompt, aiInputBuffer, AbortSignal.timeout(2 * 60 * 1000));
+          const retryBuffer = await generateWithForge(fallbackPrompt, aiInputBuffer, AbortSignal.timeout(2 * 60 * 1000));
           const retryBufferFlat = await sharp(retryBuffer).flatten({ background: { r: 255, g: 255, b: 255 } }).png().toBuffer();
           const retryStats = await sharp(retryBufferFlat).grayscale().stats();
           if (retryStats.channels[0].mean < 250) {
@@ -1033,7 +1023,7 @@ async function runTraceJob(
                 `Pure black lines (#000000) on pure white background (#FFFFFF). No fills, no shading. ` +
                 `You are a TRACING MACHINE — copy what you see, nothing more, nothing less.`;
               try {
-                const retryHallucinationBuffer = await generateWithOpenAI(ultraStrictPrompt, aiInputBuffer, AbortSignal.timeout(2 * 60 * 1000));
+                const retryHallucinationBuffer = await generateWithForge(ultraStrictPrompt, aiInputBuffer, AbortSignal.timeout(2 * 60 * 1000));
                 const retryStats = await sharp(retryHallucinationBuffer).grayscale().stats();
                 if (retryStats.channels[0].mean < 250) {
                   rawBuffer = retryHallucinationBuffer;
