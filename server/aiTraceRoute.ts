@@ -1622,3 +1622,137 @@ router.post("/api/ai-trace/warmup", async (_req, res) => {
 });
 
 export default router;
+
+// ─── TEST LAB: Admin-only model comparison endpoint ──────────────────────────
+// POST /api/test-lab
+// Accepts: multipart/form-data { image, model, prompt?, description?, singleLine? }
+// Returns: { imageUrl, model, durationMs, promptUsed }
+// Protected: admin cookie required
+
+router.post(
+  "/api/test-lab",
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      // Admin-only guard
+      const { isAdminRequest } = await import("./security");
+      if (!isAdminRequest(req)) {
+        return res.status(403).json({ error: "FORBIDDEN", message: "Admin only" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: "NO_IMAGE", message: "No image uploaded" });
+      }
+
+      const model = (req.body?.model as string) || "forge";
+      const userDesc = (req.body?.description as string || "").trim();
+      const singleLine = req.body?.singleLine === "true" || req.body?.singleLine === true;
+
+      // Pre-process image (same as main flow)
+      let imageBuffer = await sharp(req.file.buffer).rotate().toBuffer();
+      const sourceMeta = await sharp(imageBuffer).metadata();
+      const srcW = sourceMeta.width ?? 1;
+      const srcH = sourceMeta.height ?? 1;
+      const isLandscapeImg = srcW >= srcH;
+      const aiResizeW = isLandscapeImg ? 1536 : 1024;
+      const aiResizeH = isLandscapeImg ? 1024 : 1536;
+
+      const rawResized = await sharp(imageBuffer)
+        .flatten({ background: { r: 255, g: 255, b: 255 } })
+        .resize(aiResizeW, aiResizeH, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .toBuffer();
+
+      const { channels } = await sharp(rawResized).stats();
+      const avgBrightness = (channels[0].mean + channels[1].mean + channels[2].mean) / 3;
+      const editSourceBuffer = await sharp(rawResized)
+        .sharpen({ sigma: 0.8, m1: 0.8, m2: 0.3, x1: 2, y2: 10, y3: 20 })
+        .png({ compressionLevel: 6 })
+        .toBuffer();
+
+      const objectDescription = userDesc || "the image";
+      const editPrompt = singleLine
+        ? buildLineArtPrompt(objectDescription, 0, true)
+        : buildLineArtPrompt(objectDescription, 0, false);
+
+      const startMs = Date.now();
+      let resultBuffer: Buffer;
+
+      if (model === "forge") {
+        resultBuffer = await generateWithForge(editPrompt, editSourceBuffer, AbortSignal.timeout(3 * 60 * 1000));
+      } else if (model === "gpt-image-1" || model === "gpt-image-1-mini" || model === "gpt-image-1.5" || model === "gpt-image-2" || model === "gpt-image-2-2026-04-21") {
+        // OpenAI /v1/images/generations (text-to-image, no input image)
+        const openaiApiKey = process.env.OPENAI_API_KEY;
+        if (!openaiApiKey) throw new Error("OPENAI_API_KEY not configured");
+        const resp = await fetch("https://api.openai.com/v1/images/generations", {
+          method: "POST",
+          headers: { authorization: `Bearer ${openaiApiKey}`, "content-type": "application/json" },
+          body: JSON.stringify({ model, prompt: editPrompt, n: 1, size: "1024x1024" }),
+          signal: AbortSignal.timeout(3 * 60 * 1000),
+        });
+        if (!resp.ok) {
+          const detail = await resp.text().catch(() => "");
+          throw new Error(`OpenAI ${model} failed (${resp.status}): ${detail}`);
+        }
+        const data = await resp.json() as { data?: Array<{ b64_json?: string; url?: string }> };
+        const item = data.data?.[0];
+        if (!item) throw new Error("OpenAI returned no image");
+        if (item.b64_json) {
+          resultBuffer = Buffer.from(item.b64_json, "base64");
+        } else if (item.url) {
+          const imgResp = await fetch(item.url);
+          resultBuffer = Buffer.from(await imgResp.arrayBuffer());
+        } else {
+          throw new Error("OpenAI returned no image data");
+        }
+      } else if (model === "dall-e-2") {
+        // dall-e-2 supports /v1/images/edits with input image
+        const openaiApiKey = process.env.OPENAI_API_KEY;
+        if (!openaiApiKey) throw new Error("OPENAI_API_KEY not configured");
+        const FormDataNode = (await import("form-data")).default;
+        const form = new FormDataNode();
+        form.append("model", "dall-e-2");
+        form.append("prompt", editPrompt.slice(0, 1000)); // dall-e-2 has 1000 char limit
+        form.append("image", editSourceBuffer, { filename: "image.png", contentType: "image/png" });
+        form.append("n", "1");
+        form.append("size", "1024x1024");
+        form.append("response_format", "b64_json");
+        const formBuffer = form.getBuffer();
+        const resp = await fetch("https://api.openai.com/v1/images/edits", {
+          method: "POST",
+          headers: { authorization: `Bearer ${openaiApiKey}`, ...form.getHeaders() },
+          body: new Uint8Array(formBuffer.buffer, formBuffer.byteOffset, formBuffer.byteLength) as any,
+          signal: AbortSignal.timeout(3 * 60 * 1000),
+        });
+        if (!resp.ok) {
+          const detail = await resp.text().catch(() => "");
+          throw new Error(`dall-e-2 failed (${resp.status}): ${detail}`);
+        }
+        const data = await resp.json() as { data?: Array<{ b64_json?: string }> };
+        const b64 = data.data?.[0]?.b64_json;
+        if (!b64) throw new Error("dall-e-2 returned no image");
+        resultBuffer = Buffer.from(b64, "base64");
+      } else {
+        return res.status(400).json({ error: "UNKNOWN_MODEL", message: `Unknown model: ${model}` });
+      }
+
+      const durationMs = Date.now() - startMs;
+
+      // Flatten and upload result
+      const flatBuffer = await sharp(resultBuffer)
+        .flatten({ background: { r: 255, g: 255, b: 255 } })
+        .png()
+        .toBuffer();
+
+      const key = `test-lab/${nanoid(10)}-${model}.png`;
+      const { url } = await storagePut(key, flatBuffer, "image/png");
+
+      return res.json({ imageUrl: url, model, durationMs, promptUsed: editPrompt });
+
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("[test-lab] Error:", message);
+      return res.status(500).json({ error: "FAILED", message });
+    }
+  }
+);
+
