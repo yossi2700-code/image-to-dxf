@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Upload, Trash2, Clock, Zap, FlaskConical } from "lucide-react";
+import { Loader2, Upload, Trash2, Clock, Zap, FlaskConical, Lock } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
 const MODELS = [
   { id: "forge",                   label: "Forge (מנוס)",         tag: "fallback",   color: "bg-blue-100 text-blue-800",   note: "image+prompt editing" },
@@ -31,6 +32,7 @@ interface Result {
 }
 
 export default function TestLab() {
+  const { data: adminCheck, isLoading: adminLoading } = trpc.admin.check.useQuery();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [description, setDescription] = useState("");
@@ -91,6 +93,24 @@ export default function TestLab() {
   }
 
   const isRunning = running.length > 0;
+
+  // Admin guard
+  if (adminLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+      </div>
+    );
+  }
+  if (!adminCheck?.authenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
+        <Lock className="w-12 h-12 text-gray-400" />
+        <h2 className="text-xl font-semibold text-gray-700">גישה מוגבלת לאדמין</h2>
+        <p className="text-sm text-gray-500">יש להתחבר כאדמין דרך <a href="/admin" className="text-purple-600 underline">/admin</a> כדי לגשת לדף זה.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
