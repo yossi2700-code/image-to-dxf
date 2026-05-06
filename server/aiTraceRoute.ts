@@ -967,8 +967,8 @@ async function runTraceJob(
             .png()
             .toBuffer();
         }
-        // Use OpenAI gpt-image-2 for high-quality line art generation
-        rawBuffer = await generateWithOpenAI(editPrompt, "gpt-image-2", abortController.signal);
+        // Use Forge ImageService for high-quality line art generation
+        rawBuffer = await generateWithForge(editPrompt, aiInputBuffer, abortController.signal);
         // Flatten alpha channel → white background immediately after receiving AI output.
         // Prevents gray artifacts when the AI output PNG has transparency or semi-transparent edges.
         rawBuffer = await sharp(rawBuffer)
@@ -984,7 +984,7 @@ async function runTraceJob(
           // All-white image returned by AI — retry once with a simpler prompt
           console.warn(`[aiTraceRoute] Job ${jobId}: AI returned blank/white image (brightness=${aiOutputBrightness.toFixed(1)}) — retrying with fallback prompt`);
           const fallbackPrompt = `Clean black and white line art. Trace the exact shapes from the reference image. Pure black lines (#000000) on pure white background (#FFFFFF). No fills, no shading. Reproduce ONLY what you see in the reference image.`;
-          const retryBuffer = await generateWithOpenAI(fallbackPrompt, "gpt-image-2", AbortSignal.timeout(2 * 60 * 1000));
+          const retryBuffer = await generateWithForge(fallbackPrompt, aiInputBuffer, AbortSignal.timeout(2 * 60 * 1000));
           const retryBufferFlat = await sharp(retryBuffer).flatten({ background: { r: 255, g: 255, b: 255 } }).png().toBuffer();
           const retryStats = await sharp(retryBufferFlat).grayscale().stats();
           if (retryStats.channels[0].mean < 250) {
@@ -1060,7 +1060,7 @@ async function runTraceJob(
                 `Pure black lines (#000000) on pure white background (#FFFFFF). No fills, no shading. ` +
                 `You are a TRACING MACHINE — copy what you see, nothing more, nothing less.`;
               try {
-                const retryHallucinationBuffer = await generateWithOpenAI(ultraStrictPrompt, "gpt-image-2", AbortSignal.timeout(2 * 60 * 1000));
+                const retryHallucinationBuffer = await generateWithForge(ultraStrictPrompt, aiInputBuffer, AbortSignal.timeout(2 * 60 * 1000));
                 const retryStats = await sharp(retryHallucinationBuffer).grayscale().stats();
                 if (retryStats.channels[0].mean < 250) {
                   rawBuffer = retryHallucinationBuffer;
