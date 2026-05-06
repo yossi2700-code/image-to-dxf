@@ -124,6 +124,9 @@ importers:
       '@types/express-rate-limit':
         specifier: ^6.0.2
         version: 6.0.2(express@4.21.2)
+      '@types/form-data':
+        specifier: ^2.5.2
+        version: 2.5.2
       '@types/jsonwebtoken':
         specifier: ^9.0.10
         version: 9.0.10
@@ -178,6 +181,9 @@ importers:
       express-rate-limit:
         specifier: ^8.3.1
         version: 8.3.1(express@4.21.2)
+      form-data:
+        specifier: ^4.0.5
+        version: 4.0.5
       framer-motion:
         specifier: ^12.23.22
         version: 12.23.22(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -3805,6 +3811,10 @@ packages:
   '@types/express@4.17.21':
     resolution: {integrity: sha512-ejlPM315qwLpaQlQDTjPdsUFSc6ZsP4AN6AlWnogPjQ7CVi7PYF3YVz+CY3jE2pwYf7E/7HlDAN0rV2GxTG0HQ==}
 
+  '@types/form-data@2.5.2':
+    resolution: {integrity: sha512-tfmcyHn1Pp9YHAO5r40+UuZUPAZbUEgqTel3EuEKpmF9hPkXgR4l41853raliXnb4gwyPNoQOfvgGGlHN5WSog==}
+    deprecated: This is a stub types definition. form-data provides its own type definitions, so you do not need this installed.
+
   '@types/geojson@7946.0.16':
     resolution: {integrity: sha512-6C8nqWur3j98U6+lXDfTUWIfgvZU+EumvpHKcYjujKH7woYyLj2sUmff0tRhrqM7BohUw7Pz3ZB1jj2gW9Fvmg==}
 
@@ -4894,10 +4904,6 @@ packages:
 
   font-family-papandreou@0.2.0-patch2:
     resolution: {integrity: sha512-l/YiRdBSH/eWv6OF3sLGkwErL+n0MqCICi9mppTZBOCL5vixWGDqCYvRcuxB2h7RGCTzaTKOHT2caHvCXQPRlw==}
-
-  form-data@4.0.4:
-    resolution: {integrity: sha512-KrGhL9Q4zjj0kiUt5OO4Mr/A/jlI2jDYs5eHBpYHPcBEVSiipAvn2Ko2HnPe20rmcuuvMHNdZFp+4IlGTMF0Ow==}
-    engines: {node: '>= 6'}
 
   form-data@4.0.5:
     resolution: {integrity: sha512-8RipRLol37bNs2bhoV67fiTEvdTrbMUYcFTiy3+wuuOnUog2QBHCZWXDRijWQfAkhBj2Uf5UnVaiWwA5vdd82w==}
@@ -10889,6 +10895,10 @@ snapshots:
       '@types/qs': 6.14.0
       '@types/serve-static': 1.15.9
 
+  '@types/form-data@2.5.2':
+    dependencies:
+      form-data: 4.0.5
+
   '@types/geojson@7946.0.16': {}
 
   '@types/google.maps@3.58.1': {}
@@ -10975,7 +10985,7 @@ snapshots:
       '@types/cookiejar': 2.1.5
       '@types/methods': 1.1.4
       '@types/node': 24.7.0
-      form-data: 4.0.4
+      form-data: 4.0.5
 
   '@types/supertest@7.2.0':
     dependencies:
@@ -11119,7 +11129,7 @@ snapshots:
   axios@1.12.2:
     dependencies:
       follow-redirects: 1.15.11
-      form-data: 4.0.4
+      form-data: 4.0.5
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
@@ -12011,14 +12021,6 @@ snapshots:
   follow-redirects@1.15.11: {}
 
   font-family-papandreou@0.2.0-patch2: {}
-
-  form-data@4.0.4:
-    dependencies:
-      asynckit: 0.4.0
-      combined-stream: 1.0.8
-      es-set-tostringtag: 2.1.0
-      hasown: 2.0.2
-      mime-types: 2.1.35
 
   form-data@4.0.5:
     dependencies:
