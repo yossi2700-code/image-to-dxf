@@ -215,19 +215,20 @@ export function anonymizeIp(ip: string): string {
 }
 
 // ── 8. Admin session validator ────────────────────────────────────────────────
-// Validates admin cookie AND checks for a timing-safe comparison.
+// Validates admin cookie — supports JWT-signed tokens (current) only.
 const ADMIN_COOKIE = "admin_session";
 
 export function isAdminRequest(req: Request): boolean {
   const cookies = (req as { cookies?: Record<string, string> }).cookies ?? {};
-  const sessionValue = cookies[ADMIN_COOKIE];
-  if (!sessionValue) return false;
-  // Constant-time comparison to prevent timing attacks
-  const expected = "authenticated";
-  if (sessionValue.length !== expected.length) return false;
-  let diff = 0;
-  for (let i = 0; i < expected.length; i++) {
-    diff |= sessionValue.charCodeAt(i) ^ expected.charCodeAt(i);
+  const token = cookies[ADMIN_COOKIE];
+  if (!token) return false;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const jwt = require("jsonwebtoken") as typeof import("jsonwebtoken");
+    const secret = process.env.JWT_SECRET || "fallback-secret";
+    const payload = jwt.verify(token, secret) as { role?: string };
+    return payload?.role === "admin";
+  } catch {
+    return false;
   }
-  return diff === 0;
 }
