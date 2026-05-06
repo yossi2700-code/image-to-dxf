@@ -1658,8 +1658,6 @@ router.post("/api/ai-trace/warmup", async (_req, res) => {
   }
 });
 
-export default router;
-
 // ─── TEST LAB: Admin-only model comparison endpoint ──────────────────────────
 // POST /api/test-lab
 // Accepts: multipart/form-data { image, model, prompt?, description?, singleLine? }
@@ -1793,3 +1791,5 @@ router.post(
   }
 );
 
+
+export default router;
