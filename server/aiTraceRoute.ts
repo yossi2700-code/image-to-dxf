@@ -655,7 +655,7 @@ async function generateWithOpenAI(prompt: string, imageBuffer: Buffer, signal?: 
 
   const FormDataNode = (await import("form-data")).default;
   const form = new FormDataNode();
-  form.append("model", "gpt-image-1");
+  form.append("model", "gpt-image-2");
   form.append("prompt", prompt);
   form.append("image", imageBuffer, { filename: "image.png", contentType: "image/png" });
   form.append("n", "1");
