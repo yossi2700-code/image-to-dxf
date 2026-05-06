@@ -13,6 +13,7 @@
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import type { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
 
 // ── 1. Helmet ─────────────────────────────────────────────────────────────────
 export const helmetMiddleware = helmet({
@@ -223,8 +224,6 @@ export function isAdminRequest(req: Request): boolean {
   const token = cookies[ADMIN_COOKIE];
   if (!token) return false;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const jwt = require("jsonwebtoken") as typeof import("jsonwebtoken");
     const secret = process.env.JWT_SECRET || "fallback-secret";
     const payload = jwt.verify(token, secret) as { role?: string };
     return payload?.role === "admin";
