@@ -684,6 +684,43 @@ async function generateWithForge(prompt: string, imageBuffer: Buffer, signal?: A
   return Buffer.from(b64, "base64");
 }
 
+// Uses OpenAI gpt-image-2 (or other model) via /v1/images/generations (text-to-image)
+// Note: gpt-image-2 requires org verification; does NOT accept input images
+async function generateWithOpenAI(prompt: string, model = "gpt-image-2", signal?: AbortSignal): Promise<Buffer> {
+  const openaiApiKey = process.env.OPENAI_API_KEY;
+  if (!openaiApiKey) throw new Error("OPENAI_API_KEY not configured");
+
+  const response = await fetch("https://api.openai.com/v1/images/generations", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${openaiApiKey}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      prompt,
+      n: 1,
+      size: "1024x1024",
+    }),
+    signal,
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`OpenAI ${model} failed (${response.status}): ${detail}`);
+  }
+
+  const result = await response.json() as { data?: Array<{ b64_json?: string; url?: string }> };
+  const item = result.data?.[0];
+  if (!item) throw new Error(`OpenAI ${model} did not return image data`);
+  if (item.b64_json) return Buffer.from(item.b64_json, "base64");
+  if (item.url) {
+    const imgResp = await fetch(item.url, { signal });
+    return Buffer.from(await imgResp.arrayBuffer());
+  }
+  throw new Error(`OpenAI ${model} returned no usable image`);
+}
+
 // ─── Background job runner for AI Trace ──────────────────────────────────────
 async function runTraceJob(
   jobId: string,
@@ -930,8 +967,8 @@ async function runTraceJob(
             .png()
             .toBuffer();
         }
-        // Use Forge ImageService for high-quality line art generation
-        rawBuffer = await generateWithForge(editPrompt, aiInputBuffer, abortController.signal);
+        // Use OpenAI gpt-image-2 for high-quality line art generation
+        rawBuffer = await generateWithOpenAI(editPrompt, "gpt-image-2", abortController.signal);
         // Flatten alpha channel → white background immediately after receiving AI output.
         // Prevents gray artifacts when the AI output PNG has transparency or semi-transparent edges.
         rawBuffer = await sharp(rawBuffer)
@@ -947,7 +984,7 @@ async function runTraceJob(
           // All-white image returned by AI — retry once with a simpler prompt
           console.warn(`[aiTraceRoute] Job ${jobId}: AI returned blank/white image (brightness=${aiOutputBrightness.toFixed(1)}) — retrying with fallback prompt`);
           const fallbackPrompt = `Clean black and white line art. Trace the exact shapes from the reference image. Pure black lines (#000000) on pure white background (#FFFFFF). No fills, no shading. Reproduce ONLY what you see in the reference image.`;
-          const retryBuffer = await generateWithForge(fallbackPrompt, aiInputBuffer, AbortSignal.timeout(2 * 60 * 1000));
+          const retryBuffer = await generateWithOpenAI(fallbackPrompt, "gpt-image-2", AbortSignal.timeout(2 * 60 * 1000));
           const retryBufferFlat = await sharp(retryBuffer).flatten({ background: { r: 255, g: 255, b: 255 } }).png().toBuffer();
           const retryStats = await sharp(retryBufferFlat).grayscale().stats();
           if (retryStats.channels[0].mean < 250) {
@@ -1023,7 +1060,7 @@ async function runTraceJob(
                 `Pure black lines (#000000) on pure white background (#FFFFFF). No fills, no shading. ` +
                 `You are a TRACING MACHINE — copy what you see, nothing more, nothing less.`;
               try {
-                const retryHallucinationBuffer = await generateWithForge(ultraStrictPrompt, aiInputBuffer, AbortSignal.timeout(2 * 60 * 1000));
+                const retryHallucinationBuffer = await generateWithOpenAI(ultraStrictPrompt, "gpt-image-2", AbortSignal.timeout(2 * 60 * 1000));
                 const retryStats = await sharp(retryHallucinationBuffer).grayscale().stats();
                 if (retryStats.channels[0].mean < 250) {
                   rawBuffer = retryHallucinationBuffer;
