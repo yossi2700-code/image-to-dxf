@@ -72,7 +72,7 @@ export default function TestLab() {
 
       const startMs = Date.now();
       try {
-        const resp = await fetch("/api/test-lab", { method: "POST", body: form });
+        const resp = await fetch("/api/test-lab", { method: "POST", body: form, credentials: "include" });
         const data = await resp.json();
         if (!resp.ok) {
           return { model, imageUrl: "", durationMs: Date.now() - startMs, promptUsed: "", error: data.message || "Unknown error" } as Result;
