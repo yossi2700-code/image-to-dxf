@@ -12,40 +12,37 @@ import { processForGraniteEngraving } from "./engravingProcessor";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
-// Shared prompt for both portrait and general granite engraving.
-// Key principle: FAITHFUL conversion — preserve exact composition, only convert colors to grayscale.
-const PORTRAIT_ENGRAVING_PROMPT = `Convert this image to grayscale optimized for diamond needle engraving on black granite.
+// Granite engraving prompts — produce black background with glowing subject effect.
+// Target: subject isolated on pure black, bright whites, soft glow halo around edges.
+const PORTRAIT_ENGRAVING_PROMPT = `Transform this image into a professional diamond needle engraving on black granite.
 
-CRITICAL: Keep the EXACT same composition, subjects, positions, and background as the original image. Do NOT remove background. Do NOT change what is in the image. Do NOT add or remove any elements.
+STEPS:
+1. ISOLATE the main subject (person, animal, face) — remove ALL background elements completely.
+2. Replace the entire background with PURE BLACK (0,0,0).
+3. Convert the subject to high-contrast grayscale:
+   - Brightest highlights (fur, skin, eyes) → near-white (220-255)
+   - Mid-tones → medium gray (100-180)
+   - Shadows → dark gray (20-80)
+   - Subject edges → add a soft white glow/halo (blur radius ~15px, opacity 60%) to create the engraving glow effect
+4. Boost local contrast: make fine details (hair strands, fur texture, eyelashes, whiskers) crisp and bright.
+5. The result should look like a professional engraving photo on polished black granite — bright glowing subject against pure black.
 
-Only change: convert all colors to smooth grayscale tones suitable for engraving.
+Style: photorealistic grayscale engraving. Pure black background. Glowing white edges. Maximum detail preservation. No color. No noise.`;
 
-Grayscale mapping rules:
-- Bright/light areas in original → bright gray (180-240)
-- Mid-tone areas → medium gray (80-160)
-- Dark/shadow areas → dark gray (20-80)
-- The darkest background areas → near-black (0-30)
-- Skin tones: smooth gradients, soft transitions, no harsh edges
-- Hair: natural gray tones showing individual strands
-- All details preserved: textures, edges, fine features
+const GENERAL_ENGRAVING_PROMPT = `Transform this image into a professional diamond needle engraving on black granite.
 
-Style: photorealistic grayscale. 256 shades of gray. Smooth gradients throughout. No noise. No harsh edges. Preserve all original details faithfully.`;
+STEPS:
+1. ISOLATE the main subject — remove ALL background elements completely.
+2. Replace the entire background with PURE BLACK (0,0,0).
+3. Convert the subject to high-contrast grayscale:
+   - Brightest areas (highlights, light surfaces) → near-white (220-255)
+   - Mid-tones → medium gray (100-180)
+   - Shadows → dark gray (20-80)
+   - Subject edges → add a soft white glow/halo (blur radius ~15px, opacity 60%) for the engraving glow effect
+4. Boost local contrast: make fine details (textures, edges, fine features) crisp and bright.
+5. The result should look like a professional engraving photo on polished black granite — bright glowing subject against pure black.
 
-const GENERAL_ENGRAVING_PROMPT = `Convert this image to grayscale optimized for diamond needle engraving on black granite.
-
-CRITICAL: Keep the EXACT same composition, subjects, positions, and background as the original image. Do NOT remove background. Do NOT change what is in the image. Do NOT add or remove any elements.
-
-Only change: convert all colors to smooth grayscale tones suitable for engraving.
-
-Grayscale mapping rules:
-- Bright/light areas in original → bright gray (180-240)
-- Mid-tone areas → medium gray (80-160)
-- Dark/shadow areas → dark gray (20-80)
-- The darkest background areas → near-black (0-30)
-- All details preserved: textures, edges, fine features
-- Smooth continuous gradients — no noise, no harsh edges
-
-Style: photorealistic grayscale. 256 shades of gray. Smooth gradients throughout. Preserve all original details faithfully.`;
+Style: photorealistic grayscale engraving. Pure black background. Glowing white edges. Maximum detail preservation. No color. No noise.`;
 
 /**
  * Remove background from image using Replicate rembg model.

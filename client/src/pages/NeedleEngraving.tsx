@@ -36,8 +36,8 @@ export default function NeedleEngraving() {
   const t = {
     title: isHe ? "חריטה עם מחט יהלום" : "Diamond Needle Engraving",
     subtitle: isHe
-      ? "המרת תמונה לקובץ BMP 8-bit מוכן לחריטה על גרניט שחור"
-      : "Convert image to BMP 8-bit ready for black granite engraving",
+      ? "AI מבודד את הנושא, מסיר רקע ויוצר אפקט זוהר על גרניט שחור"
+      : "AI isolates subject, removes background and creates glow effect on black granite",
     uploadTitle: isHe ? "העלה תמונה" : "Upload Image",
     uploadHint: isHe ? "JPG או PNG, עד 20MB" : "JPG or PNG, up to 20MB",
     dragHint: isHe ? "גרור תמונה לכאן או לחץ לבחירה" : "Drag image here or click to select",
@@ -55,9 +55,9 @@ export default function NeedleEngraving() {
     colorConverted: isHe ? "תמונה צבעונית הומרה לגווני אפור על ידי AI" : "Color image converted to grayscale by AI",
     bwDirect: isHe ? "תמונה שחור-לבן — עובדה ישירות" : "B&W image — processed directly",
     infoTitle: isHe ? "איך זה עובד" : "How it works",
-    info1: isHe ? "תמונה צבעונית → AI ממיר לגווני אפור מקצועי" : "Color image → AI converts to professional grayscale",
-    info2: isHe ? "תמונה שחור-לבן → עיבוד ישיר ללא AI" : "B&W image → direct processing without AI",
-    info3: isHe ? "CLAHE לאיזון חשיפה + Unsharp mask לחידוד פרטים" : "CLAHE exposure balance + Unsharp mask for detail sharpening",
+    info1: isHe ? "AI מבודד את הנושא ומסיר את הרקע המקורי" : "AI isolates subject and removes original background",
+    info2: isHe ? "רקע שחור טהור + אפקט זוהר לבן סביב הנושא" : "Pure black background + white glow effect around subject",
+    info3: isHe ? "ניגודיות גבוהה + חידוד פרטים עדינים (פרווה, שיער, ריסים)" : "High contrast + fine detail sharpening (fur, hair, eyelashes)",
     info4: isHe ? "פלט: BMP 8-bit בלבד (לא 24-bit — המכונה לא קוראת 24-bit)" : "Output: BMP 8-bit only (not 24-bit — machine won't read 24-bit)",
     specTitle: isHe ? "מפרט טכני" : "Technical Specs",
     spec1: isHe ? "פורמט: BMP 8-bit בלבד" : "Format: BMP 8-bit only",
