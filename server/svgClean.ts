@@ -209,7 +209,19 @@ function filterNearbyParallelPaths(svg: string): string {
   return result;
 }
 
+/** Dynamic stroke-width for SVG preview based on path count */
+function dynamicSvgStrokeWidth(pathCount: number): number {
+  if (pathCount < 2000) return 3.0;
+  if (pathCount < 5000) return 2.0;
+  if (pathCount < 10000) return 1.2;
+  return 0.8;
+}
+
 export function cleanSvgForPreview(rawSvg: string): string {
+  // Count paths to determine dynamic stroke width
+  const pathCount = (rawSvg.match(/<path /g) || []).length;
+  const strokeWidth = dynamicSvgStrokeWidth(pathCount);
+
   const cleaned = rawSvg
     // Remove all <text>...</text> elements (watermarks like "dxfai.net")
     .replace(/<text[^>]*>[\s\S]*?<\/text>/gi, '')
@@ -235,8 +247,8 @@ export function cleanSvgForPreview(rawSvg: string): string {
     .replace(/stroke:[^;"'\s]*(;|(?=["'\s]))/g, '')
     // Remove stroke-width in style attributes
     .replace(/stroke-width:[^;"'\s]*(;|(?=["'\s]))/g, '')
-    // Now add clean stroke attributes to all path elements
-    .replace(/<path /g, '<path stroke="black" stroke-width="3.0" fill="none" ');
+    // Now add clean stroke attributes to all path elements with dynamic width
+    .replace(/<path /g, `<path stroke="black" stroke-width="${strokeWidth}" fill="none" `);
 
   // Filter near-duplicate parallel paths (removes double-line artefacts from AI output)
   const deduped = filterNearbyParallelPaths(cleaned);

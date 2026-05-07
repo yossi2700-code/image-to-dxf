@@ -751,6 +751,17 @@ export function segmentsToDxf(
 }
 
 /**
+ * Calculate dynamic stroke-width based on number of elements.
+ * More elements = thinner strokes to avoid merging into blobs.
+ */
+function dynamicStrokeWidth(count: number): number {
+  if (count < 2000) return 2.5;
+  if (count < 5000) return 1.8;
+  if (count < 10000) return 1.2;
+  return 0.8;
+}
+
+/**
  * Generate SVG preview from line segments
  */
 export function segmentsToSvg(
@@ -758,13 +769,14 @@ export function segmentsToSvg(
   width: number,
   height: number
 ): string {
+  const sw = dynamicStrokeWidth(segments.length);
   const lines: string[] = [];
   lines.push(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" style="background:#fff">`
   );
   for (const seg of segments) {
     lines.push(
-      `<line x1="${seg.x1}" y1="${seg.y1}" x2="${seg.x2}" y2="${seg.y2}" stroke="#1a1a2e" stroke-width="1.8" stroke-linecap="round"/>`
+      `<line x1="${seg.x1}" y1="${seg.y1}" x2="${seg.x2}" y2="${seg.y2}" stroke="#1a1a2e" stroke-width="${sw}" stroke-linecap="round"/>`
     );
   }
   lines.push("</svg>");
@@ -779,6 +791,7 @@ export function polylinesToSvg(
   width: number,
   height: number
 ): string {
+  const sw = dynamicStrokeWidth(polylines.length);
   const lines: string[] = [];
   lines.push(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" style="background:#fff">`
@@ -787,7 +800,7 @@ export function polylinesToSvg(
     if (poly.length < 2) continue;
     const pts = poly.map(([x, y]) => `${x},${y}`).join(" ");
     lines.push(
-      `<polyline points="${pts}" fill="none" stroke="#1a1a2e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`
+      `<polyline points="${pts}" fill="none" stroke="#1a1a2e" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"/>`
     );
   }
   lines.push("</svg>");
