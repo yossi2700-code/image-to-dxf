@@ -135,8 +135,13 @@ async function convertToEngravingGrayscaleWithOpenAI(
 ): Promise<Buffer> {
   const prompt = isPortrait ? PORTRAIT_ENGRAVING_PROMPT : GENERAL_ENGRAVING_PROMPT;
 
+  // Save original dimensions so we can restore them after AI processing
+  const origMeta = await sharp(imageBuffer).metadata();
+  const origWidth = origMeta.width ?? 1024;
+  const origHeight = origMeta.height ?? 1024;
+
   // Resize to fit within 1024x1024 while preserving aspect ratio (no cropping!)
-  // Use 'contain' with black background so the full subject is visible
+  // Use 'contain' with black background so the full subject is visible to the AI
   const preparedBuffer = await sharp(imageBuffer)
     .resize(1024, 1024, {
       fit: 'contain',
@@ -153,7 +158,7 @@ async function convertToEngravingGrayscaleWithOpenAI(
     prompt,
     n: 1,
     size: "1024x1024",
-    quality: "medium",  // Per PDF spec: medium is sufficient and faster
+    quality: "medium",
   });
   const imageData = response.data?.[0];
   if (!imageData) throw new Error("AI did not return an image");
@@ -167,22 +172,21 @@ async function convertToEngravingGrayscaleWithOpenAI(
   } else {
     throw new Error("AI returned no image data");
   }
-  // Convert to PNG for downstream processing
-  const pngBuffer = await sharp(rawBuffer).rotate().png().toBuffer();
 
-  // Auto-trim black padding added by 'contain' resize — so the subject fills the frame.
-  // sharp.trim() removes border pixels that match the corner color (black in our case).
-  // threshold=15: pixels darker than 15 are considered "black border" and trimmed.
-  try {
-    const trimmed = await sharp(pngBuffer)
-      .trim({ background: { r: 0, g: 0, b: 0 }, threshold: 15 })
-      .png()
-      .toBuffer();
-    return trimmed;
-  } catch {
-    // If trim fails (e.g. entire image is black), return original
-    return pngBuffer;
-  }
+  // Resize AI result back to original dimensions — preserves original aspect ratio and size.
+  // Use 'fill' to stretch back to exact original size (AI output already has correct aspect ratio
+  // because we used 'contain' with matching aspect ratio padding).
+  // This ensures the output matches the source image dimensions exactly.
+  const restored = await sharp(rawBuffer)
+    .rotate()
+    .resize(origWidth, origHeight, {
+      fit: 'fill',
+      kernel: sharp.kernel.lanczos3,
+    })
+    .png()
+    .toBuffer();
+
+  return restored;
 }
 
 /**
