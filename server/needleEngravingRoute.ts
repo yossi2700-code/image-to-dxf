@@ -14,35 +14,37 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
 // Granite engraving prompts — produce black background with glowing subject effect.
 // Target: subject isolated on pure black, bright whites, soft glow halo around edges.
-const PORTRAIT_ENGRAVING_PROMPT = `Transform this image into a professional diamond needle engraving on black granite.
+const PORTRAIT_ENGRAVING_PROMPT = `Transform this image into a professional diamond needle engraving on polished black granite.
 
-STEPS:
-1. ISOLATE the main subject (person, animal, face) — remove ALL background elements completely.
-2. Replace the entire background with PURE BLACK (0,0,0).
-3. Convert the subject to high-contrast grayscale:
-   - Brightest highlights (fur, skin, eyes) → near-white (220-255)
-   - Mid-tones → medium gray (100-180)
-   - Shadows → dark gray (20-80)
-   - Subject edges → add a soft white glow/halo (blur radius ~15px, opacity 60%) to create the engraving glow effect
-4. Boost local contrast: make fine details (hair strands, fur texture, eyelashes, whiskers) crisp and bright.
-5. The result should look like a professional engraving photo on polished black granite — bright glowing subject against pure black.
+CRITICAL RULES:
+- Background: PURE BLACK (RGB 0,0,0) — completely empty, no texture, no gradient
+- Subject (person/animal/face): render in BRIGHT LIGHT TONES — whites and light grays
+  * Bright highlights (fur highlights, skin highlights, eyes whites) → bright white (230-255)
+  * Mid-tones (skin, fur body) → light-to-medium gray (140-200)
+  * Shadows within the subject → medium gray (80-130) — NOT black
+  * The subject should appear LUMINOUS and BRIGHT against the black background
+- Soft white glow/halo around the outer edges of the subject (vignette glow effect)
+- Preserve ALL fine details: individual fur strands, eyelashes, whiskers, skin texture
+- Smooth gradients — no harsh posterization or banding
+- No color whatsoever — pure grayscale only
 
-Style: photorealistic grayscale engraving. Pure black background. Glowing white edges. Maximum detail preservation. No color. No noise.`;
+The final result must look like a professional granite engraving photograph: a BRIGHT, DETAILED subject floating on a PURE BLACK background with a soft white glow around the edges.`;
 
-const GENERAL_ENGRAVING_PROMPT = `Transform this image into a professional diamond needle engraving on black granite.
+const GENERAL_ENGRAVING_PROMPT = `Transform this image into a professional diamond needle engraving on polished black granite.
 
-STEPS:
-1. ISOLATE the main subject — remove ALL background elements completely.
-2. Replace the entire background with PURE BLACK (0,0,0).
-3. Convert the subject to high-contrast grayscale:
-   - Brightest areas (highlights, light surfaces) → near-white (220-255)
-   - Mid-tones → medium gray (100-180)
-   - Shadows → dark gray (20-80)
-   - Subject edges → add a soft white glow/halo (blur radius ~15px, opacity 60%) for the engraving glow effect
-4. Boost local contrast: make fine details (textures, edges, fine features) crisp and bright.
-5. The result should look like a professional engraving photo on polished black granite — bright glowing subject against pure black.
+CRITICAL RULES:
+- Background: PURE BLACK (RGB 0,0,0) — completely empty
+- Subject: render in BRIGHT LIGHT TONES — whites and light grays
+  * Bright highlights → bright white (230-255)
+  * Mid-tones → light-to-medium gray (140-200)
+  * Shadows within subject → medium gray (80-130) — NOT black
+  * The subject should appear LUMINOUS and BRIGHT against the black background
+- Soft white glow/halo around the outer edges of the subject
+- Preserve ALL fine details: textures, edges, fine features
+- Smooth gradients — no harsh posterization
+- No color — pure grayscale only
 
-Style: photorealistic grayscale engraving. Pure black background. Glowing white edges. Maximum detail preservation. No color. No noise.`;
+The final result must look like a professional granite engraving photograph: a BRIGHT, DETAILED subject on a PURE BLACK background with a soft white glow around the edges.`;
 
 /**
  * Remove background from image using Replicate rembg model.

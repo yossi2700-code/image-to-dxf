@@ -243,11 +243,24 @@ export async function processForGraniteEngraving(
   const height = info.height;
   const total = width * height;
 
-  // ── 4. CLAHE (clipLimit=1.2, tileGridSize=16×16) per spec ────────────────────
-  const claheResult = applyCLAHE(pixels, width, height, 1.2, 16);
+  // ── 4. CLAHE — gentle (clipLimit=1.5, tileCount=8) to enhance local contrast without darkening ──
+  const claheResult = applyCLAHE(pixels, width, height, 1.5, 8);
 
-  // ── 5. Unsharp mask: amount=1.25, sigma=0.8 (exact PDF spec) ─────────────────
-  const blurredBuf = await sharp(Buffer.from(claheResult), {
+  // ── 5. Brightness boost: lift all non-black pixels so subject appears bright on black background ──
+  // Pixels that are already near-black (background) stay black; subject pixels get lifted.
+  const brightened = new Uint8Array(total);
+  for (let i = 0; i < total; i++) {
+    const v = claheResult[i];
+    if (v < 20) {
+      brightened[i] = 0; // keep background pure black
+    } else {
+      // Stretch: map [20..255] → [60..255] to make subject brighter
+      brightened[i] = Math.min(255, Math.round(60 + (v - 20) * (195 / 235)));
+    }
+  }
+
+  // ── 6. Unsharp mask: amount=1.3, sigma=0.8 — sharpen fine details ─────────────────────
+  const blurredBuf = await sharp(Buffer.from(brightened), {
     raw: { width, height, channels: 1 },
   })
     .blur(0.8)
@@ -256,17 +269,17 @@ export async function processForGraniteEngraving(
   const blurred = new Uint8Array(blurredBuf);
   const sharpened = new Uint8Array(total);
   for (let i = 0; i < total; i++) {
-    const val = Math.round(claheResult[i] * 1.25 + blurred[i] * -0.25);
+    const val = Math.round(brightened[i] * 1.3 + blurred[i] * -0.3);
     sharpened[i] = Math.max(0, Math.min(255, val));
   }
 
-  // ── 6. Black threshold: pixels < 15 → 0 (absolute black background) ──────────
+  // ── 7. Black threshold: pixels < 20 → 0 (keep background pure black) ───────────────
   const finalPixels = new Uint8Array(total);
   for (let i = 0; i < total; i++) {
-    finalPixels[i] = sharpened[i] < 15 ? 0 : sharpened[i];
+    finalPixels[i] = sharpened[i] < 20 ? 0 : sharpened[i];
   }
 
-  //  // ── 8. Upscale to high resolution for professional engraving (3000×3000 min) ──
+  // ── 8. Upscale to high resolution for professional engraving (3000×3000 min) ──
   // AI generates at 1024×1024 — too low for engraving. Upscale with Lanczos3.
   const TARGET_SIZE = 3000;
   let finalWidth = width;
