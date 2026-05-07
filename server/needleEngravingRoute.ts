@@ -140,16 +140,20 @@ async function convertToEngravingGrayscaleWithOpenAI(
   const origWidth = origMeta.width ?? 1024;
   const origHeight = origMeta.height ?? 1024;
 
-  // Resize to fit within 1024x1024 while preserving aspect ratio (no cropping!)
-  // Use 'contain' with black background so the full subject is visible to the AI
+  // Resize to fit within 1024x1024 while preserving aspect ratio.
+  // Use 'inside' so the image fills the 1024 box without any padding — the subject fills the frame.
   const preparedBuffer = await sharp(imageBuffer)
     .resize(1024, 1024, {
-      fit: 'contain',
-      background: { r: 0, g: 0, b: 0 },
+      fit: 'inside',
       kernel: sharp.kernel.lanczos3,
     })
     .png()
     .toBuffer();
+
+  // Get actual dimensions after resize (may be e.g. 768x1024 or 1024x768)
+  const prepMeta = await sharp(preparedBuffer).metadata();
+  const prepWidth = prepMeta.width ?? 1024;
+  const prepHeight = prepMeta.height ?? 1024;
 
   const imageFile = new File([new Uint8Array(preparedBuffer)], "source.png", { type: "image/png" });
   const response = await openai.images.edit({
@@ -173,12 +177,20 @@ async function convertToEngravingGrayscaleWithOpenAI(
     throw new Error("AI returned no image data");
   }
 
-  // Resize AI result back to original dimensions — preserves original aspect ratio and size.
-  // Use 'fill' to stretch back to exact original size (AI output already has correct aspect ratio
-  // because we used 'contain' with matching aspect ratio padding).
-  // This ensures the output matches the source image dimensions exactly.
-  const restored = await sharp(rawBuffer)
-    .rotate()
+  // The AI returns 1024x1024 but the subject may be cropped to prepWidth x prepHeight area.
+  // First crop the AI output to the actual subject area, then restore to original dimensions.
+  const croppedBuffer = await sharp(rawBuffer)
+    .extract({
+      left: Math.round((1024 - prepWidth) / 2),
+      top: Math.round((1024 - prepHeight) / 2),
+      width: prepWidth,
+      height: prepHeight,
+    })
+    .png()
+    .toBuffer();
+
+  // Resize back to original dimensions
+  const restored = await sharp(croppedBuffer)
     .resize(origWidth, origHeight, {
       fit: 'fill',
       kernel: sharp.kernel.lanczos3,
