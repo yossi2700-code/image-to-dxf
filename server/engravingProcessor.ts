@@ -213,8 +213,10 @@ export async function processForGraniteEngraving(
   if (widthCm && heightCm) {
     const widthPx = Math.round((widthCm / 2.54) * dpi);
     const heightPx = Math.round((heightCm / 2.54) * dpi);
+    // fit: "contain" preserves aspect ratio and pads with black — prevents stretching
     pipeline = pipeline.resize(widthPx, heightPx, {
-      fit: "fill",
+      fit: "contain",
+      background: { r: 0, g: 0, b: 0 },
       kernel: sharp.kernel.lanczos3,
     });
   } else if (widthCm) {

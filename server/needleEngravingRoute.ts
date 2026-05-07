@@ -379,8 +379,23 @@ router.post("/generate-and-process", express.json(), async (req, res) => {
 
     // Step 1: Generate image with AI using Forge API (text-to-image)
     const engravingPrompt = isPortrait === "true"
-      ? `Professional portrait: ${prompt}. Grayscale only, no color. High contrast, sharp facial details, smooth gradients. Black background. Optimized for diamond needle engraving on black granite.`
-      : `${prompt}. Grayscale only, no color. High contrast, sharp details, clean composition. Black background. Optimized for diamond needle engraving on black granite.`;
+      ? `Professional portrait on black granite: ${prompt}.
+Style: photorealistic grayscale portrait on polished black granite.
+- Pure black background (0,0,0)
+- Subject rendered in FULL grayscale tones: bright whites for highlights, mid-grays for skin/fur texture, dark grays for shadows — NOT just white lines
+- Soft white glow/halo around the subject edges (like a vignette glow)
+- Maximum detail: individual hair strands, fur texture, eyelashes, skin pores
+- High local contrast — every detail visible
+- Smooth gradients, no harsh posterization
+Result should look like a professional granite engraving photograph — rich tonal range, glowing subject, pure black background.`
+      : `Subject on black granite: ${prompt}.
+Style: photorealistic grayscale on polished black granite.
+- Pure black background (0,0,0)
+- Subject rendered in FULL grayscale tones: bright whites for highlights, mid-grays for textures, dark grays for shadows — NOT just white lines
+- Soft white glow/halo around the subject edges
+- Maximum detail preservation
+- High local contrast, smooth gradients
+Result should look like a professional granite engraving photograph — rich tonal range, glowing subject, pure black background.`;
 
     const { url: generatedUrl, buffer: generatedBuffer } = await generateImage({ prompt: engravingPrompt });
     if (!generatedUrl) throw new Error("AI image generation failed");
