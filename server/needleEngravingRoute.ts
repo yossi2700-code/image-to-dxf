@@ -135,16 +135,14 @@ async function convertToEngravingGrayscaleWithOpenAI(
 ): Promise<Buffer> {
   const prompt = isPortrait ? PORTRAIT_ENGRAVING_PROMPT : GENERAL_ENGRAVING_PROMPT;
 
-  // Per PDF spec: center-crop to square then resize to 1024x1024 before sending to AI
-  const meta = await sharp(imageBuffer).metadata();
-  const w = meta.width ?? 1024;
-  const h = meta.height ?? 1024;
-  const size = Math.min(w, h);
-  const left = Math.floor((w - size) / 2);
-  const top = Math.floor((h - size) / 2);
+  // Resize to fit within 1024x1024 while preserving aspect ratio (no cropping!)
+  // Use 'contain' with black background so the full subject is visible
   const preparedBuffer = await sharp(imageBuffer)
-    .extract({ left, top, width: size, height: size })
-    .resize(1024, 1024, { kernel: sharp.kernel.lanczos3 })
+    .resize(1024, 1024, {
+      fit: 'contain',
+      background: { r: 0, g: 0, b: 0 },
+      kernel: sharp.kernel.lanczos3,
+    })
     .png()
     .toBuffer();
 
