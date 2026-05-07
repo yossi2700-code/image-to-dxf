@@ -1669,12 +1669,6 @@ router.post(
   upload.single("image"),
   async (req, res) => {
     try {
-      // Admin-only guard
-      const { isAdminRequest } = await import("./security");
-      if (!isAdminRequest(req)) {
-        return res.status(403).json({ error: "FORBIDDEN", message: "Admin only" });
-      }
-
       if (!req.file) {
         return res.status(400).json({ error: "NO_IMAGE", message: "No image uploaded" });
       }
