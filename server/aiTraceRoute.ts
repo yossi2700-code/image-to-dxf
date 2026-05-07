@@ -1078,11 +1078,10 @@ async function runTraceJob(
       // optTolerance: 0.6 — moderate curve joining; 1.2 was merging unrelated strokes
       // alphaMax: 1.0 — standard corner rounding; 1.5 was causing filled areas in portrait
       const potraceOptions = isDetailedMode
-        // Detailed: turdSize 8 keeps very fine details; alphaMax 1.0 = smooth corners
-        ? { threshold: 128, turdSize: 8, alphaMax: 1.0, optCurve: true, optTolerance: 0.6 }
-        // Simple: turdSize 4 — keep all lines including short architectural details;
-        //         optTolerance 0.6 — moderate curve joining without merging unrelated strokes
-        : { threshold: 128, turdSize: 4, alphaMax: 1.0, optCurve: true, optTolerance: 0.6 };
+        // Detailed: turdSize 8 keeps very fine details; optTolerance 1.0 joins broken segments into smooth curves
+        ? { threshold: 128, turdSize: 8, alphaMax: 1.0, optCurve: true, optTolerance: 1.0 }
+        // Simple: turdSize 6 — remove tiny noise fragments; optTolerance 1.0 = smooth continuous lines
+        : { threshold: 128, turdSize: 6, alphaMax: 1.0, optCurve: true, optTolerance: 1.0 };
 
       const rawSvg = await new Promise<string>((resolve, reject) => {
         potrace.trace(processedBuffer, potraceOptions, (err: Error | null, svg: string) => {
