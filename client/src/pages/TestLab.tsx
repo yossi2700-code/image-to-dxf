@@ -28,6 +28,7 @@ interface Result {
   durationMs: number;
   promptUsed: string;
   error?: string;
+  classification?: { type: string; subject: string; complexity: string } | null;
 }
 
 export default function TestLab() {
@@ -75,7 +76,7 @@ export default function TestLab() {
         if (!resp.ok) {
           return { model, imageUrl: "", durationMs: Date.now() - startMs, promptUsed: "", error: data.message || "Unknown error" } as Result;
         }
-        return { model, imageUrl: data.imageUrl, durationMs: data.durationMs, promptUsed: data.promptUsed } as Result;
+        return { model, imageUrl: data.imageUrl, durationMs: data.durationMs, promptUsed: data.promptUsed, classification: data.classification } as Result;
       } catch (err) {
         return { model, imageUrl: "", durationMs: Date.now() - startMs, promptUsed: "", error: String(err) } as Result;
       }
@@ -285,6 +286,11 @@ export default function TestLab() {
                           className="w-full rounded border border-gray-100 object-contain bg-white"
                           style={{ maxHeight: 320 }}
                         />
+                      )}
+                      {result.classification && (
+                        <div className="mt-2 text-xs text-gray-500 bg-gray-50 rounded px-2 py-1">
+                          <span className="font-medium">זוהה:</span> {result.classification.type} · {result.classification.subject} · {result.classification.complexity}
+                        </div>
                       )}
                       {result.promptUsed && (
                         <div className="mt-2">

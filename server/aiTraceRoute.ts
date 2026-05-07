@@ -1698,10 +1698,27 @@ router.post(
         .png({ compressionLevel: 6 })
         .toBuffer();
 
-      const objectDescription = userDesc || "the image";
-      const editPrompt = singleLine
-        ? buildLineArtPrompt(objectDescription, 0, true)
-        : buildLineArtPrompt(objectDescription, 0, false);
+      // If no user description, run GPT-4o vision to classify the image
+      // This is essential for OpenAI text-to-image models that can't see the input image
+      let objectDescription = userDesc;
+      let classification: ImageClassification | null = null;
+      if (!objectDescription || model !== "forge") {
+        const imageBase64 = editSourceBuffer.toString("base64");
+        classification = await classifyImage(imageBase64);
+        if (!objectDescription) objectDescription = classification.subject || "the image";
+      }
+
+      // For OpenAI text-to-image models, use the classified prompt for best results
+      let editPrompt: string;
+      if (model !== "forge" && model !== "dall-e-2" && classification) {
+        editPrompt = singleLine
+          ? buildLineArtPrompt(objectDescription, 0, true)
+          : buildClassifiedPrompt(classification, "");
+      } else {
+        editPrompt = singleLine
+          ? buildLineArtPrompt(objectDescription, 0, true)
+          : buildLineArtPrompt(objectDescription, 0, false);
+      }
 
       const startMs = Date.now();
       let resultBuffer: Buffer;
@@ -1775,7 +1792,7 @@ router.post(
       const key = `test-lab/${nanoid(10)}-${model}.png`;
       const { url } = await storagePut(key, flatBuffer, "image/png");
 
-      return res.json({ imageUrl: url, model, durationMs, promptUsed: editPrompt });
+      return res.json({ imageUrl: url, model, durationMs, promptUsed: editPrompt, classification });
 
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
