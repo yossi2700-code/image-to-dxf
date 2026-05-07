@@ -764,7 +764,7 @@ export function segmentsToSvg(
   );
   for (const seg of segments) {
     lines.push(
-      `<line x1="${seg.x1}" y1="${seg.y1}" x2="${seg.x2}" y2="${seg.y2}" stroke="#1a1a2e" stroke-width="1.2" stroke-linecap="round"/>`
+      `<line x1="${seg.x1}" y1="${seg.y1}" x2="${seg.x2}" y2="${seg.y2}" stroke="#1a1a2e" stroke-width="1.8" stroke-linecap="round"/>`
     );
   }
   lines.push("</svg>");
@@ -787,7 +787,7 @@ export function polylinesToSvg(
     if (poly.length < 2) continue;
     const pts = poly.map(([x, y]) => `${x},${y}`).join(" ");
     lines.push(
-      `<polyline points="${pts}" fill="none" stroke="#1a1a2e" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>`
+      `<polyline points="${pts}" fill="none" stroke="#1a1a2e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`
     );
   }
   lines.push("</svg>");
