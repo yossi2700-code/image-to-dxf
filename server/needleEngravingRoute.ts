@@ -17,6 +17,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 const PORTRAIT_ENGRAVING_PROMPT = `Transform this image into a professional diamond needle engraving on polished black granite.
 
 CRITICAL RULES:
+- SHOW THE ENTIRE SUBJECT from head to toe — do NOT crop or zoom in. The full body must be visible in the frame with some black space around it.
 - Background: PURE BLACK (RGB 0,0,0) — completely empty, no texture, no gradient
 - Subject (person/animal/face): render in BRIGHT LIGHT TONES — whites and light grays
   * Bright highlights (fur highlights, skin highlights, eyes whites) → bright white (230-255)
@@ -27,12 +28,14 @@ CRITICAL RULES:
 - Preserve ALL fine details: individual fur strands, eyelashes, whiskers, skin texture
 - Smooth gradients — no harsh posterization or banding
 - No color whatsoever — pure grayscale only
+- Keep the same composition and framing as the original image — do not zoom in
 
-The final result must look like a professional granite engraving photograph: a BRIGHT, DETAILED subject floating on a PURE BLACK background with a soft white glow around the edges.`;
+The final result must look like a professional granite engraving photograph: a BRIGHT, DETAILED subject floating on a PURE BLACK background with a soft white glow around the edges. The FULL BODY must be visible.`;
 
 const GENERAL_ENGRAVING_PROMPT = `Transform this image into a professional diamond needle engraving on polished black granite.
 
 CRITICAL RULES:
+- SHOW THE ENTIRE SUBJECT — do NOT crop, zoom in, or cut off any part. Keep the same framing as the original image.
 - Background: PURE BLACK (RGB 0,0,0) — completely empty
 - Subject: render in BRIGHT LIGHT TONES — whites and light grays
   * Bright highlights → bright white (230-255)
@@ -43,8 +46,9 @@ CRITICAL RULES:
 - Preserve ALL fine details: textures, edges, fine features
 - Smooth gradients — no harsh posterization
 - No color — pure grayscale only
+- Same composition as original — do not zoom or reframe
 
-The final result must look like a professional granite engraving photograph: a BRIGHT, DETAILED subject on a PURE BLACK background with a soft white glow around the edges.`;
+The final result must look like a professional granite engraving photograph: a BRIGHT, DETAILED subject on a PURE BLACK background with a soft white glow around the edges. Show the COMPLETE subject without cropping.`;
 
 /**
  * Remove background from image using Replicate rembg model.
