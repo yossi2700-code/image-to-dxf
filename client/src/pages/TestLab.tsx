@@ -13,12 +13,14 @@ import { Switch } from "@/components/ui/switch";
 import { Upload, Trash2, Clock, Zap, FlaskConical, Loader2 } from "lucide-react";
 
 const MODELS = [
-  { id: "forge",                   label: "Forge (מנוס)",         tag: "fallback",   color: "bg-blue-100 text-blue-800",   note: "image+prompt editing" },
+  { id: "forge",                   label: "Forge (מנוס)",         tag: "current",    color: "bg-blue-100 text-blue-800",   note: "image+prompt editing · active" },
+  { id: "gpt-image-1-edit",        label: "gpt-image-1 (edit)",   tag: "openai",     color: "bg-green-100 text-green-800", note: "image+prompt editing" },
+  { id: "flux-kontext-pro",        label: "Flux Kontext Pro",     tag: "replicate",  color: "bg-orange-100 text-orange-800", note: "image+prompt editing" },
   { id: "dall-e-2",                label: "DALL-E 2",             tag: "openai",     color: "bg-gray-100 text-gray-700",   note: "image+prompt editing" },
   { id: "gpt-image-1-mini",        label: "gpt-image-1-mini",     tag: "openai",     color: "bg-green-100 text-green-800", note: "text-to-image" },
   { id: "gpt-image-1",             label: "gpt-image-1",          tag: "openai",     color: "bg-green-100 text-green-800", note: "text-to-image" },
   { id: "gpt-image-1.5",           label: "gpt-image-1.5",        tag: "openai",     color: "bg-green-100 text-green-800", note: "text-to-image" },
-  { id: "gpt-image-2",             label: "gpt-image-2",          tag: "current",    color: "bg-purple-100 text-purple-800", note: "text-to-image · active" },
+  { id: "gpt-image-2",             label: "gpt-image-2",          tag: "openai",     color: "bg-purple-100 text-purple-800", note: "text-to-image" },
   { id: "gpt-image-2-2026-04-21",  label: "gpt-image-2 (Apr 26)", tag: "openai",     color: "bg-purple-100 text-purple-800", note: "text-to-image" },
 ];
 

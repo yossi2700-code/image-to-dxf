@@ -1750,6 +1750,75 @@ router.post(
         } else {
           throw new Error("OpenAI returned no image data");
         }
+      } else if (model === "gpt-image-1-edit") {
+        // gpt-image-1 via /v1/images/edits — sees the input image directly
+        const openaiApiKey = process.env.OPENAI_API_KEY;
+        if (!openaiApiKey) throw new Error("OPENAI_API_KEY not configured");
+        const FormDataNode2 = (await import("form-data")).default;
+        const form2 = new FormDataNode2();
+        form2.append("model", "gpt-image-1");
+        form2.append("prompt", editPrompt);
+        form2.append("image", editSourceBuffer, { filename: "image.png", contentType: "image/png" });
+        form2.append("n", "1");
+        form2.append("size", "1024x1024");
+        const formBuffer2 = form2.getBuffer();
+        const resp2 = await fetch("https://api.openai.com/v1/images/edits", {
+          method: "POST",
+          headers: { authorization: `Bearer ${openaiApiKey}`, ...form2.getHeaders() },
+          body: new Uint8Array(formBuffer2.buffer, formBuffer2.byteOffset, formBuffer2.byteLength) as any,
+          signal: AbortSignal.timeout(3 * 60 * 1000),
+        });
+        if (!resp2.ok) {
+          const detail = await resp2.text().catch(() => "");
+          throw new Error(`gpt-image-1-edit failed (${resp2.status}): ${detail}`);
+        }
+        const data2 = await resp2.json() as { data?: Array<{ b64_json?: string; url?: string }> };
+        const item2 = data2.data?.[0];
+        if (!item2) throw new Error("gpt-image-1-edit returned no image");
+        if (item2.b64_json) {
+          resultBuffer = Buffer.from(item2.b64_json, "base64");
+        } else if (item2.url) {
+          const imgResp2 = await fetch(item2.url);
+          resultBuffer = Buffer.from(await imgResp2.arrayBuffer());
+        } else {
+          throw new Error("gpt-image-1-edit returned no image data");
+        }
+      } else if (model === "flux-kontext-pro") {
+        // Flux Kontext Pro via Replicate — sees the input image directly
+        const replicateToken = process.env.REPLICATE_API_TOKEN;
+        if (!replicateToken) throw new Error("REPLICATE_API_TOKEN not configured");
+        const imageBase64 = editSourceBuffer.toString("base64");
+        const imageDataUrl = `data:image/png;base64,${imageBase64}`;
+        const fluxResp = await fetch("https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-pro/predictions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${replicateToken}`,
+            "Content-Type": "application/json",
+            "Prefer": "wait"
+          },
+          body: JSON.stringify({
+            input: {
+              prompt: editPrompt,
+              input_image: imageDataUrl
+            }
+          }),
+          signal: AbortSignal.timeout(3 * 60 * 1000),
+        });
+        if (!fluxResp.ok) {
+          const detail = await fluxResp.text().catch(() => "");
+          throw new Error(`Flux Kontext Pro failed (${fluxResp.status}): ${detail}`);
+        }
+        const fluxData = await fluxResp.json() as { status: string; output?: string; error?: string };
+        if (fluxData.error) throw new Error(`Flux Kontext Pro error: ${fluxData.error}`);
+        if (!fluxData.output) throw new Error("Flux Kontext Pro returned no output");
+        // Poll if not done yet
+        let outputUrl = fluxData.output;
+        if (fluxData.status !== "succeeded") {
+          // Shouldn't happen with Prefer: wait, but handle gracefully
+          throw new Error(`Flux Kontext Pro status: ${fluxData.status}`);
+        }
+        const imgRespFlux = await fetch(outputUrl);
+        resultBuffer = Buffer.from(await imgRespFlux.arrayBuffer());
       } else if (model === "dall-e-2") {
         // dall-e-2 supports /v1/images/edits with input image
         const openaiApiKey = process.env.OPENAI_API_KEY;
