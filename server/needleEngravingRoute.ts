@@ -168,7 +168,21 @@ async function convertToEngravingGrayscaleWithOpenAI(
     throw new Error("AI returned no image data");
   }
   // Convert to PNG for downstream processing
-  return await sharp(rawBuffer).rotate().png().toBuffer();
+  const pngBuffer = await sharp(rawBuffer).rotate().png().toBuffer();
+
+  // Auto-trim black padding added by 'contain' resize — so the subject fills the frame.
+  // sharp.trim() removes border pixels that match the corner color (black in our case).
+  // threshold=15: pixels darker than 15 are considered "black border" and trimmed.
+  try {
+    const trimmed = await sharp(pngBuffer)
+      .trim({ background: { r: 0, g: 0, b: 0 }, threshold: 15 })
+      .png()
+      .toBuffer();
+    return trimmed;
+  } catch {
+    // If trim fails (e.g. entire image is black), return original
+    return pngBuffer;
+  }
 }
 
 /**
