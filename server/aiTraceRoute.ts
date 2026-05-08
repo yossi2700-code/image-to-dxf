@@ -1040,8 +1040,9 @@ async function runTraceJob(
           .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .grayscale()
           .linear(2.5, -50)            // strong contrast: pull thin lines to solid black
+          .blur(0.8)                   // light blur merges broken line fragments before threshold
           .sharpen({ sigma: 1.0, m1: 1.5, m2: 0.3, x1: 2, y2: 10, y3: 20 }) // sharpen edges before threshold
-          .threshold(170)              // high threshold: only solid black lines survive, grey noise removed
+          .threshold(160)              // slightly lower threshold to keep more line pixels after blur
           .png()
           .toBuffer();
       }
@@ -1077,11 +1078,15 @@ async function runTraceJob(
       // turdSize: 8 for both modes — turdSize 24 deleted short lines (giraffe spots, leaves, fine details)
       // optTolerance: 0.6 — moderate curve joining; 1.2 was merging unrelated strokes
       // alphaMax: 1.0 — standard corner rounding; 1.5 was causing filled areas in portrait
+      // turdSize scales with image complexity:
+      // - isBwDrawing (clean B&W sketch): turdSize 8 — keep fine details
+      // - color photo (flowers, real photos): turdSize 20 — aggressively remove noise fragments
+      const turdForColorPhoto = (!isDetailedMode && !isBwDrawing) ? 20 : (isDetailedMode ? 8 : 6);
       const potraceOptions = isDetailedMode
         // Detailed: turdSize 8 keeps very fine details; optTolerance 1.0 joins broken segments into smooth curves
         ? { threshold: 128, turdSize: 8, alphaMax: 1.0, optCurve: true, optTolerance: 1.0 }
-        // Simple: turdSize 6 — remove tiny noise fragments; optTolerance 1.0 = smooth continuous lines
-        : { threshold: 128, turdSize: 6, alphaMax: 1.0, optCurve: true, optTolerance: 1.0 };
+        // Simple: use turdForColorPhoto — larger for color photos to remove noise, smaller for B&W sketches
+        : { threshold: 128, turdSize: turdForColorPhoto, alphaMax: 1.0, optCurve: true, optTolerance: 1.2 };
 
       const rawSvg = await new Promise<string>((resolve, reject) => {
         potrace.trace(processedBuffer, potraceOptions, (err: Error | null, svg: string) => {
