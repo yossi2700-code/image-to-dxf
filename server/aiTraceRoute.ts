@@ -684,6 +684,53 @@ async function generateWithForge(prompt: string, imageBuffer: Buffer, signal?: A
   return Buffer.from(b64, "base64");
 }
 
+/**
+ * Generate line art using Flux Kontext Pro via Replicate API.
+ * ~2-3x faster than Forge/GPT-image-1 (10-15s vs 30-40s).
+ * Falls back to Forge if REPLICATE_API_TOKEN is not configured.
+ */
+async function generateWithFluxKontext(prompt: string, imageBuffer: Buffer, signal?: AbortSignal): Promise<Buffer> {
+  const replicateToken = process.env.REPLICATE_API_TOKEN;
+  if (!replicateToken) throw new Error("REPLICATE_API_TOKEN not configured");
+
+  const imageBase64 = imageBuffer.toString("base64");
+  const imageDataUrl = `data:image/png;base64,${imageBase64}`;
+
+  const response = await fetch("https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-pro/predictions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${replicateToken}`,
+      "Content-Type": "application/json",
+      "Prefer": "wait"
+    },
+    body: JSON.stringify({
+      input: {
+        prompt,
+        input_image: imageDataUrl,
+        aspect_ratio: "match_input_image"
+      }
+    }),
+    signal,
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Flux Kontext Pro failed (${response.status}): ${detail}`);
+  }
+
+  const data = await response.json() as { status: string; output?: string | string[]; error?: string };
+  if (data.error) throw new Error(`Flux Kontext Pro error: ${data.error}`);
+  if (data.status !== "succeeded") throw new Error(`Flux Kontext Pro status: ${data.status}`);
+
+  // Output can be a string URL or array of URLs
+  const outputUrl = Array.isArray(data.output) ? data.output[0] : data.output;
+  if (!outputUrl) throw new Error("Flux Kontext Pro returned no output");
+
+  const imgResp = await fetch(outputUrl, { signal });
+  if (!imgResp.ok) throw new Error(`Failed to download Flux output: ${imgResp.status}`);
+  return Buffer.from(await imgResp.arrayBuffer());
+}
+
 // Uses OpenAI gpt-image-2 (or other model) via /v1/images/generations (text-to-image)
 // Note: gpt-image-2 requires org verification; does NOT accept input images
 async function generateWithOpenAI(prompt: string, model = "gpt-image-2", signal?: AbortSignal): Promise<Buffer> {
@@ -967,8 +1014,20 @@ async function runTraceJob(
             .png()
             .toBuffer();
         }
-        // Use Forge ImageService for high-quality line art generation
-        rawBuffer = await generateWithForge(editPrompt, aiInputBuffer, abortController.signal);
+        // Try Flux Kontext Pro first (faster: ~10-15s vs ~30-40s), fall back to Forge
+        const useFluxKontext = !!process.env.REPLICATE_API_TOKEN;
+        if (useFluxKontext) {
+          try {
+            console.log(`[aiTraceRoute] Job ${jobId}: using Flux Kontext Pro (fast mode)`);
+            rawBuffer = await generateWithFluxKontext(editPrompt, aiInputBuffer, abortController.signal);
+            console.log(`[aiTraceRoute] Job ${jobId}: Flux Kontext Pro succeeded`);
+          } catch (fluxErr) {
+            console.warn(`[aiTraceRoute] Job ${jobId}: Flux Kontext Pro failed, falling back to Forge:`, fluxErr instanceof Error ? fluxErr.message : fluxErr);
+            rawBuffer = await generateWithForge(editPrompt, aiInputBuffer, abortController.signal);
+          }
+        } else {
+          rawBuffer = await generateWithForge(editPrompt, aiInputBuffer, abortController.signal);
+        }
         // Flatten alpha channel → white background immediately after receiving AI output.
         // Prevents gray artifacts when the AI output PNG has transparency or semi-transparent edges.
         rawBuffer = await sharp(rawBuffer)
@@ -984,7 +1043,9 @@ async function runTraceJob(
           // All-white image returned by AI — retry once with a simpler prompt
           console.warn(`[aiTraceRoute] Job ${jobId}: AI returned blank/white image (brightness=${aiOutputBrightness.toFixed(1)}) — retrying with fallback prompt`);
           const fallbackPrompt = `Clean black and white line art. Trace the exact shapes from the reference image. Pure black lines (#000000) on pure white background (#FFFFFF). No fills, no shading. Reproduce ONLY what you see in the reference image.`;
-          const retryBuffer = await generateWithForge(fallbackPrompt, aiInputBuffer, AbortSignal.timeout(2 * 60 * 1000));
+          const retryBuffer = useFluxKontext
+            ? await generateWithFluxKontext(fallbackPrompt, aiInputBuffer, AbortSignal.timeout(2 * 60 * 1000)).catch(() => generateWithForge(fallbackPrompt, aiInputBuffer, AbortSignal.timeout(2 * 60 * 1000)))
+            : await generateWithForge(fallbackPrompt, aiInputBuffer, AbortSignal.timeout(2 * 60 * 1000));
           const retryBufferFlat = await sharp(retryBuffer).flatten({ background: { r: 255, g: 255, b: 255 } }).png().toBuffer();
           const retryStats = await sharp(retryBufferFlat).grayscale().stats();
           if (retryStats.channels[0].mean < 250) {
