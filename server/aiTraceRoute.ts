@@ -1032,21 +1032,19 @@ async function runTraceJob(
       } else {
         // Simple mode — color photo or colored drawing (flowers, cars, real photos):
         // The AI redraws the image as line art. We then process the AI output:
-        // Problem: AI generates thin/light lines that potrace can't detect → lines disappear in DXF.
-        // Solution: strong contrast boost to pull thin lines to solid black, then high threshold
-        // to keep only the darkest pixels (true lines) and discard any grey noise.
-        // Color photo pipeline — same as generateRoute (proven to produce thick, clean lines):
-        // blur(1.5) merges thick outline stroke edges into single centerline
-        // threshold(200) removes grey, keeps only merged dark lines
-        // blur(0.4) + threshold(185) — final sharpening pass for clean single strokes
+        // Problem: AI generates thin/light/grey lines that potrace can't detect → lines disappear or break in DXF.
+        // Solution: contrast boost pulls ALL grey lines to solid black, then moderate threshold
+        // keeps lines intact without breaking them. Lower threshold = more continuous lines.
+        // Pipeline: contrast boost → blur (merge edges) → threshold → light smooth → final threshold
         processedBuffer = await sharp(rawBuffer)
           .extend({ top: 240, bottom: 240, left: 240, right: 240, background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .resize(3072, 3072, { fit: "inside", background: { r: 255, g: 255, b: 255, alpha: 1 } })
           .grayscale()
-          .blur(1.5)
-          .threshold(200)
-          .blur(0.4)
-          .threshold(185)
+          .linear(2.5, -60)            // contrast boost: pulls grey/faint lines to solid black
+          .blur(1.2)                   // merge close edges into single centerline
+          .threshold(180)              // lower threshold — keeps more line pixels intact
+          .blur(0.4)                   // light smooth to reduce jagged edges
+          .threshold(170)              // final pass — clean binary output
           .png()
           .toBuffer();
       }
@@ -1078,18 +1076,15 @@ async function runTraceJob(
         }
       }
 
-      // Potrace options — Apr 6 baseline (proven to produce continuous lines without fragmentation)
-      // turdSize: 8 for both modes — turdSize 24 deleted short lines (giraffe spots, leaves, fine details)
-      // optTolerance: 0.6 — moderate curve joining; 1.2 was merging unrelated strokes
-      // alphaMax: 1.0 — standard corner rounding; 1.5 was causing filled areas in portrait
-      // Potrace options — same as generateRoute for consistent thick clean lines
-      // turdSize 80 removes noise/hatching remnants (same as generateRoute default)
-      // optTolerance 0.4 — balanced smoothness (same as generateRoute)
+      // Potrace options — optimized for smooth continuous lines
+      // optTolerance: higher = smoother curves, joins nearby endpoints into continuous paths
+      // turdSize: removes small noise blobs (too high = deletes legitimate short lines)
+      // alphaMax: corner smoothness (1.0 = standard, higher = rounder corners)
       const potraceOptions = isDetailedMode
-        // Detailed: smaller turdSize keeps very fine details; optTolerance 1.0 joins broken segments
+        // Detailed: smaller turdSize keeps fine details; optTolerance 1.0 joins broken segments
         ? { threshold: 128, turdSize: 8, alphaMax: 1.0, optCurve: true, optTolerance: 1.0 }
-        // Simple/color photo: turdSize 80 removes noise — same as generateRoute for thick clean lines
-        : { threshold: 128, turdSize: 80, alphaMax: 1.0, optCurve: true, optTolerance: 0.4 };
+        // Simple: turdSize 40 removes noise but keeps short lines; optTolerance 0.8 joins broken endpoints
+        : { threshold: 128, turdSize: 40, alphaMax: 1.2, optCurve: true, optTolerance: 0.8 };
 
       const rawSvg = await new Promise<string>((resolve, reject) => {
         potrace.trace(processedBuffer, potraceOptions, (err: Error | null, svg: string) => {
