@@ -554,6 +554,7 @@ export function AiDocumentRedrawTab({ onOpenAuth, onInsufficientTokens }: AiDocu
     setStatus("loading");
     setResult(null);
     setErrorMsg("");
+    localStorage.removeItem("doc_redraw_result"); // Clear old cached result to prevent stale data
     startScanAnimation();
     try {
       const formData = new FormData();

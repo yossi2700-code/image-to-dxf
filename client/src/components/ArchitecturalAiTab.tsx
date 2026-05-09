@@ -464,6 +464,7 @@ export function ArchitecturalAiTab({ onOpenAuth, onInsufficientTokens }: Archite
     setImages([]);
     setSelectedIdx(null);
     setErrorMsg("");
+    localStorage.removeItem(LS_KEY_RESULT); // Clear old cached result to prevent stale data
     startProgressSteps();
     startElapsedTimer();
 

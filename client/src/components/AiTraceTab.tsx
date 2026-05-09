@@ -813,6 +813,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
     }
 
     setShowSuccessOverlay(false); setStatus("loading"); setResult(null); setErrorMsg(""); setCurrentStepHe(""); setCurrentStepEn("");
+    clearResultCache(); // Clear old cached result to prevent stale data from showing on reload
     try {
       // Await warmup if it's still in-flight — ensures Forge is awake before the real request
       if (warmupPromiseRef.current) {
@@ -899,6 +900,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
   // Handle Try Again from history — fetch source image URL and re-submit
   const handleTraceFromUrl = async (sourceUrl: string) => {
     setShowSuccessOverlay(false); setStatus("loading"); setResult(null); setErrorMsg("");
+    clearResultCache(); // Clear old cached result to prevent stale data from showing on reload
     try {
       // Fetch the image as a blob from S3
       const resp = await fetch(sourceUrl);
