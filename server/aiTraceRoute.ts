@@ -696,6 +696,11 @@ async function generateWithFluxKontext(prompt: string, imageBuffer: Buffer, sign
   const imageBase64 = imageBuffer.toString("base64");
   const imageDataUrl = `data:image/png;base64,${imageBase64}`;
 
+  // Enhance prompt for Flux Kontext: add detail-preservation instructions
+  // Flux needs explicit instructions to preserve fine details (faces, thin lines, small elements)
+  const enhancedPrompt = prompt + 
+    " CRITICAL DETAIL PRESERVATION: Maintain ALL fine details from the reference image — every small line, curve, facial feature, finger, thin connection, and delicate element must be preserved exactly. Do NOT simplify or omit any small details. Every tiny element visible in the reference must appear in the output. High detail, high precision, preserve all micro-details.";
+
   const response = await fetch("https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-pro/predictions", {
     method: "POST",
     headers: {
@@ -705,9 +710,11 @@ async function generateWithFluxKontext(prompt: string, imageBuffer: Buffer, sign
     },
     body: JSON.stringify({
       input: {
-        prompt,
+        prompt: enhancedPrompt,
         input_image: imageDataUrl,
-        aspect_ratio: "match_input_image"
+        aspect_ratio: "match_input_image",
+        output_format: "png",
+        prompt_upsampling: true
       }
     }),
     signal,
