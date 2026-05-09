@@ -1021,20 +1021,8 @@ async function runTraceJob(
             .png()
             .toBuffer();
         }
-        // Try Flux Kontext Pro first (faster: ~10-15s vs ~30-40s), fall back to Forge
-        const useFluxKontext = !!process.env.REPLICATE_API_TOKEN;
-        if (useFluxKontext) {
-          try {
-            console.log(`[aiTraceRoute] Job ${jobId}: using Flux Kontext Pro (fast mode)`);
-            rawBuffer = await generateWithFluxKontext(editPrompt, aiInputBuffer, abortController.signal);
-            console.log(`[aiTraceRoute] Job ${jobId}: Flux Kontext Pro succeeded`);
-          } catch (fluxErr) {
-            console.warn(`[aiTraceRoute] Job ${jobId}: Flux Kontext Pro failed, falling back to Forge:`, fluxErr instanceof Error ? fluxErr.message : fluxErr);
-            rawBuffer = await generateWithForge(editPrompt, aiInputBuffer, abortController.signal);
-          }
-        } else {
-          rawBuffer = await generateWithForge(editPrompt, aiInputBuffer, abortController.signal);
-        }
+        // Use Forge ImageService for high-quality line art generation
+        rawBuffer = await generateWithForge(editPrompt, aiInputBuffer, abortController.signal);
         // Flatten alpha channel → white background immediately after receiving AI output.
         // Prevents gray artifacts when the AI output PNG has transparency or semi-transparent edges.
         rawBuffer = await sharp(rawBuffer)
@@ -1050,9 +1038,7 @@ async function runTraceJob(
           // All-white image returned by AI — retry once with a simpler prompt
           console.warn(`[aiTraceRoute] Job ${jobId}: AI returned blank/white image (brightness=${aiOutputBrightness.toFixed(1)}) — retrying with fallback prompt`);
           const fallbackPrompt = `Clean black and white line art. Trace the exact shapes from the reference image. Pure black lines (#000000) on pure white background (#FFFFFF). No fills, no shading. Reproduce ONLY what you see in the reference image.`;
-          const retryBuffer = useFluxKontext
-            ? await generateWithFluxKontext(fallbackPrompt, aiInputBuffer, AbortSignal.timeout(2 * 60 * 1000)).catch(() => generateWithForge(fallbackPrompt, aiInputBuffer, AbortSignal.timeout(2 * 60 * 1000)))
-            : await generateWithForge(fallbackPrompt, aiInputBuffer, AbortSignal.timeout(2 * 60 * 1000));
+          const retryBuffer = await generateWithForge(fallbackPrompt, aiInputBuffer, AbortSignal.timeout(2 * 60 * 1000));
           const retryBufferFlat = await sharp(retryBuffer).flatten({ background: { r: 255, g: 255, b: 255 } }).png().toBuffer();
           const retryStats = await sharp(retryBufferFlat).grayscale().stats();
           if (retryStats.channels[0].mean < 250) {
