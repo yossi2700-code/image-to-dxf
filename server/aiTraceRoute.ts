@@ -1100,9 +1100,10 @@ async function runTraceJob(
 
       // All paths closed — CorelDRAW/Flexi need closed LWPOLYLINE for fill/cut operations.
       const { dxf, segmentCount, width, height, realWidth, realHeight } = svgToDxf(rawSvg, hairline, lineweightMm, 0, false, singleLine && closePaths);
-      // Save the processed (B&W) buffer as preview — NOT rawBuffer which may contain color
+      // Save the AI output (rawBuffer) as preview — clean lines on white background
+      // processedBuffer is B&W binary (for potrace only) — not suitable for display
       const imgKey = `ai-trace-generated/${nanoid()}.png`;
-      const { url: imageUrl } = await storagePut(imgKey, processedBuffer, "image/png");
+      const { url: imageUrl } = await storagePut(imgKey, rawBuffer, "image/png");
       const dxfFilename = `${baseFilename}_${variation.label}.dxf`;
       const dxfKey = `ai-trace-dxf/${nanoid()}-${dxfFilename}`;
       const { url: dxfUrl } = await storagePut(dxfKey, Buffer.from(dxf, "utf-8"), "application/dxf");
