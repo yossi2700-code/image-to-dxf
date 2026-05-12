@@ -1061,8 +1061,8 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       <div className="flex flex-col gap-5">
         {/* Upload area — hidden during loading */}
         <div
-          className="rounded-xl p-5 relative"
-          style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', display: status === 'loading' ? 'none' : undefined }}
+          className="rounded-2xl p-5 sm:p-7 relative"
+          style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 6px 18px rgba(15,23,42,0.06)', display: status === 'loading' ? 'none' : undefined }}
         >
             <div className="flex items-center gap-2 mb-3">
               <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background: '#f0fdf9'}}>
@@ -1260,33 +1260,25 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
               <div className="mb-3 space-y-2">
                 <label
                   htmlFor="ai-trace-file-input"
-                  className="w-full flex items-center justify-center gap-3 py-5 rounded-xl transition-colors hover:bg-teal-50 cursor-pointer"
-                  style={{border: '2px dashed #99f6e4', background: '#f0fdf9'}}
+                  className="w-full min-h-[220px] sm:min-h-[280px] flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 px-5 py-10 sm:py-12 rounded-2xl transition-colors hover:bg-teal-50 cursor-pointer text-center sm:text-start"
+                  style={{border: dragOver ? '3px dashed #0d9488' : '3px dashed #5eead4', background: dragOver ? '#ccfbf1' : 'linear-gradient(135deg, #f0fdfa, #ecfeff)', boxShadow: 'inset 0 0 0 1px rgba(20,184,166,0.08)'}}
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={onDrop}
                 >
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-teal-100">
-                    <ImageIcon className="w-5 h-5 text-teal-600" />
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center shrink-0 bg-teal-100" style={{ boxShadow: '0 10px 24px rgba(13,148,136,0.16)' }}>
+                    <ImageIcon className="w-8 h-8 sm:w-10 sm:h-10 text-teal-600" />
                   </div>
-                  <div className="text-start">
-                    <p className="font-semibold text-sm text-teal-700">{t("choosePhoto")}</p>
-                    <p className="text-xs text-gray-400">{t("fromGalleryOrNew")}</p>
+                  <div>
+                    <p className="font-bold text-lg sm:text-xl text-teal-800">{t("choosePhoto")}</p>
+                    <p className="text-sm sm:text-base text-gray-500 mt-1">{t("fromGalleryOrNew")}</p>
+                    <p className="hidden sm:block text-xs text-teal-600 font-semibold mt-3">{t("orDragDrop")}</p>
                   </div>
                 </label>
-                <p className="hidden sm:block text-xs text-center text-gray-400">
+                <p className="sm:hidden text-xs text-center text-gray-400">
                   {t("orDragDrop")}
                 </p>
               </div>
-            )}
-
-            {/* Drag overlay — desktop only */}
-            {!imagePreview && (
-              <div
-                className={`hidden sm:block absolute inset-0 rounded-xl transition-colors pointer-events-none ${
-                  dragOver ? "bg-teal-100/30 border-2 border-teal-500" : ""
-                }`}
-                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={onDrop}
-              />
             )}
 
             {/* Mode toggle: Object vs Full Image */}
