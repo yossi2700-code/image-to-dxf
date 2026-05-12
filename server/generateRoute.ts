@@ -5,7 +5,7 @@ import { logUsageEvent, anonymizeIp } from "./usageDb";
 import { getAppUserFromCookie } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { deductTokens } from "./tokenService";
-import { createJob, getJob, updateJob, cancelJob } from "./jobStore";
+import { createJobPersisted, getJob, getJobFromDB, updateJob, cancelJob } from "./jobStore";
 import { svgToDxf } from "./svgToDxf";
 import { cleanSvgForPreview } from "./svgClean";
 import potrace from "potrace";
@@ -696,7 +696,7 @@ router.post("/api/generate-images", async (req, res) => {
 
     const jobId = nanoid(12);
     const jobGroupId = nanoid(12); // pre-generate groupId so all 3 variations share it
-    createJob(jobId, appUser.userId, "ai_generate");
+    await createJobPersisted(jobId, appUser.userId, "ai_generate");
 
     // 5-minute hard timeout
     const MAX_GEN_JOB_MS = 5 * 60 * 1000;
@@ -726,11 +726,16 @@ router.post("/api/generate-images", async (req, res) => {
 });
 
 // ─── GET /api/generate-images/job/:jobId ──────────────────────────────────────
-router.get("/api/generate-images/job/:jobId", (req, res) => {
+router.get("/api/generate-images/job/:jobId", async (req, res) => {
   const appUser = getAppUserFromCookie(req.cookies);
   if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
 
-  const job = getJob(req.params.jobId);
+  // First read from the local in-memory cache, then fall back to the
+  // persistent DB-backed job store. This prevents the first AI generation
+  // from appearing to return no result when POST and polling requests are
+  // handled by different Cloud Run instances or after a cold restart.
+  let job = getJob(req.params.jobId);
+  if (!job) job = await getJobFromDB(req.params.jobId);
   if (!job) return res.status(404).json({ error: "JOB_NOT_FOUND" });
   if (job.userId !== appUser.userId) return res.status(403).json({ error: "FORBIDDEN" });
 
@@ -762,7 +767,8 @@ router.post("/api/generate-images/cancel/:jobId", async (req, res) => {
   const appUser = getAppUserFromCookie(req.cookies);
   if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
 
-  const job = getJob(req.params.jobId);
+  let job = getJob(req.params.jobId);
+  if (!job) job = await getJobFromDB(req.params.jobId);
   if (!job) return res.status(404).json({ error: "JOB_NOT_FOUND" });
   if (job.userId !== appUser.userId) return res.status(403).json({ error: "FORBIDDEN" });
 

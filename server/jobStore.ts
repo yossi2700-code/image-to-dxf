@@ -90,9 +90,9 @@ setInterval(async () => {
   }
 }, 60 * 1000);
 
-export function createJob(id: string, userId: number, tokenAction: string): Job {
+function buildNewJob(id: string, userId: number, tokenAction: string): Job {
   const now = Date.now();
-  const job: Job = {
+  return {
     id,
     userId,
     status: "pending",
@@ -100,19 +100,44 @@ export function createJob(id: string, userId: number, tokenAction: string): Job 
     updatedAt: now,
     tokenAction,
   };
+}
+
+async function persistNewJob(job: Job): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(persistentJobs).values({
+    id: job.id,
+    userId: job.userId,
+    status: "pending",
+    tokenAction: job.tokenAction,
+    tokenDeducted: 0,
+    noFaceRefundSent: 0,
+  });
+}
+
+export function createJob(id: string, userId: number, tokenAction: string): Job {
+  const job = buildNewJob(id, userId, tokenAction);
   cache.set(id, job);
-  // Fire-and-forget DB write — don't block the caller
-  getDb().then(db => {
-    if (!db) return;
-    return db.insert(persistentJobs).values({
-      id,
-      userId,
-      status: "pending",
-      tokenAction,
-      tokenDeducted: 0,
-      noFaceRefundSent: 0,
-    });
-  }).catch((e: unknown) => console.error("[jobStore] createJob DB error:", e));
+  // Fire-and-forget DB write — don't block existing callers.
+  persistNewJob(job).catch((e: unknown) => console.error("[jobStore] createJob DB error:", e));
+  return job;
+}
+
+/**
+ * Create a job and wait for the DB insert when possible.
+ * Use this for endpoints that immediately return a jobId to a polling client,
+ * so the next polling request can find the job even if it lands on another
+ * server instance. If the DB is temporarily unavailable, the in-memory job is
+ * still returned and processing can continue on the current instance.
+ */
+export async function createJobPersisted(id: string, userId: number, tokenAction: string): Promise<Job> {
+  const job = buildNewJob(id, userId, tokenAction);
+  cache.set(id, job);
+  try {
+    await persistNewJob(job);
+  } catch (e: unknown) {
+    console.error("[jobStore] createJobPersisted DB error:", e);
+  }
   return job;
 }
 
