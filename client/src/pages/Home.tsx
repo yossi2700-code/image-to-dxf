@@ -1424,6 +1424,25 @@ function AiGeneratorTab({ onOpenAuth, onInsufficientTokens }: { onOpenAuth?: () 
       try {
         const res = await fetch(`/api/generate-images/job/${id}`, { credentials: "include" });
         const data = await res.json();
+        // Handle auth failure — stop polling and prompt login
+        if (res.status === 401) {
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          stopProgressSteps();
+          setStatus("idle");
+          setJobIdPersisted(null);
+          if (onOpenAuth) onOpenAuth();
+          return;
+        }
+        // Handle job not found (e.g. server restarted) — stop polling
+        if (res.status === 404) {
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          stopProgressSteps();
+          const msg = isRtl ? "העבודה לא נמצאה — נסה שוב" : "Job not found — please try again";
+          setErrorMsg(msg);
+          setStatus("error");
+          setJobIdPersisted(null);
+          return;
+        }
         if (data.status === "done") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           stopProgressSteps();

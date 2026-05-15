@@ -3060,7 +3060,8 @@ export const appRouter = router({
         const formUint8 = new Uint8Array(formBuffer.buffer, formBuffer.byteOffset, formBuffer.byteLength);
 
         const startMs = Date.now();
-        const response = await fetch("https://api.openai.com/v1/images/edits", {
+        const openaiBaseRouters = (process.env.OPENAI_BASE_URL || "https://api.openai.com").replace(/\/v1\/?$/, "");
+        const response = await fetch(`${openaiBaseRouters}/v1/images/edits`, {
           method: "POST",
           headers: { authorization: `Bearer ${apiKey}`, ...form.getHeaders() },
           body: formUint8 as any,

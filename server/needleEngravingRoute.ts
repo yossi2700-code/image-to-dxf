@@ -10,7 +10,10 @@ import { deductTokens } from "./tokenService";
 import { recordUserAction } from "./userActionsDb";
 import { processForGraniteEngraving } from "./engravingProcessor";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY ?? "",
+  baseURL: process.env.OPENAI_BASE_URL || undefined,
+});
 
 // Granite engraving prompts — produce black background with glowing subject effect.
 // Target: subject isolated on pure black, bright whites, soft glow halo around edges.

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 import { logUsageEvent, anonymizeIp } from "./usageDb";
-import { getAppUserFromCookie } from "./appAuth";
+import { getAppUserFromCookie, getAppUserFromRequest } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { deductTokens } from "./tokenService";
 import { createJobPersisted, getJob, getJobFromDB, updateJob, cancelJob } from "./jobStore";
@@ -662,7 +662,7 @@ router.post("/api/generate-images", async (req, res) => {
 
     const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
     const ipAnon = anonymizeIp(rawIp);
-    const appUser = getAppUserFromCookie(req.cookies);
+    const appUser = await getAppUserFromRequest(req, res);
 
     if (!appUser?.userId) {
       return res.status(401).json({ error: "REGISTRATION_REQUIRED", message: "נדרשת הרשמה כדי ליצור עיצובי AI" });
@@ -727,7 +727,7 @@ router.post("/api/generate-images", async (req, res) => {
 
 // ─── GET /api/generate-images/job/:jobId ──────────────────────────────────────
 router.get("/api/generate-images/job/:jobId", async (req, res) => {
-  const appUser = getAppUserFromCookie(req.cookies);
+  const appUser = await getAppUserFromRequest(req, res);
   if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
 
   // First read from the local in-memory cache, then fall back to the
@@ -764,7 +764,7 @@ router.get("/api/generate-images/job/:jobId", async (req, res) => {
 
 // ─── POST /api/generate-images/cancel/:jobId ──────────────────────────────────
 router.post("/api/generate-images/cancel/:jobId", async (req, res) => {
-  const appUser = getAppUserFromCookie(req.cookies);
+  const appUser = await getAppUserFromRequest(req, res);
   if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
 
   let job = getJob(req.params.jobId);

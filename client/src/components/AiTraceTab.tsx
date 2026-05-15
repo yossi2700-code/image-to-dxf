@@ -521,6 +521,25 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
       try {
         const res = await fetch(`/api/ai-trace/job/${id}`, { credentials: "include" });
         const data = await res.json();
+        // Handle auth failure — stop polling and show error
+        if (res.status === 401) {
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+          setStatus("idle");
+          setJobIdPersisted(null);
+          onOpenAuth();
+          return;
+        }
+        // Handle job not found (e.g. server restarted) — stop polling and show error
+        if (res.status === 404) {
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+          const msg = isRtl ? "העבודה לא נמצאה — נסה שוב" : "Job not found — please try again";
+          setErrorMsg(msg);
+          setStatus("error");
+          setJobIdPersisted(null);
+          return;
+        }
         if (data.status === "done") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }

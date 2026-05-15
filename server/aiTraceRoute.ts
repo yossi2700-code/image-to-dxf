@@ -18,7 +18,7 @@ import sharp from "sharp";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 import { logUsageEvent, anonymizeIp } from "./usageDb";
-import { getAppUserFromCookie } from "./appAuth";
+import { getAppUserFromCookie, getAppUserFromRequest } from "./appAuth";
 import { recordUserAction } from "./userActionsDb";
 import { checkUsageLimit } from "./usageLimits";
 import { deductTokens, addTokens, TOKEN_COSTS, TokenAction, getTokenCostForAction } from "./tokenService";
@@ -35,7 +35,10 @@ import path from "path";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY ?? "",
+  baseURL: process.env.OPENAI_BASE_URL || undefined,
+});
 
 /** Convert description to safe filename — ASCII only, capped at 20 chars for clean download names */
 // Words that come from AI analysis descriptions — not useful as filenames
@@ -744,7 +747,8 @@ async function generateWithOpenAI(prompt: string, model = "gpt-image-2", signal?
   const openaiApiKey = process.env.OPENAI_API_KEY;
   if (!openaiApiKey) throw new Error("OPENAI_API_KEY not configured");
 
-  const response = await fetch("https://api.openai.com/v1/images/generations", {
+  const openaiBase = (process.env.OPENAI_BASE_URL || "https://api.openai.com").replace(/\/v1\/?$/, "");
+  const response = await fetch(`${openaiBase}/v1/images/generations`, {
     method: "POST",
     headers: {
       authorization: `Bearer ${openaiApiKey}`,
@@ -1307,7 +1311,7 @@ router.post(
   async (req, res) => {
     try {
       // ── Auth check ────────────────────────────────────────────────────────────
-      const appUser = getAppUserFromCookie(req.cookies);
+      const appUser = await getAppUserFromRequest(req, res);
       if (!appUser) {
         return res.status(401).json({
           error: "UNAUTHORIZED",
@@ -1443,7 +1447,7 @@ router.post(
 
 /// ─── GET /api/ai-trace/job/:jobId ─────────────────────────────────────────────
 router.get("/api/ai-trace/job/:jobId", async (req, res) => {
-  const appUser = getAppUserFromCookie(req.cookies);
+  const appUser = await getAppUserFromRequest(req, res);
   if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
   // Try in-memory cache first; fall back to DB for cross-instance lookups (Cloud Run restarts)
   let job = getJob(req.params.jobId);
@@ -1479,7 +1483,7 @@ router.get("/api/ai-trace/job/:jobId", async (req, res) => {
   }
 });// ─── POST /api/ai-trace/cancel/:jobId ─────────────────────────────────────────────
 router.post("/api/ai-trace/cancel/:jobId", async (req, res) => {
-  const appUser = getAppUserFromCookie(req.cookies);
+  const appUser = await getAppUserFromRequest(req, res);
   if (!appUser) return res.status(401).json({ error: "UNAUTHORIZED" });
   let job = getJob(req.params.jobId);
   if (!job) job = await getJobFromDB(req.params.jobId) ?? undefined;
@@ -1521,7 +1525,7 @@ router.post(
   "/api/ai-trace/convert",
   async (req, res) => {
     try {
-      const appUser = getAppUserFromCookie(req.cookies);
+      const appUser = await getAppUserFromRequest(req, res);
       if (!appUser) {
         return res.status(401).json({ error: "UNAUTHORIZED", message: "יש להתחבר" });
       }
@@ -1706,7 +1710,8 @@ router.post(
         // OpenAI /v1/images/generations (text-to-image, no input image)
         const openaiApiKey = process.env.OPENAI_API_KEY;
         if (!openaiApiKey) throw new Error("OPENAI_API_KEY not configured");
-        const resp = await fetch("https://api.openai.com/v1/images/generations", {
+        const openaiBase1 = (process.env.OPENAI_BASE_URL || "https://api.openai.com").replace(/\/v1\/?$/, "");
+        const resp = await fetch(`${openaiBase1}/v1/images/generations`, {
           method: "POST",
           headers: { authorization: `Bearer ${openaiApiKey}`, "content-type": "application/json" },
           body: JSON.stringify({ model, prompt: editPrompt, n: 1, size: "1024x1024" }),
@@ -1739,7 +1744,8 @@ router.post(
         form2.append("n", "1");
         form2.append("size", "1024x1024");
         const formBuffer2 = form2.getBuffer();
-        const resp2 = await fetch("https://api.openai.com/v1/images/edits", {
+        const openaiBase2 = (process.env.OPENAI_BASE_URL || "https://api.openai.com").replace(/\/v1\/?$/, "");
+        const resp2 = await fetch(`${openaiBase2}/v1/images/edits`, {
           method: "POST",
           headers: { authorization: `Bearer ${openaiApiKey}`, ...form2.getHeaders() },
           body: new Uint8Array(formBuffer2.buffer, formBuffer2.byteOffset, formBuffer2.byteLength) as any,
@@ -1809,7 +1815,8 @@ router.post(
         form.append("size", "1024x1024");
         form.append("response_format", "b64_json");
         const formBuffer = form.getBuffer();
-        const resp = await fetch("https://api.openai.com/v1/images/edits", {
+        const openaiBase3 = (process.env.OPENAI_BASE_URL || "https://api.openai.com").replace(/\/v1\/?$/, "");
+        const resp = await fetch(`${openaiBase3}/v1/images/edits`, {
           method: "POST",
           headers: { authorization: `Bearer ${openaiApiKey}`, ...form.getHeaders() },
           body: new Uint8Array(formBuffer.buffer, formBuffer.byteOffset, formBuffer.byteLength) as any,
