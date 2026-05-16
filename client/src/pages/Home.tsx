@@ -1013,7 +1013,7 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
       }
       setResult(data as ConvertResult);
       setStatus("success");
-      setShowSvgPreview(false);
+      setShowSvgPreview(true);
       toast.success(`${t("conversionSuccess")} (${data.segmentCount.toLocaleString()} ${t("lines")})`);
     } catch (err: unknown) {
       const msg = err instanceof DOMException && err.name === "AbortError"
