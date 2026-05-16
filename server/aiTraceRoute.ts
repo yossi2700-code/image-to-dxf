@@ -23,7 +23,7 @@ import { recordUserAction } from "./userActionsDb";
 import { checkUsageLimit } from "./usageLimits";
 import { deductTokens, addTokens, TOKEN_COSTS, TokenAction, getTokenCostForAction } from "./tokenService";
 import { invokeLLM } from "./_core/llm";
-import { createJob, getJob, getJobFromDB, updateJob, cancelJob, heartbeatJob } from "./jobStore";
+import { createJobPersisted, getJob, getJobFromDB, updateJob, cancelJob, heartbeatJob } from "./jobStore";
 import { svgToDxf } from "./svgToDxf";
 import { cleanSvgForPreview } from "./svgClean";
 import OpenAI from "openai";
@@ -1400,7 +1400,7 @@ router.post(
       // Create job and start background processing
       // Token deduction happens INSIDE the job after successful completion.
       const jobId = nanoid(12);
-      createJob(jobId, appUser.userId, "ai_trace");
+      await createJobPersisted(jobId, appUser.userId, "ai_trace");
 
       // 3-minute hard timeout — if job takes longer, mark as error and stop
       const MAX_JOB_MS = 3 * 60 * 1000;

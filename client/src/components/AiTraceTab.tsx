@@ -517,6 +517,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
   // Poll job status every 3 seconds
   const startPolling = useCallback((id: string) => {
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    let notFoundAttempts = 0;
     pollIntervalRef.current = setInterval(async () => {
       try {
         const res = await fetch(`/api/ai-trace/job/${id}`, { credentials: "include" });
@@ -530,8 +531,12 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
           onOpenAuth();
           return;
         }
-        // Handle job not found (e.g. server restarted) — stop polling and show error
+        // Handle a temporary job lookup miss. In production, the first poll can land
+        // on another instance before the DB-backed job row is visible; retry briefly
+        // instead of failing a conversion that is still running.
         if (res.status === 404) {
+          notFoundAttempts += 1;
+          if (notFoundAttempts <= 5) return;
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
           const msg = isRtl ? "העבודה לא נמצאה — נסה שוב" : "Job not found — please try again";
@@ -540,6 +545,7 @@ export function AiTraceTab({ onOpenAuth, onInsufficientTokens, onSwitchToPortrai
           setJobIdPersisted(null);
           return;
         }
+        notFoundAttempts = 0;
         if (data.status === "done") {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
