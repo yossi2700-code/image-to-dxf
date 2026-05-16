@@ -211,6 +211,18 @@ function buildLegacyDxf(
 
 // ─── Route handler ────────────────────────────────────────────────────────────
 
+function readDxfFromDataUrl(url: string): string | null {
+  const commaIndex = url.indexOf(",");
+  if (!url.startsWith("data:") || commaIndex < 0) return null;
+  const meta = url.slice(5, commaIndex).toLowerCase();
+  if (!/(application\/dxf|application\/octet-stream|text\/plain)/.test(meta)) return null;
+  const payload = url.slice(commaIndex + 1);
+  if (meta.includes(";base64")) {
+    return Buffer.from(payload, "base64").toString("utf-8");
+  }
+  return decodeURIComponent(payload);
+}
+
 router.get("/api/dxf-legacy", async (req: Request, res: Response) => {
   const { url, scale } = req.query as { url?: string; scale?: string };
 
@@ -219,38 +231,49 @@ router.get("/api/dxf-legacy", async (req: Request, res: Response) => {
     return;
   }
 
-  // Only allow our own S3 / CDN URLs (security: prevent SSRF to arbitrary hosts)
-  let parsedUrl: URL;
-  try {
-    parsedUrl = new URL(url);
-  } catch {
-    res.status(400).json({ error: "Invalid URL" });
-    return;
-  }
-
-  const allowedHosts = [
-    "d2xsxph8kpxj0f.cloudfront.net",
-    "s3.amazonaws.com",
-    "s3.ap-southeast-1.amazonaws.com",
-    "manus-app-storage.s3.ap-southeast-1.amazonaws.com",
-  ];
-  const isAllowed = allowedHosts.some(
-    (h) => parsedUrl.hostname === h || parsedUrl.hostname.endsWith(`.${h}`)
-  );
-  if (!isAllowed) {
-    res.status(403).json({ error: "URL not allowed" });
-    return;
-  }
-
   const scaleFactor = Math.min(Math.max(parseFloat(scale ?? "1") || 1, 0.01), 10);
 
   try {
-    const fetchRes = await fetch(url);
-    if (!fetchRes.ok) {
-      res.status(502).json({ error: `Failed to fetch DXF: ${fetchRes.status}` });
-      return;
+    let dxfText: string;
+
+    if (url.startsWith("data:")) {
+      const decoded = readDxfFromDataUrl(url);
+      if (!decoded) {
+        res.status(400).json({ error: "Invalid DXF data URL" });
+        return;
+      }
+      dxfText = decoded;
+    } else {
+      // Only allow our own S3 / CDN URLs (security: prevent SSRF to arbitrary hosts)
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(url);
+      } catch {
+        res.status(400).json({ error: "Invalid URL" });
+        return;
+      }
+
+      const allowedHosts = [
+        "d2xsxph8kpxj0f.cloudfront.net",
+        "s3.amazonaws.com",
+        "s3.ap-southeast-1.amazonaws.com",
+        "manus-app-storage.s3.ap-southeast-1.amazonaws.com",
+      ];
+      const isAllowed = allowedHosts.some(
+        (h) => parsedUrl.hostname === h || parsedUrl.hostname.endsWith(`.${h}`)
+      );
+      if (!isAllowed) {
+        res.status(403).json({ error: "URL not allowed" });
+        return;
+      }
+
+      const fetchRes = await fetch(url);
+      if (!fetchRes.ok) {
+        res.status(502).json({ error: `Failed to fetch DXF: ${fetchRes.status}` });
+        return;
+      }
+      dxfText = await fetchRes.text();
     }
-    const dxfText = await fetchRes.text();
 
     // Parse polylines (try LWPOLYLINE first, then old POLYLINE)
     let polylines = parseLwPolylines(dxfText);

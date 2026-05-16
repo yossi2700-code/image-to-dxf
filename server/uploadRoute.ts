@@ -10,6 +10,39 @@ import { checkUsageLimit } from "./usageLimits";
 
 const router = Router();
 
+type StoredOutput = {
+  url: string;
+  persisted: boolean;
+  error?: string;
+};
+
+function toDataUrl(data: Buffer | Uint8Array | string, contentType: string): string {
+  const buffer = typeof data === "string" ? Buffer.from(data, "utf-8") : Buffer.from(data);
+  return `data:${contentType};base64,${buffer.toString("base64")}`;
+}
+
+function isRecoverableStorageError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return /Storage proxy credentials missing|Storage upload failed|fetch failed|ECONNREFUSED|ENOTFOUND|ETIMEDOUT/i.test(message);
+}
+
+async function storagePutOrDataUrl(
+  relKey: string,
+  data: Buffer | Uint8Array | string,
+  contentType: string,
+  label: string
+): Promise<StoredOutput> {
+  try {
+    const { url } = await storagePut(relKey, data, contentType);
+    return { url, persisted: true };
+  } catch (err) {
+    if (!isRecoverableStorageError(err)) throw err;
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn(`[convert] ${label} storage unavailable, returning temporary data URL fallback:`, message);
+    return { url: toDataUrl(data, contentType), persisted: false, error: message };
+  }
+}
+
 // Store files in memory (max 20 MB)
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -97,18 +130,23 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
       });
     }
 
-    // Upload DXF to S3
+    // Store DXF/SVG. If the configured Forge storage proxy is unavailable, still
+    // return downloadable data URLs so the user can get the file immediately.
     const key = `dxf-output/${nanoid()}.dxf`;
-    const { url } = await storagePut(key, Buffer.from(dxf, "utf-8"), "application/dxf");
+    const dxfStored = await storagePutOrDataUrl(key, dxf, "application/dxf", "DXF");
+    const url = dxfStored.url;
 
-    // Upload SVG to S3
     let svgUrl: string | undefined;
+    let svgPersisted = false;
+    let storageFallbackUsed = !dxfStored.persisted;
     try {
       const svgKey = `svg-output/${nanoid()}.svg`;
-      const svgResult = await storagePut(svgKey, Buffer.from(svgPreview, "utf-8"), "image/svg+xml");
-      svgUrl = svgResult.url;
+      const svgStored = await storagePutOrDataUrl(svgKey, svgPreview, "image/svg+xml", "SVG");
+      svgUrl = svgStored.url;
+      svgPersisted = svgStored.persisted;
+      storageFallbackUsed = storageFallbackUsed || !svgStored.persisted;
     } catch (e) {
-      console.warn("[convert] Failed to upload SVG:", e);
+      console.warn("[convert] Failed to store SVG:", e);
     }
 
     // Upload original image thumbnail to S3 (fire-and-forget)
@@ -131,8 +169,8 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
         actionType: "convert",
         description: req.file.originalname,
         segmentCount,
-        dxfUrl: url,
-        svgUrl,
+        dxfUrl: dxfStored.persisted ? url : undefined,
+        svgUrl: svgPersisted ? svgUrl : undefined,
         imageUrl,
         svgPreview,
         feature: "convert",
@@ -150,6 +188,7 @@ router.post("/api/convert", upload.single("image"), async (req, res) => {
       height,
       realWidth,
       realHeight,
+      storageMode: storageFallbackUsed ? "temporary" : "persistent",
     });
   } catch (err: unknown) {
     console.error("[convert]", err);
