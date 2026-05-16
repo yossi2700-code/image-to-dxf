@@ -1406,10 +1406,9 @@ router.post(
       // Production note: many serverless platforms pause CPU immediately after the
       // HTTP response is returned. In that environment a fire-and-forget Promise can
       // remain stuck forever in `pending`, which is exactly what users experienced.
-      // Therefore the safe default is to keep this request alive until the job reaches
-      // a terminal state; the client still receives a jobId and then polls the already
-      // persisted result. If the hosting platform is configured with a real always-on
-      // worker/CPU, AI_TRACE_BACKGROUND=true can restore the previous async behavior.
+      // Therefore this request must stay open until the job reaches a terminal state;
+      // the client still receives a jobId and then polls the already persisted result.
+      // Do not re-enable fire-and-forget background mode without a dedicated worker.
       const MAX_JOB_MS = 3 * 60 * 1000;
       const timeoutPromise = new Promise<void>((_, reject) =>
         setTimeout(() => reject(new Error("Job timed out after 3 minutes")), MAX_JOB_MS)
@@ -1431,13 +1430,8 @@ router.post(
         }
       });
 
-      if (process.env.AI_TRACE_BACKGROUND === "true") {
-        void processingPromise;
-        return res.json({ jobId });
-      }
-
       await processingPromise;
-      return res.json({ jobId });
+      return res.json({ jobId, mode: "synchronous" });
 
     } catch (err: unknown) {
       console.error("[aiTraceRoute] Step 1 Error:", err);
