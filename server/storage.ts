@@ -6,6 +6,28 @@ import { ENV } from './_core/env';
 type StorageConfig = { baseUrl: string; apiKey: string };
 
 const DEFAULT_STORAGE_TIMEOUT_MS = 8_000;
+const STORAGE_DIAGNOSTIC_TEXT = "dxfai-storage-diagnostic";
+
+type StorageDiagnosticStage = {
+  name: "config" | "upload" | "downloadUrl";
+  ok: boolean;
+  durationMs: number;
+  status?: number;
+  statusText?: string;
+  errorName?: string;
+  errorMessage?: string;
+  timedOut?: boolean;
+};
+
+export type StorageDiagnosticReport = {
+  ok: boolean;
+  checkedAt: string;
+  hasBaseUrl: boolean;
+  hasApiKey: boolean;
+  baseHost?: string;
+  probeKey?: string;
+  stages: StorageDiagnosticStage[];
+};
 
 async function fetchWithTimeout(
   url: URL,
@@ -88,6 +110,24 @@ function buildAuthHeaders(apiKey: string): HeadersInit {
   return { Authorization: `Bearer ${apiKey}` };
 }
 
+function describeStorageError(err: unknown): Pick<StorageDiagnosticStage, "errorName" | "errorMessage" | "timedOut"> {
+  const errorName = err instanceof Error ? err.name : typeof err;
+  const rawMessage = err instanceof Error ? err.message : String(err);
+  return {
+    errorName,
+    errorMessage: rawMessage.slice(0, 500),
+    timedOut: /timed out|ETIMEDOUT|AbortError/i.test(`${errorName} ${rawMessage}`),
+  };
+}
+
+async function safeResponseBody(response: Response): Promise<string> {
+  try {
+    return (await response.text()).slice(0, 500);
+  } catch {
+    return response.statusText.slice(0, 500);
+  }
+}
+
 export async function storagePut(
   relKey: string,
   data: Buffer | Uint8Array | string,
@@ -104,7 +144,7 @@ export async function storagePut(
   });
 
   if (!response.ok) {
-    const message = await response.text().catch(() => response.statusText);
+    const message = await safeResponseBody(response);
     throw new Error(
       `Storage upload failed (${response.status} ${response.statusText}): ${message}`
     );
@@ -120,4 +160,122 @@ export async function storageGet(relKey: string): Promise<{ key: string; url: st
     key,
     url: await buildDownloadUrl(baseUrl, key, apiKey),
   };
+}
+
+/**
+ * Admin-only diagnostic helper.
+ * It uploads a tiny non-user text probe and asks the proxy for a download URL.
+ * The report intentionally exposes only config presence, host, timings, status codes,
+ * and sanitized errors; it never returns the bearer token or signed download URL.
+ */
+export async function diagnoseStorageProxy(timeoutMs = DEFAULT_STORAGE_TIMEOUT_MS): Promise<StorageDiagnosticReport> {
+  const report: StorageDiagnosticReport = {
+    ok: false,
+    checkedAt: new Date().toISOString(),
+    hasBaseUrl: Boolean(ENV.forgeApiUrl),
+    hasApiKey: Boolean(ENV.forgeApiKey),
+    stages: [],
+  };
+
+  const configStart = Date.now();
+  let config: StorageConfig;
+  try {
+    config = getStorageConfig();
+    report.baseHost = new URL(config.baseUrl).hostname;
+    report.stages.push({ name: "config", ok: true, durationMs: Date.now() - configStart });
+  } catch (err) {
+    report.stages.push({
+      name: "config",
+      ok: false,
+      durationMs: Date.now() - configStart,
+      ...describeStorageError(err),
+    });
+    return report;
+  }
+
+  const probeKey = `diagnostics/storage-probe-${Date.now()}.txt`;
+  report.probeKey = probeKey;
+
+  const uploadStart = Date.now();
+  try {
+    const uploadUrl = buildUploadUrl(config.baseUrl, probeKey);
+    const uploadResponse = await fetchWithTimeout(uploadUrl, {
+      method: "POST",
+      headers: buildAuthHeaders(config.apiKey),
+      body: toFormData(STORAGE_DIAGNOSTIC_TEXT, "text/plain; charset=utf-8", "storage-probe.txt"),
+    }, timeoutMs);
+
+    if (!uploadResponse.ok) {
+      const message = await safeResponseBody(uploadResponse);
+      report.stages.push({
+        name: "upload",
+        ok: false,
+        durationMs: Date.now() - uploadStart,
+        status: uploadResponse.status,
+        statusText: uploadResponse.statusText,
+        errorMessage: message,
+      });
+      return report;
+    }
+
+    await uploadResponse.json().catch(() => undefined);
+    report.stages.push({
+      name: "upload",
+      ok: true,
+      durationMs: Date.now() - uploadStart,
+      status: uploadResponse.status,
+      statusText: uploadResponse.statusText,
+    });
+  } catch (err) {
+    report.stages.push({
+      name: "upload",
+      ok: false,
+      durationMs: Date.now() - uploadStart,
+      ...describeStorageError(err),
+    });
+    return report;
+  }
+
+  const downloadStart = Date.now();
+  try {
+    const downloadApiUrl = new URL("v1/storage/downloadUrl", ensureTrailingSlash(config.baseUrl));
+    downloadApiUrl.searchParams.set("path", normalizeKey(probeKey));
+    const downloadResponse = await fetchWithTimeout(downloadApiUrl, {
+      method: "GET",
+      headers: buildAuthHeaders(config.apiKey),
+    }, timeoutMs);
+
+    if (!downloadResponse.ok) {
+      const message = await safeResponseBody(downloadResponse);
+      report.stages.push({
+        name: "downloadUrl",
+        ok: false,
+        durationMs: Date.now() - downloadStart,
+        status: downloadResponse.status,
+        statusText: downloadResponse.statusText,
+        errorMessage: message,
+      });
+      return report;
+    }
+
+    await downloadResponse.json().catch(() => undefined);
+    report.stages.push({
+      name: "downloadUrl",
+      ok: true,
+      durationMs: Date.now() - downloadStart,
+      status: downloadResponse.status,
+      statusText: downloadResponse.statusText,
+    });
+  } catch (err) {
+    report.stages.push({
+      name: "downloadUrl",
+      ok: false,
+      durationMs: Date.now() - downloadStart,
+      ...describeStorageError(err),
+    });
+    return report;
+  }
+
+  report.ok = true;
+  return report;
 }

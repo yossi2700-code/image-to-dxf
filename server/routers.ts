@@ -17,7 +17,7 @@ import { COUNTRY_NAMES_HE, countryCodeToFlag, getHebrewCountryDisplay } from "./
 import { getTokenBalance, addTokens, getTokenTransactions, invalidateTokenCostsCache } from "./tokenService";
 import { createPayPalOrder, capturePayPalOrder, createPayPalOrderForCardFields } from "./paypal";
 import { getPackageById, getPriceForCurrency } from "./products";
-import { storagePut } from "./storage";
+import { diagnoseStorageProxy, storagePut } from "./storage";
 import { sendPurchaseConfirmationEmail, sendBulkEmail, sendShareApprovedEmail } from "./emailService";
 import { notifyOwner } from "./_core/notification";
 import { generatePreviewFromSvg } from "./svgPreviewGenerator";
@@ -1137,6 +1137,13 @@ export const appRouter = router({
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         await db.delete(adminTasks).where(eq(adminTasks.id, input.id));
         return { success: true };
+      }),
+
+    /** Admin-only storage proxy diagnostic for conversion upload/download failures */
+    storageDiagnostics: adminProcedure
+      .input(z.object({ timeoutMs: z.number().min(1000).max(30000).default(8000) }).optional())
+      .mutation(async ({ input }) => {
+        return diagnoseStorageProxy(input?.timeoutMs ?? 8000);
       }),
 
     /** Get recent failed jobs for debugging */
