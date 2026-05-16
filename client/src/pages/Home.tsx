@@ -979,8 +979,30 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
       const owVal = parseFloat(outputWidthMm);
       if (!isNaN(owVal) && owVal > 0) formData.append("outputWidthMm", String(owVal));
       formData.append("dpi", String(dpi));
-      const res = await fetch("/api/convert", { method: "POST", body: formData });
-      const data = await res.json();
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 60_000);
+      let res: Response;
+      let data: any;
+      try {
+        res = await fetch("/api/convert", {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+          signal: controller.signal,
+        });
+        const contentType = res.headers.get("content-type") ?? "";
+        const responseText = await res.text();
+        if (!contentType.includes("application/json")) {
+          throw new Error(t("authErrorNetwork"));
+        }
+        try {
+          data = responseText ? JSON.parse(responseText) : {};
+        } catch {
+          throw new Error(t("authErrorNetwork"));
+        }
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
       if (!res.ok || !data.success) {
         if (data.error === "REGISTRATION_REQUIRED") {
           onOpenAuth();
@@ -994,7 +1016,9 @@ function UploadTab({ onOpenAuth }: UploadTabProps) {
       setShowSvgPreview(false);
       toast.success(`${t("conversionSuccess")} (${data.segmentCount.toLocaleString()} ${t("lines")})`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : t("imageProcessingError");
+      const msg = err instanceof DOMException && err.name === "AbortError"
+        ? t("authErrorNetwork")
+        : err instanceof Error ? err.message : t("imageProcessingError");
       setErrorMsg(msg);
       setStatus("error");
       toast.error(msg);
