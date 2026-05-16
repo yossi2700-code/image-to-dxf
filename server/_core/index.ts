@@ -35,6 +35,9 @@ import unsubscribeRoute from "../unsubscribeRoute";
 import needleEngravingRoute from "../needleEngravingRoute";
 import { smartTemplateRouter } from "../smartTemplateRoute";
 
+const VERSION_DIAGNOSTIC_ID = "ai-trace-sync-diagnostic-2026-05-16T22-15Z";
+const VERSION_UPDATED_AT = "2026-05-16T22:15:00Z";
+
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
     const server = net.createServer();
@@ -147,6 +150,23 @@ async function startServer() {
   app.use("/api/ai-refine", uploadLimiter);
   app.use("/api/face-detect", uploadLimiter);
   app.use("/api/ai-document-redraw", uploadLimiter);
+
+  // ── Diagnostic version endpoint ─────────────────────────────────────────────
+  // Safe public endpoint: no secrets, no user data, no token-consuming work.
+  // Used to verify that the deployed backend revision is actually updated.
+  app.get("/api/version", (_req, res) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.json({
+      service: "dxfai.ai backend",
+      diagnosticId: VERSION_DIAGNOSTIC_ID,
+      updatedAt: VERSION_UPDATED_AT,
+      nodeEnv: process.env.NODE_ENV || null,
+      aiTraceBackground: process.env.AI_TRACE_BACKGROUND || null,
+      commit: process.env.GIT_COMMIT || process.env.COMMIT_SHA || process.env.VERCEL_GIT_COMMIT_SHA || process.env.K_REVISION || null,
+      cloudRunRevision: process.env.K_REVISION || null,
+      bootTime: new Date().toISOString(),
+    });
+  });
 
   // ── Routes ───────────────────────────────────────────────────────────────────
   // OAuth callback under /api/oauth/callback
