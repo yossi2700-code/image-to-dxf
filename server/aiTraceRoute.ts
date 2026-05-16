@@ -818,7 +818,7 @@ async function runTraceJob(
     }
   }, JOB_TIMEOUT_MS);
   try {
-    updateJob(jobId, {
+    await updateJob(jobId, {
       status: "processing",
       step: isHe ? "ממיר תמונה לקווי עט נקיים..." : "Converting image to clean pen strokes...",
       stepEn: "Converting image to clean pen strokes...",
@@ -915,7 +915,7 @@ async function runTraceJob(
     ]);
 
     // Initialize partialImages array for streaming results to client as each image completes
-    updateJob(jobId, { partialImages: [] });
+    await updateJob(jobId, { partialImages: [] });
 
     // Wait for clarity check first — fail fast if image is not processable
     const clarityResult = await clarityPromise;
@@ -923,7 +923,7 @@ async function runTraceJob(
       clearTimeout(internalTimeoutId);
       clearInterval(heartbeatInterval);
       const cr = clarityResult as { clear: boolean; reason?: string; reasonHe?: string };
-      updateJob(jobId, {
+      await updateJob(jobId, {
         status: "error",
         error: isHe
           ? (cr.reasonHe ?? "התמונה אינה ברורה מספיק. אנא העלה תמונה ברורה יותר עם תאורה ברורה.")
@@ -946,7 +946,7 @@ async function runTraceJob(
         mandala: isHe ? "מנדלה/תבנית" : "mandala/pattern",
         drawing: isHe ? "ציור/שרטוט" : "drawing/sketch",
       };
-      updateJob(jobId, {
+      await updateJob(jobId, {
         step: isHe
           ? `זוהה: ${typeLabel[imageClassification.type] ?? imageClassification.type} — ממיר לקווים...`
           : `Detected: ${typeLabel[imageClassification.type] ?? imageClassification.type} — converting to lines...`,
@@ -964,13 +964,13 @@ async function runTraceJob(
     const isBwDrawing = isMonochrome && avgBrightness > 150 && !isDarkBackground && !isPhotoType;
     if (isBwDrawing) {
       console.log(`[aiTraceRoute] Job ${jobId}: B&W drawing detected — colorizing lines before AI`);
-      updateJob(jobId, {
+      await updateJob(jobId, {
         step: isHe ? "ציור שחור-לבן זוהה — מעבד לפני עיבוד AI..." : "B&W drawing detected — preparing for AI...",
         stepEn: "B&W drawing detected — preparing for AI...",
       });
     } else if (isDarkBackground) {
       console.log(`[aiTraceRoute] Job ${jobId}: dark-bg drawing detected — sending to AI for outline extraction`);
-      updateJob(jobId, {
+      await updateJob(jobId, {
         step: isHe ? "ציור על רקע כהה זוהה — מחלץ קווי מתאר..." : "Dark-bg drawing detected — extracting outlines via AI...",
         stepEn: "Dark-bg drawing detected — extracting outlines via AI...",
       });
@@ -1170,7 +1170,7 @@ async function runTraceJob(
       const currentJob = getJob(jobId);
       if (currentJob && currentJob.status !== "cancelled") {
         const partialImages = (currentJob.partialImages as typeof imageResult[] | undefined) ?? [];
-        updateJob(jobId, {
+        await updateJob(jobId, {
           partialImages: [...partialImages, imageResult],
           step: isHe ? "ממיר ל-DXF..." : "Converting to DXF...",
           stepEn: "Converting to DXF...",
@@ -1213,7 +1213,7 @@ async function runTraceJob(
 
     // Deduct tokens NOW — only after successful job completion
     await deductTokens(appUserId, "ai_trace");
-    updateJob(jobId, { tokenDeducted: true });
+    await updateJob(jobId, { tokenDeducted: true });
 
     // Record user actions
     const groupId = nanoid(12);
@@ -1240,7 +1240,7 @@ async function runTraceJob(
     }
 
     clearTimeout(internalTimeoutId);
-    updateJob(jobId, { status: "done", result: { success: true, images, objectDescription, suggestions } });
+    await updateJob(jobId, { status: "done", result: { success: true, images, objectDescription, suggestions } });
 
   } catch (err: unknown) {
     clearTimeout(internalTimeoutId);
@@ -1256,7 +1256,7 @@ async function runTraceJob(
         msgLower.includes("content policy") || msgLower.includes("rejected") ||
         msgLower.includes("moderation") || msgLower.includes("inappropriate") ||
         msgLower.includes("violat");
-      updateJob(jobId, {
+      await updateJob(jobId, {
         status: "error",
         error: message,
         errorCode: isContentPolicy ? "CONTENT_POLICY" : undefined,
@@ -1402,20 +1402,27 @@ router.post(
       const jobId = nanoid(12);
       await createJobPersisted(jobId, appUser.userId, "ai_trace");
 
-      // 3-minute hard timeout — if job takes longer, mark as error and stop
+      // 3-minute hard timeout — if job takes longer, mark as error and stop.
+      // Production note: many serverless platforms pause CPU immediately after the
+      // HTTP response is returned. In that environment a fire-and-forget Promise can
+      // remain stuck forever in `pending`, which is exactly what users experienced.
+      // Therefore the safe default is to keep this request alive until the job reaches
+      // a terminal state; the client still receives a jobId and then polls the already
+      // persisted result. If the hosting platform is configured with a real always-on
+      // worker/CPU, AI_TRACE_BACKGROUND=true can restore the previous async behavior.
       const MAX_JOB_MS = 3 * 60 * 1000;
       const timeoutPromise = new Promise<void>((_, reject) =>
         setTimeout(() => reject(new Error("Job timed out after 3 minutes")), MAX_JOB_MS)
       );
-      Promise.race([
+      const processingPromise = Promise.race([
         runTraceJob(jobId, imageBuffer, imageBase64, userDesc, focusText, landscapeMode, lang, appUser.userId, ipAnon ?? "", uploadedSourceImageUrl, variationIndex, hairline, lineweightMm, singleLine, closePaths),
         timeoutPromise,
-      ]).catch((err) => {
+      ]).catch(async (err) => {
         const msg = err instanceof Error ? err.message : String(err);
         console.error("[aiTraceRoute] Job error/timeout:", msg);
         const job = getJob(jobId);
         if (job && job.status !== "done" && job.status !== "cancelled") {
-          updateJob(jobId, {
+          await updateJob(jobId, {
             status: "error",
             error: msg.includes("timed out")
               ? "העיבוד ארך יותר מ-3 דקות. נסה שוב — בדרך כלל הניסיון השני מהיר יותר."
@@ -1424,6 +1431,12 @@ router.post(
         }
       });
 
+      if (process.env.AI_TRACE_BACKGROUND === "true") {
+        void processingPromise;
+        return res.json({ jobId });
+      }
+
+      await processingPromise;
       return res.json({ jobId });
 
     } catch (err: unknown) {

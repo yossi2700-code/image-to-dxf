@@ -166,7 +166,7 @@ export async function getJobFromDB(id: string): Promise<Job | undefined> {
   }
 }
 
-export function updateJob(id: string, update: Partial<Job>): void {
+export async function updateJob(id: string, update: Partial<Job>): Promise<void> {
   const job = cache.get(id);
   if (job) {
     Object.assign(job, update, { updatedAt: Date.now() });
@@ -184,10 +184,13 @@ export function updateJob(id: string, update: Partial<Job>): void {
   if (update.result !== undefined) dbUpdate.result = JSON.stringify(update.result);
   if (update.partialImages !== undefined) dbUpdate.partialImages = JSON.stringify(update.partialImages);
   if (Object.keys(dbUpdate).length > 0) {
-    getDb().then(db => {
+    try {
+      const db = await getDb();
       if (!db) return;
-      return db.update(persistentJobs).set(dbUpdate).where(eq(persistentJobs.id, id));
-    }).catch((e: unknown) => console.error("[jobStore] updateJob DB error:", e));
+      await db.update(persistentJobs).set(dbUpdate).where(eq(persistentJobs.id, id));
+    } catch (e: unknown) {
+      console.error("[jobStore] updateJob DB error:", e);
+    }
   }
 }
 
